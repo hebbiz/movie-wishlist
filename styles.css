@@ -117,6 +117,10 @@ button:hover {
   margin-bottom: 8px;
 }
 
+.links {
+  margin-bottom: 18px;
+}
+
 .links a {
   display: block;
   color: #d6b25e;
