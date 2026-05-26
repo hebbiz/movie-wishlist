@@ -43,7 +43,7 @@ async function loadMovies() {
   console.log("Movies loaded:", data);
 
   movies = data || [];
-  renderMovies(movies);
+  applySearchAndFilters();
 }
 
 function renderMovies(list) {
