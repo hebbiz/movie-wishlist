@@ -80,7 +80,11 @@ function renderMovies(list) {
           ${movie.added_by ? "Додав: " + movie.added_by + "<br>" : ""}
         </div>
 
-        ${movie.notes ? `<p>${movie.notes}</p>` : ""}
+        ${movie.notes ? `
+          <p class="movie-notes collapsed" onclick="toggleNotes(this)">
+        ${movie.notes}
+          </p>
+          ` : ""}
 
         <div class="links">
           ${movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank">IMDb</a>` : ""}
@@ -114,6 +118,10 @@ function formatStatus(status) {
   if (status === "watched") return "переглянуто";
 
   return status || "не вказано";
+}
+
+function toggleNotes(element) {
+  element.classList.toggle("collapsed");
 }
 
 function getMovieFormData() {
