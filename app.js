@@ -200,6 +200,7 @@ function startEditMovie(id) {
 
   formPanel.style.display = "block";
    showAddFormButton.style.display = "none";
+   cancelEditButton.style.display = "block";
    formTitle.textContent = "Редагувати фільм";
 
   fillForm(movie);
@@ -443,6 +444,7 @@ showAddFormButton.addEventListener("click", () => {
 
   formPanel.style.display = "block";
   showAddFormButton.style.display = "none";
+  cancelEditButton.style.display = "block";
 
   formTitle.textContent = "Додати фільм";
   submitButton.textContent = "Додати";
