@@ -9,6 +9,9 @@ const searchInput = document.getElementById("searchInput");
 const filterButtons = document.querySelectorAll(".filter-btn");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
+const formPanel = document.getElementById("formPanel");
+const formTitle = document.getElementById("formTitle");
+const showAddFormButton = document.getElementById("showAddFormButton");
 const statusSelect = document.getElementById("status");
 const recommendedMediumGroup = document.getElementById("recommendedMediumGroup");
 const ownedMediumGroup = document.getElementById("ownedMediumGroup");
@@ -172,12 +175,15 @@ function resetFormMode() {
   console.log("Reset form mode");
 
   editingMovieId = null;
-
   movieForm.reset();
 
+  formTitle.textContent = "Додати фільм";
   submitButton.textContent = "Додати";
-
   cancelEditButton.style.display = "none";
+  formPanel.style.display = "none";
+  showAddFormButton.style.display = "block";
+
+  updateFormVisibility();
 }
 
 function startEditMovie(id) {
@@ -191,6 +197,10 @@ function startEditMovie(id) {
   }
 
   editingMovieId = id;
+
+  formPanel.style.display = "block";
+   showAddFormButton.style.display = "none";
+   formTitle.textContent = "Редагувати фільм";
 
   fillForm(movie);
 
@@ -425,4 +435,22 @@ lookupButton.addEventListener("click", async () => {
 });
 
 statusSelect.addEventListener("change", updateFormVisibility);
+
 updateFormVisibility();
+
+showAddFormButton.addEventListener("click", () => {
+  resetFormMode();
+
+  formPanel.style.display = "block";
+  showAddFormButton.style.display = "none";
+
+  formTitle.textContent = "Додати фільм";
+  submitButton.textContent = "Додати";
+
+  window.scrollTo({
+    top: formPanel.offsetTop - 20,
+    behavior: "smooth",
+  });
+});
+
+loadMovies();
