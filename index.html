@@ -28,6 +28,13 @@
         <button id="lookupButton" type="button">Заповнити з IMDb</button>
         <input id="poster_url" type="url" placeholder="Посилання на постер" />
 
+        <select id="status">
+         <option value="wishlist">Хочу переглянути</option>
+         <option value="ordered">Замовлено</option>
+         <option value="owned">Придбано</option>
+         <option value="watched">Переглянуто</option>
+        </select>
+
         <select id="recommended_medium">
           <option value="">Рекомендований носій</option>
           <option value="4K UHD Blu-ray">4K UHD Blu-ray</option>
@@ -37,13 +44,6 @@
           <option value="HBO Max">HBO Max</option>
           <option value="Disney+">Disney+</option>
           <option value="Інше">Інше</option>
-        </select>
-
-        <select id="status">
-         <option value="wishlist">Хочу переглянути</option>
-         <option value="ordered">Замовлено</option>
-         <option value="owned">Придбано</option>
-         <option value="watched">Переглянуто</option>
         </select>
 
         <input id="owned_medium" type="text" placeholder="На якому носії придбано" />
