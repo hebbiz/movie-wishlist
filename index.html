@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Wishlist</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Movie Wishlist</h1>
+      <p>Список фільмів для перегляду та покупки</p>
+    </header>
+
+    <section class="panel">
+      <input id="searchInput" type="text" placeholder="Пошук за назвою, роком, носієм..." />
+    </section>
+
+    <section class="panel">
+      <h2>Додати фільм</h2>
+
+      <form id="movieForm">
+        <input id="title" type="text" placeholder="Назва фільму" required />
+        <input id="year" type="number" placeholder="Рік" />
+        <input id="imdb_url" type="url" placeholder="IMDb посилання" />
+        <input id="poster_url" type="url" placeholder="Посилання на постер" />
+
+        <select id="recommended_medium">
+          <option value="">Рекомендований носій</option>
+          <option value="4K UHD Blu-ray">4K UHD Blu-ray</option>
+          <option value="Blu-ray">Blu-ray</option>
+          <option value="Apple TV / iTunes">Apple TV / iTunes</option>
+          <option value="Netflix">Netflix</option>
+          <option value="HBO Max">HBO Max</option>
+          <option value="Disney+">Disney+</option>
+          <option value="Інше">Інше</option>
+        </select>
+
+        <select id="status">
+          <option value="wishlist">Хочу переглянути</option>
+          <option value="owned">Придбано</option>
+          <option value="watched">Переглянуто</option>
+        </select>
+
+        <label class="checkbox">
+          <input id="is_owned" type="checkbox" />
+          Уже придбано
+        </label>
+
+        <input id="owned_medium" type="text" placeholder="На якому носії придбано" />
+        <input id="purchase_url" type="url" placeholder="Де купити / рекомендоване посилання" />
+        <input id="added_by" type="text" placeholder="Хто додав" />
+        <textarea id="notes" placeholder="Нотатки"></textarea>
+
+        <button id="submitButton" type="submit">Додати</button>
+        <button id="cancelEditButton" type="button" style="display: none;">Скасувати редагування</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Список</h2>
+      <div id="moviesGrid" class="grid"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
