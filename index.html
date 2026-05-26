@@ -26,8 +26,14 @@
       <button type="button" class="filter-btn" data-filter="watched">Переглянуто</button>
     </section>
 
-    <section class="panel">
-      <h2>Додати фільм</h2>
+    <section class="panel actions-panel">
+      <button id="showAddFormButton" type="button">Додати</button>
+    </section>
+
+    <section class="panel" id="formPanel" style="display: none;">
+      <h2 id="formTitle">Додати фільм</h2>
+
+    <form id="movieForm">
 
       <form id="movieForm">
         <input id="title" type="text" placeholder="Назва фільму" required />
