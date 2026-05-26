@@ -152,3 +152,12 @@ button:hover {
   background: #d6b25e;
   color: #111;
 }
+
+.actions-panel {
+  background: transparent;
+  padding: 0;
+}
+
+.actions-panel button {
+  max-width: 220px;
+}
