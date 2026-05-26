@@ -161,3 +161,8 @@ button:hover {
 .actions-panel button {
   max-width: 220px;
 }
+
+#cancelEditButton {
+  background: #2a2a2a;
+  color: #f4f4f4;
+}
