@@ -6,6 +6,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const movieForm = document.getElementById("movieForm");
 const moviesGrid = document.getElementById("moviesGrid");
 const searchInput = document.getElementById("searchInput");
+const filterButtons = document.querySelectorAll(".filter-btn");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
 const statusSelect = document.getElementById("status");
@@ -16,6 +17,7 @@ const lookupButton = document.getElementById("lookupButton");
 
 let movies = [];
 let editingMovieId = null;
+let activeFilter = "all";
 
 async function loadMovies() {
   console.log("Loading movies...");
@@ -316,27 +318,65 @@ async function deleteMovie(id) {
   loadMovies();
 }
 
-searchInput.addEventListener("input", () => {
+function applySearchAndFilters() {
   const query = searchInput.value.toLowerCase().trim();
 
-  console.log("Search query:", query);
-
   const filtered = movies.filter((movie) => {
-    return [
+    const searchableText = [
       movie.title,
       movie.year,
       movie.recommended_medium,
-      movie.status,
       movie.owned_medium,
+      movie.status,
       movie.notes,
       movie.added_by,
     ]
       .join(" ")
-      .toLowerCase()
-      .includes(query);
+      .toLowerCase();
+
+    const matchesSearch = searchableText.includes(query);
+
+    let matchesFilter = true;
+
+    if (activeFilter === "wishlist") {
+      matchesFilter = movie.status === "wishlist";
+    }
+
+    if (activeFilter === "ordered") {
+      matchesFilter = movie.status === "ordered";
+    }
+
+    if (activeFilter === "owned") {
+      matchesFilter = movie.status === "owned";
+    }
+
+    if (activeFilter === "watched") {
+      matchesFilter = movie.status === "watched";
+    }
+
+    if (activeFilter === "uhd") {
+      matchesFilter =
+        movie.recommended_medium === "4K UHD Blu-ray" ||
+        movie.owned_medium === "4K UHD Blu-ray";
+    }
+
+    return matchesSearch && matchesFilter;
   });
 
   renderMovies(filtered);
+}
+
+searchInput.addEventListener("input", applySearchAndFilters);
+
+filterButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    activeFilter = button.dataset.filter;
+
+    filterButtons.forEach((btn) => btn.classList.remove("active"));
+    button.classList.add("active");
+
+    applySearchAndFilters();
+  });
 });
 
 loadMovies();
