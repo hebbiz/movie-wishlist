@@ -8,6 +8,7 @@ const moviesGrid = document.getElementById("moviesGrid");
 const searchInput = document.getElementById("searchInput");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
+const lookupButton = document.getElementById("lookupButton");
 
 let movies = [];
 let editingMovieId = null;
@@ -313,3 +314,46 @@ searchInput.addEventListener("input", () => {
 });
 
 loadMovies();
+lookupButton.addEventListener("click", async () => {
+  const imdbUrl = document.getElementById("imdb_url").value.trim();
+
+  const match = imdbUrl.match(/tt\d+/);
+
+  if (!match) {
+    alert("Не вдалося знайти IMDb ID у посиланні.");
+    return;
+  }
+
+  const imdbId = match[0];
+
+  lookupButton.textContent = "Шукаю...";
+  lookupButton.disabled = true;
+
+  try {
+    const response = await fetch(
+      `/.netlify/functions/movie-lookup?imdbId=${imdbId}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert("Помилка IMDb/TMDb пошуку: " + (data.error || response.status));
+      return;
+    }
+
+    document.getElementById("title").value = data.title || "";
+    document.getElementById("year").value = data.year || "";
+    document.getElementById("poster_url").value = data.poster_url || "";
+
+    if (data.overview) {
+      document.getElementById("notes").value = data.overview;
+    }
+
+    alert("Дані фільму заповнено.");
+  } catch (error) {
+    alert("Помилка запиту: " + error.message);
+  } finally {
+    lookupButton.textContent = "Заповнити з IMDb";
+    lookupButton.disabled = false;
+  }
+});
