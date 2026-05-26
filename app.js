@@ -8,6 +8,10 @@ const moviesGrid = document.getElementById("moviesGrid");
 const searchInput = document.getElementById("searchInput");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
+const statusSelect = document.getElementById("status");
+const recommendedMediumGroup = document.getElementById("recommendedMediumGroup");
+const ownedMediumGroup = document.getElementById("ownedMediumGroup");
+const purchaseLabel = document.getElementById("purchaseLabel");
 const lookupButton = document.getElementById("lookupButton");
 
 let movies = [];
@@ -94,6 +98,7 @@ function renderMovies(list) {
 
 function formatStatus(status) {
   if (status === "wishlist") return "хочу переглянути";
+  if (status === "ordered") return "замовлено";
   if (status === "owned") return "придбано";
   if (status === "watched") return "переглянуто";
 
@@ -109,7 +114,9 @@ function getMovieFormData() {
     recommended_medium:
       document.getElementById("recommended_medium").value || null,
     status: document.getElementById("status").value,
-    is_owned: document.getElementById("is_owned").checked,
+    is_owned: ["ordered", "owned", "watched"].includes(
+      document.getElementById("status").value
+      ),
     owned_medium:
       document.getElementById("owned_medium").value.trim() || null,
     purchase_url:
@@ -128,8 +135,6 @@ function fillForm(movie) {
     movie.recommended_medium || "";
   document.getElementById("status").value =
     movie.status || "wishlist";
-  document.getElementById("is_owned").checked =
-    !!movie.is_owned;
   document.getElementById("owned_medium").value =
     movie.owned_medium || "";
   document.getElementById("purchase_url").value =
@@ -138,6 +143,21 @@ function fillForm(movie) {
     movie.notes || "";
   document.getElementById("added_by").value =
     movie.added_by || "";
+updateFormVisibility();
+}
+
+function updateFormVisibility() {
+  const status = statusSelect.value;
+
+  if (status === "wishlist") {
+    recommendedMediumGroup.style.display = "block";
+    ownedMediumGroup.style.display = "none";
+    purchaseLabel.textContent = "Де купити / рекомендоване посилання";
+  } else {
+    recommendedMediumGroup.style.display = "none";
+    ownedMediumGroup.style.display = "block";
+    purchaseLabel.textContent = "Де куплено / посилання";
+  }
 }
 
 function resetFormMode() {
@@ -357,3 +377,6 @@ lookupButton.addEventListener("click", async () => {
     lookupButton.disabled = false;
   }
 });
+
+statusSelect.addEventListener("change", updateFormVisibility);
+updateFormVisibility();
