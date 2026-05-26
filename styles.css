@@ -133,3 +133,22 @@ button:hover {
   color: white;
   margin-top: 12px;
 }
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-btn {
+  width: auto;
+  margin-bottom: 0;
+  padding: 10px 14px;
+  background: #2a2a2a;
+  color: #f4f4f4;
+}
+
+.filter-btn.active {
+  background: #d6b25e;
+  color: #111;
+}
