@@ -79,7 +79,7 @@ function renderMovies(list) {
 
         <div class="links">
           ${movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank">IMDb</a>` : ""}
-          ${movie.purchase_url ? `<a href="${movie.purchase_url}" target="_blank">${movie.purchase_url}</a>` : ""}
+          ${movie.purchase_url ? `<a href="${movie.purchase_url}" target="_blank">Де купити</a>` : ""}
         </div>
 
         <button onclick="startEditMovie('${movie.id}')">
