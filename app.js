@@ -96,17 +96,49 @@ function renderMovies(list) {
         </button>
 
         <div class="card-menu">
-          <button class="menu-button" onclick="toggleCardMenu('${movie.id}')">⋯</button>
+         <button class="menu-button" type="button" data-menu-id="${movie.id}">⋯</button>
 
-          <div class="menu-dropdown" id="menu-${movie.id}">
-            <button onclick="markAsWatched('${movie.id}')">Позначити як переглянуте</button>
-            <button class="delete-option" onclick="deleteMovie('${movie.id}')">Видалити</button>
-          </div>
+        <div class="menu-dropdown" id="menu-${movie.id}">
+         <button type="button" data-watch-id="${movie.id}">Позначити як переглянуте</button>
+         <button type="button" class="delete-option" data-delete-id="${movie.id}">Видалити</button>
         </div>
+       </div>
       </div>
     `;
-
+    
     moviesGrid.appendChild(card);
+  });
+  attachCardMenuHandlers();
+}
+
+function attachCardMenuHandlers() {
+  document.querySelectorAll("[data-menu-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.menuId;
+      const menu = document.getElementById("menu-" + id);
+
+      document.querySelectorAll(".menu-dropdown").forEach((dropdown) => {
+        if (dropdown !== menu) {
+          dropdown.style.display = "none";
+        }
+      });
+
+      if (menu) {
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-watch-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      markAsWatched(button.dataset.watchId);
+    });
+  });
+
+  document.querySelectorAll("[data-delete-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      deleteMovie(button.dataset.deleteId);
+    });
   });
 }
 
@@ -345,20 +377,6 @@ async function deleteMovie(id) {
   if (!confirmed) {
     return;
   }
-
-function toggleCardMenu(id) {
-  const menu = document.getElementById("menu-" + id);
-
-  document.querySelectorAll(".menu-dropdown").forEach((item) => {
-    if (item !== menu) {
-      item.style.display = "none";
-    }
-  });
-
-  window.toggleCardMenu = toggleCardMenu;
-  window.markAsWatched = markAsWatched;
-  window.deleteMovie = deleteMovie;
-  window.startEditMovie = startEditMovie;
 
   menu.style.display = menu.style.display === "block" ? "none" : "block";
 }
