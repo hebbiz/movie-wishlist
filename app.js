@@ -426,33 +426,6 @@ async function markAsWatched(id) {
 
   loadMovies();
 }
-  
-  const { error } = await supabaseClient
-    .from("movies")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Delete error:", error);
-
-    alert(
-      "Помилка видалення фільму\n\n" +
-      "Code: " + (error.code || "N/A") + "\n" +
-      "Message: " + error.message + "\n" +
-      "Details: " + (error.details || "No details")
-    );
-
-    return;
-  }
-
-  console.log("Delete success");
-
-  if (editingMovieId === id) {
-    resetFormMode();
-  }
-
-  loadMovies();
-}
 
 function applySearchAndFilters() {
   const query = searchInput.value.toLowerCase().trim();
@@ -515,8 +488,6 @@ filterButtons.forEach((button) => {
   });
 });
 
-loadMovies();
-lookupButton.addEventListener("click", async () => {
   const imdbUrl = document.getElementById("imdb_url").value.trim();
 
   const match = imdbUrl.match(/tt\d+/);
