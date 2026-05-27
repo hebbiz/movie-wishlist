@@ -142,6 +142,16 @@ function attachCardMenuHandlers() {
   });
 }
 
+  document.addEventListener("click", (event) => {
+    const clickedInsideMenu = event.target.closest(".card-menu");
+
+  if (!clickedInsideMenu) {
+    document.querySelectorAll(".menu-dropdown").forEach((menu) => {
+      menu.style.display = "none";
+    });
+  }
+});
+
 function formatStatus(status) {
   if (status === "wishlist") return "хочу переглянути";
   if (status === "ordered") return "замовлено";
