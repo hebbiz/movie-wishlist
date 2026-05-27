@@ -82,9 +82,9 @@ function renderMovies(list) {
 
         ${movie.notes ? `
           <p class="movie-notes collapsed" onclick="toggleNotes(this)">
-        ${movie.notes}
+            ${movie.notes}
           </p>
-          ` : ""}
+        ` : ""}
 
         <div class="links">
           ${movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank">IMDb</a>` : ""}
@@ -92,16 +92,16 @@ function renderMovies(list) {
         </div>
 
         <button onclick="startEditMovie('${movie.id}')">
-        Редагувати
+          Редагувати
         </button>
 
         <div class="card-menu">
           <button class="menu-button" onclick="toggleCardMenu('${movie.id}')">⋯</button>
 
-        <div class="menu-dropdown" id="menu-${movie.id}">
-          <button onclick="markAsWatched('${movie.id}')">Позначити як переглянуте</button>
-          <button class="delete-option" onclick="deleteMovie('${movie.id}')">Видалити</button>
-        </div>
+          <div class="menu-dropdown" id="menu-${movie.id}">
+            <button onclick="markAsWatched('${movie.id}')">Позначити як переглянуте</button>
+            <button class="delete-option" onclick="deleteMovie('${movie.id}')">Видалити</button>
+          </div>
         </div>
       </div>
     `;
