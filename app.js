@@ -355,6 +355,11 @@ function toggleCardMenu(id) {
     }
   });
 
+  window.toggleCardMenu = toggleCardMenu;
+  window.markAsWatched = markAsWatched;
+  window.deleteMovie = deleteMovie;
+  window.startEditMovie = startEditMovie;
+
   menu.style.display = menu.style.display === "block" ? "none" : "block";
 }
 
