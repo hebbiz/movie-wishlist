@@ -89,10 +89,12 @@ function renderMovies(list) {
         <div class="links">
           ${movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank">IMDb</a>` : ""}
           ${movie.purchase_url
-           ? `<a href="${movie.purchase_url}" target="_blank">
-            ${getPurchaseLabel(movie)}
-            </a>`
-           : ""}
+  ? `<a href="${movie.purchase_url}" target="_blank">
+      ${movie.status === "wishlist"
+        ? "Де купити"
+        : "Де придбано"}
+    </a>`
+  : ""}
         </div>
 
         <button onclick="startEditMovie('${movie.id}')">
@@ -116,43 +118,6 @@ function formatStatus(status) {
   if (status === "watched") return "переглянуто";
 
   return status || "не вказано";
-}
-
-function getPurchaseLabel(movie) {
-  const streamingServices = [
-    "Netflix",
-    "HBO Max",
-    "Disney+",
-    "Apple TV / iTunes",
-    "Megogo",
-  ];
-
-  if (
-    movie.status !== "wishlist" &&
-    streamingServices.includes(movie.owned_medium)
-  ) {
-    return `Дивитись на ${movie.owned_medium}`;
-  }
-
-  if (movie.status === "wishlist") {
-    return "Де купити";
-  }
-
-  return "Де придбано";
-}
-
-  if (
-    movie.status !== "wishlist" &&
-    streamingServices.includes(movie.owned_medium)
-  ) {
-    return `Дивитись на ${movie.owned_medium}`;
-  }
-
-  if (movie.status === "wishlist") {
-    return "Де купити";
-  }
-
-  return "Де придбано";
 }
 
 function toggleNotes(element) {
