@@ -488,6 +488,7 @@ filterButtons.forEach((button) => {
   });
 });
 
+  lookupButton.addEventListener("click", async () => {
   const imdbUrl = document.getElementById("imdb_url").value.trim();
 
   const match = imdbUrl.match(/tt\d+/);
