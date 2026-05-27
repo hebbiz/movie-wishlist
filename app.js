@@ -123,9 +123,23 @@ function getPurchaseLabel(movie) {
     "Netflix",
     "HBO Max",
     "Disney+",
-    "Apple TV",
+    "Apple TV / iTunes",
     "Megogo",
   ];
+
+  if (
+    movie.status !== "wishlist" &&
+    streamingServices.includes(movie.owned_medium)
+  ) {
+    return `Дивитись на ${movie.owned_medium}`;
+  }
+
+  if (movie.status === "wishlist") {
+    return "Де купити";
+  }
+
+  return "Де придбано";
+}
 
   if (
     movie.status !== "wishlist" &&
