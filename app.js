@@ -313,6 +313,24 @@ movieForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (movieData.imdb_url) {
+  const normalizedImdbUrl = movieData.imdb_url.trim().toLowerCase();
+
+  const duplicateMovie = movies.find((movie) => {
+    if (!movie.imdb_url) return false;
+
+    return (
+      movie.imdb_url.trim().toLowerCase() === normalizedImdbUrl &&
+      movie.id !== editingMovieId
+    );
+  });
+
+  if (duplicateMovie) {
+    alert("Такий фільм вже додано до списку.");
+    return;
+  }
+}
+
   if (editingMovieId) {
     console.log("Updating movie:", editingMovieId);
 
