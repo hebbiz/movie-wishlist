@@ -82,9 +82,9 @@ function renderMovies(list) {
 
         ${movie.notes ? `
           <p class="movie-notes collapsed" onclick="toggleNotes(this)">
-        ${movie.notes}
+            ${movie.notes}
           </p>
-          ` : ""}
+        ` : ""}
 
         <div class="links">
           ${movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank">IMDb</a>` : ""}
@@ -95,15 +95,62 @@ function renderMovies(list) {
           Редагувати
         </button>
 
-        <button class="delete-btn" onclick="deleteMovie('${movie.id}')">
-          Видалити
-        </button>
+        <div class="card-menu">
+         <button class="menu-button" type="button" data-menu-id="${movie.id}">⋯</button>
+
+        <div class="menu-dropdown" id="menu-${movie.id}">
+         <button type="button" data-watch-id="${movie.id}">Позначити як переглянуте</button>
+         <button type="button" class="delete-option" data-delete-id="${movie.id}">Видалити</button>
+        </div>
+       </div>
       </div>
     `;
-
+    
     moviesGrid.appendChild(card);
   });
+  attachCardMenuHandlers();
 }
+
+function attachCardMenuHandlers() {
+  document.querySelectorAll("[data-menu-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.menuId;
+      const menu = document.getElementById("menu-" + id);
+
+      document.querySelectorAll(".menu-dropdown").forEach((dropdown) => {
+        if (dropdown !== menu) {
+          dropdown.style.display = "none";
+        }
+      });
+
+      if (menu) {
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-watch-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      markAsWatched(button.dataset.watchId);
+    });
+  });
+
+  document.querySelectorAll("[data-delete-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      deleteMovie(button.dataset.deleteId);
+    });
+  });
+}
+
+  document.addEventListener("click", (event) => {
+    const clickedInsideMenu = event.target.closest(".card-menu");
+
+  if (!clickedInsideMenu) {
+    document.querySelectorAll(".menu-dropdown").forEach((menu) => {
+      menu.style.display = "none";
+    });
+  }
+});
 
 function formatStatus(status) {
   if (status === "wishlist") return "хочу переглянути";
@@ -368,6 +415,28 @@ async function deleteMovie(id) {
   loadMovies();
 }
 
+async function markAsWatched(id) {
+  const { error } = await supabaseClient
+    .from("movies")
+    .update({
+      status: "watched",
+      is_owned: true,
+    })
+    .eq("id", id);
+
+  if (error) {
+    alert(
+      "Помилка оновлення статусу\n\n" +
+      "Code: " + (error.code || "N/A") + "\n" +
+      "Message: " + error.message
+    );
+
+    return;
+  }
+
+  loadMovies();
+}
+
 function applySearchAndFilters() {
   const query = searchInput.value.toLowerCase().trim();
 
@@ -429,8 +498,7 @@ filterButtons.forEach((button) => {
   });
 });
 
-loadMovies();
-lookupButton.addEventListener("click", async () => {
+  lookupButton.addEventListener("click", async () => {
   const imdbUrl = document.getElementById("imdb_url").value.trim();
 
   const match = imdbUrl.match(/tt\d+/);
