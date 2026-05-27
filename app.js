@@ -378,13 +378,40 @@ async function deleteMovie(id) {
     return;
   }
 
-  menu.style.display = menu.style.display === "block" ? "none" : "block";
+  const { error } = await supabaseClient
+    .from("movies")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Delete error:", error);
+
+    alert(
+      "Помилка видалення фільму\n\n" +
+      "Code: " + (error.code || "N/A") + "\n" +
+      "Message: " + error.message + "\n" +
+      "Details: " + (error.details || "No details")
+    );
+
+    return;
+  }
+
+  console.log("Delete success");
+
+  if (editingMovieId === id) {
+    resetFormMode();
+  }
+
+  loadMovies();
 }
 
 async function markAsWatched(id) {
   const { error } = await supabaseClient
     .from("movies")
-    .update({ status: "watched", is_owned: true })
+    .update({
+      status: "watched",
+      is_owned: true,
+    })
     .eq("id", id);
 
   if (error) {
@@ -393,6 +420,7 @@ async function markAsWatched(id) {
       "Code: " + (error.code || "N/A") + "\n" +
       "Message: " + error.message
     );
+
     return;
   }
 
