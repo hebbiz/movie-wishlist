@@ -118,6 +118,29 @@ function formatStatus(status) {
   return status || "не вказано";
 }
 
+function getPurchaseLabel(movie) {
+  const streamingServices = [
+    "Netflix",
+    "HBO Max",
+    "Disney+",
+    "Apple TV / iTunes",
+    "Megogo",
+  ];
+
+  if (
+    movie.status !== "wishlist" &&
+    streamingServices.includes(movie.owned_medium)
+  ) {
+    return `Дивитись на ${movie.owned_medium}`;
+  }
+
+  if (movie.status === "wishlist") {
+    return "Де купити";
+  }
+
+  return "Де придбано";
+}
+
 function toggleNotes(element) {
   element.classList.toggle("collapsed");
 }
