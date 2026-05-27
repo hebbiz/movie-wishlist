@@ -92,12 +92,17 @@ function renderMovies(list) {
         </div>
 
         <button onclick="startEditMovie('${movie.id}')">
-          Редагувати
+        Редагувати
         </button>
 
-        <button class="delete-btn" onclick="deleteMovie('${movie.id}')">
-          Видалити
-        </button>
+        <div class="card-menu">
+          <button class="menu-button" onclick="toggleCardMenu('${movie.id}')">⋯</button>
+
+        <div class="menu-dropdown" id="menu-${movie.id}">
+          <button onclick="markAsWatched('${movie.id}')">Позначити як переглянуте</button>
+          <button class="delete-option" onclick="deleteMovie('${movie.id}')">Видалити</button>
+        </div>
+        </div>
       </div>
     `;
 
@@ -341,6 +346,36 @@ async function deleteMovie(id) {
     return;
   }
 
+function toggleCardMenu(id) {
+  const menu = document.getElementById("menu-" + id);
+
+  document.querySelectorAll(".menu-dropdown").forEach((item) => {
+    if (item !== menu) {
+      item.style.display = "none";
+    }
+  });
+
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+async function markAsWatched(id) {
+  const { error } = await supabaseClient
+    .from("movies")
+    .update({ status: "watched", is_owned: true })
+    .eq("id", id);
+
+  if (error) {
+    alert(
+      "Помилка оновлення статусу\n\n" +
+      "Code: " + (error.code || "N/A") + "\n" +
+      "Message: " + error.message
+    );
+    return;
+  }
+
+  loadMovies();
+}
+  
   const { error } = await supabaseClient
     .from("movies")
     .delete()
