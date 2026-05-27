@@ -123,11 +123,25 @@ function getPurchaseLabel(movie) {
     "Megogo",
   ];
 
-  const isPurchasedStatus = ["ordered", "owned", "watched"].includes(movie.status);
+  const displayNames = {
+    "Apple TV / iTunes": "Apple TV",
+    "HBO Max": "HBO Max",
+    "Disney+": "Disney+",
+    "Netflix": "Netflix",
+    "Megogo": "Megogo",
+  };
+
+  const isPurchasedStatus = ["ordered", "owned", "watched"].includes(
+    movie.status
+  );
+
   const isStreaming = streamingServices.includes(movie.owned_medium);
 
   if (isPurchasedStatus && isStreaming) {
-    return "Дивитись на " + movie.owned_medium;
+    const displayName =
+      displayNames[movie.owned_medium] || movie.owned_medium;
+
+    return "Дивитись на " + displayName;
   }
 
   if (movie.status === "wishlist") {
