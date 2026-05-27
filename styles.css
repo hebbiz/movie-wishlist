@@ -92,8 +92,9 @@ button:hover {
 .card {
   background: #1b1b1b;
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #2a2a2a;
+  position: relative;
 }
 
 .card img {
@@ -101,6 +102,7 @@ button:hover {
   height: 330px;
   object-fit: cover;
   background: #222;
+  border-radius: 14px 14px 0 0;
 }
 
 .card-content {
