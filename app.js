@@ -8,6 +8,7 @@ const moviesGrid = document.getElementById("moviesGrid");
 const movieCount = document.getElementById("movieCount");
 const searchInput = document.getElementById("searchInput");
 const clearSearchButton = document.getElementById("clearSearchButton");
+const searchHint = document.getElementById("searchHint");
 const filterButtons = document.querySelectorAll(".filter-btn");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
