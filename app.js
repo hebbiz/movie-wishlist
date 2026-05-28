@@ -5,6 +5,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const movieForm = document.getElementById("movieForm");
 const moviesGrid = document.getElementById("moviesGrid");
+const movieCount = document.getElementById("movieCount");
 const searchInput = document.getElementById("searchInput");
 const clearSearchButton = document.getElementById("clearSearchButton");
 const filterButtons = document.querySelectorAll(".filter-btn");
@@ -52,6 +53,7 @@ async function loadMovies() {
 
 function renderMovies(list) {
   moviesGrid.innerHTML = "";
+  movieCount.textContent = `(${list.length})`;
 
   if (list.length === 0) {
     moviesGrid.innerHTML = "<p>Нічого не знайдено.</p>";
