@@ -621,7 +621,71 @@ statusSelect.addEventListener("change", updateFormVisibility);
 
 updateFormVisibility();
 
-showAddFormButton.addEventListener("click", () => {
+showAddFormButton.addEventListener("click", async () => {
+  if (pendingImdbUrl && pendingImdbId) {
+    const existingMovie = findMovieByImdbId(pendingImdbId);
+
+    if (existingMovie) {
+      alert("Такий фільм вже додано до списку.");
+      return;
+    }
+
+    showAddFormButton.textContent = "Додаю...";
+    showAddFormButton.disabled = true;
+
+    try {
+      const response = await fetch(
+        `/.netlify/functions/movie-lookup?imdbId=${pendingImdbId}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert("Помилка IMDb/TMDb пошуку: " + (data.error || response.status));
+        return;
+      }
+
+      const newMovie = {
+        title: data.title || "Без назви",
+        year: data.year ? Number(data.year) : null,
+        imdb_url: pendingImdbUrl,
+        poster_url: data.poster_url || null,
+        recommended_medium: null,
+        status: "wishlist",
+        is_owned: false,
+        owned_medium: null,
+        purchase_url: null,
+        notes: data.overview || null,
+        added_by: null,
+      };
+
+      const { error } = await supabaseClient.from("movies").insert([newMovie]);
+
+      if (error) {
+        alert(
+          "Помилка додавання фільму\n\n" +
+          "Code: " + (error.code || "N/A") + "\n" +
+          "Message: " + error.message + "\n" +
+          "Details: " + (error.details || "No details")
+        );
+        return;
+      }
+
+      searchInput.value = "";
+      resetSmartSearchState();
+      await loadMovies();
+
+      alert("Фільм додано до списку.");
+    } catch (error) {
+      alert("Помилка запиту: " + error.message);
+    } finally {
+      showAddFormButton.disabled = false;
+      showAddFormButton.textContent = "Додати";
+    }
+
+    return;
+  }
+
   resetFormMode();
 
   formPanel.style.display = "block";
