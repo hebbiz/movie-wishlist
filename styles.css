@@ -251,11 +251,11 @@ button:hover {
 #clearSearchButton {
   position: absolute;
 
-  right: 10px;
-  top: 22px;
+  right: 14px;
+  top: 24px;
 
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
 
   border-radius: 50%;
   padding: 0;
