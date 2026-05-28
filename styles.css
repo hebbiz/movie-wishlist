@@ -278,3 +278,7 @@ button:hover {
 #clearSearchButton:hover::after {
   background: #fff;
 }
+
+#clearSearchButton {
+  background: red !important;
+}
