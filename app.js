@@ -24,6 +24,8 @@ const lookupButton = document.getElementById("lookupButton");
 let movies = [];
 let editingMovieId = null;
 let activeFilter = "all";
+let pendingImdbUrl = null;
+let pendingImdbId = null;
 
 async function loadMovies() {
   console.log("Loading movies...");
