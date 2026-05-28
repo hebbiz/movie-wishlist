@@ -574,9 +574,20 @@ function applySearchAndFilters() {
     const existingMovie = findMovieByImdbId(imdbId);
 
     if (existingMovie) {
-      searchHint.textContent = "Цей фільм вже є у ваших списках.";
-      searchHint.className = "search-hint warning";
-    } else {
+      const isUnavailable =
+        existingMovie.recommended_medium === "Наразі недоступний";
+
+      if (isUnavailable) {
+        searchHint.textContent =
+        "Фільм знайдено у ваших списках перегляду. Адміністратор, на жаль, позначив його як тимчасово недоступний на стрімінгових платформах та фізичних носіях.";
+        searchHint.className = "search-hint unavailable";
+        
+      } else {
+        searchHint.textContent = "Цей фільм вже є у ваших списках.";
+        searchHint.className = "search-hint warning";
+      }
+    }
+    else {
       pendingImdbUrl = searchInput.value.trim();
       pendingImdbId = imdbId;
 
