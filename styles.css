@@ -281,3 +281,18 @@ button:hover {
 #clearSearchButton:hover::after {
   background: #fff;
 }
+
+.search-hint {
+  margin: 8px 2px 0;
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.search-hint.positive {
+  color: #d6b25e;
+}
+
+.search-hint.warning {
+  color: #ffb3b3;
+}
