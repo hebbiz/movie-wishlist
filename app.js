@@ -492,6 +492,27 @@ async function markAsWatched(id) {
 
 function applySearchAndFilters() {
   const query = searchInput.value.toLowerCase().trim();
+  const imdbId = extractImdbId(query);
+
+  resetSmartSearchState();
+
+  if (imdbId) {
+    const existingMovie = findMovieByImdbId(imdbId);
+
+    if (existingMovie) {
+      searchHint.textContent = "Цей фільм вже є у ваших списках.";
+      searchHint.className = "search-hint warning";
+    } else {
+      pendingImdbUrl = searchInput.value.trim();
+      pendingImdbId = imdbId;
+
+      searchHint.textContent =
+        "Якщо хочете переглянути цей фільм, натисніть «Додати з IMDb». Адміністратор може змінити статус та інформацію про фільм пізніше.";
+      searchHint.className = "search-hint positive";
+
+      showAddFormButton.textContent = "Додати з IMDb";
+    }
+  }
 
   const filtered = movies.filter((movie) => {
     const searchableText = [
@@ -502,6 +523,7 @@ function applySearchAndFilters() {
       movie.status,
       movie.notes,
       movie.added_by,
+      movie.imdb_url,
     ]
       .join(" ")
       .toLowerCase();
