@@ -72,7 +72,15 @@ function renderMovies(list) {
       : "https://via.placeholder.com/400x600?text=No+Poster";
 
     card.innerHTML = `
-      <img src="${poster}" alt="${movie.title}" />
+      <div class="poster-wrapper">
+        <img src="${poster}" alt="${movie.title}" />
+
+        ${
+          movie.recommended_medium === "Наразі недоступний"
+            ? `<span class="unavailable-badge">Наразі недоступний</span>`
+            : ""
+         }
+</div>
 
       <div class="card-content">
         <h3>${movie.title}</h3>
