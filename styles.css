@@ -252,10 +252,10 @@ button:hover {
   position: absolute;
 
   right: 10px;
-  top: 11px;
+  top: 15px;
 
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
 
   border-radius: 50%;
   padding: 0;
