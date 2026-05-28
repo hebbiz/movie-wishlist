@@ -703,6 +703,7 @@ showAddFormButton.addEventListener("click", async () => {
 
 clearSearchButton.addEventListener("click", () => {
   searchInput.value = "";
+  resetSmartSearchState();
   applySearchAndFilters();
   searchInput.focus();
 });
