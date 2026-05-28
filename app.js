@@ -176,6 +176,35 @@ function getPurchaseLabel(movie) {
     "Megogo",
   ];
 
+  function extractImdbId(value) {
+  const match = value.match(/tt\d+/);
+  return match ? match[0] : null;
+}
+
+function normalizeImdbIdFromUrl(value) {
+  if (!value) return null;
+  return extractImdbId(value.trim());
+}
+
+function findMovieByImdbId(imdbId) {
+  if (!imdbId) return null;
+
+  return movies.find((movie) => {
+    const existingImdbId = normalizeImdbIdFromUrl(movie.imdb_url);
+    return existingImdbId === imdbId;
+  });
+}
+
+function resetSmartSearchState() {
+  pendingImdbUrl = null;
+  pendingImdbId = null;
+
+  searchHint.textContent = "";
+  searchHint.className = "search-hint";
+
+  showAddFormButton.textContent = "Додати";
+}
+
   const displayNames = {
     "Apple TV / iTunes": "Apple TV",
     "HBO Max": "HBO Max",
