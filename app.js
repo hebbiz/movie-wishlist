@@ -8,6 +8,7 @@ const moviesGrid = document.getElementById("moviesGrid");
 const movieCount = document.getElementById("movieCount");
 const searchInput = document.getElementById("searchInput");
 const clearSearchButton = document.getElementById("clearSearchButton");
+const searchHint = document.getElementById("searchHint");
 const filterButtons = document.querySelectorAll(".filter-btn");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
@@ -23,6 +24,8 @@ const lookupButton = document.getElementById("lookupButton");
 let movies = [];
 let editingMovieId = null;
 let activeFilter = "all";
+let pendingImdbUrl = null;
+let pendingImdbId = null;
 
 async function loadMovies() {
   console.log("Loading movies...");
@@ -164,6 +167,37 @@ function formatStatus(status) {
   return status || "не вказано";
 }
 
+function extractImdbId(value) {
+  if (!value) return null;
+
+  const match = value.match(/tt\d+/);
+  return match ? match[0] : null;
+}
+
+function normalizeImdbIdFromUrl(value) {
+  if (!value) return null;
+  return extractImdbId(value.trim());
+}
+
+function findMovieByImdbId(imdbId) {
+  if (!imdbId) return null;
+
+  return movies.find((movie) => {
+    const existingImdbId = normalizeImdbIdFromUrl(movie.imdb_url);
+    return existingImdbId === imdbId;
+  });
+}
+
+function resetSmartSearchState() {
+  pendingImdbUrl = null;
+  pendingImdbId = null;
+
+  searchHint.textContent = "";
+  searchHint.className = "search-hint";
+
+  showAddFormButton.textContent = "Додати";
+}
+
 function getPurchaseLabel(movie) {
   const streamingServices = [
     "Netflix",
@@ -172,6 +206,70 @@ function getPurchaseLabel(movie) {
     "Apple TV / iTunes",
     "Megogo",
   ];
+
+  const displayNames = {
+    "Apple TV / iTunes": "Apple TV",
+    "HBO Max": "HBO Max",
+    "Disney+": "Disney+",
+    "Netflix": "Netflix",
+    "Megogo": "Megogo",
+  };
+
+  const isPurchasedStatus = ["ordered", "owned", "watched"].includes(
+    movie.status
+  );
+
+  const isStreaming = streamingServices.includes(movie.owned_medium);
+
+  if (isPurchasedStatus && isStreaming) {
+    const displayName = displayNames[movie.owned_medium] || movie.owned_medium;
+    return "Дивитись на " + displayName;
+  }
+
+  if (movie.status === "wishlist") {
+    return "Де купити";
+  }
+
+  return "Де придбано";
+}
+
+function getPurchaseLabel(movie) {
+  const streamingServices = [
+    "Netflix",
+    "HBO Max",
+    "Disney+",
+    "Apple TV / iTunes",
+    "Megogo",
+  ];
+
+  function extractImdbId(value) {
+  const match = value.match(/tt\d+/);
+  return match ? match[0] : null;
+}
+
+function normalizeImdbIdFromUrl(value) {
+  if (!value) return null;
+  return extractImdbId(value.trim());
+}
+
+function findMovieByImdbId(imdbId) {
+  if (!imdbId) return null;
+
+  return movies.find((movie) => {
+    const existingImdbId = normalizeImdbIdFromUrl(movie.imdb_url);
+    return existingImdbId === imdbId;
+  });
+}
+
+function resetSmartSearchState() {
+  pendingImdbUrl = null;
+  pendingImdbId = null;
+
+  searchHint.textContent = "";
+  searchHint.className = "search-hint";
+
+  showAddFormButton.textContent = "Додати";
+}
 
   const displayNames = {
     "Apple TV / iTunes": "Apple TV",
@@ -460,6 +558,27 @@ async function markAsWatched(id) {
 
 function applySearchAndFilters() {
   const query = searchInput.value.toLowerCase().trim();
+  const imdbId = extractImdbId(query);
+
+  resetSmartSearchState();
+
+  if (imdbId) {
+    const existingMovie = findMovieByImdbId(imdbId);
+
+    if (existingMovie) {
+      searchHint.textContent = "Цей фільм вже є у ваших списках.";
+      searchHint.className = "search-hint warning";
+    } else {
+      pendingImdbUrl = searchInput.value.trim();
+      pendingImdbId = imdbId;
+
+      searchHint.textContent =
+        "Якщо хочете переглянути цей фільм, натисніть «Додати з IMDb». Адміністратор може змінити статус та інформацію про фільм пізніше.";
+      searchHint.className = "search-hint positive";
+
+      showAddFormButton.textContent = "Додати з IMDb";
+    }
+  }
 
   const filtered = movies.filter((movie) => {
     const searchableText = [
@@ -470,6 +589,7 @@ function applySearchAndFilters() {
       movie.status,
       movie.notes,
       movie.added_by,
+      movie.imdb_url,
     ]
       .join(" ")
       .toLowerCase();
@@ -567,7 +687,71 @@ statusSelect.addEventListener("change", updateFormVisibility);
 
 updateFormVisibility();
 
-showAddFormButton.addEventListener("click", () => {
+showAddFormButton.addEventListener("click", async () => {
+  if (pendingImdbUrl && pendingImdbId) {
+    const existingMovie = findMovieByImdbId(pendingImdbId);
+
+    if (existingMovie) {
+      alert("Такий фільм вже додано до списку.");
+      return;
+    }
+
+    showAddFormButton.textContent = "Додаю...";
+    showAddFormButton.disabled = true;
+
+    try {
+      const response = await fetch(
+        `/.netlify/functions/movie-lookup?imdbId=${pendingImdbId}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert("Помилка IMDb/TMDb пошуку: " + (data.error || response.status));
+        return;
+      }
+
+      const newMovie = {
+        title: data.title || "Без назви",
+        year: data.year ? Number(data.year) : null,
+        imdb_url: pendingImdbUrl,
+        poster_url: data.poster_url || null,
+        recommended_medium: null,
+        status: "wishlist",
+        is_owned: false,
+        owned_medium: null,
+        purchase_url: null,
+        notes: data.overview || null,
+        added_by: null,
+      };
+
+      const { error } = await supabaseClient.from("movies").insert([newMovie]);
+
+      if (error) {
+        alert(
+          "Помилка додавання фільму\n\n" +
+          "Code: " + (error.code || "N/A") + "\n" +
+          "Message: " + error.message + "\n" +
+          "Details: " + (error.details || "No details")
+        );
+        return;
+      }
+
+      searchInput.value = "";
+      resetSmartSearchState();
+      await loadMovies();
+
+      alert("Фільм додано до списку.");
+    } catch (error) {
+      alert("Помилка запиту: " + error.message);
+    } finally {
+      showAddFormButton.disabled = false;
+      showAddFormButton.textContent = "Додати";
+    }
+
+    return;
+  }
+
   resetFormMode();
 
   formPanel.style.display = "block";
@@ -585,6 +769,7 @@ showAddFormButton.addEventListener("click", () => {
 
 clearSearchButton.addEventListener("click", () => {
   searchInput.value = "";
+  resetSmartSearchState();
   applySearchAndFilters();
   searchInput.focus();
 });
