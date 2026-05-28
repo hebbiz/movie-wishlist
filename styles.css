@@ -223,3 +223,61 @@ button:hover {
 .menu-dropdown .delete-option {
   color: #ff9b9b;
 }
+
+.search-wrapper {
+  position: relative;
+}
+
+#searchInput {
+  padding-right: 42px;
+}
+
+#clearSearchButton {
+  position: absolute;
+
+  right: 14px;
+  top: 10px;
+
+  width: 24px;
+  height: 24px;
+
+  border-radius: 50%;
+  padding: 0;
+  margin: 0;
+  border: none;
+
+  background: transparent;
+  cursor: pointer;
+}
+
+#clearSearchButton::before,
+#clearSearchButton::after {
+  content: "";
+  position: absolute;
+
+  left: 7.5px;
+  top: 11px;
+
+  width: 9px;
+  height: 2px;
+
+  background: #999;
+  border-radius: 2px;
+}
+
+#clearSearchButton::before {
+  transform: rotate(45deg);
+}
+
+#clearSearchButton::after {
+  transform: rotate(-45deg);
+}
+
+#clearSearchButton:hover {
+  background: #2a2a2a;
+}
+
+#clearSearchButton:hover::before,
+#clearSearchButton:hover::after {
+  background: #fff;
+}

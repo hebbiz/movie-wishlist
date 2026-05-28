@@ -6,6 +6,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const movieForm = document.getElementById("movieForm");
 const moviesGrid = document.getElementById("moviesGrid");
 const searchInput = document.getElementById("searchInput");
+const clearSearchButton = document.getElementById("clearSearchButton");
 const filterButtons = document.querySelectorAll(".filter-btn");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
@@ -578,6 +579,12 @@ showAddFormButton.addEventListener("click", () => {
     top: formPanel.offsetTop - 20,
     behavior: "smooth",
   });
+});
+
+clearSearchButton.addEventListener("click", () => {
+  searchInput.value = "";
+  applySearchAndFilters();
+  searchInput.focus();
 });
 
 loadMovies();
