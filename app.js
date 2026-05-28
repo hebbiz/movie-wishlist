@@ -167,6 +167,72 @@ function formatStatus(status) {
   return status || "не вказано";
 }
 
+function extractImdbId(value) {
+  if (!value) return null;
+
+  const match = value.match(/tt\d+/);
+  return match ? match[0] : null;
+}
+
+function normalizeImdbIdFromUrl(value) {
+  if (!value) return null;
+  return extractImdbId(value.trim());
+}
+
+function findMovieByImdbId(imdbId) {
+  if (!imdbId) return null;
+
+  return movies.find((movie) => {
+    const existingImdbId = normalizeImdbIdFromUrl(movie.imdb_url);
+    return existingImdbId === imdbId;
+  });
+}
+
+function resetSmartSearchState() {
+  pendingImdbUrl = null;
+  pendingImdbId = null;
+
+  searchHint.textContent = "";
+  searchHint.className = "search-hint";
+
+  showAddFormButton.textContent = "Додати";
+}
+
+function getPurchaseLabel(movie) {
+  const streamingServices = [
+    "Netflix",
+    "HBO Max",
+    "Disney+",
+    "Apple TV / iTunes",
+    "Megogo",
+  ];
+
+  const displayNames = {
+    "Apple TV / iTunes": "Apple TV",
+    "HBO Max": "HBO Max",
+    "Disney+": "Disney+",
+    "Netflix": "Netflix",
+    "Megogo": "Megogo",
+  };
+
+  const isPurchasedStatus = ["ordered", "owned", "watched"].includes(
+    movie.status
+  );
+
+  const isStreaming = streamingServices.includes(movie.owned_medium);
+
+  if (isPurchasedStatus && isStreaming) {
+    const displayName = displayNames[movie.owned_medium] || movie.owned_medium;
+    return "Дивитись на " + displayName;
+  }
+
+  if (movie.status === "wishlist") {
+    return "Де купити";
+  }
+
+  return "Де придбано";
+}
+
 function getPurchaseLabel(movie) {
   const streamingServices = [
     "Netflix",
