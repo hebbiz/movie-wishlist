@@ -234,22 +234,6 @@ button:hover {
 
 #clearSearchButton {
   position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-
-  width: 28px;
-  height: 28px;
-
-  border-radius: 50%;
-  padding: 0;
-  margin: 0;
-
-  background: transparent;
-}
-
-#clearSearchButton {
-  position: absolute;
 
   right: 14px;
   top: 24px;
@@ -260,8 +244,10 @@ button:hover {
   border-radius: 50%;
   padding: 0;
   margin: 0;
+  border: none;
 
-  background: red !important;
+  background: transparent;
+  cursor: pointer;
 }
 
 #clearSearchButton::before,
@@ -269,13 +255,13 @@ button:hover {
   content: "";
   position: absolute;
 
-  left: 8px;
-  top: 13px;
+  left: 7.5px;
+  top: 11px;
 
-  width: 12px;
+  width: 9px;
   height: 2px;
 
-  background: white;
+  background: #999;
   border-radius: 2px;
 }
 
@@ -287,6 +273,11 @@ button:hover {
   transform: rotate(-45deg);
 }
 
-#clearSearchButton {
-  background: red !important;
+#clearSearchButton:hover {
+  background: #2a2a2a;
+}
+
+#clearSearchButton:hover::before,
+#clearSearchButton:hover::after {
+  background: #fff;
 }
