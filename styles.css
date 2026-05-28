@@ -236,7 +236,7 @@ button:hover {
   position: absolute;
   right: 10px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(calc(-50% - 1px));
 
   width: 28px;
   height: 28px;
@@ -254,7 +254,6 @@ button:hover {
 
   font-size: 22px;
   font-weight: 300;
-  line-height: 28px;
 }
 
 #clearSearchButton:hover {
