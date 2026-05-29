@@ -109,16 +109,20 @@ button:hover {
   border-radius: 14px 14px 0 0;
 }
 
-.unavailable-badge {
+.poster-badges {
   position: absolute;
   left: 12px;
   top: 12px;
 
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.poster-badge {
   padding: 5px 9px;
   border-radius: 999px;
-
-  background: rgba(70, 24, 24, 0.82);
-  color: #f1d0d0;
 
   font-size: 11px;
   font-weight: 700;
@@ -126,6 +130,16 @@ button:hover {
   text-transform: uppercase;
 
   backdrop-filter: blur(6px);
+}
+
+.unavailable-badge {
+  background: rgba(70, 24, 24, 0.82);
+  color: #f1d0d0;
+}
+
+.watched-badge {
+  background: rgba(35, 65, 42, 0.82);
+  color: #cfe3c4;
 }
 
 .card-content {
