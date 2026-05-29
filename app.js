@@ -208,19 +208,21 @@ function resetSmartSearchState() {
 
 function getPurchaseLabel(movie) {
   const streamingServices = [
-    "Netflix",
-    "HBO Max",
-    "Disney+",
-    "Apple TV / iTunes",
-    "Megogo",
+  "Netflix",
+  "HBO Max",
+  "Disney+",
+  "Apple TV / iTunes",
+  "Prime Video",
+  "Megogo",
   ];
 
   const displayNames = {
-    "Apple TV / iTunes": "Apple TV",
-    "HBO Max": "HBO Max",
-    "Disney+": "Disney+",
-    "Netflix": "Netflix",
-    "Megogo": "Megogo",
+  "Apple TV / iTunes": "Apple TV",
+  "Prime Video": "Prime Video",
+  "HBO Max": "HBO Max",
+  "Disney+": "Disney+",
+  "Netflix": "Netflix",
+  "Megogo": "Megogo",
   };
 
   const isPurchasedStatus = ["ordered", "owned", "watched"].includes(
