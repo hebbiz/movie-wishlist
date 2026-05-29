@@ -693,7 +693,22 @@ filterButtons.forEach((button) => {
   }
 });
 
-statusSelect.addEventListener("change", updateFormVisibility);
+statusSelect.addEventListener("change", () => {
+  const status = statusSelect.value;
+  const recommendedMedium = document.getElementById("recommended_medium").value;
+  const ownedMedium = document.getElementById("owned_medium").value;
+
+  if (
+    ["ordered", "owned", "watched"].includes(status) &&
+    recommendedMedium &&
+    recommendedMedium !== "Наразі недоступний" &&
+    !ownedMedium
+  ) {
+    document.getElementById("owned_medium").value = recommendedMedium;
+  }
+
+  updateFormVisibility();
+});
 
 updateFormVisibility();
 
