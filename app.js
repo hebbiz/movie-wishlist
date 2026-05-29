@@ -545,9 +545,12 @@ async function deleteMovie(id) {
 }
 
 async function markAsWatched(id) {
-  const movie = movies.find((m) => m.id === id);
+  const movie = movies.find((item) => item.id === id);
 
-  if (!movie) return;
+  if (!movie) {
+    alert("Фільм не знайдено.");
+    return;
+  }
 
   const updateData = {
     status: "watched",
@@ -568,7 +571,13 @@ async function markAsWatched(id) {
     .eq("id", id);
 
   if (error) {
-    ...
+    alert(
+      "Помилка оновлення статусу\n\n" +
+      "Code: " + (error.code || "N/A") + "\n" +
+      "Message: " + error.message
+    );
+
+    return;
   }
 
   loadMovies();
