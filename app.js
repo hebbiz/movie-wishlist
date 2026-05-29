@@ -80,7 +80,13 @@ function renderMovies(list) {
             ? `<span class="unavailable-badge">Наразі недоступний</span>`
             : ""
          }
-</div>
+
+        ${
+          movie.status === "watched"
+            ? `<span class="watched-badge">Переглянуто</span>`
+            : ""
+         }
+      </div>
 
       <div class="card-content">
         <h3>${movie.title}</h3>
