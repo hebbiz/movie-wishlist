@@ -319,3 +319,7 @@ button:hover {
 .search-hint.warning {
   color: #9aad7f;
 }
+
+.search-hint.unavailable {
+  color: #c99292;
+}
