@@ -545,22 +545,30 @@ async function deleteMovie(id) {
 }
 
 async function markAsWatched(id) {
+  const movie = movies.find((m) => m.id === id);
+
+  if (!movie) return;
+
+  const updateData = {
+    status: "watched",
+    is_owned: true,
+  };
+
+  if (
+    !movie.owned_medium &&
+    movie.recommended_medium &&
+    movie.recommended_medium !== "Наразі недоступний"
+  ) {
+    updateData.owned_medium = movie.recommended_medium;
+  }
+
   const { error } = await supabaseClient
     .from("movies")
-    .update({
-      status: "watched",
-      is_owned: true,
-    })
+    .update(updateData)
     .eq("id", id);
 
   if (error) {
-    alert(
-      "Помилка оновлення статусу\n\n" +
-      "Code: " + (error.code || "N/A") + "\n" +
-      "Message: " + error.message
-    );
-
-    return;
+    ...
   }
 
   loadMovies();
