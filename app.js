@@ -75,17 +75,20 @@ function renderMovies(list) {
       <div class="poster-wrapper">
         <img src="${poster}" alt="${movie.title}" />
 
-        ${
-          movie.recommended_medium === "Наразі недоступний"
-            ? `<span class="unavailable-badge">Наразі недоступний</span>`
-            : ""
-         }
+        <div class="poster-badges">
+           ${
+             movie.recommended_medium === "Наразі недоступний"
+               ? `<span class="poster-badge unavailable-badge">Наразі недоступний</span>`
+           : ""
+           }
 
-        ${
-          movie.status === "watched"
-            ? `<span class="watched-badge">Переглянуто</span>`
-            : ""
-         }
+           ${
+             movie.status === "watched"
+               ? `<span class="poster-badge watched-badge">Переглянуто</span>`
+           : ""
+           }
+        </div>
+        
       </div>
 
       <div class="card-content">
