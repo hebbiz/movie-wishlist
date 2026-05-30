@@ -254,12 +254,13 @@ function getPurchaseLabel(movie) {
 
 function getPurchaseLabel(movie) {
   const streamingServices = [
-    "Netflix",
-    "HBO Max",
-    "Disney+",
-    "Apple TV / iTunes",
-    "Megogo",
-  ];
+  "Netflix",
+  "HBO Max",
+  "Disney+",
+  "Apple TV / iTunes",
+  "Prime Video",
+  "Megogo",
+];
 
   function extractImdbId(value) {
   const match = value.match(/tt\d+/);
@@ -292,6 +293,7 @@ function resetSmartSearchState() {
 
   const displayNames = {
     "Apple TV / iTunes": "Apple TV",
+    "Prime Video": "Prime Video",
     "HBO Max": "HBO Max",
     "Disney+": "Disney+",
     "Netflix": "Netflix",
