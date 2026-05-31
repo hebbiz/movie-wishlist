@@ -114,6 +114,15 @@ p {
   font-size: 14px;
 }
 
+#saveProfileButton {
+  background: #3b5d45;
+  color: #f4f4f4;
+}
+
+#saveProfileButton:hover {
+  background: #4a7357;
+}
+
 .search-panel {
   margin-top: 24px;
 }
@@ -291,7 +300,8 @@ button:hover {
   max-width: 220px;
 }
 
-#cancelEditButton {
+#cancelEditButton,
+#cancelProfileButton {
   background: #2a2a2a;
   color: #f4f4f4;
 }
