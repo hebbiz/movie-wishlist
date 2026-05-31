@@ -915,6 +915,12 @@ showAddFormButton.addEventListener("click", async () => {
   formTitle.textContent = "Додати фільм";
   submitButton.textContent = "Додати";
 
+  const displayName = await getCurrentUserDisplayName();
+
+  if (displayName) {
+  document.getElementById("added_by").value = displayName;
+  }
+
   window.scrollTo({
     top: formPanel.offsetTop - 20,
     behavior: "smooth",
