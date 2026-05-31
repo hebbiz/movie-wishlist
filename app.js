@@ -20,12 +20,46 @@ const recommendedMediumGroup = document.getElementById("recommendedMediumGroup")
 const ownedMediumGroup = document.getElementById("ownedMediumGroup");
 const purchaseLabel = document.getElementById("purchaseLabel");
 const lookupButton = document.getElementById("lookupButton");
+const loginButton = document.getElementById("loginButton");
+const logoutButton = document.getElementById("logoutButton");
+const userInfo = document.getElementById("userInfo");
+const userEmail = document.getElementById("userEmail");
 
 let movies = [];
 let editingMovieId = null;
 let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
+
+async function updateAuthUI() {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (session?.user) {
+    loginButton.style.display = "none";
+
+    userInfo.style.display = "flex";
+    userEmail.textContent = session.user.email;
+  } else {
+    loginButton.style.display = "block";
+
+    userInfo.style.display = "none";
+    userEmail.textContent = "";
+  }
+}
+
+loginButton.addEventListener("click", async () => {
+  await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+  });
+});
+
+logoutButton.addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+
+  updateAuthUI();
+});
 
 async function loadMovies() {
   console.log("Loading movies...");
@@ -837,3 +871,9 @@ clearSearchButton.addEventListener("click", () => {
 });
 
 loadMovies();
+
+updateAuthUI();
+
+supabaseClient.auth.onAuthStateChange(() => {
+  updateAuthUI();
+});
