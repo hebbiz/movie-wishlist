@@ -26,7 +26,11 @@ const userInfo = document.getElementById("userInfo");
 const userEmail = document.getElementById("userEmail");
 const userMenuButton = document.getElementById("userMenuButton");
 const userMenuDropdown = document.getElementById("userMenuDropdown");
-const addUsernameButton = document.getElementById("addUsernameButton");
+const editProfileButton = document.getElementById("editProfileButton");
+const profilePanel = document.getElementById("profilePanel");
+const displayNameInput = document.getElementById("displayNameInput");
+const saveProfileButton = document.getElementById("saveProfileButton");
+const cancelProfileButton = document.getElementById("cancelProfileButton");
 
 let movies = [];
 let editingMovieId = null;
