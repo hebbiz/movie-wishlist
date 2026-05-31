@@ -29,7 +29,11 @@ p {
 }
 
 #authPanel {
-  margin-bottom: 42px;
+  margin-bottom: 32px;
+}
+
+#authPanel + .panel {
+  margin-top: 24px;
 }
 
 #loginButton,
