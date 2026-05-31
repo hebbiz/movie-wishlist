@@ -106,3 +106,13 @@ from public.profiles p
 cross join public.groups g
 where g.is_default = true
 on conflict (group_id, user_id) do nothing;
+
+-- Access RLS policy for users to read their own profile
+
+alter table public.profiles enable row level security;
+
+create policy "Users can read their own profile"
+on public.profiles
+for select
+to authenticated
+using (auth.uid() = id);
