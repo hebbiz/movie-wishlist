@@ -24,6 +24,9 @@ const loginButton = document.getElementById("loginButton");
 const logoutButton = document.getElementById("logoutButton");
 const userInfo = document.getElementById("userInfo");
 const userEmail = document.getElementById("userEmail");
+const userMenuButton = document.getElementById("userMenuButton");
+const userMenuDropdown = document.getElementById("userMenuDropdown");
+const addUsernameButton = document.getElementById("addUsernameButton");
 
 let movies = [];
 let editingMovieId = null;
@@ -871,6 +874,24 @@ clearSearchButton.addEventListener("click", () => {
   resetSmartSearchState();
   applySearchAndFilters();
   searchInput.focus();
+});
+
+userMenuButton.addEventListener("click", () => {
+  userMenuDropdown.style.display =
+    userMenuDropdown.style.display === "block" ? "none" : "block";
+});
+
+addUsernameButton.addEventListener("click", () => {
+  alert("Функція додавання юзернейму буде додана пізніше.");
+  userMenuDropdown.style.display = "none";
+});
+
+document.addEventListener("click", (event) => {
+  const clickedInsideUserMenu = event.target.closest(".user-menu");
+
+  if (!clickedInsideUserMenu) {
+    userMenuDropdown.style.display = "none";
+  }
 });
 
 loadMovies();
