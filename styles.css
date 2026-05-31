@@ -169,6 +169,11 @@ button:hover {
   background: #e4c675;
 }
 
+.readonly-field {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
 .checkbox {
   display: flex;
   align-items: center;
