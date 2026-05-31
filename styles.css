@@ -28,11 +28,30 @@ p {
   color: #bbb;
 }
 
+#authPanel {
+  margin-bottom: 24px;
+}
+
+#loginButton,
+#logoutButton {
+  max-width: 220px;
+}
+
 .panel {
   background: #1b1b1b;
   padding: 18px;
   border-radius: 14px;
   margin-bottom: 24px;
+}
+
+#userInfo {
+  align-items: center;
+  gap: 12px;
+}
+
+#userEmail {
+  color: #bbb;
+  font-size: 14px;
 }
 
 input,
