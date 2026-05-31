@@ -30,11 +30,14 @@ p {
 
 #authPanel {
   display: block;
-  margin-bottom: 24px;
+  margin-bottom: 0;
+}
+
+#authPanel + .panel {
+  margin-top: 24px;
 }
 
 #loginButton {
-  width: auto;
   max-width: 260px;
   margin-bottom: 0;
 }
