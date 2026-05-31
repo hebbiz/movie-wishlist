@@ -30,7 +30,6 @@ p {
 
 #loginButton,
 #logoutButton {
-  width: fit-content;
   max-width: 260px;
 }
 
