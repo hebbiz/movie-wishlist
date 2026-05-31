@@ -33,10 +33,6 @@ p {
   margin-bottom: 0;
 }
 
-#authPanel + .panel {
-  margin-top: 24px;
-}
-
 #loginButton {
   max-width: 260px;
   margin-bottom: 0;
@@ -113,16 +109,20 @@ p {
   color: #ffb3b3;
 }
 
+#userEmail {
+  color: #bbb;
+  font-size: 14px;
+}
+
+.search-panel {
+  margin-top: 24px;
+}
+
 .panel {
   background: #1b1b1b;
   padding: 18px;
   border-radius: 14px;
   margin-bottom: 24px;
-}
-
-#userEmail {
-  color: #bbb;
-  font-size: 14px;
 }
 
 input,
