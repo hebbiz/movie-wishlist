@@ -116,3 +116,12 @@ on public.profiles
 for select
 to authenticated
 using (auth.uid() = id);
+
+-- User Profile Update Policy
+
+create policy "Users can update their own profile"
+on public.profiles
+for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
