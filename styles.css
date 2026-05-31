@@ -30,7 +30,8 @@ p {
 
 #loginButton,
 #logoutButton {
-  max-width: 220px;
+  width: fit-content;
+  max-width: 260px;
 }
 
 #authPanel {
