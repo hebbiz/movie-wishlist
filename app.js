@@ -442,9 +442,16 @@ function fillForm(movie) {
     movie.purchase_url || "";
   document.getElementById("notes").value =
     movie.notes || "";
-  document.getElementById("added_by").value =
-    movie.added_by || "";
+setAddedByField(movie.added_by || "", !!movie.added_by);
 updateFormVisibility();
+}
+
+function setAddedByField(value, isLocked) {
+  const addedByInput = document.getElementById("added_by");
+
+  addedByInput.value = value || "";
+  addedByInput.readOnly = isLocked;
+  addedByInput.classList.toggle("readonly-field", isLocked);
 }
 
 function updateFormVisibility() {
@@ -466,6 +473,7 @@ function resetFormMode() {
 
   editingMovieId = null;
   movieForm.reset();
+  setAddedByField("", false);
 
   formTitle.textContent = "Додати фільм";
   submitButton.textContent = "Додати";
@@ -917,9 +925,11 @@ showAddFormButton.addEventListener("click", async () => {
 
   const displayName = await getCurrentUserDisplayName();
 
-  if (displayName) {
-  document.getElementById("added_by").value = displayName;
-  }
+    if (displayName) {
+       setAddedByField(displayName, true);
+    } else {
+       setAddedByField("", false);
+    }
 
   window.scrollTo({
     top: formPanel.offsetTop - 20,
