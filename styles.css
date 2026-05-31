@@ -28,22 +28,59 @@ p {
   color: #bbb;
 }
 
-#authPanel {
-  margin-bottom: 32px;
-}
-
-#authPanel + .panel {
-  margin-top: 24px;
-}
-
 #loginButton,
 #logoutButton {
   max-width: 220px;
 }
 
+#authPanel {
+
+  display: block;
+
+  margin-bottom: 24px;
+
+}
+
+#userInfo {
+
+  display: block;
+
+}
+
 .user-menu {
+
   position: relative;
-  display: inline-block;
+
+  display: block;
+
+  width: fit-content;
+
+  margin-bottom: 24px;
+
+}
+
+#userMenuButton {
+
+  width: auto;
+
+  max-width: 260px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  background: #2a2a2a;
+
+  color: #f4f4f4;
+
+  padding: 10px 14px;
+
+  margin-bottom: 0;
+
+  font-weight: 600;
+
 }
 
 #userMenuButton {
@@ -111,11 +148,6 @@ p {
   padding: 18px;
   border-radius: 14px;
   margin-bottom: 24px;
-}
-
-#userInfo {
-  align-items: center;
-  gap: 12px;
 }
 
 #userEmail {
