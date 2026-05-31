@@ -27,11 +27,29 @@
         </button>
 
        <div id="userMenuDropdown" class="user-menu-dropdown">
-        <button id="addUsernameButton" type="button">Додати юзернейм</button>
+        <button id="editProfileButton" type="button">Редагувати профіль</button>
         <button id="logoutButton" type="button">Вийти</button>
        </div>
      </div>
     </div>
+
+    <section class="panel" id="profilePanel" style="display:none;">
+      <h2>Редагувати профіль</h2>
+
+      <input
+        id="displayNameInput"
+        type="text"
+        placeholder="Ваше ім'я"
+      />
+
+      <button id="saveProfileButton" type="button">
+        Зберегти
+      </button>
+
+      <button id="cancelProfileButton" type="button">
+        ← Повернутись до списку
+      </button>
+    </section>
 
     <section class="panel search-panel">
       <div class="search-wrapper">

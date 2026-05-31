@@ -26,13 +26,18 @@ const userInfo = document.getElementById("userInfo");
 const userEmail = document.getElementById("userEmail");
 const userMenuButton = document.getElementById("userMenuButton");
 const userMenuDropdown = document.getElementById("userMenuDropdown");
-const addUsernameButton = document.getElementById("addUsernameButton");
+const editProfileButton = document.getElementById("editProfileButton");
+const profilePanel = document.getElementById("profilePanel");
+const displayNameInput = document.getElementById("displayNameInput");
+const saveProfileButton = document.getElementById("saveProfileButton");
+const cancelProfileButton = document.getElementById("cancelProfileButton");
 
 let movies = [];
 let editingMovieId = null;
 let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
+let currentProfile = null;
 
 async function updateAuthUI() {
   const {
@@ -55,6 +60,8 @@ async function updateAuthUI() {
       return;
     }
 
+    currentProfile = profile
+
     userEmail.textContent =
       profile?.display_name || profile?.email || session.user.email;
   } else {
@@ -62,6 +69,9 @@ async function updateAuthUI() {
     userInfo.style.display = "none";
     userEmail.textContent = "";
   }
+
+    currentProfile = profile
+  
 }
 
 loginButton.addEventListener("click", async () => {
@@ -895,9 +905,15 @@ userMenuButton.addEventListener("click", () => {
     userMenuDropdown.style.display === "block" ? "none" : "block";
 });
 
-addUsernameButton.addEventListener("click", () => {
-  alert("Функція додавання юзернейму буде додана пізніше.");
+editProfileButton.addEventListener("click", () => {
+  displayNameInput.value = currentProfile?.display_name || "";
+  profilePanel.style.display = "block";
   userMenuDropdown.style.display = "none";
+
+  window.scrollTo({
+    top: profilePanel.offsetTop - 20,
+    behavior: "smooth",
+  });
 });
 
 document.addEventListener("click", (event) => {
@@ -906,6 +922,51 @@ document.addEventListener("click", (event) => {
   if (!clickedInsideUserMenu) {
     userMenuDropdown.style.display = "none";
   }
+});
+
+saveProfileButton.addEventListener("click", async () => {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session?.user) {
+    alert("Потрібно увійти в акаунт.");
+    return;
+  }
+
+  const displayName = displayNameInput.value.trim();
+
+  if (!displayName) {
+    alert("Ім'я не може бути порожнім.");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({
+      display_name: displayName,
+    })
+    .eq("id", session.user.id);
+
+  if (error) {
+    alert(
+      "Помилка збереження профілю\n\n" +
+      "Message: " + error.message
+    );
+    return;
+  }
+
+  currentProfile = {
+    ...(currentProfile || {}),
+    display_name: displayName,
+  };
+
+  userEmail.textContent = displayName;
+  profilePanel.style.display = "none";
+});
+
+cancelProfileButton.addEventListener("click", () => {
+  profilePanel.style.display = "none";
 });
 
 loadMovies();
