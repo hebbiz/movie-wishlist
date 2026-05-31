@@ -39,7 +39,7 @@ async function updateAuthUI() {
   if (session?.user) {
     loginButton.style.display = "none";
 
-    userInfo.style.display = "flex";
+    userInfo.style.display = "block";
     userEmail.textContent = session.user.email;
   } else {
     loginButton.style.display = "block";
@@ -52,6 +52,9 @@ async function updateAuthUI() {
 loginButton.addEventListener("click", async () => {
   await supabaseClient.auth.signInWithOAuth({
     provider: "google",
+    options: {
+      redirectTo: window.location.origin,
+    },
   });
 });
 
