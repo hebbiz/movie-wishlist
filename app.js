@@ -41,12 +41,24 @@ async function updateAuthUI() {
 
   if (session?.user) {
     loginButton.style.display = "none";
-
     userInfo.style.display = "block";
-    userEmail.textContent = session.user.email;
+
+    const { data: profile, error } = await supabaseClient
+      .from("profiles")
+      .select("display_name, email")
+      .eq("id", session.user.id)
+      .single();
+
+    if (error) {
+      console.warn("Profile load error:", error);
+      userEmail.textContent = session.user.email;
+      return;
+    }
+
+    userEmail.textContent =
+      profile?.display_name || profile?.email || session.user.email;
   } else {
     loginButton.style.display = "block";
-
     userInfo.style.display = "none";
     userEmail.textContent = "";
   }
