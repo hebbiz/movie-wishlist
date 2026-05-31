@@ -20,12 +20,52 @@ const recommendedMediumGroup = document.getElementById("recommendedMediumGroup")
 const ownedMediumGroup = document.getElementById("ownedMediumGroup");
 const purchaseLabel = document.getElementById("purchaseLabel");
 const lookupButton = document.getElementById("lookupButton");
+const loginButton = document.getElementById("loginButton");
+const logoutButton = document.getElementById("logoutButton");
+const userInfo = document.getElementById("userInfo");
+const userEmail = document.getElementById("userEmail");
+const userMenuButton = document.getElementById("userMenuButton");
+const userMenuDropdown = document.getElementById("userMenuDropdown");
+const addUsernameButton = document.getElementById("addUsernameButton");
 
 let movies = [];
 let editingMovieId = null;
 let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
+
+async function updateAuthUI() {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (session?.user) {
+    loginButton.style.display = "none";
+
+    userInfo.style.display = "block";
+    userEmail.textContent = session.user.email;
+  } else {
+    loginButton.style.display = "block";
+
+    userInfo.style.display = "none";
+    userEmail.textContent = "";
+  }
+}
+
+loginButton.addEventListener("click", async () => {
+  await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin,
+    },
+  });
+});
+
+logoutButton.addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+
+  updateAuthUI();
+});
 
 async function loadMovies() {
   console.log("Loading movies...");
@@ -838,4 +878,28 @@ clearSearchButton.addEventListener("click", () => {
   searchInput.focus();
 });
 
+userMenuButton.addEventListener("click", () => {
+  userMenuDropdown.style.display =
+    userMenuDropdown.style.display === "block" ? "none" : "block";
+});
+
+addUsernameButton.addEventListener("click", () => {
+  alert("Функція додавання юзернейму буде додана пізніше.");
+  userMenuDropdown.style.display = "none";
+});
+
+document.addEventListener("click", (event) => {
+  const clickedInsideUserMenu = event.target.closest(".user-menu");
+
+  if (!clickedInsideUserMenu) {
+    userMenuDropdown.style.display = "none";
+  }
+});
+
 loadMovies();
+
+updateAuthUI();
+
+supabaseClient.auth.onAuthStateChange(() => {
+  updateAuthUI();
+});

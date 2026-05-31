@@ -14,7 +14,26 @@
       <p>Список фільмів для перегляду та покупки</p>
     </header>
 
-    <section class="panel">
+    <div id="authPanel">
+      <button id="loginButton" style="display:none;">
+      Увійти через Google
+      </button>
+
+    <div id="userInfo" style="display:none;">
+      <div class="user-menu">
+        <button id="userMenuButton" type="button">
+          <span id="userEmail"></span>
+          <span class="user-menu-arrow">▾</span>
+        </button>
+
+       <div id="userMenuDropdown" class="user-menu-dropdown">
+        <button id="addUsernameButton" type="button">Додати юзернейм</button>
+        <button id="logoutButton" type="button">Вийти</button>
+       </div>
+     </div>
+    </div>
+
+    <section class="panel search-panel">
       <div class="search-wrapper">
         <input type="text" id="searchInput" placeholder="Пошук..." />
          <button id="clearSearchButton" type="button" aria-label="Очистити пошук"></button>
