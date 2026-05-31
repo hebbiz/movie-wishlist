@@ -407,6 +407,26 @@ function getMovieFormData() {
   };
 }
 
+async function getCurrentUserDisplayName() {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session?.user) {
+    return null;
+  }
+
+  if (currentProfile?.display_name) {
+    return currentProfile.display_name;
+  }
+
+  if (currentProfile?.email) {
+    return currentProfile.email;
+  }
+
+  return session.user.email || null;
+}
+
 function fillForm(movie) {
   document.getElementById("title").value = movie.title || "";
   document.getElementById("year").value = movie.year || "";
@@ -422,9 +442,16 @@ function fillForm(movie) {
     movie.purchase_url || "";
   document.getElementById("notes").value =
     movie.notes || "";
-  document.getElementById("added_by").value =
-    movie.added_by || "";
+setAddedByField(movie.added_by || "", !!movie.added_by);
 updateFormVisibility();
+}
+
+function setAddedByField(value, isLocked) {
+  const addedByInput = document.getElementById("added_by");
+
+  addedByInput.value = value || "";
+  addedByInput.readOnly = isLocked;
+  addedByInput.classList.toggle("readonly-field", isLocked);
 }
 
 function updateFormVisibility() {
@@ -446,6 +473,7 @@ function resetFormMode() {
 
   editingMovieId = null;
   movieForm.reset();
+  setAddedByField("", false);
 
   formTitle.textContent = "Додати фільм";
   submitButton.textContent = "Додати";
@@ -489,6 +517,12 @@ movieForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const movieData = getMovieFormData();
+
+    if (!movieData.added_by) {
+       movieData.added_by = await getCurrentUserDisplayName();
+    }
+
+console.log("Form data:", movieData);
 
   console.log("Form data:", movieData);
 
@@ -837,6 +871,8 @@ showAddFormButton.addEventListener("click", async () => {
         return;
       }
 
+      const addedBy = await getCurrentUserDisplayName();
+
       const newMovie = {
         title: data.title || "Без назви",
         year: data.year ? Number(data.year) : null,
@@ -848,7 +884,7 @@ showAddFormButton.addEventListener("click", async () => {
         owned_medium: null,
         purchase_url: null,
         notes: data.overview || null,
-        added_by: null,
+        added_by: addedBy,
       };
 
       const { error } = await supabaseClient.from("movies").insert([newMovie]);
@@ -886,6 +922,14 @@ showAddFormButton.addEventListener("click", async () => {
 
   formTitle.textContent = "Додати фільм";
   submitButton.textContent = "Додати";
+
+  const displayName = await getCurrentUserDisplayName();
+
+    if (displayName) {
+       setAddedByField(displayName, true);
+    } else {
+       setAddedByField("", false);
+    }
 
   window.scrollTo({
     top: formPanel.offsetTop - 20,

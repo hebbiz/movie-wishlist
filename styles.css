@@ -169,6 +169,14 @@ button:hover {
   background: #e4c675;
 }
 
+.readonly-field {
+  background: #232628 !important;
+  color: #d0d0d0;
+  border: 1px solid #4a4f53;
+
+  cursor: not-allowed;
+}
+
 .checkbox {
   display: flex;
   align-items: center;
