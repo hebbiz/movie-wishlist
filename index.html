@@ -20,9 +20,17 @@
       </button>
 
     <div id="userInfo" style="display:none;">
-      <span id="userEmail"></span>
-      <button id="logoutButton">Вийти</button>
-      </div>
+      <div class="user-menu">
+        <button id="userMenuButton" type="button">
+          <span id="userEmail"></span>
+          <span class="user-menu-arrow">▾</span>
+        </button>
+
+       <div id="userMenuDropdown" class="user-menu-dropdown">
+        <button id="addUsernameButton" type="button">Додати юзернейм</button>
+        <button id="logoutButton" type="button">Вийти</button>
+       </div>
+     </div>
     </div>
 
     <section class="panel">
