@@ -170,7 +170,10 @@ button:hover {
 }
 
 .readonly-field {
-  opacity: 0.75;
+  background: #232628 !important;
+  color: #d0d0d0;
+  border: 1px solid #4a4f53;
+
   cursor: not-allowed;
 }
 
