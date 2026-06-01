@@ -364,6 +364,15 @@ async function getCurrentUserDisplayName() {
   return session.user.email || null;
 }
 
+function getUserAvatarLetter() {
+  const name =
+    currentProfile?.display_name ||
+    currentProfile?.email ||
+    "Я";
+
+  return name.trim().charAt(0).toUpperCase();
+}
+
 function fillForm(movie) {
   document.getElementById("title").value = movie.title || "";
   document.getElementById("year").value = movie.year || "";
@@ -739,6 +748,50 @@ function pickMykolaMovie() {
   ];
 }
 
+function getRandomItem(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+const mykolaRecommendationPhrases = [
+  "Я довго думав. Приблизно 0.3 секунди. Сьогодні я б радив:",
+  "Ви ж все одно будете ще 20 хвилин вибирати. Тому пропоную:",
+  "Я міг би запропонувати щось дуже складне. Але навіщо? Дивіться:",
+  "Мій скромний, але впевнений вибір:",
+  "Після короткого, але науково бездоганного аналізу:",
+  "Як доктор наук кажу: тут усе очевидно.",
+  "Не хочу тиснути авторитетом, але вибір правильний:",
+  "Наука не завжди має відповіді. Але сьогодні має:",
+  "Я перевірив усі змінні. Результат такий:",
+  "Без зайвої метафізики. Ставте:",
+  "Пив би чай, радив би те саме. Але ми ж дорослі люди:",
+  "Є відчуття, що вечір просить саме це:",
+  "Не сперечайтесь із Миколою. Просто увімкніть:",
+  "Це не порада. Це майже консенсус кафедри:",
+  "Скажу культурно: кращого варіанту зараз не бачу.",
+];
+
+const mykolaAnotherReplies = [
+  "Гаразд. Резервний варіант теж непоганий.",
+  "Добре. Але це вже майже розкіш.",
+  "Можу ще. Я сьогодні у формі.",
+  "Вимогливо. Поважаю.",
+  "Не питання. У мене є ще аргументи.",
+  "Добре, відкриваю другу пляшку логіки.",
+  "Зараз підберемо щось менш очевидне.",
+  "Гаразд. Перераховую коефіцієнти.",
+];
+
+const mykolaThankYouReplies = [
+  "Дякую. Приємно мати справу з освіченою людиною.",
+  "Звісно хороший. Я ж Микола.",
+  "Нарешті це хтось визнав уголос.",
+  "Приймається. Без зайвої скромності.",
+  "Дякую. Це був науково обґрунтований вибір.",
+  "От і домовились. Гарного перегляду.",
+  "Приємно, коли аудиторія підготовлена.",
+  "Я знав, що ми порозуміємось.",
+];
+
 function addUserBubble(text) {
   const row = document.createElement("div");
   row.className = "user-message-row";
@@ -746,6 +799,10 @@ function addUserBubble(text) {
   row.innerHTML = `
     <div class="user-bubble">
       ${text}
+    </div>
+
+    <div class="user-avatar">
+      ${getUserAvatarLetter()}
     </div>
   `;
 
@@ -767,6 +824,68 @@ function addMykolaBubble(text) {
 
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
+}
+
+function recommendMykolaMovie() {
+  const movie = pickMykolaMovie();
+
+  if (!movie) {
+    addMykolaBubble(
+      "Я б і радий щось порадити, але список бажаного або порожній, або все тимчасово недоступне. Навіть Микола тут безсилий."
+    );
+    return;
+  }
+
+  const phrase = getRandomItem(mykolaRecommendationPhrases);
+
+  addMykolaBubble(`${phrase}<br><br><strong>${movie.title}</strong>`);
+
+  setTimeout(() => {
+    addMykolaFollowUpActions();
+  }, 250);
+}
+
+function addMykolaFollowUpActions() {
+  const row = document.createElement("div");
+  row.className = "mykola-actions";
+  row.id = "mykolaFollowUpActions";
+
+  row.innerHTML = `
+    <button id="mykolaAnotherButton" type="button">
+      Порадь ще
+    </button>
+
+    <button id="mykolaThanksButton" type="button">
+      Дякую, хороший смак
+    </button>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  document.getElementById("mykolaAnotherButton").addEventListener("click", () => {
+    row.remove();
+
+    addUserBubble("Порадь ще");
+
+    setTimeout(() => {
+      addMykolaBubble(getRandomItem(mykolaAnotherReplies));
+    }, 250);
+
+    setTimeout(() => {
+      recommendMykolaMovie();
+    }, 650);
+  });
+
+  document.getElementById("mykolaThanksButton").addEventListener("click", () => {
+    row.remove();
+
+    addUserBubble("Дякую, хороший смак");
+
+    setTimeout(() => {
+      addMykolaBubble(getRandomItem(mykolaThankYouReplies));
+    }, 350);
+  });
 }
 
 function resetMykolaChat() {
@@ -829,25 +948,7 @@ function wireMykolaActionButtons() {
     actions.style.display = "none";
 
     setTimeout(() => {
-      const movie = pickMykolaMovie();
-
-      if (!movie) {
-        addMykolaBubble(
-          "Я б і радий щось порадити, але список бажаного або порожній, або все тимчасово недоступне. Навіть Микола тут безсилий."
-        );
-        return;
-      }
-
-      const phrases = [
-        "Я довго думав. Приблизно 0.3 секунди. Сьогодні я б радив:",
-        "Ви ж все одно будете ще 20 хвилин вибирати. Тому пропоную:",
-        "Я міг би запропонувати щось дуже складне. Але навіщо? Дивіться:",
-        "Мій скромний, але впевнений вибір:",
-      ];
-
-      const phrase = phrases[Math.floor(Math.random() * phrases.length)];
-
-      addMykolaBubble(`${phrase}<br><br><strong>${movie.title}</strong>`);
+      recommendMykolaMovie();
     }, 450);
   });
 
