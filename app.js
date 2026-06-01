@@ -31,6 +31,11 @@ const profilePanel = document.getElementById("profilePanel");
 const displayNameInput = document.getElementById("displayNameInput");
 const saveProfileButton = document.getElementById("saveProfileButton");
 const cancelProfileButton = document.getElementById("cancelProfileButton");
+const mainView = document.getElementById("mainView");
+const mykolaView = document.getElementById("mykolaView");
+const openMykolaButton = document.getElementById("openMykolaButton");
+const backFromMykolaButton = document.getElementById("backFromMykolaButton");
+const mykolaChat = document.getElementById("mykolaChat");
 
 let movies = [];
 let editingMovieId = null;
@@ -56,22 +61,22 @@ async function updateAuthUI() {
 
     if (error) {
       console.warn("Profile load error:", error);
+      currentProfile = null;
       userEmail.textContent = session.user.email;
       return;
     }
 
-    currentProfile = profile
+    currentProfile = profile;
 
     userEmail.textContent =
       profile?.display_name || profile?.email || session.user.email;
   } else {
+    currentProfile = null;
+
     loginButton.style.display = "block";
     userInfo.style.display = "none";
     userEmail.textContent = "";
   }
-
-    currentProfile = profile
-  
 }
 
 loginButton.addEventListener("click", async () => {
@@ -314,74 +319,6 @@ function getPurchaseLabel(movie) {
   return "Де придбано";
 }
 
-function getPurchaseLabel(movie) {
-  const streamingServices = [
-  "Netflix",
-  "HBO Max",
-  "Disney+",
-  "Apple TV / iTunes",
-  "Prime Video",
-  "Megogo",
-];
-
-  function extractImdbId(value) {
-  const match = value.match(/tt\d+/);
-  return match ? match[0] : null;
-}
-
-function normalizeImdbIdFromUrl(value) {
-  if (!value) return null;
-  return extractImdbId(value.trim());
-}
-
-function findMovieByImdbId(imdbId) {
-  if (!imdbId) return null;
-
-  return movies.find((movie) => {
-    const existingImdbId = normalizeImdbIdFromUrl(movie.imdb_url);
-    return existingImdbId === imdbId;
-  });
-}
-
-function resetSmartSearchState() {
-  pendingImdbUrl = null;
-  pendingImdbId = null;
-
-  searchHint.textContent = "";
-  searchHint.className = "search-hint";
-
-  showAddFormButton.textContent = "Додати";
-}
-
-  const displayNames = {
-    "Apple TV / iTunes": "Apple TV",
-    "Prime Video": "Prime Video",
-    "HBO Max": "HBO Max",
-    "Disney+": "Disney+",
-    "Netflix": "Netflix",
-    "Megogo": "Megogo",
-  };
-
-  const isPurchasedStatus = ["ordered", "owned", "watched"].includes(
-    movie.status
-  );
-
-  const isStreaming = streamingServices.includes(movie.owned_medium);
-
-  if (isPurchasedStatus && isStreaming) {
-    const displayName =
-      displayNames[movie.owned_medium] || movie.owned_medium;
-
-    return "Дивитись на " + displayName;
-  }
-
-  if (movie.status === "wishlist") {
-    return "Де купити";
-  }
-
-  return "Де придбано";
-}
-
 function toggleNotes(element) {
   element.classList.toggle("collapsed");
 }
@@ -443,7 +380,9 @@ function fillForm(movie) {
   document.getElementById("notes").value =
     movie.notes || "";
 setAddedByField(movie.added_by || "", !!movie.added_by);
+  
 updateFormVisibility();
+  
 }
 
 function setAddedByField(value, isLocked) {
@@ -523,8 +462,6 @@ movieForm.addEventListener("submit", async (event) => {
     }
 
 console.log("Form data:", movieData);
-
-  console.log("Form data:", movieData);
 
   if (!movieData.title) {
     alert("Назва фільму обов'язкова.");
@@ -771,6 +708,161 @@ function applySearchAndFilters() {
   renderMovies(filtered);
 }
 
+function getRecommendationCandidates() {
+  return movies.filter((movie) => {
+    return (
+      movie.status === "wishlist" &&
+      movie.recommended_medium !== "Наразі недоступний"
+    );
+  });
+}
+
+function pickMykolaMovie() {
+  const candidates = getRecommendationCandidates();
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const uhdCandidates = candidates.filter(
+    (movie) =>
+      movie.recommended_medium === "4K UHD Blu-ray"
+  );
+
+  const pool =
+    uhdCandidates.length > 0
+      ? uhdCandidates
+      : candidates;
+
+  return pool[
+    Math.floor(Math.random() * pool.length)
+  ];
+}
+
+function addUserBubble(text) {
+  const row = document.createElement("div");
+  row.className = "user-message-row";
+
+  row.innerHTML = `
+    <div class="user-bubble">
+      ${text}
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+}
+
+function addMykolaBubble(text) {
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-bubble">
+      ${text}
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+}
+
+function resetMykolaChat() {
+  mykolaChat.innerHTML = `
+    <div class="mykola-message-row">
+      <div class="mykola-avatar">М</div>
+
+      <div class="mykola-bubble">
+        Вам щось підказати?
+      </div>
+    </div>
+
+    <div class="mykola-actions" id="mykolaActions">
+      <button id="mykolaYesButton" type="button">
+        Так
+      </button>
+
+      <button id="mykolaNoButton" type="button">
+        Ні
+      </button>
+    </div>
+  `;
+
+  wireMykolaActionButtons();
+}
+
+openMykolaButton.addEventListener("click", () => {
+
+  mainView.classList.remove("active");
+
+  mykolaView.classList.add("active");
+
+  window.scrollTo({
+    top: mykolaView.offsetTop - 20,
+    behavior: "smooth",
+  });
+});
+
+backFromMykolaButton.addEventListener("click", () => {
+
+  mykolaView.classList.remove("active");
+
+  mainView.classList.add("active");
+
+  resetMykolaChat();
+
+  window.scrollTo({
+    top: mainView.offsetTop - 20,
+    behavior: "smooth",
+  });
+});
+
+function wireMykolaActionButtons() {
+  const yesButton = document.getElementById("mykolaYesButton");
+  const noButton = document.getElementById("mykolaNoButton");
+  const actions = document.getElementById("mykolaActions");
+
+  yesButton.addEventListener("click", () => {
+    addUserBubble("Так");
+    actions.style.display = "none";
+
+    setTimeout(() => {
+      const movie = pickMykolaMovie();
+
+      if (!movie) {
+        addMykolaBubble(
+          "Я б і радий щось порадити, але список бажаного або порожній, або все тимчасово недоступне. Навіть Микола тут безсилий."
+        );
+        return;
+      }
+
+      const phrases = [
+        "Я довго думав. Приблизно 0.3 секунди. Сьогодні я б радив:",
+        "Ви ж все одно будете ще 20 хвилин вибирати. Тому пропоную:",
+        "Я міг би запропонувати щось дуже складне. Але навіщо? Дивіться:",
+        "Мій скромний, але впевнений вибір:",
+      ];
+
+      const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+
+      addMykolaBubble(`${phrase}<br><br><strong>${movie.title}</strong>`);
+    }, 450);
+  });
+
+  noButton.addEventListener("click", () => {
+    addUserBubble("Ні");
+    actions.style.display = "none";
+
+    setTimeout(() => {
+      addMykolaBubble(
+        "Ну й добре. Я теж іноді просто дивлюсь на список і нічого не обираю."
+      );
+    }, 350);
+  });
+}
+
 searchInput.addEventListener("input", applySearchAndFilters);
 
 filterButtons.forEach((button) => {
@@ -1012,6 +1104,8 @@ saveProfileButton.addEventListener("click", async () => {
 cancelProfileButton.addEventListener("click", () => {
   profilePanel.style.display = "none";
 });
+
+wireMykolaActionButtons();
 
 loadMovies();
 

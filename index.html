@@ -51,6 +51,8 @@
       </button>
     </section>
 
+  <div id="mainView" class="view active">
+
     <section class="panel search-panel">
       <div class="search-wrapper">
         <input type="text" id="searchInput" placeholder="Пошук..." />
@@ -69,6 +71,13 @@
 
     <section class="panel actions-panel">
       <button id="showAddFormButton" type="button">Додати</button>
+    </section>
+
+    <section class="mykola-entry-panel">
+      <button id="openMykolaButton" type="button" class="mykola-hint-button">
+        <span>Не знаєш що подивитись? Запитай Миколу</span>
+        <span class="mykola-hint-arrow">→</span>
+      </button>
     </section>
 
     <section class="panel" id="formPanel" style="display: none;">
@@ -91,39 +100,39 @@
         </select>
 
         <div id="recommendedMediumGroup">
-  <select id="recommended_medium">
-    <option value="">Рекомендований носій</option>
-    <option value="4K UHD Blu-ray">4K UHD Blu-ray</option>
-    <option value="Blu-ray">Blu-ray</option>
-    <option value="Apple TV / iTunes">Apple TV / iTunes</option>
-    <option value="Netflix">Netflix</option>
-    <option value="HBO Max">HBO Max</option>
-    <option value="Prime Video">Prime Video</option>
-    <option value="Disney+">Disney+</option>
-    <option value="Megogo">Megogo</option>
-    <option value="Наразі недоступний">Наразі недоступний</option>
-  </select>
-</div>
+          <select id="recommended_medium">
+            <option value="">Рекомендований носій</option>
+            <option value="4K UHD Blu-ray">4K UHD Blu-ray</option>
+            <option value="Blu-ray">Blu-ray</option>
+            <option value="Apple TV / iTunes">Apple TV / iTunes</option>
+            <option value="Netflix">Netflix</option>
+            <option value="HBO Max">HBO Max</option>
+            <option value="Prime Video">Prime Video</option>
+            <option value="Disney+">Disney+</option>
+            <option value="Megogo">Megogo</option>
+            <option value="Наразі недоступний">Наразі недоступний</option>
+          </select>
+        </div>
 
-<div id="ownedMediumGroup" style="display: none;">
-  <select id="owned_medium">
-    <option value="">На якому носії придбано</option>
-    <option value="4K UHD Blu-ray">4K UHD Blu-ray</option>
-    <option value="Blu-ray">Blu-ray</option>
-    <option value="Apple TV / iTunes">Apple TV / iTunes</option>
-    <option value="Netflix">Netflix</option>
-    <option value="HBO Max">HBO Max</option>
-    <option value="Prime Video">Prime Video</option>
-    <option value="Disney+">Disney+</option>
-    <option value="Megogo">Megogo</option>
-    <option value="Інше">Інше</option>
-  </select>
-</div>
+        <div id="ownedMediumGroup" style="display: none;">
+          <select id="owned_medium">
+            <option value="">На якому носії придбано</option>
+            <option value="4K UHD Blu-ray">4K UHD Blu-ray</option>
+            <option value="Blu-ray">Blu-ray</option>
+            <option value="Apple TV / iTunes">Apple TV / iTunes</option>
+            <option value="Netflix">Netflix</option>
+            <option value="HBO Max">HBO Max</option>
+            <option value="Prime Video">Prime Video</option>
+            <option value="Disney+">Disney+</option>
+            <option value="Megogo">Megogo</option>
+            <option value="Інше">Інше</option>
+          </select>
+        </div>
 
-<div id="purchaseGroup">
-  <label id="purchaseLabel" for="purchase_url">Де купити / рекомендоване посилання</label>
-  <input id="purchase_url" type="url" placeholder="https://..." />
-</div>
+        <div id="purchaseGroup">
+          <label id="purchaseLabel" for="purchase_url">Де купити / рекомендоване посилання</label>
+          <input id="purchase_url" type="url" placeholder="https://..." />
+        </div>
         
         <input id="added_by" type="text" placeholder="Хто додав" />
         <textarea id="notes" placeholder="Нотатки"></textarea>
@@ -141,6 +150,40 @@
       </h2>
       <div id="moviesGrid" class="grid"></div>
     </section>
+  </div>
+
+<div id="mykolaView" class="view">
+  <section class="panel mykola-panel">
+
+    <button id="backFromMykolaButton" type="button">
+      ← Назад до списку
+    </button>
+
+    <div class="mykola-chat" id="mykolaChat">
+
+      <div class="mykola-message-row">
+        <div class="mykola-avatar">М</div>
+
+        <div class="mykola-bubble">
+          Вам щось підказати?
+        </div>
+      </div>
+
+      <div class="mykola-actions" id="mykolaActions">
+        <button id="mykolaYesButton" type="button">
+          Так
+        </button>
+
+        <button id="mykolaNoButton" type="button">
+          Ні
+        </button>
+      </div>
+
+    </div>
+
+  </section>
+</div>
+      
   </main>
 
   <script src="app.js"></script>
