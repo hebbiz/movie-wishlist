@@ -808,6 +808,7 @@ function addUserBubble(text) {
 
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
+  scrollMykolaChatToBottom();
 }
 
 function addMykolaBubble(text) {
@@ -824,6 +825,47 @@ function addMykolaBubble(text) {
 
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
+  scrollMykolaChatToBottom();
+}
+
+function addMykolaTypingBubble() {
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+  row.dataset.typing = "true";
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-bubble mykola-typing-bubble">
+      <span class="mykola-typing-dot"></span>
+      <span class="mykola-typing-dot"></span>
+      <span class="mykola-typing-dot"></span>
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+
+  return row;
+}
+
+function removeMykolaTypingBubble() {
+  const typingBubble = mykolaChat.querySelector('[data-typing="true"]');
+
+  if (typingBubble) {
+    typingBubble.remove();
+  }
+}
+
+function runWithMykolaThinking(callback, delay = 2400) {
+  addMykolaTypingBubble();
+
+  setTimeout(() => {
+    removeMykolaTypingBubble();
+    callback();
+  }, delay);
 }
 
 function recommendMykolaMovie() {
@@ -859,22 +901,24 @@ function addMykolaFollowUpActions() {
       Дякую, хороший смак
     </button>
   `;
-
+  
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
 
   document.getElementById("mykolaAnotherButton").addEventListener("click", () => {
     row.remove();
 
     addUserBubble("Порадь ще");
 
-    setTimeout(() => {
-      addMykolaBubble(getRandomItem(mykolaAnotherReplies));
-    }, 250);
+      runWithMykolaThinking(() => {
+        addMykolaBubble(getRandomItem(mykolaAnotherReplies));
 
-    setTimeout(() => {
-      recommendMykolaMovie();
-    }, 650);
+        runWithMykolaThinking(() => {
+        recommendMykolaMovie();
+        }, 2200);
+      }, 1600);
   });
 
   document.getElementById("mykolaThanksButton").addEventListener("click", () => {
@@ -882,9 +926,9 @@ function addMykolaFollowUpActions() {
 
     addUserBubble("Дякую, хороший смак");
 
-    setTimeout(() => {
-      addMykolaBubble(getRandomItem(mykolaThankYouReplies));
-    }, 350);
+    runWithMykolaThinking(() => {
+       addMykolaBubble(getRandomItem(mykolaThankYouReplies));
+    }, 1800);
   });
 }
 
@@ -947,20 +991,27 @@ function wireMykolaActionButtons() {
     addUserBubble("Так");
     actions.style.display = "none";
 
-    setTimeout(() => {
+    runWithMykolaThinking(() => {
       recommendMykolaMovie();
-    }, 450);
+    });
   });
 
   noButton.addEventListener("click", () => {
     addUserBubble("Ні");
     actions.style.display = "none";
 
-    setTimeout(() => {
+    runWithMykolaThinking(() => {
       addMykolaBubble(
         "Ну й добре. Я теж іноді просто дивлюсь на список і нічого не обираю."
       );
-    }, 350);
+    }, 1800);
+  });
+}
+
+function scrollMykolaChatToBottom() {
+  mykolaChat.scrollIntoView({
+    behavior: "smooth",
+    block: "end",
   });
 }
 
