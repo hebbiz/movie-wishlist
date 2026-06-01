@@ -622,3 +622,43 @@ button:hover {
     transform: translateY(0) scale(1);
   }
 }
+
+.mykola-typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 48px;
+}
+
+.mykola-typing-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+  background: #aaa;
+
+  opacity: 0.35;
+  animation: mykolaTypingDot 1.2s infinite ease-in-out;
+}
+
+.mykola-typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.mykola-typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes mykolaTypingDot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
