@@ -808,6 +808,7 @@ function addUserBubble(text) {
 
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
+  scrollMykolaChatToBottom();
 }
 
 function addMykolaBubble(text) {
@@ -824,6 +825,7 @@ function addMykolaBubble(text) {
 
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
+  scrollMykolaChatToBottom();
 }
 
 function addMykolaTypingBubble() {
@@ -843,6 +845,8 @@ function addMykolaTypingBubble() {
 
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
 
   return row;
 }
@@ -897,9 +901,11 @@ function addMykolaFollowUpActions() {
       Дякую, хороший смак
     </button>
   `;
-
+  
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
 
   document.getElementById("mykolaAnotherButton").addEventListener("click", () => {
     row.remove();
@@ -999,6 +1005,13 @@ function wireMykolaActionButtons() {
         "Ну й добре. Я теж іноді просто дивлюсь на список і нічого не обираю."
       );
     }, 1800);
+  });
+}
+
+function scrollMykolaChatToBottom() {
+  mykolaChat.scrollIntoView({
+    behavior: "smooth",
+    block: "end",
   });
 }
 
