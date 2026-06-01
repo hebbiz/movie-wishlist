@@ -720,10 +720,24 @@ function applySearchAndFilters() {
 function getRecommendationCandidates() {
   return movies.filter((movie) => {
     return (
-      movie.status === "wishlist" &&
-      movie.recommended_medium !== "Наразі недоступний"
+      movie.recommended_medium !== "Наразі недоступний" &&
+      movie.status !== "watched" &&
+      movie.status !== "ordered"
     );
   });
+}
+
+function isStreamingMedium(medium) {
+  const streamingServices = [
+    "Netflix",
+    "HBO Max",
+    "Disney+",
+    "Apple TV / iTunes",
+    "Prime Video",
+    "Megogo",
+  ];
+
+  return streamingServices.includes(medium);
 }
 
 function pickMykolaMovie() {
@@ -733,19 +747,61 @@ function pickMykolaMovie() {
     return null;
   }
 
-  const uhdCandidates = candidates.filter(
-    (movie) =>
-      movie.recommended_medium === "4K UHD Blu-ray"
-  );
+  const ownedMovies = candidates.filter((movie) => {
+    return movie.status === "owned";
+  });
 
-  const pool =
-    uhdCandidates.length > 0
-      ? uhdCandidates
-      : candidates;
+  const streamingWishlistMovies = candidates.filter((movie) => {
+    return (
+      movie.status === "wishlist" &&
+      isStreamingMedium(movie.recommended_medium)
+    );
+  });
 
-  return pool[
-    Math.floor(Math.random() * pool.length)
-  ];
+  const otherMovies = candidates.filter((movie) => {
+    return (
+      movie.status !== "owned" &&
+      !(
+        movie.status === "wishlist" &&
+        isStreamingMedium(movie.recommended_medium)
+      )
+    );
+  });
+
+  const groups = [
+    {
+      weight: 0.6,
+      movies: ownedMovies,
+    },
+    {
+      weight: 0.3,
+      movies: streamingWishlistMovies,
+    },
+    {
+      weight: 0.1,
+      movies: otherMovies,
+    },
+  ].filter((group) => group.movies.length > 0);
+
+  if (groups.length === 0) {
+    return null;
+  }
+
+  const totalWeight = groups.reduce((sum, group) => {
+    return sum + group.weight;
+  }, 0);
+
+  let randomValue = Math.random() * totalWeight;
+
+  for (const group of groups) {
+    randomValue -= group.weight;
+
+    if (randomValue <= 0) {
+      return getRandomItem(group.movies);
+    }
+  }
+
+  return getRandomItem(groups[groups.length - 1].movies);
 }
 
 function getRandomItem(items) {
