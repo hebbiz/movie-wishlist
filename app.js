@@ -364,6 +364,15 @@ async function getCurrentUserDisplayName() {
   return session.user.email || null;
 }
 
+function getUserAvatarLetter() {
+  const name =
+    currentProfile?.display_name ||
+    currentProfile?.email ||
+    "Я";
+
+  return name.trim().charAt(0).toUpperCase();
+}
+
 function fillForm(movie) {
   document.getElementById("title").value = movie.title || "";
   document.getElementById("year").value = movie.year || "";
@@ -793,7 +802,7 @@ function addUserBubble(text) {
     </div>
 
     <div class="user-avatar">
-      Я
+      ${getUserAvatarLetter()}
     </div>
   `;
 
