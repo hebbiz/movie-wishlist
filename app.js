@@ -791,6 +791,10 @@ function addUserBubble(text) {
     <div class="user-bubble">
       ${text}
     </div>
+
+    <div class="user-avatar">
+      Я
+    </div>
   `;
 
   const actions = document.getElementById("mykolaActions");
