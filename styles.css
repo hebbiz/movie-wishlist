@@ -513,6 +513,7 @@ button:hover {
 .mykola-panel {
   max-width: 720px;
   min-height: 520px;
+  margin-top: 24px;
 }
 
 .mykola-chat {
