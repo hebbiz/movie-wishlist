@@ -31,6 +31,14 @@ const profilePanel = document.getElementById("profilePanel");
 const displayNameInput = document.getElementById("displayNameInput");
 const saveProfileButton = document.getElementById("saveProfileButton");
 const cancelProfileButton = document.getElementById("cancelProfileButton");
+const mainView = document.getElementById("mainView");
+const mykolaView = document.getElementById("mykolaView");
+const openMykolaButton = document.getElementById("openMykolaButton");
+const backFromMykolaButton = document.getElementById("backFromMykolaButton");
+const mykolaChat = document.getElementById("mykolaChat");
+const mykolaActions = document.getElementById("mykolaActions");
+const mykolaYesButton = document.getElementById("mykolaYesButton");
+const mykolaNoButton = document.getElementById("mykolaNoButton");
 
 let movies = [];
 let editingMovieId = null;
@@ -770,6 +778,152 @@ function applySearchAndFilters() {
 
   renderMovies(filtered);
 }
+
+function getRecommendationCandidates() {
+  return movies.filter((movie) => {
+    return (
+      movie.status === "wishlist" &&
+      movie.recommended_medium !== "Наразі недоступний"
+    );
+  });
+}
+
+function pickMykolaMovie() {
+  const candidates = getRecommendationCandidates();
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const uhdCandidates = candidates.filter(
+    (movie) =>
+      movie.recommended_medium === "4K UHD Blu-ray"
+  );
+
+  const pool =
+    uhdCandidates.length > 0
+      ? uhdCandidates
+      : candidates;
+
+  return pool[
+    Math.floor(Math.random() * pool.length)
+  ];
+}
+
+function addUserBubble(text) {
+  const row = document.createElement("div");
+
+  row.className = "user-message-row";
+
+  row.innerHTML = `
+    <div class="user-bubble">
+      ${text}
+    </div>
+  `;
+
+  mykolaChat.insertBefore(
+    row,
+    mykolaActions
+  );
+}
+
+function addMykolaBubble(text) {
+  const row = document.createElement("div");
+
+  row.className = "mykola-message-row";
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-bubble">
+      ${text}
+    </div>
+  `;
+
+  mykolaChat.insertBefore(
+    row,
+    mykolaActions
+  );
+}
+
+openMykolaButton.addEventListener("click", () => {
+
+  mainView.classList.remove("active");
+
+  mykolaView.classList.add("active");
+
+  window.scrollTo({
+    top: mykolaView.offsetTop - 20,
+    behavior: "smooth",
+  });
+});
+
+backFromMykolaButton.addEventListener("click", () => {
+
+  mykolaView.classList.remove("active");
+
+  mainView.classList.add("active");
+
+  window.scrollTo({
+    top: mainView.offsetTop - 20,
+    behavior: "smooth",
+  });
+});
+
+mykolaYesButton.addEventListener("click", () => {
+
+  addUserBubble("Так");
+
+  mykolaActions.style.display = "none";
+
+  setTimeout(() => {
+
+    const movie = pickMykolaMovie();
+
+    if (!movie) {
+
+      addMykolaBubble(
+        "Я б і радий щось порадити, але список бажаного або порожній, або все тимчасово недоступне. Навіть Микола тут безсилий."
+      );
+
+      return;
+    }
+
+    const phrases = [
+      "Я довго думав. Приблизно 0.3 секунди. Сьогодні я б радив:",
+      "Ви ж все одно будете ще 20 хвилин вибирати. Тому пропоную:",
+      "Я міг би запропонувати щось дуже складне. Але навіщо? Дивіться:",
+      "Мій скромний, але впевнений вибір:"
+    ];
+
+    const phrase =
+      phrases[
+        Math.floor(
+          Math.random() * phrases.length
+        )
+      ];
+
+    addMykolaBubble(
+      `${phrase}<br><br><strong>${movie.title}</strong>`
+    );
+
+  }, 450);
+});
+
+mykolaNoButton.addEventListener("click", () => {
+
+  addUserBubble("Ні");
+
+  mykolaActions.style.display = "none";
+
+  setTimeout(() => {
+
+    addMykolaBubble(
+      "Ну й добре. Я теж іноді просто дивлюсь на список і нічого не обираю."
+    );
+
+  }, 350);
+});
 
 searchInput.addEventListener("input", applySearchAndFilters);
 
