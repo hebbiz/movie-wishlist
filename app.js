@@ -43,6 +43,7 @@ let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
 let currentProfile = null;
+let mykolaConversationFinished = false;
 
 async function updateAuthUI() {
   const {
@@ -1140,6 +1141,8 @@ function addMykolaFollowUpActions() {
 
         addMykolaBubble("Хороший смак я схвалюю.");
 
+        mykolaConversationFinished = true;
+
         setTimeout(() => {
           addMykolaGif();
         }, 1200);
@@ -1149,6 +1152,8 @@ function addMykolaFollowUpActions() {
         addMykolaBubble(
           getRandomItem(mykolaThankYouReplies)
         );
+
+        mykolaConversationFinished = true;
 
       }
 
@@ -1183,21 +1188,20 @@ function resetMykolaChat() {
 function openMykolaView() {
   mainView.classList.remove("active");
 
-  mykolaView.classList.add("active");
+  if (mykolaConversationFinished) {
+    resetMykolaChat();
 
-  const followUpExists =
-    document.getElementById("mykolaFollowUpActions");
+    const firstBubble = mykolaChat.querySelector(".mykola-bubble");
 
-  const returnPromptExists =
-    document.getElementById("mykolaReturnActions");
+    if (firstBubble) {
+      firstBubble.textContent =
+        "Ви знову тут. Вам ще щось підказати?";
+    }
 
-  if (
-    hasMykolaHistory() &&
-      !followUpExists &&
-      !returnPromptExists
-  ) {
-    showMykolaReturnPrompt();
+    mykolaConversationFinished = false;
   }
+
+  mykolaView.classList.add("active");
 
   window.scrollTo({
     top: mykolaView.offsetTop - 20,
