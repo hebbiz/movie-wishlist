@@ -109,11 +109,6 @@ p {
   color: #ffb3b3;
 }
 
-#userEmail {
-  color: #bbb;
-  font-size: 14px;
-}
-
 #saveProfileButton {
   background: #3b5d45;
   color: #f4f4f4;
@@ -677,13 +672,22 @@ button:hover {
 
 .mykola-movie-bubble {
   width: 190px;
+  max-width: 70vw;
+
   border-radius: 14px;
   overflow: hidden;
 
   background: #242424;
   border: 1px solid #333;
 
+  cursor: pointer;
+
   animation: bubbleIn 180ms ease-out;
+  transition: transform 160ms ease;
+}
+
+.mykola-movie-bubble:hover {
+  transform: translateY(-2px);
 }
 
 .mykola-movie-poster-wrapper {
@@ -727,32 +731,31 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 
   padding: 10px;
 
   background: linear-gradient(
     to top,
-    rgba(0,0,0,.92),
-    rgba(0,0,0,.55),
+    rgba(0, 0, 0, 0.92),
+    rgba(0, 0, 0, 0.55),
     transparent
   );
 
   color: #f4f4f4;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.25;
+}
+
+.mykola-movie-title span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mykola-movie-arrow {
   color: #d6b25e;
   font-size: 16px;
   flex-shrink: 0;
-}
-
-.mykola-movie-bubble {
-  cursor: pointer;
-  transition: transform 160ms ease;
-}
-
-.mykola-movie-bubble:hover {
-  transform: translateY(-2px);
 }
