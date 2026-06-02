@@ -915,7 +915,18 @@ function addMykolaGif() {
   }
 
   scrollMykolaChatToBottom();
-  
+
+  const gifElement = document.getElementById(gifId);
+
+  if (gifElement) {
+    gifElement.addEventListener("load", () => {
+      scrollMykolaChatToBottom();
+    });
+  }
+
+  setTimeout(() => {
+    scrollMykolaChatToBottom();
+  }, 150);
 }
 
 function addMykolaTypingBubble() {
