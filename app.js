@@ -1205,8 +1205,6 @@ backFromMykolaButton.addEventListener("click", () => {
 
   mainView.classList.add("active");
 
-  resetMykolaChat();
-
   window.scrollTo({
     top: mainView.offsetTop - 20,
     behavior: "smooth",
@@ -1502,6 +1500,11 @@ loadMovies();
 
 updateAuthUI();
 
-supabaseClient.auth.onAuthStateChange(() => {
+supabaseClient.auth.onAuthStateChange((event) => {
+
+  if (event === "SIGNED_IN") {
+    resetMykolaChat();
+  }
+
   updateAuthUI();
 });
