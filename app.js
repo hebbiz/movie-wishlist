@@ -1180,8 +1180,7 @@ function resetMykolaChat() {
   wireMykolaActionButtons();
 }
 
-openMykolaButton.addEventListener("click", () => {
-
+function openMykolaView() {
   mainView.classList.remove("active");
 
   mykolaView.classList.add("active");
@@ -1190,6 +1189,14 @@ openMykolaButton.addEventListener("click", () => {
     top: mykolaView.offsetTop - 20,
     behavior: "smooth",
   });
+
+  setTimeout(() => {
+    scrollMykolaChatToBottom();
+  }, 260);
+}
+
+openMykolaButton.addEventListener("click", () => {
+  openMykolaView();
 });
 
 backFromMykolaButton.addEventListener("click", () => {
@@ -1233,9 +1240,17 @@ function wireMykolaActionButtons() {
 }
 
 function scrollMykolaChatToBottom() {
-  mykolaChat.scrollIntoView({
+  const bottomOffset = 72;
+
+  const targetPosition =
+    mykolaChat.getBoundingClientRect().bottom +
+    window.scrollY -
+    window.innerHeight +
+    bottomOffset;
+
+  window.scrollTo({
+    top: Math.max(targetPosition, 0),
     behavior: "smooth",
-    block: "end",
   });
 }
 
