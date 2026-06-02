@@ -1185,6 +1185,20 @@ function openMykolaView() {
 
   mykolaView.classList.add("active");
 
+  const followUpExists =
+    document.getElementById("mykolaFollowUpActions");
+
+  const returnPromptExists =
+    document.getElementById("mykolaReturnActions");
+
+  if (
+    hasMykolaHistory() &&
+      !followUpExists &&
+      !returnPromptExists
+  ) {
+    showMykolaReturnPrompt();
+  }
+
   window.scrollTo({
     top: mykolaView.offsetTop - 20,
     behavior: "smooth",
@@ -1250,6 +1264,68 @@ function scrollMykolaChatToBottom() {
     top: Math.max(targetPosition, 0),
     behavior: "smooth",
   });
+}
+
+function hasMykolaHistory() {
+  return (
+    mykolaChat.querySelectorAll(".mykola-message-row").length > 1
+  );
+}
+
+function showMykolaReturnPrompt() {
+
+  if (document.getElementById("mykolaReturnActions")) {
+    return;
+  }
+
+  addMykolaBubble("Вам ще щось підказати?");
+
+  const row = document.createElement("div");
+
+  row.className = "mykola-actions";
+  row.id = "mykolaReturnActions";
+
+  row.innerHTML = `
+    <button type="button" id="mykolaReturnYes">
+      Так
+    </button>
+
+    <button type="button" id="mykolaReturnNo">
+      Ні
+    </button>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+
+  mykolaChat.insertBefore(row, actions);
+
+  document
+    .getElementById("mykolaReturnYes")
+    .addEventListener("click", () => {
+
+      row.remove();
+
+      addUserBubble("Так");
+
+      runWithMykolaThinking(() => {
+        recommendMykolaMovie();
+      });
+    });
+
+  document
+    .getElementById("mykolaReturnNo")
+    .addEventListener("click", () => {
+
+      row.remove();
+
+      addUserBubble("Ні");
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble(
+          "Гаразд. Якщо що — я поруч."
+        );
+      }, 1500);
+    });
 }
 
 searchInput.addEventListener("input", applySearchAndFilters);
