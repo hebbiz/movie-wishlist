@@ -664,7 +664,7 @@ button:hover {
 }
 
 .mykola-gif-container {
-  max-width: 200px;
+  max-width: 100px;
   border-radius: 12px;
   overflow: hidden;
 }
