@@ -1057,6 +1057,40 @@ function addMykolaMovieBubble(movie) {
       scrollMykolaChatToBottom();
     });
   }
+
+  const bubble = row.querySelector(".mykola-movie-bubble");
+
+  if (bubble) {
+    bubble.addEventListener("click", () => {
+      openMovieFromMykola(movie);
+    });
+  }
+  
+}
+
+function openMovieFromMykola(movie) {
+
+  mykolaView.classList.remove("active");
+  mainView.classList.add("active");
+
+  activeFilter = movie.status;
+
+  filterButtons.forEach((btn) => {
+    btn.classList.remove("active");
+
+    if (btn.dataset.filter === movie.status) {
+      btn.classList.add("active");
+    }
+  });
+
+  searchInput.value = movie.title;
+
+  applySearchAndFilters();
+
+  window.scrollTo({
+    top: moviesGrid.offsetTop - 20,
+    behavior: "smooth",
+  });
 }
 
 function addMykolaFollowUpActions() {
