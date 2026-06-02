@@ -43,6 +43,7 @@ let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
 let currentProfile = null;
+let mykolaConversationFinished = false;
 
 async function updateAuthUI() {
   const {
@@ -981,11 +982,116 @@ function recommendMykolaMovie() {
 
   const phrase = getRandomItem(mykolaRecommendationPhrases);
 
-  addMykolaBubble(`${phrase}<br><br><strong>${movie.title}</strong>`);
+  addMykolaBubble(phrase);
 
-  setTimeout(() => {
-    addMykolaFollowUpActions();
-  }, 250);
+    setTimeout(() => {
+
+      addMykolaMovieBubble(movie);
+
+    }, 350);
+
+    setTimeout(() => {
+      
+      addMykolaFollowUpActions();
+  
+    }, 700);
+}
+
+function getMykolaRecommendedMedium(movie) {
+  return (
+    movie.owned_medium ||
+    movie.recommended_medium ||
+    "Носій не вказано"
+  );
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function addMykolaMovieBubble(movie) {
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+
+  const poster = movie.poster_url
+    ? movie.poster_url
+    : "https://via.placeholder.com/300x450?text=No+Poster";
+
+  const medium = getMykolaRecommendedMedium(movie);
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-movie-bubble">
+      <div class="mykola-movie-poster-wrapper">
+        <img
+          src="${escapeHtml(poster)}"
+          alt="${escapeHtml(movie.title)}"
+          class="mykola-movie-poster"
+        >
+
+        <div class="mykola-movie-medium-badge">
+          ${escapeHtml(medium)}
+        </div>
+
+        <div class="mykola-movie-title">
+          <span>${escapeHtml(movie.title)}</span>
+          <span class="mykola-movie-arrow">→</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+
+  const img = row.querySelector("img");
+
+  if (img) {
+    img.addEventListener("load", () => {
+      scrollMykolaChatToBottom();
+    });
+  }
+
+  const bubble = row.querySelector(".mykola-movie-bubble");
+
+  if (bubble) {
+    bubble.addEventListener("click", () => {
+      openMovieFromMykola(movie);
+    });
+  }
+}
+
+function openMovieFromMykola(movie) {
+
+  mykolaView.classList.remove("active");
+  mainView.classList.add("active");
+
+  activeFilter = movie.status;
+
+  filterButtons.forEach((btn) => {
+    btn.classList.remove("active");
+
+    if (btn.dataset.filter === movie.status) {
+      btn.classList.add("active");
+    }
+  });
+
+  searchInput.value = movie.title;
+
+  applySearchAndFilters();
+
+  window.scrollTo({
+    top: moviesGrid.offsetTop - 20,
+    behavior: "smooth",
+  });
 }
 
 function addMykolaFollowUpActions() {
@@ -1035,6 +1141,8 @@ function addMykolaFollowUpActions() {
 
         addMykolaBubble("Хороший смак я схвалюю.");
 
+        mykolaConversationFinished = true;
+
         setTimeout(() => {
           addMykolaGif();
         }, 1200);
@@ -1044,6 +1152,8 @@ function addMykolaFollowUpActions() {
         addMykolaBubble(
           getRandomItem(mykolaThankYouReplies)
         );
+
+        mykolaConversationFinished = true;
 
       }
 
@@ -1075,9 +1185,21 @@ function resetMykolaChat() {
   wireMykolaActionButtons();
 }
 
-openMykolaButton.addEventListener("click", () => {
-
+function openMykolaView() {
   mainView.classList.remove("active");
+
+  if (mykolaConversationFinished) {
+    resetMykolaChat();
+
+    const firstBubble = mykolaChat.querySelector(".mykola-bubble");
+
+    if (firstBubble) {
+      firstBubble.textContent =
+        "Ви знову тут. Вам ще щось підказати?";
+    }
+
+    mykolaConversationFinished = false;
+  }
 
   mykolaView.classList.add("active");
 
@@ -1085,6 +1207,14 @@ openMykolaButton.addEventListener("click", () => {
     top: mykolaView.offsetTop - 20,
     behavior: "smooth",
   });
+
+  setTimeout(() => {
+    scrollMykolaChatToBottom();
+  }, 260);
+}
+
+openMykolaButton.addEventListener("click", () => {
+  openMykolaView();
 });
 
 backFromMykolaButton.addEventListener("click", () => {
@@ -1092,8 +1222,6 @@ backFromMykolaButton.addEventListener("click", () => {
   mykolaView.classList.remove("active");
 
   mainView.classList.add("active");
-
-  resetMykolaChat();
 
   window.scrollTo({
     top: mainView.offsetTop - 20,
@@ -1128,10 +1256,80 @@ function wireMykolaActionButtons() {
 }
 
 function scrollMykolaChatToBottom() {
-  mykolaChat.scrollIntoView({
+  const bottomOffset = 72;
+
+  const targetPosition =
+    mykolaChat.getBoundingClientRect().bottom +
+    window.scrollY -
+    window.innerHeight +
+    bottomOffset;
+
+  window.scrollTo({
+    top: Math.max(targetPosition, 0),
     behavior: "smooth",
-    block: "end",
   });
+}
+
+function hasMykolaHistory() {
+  return (
+    mykolaChat.querySelectorAll(".mykola-message-row").length > 1
+  );
+}
+
+function showMykolaReturnPrompt() {
+
+  if (document.getElementById("mykolaReturnActions")) {
+    return;
+  }
+
+  addMykolaBubble("Вам ще щось підказати?");
+
+  const row = document.createElement("div");
+
+  row.className = "mykola-actions";
+  row.id = "mykolaReturnActions";
+
+  row.innerHTML = `
+    <button type="button" id="mykolaReturnYes">
+      Так
+    </button>
+
+    <button type="button" id="mykolaReturnNo">
+      Ні
+    </button>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+
+  mykolaChat.insertBefore(row, actions);
+
+  document
+    .getElementById("mykolaReturnYes")
+    .addEventListener("click", () => {
+
+      row.remove();
+
+      addUserBubble("Так");
+
+      runWithMykolaThinking(() => {
+        recommendMykolaMovie();
+      });
+    });
+
+  document
+    .getElementById("mykolaReturnNo")
+    .addEventListener("click", () => {
+
+      row.remove();
+
+      addUserBubble("Ні");
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble(
+          "Гаразд. Якщо що — я поруч."
+        );
+      }, 1500);
+    });
 }
 
 searchInput.addEventListener("input", applySearchAndFilters);
@@ -1382,6 +1580,11 @@ loadMovies();
 
 updateAuthUI();
 
-supabaseClient.auth.onAuthStateChange(() => {
+supabaseClient.auth.onAuthStateChange((event) => {
+
+  if (event === "SIGNED_IN") {
+    resetMykolaChat();
+  }
+
   updateAuthUI();
 });
