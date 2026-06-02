@@ -848,7 +848,7 @@ const mykolaThankYouReplies = [
   "Я знав, що ми порозуміємось.",
 ];
 
-const MYKOLA_GIF_CHANCE = 1.0;
+const MYKOLA_GIF_CHANCE = 0.9;
 
 function addUserBubble(text) {
   const row = document.createElement("div");
