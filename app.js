@@ -1004,6 +1004,15 @@ function getMykolaRecommendedMedium(movie) {
   );
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function addMykolaMovieBubble(movie) {
   const row = document.createElement("div");
   row.className = "mykola-message-row";
@@ -1020,17 +1029,17 @@ function addMykolaMovieBubble(movie) {
     <div class="mykola-movie-bubble">
       <div class="mykola-movie-poster-wrapper">
         <img
-          src="${poster}"
-          alt="${movie.title}"
+          src="${escapeHtml(poster)}"
+          alt="${escapeHtml(movie.title)}"
           class="mykola-movie-poster"
         >
 
         <div class="mykola-movie-medium-badge">
-          ${medium}
+          ${escapeHtml(medium)}
         </div>
 
         <div class="mykola-movie-title">
-          ${movie.title}
+          ${escapeHtml(movie.title)}
         </div>
       </div>
     </div>
