@@ -981,11 +981,73 @@ function recommendMykolaMovie() {
 
   const phrase = getRandomItem(mykolaRecommendationPhrases);
 
-  addMykolaBubble(`${phrase}<br><br><strong>${movie.title}</strong>`);
+  addMykolaBubble(phrase);
 
-  setTimeout(() => {
-    addMykolaFollowUpActions();
-  }, 250);
+    setTimeout(() => {
+
+      addMykolaMovieBubble(movie);
+
+    }, 350);
+
+    setTimeout(() => {
+      
+      addMykolaFollowUpActions();
+  
+    }, 700);
+}
+
+function getMykolaRecommendedMedium(movie) {
+  return (
+    movie.owned_medium ||
+    movie.recommended_medium ||
+    "Носій не вказано"
+  );
+}
+
+function addMykolaMovieBubble(movie) {
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+
+  const poster = movie.poster_url
+    ? movie.poster_url
+    : "https://via.placeholder.com/300x450?text=No+Poster";
+
+  const medium = getMykolaRecommendedMedium(movie);
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-movie-bubble">
+      <div class="mykola-movie-poster-wrapper">
+        <img
+          src="${poster}"
+          alt="${movie.title}"
+          class="mykola-movie-poster"
+        >
+
+        <div class="mykola-movie-medium-badge">
+          ${medium}
+        </div>
+
+        <div class="mykola-movie-title">
+          ${movie.title}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+
+  const img = row.querySelector("img");
+
+  if (img) {
+    img.addEventListener("load", () => {
+      scrollMykolaChatToBottom();
+    });
+  }
 }
 
 function addMykolaFollowUpActions() {
