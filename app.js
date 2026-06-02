@@ -848,6 +848,8 @@ const mykolaThankYouReplies = [
   "Я знав, що ми порозуміємось.",
 ];
 
+const MYKOLA_GIF_CHANCE = 0.05;
+
 function addUserBubble(text) {
   const row = document.createElement("div");
   row.className = "user-message-row";
@@ -882,6 +884,38 @@ function addMykolaBubble(text) {
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
   scrollMykolaChatToBottom();
+}
+
+function addMykolaGif() {
+  const row = document.createElement("div");
+
+  row.className = "mykola-message-row";
+
+  const gifId = "mykola-gif-" + Date.now();
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-gif-container">
+      <img
+        id="${gifId}"
+        src="/assets/mykola.gif?t=${Date.now()}"
+        alt="Микола схвалює"
+        class="mykola-gif"
+      >
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+
+  if (actions) {
+    mykolaChat.insertBefore(row, actions);
+  } else {
+    mykolaChat.appendChild(row);
+  }
+
+  scrollMykolaChatToBottom();
+  
 }
 
 function addMykolaTypingBubble() {
@@ -978,12 +1012,30 @@ function addMykolaFollowUpActions() {
   });
 
   document.getElementById("mykolaThanksButton").addEventListener("click", () => {
-    row.remove();
+  row.remove();
 
     addUserBubble("Дякую, хороший смак");
 
     runWithMykolaThinking(() => {
-       addMykolaBubble(getRandomItem(mykolaThankYouReplies));
+
+      const showGif = Math.random() < MYKOLA_GIF_CHANCE;
+
+      if (showGif) {
+
+        addMykolaBubble("Хороший смак я схвалюю.");
+
+        setTimeout(() => {
+          addMykolaGif();
+        }, 1200);
+
+      } else {
+
+        addMykolaBubble(
+          getRandomItem(mykolaThankYouReplies)
+        );
+
+      }
+
     }, 1800);
   });
 }

@@ -662,3 +662,15 @@ button:hover {
     transform: translateY(-2px);
   }
 }
+
+.mykola-gif-container {
+  max-width: 100px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.mykola-gif-container img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
