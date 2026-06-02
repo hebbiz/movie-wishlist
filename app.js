@@ -3,15 +3,6 @@ const SUPABASE_KEY = "sb_publishable_LS48R8c2aoDZ_MSe4LWl9Q__n1M7zf_";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-window.onerror = function(message, source, line, column, error) {
-  alert(
-    "JS ERROR:\n\n" +
-    message +
-    "\nLine: " + line +
-    "\nColumn: " + column
-  );
-};
-
 const movieForm = document.getElementById("movieForm");
 const moviesGrid = document.getElementById("moviesGrid");
 const movieCount = document.getElementById("movieCount");
