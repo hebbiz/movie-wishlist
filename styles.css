@@ -674,3 +674,68 @@ button:hover {
   width: 100%;
   height: auto;
 }
+
+.mykola-movie-bubble {
+  width: 190px;
+  border-radius: 14px;
+  overflow: hidden;
+
+  background: #242424;
+  border: 1px solid #333;
+
+  animation: bubbleIn 180ms ease-out;
+}
+
+.mykola-movie-poster-wrapper {
+  position: relative;
+  width: 100%;
+  background: #181818;
+}
+
+.mykola-movie-poster {
+  display: block;
+  width: 100%;
+  height: 285px;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.mykola-movie-medium-badge {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+
+  padding: 4px 8px;
+  border-radius: 999px;
+
+  background: rgba(17, 17, 17, 0.78);
+  color: #f4f4f4;
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+
+  backdrop-filter: blur(6px);
+}
+
+.mykola-movie-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  padding: 10px;
+
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92),
+    rgba(0, 0, 0, 0.55),
+    transparent
+  );
+
+  color: #f4f4f4;
+
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
