@@ -1039,7 +1039,8 @@ function addMykolaMovieBubble(movie) {
         </div>
 
         <div class="mykola-movie-title">
-          ${escapeHtml(movie.title)}
+          <span>${escapeHtml(movie.title)}</span>
+          <span class="mykola-movie-arrow">→</span>
         </div>
       </div>
     </div>
@@ -1065,7 +1066,6 @@ function addMykolaMovieBubble(movie) {
       openMovieFromMykola(movie);
     });
   }
-  
 }
 
 function openMovieFromMykola(movie) {
