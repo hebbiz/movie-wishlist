@@ -891,11 +891,18 @@ function addMykolaGif() {
 
   row.className = "mykola-message-row";
 
+  const gifId = "mykola-gif-" + Date.now();
+
   row.innerHTML = `
     <div class="mykola-avatar">М</div>
 
     <div class="mykola-gif-container">
-      <img src="/assets/mykola.gif" alt="Микола схвалює">
+      <img
+        id="${gifId}"
+        src="/assets/mykola.gif?t=${Date.now()}"
+        alt="Микола схвалює"
+        class="mykola-gif"
+      >
     </div>
   `;
 
@@ -908,6 +915,7 @@ function addMykolaGif() {
   }
 
   scrollMykolaChatToBottom();
+  
 }
 
 function addMykolaTypingBubble() {
