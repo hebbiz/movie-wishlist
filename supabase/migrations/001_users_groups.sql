@@ -68,7 +68,7 @@ begin
 
   if default_group_id is not null then
     insert into public.group_members (group_id, user_id, role)
-    values (default_group_id, new.id, 'member')
+    values (default_group_id, new.id, 'visitor')
     on conflict (group_id, user_id) do nothing;
   end if;
 
