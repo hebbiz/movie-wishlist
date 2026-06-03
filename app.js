@@ -775,11 +775,11 @@ function pickMykolaMovie() {
 
   const groups = [
     {
-      weight: 0.6,
+      weight: 0.5,
       movies: ownedMovies,
     },
     {
-      weight: 0.3,
+      weight: 0.4,
       movies: streamingWishlistMovies,
     },
     {
