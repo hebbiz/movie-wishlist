@@ -153,12 +153,8 @@ const accessMessages = {
 };
 
 async function loadCurrentRole() {
-  const {
-    data: { session },
-  } = await supabaseClient.auth.getSession();
-
-  if (!session?.user) {
-    currentRole = "visitor";
+  if (!currentUser) {
+    currentRole = null;
     return;
   }
 
@@ -166,16 +162,19 @@ async function loadCurrentRole() {
     .from("group_members")
     .select("role")
     .eq("group_id", currentGroupId)
-    .eq("user_id", session.user.id)
-    .single();
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
 
   if (error) {
     console.warn("Role load error:", error);
-    currentRole = null;
-  return;  
+    currentRole = "visitor";
+    return;
   }
 
-  currentRole = data?.role || "visitor";
+  currentRole = (data?.role || "visitor").trim().toLowerCase();
+
+  console.log("Current user:", currentUser.email);
+  console.log("Current role:", currentRole);
 }
 
 function applyAccessLevel() {
