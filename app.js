@@ -45,6 +45,7 @@ let pendingImdbId = null;
 let currentProfile = null;
 let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
+let currentUser = null;
 let currentRole = null;
 let currentGroupId = "2481bff1-a26f-4173-8a47-f1b16029079d";
 
@@ -54,6 +55,8 @@ async function updateAuthUI() {
   } = await supabaseClient.auth.getSession();
 
   if (session?.user) {
+    currentUser = session.user
+    
     loginButton.style.display = "none";
     userInfo.style.display = "block";
 
@@ -75,16 +78,18 @@ async function updateAuthUI() {
     userEmail.textContent =
       profile?.display_name || profile?.email || session.user.email;
   } else {
-    currentProfile = null;
+      currentUser = null;
+      currentRole = null;
+      currentProfile = null;
 
-    loginButton.style.display = "block";
-    userInfo.style.display = "none";
-    userEmail.textContent = "";
+      loginButton.style.display = "block";
+      userInfo.style.display = "none";
+      userEmail.textContent = "";
   }
 }
 
 function isAnonymous() {
-  return !currentRole;
+  return !currentUser;
 }
 
 function isVisitor() {
@@ -153,7 +158,7 @@ async function loadCurrentRole() {
   } = await supabaseClient.auth.getSession();
 
   if (!session?.user) {
-    currentRole = null;
+    currentRole = "visitor";
     return;
   }
 
