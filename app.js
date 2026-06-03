@@ -160,44 +160,32 @@ async function loadCurrentRole() {
     return;
   }
 
+  const displayName =
+    currentProfile?.display_name ||
+    currentProfile?.email ||
+    currentUser?.email ||
+    "User";
+
   const { data, error } = await supabaseClient
     .from("group_members")
-    .select("role")
+    .select("role, user_id, group_id")
     .eq("group_id", currentGroupId)
     .eq("user_id", currentUser.id)
     .maybeSingle();
 
   if (error) {
-  console.warn("Role load error:", error);
+    currentRole = "visitor";
 
-  currentRole = "visitor";
+    userEmail.textContent =
+      `${displayName} | role=ERROR | user=${currentUser.id.slice(0, 8)}`;
 
-  const displayName =
-    currentProfile?.display_name ||
-    currentProfile?.email ||
-    currentUser?.email;
-
-  if (displayName) {
-    userEmail.textContent = `${displayName} (${currentRole})`;
+    return;
   }
-
-  return;
-}
 
   currentRole = (data?.role || "visitor").trim().toLowerCase();
 
-  console.log("Current user:", currentUser.email);
-  console.log("Current role:", currentRole);
-
-  const displayName =
-    currentProfile?.display_name ||
-    currentProfile?.email ||
-    currentUser?.email;
-
-  if (displayName) {
-    userEmail.textContent = `${displayName} (${currentRole})`;
-}
-  
+  userEmail.textContent =
+    `${displayName} | role=${data?.role || "NULL"} | user=${currentUser.id.slice(0, 8)}`;
 }
 
 function applyAccessLevel() {
