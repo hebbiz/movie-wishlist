@@ -767,9 +767,17 @@ async function deleteMovie(id) {
   }
 
   if (!canDeleteMovie(movie)) {
+
+  if (isMember()) {
+    alert(
+      "Ви не можете видаляти фільми з цього списку. Зверніться до адміністратора."
+    );
+  } else {
     showAccessDenied(accessMessages.delete);
-    return;
   }
+
+  return;
+}
 
   const confirmed = confirm("Видалити цей фільм?");
 
