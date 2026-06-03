@@ -93,6 +93,9 @@ loginButton.addEventListener("click", async () => {
 logoutButton.addEventListener("click", async () => {
   await supabaseClient.auth.signOut();
 
+  resetMykolaChat();
+  clearMykolaFinishedState();
+
   updateAuthUI();
 });
 
@@ -1071,6 +1074,7 @@ function addMykolaMovieBubble(movie) {
 }
 
 function openMovieFromMykola(movie) {
+  finishMykolaConversation();
 
   mykolaView.classList.remove("active");
   mainView.classList.add("active");
@@ -1602,6 +1606,7 @@ supabaseClient.auth.onAuthStateChange((event) => {
 
   if (event === "SIGNED_IN") {
     resetMykolaChat();
+    clearMykolaFinishedState();
   }
 
   updateAuthUI();
