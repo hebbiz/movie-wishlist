@@ -78,7 +78,7 @@ async function updateAuthUI() {
     const displayName =
       profile?.display_name || profile?.email || session.user.email;
 
-      userEmail.textContent = `${displayName} (${currentRole || "loading"})`;
+    userEmail.textContent = displayName;
   } else {
       currentUser = null;
       currentRole = null;
@@ -160,32 +160,20 @@ async function loadCurrentRole() {
     return;
   }
 
-  const displayName =
-    currentProfile?.display_name ||
-    currentProfile?.email ||
-    currentUser?.email ||
-    "User";
-
   const { data, error } = await supabaseClient
     .from("group_members")
-    .select("role, user_id, group_id")
+    .select("role")
     .eq("group_id", currentGroupId)
     .eq("user_id", currentUser.id)
     .maybeSingle();
 
   if (error) {
+    console.warn("Role load error:", error);
     currentRole = "visitor";
-
-    userEmail.textContent =
-      `${displayName} | role=ERROR | user=${currentUser.id.slice(0, 8)}`;
-
     return;
   }
 
   currentRole = (data?.role || "visitor").trim().toLowerCase();
-
-  userEmail.textContent =
-    `${displayName} | role=${data?.role || "NULL"} | user=${currentUser.id.slice(0, 8)}`;
 }
 
 function applyAccessLevel() {
@@ -195,8 +183,8 @@ function applyAccessLevel() {
     return;
   }
 
-  mainView.style.display = "block";
-  mykolaView.style.display = "block";
+  mainView.style.display = "";
+  mykolaView.style.display = "";
 }
 
 async function ensureVisitorMembership() {
