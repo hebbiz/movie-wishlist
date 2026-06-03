@@ -1273,6 +1273,8 @@ function wireMykolaActionButtons() {
       addMykolaBubble(
         "Ну й добре. Я теж іноді просто дивлюсь на список і нічого не обираю."
       );
+
+      finishMykolaConversation();
     }, 1800);
   });
 }
@@ -1350,6 +1352,8 @@ function showMykolaReturnPrompt() {
         addMykolaBubble(
           "Гаразд. Якщо що — я поруч."
         );
+
+      finishMykolaConversation();
       }, 1500);
     });
 }
