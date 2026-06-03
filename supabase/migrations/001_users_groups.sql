@@ -125,3 +125,13 @@ for update
 to authenticated
 using (auth.uid() = id)
 with check (auth.uid() = id);
+
+-- User Membership Update Policy
+
+create policy "Users can read own group membership"
+on group_members
+for select
+to authenticated
+using (
+  user_id = auth.uid()
+);
