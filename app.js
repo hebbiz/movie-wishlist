@@ -45,6 +45,9 @@ let pendingImdbId = null;
 let currentProfile = null;
 let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
+let currentUser = null;
+let currentRole = null;
+let currentGroupId = "2481bff1-a26f-4173-8a47-f1b16029079d";
 
 async function updateAuthUI() {
   const {
@@ -52,6 +55,8 @@ async function updateAuthUI() {
   } = await supabaseClient.auth.getSession();
 
   if (session?.user) {
+    currentUser = session.user
+    
     loginButton.style.display = "none";
     userInfo.style.display = "block";
 
@@ -70,15 +75,146 @@ async function updateAuthUI() {
 
     currentProfile = profile;
 
-    userEmail.textContent =
+    const displayName =
       profile?.display_name || profile?.email || session.user.email;
-  } else {
-    currentProfile = null;
 
-    loginButton.style.display = "block";
-    userInfo.style.display = "none";
-    userEmail.textContent = "";
+    userEmail.textContent = displayName;
+  } else {
+      currentUser = null;
+      currentRole = null;
+      currentProfile = null;
+
+      loginButton.style.display = "block";
+      userInfo.style.display = "none";
+      userEmail.textContent = "";
   }
+}
+
+function isAnonymous() {
+  return !currentUser;
+}
+
+function isVisitor() {
+  return currentRole === "visitor";
+}
+
+function isMember() {
+  return currentRole === "member";
+}
+
+function isOwner() {
+  return currentRole === "owner";
+}
+
+function canOpenPurchaseUrl() {
+  return isMember() || isOwner();
+}
+
+function canAddMovie() {
+  return isMember() || isOwner();
+}
+
+function canUpdateMovie() {
+  return isMember() || isOwner();
+}
+
+function canDeleteMovie(movie) {
+  if (isOwner()) {
+    return true;
+  }
+
+  if (isMember()) {
+    return (
+      movie.status === "wishlist"
+    );
+  }
+
+  return false;
+}
+
+function canInviteUsers() {
+  return isOwner();
+}
+
+function showAccessDenied(message) {
+  alert(message);
+}
+
+const accessMessages = {
+  viewPurchaseUrl:
+    "Адміністратор обмежив вашу можливість переглядати посилання на покупку.",
+
+  addOrEdit:
+    "Адміністратор обмежив вашу можливість додавати чи редагувати фільми.",
+
+  delete:
+    "Адміністратор обмежив вашу можливість видаляти фільми.",
+
+  invite:
+    "Адміністратор обмежив вашу можливість запрошувати користувачів.",
+};
+
+async function loadCurrentRole() {
+  if (!currentUser) {
+    currentRole = null;
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("group_members")
+    .select("role")
+    .eq("group_id", currentGroupId)
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("Role load error:", error);
+    currentRole = "visitor";
+    return;
+  }
+
+  currentRole = (data?.role || "visitor").trim().toLowerCase();
+}
+
+function applyAccessLevel() {
+  if (isAnonymous()) {
+    mainView.style.display = "none";
+    mykolaView.style.display = "none";
+    return;
+  }
+
+  mainView.style.display = "";
+  mykolaView.style.display = "";
+}
+
+async function ensureVisitorMembership() {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session?.user) return;
+
+  const { data } = await supabaseClient
+    .from("group_members")
+    .select("id")
+    .eq("group_id", currentGroupId)
+    .eq("user_id", session.user.id)
+    .maybeSingle();
+
+  if (data) return;
+
+  const { error: insertError } = await supabaseClient
+  .from("group_members")
+  .insert({
+    group_id: currentGroupId,
+    user_id: session.user.id,
+    role: "visitor",
+  });
+
+  if (insertError) {
+    console.error("Visitor insert error:", insertError);
+  }
+
 }
 
 loginButton.addEventListener("click", async () => {
@@ -93,10 +229,13 @@ loginButton.addEventListener("click", async () => {
 logoutButton.addEventListener("click", async () => {
   await supabaseClient.auth.signOut();
 
+  currentRole = null;
+
   resetMykolaChat();
   clearMykolaFinishedState();
 
-  updateAuthUI();
+  await updateAuthUI();
+  applyAccessLevel();
 });
 
 async function loadMovies() {
@@ -182,8 +321,23 @@ function renderMovies(list) {
         ` : ""}
 
         <div class="links">
-          ${movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank">IMDb</a>` : ""}
-          ${movie.purchase_url ? `<a href="${movie.purchase_url}" target="_blank">${getPurchaseLabel(movie)}</a>` : ""}
+          ${movie.imdb_url
+            ? `<a href="${movie.imdb_url}" target="_blank">IMDb</a>`
+            : ""
+          }
+
+          ${movie.purchase_url
+            ? `
+             <a
+               href="#"
+               class="purchase-link"
+               data-url="${movie.purchase_url}"
+            >
+               ${getPurchaseLabel(movie)}
+             </a>
+            `
+            : ""
+          }
         </div>
 
         <button onclick="startEditMovie('${movie.id}')">
@@ -204,6 +358,32 @@ function renderMovies(list) {
     moviesGrid.appendChild(card);
   });
   attachCardMenuHandlers();
+  attachPurchaseLinkHandlers();
+}
+
+function attachPurchaseLinkHandlers() {
+
+  document.querySelectorAll(".purchase-link").forEach((link) => {
+
+    link.addEventListener("click", (event) => {
+
+      event.preventDefault();
+
+      if (!canOpenPurchaseUrl()) {
+
+        showAccessDenied(accessMessages.viewPurchaseUrl);
+        return;
+        
+      }
+
+      window.open(
+        link.dataset.url,
+        "_blank"
+      );
+    });
+
+  });
+
 }
 
 function attachCardMenuHandlers() {
@@ -469,6 +649,16 @@ function startEditMovie(id) {
 movieForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  if (editingMovieId && !canUpdateMovie()) {
+    showAccessDenied(accessMessages.addOrEdit);
+    return;
+  }
+
+  if (!editingMovieId && !canAddMovie()) {
+    showAccessDenied(accessMessages.addOrEdit);
+    return;
+  }
+
   const movieData = getMovieFormData();
 
     if (!movieData.added_by) {
@@ -569,11 +759,33 @@ cancelEditButton.addEventListener("click", () => {
 async function deleteMovie(id) {
   console.log("Deleting movie:", id);
 
+  const movie = movies.find((item) => item.id === id);
+
+  if (!movie) {
+    alert("Фільм не знайдено.");
+    return;
+  }
+
+  if (!canDeleteMovie(movie)) {
+
+  if (isMember()) {
+    alert(
+      "Ви не можете видаляти фільми з цього списку. Зверніться до адміністратора."
+    );
+  } else {
+    showAccessDenied(accessMessages.delete);
+  }
+
+  return;
+}
+
   const confirmed = confirm("Видалити цей фільм?");
 
   if (!confirmed) {
     return;
   }
+
+  // далі delete Supabase код
 
   const { error } = await supabaseClient
     .from("movies")
@@ -603,11 +815,16 @@ async function deleteMovie(id) {
 }
 
 async function markAsWatched(id) {
-  const movie = movies.find((item) => item.id === id);
+  const movie = movies.find((item) => item.id === id)
 
   if (!movie) {
     alert("Фільм не знайдено.");
     return;
+  }
+
+  if (!canUpdateMovie()) {
+    showAccessDenied(accessMessages.addOrEdit);
+  return;
   }
 
   const updateData = {
@@ -1434,8 +1651,14 @@ statusSelect.addEventListener("change", () => {
 updateFormVisibility();
 
 showAddFormButton.addEventListener("click", async () => {
+  
   if (pendingImdbUrl && pendingImdbId) {
-    const existingMovie = findMovieByImdbId(pendingImdbId);
+      const existingMovie = findMovieByImdbId(pendingImdbId);
+
+    if (!canAddMovie()) {
+      showAccessDenied(accessMessages.addOrEdit);
+    return;
+    }
 
     if (existingMovie) {
       alert("Такий фільм вже додано до списку.");
@@ -1599,12 +1822,21 @@ cancelProfileButton.addEventListener("click", () => {
   profilePanel.style.display = "none";
 });
 
+async function initApp() {
+  await updateAuthUI();
+  await ensureVisitorMembership();
+  await loadCurrentRole();
+  applyAccessLevel();
+
+  if (!isAnonymous()) {
+    await loadMovies();
+  }
+}
+
 wireMykolaActionButtons();
 
-loadMovies();
-
-updateAuthUI();
+initApp();
 
 supabaseClient.auth.onAuthStateChange(() => {
-  updateAuthUI();
+  initApp();
 });
