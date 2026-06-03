@@ -43,7 +43,8 @@ let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
 let currentProfile = null;
-let mykolaConversationFinished = false;
+let mykolaConversationFinished =
+  localStorage.getItem("mykolaConversationFinished") === "true";
 
 async function updateAuthUI() {
   const {
@@ -1141,7 +1142,7 @@ function addMykolaFollowUpActions() {
 
         addMykolaBubble("Хороший смак я схвалюю.");
 
-        mykolaConversationFinished = true;
+        finishMykolaConversation();
 
         setTimeout(() => {
           addMykolaGif();
@@ -1153,7 +1154,7 @@ function addMykolaFollowUpActions() {
           getRandomItem(mykolaThankYouReplies)
         );
 
-        mykolaConversationFinished = true;
+        finishMykolaConversation();
 
       }
 
@@ -1185,6 +1186,23 @@ function resetMykolaChat() {
   wireMykolaActionButtons();
 }
 
+function saveMykolaState() {
+  localStorage.setItem(
+    "mykolaConversationFinished",
+    mykolaConversationFinished ? "true" : "false"
+  );
+}
+
+function finishMykolaConversation() {
+  mykolaConversationFinished = true;
+  saveMykolaState();
+}
+
+function clearMykolaFinishedState() {
+  mykolaConversationFinished = false;
+  saveMykolaState();
+}
+
 function openMykolaView() {
   mainView.classList.remove("active");
 
@@ -1198,7 +1216,7 @@ function openMykolaView() {
         "Ви знову тут. Вам ще щось підказати?";
     }
 
-    mykolaConversationFinished = false;
+    clearMykolaFinishedState();
   }
 
   mykolaView.classList.add("active");
