@@ -1074,7 +1074,6 @@ function addMykolaMovieBubble(movie) {
 }
 
 function openMovieFromMykola(movie) {
-  finishMykolaConversation();
 
   mykolaView.classList.remove("active");
   mainView.classList.add("active");
