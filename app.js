@@ -75,8 +75,10 @@ async function updateAuthUI() {
 
     currentProfile = profile;
 
-    userEmail.textContent =
+    const displayName =
       profile?.display_name || profile?.email || session.user.email;
+
+      userEmail.textContent = `${displayName} (${currentRole || "loading"})`;
   } else {
       currentUser = null;
       currentRole = null;
@@ -166,15 +168,36 @@ async function loadCurrentRole() {
     .maybeSingle();
 
   if (error) {
-    console.warn("Role load error:", error);
-    currentRole = "visitor";
-    return;
+  console.warn("Role load error:", error);
+
+  currentRole = "visitor";
+
+  const displayName =
+    currentProfile?.display_name ||
+    currentProfile?.email ||
+    currentUser?.email;
+
+  if (displayName) {
+    userEmail.textContent = `${displayName} (${currentRole})`;
   }
+
+  return;
+}
 
   currentRole = (data?.role || "visitor").trim().toLowerCase();
 
   console.log("Current user:", currentUser.email);
   console.log("Current role:", currentRole);
+
+  const displayName =
+    currentProfile?.display_name ||
+    currentProfile?.email ||
+    currentUser?.email;
+
+  if (displayName) {
+    userEmail.textContent = `${displayName} (${currentRole})`;
+}
+  
 }
 
 function applyAccessLevel() {
