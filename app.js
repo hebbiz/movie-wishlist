@@ -43,7 +43,8 @@ let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
 let currentProfile = null;
-let mykolaConversationFinished = false;
+let mykolaConversationFinished =
+  localStorage.getItem("mykolaConversationFinished") === "true";
 
 async function updateAuthUI() {
   const {
@@ -91,6 +92,9 @@ loginButton.addEventListener("click", async () => {
 
 logoutButton.addEventListener("click", async () => {
   await supabaseClient.auth.signOut();
+
+  resetMykolaChat();
+  clearMykolaFinishedState();
 
   updateAuthUI();
 });
@@ -1141,7 +1145,7 @@ function addMykolaFollowUpActions() {
 
         addMykolaBubble("Хороший смак я схвалюю.");
 
-        mykolaConversationFinished = true;
+        finishMykolaConversation();
 
         setTimeout(() => {
           addMykolaGif();
@@ -1153,7 +1157,7 @@ function addMykolaFollowUpActions() {
           getRandomItem(mykolaThankYouReplies)
         );
 
-        mykolaConversationFinished = true;
+        finishMykolaConversation();
 
       }
 
@@ -1185,6 +1189,23 @@ function resetMykolaChat() {
   wireMykolaActionButtons();
 }
 
+function saveMykolaState() {
+  localStorage.setItem(
+    "mykolaConversationFinished",
+    mykolaConversationFinished ? "true" : "false"
+  );
+}
+
+function finishMykolaConversation() {
+  mykolaConversationFinished = true;
+  saveMykolaState();
+}
+
+function clearMykolaFinishedState() {
+  mykolaConversationFinished = false;
+  saveMykolaState();
+}
+
 function openMykolaView() {
   mainView.classList.remove("active");
 
@@ -1198,7 +1219,7 @@ function openMykolaView() {
         "Ви знову тут. Вам ще щось підказати?";
     }
 
-    mykolaConversationFinished = false;
+    clearMykolaFinishedState();
   }
 
   mykolaView.classList.add("active");
@@ -1251,6 +1272,8 @@ function wireMykolaActionButtons() {
       addMykolaBubble(
         "Ну й добре. Я теж іноді просто дивлюсь на список і нічого не обираю."
       );
+
+      finishMykolaConversation();
     }, 1800);
   });
 }
@@ -1328,6 +1351,8 @@ function showMykolaReturnPrompt() {
         addMykolaBubble(
           "Гаразд. Якщо що — я поруч."
         );
+
+      finishMykolaConversation();
       }, 1500);
     });
 }
@@ -1580,11 +1605,6 @@ loadMovies();
 
 updateAuthUI();
 
-supabaseClient.auth.onAuthStateChange((event) => {
-
-  if (event === "SIGNED_IN") {
-    resetMykolaChat();
-  }
-
+supabaseClient.auth.onAuthStateChange(() => {
   updateAuthUI();
 });
