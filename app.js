@@ -1602,12 +1602,6 @@ loadMovies();
 
 updateAuthUI();
 
-supabaseClient.auth.onAuthStateChange((event) => {
-
-  if (event === "SIGNED_IN") {
-    resetMykolaChat();
-    clearMykolaFinishedState();
-  }
-
+supabaseClient.auth.onAuthStateChange(() => {
   updateAuthUI();
 });
