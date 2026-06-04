@@ -44,5 +44,18 @@ select
 from public.movies
 on conflict (movie_id, group_id) do nothing;
 
+-- Access Control for User’s Group Lists
 
+create policy "Users can read own group lists"
+on public.movie_group_lists
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.group_members gm
+    where gm.group_id = movie_group_lists.group_id
+      and gm.user_id = auth.uid()
+  )
+);
 
