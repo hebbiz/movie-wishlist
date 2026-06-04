@@ -503,6 +503,23 @@ function findMovieByImdbId(imdbId) {
   });
 }
 
+async function findExistingMovieMetadataByImdbId(imdbId) {
+  if (!imdbId) return null;
+
+  const { data, error } = await supabaseClient
+    .from("movies")
+    .select("id, imdb_url")
+    .ilike("imdb_url", `%${imdbId}%`)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Existing movie metadata lookup error:", error);
+    return null;
+  }
+
+  return data || null;
+}
+
 function resetSmartSearchState() {
   pendingImdbUrl = null;
   pendingImdbId = null;
@@ -817,36 +834,49 @@ console.log("Form data:", movieData);
 
   console.log("Creating new movie");
 
-  const movieInsertData = getMovieMetadataData(movieData);
+  const imdbId = normalizeImdbIdFromUrl(movieData.imdb_url);
 
-  const { data: createdMovies, error: movieInsertError } = await supabaseClient
-    .from("movies")
-    .insert([movieInsertData])
-    .select();
+  let movieId = null;
 
-  if (movieInsertError) {
-    console.error("Movie insert error:", movieInsertError);
+  const existingMetadataMovie =
+    await findExistingMovieMetadataByImdbId(imdbId);
 
-    alert(
-      "Помилка додавання фільму\n\n" +
-      "Code: " + (movieInsertError.code || "N/A") + "\n" +
-      "Message: " + movieInsertError.message + "\n" +
-      "Details: " + (movieInsertError.details || "No details")
-    );
+  if (existingMetadataMovie) {
+    movieId = existingMetadataMovie.id;
+  } else {
+    const movieInsertData = getMovieMetadataData(movieData);
 
-    return;
-  }
+    const { data: createdMovies, error: movieInsertError } = await supabaseClient
+      .from("movies")
+      .insert([movieInsertData])
+      .select();
 
-  const createdMovie = createdMovies?.[0];
+    if (movieInsertError) {
+      console.error("Movie insert error:", movieInsertError);
 
-  if (!createdMovie) {
-    alert("Фільм створено, але не отримано movie id.");
-    return;
+      alert(
+        "Помилка додавання фільму\n\n" +
+        "Code: " + (movieInsertError.code || "N/A") + "\n" +
+        "Message: " + movieInsertError.message + "\n" +
+        "Details: " + (movieInsertError.details || "No details")
+      );
+
+      return;
+    }
+
+    const createdMovie = createdMovies?.[0];
+
+    if (!createdMovie) {
+      alert("Фільм створено, але не отримано movie id.");
+      return;
+    }
+
+    movieId = createdMovie.id;
   }
 
   const listInsertData = {
     ...getMovieGroupListData(movieData),
-    movie_id: createdMovie.id,
+    movie_id: movieId,
     group_id: currentGroupId,
   };
 
@@ -1804,38 +1834,49 @@ showAddFormButton.addEventListener("click", async () => {
 
       const addedBy = await getCurrentUserDisplayName();
 
-      const movieInsertData = {
-        title: data.title || "Без назви",
-        year: data.year ? Number(data.year) : null,
-        imdb_url: pendingImdbUrl,
-        poster_url: data.poster_url || null,
-        notes: data.overview || null,
-      };
+      let movieId = null;
 
-      const { data: createdMovies, error: movieInsertError } = await supabaseClient
-        .from("movies")
-        .insert([movieInsertData])
-        .select();
+      const existingMetadataMovie =
+        await findExistingMovieMetadataByImdbId(pendingImdbId);
 
-      if (movieInsertError) {
-        alert(
-          "Помилка додавання фільму\n\n" +
-          "Code: " + (movieInsertError.code || "N/A") + "\n" +
-          "Message: " + movieInsertError.message + "\n" +
-          "Details: " + (movieInsertError.details || "No details")
-        );
-        return;
-      }
+      if (existingMetadataMovie) {
+        movieId = existingMetadataMovie.id;
+      } else {
+        const movieInsertData = {
+          title: data.title || "Без назви",
+          year: data.year ? Number(data.year) : null,
+          imdb_url: pendingImdbUrl,
+          poster_url: data.poster_url || null,
+          notes: data.overview || null,
+        };
 
-      const createdMovie = createdMovies?.[0];
+        const { data: createdMovies, error: movieInsertError } = await supabaseClient
+          .from("movies")
+          .insert([movieInsertData])
+          .select();
 
-      if (!createdMovie) {
-        alert("Фільм створено, але не отримано movie id.");
-      return;
+        if (movieInsertError) {
+          alert(
+            "Помилка додавання фільму\n\n" +
+            "Code: " + (movieInsertError.code || "N/A") + "\n" +
+            "Message: " + movieInsertError.message + "\n" +
+            "Details: " + (movieInsertError.details || "No details")
+          );
+          return;
+        }
+
+        const createdMovie = createdMovies?.[0];
+
+        if (!createdMovie) {
+          alert("Фільм створено, але не отримано movie id.");
+          return;
+        }
+
+        movieId = createdMovie.id;
       }
 
       const listInsertData = {
-        movie_id: createdMovie.id,
+        movie_id: movieId,
         group_id: currentGroupId,
         status: "wishlist",
         recommended_medium: null,
