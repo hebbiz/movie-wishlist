@@ -253,8 +253,12 @@ async function loadMovies() {
   console.log("Loading movies...");
 
   const { data, error } = await supabaseClient
-    .from("movies")
-    .select("*")
+    .from("movie_group_lists")
+    .select(`
+      *,
+      movies (*)
+    `)
+    .eq("group_id", currentGroupId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -272,7 +276,27 @@ async function loadMovies() {
 
   console.log("Movies loaded:", data);
 
-  movies = data || [];
+  movies = (data || []).map((item) => ({
+    id: item.id,
+    movie_id: item.movie_id,
+    group_id: item.group_id,
+
+    title: item.movies?.title,
+    year: item.movies?.year,
+    imdb_url: item.movies?.imdb_url,
+    poster_url: item.movies?.poster_url,
+    notes: item.movies?.notes,
+
+    status: item.status,
+    recommended_medium: item.recommended_medium,
+    owned_medium: item.owned_medium,
+    purchase_url: item.purchase_url,
+    added_by: item.added_by,
+
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+}));
+  
   applySearchAndFilters();
 }
 
