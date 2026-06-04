@@ -21,6 +21,7 @@ const ownedMediumGroup = document.getElementById("ownedMediumGroup");
 const purchaseLabel = document.getElementById("purchaseLabel");
 const lookupButton = document.getElementById("lookupButton");
 const loginButton = document.getElementById("loginButton");
+const loginDescription = document.getElementById("loginDescription");
 const logoutButton = document.getElementById("logoutButton");
 const userInfo = document.getElementById("userInfo");
 const userEmail = document.getElementById("userEmail");
@@ -55,10 +56,11 @@ async function updateAuthUI() {
   } = await supabaseClient.auth.getSession();
 
   if (session?.user) {
-    currentUser = session.user
+    currentUser = session.user;
     
     loginButton.style.display = "none";
     userInfo.style.display = "block";
+    loginDescription.style.display = "none";
 
     const { data: profile, error } = await supabaseClient
       .from("profiles")
@@ -87,6 +89,7 @@ async function updateAuthUI() {
       loginButton.style.display = "block";
       userInfo.style.display = "none";
       userEmail.textContent = "";
+      loginDescription.style.display = "block";
   }
 }
 
