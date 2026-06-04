@@ -569,6 +569,17 @@ function getMovieFormData() {
   };
 }
 
+function getMovieGroupListData(movieData) {
+  return {
+    status: movieData.status,
+    recommended_medium: movieData.recommended_medium,
+    owned_medium: movieData.owned_medium,
+    purchase_url: movieData.purchase_url,
+    added_by: movieData.added_by,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 async function getCurrentUserDisplayName() {
   const {
     data: { session },
@@ -733,9 +744,11 @@ console.log("Form data:", movieData);
   if (editingMovieId) {
     console.log("Updating movie:", editingMovieId);
 
+    const listData = getMovieGroupListData(movieData);
+
     const { data, error } = await supabaseClient
-      .from("movies")
-      .update(movieData)
+      .from("movie_group_lists")
+      .update(listData)
       .eq("id", editingMovieId)
       .select();
 
@@ -828,7 +841,7 @@ async function deleteMovie(id) {
   // далі delete Supabase код
 
   const { error } = await supabaseClient
-    .from("movies")
+    .from("movie_group_lists")
     .delete()
     .eq("id", id);
 
@@ -881,7 +894,7 @@ async function markAsWatched(id) {
   }
 
   const { error } = await supabaseClient
-    .from("movies")
+    .from("movie_group_lists")
     .update(updateData)
     .eq("id", id);
 
