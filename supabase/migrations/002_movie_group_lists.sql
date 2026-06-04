@@ -44,7 +44,7 @@ select
 from public.movies
 on conflict (movie_id, group_id) do nothing;
 
--- Access Control for User’s Group Lists
+-- Access Control for User’s Group Lists SQL
 
 create policy "Users can read own group lists"
 on public.movie_group_lists
@@ -59,7 +59,7 @@ using (
   )
 );
 
--- Restrict Inserts to Authorized Group Members
+-- Restrict Inserts to Authorized Group Members SQL
 
 create policy "Members can insert movie group lists"
 on public.movie_group_lists
@@ -74,7 +74,7 @@ with check (
   )
 );
 
--- Restrict Updates to Movie Group Members
+-- Restrict Updates to Movie Group Members SQL
 
 create policy "Members can update movie group lists"
 on public.movie_group_lists
@@ -97,7 +97,7 @@ with check (
   )
 );
 
--- Allow group members to delete movie group lists
+-- Allow group members to delete movie group lists SQL
 
 create policy "Members can delete movie group lists"
 on public.movie_group_lists
@@ -111,4 +111,14 @@ using (
       and gm.user_id = auth.uid()
   )
 );
+
+-- Remove Deprecated Movie Metadata Columns SQL
+
+alter table public.movies
+drop column if exists recommended_medium,
+drop column if exists status,
+drop column if exists is_owned,
+drop column if exists owned_medium,
+drop column if exists purchase_url,
+drop column if exists added_by;
 
