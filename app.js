@@ -136,7 +136,11 @@ function canDeleteMovie(movie) {
 
   if (isMember()) {
     return (
-      movie.status === "wishlist"
+      movie.status === "wishlist" ||
+      (
+        movie.status === "watched" &&
+        !movie.owned_medium
+      )
     );
   }
 
