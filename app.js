@@ -106,8 +106,16 @@ function isOwner() {
   return currentRole === "owner";
 }
 
-function canOpenPurchaseUrl() {
-  return isMember() || isOwner();
+function canOpenMovieUrl(movie) {
+  if (isMember() || isOwner()) {
+    return true;
+  }
+
+  if (isVisitor()) {
+    return movie.status === "wishlist";
+  }
+
+  return false;
 }
 
 function canAddMovie() {
@@ -142,7 +150,7 @@ function showAccessDenied(message) {
 
 const accessMessages = {
   viewPurchaseUrl:
-    "Адміністратор обмежив вашу можливість переглядати посилання на покупку.",
+  "Адміністратор обмежив перегляд інформації про покупки цієї групи.",
 
   addOrEdit:
     "Адміністратор обмежив вашу можливість додавати чи редагувати фільми.",
@@ -332,7 +340,8 @@ function renderMovies(list) {
                href="#"
                class="purchase-link"
                data-url="${movie.purchase_url}"
-            >
+               data-movie-id="${movie.id}"
+             >
                ${getPurchaseLabel(movie)}
              </a>
             `
@@ -369,7 +378,11 @@ function attachPurchaseLinkHandlers() {
 
       event.preventDefault();
 
-      if (!canOpenPurchaseUrl()) {
+      const movie = movies.find(
+        (item) => item.id === link.dataset.movieId
+      );
+
+      if (!movie || !canOpenMovieUrl(movie)) {
 
         showAccessDenied(accessMessages.viewPurchaseUrl);
         return;
@@ -992,11 +1005,11 @@ function pickMykolaMovie() {
 
   const groups = [
     {
-      weight: 0.6,
+      weight: 0.5,
       movies: ownedMovies,
     },
     {
-      weight: 0.3,
+      weight: 0.4,
       movies: streamingWishlistMovies,
     },
     {
