@@ -59,3 +59,56 @@ using (
   )
 );
 
+-- Restrict Inserts to Authorized Group Members
+
+create policy "Members can insert movie group lists"
+on public.movie_group_lists
+for insert
+to authenticated
+with check (
+  exists (
+    select 1
+    from public.group_members gm
+    where gm.group_id = movie_group_lists.group_id
+      and gm.user_id = auth.uid()
+  )
+);
+
+-- Restrict Updates to Movie Group Members
+
+create policy "Members can update movie group lists"
+on public.movie_group_lists
+for update
+to authenticated
+using (
+  exists (
+    select 1
+    from public.group_members gm
+    where gm.group_id = movie_group_lists.group_id
+      and gm.user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.group_members gm
+    where gm.group_id = movie_group_lists.group_id
+      and gm.user_id = auth.uid()
+  )
+);
+
+-- Allow group members to delete movie group lists
+
+create policy "Members can delete movie group lists"
+on public.movie_group_lists
+for delete
+to authenticated
+using (
+  exists (
+    select 1
+    from public.group_members gm
+    where gm.group_id = movie_group_lists.group_id
+      and gm.user_id = auth.uid()
+  )
+);
+
