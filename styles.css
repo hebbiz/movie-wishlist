@@ -38,6 +38,15 @@ p {
   margin-bottom: 0;
 }
 
+.login-description {
+  max-width: 600px;
+  margin-bottom: 16px;
+  text-align: left;
+  line-height: 1.5;
+  color: #666;
+  font-size: 0.95rem;
+}
+
 #userInfo {
   display: block;
 }
