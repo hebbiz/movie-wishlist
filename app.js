@@ -571,6 +571,16 @@ function getMovieFormData() {
   };
 }
 
+function getMovieMetadataData(movieData) {
+  return {
+    title: movieData.title,
+    year: movieData.year,
+    imdb_url: movieData.imdb_url,
+    poster_url: movieData.poster_url,
+    notes: movieData.notes,
+  };
+}
+
 function getMovieGroupListData(movieData) {
   return {
     status: movieData.status,
@@ -726,13 +736,13 @@ console.log("Form data:", movieData);
   }
 
   if (movieData.imdb_url) {
-  const normalizedImdbUrl = movieData.imdb_url.trim().toLowerCase();
+  const normalizedImdbId = normalizeImdbIdFromUrl(movieData.imdb_url);
 
   const duplicateMovie = movies.find((movie) => {
     if (!movie.imdb_url) return false;
 
     return (
-      movie.imdb_url.trim().toLowerCase() === normalizedImdbUrl &&
+      normalizeImdbIdFromUrl(movie.imdb_url) === normalizedImdbId &&
       movie.id !== editingMovieId
     );
   });
@@ -744,67 +754,121 @@ console.log("Form data:", movieData);
 }
 
   if (editingMovieId) {
-    console.log("Updating movie:", editingMovieId);
+  console.log("Updating movie:", editingMovieId);
 
-    const listData = getMovieGroupListData(movieData);
+  const currentMovie = movies.find((movie) => movie.id === editingMovieId);
 
-    const { data, error } = await supabaseClient
-      .from("movie_group_lists")
-      .update(listData)
-      .eq("id", editingMovieId)
-      .select();
-
-    if (error) {
-      console.error("Update error:", error);
-
-      alert(
-        "Помилка оновлення фільму\n\n" +
-        "Code: " + (error.code || "N/A") + "\n" +
-        "Message: " + error.message + "\n" +
-        "Details: " + (error.details || "No details")
-      );
-
-      return;
-    }
-
-    console.log("Update success:", data);
-
-    alert("Зміни збережено");
-
-    resetFormMode();
-
-    loadMovies();
-
+  if (!currentMovie) {
+    alert("Фільм не знайдено.");
     return;
   }
 
-  console.log("Creating new movie");
+  const movieMetadataData = getMovieMetadataData(movieData);
+  const listData = getMovieGroupListData(movieData);
 
-  const { data, error } = await supabaseClient
+  const { error: movieUpdateError } = await supabaseClient
     .from("movies")
-    .insert([movieData])
-    .select();
+    .update(movieMetadataData)
+    .eq("id", currentMovie.movie_id);
 
-  if (error) {
-    console.error("Insert error:", error);
+  if (movieUpdateError) {
+    console.error("Movie metadata update error:", movieUpdateError);
 
     alert(
-      "Помилка додавання фільму\n\n" +
-      "Code: " + (error.code || "N/A") + "\n" +
-      "Message: " + error.message + "\n" +
-      "Details: " + (error.details || "No details")
+      "Помилка оновлення метаданих фільму\n\n" +
+      "Code: " + (movieUpdateError.code || "N/A") + "\n" +
+      "Message: " + movieUpdateError.message + "\n" +
+      "Details: " + (movieUpdateError.details || "No details")
     );
 
     return;
   }
 
-  console.log("Insert success:", data);
+  const { error: listUpdateError } = await supabaseClient
+    .from("movie_group_lists")
+    .update(listData)
+    .eq("id", editingMovieId);
+
+  if (listUpdateError) {
+    console.error("Movie list update error:", listUpdateError);
+
+    alert(
+      "Помилка оновлення фільму у списку\n\n" +
+      "Code: " + (listUpdateError.code || "N/A") + "\n" +
+      "Message: " + listUpdateError.message + "\n" +
+      "Details: " + (listUpdateError.details || "No details")
+    );
+
+    return;
+  }
+
+  alert("Зміни збережено");
+
+  resetFormMode();
+
+  loadMovies();
+
+  return;
+}
+
+  console.log("Creating new movie");
+
+  const movieInsertData = getMovieMetadataData(movieData);
+
+  const { data: createdMovies, error: movieInsertError } = await supabaseClient
+    .from("movies")
+    .insert([movieInsertData])
+    .select();
+
+  if (movieInsertError) {
+    console.error("Movie insert error:", movieInsertError);
+
+    alert(
+      "Помилка додавання фільму\n\n" +
+      "Code: " + (movieInsertError.code || "N/A") + "\n" +
+      "Message: " + movieInsertError.message + "\n" +
+      "Details: " + (movieInsertError.details || "No details")
+    );
+
+    return;
+  }
+
+  const createdMovie = createdMovies?.[0];
+
+  if (!createdMovie) {
+    alert("Фільм створено, але не отримано movie id.");
+    return;
+  }
+
+  const listInsertData = {
+    ...getMovieGroupListData(movieData),
+    movie_id: createdMovie.id,
+    group_id: currentGroupId,
+  };
+
+  const { error: listInsertError } = await supabaseClient
+    .from("movie_group_lists")
+    .insert([listInsertData]);
+
+  if (listInsertError) {
+    console.error("Movie list insert error:", listInsertError);
+
+    alert(
+      "Фільм створено, але не додано до списку\n\n" +
+      "Code: " + (listInsertError.code || "N/A") + "\n" +
+      "Message: " + listInsertError.message + "\n" +
+      "Details: " + (listInsertError.details || "No details")
+    );
+
+    return;
+  }
 
   alert("Фільм успішно додано");
 
   resetFormMode();
 
   loadMovies();
+
 });
 
 cancelEditButton.addEventListener("click", () => {
@@ -1736,28 +1800,57 @@ showAddFormButton.addEventListener("click", async () => {
 
       const addedBy = await getCurrentUserDisplayName();
 
-      const newMovie = {
+      const movieInsertData = {
         title: data.title || "Без назви",
         year: data.year ? Number(data.year) : null,
         imdb_url: pendingImdbUrl,
         poster_url: data.poster_url || null,
-        recommended_medium: null,
-        status: "wishlist",
-        is_owned: false,
-        owned_medium: null,
-        purchase_url: null,
         notes: data.overview || null,
-        added_by: addedBy,
       };
 
-      const { error } = await supabaseClient.from("movies").insert([newMovie]);
+      const { data: createdMovies, error: movieInsertError } = await supabaseClient
+        .from("movies")
+        .insert([movieInsertData])
+        .select();
 
-      if (error) {
+      if (movieInsertError) {
         alert(
           "Помилка додавання фільму\n\n" +
-          "Code: " + (error.code || "N/A") + "\n" +
-          "Message: " + error.message + "\n" +
-          "Details: " + (error.details || "No details")
+          "Code: " + (movieInsertError.code || "N/A") + "\n" +
+          "Message: " + movieInsertError.message + "\n" +
+          "Details: " + (movieInsertError.details || "No details")
+        );
+        return;
+      }
+
+      const createdMovie = createdMovies?.[0];
+
+      if (!createdMovie) {
+        alert("Фільм створено, але не отримано movie id.");
+      return;
+      }
+
+      const listInsertData = {
+        movie_id: createdMovie.id,
+        group_id: currentGroupId,
+        status: "wishlist",
+        recommended_medium: null,
+        owned_medium: null,
+        purchase_url: null,
+        added_by: addedBy,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: listInsertError } = await supabaseClient
+        .from("movie_group_lists")
+        .insert([listInsertData]);
+
+      if (listInsertError) {
+        alert(
+          "Фільм створено, але не додано до списку\n\n" +
+          "Code: " + (listInsertError.code || "N/A") + "\n" +
+          "Message: " + listInsertError.message + "\n" +
+          "Details: " + (listInsertError.details || "No details")
         );
         return;
       }
