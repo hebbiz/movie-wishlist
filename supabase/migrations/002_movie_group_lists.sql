@@ -21,3 +21,28 @@ create table if not exists public.movie_group_lists (
 
   unique (movie_id, group_id)
 );
+
+-- Seed Movies into Group Lists SQL
+
+insert into public.movie_group_lists (
+  movie_id,
+  group_id,
+  status,
+  recommended_medium,
+  owned_medium,
+  purchase_url,
+  added_by
+)
+select
+  id,
+  '2481bff1-a26f-4173-8a47-f1b16029079d',
+  status,
+  recommended_medium,
+  owned_medium,
+  purchase_url,
+  added_by
+from public.movies
+on conflict (movie_id, group_id) do nothing;
+
+
+
