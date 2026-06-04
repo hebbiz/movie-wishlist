@@ -293,6 +293,8 @@ async function loadMovies() {
     purchase_url: item.purchase_url,
     added_by: item.added_by,
 
+    is_owned: !!item.owned_medium,
+
     created_at: item.created_at,
     updated_at: item.updated_at,
 }));
@@ -882,7 +884,6 @@ async function markAsWatched(id) {
 
   const updateData = {
     status: "watched",
-    is_owned: true,
   };
 
   if (
