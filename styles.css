@@ -41,9 +41,9 @@ p {
 }
 
 .site-subtitle {
-  margin: 4px 0 0;
+  margin: 10px 0 0;
   color: #bbb;
-  line-height: 1.35;
+  line-height: 1.45;
 }
 
 .group-selector-button {
@@ -53,7 +53,7 @@ p {
   align-items: center;
   gap: 4px;
 
-  margin: 0 0 0 4px;
+  margin: 6px 0 0;
   padding: 3px 7px;
 
   border-radius: 999px;
