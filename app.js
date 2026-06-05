@@ -65,6 +65,7 @@ async function updateAuthUI() {
     
     loginButton.style.display = "none";
     userInfo.style.display = "block";
+    groupSelectorButton.style.display = "inline-flex";
     loginDescription.style.display = "none";
 
     const { data: profile, error } = await supabaseClient
@@ -96,6 +97,7 @@ async function updateAuthUI() {
       userInfo.style.display = "none";
       userEmail.textContent = "";
       loginDescription.style.display = "block";
+      groupSelectorButton.style.display = "none";
   }
 }
 
