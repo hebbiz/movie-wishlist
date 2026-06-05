@@ -42,7 +42,7 @@ p {
 
 #authPanel {
   display: block;
-  margin-bottom: 0;
+  margin-bottom: 16px;
 }
 
 #loginButton {
@@ -140,7 +140,7 @@ p {
 }
 
 .search-panel {
-  margin-top: 24px;
+  margin-top: 0;
 }
 
 .panel {
