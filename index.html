@@ -9,9 +9,29 @@
 </head>
 <body>
   <main class="container">
-    <header>
-      <h1>Movie Wishlist</h1>
-      <p>Список фільмів для перегляду та покупки</p>
+    <header class="site-header">
+      <div class="site-title-block">
+        <h1>Movie Wishlist</h1>
+        <p>Список фільмів для перегляду та покупки</p>
+      </div>
+
+      <div id="userInfo" class="user-menu" style="display:none;">
+        <button id="userMenuButton" class="user-avatar-button" type="button">
+          <span id="userAvatarLetter">Я</span>
+        </button>
+
+        <div id="userMenuDropdown" class="user-menu-dropdown">
+          <div id="userEmail" class="user-menu-name"></div>
+
+          <button id="editProfileButton" type="button">
+            Редагувати профіль
+          </button>
+
+          <button id="logoutButton" type="button">
+            Вийти
+          </button>
+        </div>
+      </div>
     </header>
 
     <div id="authPanel">
@@ -24,20 +44,6 @@
         Увійти через Google
       </button>
 
-    </div>
-
-    <div id="userInfo" style="display:none;">
-      <div class="user-menu">
-        <button id="userMenuButton" type="button">
-          <span id="userEmail"></span>
-          <span class="user-menu-arrow">▾</span>
-        </button>
-
-       <div id="userMenuDropdown" class="user-menu-dropdown">
-        <button id="editProfileButton" type="button">Редагувати профіль</button>
-        <button id="logoutButton" type="button">Вийти</button>
-       </div>
-     </div>
     </div>
 
     <section class="panel" id="profilePanel" style="display:none;">

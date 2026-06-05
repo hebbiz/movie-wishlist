@@ -25,6 +25,7 @@ const loginDescription = document.getElementById("loginDescription");
 const logoutButton = document.getElementById("logoutButton");
 const userInfo = document.getElementById("userInfo");
 const userEmail = document.getElementById("userEmail");
+const userAvatarLetter = document.getElementById("userAvatarLetter");
 const userMenuButton = document.getElementById("userMenuButton");
 const userMenuDropdown = document.getElementById("userMenuDropdown");
 const editProfileButton = document.getElementById("editProfileButton");
@@ -81,6 +82,7 @@ async function updateAuthUI() {
       profile?.display_name || profile?.email || session.user.email;
 
     userEmail.textContent = displayName;
+    userAvatarLetter.textContent = getUserAvatarLetter();
   } else {
       currentUser = null;
       currentRole = null;
