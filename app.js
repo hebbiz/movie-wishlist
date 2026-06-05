@@ -110,7 +110,7 @@ function getGroupTypeLabel(groupType) {
 async function loadCurrentGroup() {
   const { data, error } = await supabaseClient
     .from("groups")
-    .select("id, name, group_type")
+    .select("id, name, type")
     .eq("id", currentGroupId)
     .single();
 
@@ -130,7 +130,7 @@ function renderCurrentGroupInfo() {
     return;
   }
 
-  groupTypeText.textContent = getGroupTypeLabel(currentGroup.group_type);
+  groupTypeText.textContent = getGroupTypeLabel(currentGroup.type);
   groupNameText.textContent = currentGroup.name || "";
 }
 
