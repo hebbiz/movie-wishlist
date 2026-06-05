@@ -33,6 +33,9 @@ const profilePanel = document.getElementById("profilePanel");
 const displayNameInput = document.getElementById("displayNameInput");
 const saveProfileButton = document.getElementById("saveProfileButton");
 const cancelProfileButton = document.getElementById("cancelProfileButton");
+const groupSelectorButton = document.getElementById("groupSelectorButton");
+const groupTypeText = document.getElementById("groupTypeText");
+const groupNameText = document.getElementById("groupNameText");
 const mainView = document.getElementById("mainView");
 const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
@@ -50,6 +53,7 @@ let mykolaConversationFinished =
 let currentUser = null;
 let currentRole = null;
 let currentGroupId = "2481bff1-a26f-4173-8a47-f1b16029079d";
+let currentGroup = null;
 
 async function updateAuthUI() {
   const {
@@ -93,6 +97,41 @@ async function updateAuthUI() {
       userEmail.textContent = "";
       loginDescription.style.display = "block";
   }
+}
+
+function getGroupTypeLabel(groupType) {
+  const labels = {
+    family: "сімʼї",
+  };
+
+  return labels[groupType] || "групи";
+}
+
+async function loadCurrentGroup() {
+  const { data, error } = await supabaseClient
+    .from("groups")
+    .select("id, name, group_type")
+    .eq("id", currentGroupId)
+    .single();
+
+  if (error) {
+    console.error("Group load error:", error);
+    currentGroup = null;
+    return;
+  }
+
+  currentGroup = data;
+}
+
+function renderCurrentGroupInfo() {
+  if (!currentGroup) {
+    groupTypeText.textContent = "групи";
+    groupNameText.textContent = "";
+    return;
+  }
+
+  groupTypeText.textContent = getGroupTypeLabel(currentGroup.group_type);
+  groupNameText.textContent = currentGroup.name || "";
 }
 
 function isAnonymous() {
@@ -2020,6 +2059,12 @@ async function initApp() {
   await updateAuthUI();
   await ensureVisitorMembership();
   await loadCurrentRole();
+
+  if (!isAnonymous()) {
+    await loadCurrentGroup();
+    renderCurrentGroupInfo();
+  }
+
   applyAccessLevel();
 
   if (!isAnonymous()) {
