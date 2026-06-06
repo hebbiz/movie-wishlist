@@ -16,7 +16,8 @@ body {
 }
 
 body:not(.app-ready) .container {
-  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .app-loader {
