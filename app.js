@@ -182,12 +182,15 @@ function backToMainView() {
   });
 }
 
-groupSelectorButton.addEventListener("click", () => {
+groupSelectorButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+
   groupSelectorDropdown.style.display =
     groupSelectorDropdown.style.display === "block" ? "none" : "block";
 });
 
-openGroupSettingsButton.addEventListener("click", () => {
+openGroupSettingsButton.addEventListener("click", (event) => {
+  event.stopPropagation();
   openGroupSettingsView();
 });
 
