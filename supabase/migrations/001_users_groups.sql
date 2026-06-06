@@ -157,3 +157,36 @@ USING (
   group_members.user_id = auth.uid()
 
 );
+
+-- Get Current User’s Role in a Group
+
+create or replace function public.current_user_group_role(target_group_id uuid)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select role
+  from public.group_members
+  where group_id = target_group_id
+    and user_id = auth.uid()
+  limit 1;
+$$;
+
+-- Remove Group Members Select Policy
+
+drop policy if exists "group_members_select" on public.group_members;
+
+-- Restrict Group Member Select Access
+
+create policy "group_members_select"
+on public.group_members
+for select
+to authenticated
+using (
+  public.current_user_group_role(group_id) in ('owner', 'member')
+  or user_id = auth.uid()
+);
+
+
+
