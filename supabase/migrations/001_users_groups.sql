@@ -135,3 +135,72 @@ to authenticated
 using (
   user_id = auth.uid()
 );
+
+-- Group member select access policy
+
+CREATE POLICY "group_members_select"
+ON group_members
+FOR SELECT
+TO authenticated
+USING (
+
+  EXISTS (
+    SELECT 1
+    FROM group_members my_membership
+    WHERE my_membership.group_id = group_members.group_id
+      AND my_membership.user_id = auth.uid()
+      AND my_membership.role IN ('owner', 'member')
+  )
+
+  OR
+
+  group_members.user_id = auth.uid()
+
+);
+
+-- Get Current User’s Role in a Group
+
+create or replace function public.current_user_group_role(target_group_id uuid)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select role
+  from public.group_members
+  where group_id = target_group_id
+    and user_id = auth.uid()
+  limit 1;
+$$;
+
+-- Remove Group Members Select Policy
+
+drop policy if exists "group_members_select" on public.group_members;
+
+-- Restrict Group Member Select Access
+
+create policy "group_members_select"
+on public.group_members
+for select
+to authenticated
+using (
+  public.current_user_group_role(group_id) in ('owner', 'member')
+  or user_id = auth.uid()
+);
+
+-- Profiles row-level access for group members
+
+create policy "profiles_select_visible_group_members"
+on public.profiles
+for select
+to authenticated
+using (
+  id = auth.uid()
+  or exists (
+    select 1
+    from public.group_members gm_target
+    where gm_target.user_id = profiles.id
+      and public.current_user_group_role(gm_target.group_id) in ('owner', 'member')
+  )
+);
+
