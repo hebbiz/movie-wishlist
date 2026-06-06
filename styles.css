@@ -375,6 +375,23 @@ button:hover {
   color: #cfe3c4;
 }
 
+.group-current-badge {
+  display: inline-block;
+
+  margin-left: 8px;
+  padding: 4px 8px;
+
+  border-radius: 999px;
+
+  background: rgba(35, 65, 42, 0.82);
+  color: #cfe3c4;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  vertical-align: middle;
+}
+
 .card-content {
   padding: 14px;
 }
