@@ -54,14 +54,14 @@ p {
   gap: 4px;
 
   margin: 6px 0 0;
-  padding: 3px 7px;
+  padding: 2px 6px;
 
   border-radius: 999px;
 
   background: #1f1f1f;
   color: #c8c8c8;
 
-  font-size: inherit;
+  font-size: 0.95rem;
   font-weight: 500;
   line-height: 1.2;
 
