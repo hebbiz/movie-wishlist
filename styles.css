@@ -260,11 +260,12 @@ p {
   color: #aaa;
 }
 
-#groupSettingsName {
+.group-settings-name {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
+  font-weight: 700;
 }
 
 .group-name-text {
@@ -276,7 +277,7 @@ p {
 }
 
 @media (max-width: 480px) {
-  #groupSettingsName {
+  .group-settings-name {
     display: block;
   }
 
