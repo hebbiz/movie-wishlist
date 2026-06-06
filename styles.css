@@ -999,3 +999,42 @@ button:hover {
   font-size: 16px;
   flex-shrink: 0;
 }
+
+@media (max-width: 600px) {
+  .site-header {
+    align-items: flex-start;
+  }
+
+  .site-logo-title {
+    gap: 8px;
+  }
+
+  .site-logo {
+    width: 26px;
+    height: 26px;
+  }
+
+  h1 {
+    font-size: 30px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .site-subtitle {
+    margin-left: 34px;
+    margin-top: 6px;
+
+    display: block;
+    line-height: 1.35;
+  }
+
+  .group-selector-wrapper {
+    display: block;
+    margin-top: 6px;
+  }
+
+  .group-selector-button {
+    margin: 0;
+  }
+}
+
