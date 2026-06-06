@@ -68,6 +68,15 @@ let currentRole = null;
 let currentGroupId = "2481bff1-a26f-4173-8a47-f1b16029079d";
 let currentGroup = null;
 let currentGroupMembers = [];
+let appHasInitialized = false;
+
+function showAppLoader() {
+  document.body.classList.remove("app-ready");
+}
+
+function hideAppLoader() {
+  document.body.classList.add("app-ready");
+}
 
 async function updateAuthUI() {
   const {
@@ -2245,19 +2254,28 @@ cancelProfileButton.addEventListener("click", () => {
 });
 
 async function initApp() {
-  await updateAuthUI();
-  await ensureVisitorMembership();
-  await loadCurrentRole();
+  showAppLoader();
 
-  if (!isAnonymous()) {
-    await loadCurrentGroup();
-    renderCurrentGroupInfo();
-  }
+  try {
+    await updateAuthUI();
+    await ensureVisitorMembership();
+    await loadCurrentRole();
 
-  applyAccessLevel();
+    if (!isAnonymous()) {
+      await loadCurrentGroup();
+      renderCurrentGroupInfo();
+    }
 
-  if (!isAnonymous()) {
-    await loadMovies();
+    applyAccessLevel();
+
+    if (!isAnonymous()) {
+      await loadMovies();
+    }
+  } catch (error) {
+    console.error("App initialization error:", error);
+  } finally {
+    appHasInitialized = true;
+    hideAppLoader();
   }
 }
 
@@ -2265,6 +2283,12 @@ wireMykolaActionButtons();
 
 initApp();
 
+setTimeout(() => {
+  hideAppLoader();
+}, 6000);
+
 supabaseClient.auth.onAuthStateChange(() => {
-  initApp();
+  if (appHasInitialized) {
+    initApp();
+  }
 });
