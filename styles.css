@@ -15,6 +15,62 @@ body {
   padding: 24px;
 }
 
+body:not(.app-ready) .container {
+  visibility: hidden;
+}
+
+.app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #111;
+  transition: opacity 300ms ease, visibility 300ms ease;
+}
+
+.app-loader-logo {
+  width: 96px;
+  height: 96px;
+
+  animation:
+    loaderPulse 1600ms ease-in-out infinite,
+    loaderGlow 2200ms ease-in-out infinite;
+}
+
+body.app-ready .app-loader {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@keyframes loaderPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes loaderGlow {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 4px rgba(214, 178, 94, 0.25))
+      drop-shadow(0 0 12px rgba(214, 178, 94, 0.12));
+  }
+
+  50% {
+    filter:
+      drop-shadow(0 0 8px rgba(228, 198, 117, 0.55))
+      drop-shadow(0 0 24px rgba(228, 198, 117, 0.28));
+  }
+}
+
 header {
   margin-bottom: 12px;
 }
