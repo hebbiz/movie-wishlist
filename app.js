@@ -179,8 +179,11 @@ function renderGroupSettings() {
     return;
   }
 
-  groupSettingsName.textContent =
-  getGroupTypeNominativeLabel(currentGroup.type) + " " + currentGroup.name;
+  groupSettingsName.innerHTML = `
+  ${getGroupTypeNominativeLabel(currentGroup.type)}
+  ${currentGroup.name}
+  <span class="group-current-badge">Поточна</span>
+`;
 
   groupSettingsType.textContent =
     "Тип групи: " + currentGroup.type;
