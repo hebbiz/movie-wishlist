@@ -36,6 +36,7 @@ const cancelProfileButton = document.getElementById("cancelProfileButton");
 const groupSelectorButton = document.getElementById("groupSelectorButton");
 const groupTypeText = document.getElementById("groupTypeText");
 const groupNameText = document.getElementById("groupNameText");
+const groupMembersList = document.getElementById("groupMembersList");
 const groupSelectorDropdown = document.getElementById("groupSelectorDropdown");
 const openGroupSettingsButton = document.getElementById("openGroupSettingsButton");
 const groupSettingsView = document.getElementById("groupSettingsView");
@@ -165,6 +166,9 @@ function openGroupSettingsView() {
   groupSelectorButton.classList.add("disabled");
 
   renderGroupSettings();
+    loadCurrentGroupMembers().then(() => {
+    renderGroupMembers();
+});
 
   window.scrollTo({
     top: groupSettingsView.offsetTop - 20,
@@ -187,6 +191,50 @@ function renderGroupSettings() {
 
   groupSettingsType.textContent =
     "Тип групи: " + currentGroup.type;
+}
+
+async function loadCurrentGroupMembers() {
+  const { data, error } = await supabaseClient
+    .from("group_members")
+    .select(`
+      id,
+      role,
+      profiles (
+        display_name,
+        email
+      )
+    `)
+    .eq("group_id", currentGroupId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Group members load error:", error);
+    currentGroupMembers = [];
+    return;
+  }
+
+  currentGroupMembers = data || [];
+}
+
+function renderGroupMembers() {
+  groupMembersList.innerHTML = "";
+
+  if (currentGroupMembers.length === 0) {
+    groupMembersList.innerHTML = `<p>Учасників не знайдено.</p>`;
+    return;
+  }
+
+  currentGroupMembers.forEach((member) => {
+    const name =
+      member.profiles?.display_name ||
+      "Користувач без імені";
+
+    const row = document.createElement("div");
+    row.className = "group-member-row";
+    row.textContent = name;
+
+    groupMembersList.appendChild(row);
+  });
 }
 
 function backToMainView() {
