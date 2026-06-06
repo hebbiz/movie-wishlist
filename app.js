@@ -2074,7 +2074,7 @@ document.addEventListener("click", (event) => {
   }
 
   const clickedInsideGroupSelector =
-    event.target.closest(".site-subtitle");
+    event.target.closest(".group-selector-wrapper");
 
   if (!clickedInsideGroupSelector) {
     groupSelectorDropdown.style.display = "none";
