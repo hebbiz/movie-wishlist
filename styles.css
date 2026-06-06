@@ -272,10 +272,6 @@ p {
   display: inline-block;
 }
 
-.group-current-badge {
-  margin-left: 0;
-}
-
 @media (max-width: 480px) {
   .group-settings-name {
     display: block;
@@ -591,7 +587,7 @@ button:hover {
 .group-current-badge {
   display: inline-block;
 
-  margin-left: 8px;
+  margin-left: 0;
   padding: 4px 8px;
 
   border-radius: 999px;
