@@ -15,31 +15,36 @@
   <main class="container">
     <header class="site-header">
       <div class="site-title-block">
+
         <div class="site-logo-title">
           <img
             src="/assets/logo/movie-wishlist-master-transparent.svg"
             alt="Movie Wishlist"
             class="site-logo"
           />
-        <h1>Movie Wishlist</h1>
-          <div class="site-subtitle">
-            <span>Список для перегляду та покупки</span>
+          <h1>Movie Wishlist</h1>
+        </div>
 
-            <span class="group-selector-wrapper">
-              <button id="groupSelectorButton" class="group-selector-button" type="button">
-                <span id="groupTypeText"></span>
-                <span id="groupNameText"></span>
-                <span class="group-selector-arrow">▾</span>
+        <div class="site-subtitle">
+          <span>Список для перегляду та покупки</span>
+
+          <span class="group-selector-wrapper">
+            <button id="groupSelectorButton" class="group-selector-button" type="button">
+              <span id="groupTypeText"></span>
+              <span id="groupNameText"></span>
+              <span class="group-selector-arrow">▾</span>
+            </button>
+
+            <span id="groupSelectorDropdown" class="group-selector-dropdown">
+              <button id="openGroupSettingsButton" type="button">
+                Керувати групами
               </button>
-
-              <span id="groupSelectorDropdown" class="group-selector-dropdown">
-                <button id="openGroupSettingsButton" type="button">
-                  Керувати групами
-                </button>
-              </span>
             </span>
-          </div>
+          </span>
+        </div>
+
       </div>
+    </header>
 
       <div id="userInfo" class="user-menu" style="display:none;">
         <button id="userMenuButton" class="user-avatar-button" type="button">
