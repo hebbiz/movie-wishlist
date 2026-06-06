@@ -6,6 +6,10 @@
   <title>Movie Wishlist</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
 </head>
 <body>
   <main class="container">
@@ -18,24 +22,34 @@
     </div>
     <header class="site-header">
       <div class="site-title-block">
-        <h1>Movie Wishlist</h1>
-          <div class="site-subtitle">
-            <span>Список для перегляду та покупки</span>
 
-            <span class="group-selector-wrapper">
-              <button id="groupSelectorButton" class="group-selector-button" type="button">
-                <span id="groupTypeText"></span>
-                <span id="groupNameText"></span>
-                <span class="group-selector-arrow">▾</span>
+        <div class="site-logo-title">
+          <img
+            src="/assets/logo/movie-wishlist-master-transparent.svg"
+            alt="Movie Wishlist"
+            class="site-logo"
+          />
+          <h1>Movie Wishlist</h1>
+        </div>
+
+        <div class="site-subtitle">
+          <span>Список для перегляду та покупки</span>
+
+          <span class="group-selector-wrapper">
+            <button id="groupSelectorButton" class="group-selector-button" type="button">
+              <span id="groupTypeText"></span>
+              <span id="groupNameText"></span>
+              <span class="group-selector-arrow">▾</span>
+            </button>
+
+            <span id="groupSelectorDropdown" class="group-selector-dropdown">
+              <button id="openGroupSettingsButton" type="button">
+                Керувати групами
               </button>
-
-              <span id="groupSelectorDropdown" class="group-selector-dropdown">
-                <button id="openGroupSettingsButton" type="button">
-                  Керувати групами
-                </button>
-              </span>
             </span>
-          </div>
+          </span>
+        </div>
+
       </div>
 
       <div id="userInfo" class="user-menu" style="display:none;">
