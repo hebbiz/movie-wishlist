@@ -14,7 +14,7 @@ body {
   margin: 0 auto;
   padding: 24px;
 
-  transition: opacity 300ms ease;
+  transition: opacity 700ms ease;
 }
 
 body:not(.app-ready) .container {
@@ -36,7 +36,7 @@ body:not(.app-ready) .container {
   opacity: 1;
   visibility: visible;
 
-  transition: opacity 300ms ease, visibility 300ms ease;
+  transition: opacity 500ms ease, visibility 500ms ease;
 }
 
 body.app-ready .app-loader {
