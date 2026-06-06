@@ -135,3 +135,25 @@ to authenticated
 using (
   user_id = auth.uid()
 );
+
+-- Group member select access policy
+
+CREATE POLICY "group_members_select"
+ON group_members
+FOR SELECT
+TO authenticated
+USING (
+
+  EXISTS (
+    SELECT 1
+    FROM group_members my_membership
+    WHERE my_membership.group_id = group_members.group_id
+      AND my_membership.user_id = auth.uid()
+      AND my_membership.role IN ('owner', 'member')
+  )
+
+  OR
+
+  group_members.user_id = auth.uid()
+
+);
