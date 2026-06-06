@@ -138,12 +138,12 @@ function getGroupTypePossessiveLabel(groupType) {
 
 function getGroupTypeNominativeLabel(groupType) {
   const labels = {
-    family: "сімʼя",
-    friends: "друзі",
-    community: "спільнота",
+    family: "Сімʼя",
+    friends: "Друзі",
+    community: "Спільнота",
   };
 
-  return labels[groupType] || "група";
+  return labels[groupType] || "Група";
 }
 
 async function loadCurrentGroup() {
