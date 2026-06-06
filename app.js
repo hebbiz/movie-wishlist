@@ -206,13 +206,17 @@ function renderGroupSettings() {
   }
 
   groupSettingsName.innerHTML = `
-  ${getGroupTypeNominativeLabel(currentGroup.type)}
-  ${currentGroup.name}
-  <span class="group-current-badge">Поточна</span>
-`;
+    <span class="group-name-text">
+      ${getGroupTypeNominativeLabel(currentGroup.type)} ${currentGroup.name}
+    </span>
 
-  groupSettingsType.textContent =
-  "Тип групи: " + getGroupTypeNominativeLabel(currentGroup.type);
+    <span class="group-current-badge">
+      Поточна
+    </span>
+  `;
+
+  groupSettingsType.textContent = "";
+  groupSettingsType.style.display = "none";
 }
 
 async function loadCurrentGroupMembers() {
