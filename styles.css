@@ -22,7 +22,7 @@ header {
 .site-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
@@ -269,6 +269,7 @@ p {
   position: relative;
   flex-shrink: 0;
   margin-bottom: 0;
+  transform: translateY(-2px);
 }
 
 #userMenuButton {
@@ -1001,6 +1002,12 @@ button:hover {
 }
 
 @media (max-width: 600px) {
+
+   #userMenuButton {
+    width: 34px;
+    height: 34px;
+    transform: translateY(-3px);
+  }
 
   .site-logo-title {
   margin-bottom: 8px;
