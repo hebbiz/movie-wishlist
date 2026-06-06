@@ -172,6 +172,38 @@ p {
   color: #f4f4f4;
 }
 
+.group-settings-header,
+.group-members-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.group-members-header {
+  align-items: center;
+}
+
+.group-settings-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.group-settings-menu .menu-button {
+  margin-bottom: 0;
+}
+
+.group-settings-menu .menu-dropdown {
+  right: 0;
+  left: auto;
+  top: 42px;
+  bottom: auto;
+}
+
+.group-members-editor {
+  margin-top: 16px;
+}
+
 #authPanel {
   display: block;
   margin-bottom: 16px;
