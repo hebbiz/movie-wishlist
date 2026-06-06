@@ -276,9 +276,19 @@ p {
 }
 
 @media (max-width: 480px) {
+  #groupSettingsName {
+    display: block;
+  }
+
+  .group-name-text {
+    display: block;
+  }
+
   .group-current-badge {
-    flex-basis: 100%;
+    display: inline-block;
+    margin-top: 10px;
     margin-left: 0;
+    width: fit-content;
   }
 }
 
