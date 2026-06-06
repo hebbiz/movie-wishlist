@@ -284,7 +284,7 @@ p {
   .group-current-badge {
     display: inline-block;
     margin-top: 10px;
-    margin-left: -2px;
+    margin-left: -6px;
     width: fit-content;
   }
 }
