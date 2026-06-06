@@ -20,6 +20,29 @@ body:not(.app-ready) .container {
   pointer-events: none;
 }
 
+.app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #111;
+
+  opacity: 1;
+  visibility: visible;
+
+  transition: opacity 300ms ease, visibility 300ms ease;
+}
+
+body.app-ready .app-loader {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .app-loader-logo-wrap {
   position: relative;
   width: 120px;
@@ -53,12 +76,12 @@ body:not(.app-ready) .container {
   background: linear-gradient(
     120deg,
     transparent 35%,
-    rgba(255, 244, 190, 0.95) 50%,
+    rgba(255, 230, 160, 0.7) 50%,
     transparent 65%
   );
 
   transform: translateX(-120%);
-  animation: logoShimmer 1800ms ease-in-out infinite;
+  animation: logoShimmer 4200ms ease-in-out infinite;
 }
 
 @keyframes logoShimmer {
