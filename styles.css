@@ -275,12 +275,6 @@ p {
   margin-left: 0;
 }
 
-@media (max-width: 480px) {
-  .group-current-badge {
-    flex-basis: 100%;
-    margin-left: 0;
-  }
-
 .group-members-section {
   margin-top: 18px;
 }
