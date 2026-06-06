@@ -190,17 +190,47 @@
 
       <div class="group-settings-list">
         <div class="group-settings-card">
-          <div>
-            <strong id="groupSettingsName">Назва групи</strong>
-            <p id="groupSettingsType">Тип групи</p>
-            <div class="group-members-section">
-              <h3>Учасники</h3>
-              <div id="groupMembersList" class="group-members-list"></div>
+
+          <div class="group-settings-header">
+            <div>
+              <strong id="groupSettingsName">Назва групи</strong>
+              <p id="groupSettingsType">Тип групи</p>
+            </div>
+
+            <div class="group-settings-menu">
+              <button id="groupInfoMenuButton" class="menu-button" type="button">⋯</button>
+
+                <div id="groupInfoMenuDropdown" class="menu-dropdown">
+                  <button id="editGroupInfoButton" type="button">Редагувати</button>
+                </div>
             </div>
           </div>
+
+          <div class="group-members-section">
+            <div class="group-members-header">
+              <h3>Учасники</h3>
+
+              <div class="group-settings-menu">
+                <button id="groupMembersMenuButton" class="menu-button" type="button">⋯</button>
+
+                <div id="groupMembersMenuDropdown" class="menu-dropdown">
+                  <button id="editGroupMembersButton" type="button">Редагувати</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="groupMembersList" class="group-members-list"></div>
+
+            <div
+              id="groupMembersEditor"
+              class="group-members-editor"
+              style="display:none;"
+            ></div>
+          </div>
+          
         </div>
       </div>
-
+      
     </section>
   </div>
 
