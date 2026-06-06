@@ -107,12 +107,24 @@ async function updateAuthUI() {
   }
 }
 
-function getGroupTypeLabel(groupType) {
+function getGroupTypePossessiveLabel(groupType) {
   const labels = {
     family: "сімʼї",
+    friends: "друзів",
+    community: "спільноти",
   };
 
   return labels[groupType] || "групи";
+}
+
+function getGroupTypeNominativeLabel(groupType) {
+  const labels = {
+    family: "сімʼя",
+    friends: "друзі",
+    community: "спільнота",
+  };
+
+  return labels[groupType] || "група";
 }
 
 async function loadCurrentGroup() {
@@ -138,7 +150,8 @@ function renderCurrentGroupInfo() {
     return;
   }
 
-  groupTypeText.textContent = getGroupTypeLabel(currentGroup.type);
+  groupTypeText.textContent =
+  getGroupTypePossessiveLabel(currentGroup.type);
   groupNameText.textContent = currentGroup.name || "";
 }
 
@@ -167,7 +180,7 @@ function renderGroupSettings() {
   }
 
   groupSettingsName.textContent =
-    getGroupTypeLabel(currentGroup.type) + " " + currentGroup.name;
+  getGroupTypeNominativeLabel(currentGroup.type) + " " + currentGroup.name;
 
   groupSettingsType.textContent =
     "Тип групи: " + currentGroup.type;
