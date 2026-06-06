@@ -59,16 +59,20 @@ p {
 }
 
 .site-subtitle {
-  margin-top: 8px;
+  margin-top: 6px;
+  margin-left: 44px;
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  color: #bbb;
+  line-height: 1.35;
 }
 
 .group-selector-wrapper {
   position: relative;
   display: inline-block;
+  align-items: center;
 }
 
 .group-selector-button {
@@ -78,7 +82,7 @@ p {
   align-items: center;
   gap: 4px;
 
-  margin: 6px 0 0;
+  margin: 0;
   padding: 2px 6px;
 
   border-radius: 999px;
