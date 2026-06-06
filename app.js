@@ -148,6 +148,8 @@ function openGroupSettingsView() {
   groupSettingsView.classList.add("active");
 
   groupSelectorDropdown.style.display = "none";
+  groupSelectorButton.disabled = true;
+  groupSelectorButton.classList.add("disabled");
 
   renderGroupSettings();
 
@@ -175,6 +177,8 @@ function backToMainView() {
   groupSettingsView.classList.remove("active");
   mykolaView.classList.remove("active");
   mainView.classList.add("active");
+  groupSelectorButton.disabled = false;
+  groupSelectorButton.classList.remove("disabled");
 
   window.scrollTo({
     top: mainView.offsetTop - 20,
