@@ -20,55 +20,58 @@ body:not(.app-ready) .container {
   pointer-events: none;
 }
 
-.app-loader {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
+.app-loader-logo-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  -webkit-mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
+  mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
 
-  background: #111;
-  transition: opacity 300ms ease, visibility 300ms ease;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  -webkit-mask-position: center;
+  mask-position: center;
+
+  background: #d6b25e;
 }
 
 .app-loader-logo {
-  width: 96px;
-  height: 96px;
-
-  animation:
-    loaderPulse 1600ms ease-in-out infinite,
-    loaderGlow 2200ms ease-in-out infinite;
+  display: none;
 }
 
-body.app-ready .app-loader {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+.app-loader-logo-wrap::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+
+  background: linear-gradient(
+    120deg,
+    transparent 35%,
+    rgba(255, 244, 190, 0.95) 50%,
+    transparent 65%
+  );
+
+  transform: translateX(-120%);
+  animation: logoShimmer 1800ms ease-in-out infinite;
 }
 
-@keyframes loaderPulse {
-  0%, 100% {
-    transform: scale(1);
+@keyframes logoShimmer {
+  0% {
+    transform: translateX(-120%);
   }
 
-  50% {
-    transform: scale(1.035);
-  }
-}
-
-@keyframes loaderGlow {
-  0%, 100% {
-    filter:
-      drop-shadow(0 0 4px rgba(214, 178, 94, 0.25))
-      drop-shadow(0 0 12px rgba(214, 178, 94, 0.12));
+  45% {
+    transform: translateX(120%);
   }
 
-  50% {
-    filter:
-      drop-shadow(0 0 8px rgba(228, 198, 117, 0.55))
-      drop-shadow(0 0 24px rgba(228, 198, 117, 0.28));
+  100% {
+    transform: translateX(120%);
   }
 }
 
