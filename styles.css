@@ -74,13 +74,24 @@ p {
   vertical-align: baseline;
 }
 
-.group-selector-button:hover {
+.group-selector-button:not(:disabled):hover {
   background: #333;
 }
 
 .group-selector-arrow {
   color: #bbb;
   font-size: 11px;
+}
+
+.group-selector-button.disabled,
+.group-selector-button:disabled {
+  opacity: 0.75;
+  cursor: default;
+  pointer-events: none;
+}
+
+.group-selector-button.disabled .group-selector-arrow {
+  display: none;
 }
 
 .group-selector-dropdown {
