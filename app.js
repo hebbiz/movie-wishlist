@@ -36,6 +36,12 @@ const cancelProfileButton = document.getElementById("cancelProfileButton");
 const groupSelectorButton = document.getElementById("groupSelectorButton");
 const groupTypeText = document.getElementById("groupTypeText");
 const groupNameText = document.getElementById("groupNameText");
+const groupSelectorDropdown = document.getElementById("groupSelectorDropdown");
+const openGroupSettingsButton = document.getElementById("openGroupSettingsButton");
+const groupSettingsView = document.getElementById("groupSettingsView");
+const backFromGroupSettingsButton = document.getElementById("backFromGroupSettingsButton");
+const groupSettingsName = document.getElementById("groupSettingsName");
+const groupSettingsType = document.getElementById("groupSettingsType");
 const mainView = document.getElementById("mainView");
 const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
@@ -135,6 +141,59 @@ function renderCurrentGroupInfo() {
   groupTypeText.textContent = getGroupTypeLabel(currentGroup.type);
   groupNameText.textContent = currentGroup.name || "";
 }
+
+function openGroupSettingsView() {
+  mainView.classList.remove("active");
+  mykolaView.classList.remove("active");
+  groupSettingsView.classList.add("active");
+
+  groupSelectorDropdown.style.display = "none";
+
+  renderGroupSettings();
+
+  window.scrollTo({
+    top: groupSettingsView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
+function renderGroupSettings() {
+  if (!currentGroup) {
+    groupSettingsName.textContent = "Групу не знайдено";
+    groupSettingsType.textContent = "";
+    return;
+  }
+
+  groupSettingsName.textContent =
+    getGroupTypeLabel(currentGroup.type) + " " + currentGroup.name;
+
+  groupSettingsType.textContent =
+    "Тип групи: " + currentGroup.type;
+}
+
+function backToMainView() {
+  groupSettingsView.classList.remove("active");
+  mykolaView.classList.remove("active");
+  mainView.classList.add("active");
+
+  window.scrollTo({
+    top: mainView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
+groupSelectorButton.addEventListener("click", () => {
+  groupSelectorDropdown.style.display =
+    groupSelectorDropdown.style.display === "block" ? "none" : "block";
+});
+
+openGroupSettingsButton.addEventListener("click", () => {
+  openGroupSettingsView();
+});
+
+backFromGroupSettingsButton.addEventListener("click", () => {
+  backToMainView();
+});
 
 function isAnonymous() {
   return !currentUser;
@@ -238,11 +297,13 @@ function applyAccessLevel() {
   if (isAnonymous()) {
     mainView.style.display = "none";
     mykolaView.style.display = "none";
+    groupSettingsView.style.display = "none";
     return;
   }
 
   mainView.style.display = "";
   mykolaView.style.display = "";
+  groupSettingsView.style.display = "";
 }
 
 async function ensureVisitorMembership() {
@@ -1620,6 +1681,7 @@ function clearMykolaFinishedState() {
 
 function openMykolaView() {
   mainView.classList.remove("active");
+  groupSettingsView.classList.remove("active");
 
   if (mykolaConversationFinished) {
     resetMykolaChat();
@@ -2010,6 +2072,14 @@ document.addEventListener("click", (event) => {
   if (!clickedInsideUserMenu) {
     userMenuDropdown.style.display = "none";
   }
+
+  const clickedInsideGroupSelector =
+    event.target.closest(".site-subtitle");
+
+  if (!clickedInsideGroupSelector) {
+    groupSelectorDropdown.style.display = "none";
+  }
+  
 });
 
 saveProfileButton.addEventListener("click", async () => {
