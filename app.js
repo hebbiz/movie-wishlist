@@ -107,12 +107,24 @@ async function updateAuthUI() {
   }
 }
 
-function getGroupTypeLabel(groupType) {
+function getGroupTypePossessiveLabel(groupType) {
   const labels = {
     family: "сімʼї",
+    friends: "друзів",
+    community: "спільноти",
   };
 
   return labels[groupType] || "групи";
+}
+
+function getGroupTypeNominativeLabel(groupType) {
+  const labels = {
+    family: "сімʼя",
+    friends: "друзі",
+    community: "спільнота",
+  };
+
+  return labels[groupType] || "група";
 }
 
 async function loadCurrentGroup() {
@@ -138,7 +150,8 @@ function renderCurrentGroupInfo() {
     return;
   }
 
-  groupTypeText.textContent = getGroupTypeLabel(currentGroup.type);
+  groupTypeText.textContent =
+  getGroupTypePossessiveLabel(currentGroup.type);
   groupNameText.textContent = currentGroup.name || "";
 }
 
@@ -148,6 +161,8 @@ function openGroupSettingsView() {
   groupSettingsView.classList.add("active");
 
   groupSelectorDropdown.style.display = "none";
+  groupSelectorButton.disabled = true;
+  groupSelectorButton.classList.add("disabled");
 
   renderGroupSettings();
 
@@ -164,8 +179,11 @@ function renderGroupSettings() {
     return;
   }
 
-  groupSettingsName.textContent =
-    getGroupTypeLabel(currentGroup.type) + " " + currentGroup.name;
+  groupSettingsName.innerHTML = `
+  ${getGroupTypeNominativeLabel(currentGroup.type)}
+  ${currentGroup.name}
+  <span class="group-current-badge">Поточна</span>
+`;
 
   groupSettingsType.textContent =
     "Тип групи: " + currentGroup.type;
@@ -175,6 +193,8 @@ function backToMainView() {
   groupSettingsView.classList.remove("active");
   mykolaView.classList.remove("active");
   mainView.classList.add("active");
+  groupSelectorButton.disabled = false;
+  groupSelectorButton.classList.remove("disabled");
 
   window.scrollTo({
     top: mainView.offsetTop - 20,
@@ -182,12 +202,15 @@ function backToMainView() {
   });
 }
 
-groupSelectorButton.addEventListener("click", () => {
+groupSelectorButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+
   groupSelectorDropdown.style.display =
     groupSelectorDropdown.style.display === "block" ? "none" : "block";
 });
 
-openGroupSettingsButton.addEventListener("click", () => {
+openGroupSettingsButton.addEventListener("click", (event) => {
+  event.stopPropagation();
   openGroupSettingsView();
 });
 
@@ -2074,7 +2097,7 @@ document.addEventListener("click", (event) => {
   }
 
   const clickedInsideGroupSelector =
-    event.target.closest(".site-subtitle");
+    event.target.closest(".group-selector-wrapper");
 
   if (!clickedInsideGroupSelector) {
     groupSelectorDropdown.style.display = "none";

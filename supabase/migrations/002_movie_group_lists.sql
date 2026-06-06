@@ -122,3 +122,18 @@ drop column if exists owned_medium,
 drop column if exists purchase_url,
 drop column if exists added_by;
 
+-- Allow Users to Read Their Groups
+
+create policy "Group members can read their groups"
+on public.groups
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.group_members gm
+    where gm.group_id = groups.id
+      and gm.user_id = auth.uid()
+  )
+);
+
