@@ -77,6 +77,66 @@ p {
   font-size: 11px;
 }
 
+.group-selector-dropdown {
+  display: none;
+  position: absolute;
+
+  left: 0;
+  top: 36px;
+
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 8px;
+  min-width: 220px;
+  z-index: 999;
+}
+
+.group-selector-dropdown button {
+  background: transparent;
+  color: #f4f4f4;
+  text-align: left;
+  margin-bottom: 0;
+}
+
+.group-selector-dropdown button:hover {
+  background: #333;
+}
+
+.site-subtitle {
+  position: relative;
+}
+
+.group-settings-panel {
+  max-width: 720px;
+  margin-top: 24px;
+}
+
+#backFromGroupSettingsButton {
+  max-width: 240px;
+  background: #2a2a2a;
+  color: #f4f4f4;
+}
+
+.group-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.group-settings-card {
+  background: #242424;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.group-settings-card p {
+  margin: 6px 0 0;
+  color: #aaa;
+}
+
 #authPanel {
   display: block;
   margin-bottom: 16px;
