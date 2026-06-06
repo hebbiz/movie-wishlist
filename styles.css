@@ -31,6 +31,19 @@ header {
   min-width: 0;
 }
 
+.site-logo-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-logo {
+  width: 52px;
+  height: 52px;
+  display: block;
+  flex-shrink: 0;
+}
+
 h1 {
   margin: 0;
   font-size: 36px;
