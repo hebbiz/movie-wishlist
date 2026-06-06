@@ -24,6 +24,8 @@ header {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+  position: relative;
+  z-index: 1000;
 }
 
 .site-title-block {
@@ -315,7 +317,7 @@ p {
   border-radius: 10px;
   padding: 8px;
   min-width: 220px;
-  z-index: 999;
+  z-index: 2000;
 }
 
 .user-menu-dropdown button {
@@ -1003,10 +1005,13 @@ button:hover {
 
 @media (max-width: 600px) {
 
-   #userMenuButton {
+  .user-menu {
+    transform: translateY(-3px);
+  }
+
+  #userMenuButton {
     width: 34px;
     height: 34px;
-    transform: translateY(-3px);
   }
 
   .site-logo-title {
