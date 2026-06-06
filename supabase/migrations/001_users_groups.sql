@@ -188,5 +188,19 @@ using (
   or user_id = auth.uid()
 );
 
+-- Profiles row-level access for group members
 
+create policy "profiles_select_visible_group_members"
+on public.profiles
+for select
+to authenticated
+using (
+  id = auth.uid()
+  or exists (
+    select 1
+    from public.group_members gm_target
+    where gm_target.user_id = profiles.id
+      and public.current_user_group_role(gm_target.group_id) in ('owner', 'member')
+  )
+);
 
