@@ -46,6 +46,11 @@ p {
   line-height: 1.45;
 }
 
+.group-selector-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .group-selector-button {
   width: auto;
 
@@ -82,7 +87,7 @@ p {
   position: absolute;
 
   left: 0;
-  top: 36px;
+  top: calc(100% + 8px);
 
   background: #222;
   border: 1px solid #333;
