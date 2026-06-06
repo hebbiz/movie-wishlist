@@ -37,6 +37,12 @@ const groupSelectorButton = document.getElementById("groupSelectorButton");
 const groupTypeText = document.getElementById("groupTypeText");
 const groupNameText = document.getElementById("groupNameText");
 const groupMembersList = document.getElementById("groupMembersList");
+const groupInfoMenuButton = document.getElementById("groupInfoMenuButton");
+const groupInfoMenuDropdown = document.getElementById("groupInfoMenuDropdown");
+const editGroupInfoButton = document.getElementById("editGroupInfoButton");
+const groupMembersMenuButton = document.getElementById("groupMembersMenuButton");
+const groupMembersMenuDropdown = document.getElementById("groupMembersMenuDropdown");
+const editGroupMembersButton = document.getElementById("editGroupMembersButton");
 const groupSelectorDropdown = document.getElementById("groupSelectorDropdown");
 const openGroupSettingsButton = document.getElementById("openGroupSettingsButton");
 const groupSettingsView = document.getElementById("groupSettingsView");
@@ -61,6 +67,7 @@ let currentUser = null;
 let currentRole = null;
 let currentGroupId = "2481bff1-a26f-4173-8a47-f1b16029079d";
 let currentGroup = null;
+let currentGroupMembers = [];
 
 async function updateAuthUI() {
   const {
@@ -174,6 +181,10 @@ function openGroupSettingsView() {
     top: groupSettingsView.offsetTop - 20,
     behavior: "smooth",
   });
+
+  groupInfoMenuDropdown.style.display = "none";
+  groupMembersMenuDropdown.style.display = "none";
+  
 }
 
 function renderGroupSettings() {
@@ -190,7 +201,7 @@ function renderGroupSettings() {
 `;
 
   groupSettingsType.textContent =
-    "Тип групи: " + currentGroup.type;
+  "Тип групи: " + getGroupTypeNominativeLabel(currentGroup.type);
 }
 
 async function loadCurrentGroupMembers() {
@@ -237,6 +248,34 @@ function renderGroupMembers() {
   });
 }
 
+groupInfoMenuButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  groupMembersMenuDropdown.style.display = "none";
+
+  groupInfoMenuDropdown.style.display =
+    groupInfoMenuDropdown.style.display === "block" ? "none" : "block";
+});
+
+groupMembersMenuButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  groupInfoMenuDropdown.style.display = "none";
+
+  groupMembersMenuDropdown.style.display =
+    groupMembersMenuDropdown.style.display === "block" ? "none" : "block";
+});
+
+editGroupInfoButton.addEventListener("click", () => {
+  groupInfoMenuDropdown.style.display = "none";
+  alert("Редагування групи додамо наступним кроком.");
+});
+
+editGroupMembersButton.addEventListener("click", () => {
+  groupMembersMenuDropdown.style.display = "none";
+  alert("Редагування учасників додамо наступним кроком.");
+});
+
 function backToMainView() {
   groupSettingsView.classList.remove("active");
   mykolaView.classList.remove("active");
@@ -248,6 +287,10 @@ function backToMainView() {
     top: mainView.offsetTop - 20,
     behavior: "smooth",
   });
+
+  groupInfoMenuDropdown.style.display = "none";
+  groupMembersMenuDropdown.style.display = "none";
+  
 }
 
 groupSelectorButton.addEventListener("click", (event) => {
@@ -2150,6 +2193,9 @@ document.addEventListener("click", (event) => {
   if (!clickedInsideGroupSelector) {
     groupSelectorDropdown.style.display = "none";
   }
+
+  groupInfoMenuDropdown.style.display = "none";
+  groupMembersMenuDropdown.style.display = "none";
   
 });
 
