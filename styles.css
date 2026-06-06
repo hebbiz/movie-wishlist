@@ -260,6 +260,21 @@ p {
   color: #aaa;
 }
 
+#groupSettingsName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.group-name-text {
+  display: inline-block;
+}
+
+.group-current-badge {
+  margin-left: 0;
+}
+
 .group-members-section {
   margin-top: 18px;
 }
