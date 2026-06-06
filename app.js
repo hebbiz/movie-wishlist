@@ -75,7 +75,9 @@ function showAppLoader() {
 }
 
 function hideAppLoader() {
-  document.body.classList.add("app-ready");
+  setTimeout(() => {
+    document.body.classList.add("app-ready");
+  }, 1000);
 }
 
 async function updateAuthUI() {
