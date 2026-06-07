@@ -304,6 +304,19 @@ p {
   gap: 8px;
 }
 
+.group-member-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-member-subsection h4 {
+  margin: 12px 0 2px;
+  color: #aaa;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .group-member-row {
   padding: 10px 12px;
   border-radius: 10px;

@@ -40,9 +40,6 @@ const groupMembersList = document.getElementById("groupMembersList");
 const groupInfoMenuButton = document.getElementById("groupInfoMenuButton");
 const groupInfoMenuDropdown = document.getElementById("groupInfoMenuDropdown");
 const editGroupInfoButton = document.getElementById("editGroupInfoButton");
-const groupMembersMenuButton = document.getElementById("groupMembersMenuButton");
-const groupMembersMenuDropdown = document.getElementById("groupMembersMenuDropdown");
-const editGroupMembersButton = document.getElementById("editGroupMembersButton");
 const groupSelectorDropdown = document.getElementById("groupSelectorDropdown");
 const openGroupSettingsButton = document.getElementById("openGroupSettingsButton");
 const groupSettingsView = document.getElementById("groupSettingsView");
@@ -194,7 +191,11 @@ function openGroupSettingsView() {
   });
 
   groupInfoMenuDropdown.style.display = "none";
-  groupMembersMenuDropdown.style.display = "none";
+  document
+  .querySelectorAll(".group-section-menu-dropdown")
+  .forEach((dropdown) => {
+    dropdown.style.display = "none";
+  });
   
 }
 
@@ -250,7 +251,41 @@ function renderGroupMembers() {
     return;
   }
 
-  currentGroupMembers.forEach((member) => {
+  const members = currentGroupMembers.filter(
+    (member) => member.role === "owner" || member.role === "member"
+  );
+
+  const visitors = currentGroupMembers.filter(
+    (member) => member.role === "visitor"
+  );
+
+  renderGroupMemberSection("Учасники", members, "member");
+  renderGroupMemberSection("Відвідувачі", visitors, "visitor");
+}
+
+function renderGroupMemberSection(title, members, roleType) {
+  if (members.length === 0) return;
+
+  const section = document.createElement("div");
+  section.className = "group-member-subsection";
+
+  section.innerHTML = `
+    <div class="group-members-header">
+      <h4>${title}</h4>
+
+      <div class="group-settings-menu">
+        <button class="menu-button group-section-menu-button" type="button">⋯</button>
+
+        <div class="menu-dropdown group-section-menu-dropdown">
+          <button type="button" data-invite-role="${roleType}">
+            Запросити нового
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  members.forEach((member) => {
     const name =
       member.profiles?.display_name ||
       "Користувач без імені";
@@ -259,26 +294,23 @@ function renderGroupMembers() {
     row.className = "group-member-row";
     row.textContent = name;
 
-    groupMembersList.appendChild(row);
+    section.appendChild(row);
   });
+
+  groupMembersList.appendChild(section);
 }
 
 groupInfoMenuButton.addEventListener("click", (event) => {
   event.stopPropagation();
 
-  groupMembersMenuDropdown.style.display = "none";
+  document
+  .querySelectorAll(".group-section-menu-dropdown")
+  .forEach((dropdown) => {
+    dropdown.style.display = "none";
+  });
 
   groupInfoMenuDropdown.style.display =
     groupInfoMenuDropdown.style.display === "block" ? "none" : "block";
-});
-
-groupMembersMenuButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-
-  groupInfoMenuDropdown.style.display = "none";
-
-  groupMembersMenuDropdown.style.display =
-    groupMembersMenuDropdown.style.display === "block" ? "none" : "block";
 });
 
 editGroupInfoButton.addEventListener("click", () => {
@@ -286,9 +318,50 @@ editGroupInfoButton.addEventListener("click", () => {
   alert("Редагування групи додамо наступним кроком.");
 });
 
-editGroupMembersButton.addEventListener("click", () => {
-  groupMembersMenuDropdown.style.display = "none";
-  alert("Редагування учасників додамо наступним кроком.");
+groupMembersList.addEventListener("click", (event) => {
+  const menuButton = event.target.closest(".group-section-menu-button");
+  const inviteButton = event.target.closest("[data-invite-role]");
+
+  if (menuButton) {
+    event.stopPropagation();
+
+    groupInfoMenuDropdown.style.display = "none";
+
+    const menu = menuButton
+      .closest(".group-settings-menu")
+      .querySelector(".group-section-menu-dropdown");
+
+    document
+      .querySelectorAll(".group-section-menu-dropdown")
+      .forEach((dropdown) => {
+        if (dropdown !== menu) {
+          dropdown.style.display = "none";
+        }
+      });
+
+    menu.style.display =
+      menu.style.display === "block" ? "none" : "block";
+
+    return;
+  }
+
+  if (inviteButton) {
+    event.stopPropagation();
+
+    const role = inviteButton.dataset.inviteRole;
+
+    document
+      .querySelectorAll(".group-section-menu-dropdown")
+      .forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
+
+    alert(
+      role === "member"
+        ? "Запрошення учасника додамо наступним кроком."
+        : "Запрошення відвідувача додамо наступним кроком."
+    );
+  }
 });
 
 function backToMainView() {
@@ -304,7 +377,11 @@ function backToMainView() {
   });
 
   groupInfoMenuDropdown.style.display = "none";
-  groupMembersMenuDropdown.style.display = "none";
+  document
+  .querySelectorAll(".group-section-menu-dropdown")
+  .forEach((dropdown) => {
+    dropdown.style.display = "none";
+  });
   
 }
 
@@ -2210,7 +2287,11 @@ document.addEventListener("click", (event) => {
   }
 
   groupInfoMenuDropdown.style.display = "none";
-  groupMembersMenuDropdown.style.display = "none";
+  document
+  .querySelectorAll(".group-section-menu-dropdown")
+  .forEach((dropdown) => {
+    dropdown.style.display = "none";
+  });
   
 });
 
