@@ -568,6 +568,12 @@ groupMembersList.addEventListener("click", async (event) => {
         }
       });
 
+    document
+      .querySelectorAll(".group-member-menu-dropdown")
+      .forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
+
     menu.style.display =
       menu.style.display === "block" ? "none" : "block";
 
