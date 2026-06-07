@@ -383,36 +383,72 @@ function renderGroupMemberSection(title, members, roleType) {
   if (members.length === 0) return;
 
   const section = document.createElement("div");
-  const menuHtml = isOwner()
-  ? `
-    <div class="group-settings-menu">
-      <button class="menu-button group-section-menu-button" type="button">⋯</button>
-
-      <div class="menu-dropdown group-section-menu-dropdown">
-        <button type="button" data-invite-role="${roleType}">
-          Запросити нового
-        </button>
-      </div>
-    </div>
-  `
-  : "";
   section.className = "group-member-subsection";
 
+  const menuHtml = isOwner()
+    ? `
+      <div class="group-settings-menu">
+        <button class="menu-button group-section-menu-button" type="button">⋯</button>
+
+        <div class="menu-dropdown group-section-menu-dropdown">
+          <button type="button" data-invite-role="${roleType}">
+            Запросити нового
+          </button>
+        </div>
+      </div>
+    `
+    : "";
+
   section.innerHTML = `
-  <div class="group-members-header">
-    <h4>${title}</h4>
-    ${menuHtml}
-  </div>
-`;
+    <div class="group-members-header">
+      <h4>${title}</h4>
+      ${menuHtml}
+    </div>
+  `;
 
   members.forEach((member) => {
     const name =
       member.profiles?.display_name ||
       "Користувач без імені";
 
+    const canManageMember =
+      isOwner() &&
+      member.role !== "owner";
+
     const row = document.createElement("div");
     row.className = "group-member-row";
-    row.textContent = name;
+
+    row.innerHTML = `
+      <span class="group-member-name">
+        ${escapeHtml(name)}
+      </span>
+
+      ${
+        canManageMember
+          ? `
+            <div class="group-member-menu">
+              <button
+                class="group-member-menu-button"
+                type="button"
+              >
+                ▾
+              </button>
+
+              <div class="menu-dropdown group-member-menu-dropdown">
+                <button
+                  type="button"
+                  class="delete-option"
+                  data-remove-member-id="${member.id}"
+                  data-remove-member-role="${member.role}"
+                >
+                  Видалити
+                </button>
+              </div>
+            </div>
+          `
+          : ""
+      }
+    `;
 
     section.appendChild(row);
   });
