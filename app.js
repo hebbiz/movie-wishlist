@@ -405,8 +405,6 @@ function renderGroupMembers() {
 }
 
 function renderGroupMemberSection(title, members, roleType) {
-  if (members.length === 0) return;
-
   const section = document.createElement("div");
   section.className = "group-member-subsection";
 
@@ -430,6 +428,17 @@ function renderGroupMemberSection(title, members, roleType) {
       ${menuHtml}
     </div>
   `;
+
+  if (members.length === 0) {
+    section.innerHTML += `
+      <p class="group-empty-note">
+        Поки нікого немає.
+      </p>
+    `;
+
+    groupMembersList.appendChild(section);
+    return;
+  }
 
   members.forEach((member) => {
     const name =
