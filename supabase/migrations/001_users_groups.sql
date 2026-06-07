@@ -235,6 +235,27 @@ on invitations(token);
 create index invitations_group_id_idx
 on invitations(group_id);
 
+-- Owner-Only Invitation Inserts
 
+create policy "Owners can create invitations"
+on invitations
+for insert
+with check (
+  exists (
+    select 1
+    from group_members
+    where group_members.group_id = invitations.group_id
+      and group_members.user_id = auth.uid()
+      and group_members.role = 'owner'
+  )
+);
+
+-- Read Access for Authenticated Users
+
+create policy "Authenticated users can read invitations"
+on invitations
+for select
+to authenticated
+using (true);
 
 
