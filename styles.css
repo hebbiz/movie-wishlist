@@ -371,6 +371,24 @@ p {
   color: #f4f4f4;
 }
 
+.group-member-menu-info {
+  padding: 8px 10px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 6px;
+}
+
+.group-member-menu-email {
+  color: #ddd;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.group-member-menu-subtitle {
+  margin-top: 4px;
+  color: #d6b25e;
+  font-size: 12px;
+}
+
 .group-settings-header,
 .group-members-header {
   display: flex;
