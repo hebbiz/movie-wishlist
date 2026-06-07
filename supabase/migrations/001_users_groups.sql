@@ -226,3 +226,8 @@ using (
 
 alter table group_members
 add column is_group_subscriber boolean not null default false;
+
+-- Add Required Email to Invitations
+
+alter table invitations
+add column email text not null;
