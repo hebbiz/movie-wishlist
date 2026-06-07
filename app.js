@@ -75,7 +75,9 @@ function showAppLoader() {
 }
 
 function hideAppLoader() {
-  document.body.classList.add("app-ready");
+  setTimeout(() => {
+    document.body.classList.add("app-ready");
+  }, 1000);
 }
 
 async function updateAuthUI() {
@@ -136,12 +138,12 @@ function getGroupTypePossessiveLabel(groupType) {
 
 function getGroupTypeNominativeLabel(groupType) {
   const labels = {
-    family: "сімʼя",
-    friends: "друзі",
-    community: "спільнота",
+    family: "Сімʼя",
+    friends: "Друзі",
+    community: "Спільнота",
   };
 
-  return labels[groupType] || "група";
+  return labels[groupType] || "Група";
 }
 
 async function loadCurrentGroup() {
@@ -204,13 +206,17 @@ function renderGroupSettings() {
   }
 
   groupSettingsName.innerHTML = `
-  ${getGroupTypeNominativeLabel(currentGroup.type)}
-  ${currentGroup.name}
-  <span class="group-current-badge">Поточна</span>
-`;
+    <span class="group-name-text">
+      ${getGroupTypeNominativeLabel(currentGroup.type)} ${currentGroup.name}
+    </span>
 
-  groupSettingsType.textContent =
-  "Тип групи: " + getGroupTypeNominativeLabel(currentGroup.type);
+    <span class="group-current-badge">
+      Поточна
+    </span>
+  `;
+
+  groupSettingsType.textContent = "";
+  groupSettingsType.style.display = "none";
 }
 
 async function loadCurrentGroupMembers() {

@@ -12,14 +12,16 @@
   <link rel="manifest" href="/site.webmanifest">
 </head>
 <body>
-  <main class="container">
-    <div id="appLoader" class="app-loader">
+  <div id="appLoader" class="app-loader">
+    <div class="app-loader-logo-wrap">
       <img
         src="/assets/logo/movie-wishlist-master-transparent.svg"
         alt="Movie Wishlist"
         class="app-loader-logo"
       />
     </div>
+  </div>
+  <main class="container">
     <header class="site-header">
       <div class="site-title-block">
 
@@ -97,7 +99,7 @@
       </button>
 
       <button id="cancelProfileButton" type="button">
-        ← Повернутись до списку
+        ← Повернутись
       </button>
     </section>
 
@@ -214,7 +216,9 @@
 
           <div class="group-settings-header">
             <div>
-              <strong id="groupSettingsName">Назва групи</strong>
+              <div id="groupSettingsName" class="group-settings-name">
+                Назва групи
+              </div>
               <p id="groupSettingsType">Тип групи</p>
             </div>
 
