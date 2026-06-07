@@ -641,7 +641,7 @@ sendInviteButton.addEventListener("click", async () => {
     return;
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
   
   if (!emailRegex.test(email)) {
     alert(
