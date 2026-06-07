@@ -664,7 +664,7 @@ sendInviteButton.addEventListener("click", async () => {
       email,
       role: pendingInviteRole,
       token,
-      invited_by: currentUser.id,
+      created_by: currentUser.id,
     });
 
   if (error) {
