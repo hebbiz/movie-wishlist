@@ -186,6 +186,7 @@ async function ensureUserMembership() {
       group_id: defaultGroupId,
       user_id: userId,
       role: "visitor",
+      is_group_subscriber: true,
     });
 
   currentGroupId = defaultGroupId;
@@ -342,6 +343,7 @@ async function loadCurrentGroupMembers() {
     .select(`
       id,
       role,
+      is_group_subscriber,
       profiles (
         display_name,
         email
@@ -435,6 +437,18 @@ function renderGroupMemberSection(title, members, roleType) {
               </button>
 
               <div class="menu-dropdown group-member-menu-dropdown">
+                <div class="group-member-menu-info">
+                  <div class="group-member-menu-email">
+                    ${escapeHtml(member.profiles?.email || "Email не вказано")}
+                  </div>
+
+                  ${
+                    member.is_group_subscriber
+                      ? `<div class="group-member-menu-subtitle">підписник групи</div>`
+                      : ""
+                  }
+                </div>
+
                 <button
                   type="button"
                   class="delete-option"
