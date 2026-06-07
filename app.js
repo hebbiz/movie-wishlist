@@ -106,12 +106,9 @@ async function ensureUserMembership() {
 
   const userId = session.user.id;
 
-  //
-  // 1. Спочатку перевіряємо invite token
-  //
-
   const params = new URLSearchParams(window.location.search);
-  const inviteToken = params.get("invite");
+  const inviteToken =
+    params.get("invite") || localStorage.getItem("pendingInviteToken");
 
   if (inviteToken) {
     const { data: invitation, error: invitationError } = await supabaseClient
@@ -121,17 +118,14 @@ async function ensureUserMembership() {
       .maybeSingle();
 
     if (invitationError) {
-      alert(
-        "Помилка читання запрошення\n\n" +
-        "Code: " + (invitationError.code || "N/A") + "\n" +
-        "Message: " + invitationError.message
-      );
-
+      alert("Помилка читання запрошення\n\n" + invitationError.message);
       throw invitationError;
     }
 
     if (!invitation) {
       alert("Запрошення не знайдено або вже використане.");
+      localStorage.removeItem("pendingInviteToken");
+      window.history.replaceState({}, document.title, window.location.pathname);
       return;
     }
 
@@ -144,76 +138,47 @@ async function ensureUserMembership() {
       return;
     }
 
-    if (invitation) {
-      const { data: existingMembership, error: existingMembershipError } =
-        await supabaseClient
-          .from("group_members")
-          .select("id")
-          .eq("group_id", invitation.group_id)
-          .eq("user_id", userId)
-          .maybeSingle();
+    const { data: existingMembership, error: existingMembershipError } =
+      await supabaseClient
+        .from("group_members")
+        .select("id")
+        .eq("group_id", invitation.group_id)
+        .eq("user_id", userId)
+        .maybeSingle();
 
-       if (existingMembershipError) {
-          alert(
-            "Помилка перевірки участі в групі\n\n" +
-            "Code: " + (existingMembershipError.code || "N/A") + "\n" +
-            "Message: " + existingMembershipError.message
-          );
-
-        throw existingMembershipError;
-      }
-
-      if (!existingMembership) {
-        const { error: membershipInsertError } = await supabaseClient
-          .from("group_members")
-          .insert({
-            group_id: invitation.group_id,
-            user_id: userId,
-            role: invitation.role,
-            is_group_subscriber: false,
-          });
-
-        if (membershipInsertError) {
-          alert(
-            "Помилка додавання користувача до групи\n\n" +
-            "Code: " + (membershipInsertError.code || "N/A") + "\n" +
-            "Message: " + membershipInsertError.message + "\n" +
-            "Details: " + (membershipInsertError.details || "No details")
-          );
-
-          throw membershipInsertError;
-        }
-      }
-
-      currentGroupId = invitation.group_id;
-
-      const { error: invitationDeleteError } = await supabaseClient
-        .from("invitations")
-        .delete()
-        .eq("id", invitation.id);
-
-      if (invitationDeleteError) {
-        alert(
-          "Користувача додано до групи, але запрошення не видалено\n\n" +
-          "Code: " + (invitationDeleteError.code || "N/A") + "\n" +
-          "Message: " + invitationDeleteError.message
-        );
-      }
-
-      window.history.replaceState(
-        {},
-        document.title,
-        window.location.pathname
-      );
-
-      return;
+    if (existingMembershipError) {
+      alert("Помилка перевірки участі в групі\n\n" + existingMembershipError.message);
+      throw existingMembershipError;
     }
-    
-  }
 
-  //
-  // 2. Чи є користувач хоча б в одній групі
-  //
+    if (!existingMembership) {
+      const { error: membershipInsertError } = await supabaseClient
+        .from("group_members")
+        .insert({
+          group_id: invitation.group_id,
+          user_id: userId,
+          role: invitation.role,
+          is_group_subscriber: false,
+        });
+
+      if (membershipInsertError) {
+        alert("Помилка додавання користувача до групи\n\n" + membershipInsertError.message);
+        throw membershipInsertError;
+      }
+    }
+
+    currentGroupId = invitation.group_id;
+
+    await supabaseClient
+      .from("invitations")
+      .delete()
+      .eq("id", invitation.id);
+
+    localStorage.removeItem("pendingInviteToken");
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    return;
+  }
 
   const { data: memberships, error: membershipsError } = await supabaseClient
     .from("group_members")
@@ -222,13 +187,7 @@ async function ensureUserMembership() {
     .limit(1);
 
   if (membershipsError) {
-    alert(
-      "Помилка перевірки груп користувача\n\n" +
-      "Code: " + (membershipsError.code || "N/A") + "\n" +
-      "Message: " + membershipsError.message + "\n" +
-      "Details: " + (membershipsError.details || "No details")
-    );
-
+    alert("Помилка перевірки груп користувача\n\n" + membershipsError.message);
     throw membershipsError;
   }
 
@@ -236,10 +195,6 @@ async function ensureUserMembership() {
     currentGroupId = memberships[0].group_id;
     return;
   }
-
-  //
-  // 3. Якщо ні — додаємо в default group
-  //
 
   const defaultGroupId = await getDefaultGroupId();
 
@@ -253,13 +208,7 @@ async function ensureUserMembership() {
     });
 
   if (defaultMembershipInsertError) {
-    alert(
-      "Помилка додавання користувача до default group\n\n" +
-      "Code: " + (defaultMembershipInsertError.code || "N/A") + "\n" +
-      "Message: " + defaultMembershipInsertError.message + "\n" +
-      "Details: " + (defaultMembershipInsertError.details || "No details")
-    );
-
+    alert("Помилка додавання користувача до default group\n\n" + defaultMembershipInsertError.message);
     throw defaultMembershipInsertError;
   }
 
@@ -913,10 +862,17 @@ function applyAccessLevel() {
 }
 
 loginButton.addEventListener("click", async () => {
+  const params = new URLSearchParams(window.location.search);
+  const inviteToken = params.get("invite");
+
+  if (inviteToken) {
+    localStorage.setItem("pendingInviteToken", inviteToken);
+  }
+
   await supabaseClient.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: window.location.href,
+      redirectTo: window.location.origin + window.location.pathname,
     },
   });
 });
