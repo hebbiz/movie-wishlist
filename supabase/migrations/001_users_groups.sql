@@ -204,3 +204,20 @@ using (
   )
 );
 
+-- Owner-restricted group member deletes
+
+create policy "Owners can remove group members"
+on public.group_members
+for delete
+to authenticated
+using (
+  role <> 'owner'
+  and exists (
+    select 1
+    from public.group_members owner_membership
+    where owner_membership.group_id = group_members.group_id
+      and owner_membership.user_id = auth.uid()
+      and owner_membership.role = 'owner'
+  )
+);
+
