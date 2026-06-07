@@ -269,3 +269,57 @@ using (
   lower(email) = lower(auth.jwt() ->> 'email')
 );
 
+-- Invitations Management Table
+
+create table invitations (
+  id uuid primary key default gen_random_uuid(),
+
+  group_id uuid not null references groups(id) on delete cascade,
+
+  role text not null
+    check (role in ('member', 'visitor')),
+
+  token text not null unique,
+
+  created_by uuid not null references profiles(id),
+
+  created_at timestamptz not null default now(),
+
+  expires_at timestamptz,
+
+  used_by uuid references profiles(id),
+  used_at timestamptz
+);
+
+-- Indexes for invitations token and group
+
+create index invitations_token_idx
+on invitations(token);
+
+create index invitations_group_id_idx
+on invitations(group_id);
+
+-- Owner-Only Invitation Inserts
+
+create policy "Owners can create invitations"
+on invitations
+for insert
+with check (
+  exists (
+    select 1
+    from group_members
+    where group_members.group_id = invitations.group_id
+      and group_members.user_id = auth.uid()
+      and group_members.role = 'owner'
+  )
+);
+
+-- Read Access for Authenticated Users
+
+create policy "Authenticated users can read invitations"
+on invitations
+for select
+to authenticated
+using (true);
+
+
