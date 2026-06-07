@@ -46,6 +46,11 @@ const groupSettingsView = document.getElementById("groupSettingsView");
 const backFromGroupSettingsButton = document.getElementById("backFromGroupSettingsButton");
 const groupSettingsName = document.getElementById("groupSettingsName");
 const groupSettingsType = document.getElementById("groupSettingsType");
+const invitePanel = document.getElementById("invitePanel");
+const invitePanelTitle = document.getElementById("invitePanelTitle");
+const inviteEmailInput = document.getElementById("inviteEmailInput");
+const sendInviteButton = document.getElementById("sendInviteButton");
+const cancelInviteButton = document.getElementById("cancelInviteButton");
 const mainView = document.getElementById("mainView");
 const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
@@ -62,10 +67,11 @@ let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
 let currentUser = null;
 let currentRole = null;
-let currentGroupId = "2481bff1-a26f-4173-8a47-f1b16029079d";
 let currentGroup = null;
+let currentGroupId = null;
 let currentGroupMembers = [];
 let appHasInitialized = false;
+let pendingInviteRole = null;
 
 function showAppLoader() {
   document.body.classList.remove("app-ready");
@@ -75,6 +81,114 @@ function hideAppLoader() {
   setTimeout(() => {
     document.body.classList.add("app-ready");
   }, 1000);
+}
+
+async function getDefaultGroupId() {
+  const { data, error } = await supabaseClient
+    .from("groups")
+    .select("id")
+    .eq("is_default", true)
+    .single();
+
+  if (error || !data) {
+    throw new Error("Default group not found");
+  }
+
+  return data.id;
+}
+
+async function ensureUserMembership() {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session?.user) return;
+
+  const userId = session.user.id;
+
+  //
+  // 1. Спочатку перевіряємо invite token
+  //
+
+  const params = new URLSearchParams(window.location.search);
+  const inviteToken = params.get("invite");
+
+  if (inviteToken) {
+    const { data: invitation } = await supabaseClient
+      .from("invitations")
+      .select("*")
+      .eq("token", inviteToken)
+      .maybeSingle();
+
+    if (
+        invitation &&
+        invitation.email.toLowerCase() ===
+        session.user.email.toLowerCase()
+      ) {
+      const { data: existingMembership } = await supabaseClient
+        .from("group_members")
+        .select("id")
+        .eq("group_id", invitation.group_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!existingMembership) {
+        await supabaseClient
+          .from("group_members")
+          .insert({
+            group_id: invitation.group_id,
+            user_id: userId,
+            role: invitation.role,
+          });
+      }
+
+      currentGroupId = invitation.group_id;
+
+      await supabaseClient
+        .from("invitations")
+        .delete()
+        .eq("id", invitation.id);
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
+      );
+
+      return;
+    }
+  }
+
+  //
+  // 2. Чи є користувач хоча б в одній групі
+  //
+
+  const { data: memberships } = await supabaseClient
+    .from("group_members")
+    .select("group_id")
+    .eq("user_id", userId)
+    .limit(1);
+
+  if (memberships?.length) {
+    currentGroupId = memberships[0].group_id;
+    return;
+  }
+
+  //
+  // 3. Якщо ні — додаємо в default group
+  //
+
+  const defaultGroupId = await getDefaultGroupId();
+
+  await supabaseClient
+    .from("group_members")
+    .insert({
+      group_id: defaultGroupId,
+      user_id: userId,
+      role: "visitor",
+    });
+
+  currentGroupId = defaultGroupId;
 }
 
 async function updateAuthUI() {
@@ -362,12 +476,89 @@ groupMembersList.addEventListener("click", (event) => {
         dropdown.style.display = "none";
       });
 
-    alert(
+    pendingInviteRole = role;
+
+    invitePanelTitle.textContent =
       role === "member"
-        ? "Запрошення учасника додамо наступним кроком."
-        : "Запрошення відвідувача додамо наступним кроком."
-    );
+        ? "Запросити учасника"
+        : "Запросити відвідувача";
+
+    inviteEmailInput.value = "";
+    invitePanel.style.display = "block";
+
+    window.scrollTo({
+      top: invitePanel.offsetTop - 20,
+      behavior: "smooth",
+    });
   }
+});
+
+cancelInviteButton.addEventListener("click", () => {
+  invitePanel.style.display = "none";
+  inviteEmailInput.value = "";
+  pendingInviteRole = null;
+});
+
+sendInviteButton.addEventListener("click", async () => {
+  if (!isOwner()) {
+    showAccessDenied(accessMessages.invite);
+    return;
+  }
+
+  const email = inviteEmailInput.value.trim().toLowerCase();
+
+  if (!email) {
+    alert("Вкажіть email користувача.");
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  if (!emailRegex.test(email)) {
+    alert(
+      "Вкажіть email у форматі user@gmail.com."
+    );
+  return;
+  }
+
+  if (!pendingInviteRole) {
+    alert("Роль запрошення не визначена.");
+    return;
+  }
+
+  const token = crypto.randomUUID();
+
+  const { error } = await supabaseClient
+    .from("invitations")
+    .insert({
+      group_id: currentGroupId,
+      email,
+      role: pendingInviteRole,
+      token,
+      invited_by: currentUser.id,
+    });
+
+  if (error) {
+    alert(
+      "Помилка створення запрошення\n\n" +
+      "Message: " + error.message
+    );
+    return;
+  }
+
+  const inviteUrl =
+    `${window.location.origin}?invite=${token}`;
+
+  await navigator.clipboard.writeText(inviteUrl);
+
+  alert(
+    "Запрошення створено. Посилання скопійовано:\n\n" +
+    inviteUrl
+  );
+
+  invitePanel.style.display = "none";
+  inviteEmailInput.value = "";
+  pendingInviteRole = null;
 });
 
 function backToMainView() {
@@ -516,36 +707,6 @@ function applyAccessLevel() {
   mainView.style.display = "";
   mykolaView.style.display = "";
   groupSettingsView.style.display = "";
-}
-
-async function ensureVisitorMembership() {
-  const {
-    data: { session },
-  } = await supabaseClient.auth.getSession();
-
-  if (!session?.user) return;
-
-  const { data } = await supabaseClient
-    .from("group_members")
-    .select("id")
-    .eq("group_id", currentGroupId)
-    .eq("user_id", session.user.id)
-    .maybeSingle();
-
-  if (data) return;
-
-  const { error: insertError } = await supabaseClient
-  .from("group_members")
-  .insert({
-    group_id: currentGroupId,
-    user_id: session.user.id,
-    role: "visitor",
-  });
-
-  if (insertError) {
-    console.error("Visitor insert error:", insertError);
-  }
-
 }
 
 loginButton.addEventListener("click", async () => {
@@ -2351,7 +2512,7 @@ async function initApp() {
 
   try {
     await updateAuthUI();
-    await ensureVisitorMembership();
+    await ensureUserMembership();
     await loadCurrentRole();
 
     if (!isAnonymous()) {
