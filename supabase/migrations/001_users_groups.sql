@@ -221,3 +221,8 @@ using (
   )
 );
 
+
+-- Add Group Subscriber Flag
+
+alter table group_members
+add column is_group_subscriber boolean not null default false;
