@@ -114,40 +114,91 @@ async function ensureUserMembership() {
   const inviteToken = params.get("invite");
 
   if (inviteToken) {
-    const { data: invitation } = await supabaseClient
+    const { data: invitation, error: invitationError } = await supabaseClient
       .from("invitations")
       .select("*")
       .eq("token", inviteToken)
       .maybeSingle();
 
-    if (
-        invitation &&
-        invitation.email.toLowerCase() ===
-        session.user.email.toLowerCase()
-      ) {
-      const { data: existingMembership } = await supabaseClient
-        .from("group_members")
-        .select("id")
-        .eq("group_id", invitation.group_id)
-        .eq("user_id", userId)
-        .maybeSingle();
+    if (invitationError) {
+      alert(
+        "Помилка читання запрошення\n\n" +
+        "Code: " + (invitationError.code || "N/A") + "\n" +
+        "Message: " + invitationError.message
+      );
+
+      throw invitationError;
+    }
+
+    if (!invitation) {
+      alert("Запрошення не знайдено або вже використане.");
+      return;
+    }
+
+    if (invitation.email.toLowerCase() !== session.user.email.toLowerCase()) {
+      alert(
+        "Email акаунта не збігається з email у запрошенні.\n\n" +
+        "Запрошення для: " + invitation.email + "\n" +
+        "Ви увійшли як: " + session.user.email
+      );
+      return;
+    }
+
+    if (invitation) {
+      const { data: existingMembership, error: existingMembershipError } =
+        await supabaseClient
+          .from("group_members")
+          .select("id")
+          .eq("group_id", invitation.group_id)
+          .eq("user_id", userId)
+          .maybeSingle();
+
+       if (existingMembershipError) {
+          alert(
+            "Помилка перевірки участі в групі\n\n" +
+            "Code: " + (existingMembershipError.code || "N/A") + "\n" +
+            "Message: " + existingMembershipError.message
+          );
+
+        throw existingMembershipError;
+      }
 
       if (!existingMembership) {
-        await supabaseClient
+        const { error: membershipInsertError } = await supabaseClient
           .from("group_members")
           .insert({
             group_id: invitation.group_id,
             user_id: userId,
             role: invitation.role,
+            is_group_subscriber: false,
           });
+
+        if (membershipInsertError) {
+          alert(
+            "Помилка додавання користувача до групи\n\n" +
+            "Code: " + (membershipInsertError.code || "N/A") + "\n" +
+            "Message: " + membershipInsertError.message + "\n" +
+            "Details: " + (membershipInsertError.details || "No details")
+          );
+
+          throw membershipInsertError;
+        }
       }
 
       currentGroupId = invitation.group_id;
 
-      await supabaseClient
+      const { error: invitationDeleteError } = await supabaseClient
         .from("invitations")
         .delete()
         .eq("id", invitation.id);
+
+      if (invitationDeleteError) {
+        alert(
+          "Користувача додано до групи, але запрошення не видалено\n\n" +
+          "Code: " + (invitationDeleteError.code || "N/A") + "\n" +
+          "Message: " + invitationDeleteError.message
+        );
+      }
 
       window.history.replaceState(
         {},
@@ -157,17 +208,29 @@ async function ensureUserMembership() {
 
       return;
     }
+    
   }
 
   //
   // 2. Чи є користувач хоча б в одній групі
   //
 
-  const { data: memberships } = await supabaseClient
+  const { data: memberships, error: membershipsError } = await supabaseClient
     .from("group_members")
     .select("group_id")
     .eq("user_id", userId)
     .limit(1);
+
+  if (membershipsError) {
+    alert(
+      "Помилка перевірки груп користувача\n\n" +
+      "Code: " + (membershipsError.code || "N/A") + "\n" +
+      "Message: " + membershipsError.message + "\n" +
+      "Details: " + (membershipsError.details || "No details")
+    );
+
+    throw membershipsError;
+  }
 
   if (memberships?.length) {
     currentGroupId = memberships[0].group_id;
@@ -180,7 +243,7 @@ async function ensureUserMembership() {
 
   const defaultGroupId = await getDefaultGroupId();
 
-  await supabaseClient
+  const { error: defaultMembershipInsertError } = await supabaseClient
     .from("group_members")
     .insert({
       group_id: defaultGroupId,
@@ -188,6 +251,17 @@ async function ensureUserMembership() {
       role: "visitor",
       is_group_subscriber: true,
     });
+
+  if (defaultMembershipInsertError) {
+    alert(
+      "Помилка додавання користувача до default group\n\n" +
+      "Code: " + (defaultMembershipInsertError.code || "N/A") + "\n" +
+      "Message: " + defaultMembershipInsertError.message + "\n" +
+      "Details: " + (defaultMembershipInsertError.details || "No details")
+    );
+
+    throw defaultMembershipInsertError;
+  }
 
   currentGroupId = defaultGroupId;
 }
@@ -842,7 +916,7 @@ loginButton.addEventListener("click", async () => {
   await supabaseClient.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: window.location.href,
     },
   });
 });
