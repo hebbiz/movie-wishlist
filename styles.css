@@ -304,19 +304,6 @@ p {
   gap: 8px;
 }
 
-.group-member-subsection {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.group-member-subsection h4 {
-  margin: 12px 0 2px;
-  color: #aaa;
-  font-size: 13px;
-  font-weight: 700;
-}
-
 .group-member-row {
   padding: 10px 12px;
   border-radius: 10px;
@@ -328,13 +315,19 @@ p {
 .group-members-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
 }
 
 .group-members-header {
   align-items: center;
   margin-bottom: 10px;
+}
+
+.group-member-subsection h4 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1;
 }
 
 .group-settings-menu {
@@ -347,6 +340,10 @@ p {
   height: 34px;
   padding: 0;
   margin-bottom: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   background: #2a2a2a;
   color: #f4f4f4;
