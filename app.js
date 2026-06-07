@@ -556,6 +556,12 @@ groupMembersList.addEventListener("click", async (event) => {
 
     groupInfoMenuDropdown.style.display = "none";
 
+    document
+      .querySelectorAll(".group-member-menu-dropdown")
+      .forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
+
     const menu = menuButton
       .closest(".group-settings-menu")
       .querySelector(".group-section-menu-dropdown");
@@ -566,12 +572,6 @@ groupMembersList.addEventListener("click", async (event) => {
         if (dropdown !== menu) {
           dropdown.style.display = "none";
         }
-      });
-
-    document
-      .querySelectorAll(".group-member-menu-dropdown")
-      .forEach((dropdown) => {
-        dropdown.style.display = "none";
       });
 
     menu.style.display =
