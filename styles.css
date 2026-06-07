@@ -837,8 +837,8 @@ button:hover {
   top: calc(100% + 6px);
   bottom: auto;
 
-  min-width: 140px;
-  width: 140px;
+  min-width: 200px;
+  max-width: 260px;
   padding: 6px;
 
   background: #222;
