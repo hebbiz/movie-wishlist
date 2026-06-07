@@ -248,3 +248,24 @@ with check (
       and i.role = group_members.role
   )
 );
+
+-- Email-Based Invitation Read Policy
+
+create policy "Users can read invitations for their email"
+on public.invitations
+for select
+to authenticated
+using (
+  lower(email) = lower(auth.jwt() ->> 'email')
+);
+
+-- Restrict Deletion of Invitations to Email Owner
+
+create policy "Users can delete used invitations for their email"
+on public.invitations
+for delete
+to authenticated
+using (
+  lower(email) = lower(auth.jwt() ->> 'email')
+);
+
