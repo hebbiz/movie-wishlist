@@ -456,6 +456,39 @@ function renderGroupMemberSection(title, members, roleType) {
   groupMembersList.appendChild(section);
 }
 
+async function removeGroupMember(memberId, memberRole) {
+  if (!isOwner()) {
+    showAccessDenied(accessMessages.delete);
+    return;
+  }
+
+  if (memberRole === "owner") {
+    alert("Власника групи не можна видалити.");
+    return;
+  }
+
+  const confirmed = confirm("Видалити користувача з цієї групи?");
+
+  if (!confirmed) return;
+
+  const { error } = await supabaseClient
+    .from("group_members")
+    .delete()
+    .eq("id", memberId)
+    .eq("group_id", currentGroupId);
+
+  if (error) {
+    alert(
+      "Помилка видалення користувача\n\n" +
+      "Message: " + error.message
+    );
+    return;
+  }
+
+  await loadCurrentGroupMembers();
+  renderGroupMembers();
+}
+
 groupInfoMenuButton.addEventListener("click", (event) => {
   event.stopPropagation();
 
@@ -474,10 +507,50 @@ editGroupInfoButton.addEventListener("click", () => {
   alert("Редагування групи додамо наступним кроком.");
 });
 
-groupMembersList.addEventListener("click", (event) => {
+groupMembersList.addEventListener("click", async (event) => {
+  const memberMenuButton = event.target.closest(".group-member-menu-button");
+  const removeMemberButton = event.target.closest("[data-remove-member-id]");
   const menuButton = event.target.closest(".group-section-menu-button");
   const inviteButton = event.target.closest("[data-invite-role]");
 
+  if (memberMenuButton) {
+    event.stopPropagation();
+
+    groupInfoMenuDropdown.style.display = "none";
+
+    document
+      .querySelectorAll(".group-section-menu-dropdown")
+      .forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
+
+    const menu = memberMenuButton
+      .closest(".group-member-menu")
+      .querySelector(".group-member-menu-dropdown");
+
+    document.querySelectorAll(".group-member-menu-dropdown").forEach((dropdown) => {
+      if (dropdown !== menu) {
+        dropdown.style.display = "none";
+      }
+    });
+
+    menu.style.display =
+      menu.style.display === "block" ? "none" : "block";
+
+    return;
+  }
+
+  if (removeMemberButton) {
+    event.stopPropagation();
+
+    await removeGroupMember(
+      removeMemberButton.dataset.removeMemberId,
+      removeMemberButton.dataset.removeMemberRole
+    );
+
+    return;
+  }
+  
   if (menuButton) {
     event.stopPropagation();
 
@@ -2492,6 +2565,12 @@ document.addEventListener("click", (event) => {
   groupInfoMenuDropdown.style.display = "none";
   document
   .querySelectorAll(".group-section-menu-dropdown")
+  .forEach((dropdown) => {
+    dropdown.style.display = "none";
+  });
+
+  document
+  .querySelectorAll(".group-member-menu-dropdown")
   .forEach((dropdown) => {
     dropdown.style.display = "none";
   });
