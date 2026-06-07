@@ -317,6 +317,37 @@ p {
   color: #f4f4f4;
 }
 
+.group-member-menu {
+  position: relative;
+}
+
+.group-member-menu-dropdown {
+  right: 0;
+  left: auto;
+  top: calc(100% + 4px);
+}
+
+.group-member-menu-button {
+  width: 28px;
+  height: 28px;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+
+  color: #999;
+  cursor: pointer;
+}
+
+.group-member-menu-button:hover {
+  color: #f4f4f4;
+}
+
 .group-settings-header,
 .group-members-header {
   display: flex;
