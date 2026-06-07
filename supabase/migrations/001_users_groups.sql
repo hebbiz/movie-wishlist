@@ -204,6 +204,70 @@ using (
   )
 );
 
+-- Owner-restricted group member deletes
+
+create policy "Owners can remove group members"
+on public.group_members
+for delete
+to authenticated
+using (
+  role <> 'owner'
+  and exists (
+    select 1
+    from public.group_members owner_membership
+    where owner_membership.group_id = group_members.group_id
+      and owner_membership.user_id = auth.uid()
+      and owner_membership.role = 'owner'
+  )
+);
+
+
+-- Add Group Subscriber Flag
+
+alter table group_members
+add column is_group_subscriber boolean not null default false;
+
+-- Add Required Email to Invitations
+
+alter table invitations
+add column email text not null;
+
+-- User-Scoped Invitation Acceptance Policy
+
+create policy "Users can accept their own invitations"
+on public.group_members
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+  and exists (
+    select 1
+    from public.invitations i
+    where i.group_id = group_members.group_id
+      and lower(i.email) = lower(auth.jwt() ->> 'email')
+      and i.role = group_members.role
+  )
+);
+
+-- Email-Based Invitation Read Policy
+
+create policy "Users can read invitations for their email"
+on public.invitations
+for select
+to authenticated
+using (
+  lower(email) = lower(auth.jwt() ->> 'email')
+);
+
+-- Restrict Deletion of Invitations to Email Owner
+
+create policy "Users can delete used invitations for their email"
+on public.invitations
+for delete
+to authenticated
+using (
+  lower(email) = lower(auth.jwt() ->> 'email')
+);
 
 -- Invitations Management Table
 

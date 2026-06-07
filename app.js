@@ -46,6 +46,11 @@ const groupSettingsView = document.getElementById("groupSettingsView");
 const backFromGroupSettingsButton = document.getElementById("backFromGroupSettingsButton");
 const groupSettingsName = document.getElementById("groupSettingsName");
 const groupSettingsType = document.getElementById("groupSettingsType");
+const invitePanel = document.getElementById("invitePanel");
+const invitePanelTitle = document.getElementById("invitePanelTitle");
+const inviteEmailInput = document.getElementById("inviteEmailInput");
+const sendInviteButton = document.getElementById("sendInviteButton");
+const cancelInviteButton = document.getElementById("cancelInviteButton");
 const mainView = document.getElementById("mainView");
 const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
@@ -62,10 +67,11 @@ let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
 let currentUser = null;
 let currentRole = null;
-let currentGroupId = "2481bff1-a26f-4173-8a47-f1b16029079d";
 let currentGroup = null;
+let currentGroupId = null;
 let currentGroupMembers = [];
 let appHasInitialized = false;
+let pendingInviteRole = null;
 
 function showAppLoader() {
   document.body.classList.remove("app-ready");
@@ -75,6 +81,138 @@ function hideAppLoader() {
   setTimeout(() => {
     document.body.classList.add("app-ready");
   }, 1000);
+}
+
+async function getDefaultGroupId() {
+  const { data, error } = await supabaseClient
+    .from("groups")
+    .select("id")
+    .eq("is_default", true)
+    .single();
+
+  if (error || !data) {
+    throw new Error("Default group not found");
+  }
+
+  return data.id;
+}
+
+async function ensureUserMembership() {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  if (!session?.user) return;
+
+  const userId = session.user.id;
+
+  const params = new URLSearchParams(window.location.search);
+  const inviteToken =
+    params.get("invite") || localStorage.getItem("pendingInviteToken");
+
+  if (inviteToken) {
+    const { data: invitation, error: invitationError } = await supabaseClient
+      .from("invitations")
+      .select("*")
+      .eq("token", inviteToken)
+      .maybeSingle();
+
+    if (invitationError) {
+      alert("Помилка читання запрошення\n\n" + invitationError.message);
+      throw invitationError;
+    }
+
+    if (!invitation) {
+      alert("Запрошення не знайдено або вже використане.");
+      localStorage.removeItem("pendingInviteToken");
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (invitation.email.toLowerCase() !== session.user.email.toLowerCase()) {
+      alert(
+        "Email акаунта не збігається з email у запрошенні.\n\n" +
+        "Запрошення для: " + invitation.email + "\n" +
+        "Ви увійшли як: " + session.user.email
+      );
+      return;
+    }
+
+    const { data: existingMembership, error: existingMembershipError } =
+      await supabaseClient
+        .from("group_members")
+        .select("id")
+        .eq("group_id", invitation.group_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+    if (existingMembershipError) {
+      alert("Помилка перевірки участі в групі\n\n" + existingMembershipError.message);
+      throw existingMembershipError;
+    }
+
+    if (!existingMembership) {
+      const { error: membershipInsertError } = await supabaseClient
+        .from("group_members")
+        .insert({
+          group_id: invitation.group_id,
+          user_id: userId,
+          role: invitation.role,
+          is_group_subscriber: false,
+        });
+
+      if (membershipInsertError) {
+        alert("Помилка додавання користувача до групи\n\n" + membershipInsertError.message);
+        throw membershipInsertError;
+      }
+    }
+
+    currentGroupId = invitation.group_id;
+
+    await supabaseClient
+      .from("invitations")
+      .delete()
+      .eq("id", invitation.id);
+
+    localStorage.removeItem("pendingInviteToken");
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    return;
+  }
+
+  const { data: memberships, error: membershipsError } = await supabaseClient
+    .from("group_members")
+    .select("group_id")
+    .eq("user_id", userId)
+    .limit(1);
+
+  if (membershipsError) {
+    alert("Помилка перевірки груп користувача\n\n" + membershipsError.message);
+    throw membershipsError;
+  }
+
+  if (memberships?.length) {
+    currentGroupId = memberships[0].group_id;
+    return;
+  }
+
+  const defaultGroupId = await getDefaultGroupId();
+
+  const { error: defaultMembershipInsertError } = await supabaseClient
+    .from("group_members")
+    .insert({
+      group_id: defaultGroupId,
+      user_id: userId,
+      role: "visitor",
+      is_group_subscriber: true,
+    });
+
+  if (defaultMembershipInsertError) {
+    alert("Помилка додавання користувача до default group\n\n" + defaultMembershipInsertError.message);
+    throw defaultMembershipInsertError;
+  }
+
+  currentGroupId = defaultGroupId;
 }
 
 async function updateAuthUI() {
@@ -228,6 +366,7 @@ async function loadCurrentGroupMembers() {
     .select(`
       id,
       role,
+      is_group_subscriber,
       profiles (
         display_name,
         email
@@ -269,41 +408,122 @@ function renderGroupMemberSection(title, members, roleType) {
   if (members.length === 0) return;
 
   const section = document.createElement("div");
-  const menuHtml = isOwner()
-  ? `
-    <div class="group-settings-menu">
-      <button class="menu-button group-section-menu-button" type="button">⋯</button>
-
-      <div class="menu-dropdown group-section-menu-dropdown">
-        <button type="button" data-invite-role="${roleType}">
-          Запросити нового
-        </button>
-      </div>
-    </div>
-  `
-  : "";
   section.className = "group-member-subsection";
 
+  const menuHtml = isOwner()
+    ? `
+      <div class="group-settings-menu">
+        <button class="menu-button group-section-menu-button" type="button">⋯</button>
+
+        <div class="menu-dropdown group-section-menu-dropdown">
+          <button type="button" data-invite-role="${roleType}">
+            Запросити нового
+          </button>
+        </div>
+      </div>
+    `
+    : "";
+
   section.innerHTML = `
-  <div class="group-members-header">
-    <h4>${title}</h4>
-    ${menuHtml}
-  </div>
-`;
+    <div class="group-members-header">
+      <h4>${title}</h4>
+      ${menuHtml}
+    </div>
+  `;
 
   members.forEach((member) => {
     const name =
       member.profiles?.display_name ||
       "Користувач без імені";
 
+    const canManageMember =
+      isOwner() &&
+      member.role !== "owner";
+
     const row = document.createElement("div");
     row.className = "group-member-row";
-    row.textContent = name;
+
+    row.innerHTML = `
+      <span class="group-member-name">
+        ${escapeHtml(name)}
+      </span>
+
+      ${
+        canManageMember
+          ? `
+            <div class="group-member-menu">
+              <button
+                class="group-member-menu-button"
+                type="button"
+              >
+                ▾
+              </button>
+
+              <div class="menu-dropdown group-member-menu-dropdown">
+                <div class="group-member-menu-info">
+                  <div class="group-member-menu-email">
+                    ${escapeHtml(member.profiles?.email || "Email не вказано")}
+                  </div>
+
+                  ${
+                    member.is_group_subscriber
+                      ? `<div class="group-member-menu-subtitle">підписник групи</div>`
+                      : ""
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="delete-option"
+                  data-remove-member-id="${member.id}"
+                  data-remove-member-role="${member.role}"
+                >
+                  Видалити
+                </button>
+              </div>
+            </div>
+          `
+          : ""
+      }
+    `;
 
     section.appendChild(row);
   });
 
   groupMembersList.appendChild(section);
+}
+
+async function removeGroupMember(memberId, memberRole) {
+  if (!isOwner()) {
+    showAccessDenied(accessMessages.delete);
+    return;
+  }
+
+  if (memberRole === "owner") {
+    alert("Власника групи не можна видалити.");
+    return;
+  }
+
+  const confirmed = confirm("Видалити користувача з цієї групи?");
+
+  if (!confirmed) return;
+
+  const { error } = await supabaseClient
+    .from("group_members")
+    .delete()
+    .eq("id", memberId)
+    .eq("group_id", currentGroupId);
+
+  if (error) {
+    alert(
+      "Помилка видалення користувача\n\n" +
+      "Message: " + error.message
+    );
+    return;
+  }
+
+  await loadCurrentGroupMembers();
+  renderGroupMembers();
 }
 
 groupInfoMenuButton.addEventListener("click", (event) => {
@@ -324,14 +544,60 @@ editGroupInfoButton.addEventListener("click", () => {
   alert("Редагування групи додамо наступним кроком.");
 });
 
-groupMembersList.addEventListener("click", (event) => {
+groupMembersList.addEventListener("click", async (event) => {
+  const memberMenuButton = event.target.closest(".group-member-menu-button");
+  const removeMemberButton = event.target.closest("[data-remove-member-id]");
   const menuButton = event.target.closest(".group-section-menu-button");
   const inviteButton = event.target.closest("[data-invite-role]");
 
+  if (memberMenuButton) {
+    event.stopPropagation();
+
+    groupInfoMenuDropdown.style.display = "none";
+
+    document
+      .querySelectorAll(".group-section-menu-dropdown")
+      .forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
+
+    const menu = memberMenuButton
+      .closest(".group-member-menu")
+      .querySelector(".group-member-menu-dropdown");
+
+    document.querySelectorAll(".group-member-menu-dropdown").forEach((dropdown) => {
+      if (dropdown !== menu) {
+        dropdown.style.display = "none";
+      }
+    });
+
+    menu.style.display =
+      menu.style.display === "block" ? "none" : "block";
+
+    return;
+  }
+
+  if (removeMemberButton) {
+    event.stopPropagation();
+
+    await removeGroupMember(
+      removeMemberButton.dataset.removeMemberId,
+      removeMemberButton.dataset.removeMemberRole
+    );
+
+    return;
+  }
+  
   if (menuButton) {
     event.stopPropagation();
 
     groupInfoMenuDropdown.style.display = "none";
+
+    document
+      .querySelectorAll(".group-member-menu-dropdown")
+      .forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
 
     const menu = menuButton
       .closest(".group-settings-menu")
@@ -362,12 +628,89 @@ groupMembersList.addEventListener("click", (event) => {
         dropdown.style.display = "none";
       });
 
-    alert(
+    pendingInviteRole = role;
+
+    invitePanelTitle.textContent =
       role === "member"
-        ? "Запрошення учасника додамо наступним кроком."
-        : "Запрошення відвідувача додамо наступним кроком."
-    );
+        ? "Запросити учасника"
+        : "Запросити відвідувача";
+
+    inviteEmailInput.value = "";
+    invitePanel.style.display = "block";
+
+    window.scrollTo({
+      top: invitePanel.offsetTop - 20,
+      behavior: "smooth",
+    });
   }
+});
+
+cancelInviteButton.addEventListener("click", () => {
+  invitePanel.style.display = "none";
+  inviteEmailInput.value = "";
+  pendingInviteRole = null;
+});
+
+sendInviteButton.addEventListener("click", async () => {
+  if (!isOwner()) {
+    showAccessDenied(accessMessages.invite);
+    return;
+  }
+
+  const email = inviteEmailInput.value.trim().toLowerCase();
+
+  if (!email) {
+    alert("Вкажіть email користувача.");
+    return;
+  }
+
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+  
+  if (!emailRegex.test(email)) {
+    alert(
+      "Вкажіть email у форматі user@gmail.com."
+    );
+  return;
+  }
+
+  if (!pendingInviteRole) {
+    alert("Роль запрошення не визначена.");
+    return;
+  }
+
+  const token = crypto.randomUUID();
+
+  const { error } = await supabaseClient
+    .from("invitations")
+    .insert({
+      group_id: currentGroupId,
+      email,
+      role: pendingInviteRole,
+      token,
+      created_by: currentUser.id,
+    });
+
+  if (error) {
+    alert(
+      "Помилка створення запрошення\n\n" +
+      "Message: " + error.message
+    );
+    return;
+  }
+
+  const inviteUrl =
+    `${window.location.origin}?invite=${token}`;
+
+  await navigator.clipboard.writeText(inviteUrl);
+
+  alert(
+    "Запрошення створено. Посилання скопійовано:\n\n" +
+    inviteUrl
+  );
+
+  invitePanel.style.display = "none";
+  inviteEmailInput.value = "";
+  pendingInviteRole = null;
 });
 
 function backToMainView() {
@@ -518,41 +861,18 @@ function applyAccessLevel() {
   groupSettingsView.style.display = "";
 }
 
-async function ensureVisitorMembership() {
-  const {
-    data: { session },
-  } = await supabaseClient.auth.getSession();
+loginButton.addEventListener("click", async () => {
+  const params = new URLSearchParams(window.location.search);
+  const inviteToken = params.get("invite");
 
-  if (!session?.user) return;
-
-  const { data } = await supabaseClient
-    .from("group_members")
-    .select("id")
-    .eq("group_id", currentGroupId)
-    .eq("user_id", session.user.id)
-    .maybeSingle();
-
-  if (data) return;
-
-  const { error: insertError } = await supabaseClient
-  .from("group_members")
-  .insert({
-    group_id: currentGroupId,
-    user_id: session.user.id,
-    role: "visitor",
-  });
-
-  if (insertError) {
-    console.error("Visitor insert error:", insertError);
+  if (inviteToken) {
+    localStorage.setItem("pendingInviteToken", inviteToken);
   }
 
-}
-
-loginButton.addEventListener("click", async () => {
   await supabaseClient.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: window.location.origin + window.location.pathname,
     },
   });
 });
@@ -2298,6 +2618,12 @@ document.addEventListener("click", (event) => {
   .forEach((dropdown) => {
     dropdown.style.display = "none";
   });
+
+  document
+  .querySelectorAll(".group-member-menu-dropdown")
+  .forEach((dropdown) => {
+    dropdown.style.display = "none";
+  });
   
 });
 
@@ -2351,7 +2677,7 @@ async function initApp() {
 
   try {
     await updateAuthUI();
-    await ensureVisitorMembership();
+    await ensureUserMembership();
     await loadCurrentRole();
 
     if (!isAnonymous()) {

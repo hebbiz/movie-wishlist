@@ -235,6 +235,12 @@ p {
   margin-top: 24px;
 }
 
+.group-settings-card,
+.group-members-list,
+.group-member-subsection {
+  overflow: visible;
+}
+
 #backFromGroupSettingsButton {
   max-width: 240px;
   background: #2a2a2a;
@@ -311,10 +317,76 @@ p {
 }
 
 .group-member-row {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
   padding: 10px 12px;
   border-radius: 10px;
   background: #1b1b1b;
   color: #f4f4f4;
+
+  overflow: visible;
+}
+
+.group-member-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.group-member-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.group-member-menu-button {
+  width: 28px;
+  height: 28px;
+
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+
+  color: #999;
+  cursor: pointer;
+}
+
+.group-member-menu-button {
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 8px;
+}
+
+.group-member-menu-button:hover {
+  background: #2a2a2a;
+  color: #f4f4f4;
+}
+
+.group-member-menu-info {
+  padding: 8px 10px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 6px;
+}
+
+.group-member-menu-email {
+  color: #ddd;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.group-member-menu-subtitle {
+  margin-top: 4px;
+  color: #d6b25e;
+  font-size: 12px;
 }
 
 .group-settings-header,
@@ -369,6 +441,24 @@ p {
   left: auto;
   top: 42px;
   bottom: auto;
+}
+
+.invite-confirm-button {
+  background: #3b5d45;
+  color: #f4f4f4;
+}
+
+.invite-confirm-button:hover {
+  background: #4a7357;
+}
+
+.invite-cancel-button {
+  background: #2a2a2a;
+  color: #f4f4f4;
+}
+
+.invite-cancel-button:hover {
+  background: #333;
 }
 
 .group-members-editor {
@@ -736,6 +826,44 @@ button:hover {
 
 .menu-dropdown .delete-option {
   color: #ff9b9b;
+}
+
+.group-member-menu .group-member-menu-dropdown {
+  display: none;
+  position: absolute;
+
+  left: auto;
+  right: 0;
+  top: calc(100% + 6px);
+  bottom: auto;
+
+  min-width: 200px;
+  max-width: 260px;
+  padding: 6px;
+
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 10px;
+
+  z-index: 3000;
+}
+
+.group-member-menu .menu-dropdown {
+  bottom: auto;
+}
+
+.group-member-menu .group-member-menu-dropdown button {
+  width: 100%;
+  margin: 0;
+  padding: 9px 10px;
+
+  text-align: left;
+  background: transparent;
+  color: #ff9b9b;
+}
+
+.group-member-menu .group-member-menu-dropdown button:hover {
+  background: #333;
 }
 
 .search-wrapper {
