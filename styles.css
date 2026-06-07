@@ -235,6 +235,12 @@ p {
   margin-top: 24px;
 }
 
+.group-settings-card,
+.group-members-list,
+.group-member-subsection {
+  overflow: visible;
+}
+
 #backFromGroupSettingsButton {
   max-width: 240px;
   background: #2a2a2a;
@@ -322,6 +328,8 @@ p {
   border-radius: 10px;
   background: #1b1b1b;
   color: #f4f4f4;
+
+  overflow: visible;
 }
 
 .group-member-name {
@@ -361,32 +369,6 @@ p {
 .group-member-menu-button:hover {
   background: #2a2a2a;
   color: #f4f4f4;
-}
-
-.group-member-menu-dropdown {
-  right: 0;
-  left: auto;
-  top: calc(100% + 6px);
-  bottom: auto;
-
-  min-width: 140px;
-  width: 140px;
-
-  padding: 6px;
-  z-index: 3000;
-}
-
-.group-member-menu-dropdown button {
-  width: 100%;
-  margin: 0;
-  padding: 9px 10px;
-
-  text-align: left;
-  background: transparent;
-}
-
-.group-member-menu-dropdown .delete-option {
-  color: #ff9b9b;
 }
 
 .group-settings-header,
@@ -826,6 +808,44 @@ button:hover {
 
 .menu-dropdown .delete-option {
   color: #ff9b9b;
+}
+
+.group-member-menu .group-member-menu-dropdown {
+  display: none;
+  position: absolute;
+
+  left: auto;
+  right: 0;
+  top: calc(100% + 6px);
+  bottom: auto;
+
+  min-width: 140px;
+  width: 140px;
+  padding: 6px;
+
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 10px;
+
+  z-index: 3000;
+}
+
+.group-member-menu .menu-dropdown {
+  bottom: auto;
+}
+
+.group-member-menu .group-member-menu-dropdown button {
+  width: 100%;
+  margin: 0;
+  padding: 9px 10px;
+
+  text-align: left;
+  background: transparent;
+  color: #ff9b9b;
+}
+
+.group-member-menu .group-member-menu-dropdown button:hover {
+  background: #333;
 }
 
 .search-wrapper {
