@@ -327,7 +327,8 @@ p {
 
 .group-members-header {
   align-items: center;
-  margin-bottom: 10px;
+  margin-top: 8px;
+  margin-bottom: 6px;
 }
 
 .group-member-subsection h4 {
