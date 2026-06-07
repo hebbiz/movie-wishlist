@@ -311,20 +311,27 @@ p {
 }
 
 .group-member-row {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
   padding: 10px 12px;
   border-radius: 10px;
   background: #1b1b1b;
   color: #f4f4f4;
 }
 
-.group-member-menu {
-  position: relative;
+.group-member-name {
+  flex: 1;
+  min-width: 0;
 }
 
-.group-member-menu-dropdown {
-  right: 0;
-  left: auto;
-  top: calc(100% + 4px);
+.group-member-menu {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .group-member-menu-button {
@@ -332,6 +339,7 @@ p {
   height: 28px;
 
   padding: 0;
+  margin: 0;
 
   display: flex;
   align-items: center;
@@ -344,8 +352,23 @@ p {
   cursor: pointer;
 }
 
+.group-member-menu-button {
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 8px;
+}
+
 .group-member-menu-button:hover {
+  background: #2a2a2a;
   color: #f4f4f4;
+}
+
+.group-member-menu-dropdown {
+  right: 0;
+  left: auto;
+  top: calc(100% + 4px);
+  bottom: auto;
+  z-index: 2000;
 }
 
 .group-settings-header,
