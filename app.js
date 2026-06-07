@@ -218,6 +218,8 @@ function renderGroupSettings() {
 
   groupSettingsType.textContent = "";
   groupSettingsType.style.display = "none";
+
+  groupInfoMenuButton.style.display = isOwner() ? "flex" : "none";
 }
 
 async function loadCurrentGroupMembers() {
@@ -267,23 +269,27 @@ function renderGroupMemberSection(title, members, roleType) {
   if (members.length === 0) return;
 
   const section = document.createElement("div");
+  const menuHtml = isOwner()
+  ? `
+    <div class="group-settings-menu">
+      <button class="menu-button group-section-menu-button" type="button">⋯</button>
+
+      <div class="menu-dropdown group-section-menu-dropdown">
+        <button type="button" data-invite-role="${roleType}">
+          Запросити нового
+        </button>
+      </div>
+    </div>
+  `
+  : "";
   section.className = "group-member-subsection";
 
   section.innerHTML = `
-    <div class="group-members-header">
-      <h4>${title}</h4>
-
-      <div class="group-settings-menu">
-        <button class="menu-button group-section-menu-button" type="button">⋯</button>
-
-        <div class="menu-dropdown group-section-menu-dropdown">
-          <button type="button" data-invite-role="${roleType}">
-            Запросити нового
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
+  <div class="group-members-header">
+    <h4>${title}</h4>
+    ${menuHtml}
+  </div>
+`;
 
   members.forEach((member) => {
     const name =
