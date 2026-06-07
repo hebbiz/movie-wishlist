@@ -244,7 +244,30 @@ function renderGroupMembers() {
     return;
   }
 
-  currentGroupMembers.forEach((member) => {
+  const members = currentGroupMembers.filter(
+    (member) => member.role === "owner" || member.role === "member"
+  );
+
+  const visitors = currentGroupMembers.filter(
+    (member) => member.role === "visitor"
+  );
+
+  renderGroupMemberSection("Учасники", members);
+  renderGroupMemberSection("Відвідувачі", visitors);
+}
+
+function renderGroupMemberSection(title, members) {
+  if (members.length === 0) return;
+
+  const section = document.createElement("div");
+  section.className = "group-member-subsection";
+
+  const heading = document.createElement("h4");
+  heading.textContent = title;
+
+  section.appendChild(heading);
+
+  members.forEach((member) => {
     const name =
       member.profiles?.display_name ||
       "Користувач без імені";
@@ -253,8 +276,10 @@ function renderGroupMembers() {
     row.className = "group-member-row";
     row.textContent = name;
 
-    groupMembersList.appendChild(row);
+    section.appendChild(row);
   });
+
+  groupMembersList.appendChild(section);
 }
 
 groupInfoMenuButton.addEventListener("click", (event) => {
