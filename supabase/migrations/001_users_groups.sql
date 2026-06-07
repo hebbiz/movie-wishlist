@@ -231,3 +231,20 @@ add column is_group_subscriber boolean not null default false;
 
 alter table invitations
 add column email text not null;
+
+-- User-Scoped Invitation Acceptance Policy
+
+create policy "Users can accept their own invitations"
+on public.group_members
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+  and exists (
+    select 1
+    from public.invitations i
+    where i.group_id = group_members.group_id
+      and lower(i.email) = lower(auth.jwt() ->> 'email')
+      and i.role = group_members.role
+  )
+);
