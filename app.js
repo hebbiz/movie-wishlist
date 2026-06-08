@@ -708,7 +708,7 @@ sendInviteButton.addEventListener("click", async () => {
   }
 
   const inviteUrl =
-    `${window.location.origin}?invite=${token}`;
+  `${window.location.origin}/app.html?invite=${token}`;
 
   await navigator.clipboard.writeText(inviteUrl);
 
@@ -881,7 +881,7 @@ loginButton.addEventListener("click", async () => {
   await supabaseClient.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: window.location.origin + window.location.pathname,
+      redirectTo: window.location.origin + "/app.html",
     },
   });
 });
