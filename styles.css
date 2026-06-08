@@ -124,22 +124,11 @@ header {
   gap: 12px;
 }
 
-.site-logo-mark {
+.site-logo {
   width: 36px;
   height: 36px;
-  background: #d6b25e;
-
-  -webkit-mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
-  mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
-
-  -webkit-mask-size: contain;
-  mask-size: contain;
-
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-
-  -webkit-mask-position: center;
-  mask-position: center;
+  display: block;
+  flex-shrink: 0;
 }
 
 .site-logo-title h1 {
@@ -1288,9 +1277,9 @@ button:hover {
   margin-bottom: 8px;
   }
 
-  .site-logo-mark {
-    width: 26px;
-    height: 26px;
+  .site-logo {
+  width: 26px;
+  height: 26px;
   }
 
   h1 {
