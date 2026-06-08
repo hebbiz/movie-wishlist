@@ -708,7 +708,7 @@ sendInviteButton.addEventListener("click", async () => {
   }
 
   const inviteUrl =
-    `${window.location.origin}?invite=${token}`;
+  `${window.location.origin}/app.html?invite=${token}`;
 
   await navigator.clipboard.writeText(inviteUrl);
 
