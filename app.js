@@ -881,7 +881,7 @@ loginButton.addEventListener("click", async () => {
   await supabaseClient.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: window.location.origin + window.location.pathname,
+      redirectTo: window.location.origin + "/app.html",
     },
   });
 });
