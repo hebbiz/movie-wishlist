@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy | Movie Wishlist</title>
+
+  <style>
+    body {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      font-family: system-ui, sans-serif;
+      line-height: 1.6;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+
+  <p>
+    Movie Wishlist uses Google Authentication to identify users and
+    provide access to shared movie collections.
+  </p>
+
+  <p>
+    The service stores user profile information, movie lists,
+    group memberships, invitations, and related application data
+    required for normal operation.
+  </p>
+
+  <p>
+    Personal information is not sold or shared with third parties.
+  </p>
+
+  <p>
+    If you have questions regarding this policy, please contact
+    the site administrator.
+  </p>
+</body>
+</html>
