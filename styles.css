@@ -1308,3 +1308,52 @@ button:hover {
 
 }
 
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-top: 24px;
+  padding: 14px 22px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  background: #f4f4f4;
+  color: #111;
+
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.cta-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.landing-note {
+  margin-top: 14px;
+  color: #aaa;
+  font-size: 14px;
+}
+
+footer {
+  margin-top: 48px;
+}
+
+footer a {
+  color: #d6b25e;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+.landing-container {
+  max-width: 760px;
+}
+
