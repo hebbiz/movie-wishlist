@@ -47,12 +47,12 @@ body:not(.app-ready) .container {
 
 .app-loader-text {
   margin-top: 14px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: rgba(214, 178, 94, 0.62);
 
   opacity: 0;
-  transform: translateX(100px);
+  transform: translateX(6px);
   transition: opacity 300ms ease;
 }
 
