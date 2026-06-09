@@ -491,8 +491,9 @@ function renderOtherGroups() {
 
       <button
         type="button"
-        class="switch-group-button"
+        class="switch-group-badge"
         data-switch-group-id="${group.id}"
+        aria-label="Перейти до групи"
       >
         →
       </button>
