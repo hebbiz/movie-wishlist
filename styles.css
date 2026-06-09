@@ -279,6 +279,15 @@ p {
   background: #333;
 }
 
+#saveGroupButton {
+  background: #3b5d45;
+  color: #f4f4f4;
+}
+
+#saveGroupButton:hover {
+  background: #4a7357;
+}
+
 #backFromGroupFormButton {
   max-width: 240px;
   background: #2a2a2a;
