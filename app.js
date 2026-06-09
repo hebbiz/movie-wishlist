@@ -227,7 +227,7 @@ async function ensureUserMembership() {
   const { data: memberships, error: membershipsError } = await supabaseClient
     .from("group_members")
     .select("group_id")
-    .eq("user_id", userId)
+    .eq("user_id", userId);
 
   if (membershipsError) {
     alert("Помилка перевірки груп користувача\n\n" + membershipsError.message);
