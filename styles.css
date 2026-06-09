@@ -1470,52 +1470,168 @@ button:hover {
 
 }
 
+/* ---------- Landing Page ---------- */
+
+.landing-container {
+  max-width: 900px;
+}
+
+.landing-main {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.landing-subtitle {
+  margin-top: 8px;
+  font-size: 1.05rem;
+  color: #b8b8b8;
+}
+
+.landing-hero {
+  text-align: center;
+  padding: 32px 0;
+}
+
+.landing-hero h2 {
+  margin: 0 0 20px;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.15;
+}
+
+.landing-hero p {
+  max-width: 700px;
+  margin: 0 auto 28px;
+  color: #c8c8c8;
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
+
 .cta-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  margin-top: 24px;
-  padding: 14px 22px;
+  padding: 14px 24px;
 
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
 
-  background: #f4f4f4;
+  background: #ffffff;
   color: #111;
 
-  font-size: 15px;
-  font-weight: 600;
   text-decoration: none;
+  font-weight: 600;
 
-  transition: transform 160ms ease, opacity 160ms ease;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .cta-button:hover {
+  opacity: 0.92;
   transform: translateY(-1px);
-  opacity: 0.9;
 }
 
-.landing-note {
-  margin-top: 14px;
-  color: #aaa;
-  font-size: 14px;
+/* ---------- Motto ---------- */
+
+.landing-motto-panel {
+  padding: 48px 32px;
+
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.04),
+      rgba(255,255,255,0.02)
+    );
+
+  text-align: center;
 }
+
+.landing-motto-panel p {
+  margin: 0;
+
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  line-height: 1.5;
+  font-weight: 500;
+
+  color: #f4f4f4;
+}
+
+.landing-motto-accent {
+  margin-top: 12px !important;
+
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  font-weight: 700;
+
+  color: #ffffff;
+}
+
+/* ---------- Sections ---------- */
+
+.landing-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.landing-section h2 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.landing-section p {
+  margin: 0;
+
+  color: #c8c8c8;
+  line-height: 1.7;
+}
+
+/* ---------- Feature Cards ---------- */
+
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(220px, 1fr)
+  );
+
+  gap: 16px;
+}
+
+.landing-feature-card {
+  padding: 20px;
+
+  border-radius: 14px;
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(255,255,255,0.03);
+}
+
+.landing-feature-card h3 {
+  margin: 0 0 10px;
+
+  font-size: 1.15rem;
+}
+
+.landing-feature-card p {
+  margin: 0;
+
+  color: #bfbfbf;
+  line-height: 1.6;
+}
+
+/* ---------- Footer ---------- */
 
 footer {
-  margin-top: 48px;
-}
+  margin-top: 60px;
 
-footer a {
-  color: #d6b25e;
-  text-decoration: none;
-}
+  text-align: center;
 
-footer a:hover {
-  text-decoration: underline;
-}
-
-.landing-container {
-  max-width: 760px;
+  color: #777;
+  font-size: 0.9rem;
 }
 
