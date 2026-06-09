@@ -84,14 +84,35 @@ let currentGroupMembers = [];
 let appHasInitialized = false;
 let pendingInviteRole = null;
 
-function showAppLoader() {
+function showAppLoader(message = null) {
+  const loaderText =
+    document.getElementById("appLoaderText");
+
+  if (loaderText) {
+    if (message) {
+      loaderText.textContent = message;
+      loaderText.classList.add("visible");
+    } else {
+      loaderText.textContent = "";
+      loaderText.classList.remove("visible");
+    }
+  }
+
   document.body.classList.remove("app-ready");
 }
 
 function hideAppLoader() {
+  const loaderText =
+    document.getElementById("appLoaderText");
+
+  if (loaderText) {
+    loaderText.classList.remove("visible");
+    loaderText.textContent = "";
+  }
+
   setTimeout(() => {
     document.body.classList.add("app-ready");
-  }, 1000);
+  }, 300);
 }
 
 async function getDefaultGroupId() {
@@ -414,7 +435,7 @@ function openGroupSettingsView() {
   groupSelectorButton.classList.add("disabled");
 
   renderGroupSettings();
-  renderOtherGroups();
+  ();
 
   loadCurrentGroupMembers().then(() => {
     renderGroupMembers();
@@ -1063,33 +1084,42 @@ otherGroupsList.addEventListener("click", async (event) => {
 
   if (!button) return;
 
-  currentGroupId = button.dataset.switchGroupId;
+  showAppLoader("Змінюємо поточну групу...");
 
-  saveActiveGroupId(currentGroupId);
+  try {
 
-  await loadCurrentGroup();
-  await loadCurrentRole();
-  await loadCurrentGroupMembers();
-  await loadMovies();
+    currentGroupId = button.dataset.switchGroupId;
 
-  renderCurrentGroupInfo();
-  renderGroupSettings();
-  renderGroupMembers();
-  renderOtherGroups();
+    saveActiveGroupId(currentGroupId);
 
-  groupInfoMenuDropdown.style.display = "none";
+    await loadCurrentGroup();
+    await loadCurrentRole();
+    await loadCurrentGroupMembers();
+    await loadMovies();
 
-  document
-    .querySelectorAll(".group-section-menu-dropdown")
-    .forEach((dropdown) => {
-      dropdown.style.display = "none";
+    renderCurrentGroupInfo();
+    renderGroupSettings();
+    renderGroupMembers();
+    renderOtherGroups();
+
+    groupInfoMenuDropdown.style.display = "none";
+
+    document
+      .querySelectorAll(".group-section-menu-dropdown")
+      .forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
+
+    window.scrollTo({
+      top: groupSettingsView.offsetTop - 20,
+      behavior: "smooth",
     });
 
-  window.scrollTo({
-    top: groupSettingsView.offsetTop - 20,
-    behavior: "smooth",
-  });
-  
+  } finally {
+
+    hideAppLoader();
+
+  }
 });
 
 backFromGroupSettingsButton.addEventListener("click", () => {
