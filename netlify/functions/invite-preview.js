@@ -1,18 +1,28 @@
 exports.handler = async (event) => {
   const token = event.queryStringParameters?.token;
 
+  const siteUrl =
+    process.env.URL || "https://your-site.netlify.app";
+
   if (!token) {
     return {
       statusCode: 302,
       headers: {
-        Location: "/app.html",
+        Location: `${siteUrl}/app.html`,
       },
     };
   }
 
-  const siteUrl = process.env.URL || "https://your-site.netlify.app";
-  const appUrl = `${siteUrl}/app.html?invite=${encodeURIComponent(token)}`;
-  const imageUrl = `${siteUrl}/assets/preview/invite-card.png`;
+  const encodedToken = encodeURIComponent(token);
+
+  const appUrl =
+    `${siteUrl}/app.html?invite=${encodedToken}`;
+
+  const previewUrl =
+    `${siteUrl}/.netlify/functions/invite-preview?token=${encodedToken}`;
+
+  const imageUrl =
+    `${siteUrl}/assets/preview/invite-card.png`;
 
   const html = `
 <!DOCTYPE html>
@@ -21,28 +31,25 @@ exports.handler = async (event) => {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Запрошення до Movie Wishlist</title>
-  <link rel="canonical" href="${siteUrl}/.netlify/functions/invite-preview?token=${encodeURIComponent(token)}" />
+  <title>Movie Wishlist</title>
 
-  <meta property="og:title" content="Запрошення до Movie Wishlist" />
-  <meta property="og:description" content="Вас запросили до спільного списку фільмів. Дивіться те, що радять люди, яким ви довіряєте." />
+  <meta property="og:title" content="Movie Wishlist" />
+  <meta property="og:description" content="Запрошення до спільного списку фільмів. Ми просто даємо рекомендаціям дім." />
   <meta property="og:image" content="${imageUrl}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:url" content="${siteUrl}/.netlify/functions/invite-preview?token=${encodeURIComponent(token)}" />
+  <meta property="og:url" content="${previewUrl}" />
   <meta property="og:type" content="website" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Запрошення до Movie Wishlist" />
-  <meta name="twitter:description" content="Вас запросили до спільного списку фільмів." />
+  <meta name="twitter:title" content="Movie Wishlist" />
+  <meta name="twitter:description" content="Запрошення до спільного списку фільмів. Ми просто даємо рекомендаціям дім." />
   <meta name="twitter:image" content="${imageUrl}" />
-
-  <meta http-equiv="refresh" content="1; url=${appUrl}" />
 
   <script>
     setTimeout(() => {
       window.location.replace("${appUrl}");
-    }, 700);
+    }, 800);
   </script>
 </head>
 
@@ -59,6 +66,7 @@ exports.handler = async (event) => {
     statusCode: 200,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
     },
     body: html,
   };
