@@ -227,7 +227,7 @@ async function ensureUserMembership() {
   const { data: memberships, error: membershipsError } = await supabaseClient
     .from("group_members")
     .select("group_id")
-    .eq("user_id", userId)
+    .eq("user_id", userId);
 
   if (membershipsError) {
     alert("Помилка перевірки груп користувача\n\n" + membershipsError.message);
@@ -997,16 +997,35 @@ sendInviteButton.addEventListener("click", async () => {
   }
 
   const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
-  
+
   if (!emailRegex.test(email)) {
-    alert(
-      "Вкажіть email у форматі user@gmail.com."
-    );
-  return;
+    alert("Вкажіть email у форматі user@gmail.com.");
+    return;
   }
 
   if (!pendingInviteRole) {
     alert("Роль запрошення не визначена.");
+    return;
+  }
+
+  const { data: existingInvite, error: existingInviteError } =
+    await supabaseClient
+      .from("invitations")
+      .select("id")
+      .eq("group_id", currentGroupId)
+      .eq("email", email)
+      .maybeSingle();
+
+  if (existingInviteError) {
+    alert(
+      "Помилка перевірки існуючого запрошення\n\n" +
+      "Message: " + existingInviteError.message
+    );
+    return;
+  }
+
+  if (existingInvite) {
+    alert("Запрошення для цього користувача в цю групу вже створене.");
     return;
   }
 
@@ -1031,13 +1050,21 @@ sendInviteButton.addEventListener("click", async () => {
   }
 
   const inviteUrl =
-  `${window.location.origin}/app.html?invite=${token}`;
+  `${window.location.origin}/invite.html?token=${token}`;
 
-  await navigator.clipboard.writeText(inviteUrl);
+  let copied = false;
+
+  try {
+    await navigator.clipboard.writeText(inviteUrl);
+    copied = true;
+  } catch (clipboardError) {
+    console.warn("Clipboard error:", clipboardError);
+  }
 
   alert(
-    "Запрошення створено. Посилання скопійовано:\n\n" +
-    inviteUrl
+    copied
+      ? "Запрошення створено. Посилання скопійовано:\n\n" + inviteUrl
+      : "Запрошення створено, але посилання не вдалося скопіювати автоматично:\n\n" + inviteUrl
   );
 
   invitePanel.style.display = "none";
