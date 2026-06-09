@@ -107,6 +107,14 @@ async function getDefaultGroupId() {
   return data.id;
 }
 
+function saveActiveGroupId(groupId) {
+  localStorage.setItem("activeGroupId", groupId);
+}
+
+function getSavedActiveGroupId() {
+  return localStorage.getItem("activeGroupId");
+}
+
 async function ensureUserMembership() {
   const {
     data: { session },
@@ -153,7 +161,7 @@ async function ensureUserMembership() {
         .from("group_members")
         .select("id")
         .eq("group_id", invitation.group_id)
-        .eq("user_id", userId)
+        .eq("user_id", userId);
         .maybeSingle();
 
     if (existingMembershipError) {
@@ -179,6 +187,8 @@ async function ensureUserMembership() {
 
     currentGroupId = invitation.group_id;
 
+    saveActiveGroupId(currentGroupId);
+
     await supabaseClient
       .from("invitations")
       .delete()
@@ -194,7 +204,6 @@ async function ensureUserMembership() {
     .from("group_members")
     .select("group_id")
     .eq("user_id", userId)
-    .limit(1);
 
   if (membershipsError) {
     alert("Помилка перевірки груп користувача\n\n" + membershipsError.message);
@@ -202,8 +211,19 @@ async function ensureUserMembership() {
   }
 
   if (memberships?.length) {
-    currentGroupId = memberships[0].group_id;
-    return;
+  const savedGroupId = getSavedActiveGroupId();
+
+  const savedMembership = memberships.find((membership) => {
+    return membership.group_id === savedGroupId;
+  });
+
+  currentGroupId = savedMembership
+    ? savedMembership.group_id
+    : memberships[0].group_id;
+
+  saveActiveGroupId(currentGroupId);
+
+  return;
   }
 
   const defaultGroupId = await getDefaultGroupId();
@@ -223,6 +243,9 @@ async function ensureUserMembership() {
   }
 
   currentGroupId = defaultGroupId;
+
+  saveActiveGroupId(currentGroupId);
+  
 }
 
 async function updateAuthUI() {
@@ -563,10 +586,13 @@ groupForm.addEventListener("submit", async (event) => {
 
     currentGroupId = createdGroup.id;
     currentGroup = createdGroup;
+    
+    saveActiveGroupId(createdGroup.id);
 
     await loadCurrentUserGroups();
     await loadCurrentRole();
 
+    await loadCurrentGroup();
     renderCurrentGroupInfo();
     renderGroupSettings();
 
