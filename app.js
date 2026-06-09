@@ -435,7 +435,7 @@ function openGroupSettingsView() {
   groupSelectorButton.classList.add("disabled");
 
   renderGroupSettings();
-  ();
+  renderOtherGroups();
 
   loadCurrentGroupMembers().then(() => {
     renderGroupMembers();
