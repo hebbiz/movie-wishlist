@@ -85,6 +85,21 @@ let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
 
+const enterAppButton =
+  document.getElementById("enterAppButton");
+
+if (enterAppButton) {
+  enterAppButton.addEventListener("click", (event) => {
+    event.preventDefault();
+
+    enterAppButton.classList.add("loading");
+
+    setTimeout(() => {
+      window.location.href = "/app.html";
+    }, 350);
+  });
+}
+
 function showAppLoader(message = null) {
   const loaderText =
     document.getElementById("appLoaderText");
