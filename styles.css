@@ -505,24 +505,24 @@ p {
 }
 
 .other-groups-section {
-  margin-top: 24px;
-  padding: 18px 0 0;
-
-  border-top: 1px solid #333;
+  margin-top: 18px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .other-groups-title {
-  color: #888;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 800;
   letter-spacing: 0.04em;
+  color: #9a9a9a;
+  text-transform: uppercase;
 }
 
 .other-groups-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .other-group-row {
@@ -531,44 +531,47 @@ p {
   justify-content: space-between;
   gap: 12px;
 
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 14px 10px 16px;
 
-  background: transparent;
-}
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
 
-.other-group-row:last-child {
-  border-bottom: none;
+  background: rgba(255,255,255,0.015);
 }
 
 .other-group-name {
-  font-size: 0.92rem;
+  font-size: 15px;
   font-weight: 500;
-  color: #aaa;
+  color: #f0f0f0;
 }
 
-.switch-group-badge {
-  display: inline-block;
+.switch-group-button {
+  width: 52px;
+  height: 26px;
 
-  margin-left: 4px;
-  padding: 4px 8px;
+  padding: 0;
+  margin: 0;
 
+  border: 1px solid rgba(214,178,94,0.65);
   border-radius: 999px;
 
-  background: #1b1b1b;
+  background: rgba(214,178,94,0.04);
   color: #d6b25e;
 
-  border: 1px solid rgba(214,178,94,.18);
-
-  font-size: 11px;
+  font-size: 18px;
+  line-height: 1;
   font-weight: 700;
 
-  vertical-align: middle;
+  box-shadow: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.switch-group-badge:hover {
-  background: #242424;
-  color: #e4c675;
+.switch-group-button:hover {
+  background: rgba(214,178,94,0.09);
+  border-color: rgba(214,178,94,0.9);
   transform: translateX(1px);
 }
 
