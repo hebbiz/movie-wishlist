@@ -16,6 +16,10 @@
   <meta name="theme-color" content="#0B0F1A">
   <meta name="msapplication-TileColor" content="#0B0F1A">
   <meta name="msapplication-config" content="/assets/icons/browserconfig.xml">
+  <meta property="og:title" content="Запрошення до Movie Wishlist">
+  <meta property="og:description" content="Вас запросили до спільного списку фільмів">
+  <meta property="og:image" content="https://movies.denyslisovyi.link/assets/share-preview.jpg">
+  <meta property="og:type" content="website">
 </head>
 
   <body class="app-ready">
@@ -30,7 +34,7 @@
             class="site-logo"
           />
 
-          <h1>Movie Wishlist</h1>
+          <h1>Вас запросили до Movie Wishlist</h1>
         </div>
 
         <p class="site-subtitle landing-subtitle">
@@ -115,6 +119,23 @@
     </footer>
 
   </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    const enterButton = document.getElementById("enterButton");
+
+    enterButton.addEventListener("click", () => {
+      if (!token) {
+        window.location.href = "/app.html";
+        return;
+      }
+
+    window.location.href =
+      "/app.html?invite=" + encodeURIComponent(token);
+    });
+  </script>
 
 <script>
   const enterAppButton = document.getElementById("enterAppButton");
