@@ -46,6 +46,7 @@ const groupSettingsView = document.getElementById("groupSettingsView");
 const backFromGroupSettingsButton = document.getElementById("backFromGroupSettingsButton");
 const groupSettingsName = document.getElementById("groupSettingsName");
 const groupSettingsType = document.getElementById("groupSettingsType");
+const otherGroupsList = document.getElementById("otherGroupsList");
 const createGroupButton = document.getElementById("createGroupButton");
 const groupFormView = document.getElementById("groupFormView");
 const backFromGroupFormButton = document.getElementById("backFromGroupFormButton");
