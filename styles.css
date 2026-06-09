@@ -247,6 +247,67 @@ p {
   color: #f4f4f4;
 }
 
+.group-settings-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.group-settings-title-row h2 {
+  margin: 0;
+}
+
+.group-create-button {
+  width: auto;
+  flex-shrink: 0;
+
+  padding: 8px 12px;
+  margin: 0;
+
+  border-radius: 10px;
+
+  background: #2a2a2a;
+  color: #f4f4f4;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.group-create-button:hover {
+  background: #333;
+}
+
+#saveGroupButton {
+  background: #3b5d45;
+  color: #f4f4f4;
+}
+
+#saveGroupButton:hover {
+  background: #4a7357;
+}
+
+#backFromGroupFormButton {
+  max-width: 240px;
+  background: #2a2a2a;
+  color: #f4f4f4;
+}
+
+@media (max-width: 390px) {
+  .group-create-button {
+    font-size: 0;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+  }
+
+  .group-create-button::before {
+    content: "+";
+    font-size: 18px;
+  }
+}
+
 .group-settings-list {
   display: flex;
   flex-direction: column;

@@ -233,7 +233,13 @@
         ← Повернутись до списку
       </button>
 
-      <h2>Керування групами</h2>
+      <div class="group-settings-title-row">
+        <h2>Керування групами</h2>
+
+        <button id="createGroupButton" class="group-create-button" type="button">
+          + Нова
+        </button>
+      </div>
 
       <div class="group-settings-list">
         <div class="group-settings-card">
@@ -276,6 +282,38 @@
       
     </section>
   </div>
+
+<div id="groupFormView" class="view">
+  <section class="panel group-settings-panel">
+
+    <button id="backFromGroupFormButton" type="button">
+      ← Повернутись до груп
+    </button>
+
+    <h2 id="groupFormTitle">Нова група</h2>
+
+    <form id="groupForm">
+      <select id="groupTypeInput" required>
+        <option value="">Тип групи</option>
+        <option value="family">Сімʼя</option>
+        <option value="friends">Друзі</option>
+        <option value="community">Спільнота</option>
+      </select>
+
+      <input
+        id="groupNameInput"
+        type="text"
+        placeholder="Кого?.. Чия?.."
+        required
+      />
+
+      <button id="saveGroupButton" type="submit">
+        Створити групу
+      </button>
+    </form>
+
+  </section>
+</div>
 
 <div id="mykolaView" class="view">
   <section class="panel mykola-panel">

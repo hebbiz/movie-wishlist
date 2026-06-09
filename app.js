@@ -46,6 +46,14 @@ const groupSettingsView = document.getElementById("groupSettingsView");
 const backFromGroupSettingsButton = document.getElementById("backFromGroupSettingsButton");
 const groupSettingsName = document.getElementById("groupSettingsName");
 const groupSettingsType = document.getElementById("groupSettingsType");
+const createGroupButton = document.getElementById("createGroupButton");
+const groupFormView = document.getElementById("groupFormView");
+const backFromGroupFormButton = document.getElementById("backFromGroupFormButton");
+const groupForm = document.getElementById("groupForm");
+const groupFormTitle = document.getElementById("groupFormTitle");
+const groupTypeInput = document.getElementById("groupTypeInput");
+const groupNameInput = document.getElementById("groupNameInput");
+const saveGroupButton = document.getElementById("saveGroupButton");
 const invitePanel = document.getElementById("invitePanel");
 const invitePanelTitle = document.getElementById("invitePanelTitle");
 const inviteEmailInput = document.getElementById("inviteEmailInput");
@@ -69,6 +77,8 @@ let currentUser = null;
 let currentRole = null;
 let currentGroup = null;
 let currentGroupId = null;
+let editingGroupId = null;
+let currentUserGroups = [];
 let currentGroupMembers = [];
 let appHasInitialized = false;
 let pendingInviteRole = null;
@@ -281,6 +291,66 @@ function getGroupTypeNominativeLabel(groupType) {
   return labels[groupType] || "Група";
 }
 
+const groupTypes = [
+  { value: "family", label: "Сімʼя" },
+  { value: "friends", label: "Друзі" },
+  { value: "community", label: "Спільнота" },
+];
+
+async function loadCurrentUserGroups() {
+  if (!currentUser) {
+    currentUserGroups = [];
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("group_members")
+    .select(`
+      role,
+      groups (
+        id,
+        name,
+        type
+      )
+    `)
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    console.error(error);
+    currentUserGroups = [];
+    return;
+  }
+
+  currentUserGroups = data || [];
+}
+
+function getOwnedGroupTypes() {
+  return currentUserGroups
+    .filter((g) => g.role === "owner" && g.groups?.type)
+    .map((g) => g.groups.type);
+}
+
+function renderGroupTypeOptions() {
+  const ownedTypes = getOwnedGroupTypes();
+
+  const availableTypes = groupTypes.filter((type) => {
+    return !ownedTypes.includes(type.value);
+  });
+
+  groupTypeInput.innerHTML = `
+    <option value="">Тип групи</option>
+  `;
+
+  availableTypes.forEach((type) => {
+    const option = document.createElement("option");
+    option.value = type.value;
+    option.textContent = type.label;
+    groupTypeInput.appendChild(option);
+  });
+
+  return availableTypes;
+}
+
 async function loadCurrentGroup() {
   const { data, error } = await supabaseClient
     .from("groups")
@@ -312,6 +382,7 @@ function renderCurrentGroupInfo() {
 function openGroupSettingsView() {
   mainView.classList.remove("active");
   mykolaView.classList.remove("active");
+  groupFormView.classList.remove("active");
   groupSettingsView.classList.add("active");
 
   groupSelectorDropdown.style.display = "none";
@@ -358,7 +429,80 @@ function renderGroupSettings() {
   groupSettingsType.style.display = "none";
 
   groupInfoMenuButton.style.display = isOwner() ? "flex" : "none";
+  
+  updateCreateGroupButtonVisibility();
 }
+
+function openCreateGroupView() {
+  editingGroupId = null;
+
+  groupFormTitle.textContent = "Нова група";
+  saveGroupButton.textContent = "Створити групу";
+
+  const availableTypes = renderGroupTypeOptions();
+
+    if (availableTypes.length === 0) {
+      alert("Ви вже створили всі доступні типи груп.");
+      return;
+    }
+
+    groupTypeInput.value = "";
+    groupNameInput.value = "";
+
+  mainView.classList.remove("active");
+  mykolaView.classList.remove("active");
+  groupSettingsView.classList.remove("active");
+  groupFormView.classList.add("active");
+
+  groupSelectorDropdown.style.display = "none";
+  groupInfoMenuDropdown.style.display = "none";
+
+  window.scrollTo({
+    top: groupFormView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
+function updateCreateGroupButtonVisibility() {
+  const ownedTypes = getOwnedGroupTypes();
+  const hasAvailableTypes = groupTypes.some((type) => {
+    return !ownedTypes.includes(type.value);
+  });
+
+  createGroupButton.style.display = hasAvailableTypes ? "inline-flex" : "none";
+}
+
+function backToGroupSettingsView() {
+  groupFormView.classList.remove("active");
+  groupSettingsView.classList.add("active");
+
+  window.scrollTo({
+    top: groupSettingsView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
+createGroupButton.addEventListener("click", () => {
+  openCreateGroupView();
+});
+
+backFromGroupFormButton.addEventListener("click", () => {
+  backToGroupSettingsView();
+});
+
+groupForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const groupType = groupTypeInput.value;
+  const groupName = groupNameInput.value.trim();
+
+  if (!groupType || !groupName) {
+    alert("Вкажіть тип і назву групи.");
+    return;
+  }
+
+  alert("Створення групи підключимо наступним кроком.");
+});
 
 async function loadCurrentGroupMembers() {
   const { data, error } = await supabaseClient
@@ -724,6 +868,7 @@ sendInviteButton.addEventListener("click", async () => {
 
 function backToMainView() {
   groupSettingsView.classList.remove("active");
+  groupFormView.classList.remove("active");
   mykolaView.classList.remove("active");
   mainView.classList.add("active");
   groupSelectorButton.disabled = false;
@@ -862,12 +1007,14 @@ function applyAccessLevel() {
     mainView.style.display = "none";
     mykolaView.style.display = "none";
     groupSettingsView.style.display = "none";
+    groupFormView.style.display = "none";
     return;
   }
 
   mainView.style.display = "";
   mykolaView.style.display = "";
   groupSettingsView.style.display = "";
+  groupFormView.style.display = "";
 }
 
 loginButton.addEventListener("click", async () => {
@@ -2223,6 +2370,7 @@ function clearMykolaFinishedState() {
 function openMykolaView() {
   mainView.classList.remove("active");
   groupSettingsView.classList.remove("active");
+  groupFormView.classList.remove("active");
 
   if (mykolaConversationFinished) {
     resetMykolaChat();
@@ -2687,6 +2835,11 @@ async function initApp() {
   try {
     await updateAuthUI();
     await ensureUserMembership();
+    
+    if (!isAnonymous()) {
+      await loadCurrentUserGroups();
+    }
+    
     await loadCurrentRole();
 
     if (!isAnonymous()) {
