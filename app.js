@@ -78,6 +78,7 @@ let currentRole = null;
 let currentGroup = null;
 let currentGroupId = null;
 let editingGroupId = null;
+let currentUserGroups = [];
 let currentGroupMembers = [];
 let appHasInitialized = false;
 let pendingInviteRole = null;
@@ -290,6 +291,66 @@ function getGroupTypeNominativeLabel(groupType) {
   return labels[groupType] || "Група";
 }
 
+const groupTypes = [
+  { value: "family", label: "Сімʼя" },
+  { value: "friends", label: "Друзі" },
+  { value: "community", label: "Спільнота" },
+];
+
+async function loadCurrentUserGroups() {
+  if (!currentUser) {
+    currentUserGroups = [];
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("group_members")
+    .select(`
+      role,
+      groups (
+        id,
+        name,
+        type
+      )
+    `)
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    console.error(error);
+    currentUserGroups = [];
+    return;
+  }
+
+  currentUserGroups = data || [];
+}
+
+function getOwnedGroupTypes() {
+  return currentUserGroups
+    .filter((g) => g.role === "owner" && g.groups?.type)
+    .map((g) => g.groups.type);
+}
+
+function renderGroupTypeOptions() {
+  const ownedTypes = getOwnedGroupTypes();
+
+  const availableTypes = groupTypes.filter((type) => {
+    return !ownedTypes.includes(type.value);
+  });
+
+  groupTypeInput.innerHTML = `
+    <option value="">Тип групи</option>
+  `;
+
+  availableTypes.forEach((type) => {
+    const option = document.createElement("option");
+    option.value = type.value;
+    option.textContent = type.label;
+    groupTypeInput.appendChild(option);
+  });
+
+  return availableTypes;
+}
+
 async function loadCurrentGroup() {
   const { data, error } = await supabaseClient
     .from("groups")
@@ -368,6 +429,8 @@ function renderGroupSettings() {
   groupSettingsType.style.display = "none";
 
   groupInfoMenuButton.style.display = isOwner() ? "flex" : "none";
+  
+  updateCreateGroupButtonVisibility();
 }
 
 function openCreateGroupView() {
@@ -376,8 +439,15 @@ function openCreateGroupView() {
   groupFormTitle.textContent = "Нова група";
   saveGroupButton.textContent = "Створити групу";
 
-  groupTypeInput.value = "";
-  groupNameInput.value = "";
+  const availableTypes = renderGroupTypeOptions();
+
+    if (availableTypes.length === 0) {
+      alert("Ви вже створили всі доступні типи груп.");
+      return;
+    }
+
+    groupTypeInput.value = "";
+    groupNameInput.value = "";
 
   mainView.classList.remove("active");
   mykolaView.classList.remove("active");
@@ -391,6 +461,15 @@ function openCreateGroupView() {
     top: groupFormView.offsetTop - 20,
     behavior: "smooth",
   });
+}
+
+function updateCreateGroupButtonVisibility() {
+  const ownedTypes = getOwnedGroupTypes();
+  const hasAvailableTypes = groupTypes.some((type) => {
+    return !ownedTypes.includes(type.value);
+  });
+
+  createGroupButton.style.display = hasAvailableTypes ? "inline-flex" : "none";
 }
 
 function backToGroupSettingsView() {
@@ -2756,6 +2835,11 @@ async function initApp() {
   try {
     await updateAuthUI();
     await ensureUserMembership();
+    
+    if (!isAnonymous()) {
+      await loadCurrentUserGroups();
+    }
+    
     await loadCurrentRole();
 
     if (!isAnonymous()) {
