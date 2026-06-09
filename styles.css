@@ -505,65 +505,74 @@ p {
 }
 
 .other-groups-section {
-  margin-top: 24px;
+  margin-top: 18px;
+  opacity: 0.82;
 }
 
 .other-groups-title {
-  margin: 0 0 12px;
-  font-size: 0.95rem;
-  color: #c5a100;
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #888;
 }
 
 .other-groups-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .other-group-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 
-  padding: 12px 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
+  background: transparent;
+}
 
-  background: rgba(255,255,255,0.02);
+.other-group-row:last-child {
+  border-bottom: none;
 }
 
 .other-group-name {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 500;
+  color: #aaa;
 }
 
-.switch-group-button {
-  width: 28px;
-  height: 28px;
+.switch-group-badge {
+  width: auto;
+  min-width: 28px;
+  height: 22px;
 
-  border: none;
-  border-radius: 50%;
+  margin: 0;
+  padding: 3px 8px;
 
-  background: rgba(197,161,0,.22);
-  color: #c5a100;
+  border-radius: 999px;
+  border: 1px solid rgba(214, 178, 94, 0.22);
+
+  background: #1b1b1b;
+  color: #d6b25e;
 
   box-shadow: 0 2px 6px rgba(0,0,0,.25);
 
-  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-
-  transition:
-  transform 150ms ease,
-  background 150ms ease,
-  color 150ms ease;
 }
 
-.switch-group-button:hover {
-  transform: translateX(2px);
+.switch-group-badge:hover {
+  background: #242424;
+  color: #e4c675;
+  transform: translateX(1px);
 }
 
 .invite-confirm-button {
