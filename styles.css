@@ -39,6 +39,28 @@ body:not(.app-ready) .container {
   transition: opacity 500ms ease, visibility 500ms ease;
 }
 
+.app-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.app-loader-text {
+  margin-top: 18px;
+
+  color: #d6b25e;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.app-loader-text.visible {
+  opacity: 1;
+}
+
 body.app-ready .app-loader {
   opacity: 0;
   visibility: hidden;
