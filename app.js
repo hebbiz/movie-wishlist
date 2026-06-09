@@ -493,6 +493,11 @@ backFromGroupFormButton.addEventListener("click", () => {
 groupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  if (!currentUser) {
+    alert("Потрібно увійти в акаунт.");
+    return;
+  }
+
   const groupType = groupTypeInput.value;
   const groupName = groupNameInput.value.trim();
 
@@ -501,7 +506,86 @@ groupForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  alert("Створення групи підключимо наступним кроком.");
+  const ownedTypes = getOwnedGroupTypes();
+
+  if (ownedTypes.includes(groupType)) {
+    alert("У вас вже є група цього типу.");
+    renderGroupTypeOptions();
+    return;
+  }
+
+  saveGroupButton.disabled = true;
+  saveGroupButton.textContent = "Створюю...";
+
+  try {
+    const { data: createdGroups, error: groupInsertError } =
+      await supabaseClient
+        .from("groups")
+        .insert({
+          name: groupName,
+          type: groupType,
+          created_by: currentUser.id,
+          is_default: false,
+        })
+        .select();
+
+    if (groupInsertError) {
+      alert(
+        "Помилка створення групи\n\n" +
+        "Message: " + groupInsertError.message
+      );
+      return;
+    }
+
+    const createdGroup = createdGroups?.[0];
+
+    if (!createdGroup) {
+      alert("Групу створено, але не отримано її id.");
+      return;
+    }
+
+    const { error: memberInsertError } = await supabaseClient
+      .from("group_members")
+      .insert({
+        group_id: createdGroup.id,
+        user_id: currentUser.id,
+        role: "owner",
+        is_group_subscriber: false,
+      });
+
+    if (memberInsertError) {
+      alert(
+        "Групу створено, але не вдалося додати вас як власника\n\n" +
+        "Message: " + memberInsertError.message
+      );
+      return;
+    }
+
+    currentGroupId = createdGroup.id;
+    currentGroup = createdGroup;
+
+    await loadCurrentUserGroups();
+    await loadCurrentRole();
+
+    renderCurrentGroupInfo();
+    renderGroupSettings();
+
+    movies = [];
+    applySearchAndFilters();
+
+    groupForm.reset();
+    backToGroupSettingsView();
+
+    await loadCurrentGroupMembers();
+    renderGroupMembers();
+
+    alert("Групу створено.");
+  } finally {
+    saveGroupButton.disabled = false;
+    saveGroupButton.textContent = editingGroupId
+      ? "Зберегти зміни"
+      : "Створити групу";
+  }
 });
 
 async function loadCurrentGroupMembers() {
