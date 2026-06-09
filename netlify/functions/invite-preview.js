@@ -22,10 +22,13 @@ exports.handler = async (event) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Запрошення до Movie Wishlist</title>
+  <link rel="canonical" href="${siteUrl}/.netlify/functions/invite-preview?token=${encodeURIComponent(token)}" />
 
   <meta property="og:title" content="Запрошення до Movie Wishlist" />
   <meta property="og:description" content="Вас запросили до спільного списку фільмів. Дивіться те, що радять люди, яким ви довіряєте." />
   <meta property="og:image" content="${imageUrl}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:url" content="${siteUrl}/.netlify/functions/invite-preview?token=${encodeURIComponent(token)}" />
   <meta property="og:type" content="website" />
 
@@ -34,7 +37,13 @@ exports.handler = async (event) => {
   <meta name="twitter:description" content="Вас запросили до спільного списку фільмів." />
   <meta name="twitter:image" content="${imageUrl}" />
 
-  <meta http-equiv="refresh" content="0; url=${appUrl}" />
+  <meta http-equiv="refresh" content="1; url=${appUrl}" />
+
+  <script>
+    setTimeout(() => {
+      window.location.replace("${appUrl}");
+    }, 700);
+  </script>
 </head>
 
 <body>
