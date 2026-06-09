@@ -322,4 +322,17 @@ for select
 to authenticated
 using (true);
 
+-- Add created_by Reference Column to Groups
 
+alter table public.groups
+add column created_by uuid references auth.users(id);
+
+-- Allow Authenticated Group Creation
+
+create policy "Authenticated users can create groups"
+on public.groups
+for insert
+to authenticated
+with check (
+  created_by = auth.uid()
+);
