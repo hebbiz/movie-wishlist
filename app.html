@@ -7,9 +7,12 @@
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
-  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
+  <link rel="manifest" href="/assets/icons/site.webmanifest">
+  <meta name="theme-color" content="#0B0F1A">
+  <meta name="msapplication-TileColor" content="#0B0F1A">
+  <meta name="msapplication-config" content="/assets/icons/browserconfig.xml">
 </head>
 <body>
   <div id="appLoader" class="app-loader">
@@ -21,57 +24,55 @@
       />
     </div>
   </div>
-  <main class="container">
-    <header class="site-header">
-      <div class="site-title-block">
-
-        <div class="site-logo-title">
-          <img
-            src="/assets/logo/movie-wishlist-master-transparent.svg"
-            alt="Movie Wishlist"
-            class="site-logo"
-          />
-          <h1>Movie Wishlist</h1>
-        </div>
-
-        <div class="site-subtitle">
-          <span>Список для перегляду та покупки</span>
-
-          <span class="group-selector-wrapper">
-            <button id="groupSelectorButton" class="group-selector-button" type="button">
-              <span id="groupTypeText"></span>
-              <span id="groupNameText"></span>
-              <span class="group-selector-arrow">▾</span>
-            </button>
-
-            <span id="groupSelectorDropdown" class="group-selector-dropdown">
-              <button id="openGroupSettingsButton" type="button">
-                Керувати групами
-              </button>
-            </span>
-          </span>
-        </div>
-
+  <div class="container">
+  <header class="site-header">
+    <div class="site-title-block">
+      <div class="site-logo-title">
+        <img
+          src="/assets/logo/movie-wishlist-master-transparent.svg"
+          alt="Movie Wishlist"
+          class="site-logo"
+        />
+        <h1>Movie Wishlist</h1>
       </div>
 
-      <div id="userInfo" class="user-menu" style="display:none;">
-        <button id="userMenuButton" class="user-avatar-button" type="button">
-          <span id="userAvatarLetter">Я</span>
+      <div class="site-subtitle">
+        <span>Список для перегляду та покупки</span>
+
+        <span class="group-selector-wrapper">
+          <button id="groupSelectorButton" class="group-selector-button" type="button">
+            <span id="groupTypeText"></span>
+            <span id="groupNameText"></span>
+            <span class="group-selector-arrow">▾</span>
+          </button>
+
+          <span id="groupSelectorDropdown" class="group-selector-dropdown">
+            <button id="openGroupSettingsButton" type="button">
+              Керувати групами
+            </button>
+          </span>
+        </span>
+      </div>
+    </div>
+
+    <div id="userInfo" class="user-menu" style="display:none;">
+      <button id="userMenuButton" class="user-avatar-button" type="button">
+        <span id="userAvatarLetter">Я</span>
+      </button>
+
+      <div id="userMenuDropdown" class="user-menu-dropdown">
+        <div id="userEmail" class="user-menu-name"></div>
+
+        <button id="editProfileButton" type="button">
+          Редагувати профіль
         </button>
 
-        <div id="userMenuDropdown" class="user-menu-dropdown">
-          <div id="userEmail" class="user-menu-name"></div>
-
-          <button id="editProfileButton" type="button">
-            Редагувати профіль
-          </button>
-
-          <button id="logoutButton" type="button">
-            Вийти
-          </button>
-        </div>
+        <button id="logoutButton" type="button">
+          Вийти
+        </button>
       </div>
-    </header>
+    </div>
+  </header>
 
     <div id="authPanel">
 

@@ -1,12 +1,10 @@
 {
   "name": "Movie Wishlist",
   "short_name": "Movie Wishlist",
-  "description": "Personal movie wishlist and collection catalog.",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "background_color": "#0B0F1A",
+  "description": "Private movie wishlist and family film list manager.",
   "theme_color": "#0B0F1A",
+  "background_color": "#0B0F1A",
+  "display": "standalone",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
