@@ -1031,7 +1031,7 @@ sendInviteButton.addEventListener("click", async () => {
   }
 
   const inviteUrl =
-  `${window.location.origin}/app.html?invite=${token}`;
+  `${window.location.origin}/.netlify/functions/invite-preview?token=${token}`;
 
   await navigator.clipboard.writeText(inviteUrl);
 
