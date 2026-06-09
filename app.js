@@ -1230,6 +1230,11 @@ logoutButton.addEventListener("click", async () => {
   await supabaseClient.auth.signOut();
 
   currentRole = null;
+  currentGroup = null;
+  currentGroupId = null;
+  currentUserGroups = [];
+  currentGroupMembers = [];
+  movies = [];
 
   resetMykolaChat();
   clearMykolaFinishedState();
