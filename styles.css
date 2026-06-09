@@ -50,6 +50,7 @@ body:not(.app-ready) .container {
 
   font-size: 13px;
   font-weight: 500;
+  transform: translateX(5px);
 
   color: rgba(197, 161, 0, 0.65);
 
