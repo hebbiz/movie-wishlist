@@ -1050,7 +1050,7 @@ sendInviteButton.addEventListener("click", async () => {
   }
 
   const inviteUrl =
-    `${window.location.origin}/.netlify/functions/invite-preview?token=${token}`;
+  `${window.location.origin}/invite.html?token=${token}`;
 
   let copied = false;
 
