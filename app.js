@@ -162,7 +162,7 @@ async function ensureUserMembership() {
         .from("group_members")
         .select("id")
         .eq("group_id", invitation.group_id)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
         .maybeSingle();
 
     if (existingMembershipError) {
@@ -414,9 +414,11 @@ function openGroupSettingsView() {
   groupSelectorButton.classList.add("disabled");
 
   renderGroupSettings();
-    loadCurrentGroupMembers().then(() => {
+  renderOtherGroups();
+
+  loadCurrentGroupMembers().then(() => {
     renderGroupMembers();
-});
+  });
 
   window.scrollTo({
     top: groupSettingsView.offsetTop - 20,
@@ -455,6 +457,49 @@ function renderGroupSettings() {
   groupInfoMenuButton.style.display = isOwner() ? "flex" : "none";
   
   updateCreateGroupButtonVisibility();
+}
+
+function renderOtherGroups() {
+  otherGroupsList.innerHTML = "";
+
+  const otherGroups = currentUserGroups.filter((membership) => {
+    return membership.groups?.id !== currentGroupId;
+  });
+
+  if (!otherGroups.length) {
+    otherGroupsList.innerHTML = `
+      <p class="group-empty-note">
+        Інших груп немає.
+      </p>
+    `;
+    return;
+  }
+
+  otherGroups.forEach((membership) => {
+    const group = membership.groups;
+
+    const row = document.createElement("div");
+    row.className = "other-group-row";
+
+    row.innerHTML = `
+      <div class="other-group-info">
+        <div class="other-group-name">
+          ${getGroupTypeNominativeLabel(group.type)}
+          ${escapeHtml(group.name)}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="switch-group-button"
+        data-switch-group-id="${group.id}"
+      >
+        →
+      </button>
+    `;
+
+    otherGroupsList.appendChild(row);
+  });
 }
 
 function openCreateGroupView() {
@@ -596,6 +641,7 @@ groupForm.addEventListener("submit", async (event) => {
     await loadCurrentGroup();
     renderCurrentGroupInfo();
     renderGroupSettings();
+    renderOtherGroups();
 
     movies = [];
     applySearchAndFilters();
@@ -1009,6 +1055,42 @@ groupSelectorButton.addEventListener("click", (event) => {
 openGroupSettingsButton.addEventListener("click", (event) => {
   event.stopPropagation();
   openGroupSettingsView();
+});
+
+otherGroupsList.addEventListener("click", async (event) => {
+  const button = event.target.closest(
+    "[data-switch-group-id]"
+  );
+
+  if (!button) return;
+
+  currentGroupId = button.dataset.switchGroupId;
+
+  saveActiveGroupId(currentGroupId);
+
+  await loadCurrentGroup();
+  await loadCurrentRole();
+  await loadCurrentGroupMembers();
+  await loadMovies();
+
+  renderCurrentGroupInfo();
+  renderGroupSettings();
+  renderGroupMembers();
+  renderOtherGroups();
+
+  groupInfoMenuDropdown.style.display = "none";
+
+  document
+    .querySelectorAll(".group-section-menu-dropdown")
+    .forEach((dropdown) => {
+      dropdown.style.display = "none";
+    });
+
+  window.scrollTo({
+    top: groupSettingsView.offsetTop - 20,
+    behavior: "smooth",
+  });
+  
 });
 
 backFromGroupSettingsButton.addEventListener("click", () => {
