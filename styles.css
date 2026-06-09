@@ -1686,3 +1686,31 @@ button:hover {
 .landing-footer a:hover {
   color: #d6b25e;
 }
+
+.invite-info-card {
+  margin: 32px auto 0;
+  max-width: 560px;
+  padding: 22px 24px;
+
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 22px;
+
+  text-align: left;
+}
+
+.invite-info-label {
+  margin-bottom: 10px;
+
+  color: #d6a936;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.invite-info-card p {
+  margin: 0;
+  color: #d8d8d8;
+  line-height: 1.6;
+}
