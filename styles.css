@@ -54,8 +54,9 @@ body:not(.app-ready) .container {
 
   color: rgba(197, 161, 0, 0.65);
 
-  opacity: 0;
+  opacity: 1;
   transition: opacity 300ms ease;
+  outline: 1px solid red;
 }
 
 .app-loader-text.visible {
