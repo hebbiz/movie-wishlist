@@ -485,16 +485,16 @@ function renderOtherGroups() {
       <div class="other-group-name">
         ${getGroupTypeNominativeLabel(group.type)}
         ${escapeHtml(group.name)}
-
-        <button
-          type="button"
-          class="switch-group-badge"
-          data-switch-group-id="${group.id}"
-          aria-label="Перейти до групи"
-        >
-          →
-        </button>
       </div>
+
+      <button
+        type="button"
+        class="switch-group-button"
+        data-switch-group-id="${group.id}"
+        aria-label="Перейти до групи"
+      >
+        →
+      </button>
     `;
 
     otherGroupsList.appendChild(row);
