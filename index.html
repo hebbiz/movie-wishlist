@@ -1,54 +1,117 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>Movie Wishlist</title>
 
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="styles.css" />
+
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/assets/icons/site.webmanifest">
+
+  <meta name="theme-color" content="#0B0F1A">
+  <meta name="msapplication-TileColor" content="#0B0F1A">
+  <meta name="msapplication-config" content="/assets/icons/browserconfig.xml">
 </head>
 
-<body class="app-ready">
-  <main class="container landing-container">
-    <h1>Movie Wishlist</h1>
+<body>
+  <div class="container landing-container">
 
-<p>
-  Movie Wishlist — це приватний веб-сервіс для організації персональних
-  та сімейних списків фільмів.
-</p>
+    <header class="site-header">
+      <div class="site-title-block">
+        <div class="site-logo-title">
+          <img
+            src="/assets/logo/movie-wishlist-master-transparent.svg"
+            alt="Movie Wishlist"
+            class="site-logo"
+          />
 
-<p>
-  Користувачі можуть зберігати фільми з IMDb, додавати власні нотатки,
-  відстежувати статус перегляду, зберігати інформацію про стрімінгові
-  сервіси або фізичні носії, а також ділитися списками з членами своєї групи.
-</p>
+          <h1>Movie Wishlist</h1>
+        </div>
 
-<p>
-  Доступ до списків надається лише користувачам, запрошеним власником групи.
-  Авторизація через Google використовується для підтвердження особи
-  користувача та надання доступу до відповідних списків.
-</p>
+        <p class="site-subtitle landing-subtitle">
+          Дивіться те, що радять люди, яким ви довіряєте.
+        </p>
+      </div>
+    </header>
 
-<p>
-  Сервіс не публікує списки фільмів у відкритому доступі та не використовує
-  дані Google для будь-яких цілей, окрім входу в систему.
-</p>
+    <main class="landing-main">
 
-<a class="cta-button" href="/app.html">
-  Увійти до Movie Wishlist
-</a>
+      <section class="landing-hero">
+        <h2>
+          Хороші рекомендації не повинні губитися в чатах.
+        </h2>
 
-<p class="landing-note">
-  Доступ до списків відкривається після авторизації через Google.
-</p>
+        <p>
+          Movie Wishlist допомагає збирати фільми, серіали та відео в одному місці —
+          разом із тим, хто порадив, чому це варто переглянути і де це знайти.
+        </p>
 
-<footer>
-  <p>
-    <a href="/privacy.html">Privacy Policy</a> ·
-    <a href="/terms.html">Terms of Service</a>
-  </p>
-</footer>
-  </main>
+        <a href="/app.html" class="cta-button">
+          Перейти до списку
+        </a>
+      </section>
+
+      <section class="landing-motto-panel">
+        <p>
+          Люди постійно радять одне одному цікаві речі.
+          <br>
+          Ми просто даємо цим рекомендаціям дім.
+        </p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Не просто список фільмів</h2>
+
+        <p>
+          Зберігайте не лише назви, а й контекст:
+          хто порадив, на якому носії або сервісі це доступно,
+          що вже переглянуто і що ще чекає свого вечора.
+        </p>
+      </section>
+
+      <section class="landing-section">
+        <h2>Окремий простір для кожного кола</h2>
+
+        <div class="landing-features">
+          <div class="landing-feature-card">
+            <h3>Сімʼя</h3>
+            <p>Спільний список для домашніх переглядів і сімейних рекомендацій.</p>
+          </div>
+
+          <div class="landing-feature-card">
+            <h3>Друзі</h3>
+            <p>Фільми, серіали та знахідки, які радять люди зі схожим смаком.</p>
+          </div>
+
+          <div class="landing-feature-card">
+            <h3>Спільнота</h3>
+            <p>Окремий простір для людей, яких обʼєднує спільний інтерес.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-section">
+        <h2>Не можете обрати?</h2>
+
+        <p>
+          Микола перегляне список вашої групи та запропонує,
+          що подивитися сьогодні. Іноді навіть впевненіше, ніж потрібно.
+        </p>
+      </section>
+
+    </main>
+
+    <footer>
+      <p>
+        Movie Wishlist
+      </p>
+    </footer>
+
+  </div>
 </body>
 </html>
