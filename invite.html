@@ -20,6 +20,7 @@
   <meta property="og:description" content="Вас запросили до спільного списку фільмів">
   <meta property="og:image" content="https://movies.denyslisovyi.link/assets/share-preview.jpg">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://movies.denyslisovyi.link/invite.html">
 </head>
 
   <body class="app-ready">
@@ -121,23 +122,8 @@
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-
-    const enterButton = document.getElementById("enterButton");
-
-    enterButton.addEventListener("click", () => {
-      if (!token) {
-        window.location.href = "/app.html";
-        return;
-      }
-
-    window.location.href =
-      "/app.html?invite=" + encodeURIComponent(token);
-    });
-  </script>
-
-<script>
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
   const enterAppButton = document.getElementById("enterAppButton");
 
   if (enterAppButton) {
@@ -147,7 +133,13 @@
       enterAppButton.classList.add("loading");
 
       setTimeout(() => {
-        window.location.href = "/app.html";
+        if (!token) {
+          window.location.href = "/app.html";
+          return;
+        }
+
+        window.location.href =
+          "/app.html?invite=" + encodeURIComponent(token);
       }, 350);
     });
   }
