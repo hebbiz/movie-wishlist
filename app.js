@@ -482,21 +482,19 @@ function renderOtherGroups() {
     row.className = "other-group-row";
 
     row.innerHTML = `
-      <div class="other-group-info">
-        <div class="other-group-name">
-          ${getGroupTypeNominativeLabel(group.type)}
-          ${escapeHtml(group.name)}
-        </div>
-      </div>
+      <div class="other-group-name">
+        ${getGroupTypeNominativeLabel(group.type)}
+        ${escapeHtml(group.name)}
 
-      <button
-        type="button"
-        class="switch-group-badge"
-        data-switch-group-id="${group.id}"
-        aria-label="Перейти до групи"
-      >
-        →
-      </button>
+        <button
+          type="button"
+          class="switch-group-badge"
+          data-switch-group-id="${group.id}"
+          aria-label="Перейти до групи"
+        >
+          →
+        </button>
+      </div>
     `;
 
     otherGroupsList.appendChild(row);
