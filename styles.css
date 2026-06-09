@@ -545,36 +545,6 @@ p {
   color: #f0f0f0;
 }
 
-.switch-group-button {
-  width: 52px;
-  height: 26px;
-
-  padding: 0;
-  margin: 0;
-
-  border: 1px solid rgba(214,178,94,0.65);
-  border-radius: 999px;
-
-  background: rgba(214,178,94,0.04);
-  color: #d6b25e;
-
-  font-size: 18px;
-  line-height: 1;
-  font-weight: 700;
-
-  box-shadow: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.switch-group-button:hover {
-  background: rgba(214,178,94,0.09);
-  border-color: rgba(214,178,94,0.9);
-  transform: translateX(1px);
-}
-
 .invite-confirm-button {
   background: #3b5d45;
   color: #f4f4f4;
@@ -741,6 +711,41 @@ button {
 
 button:hover {
   background: #e4c675;
+}
+
+.other-group-row .switch-group-button {
+  width: 44px;
+  height: 24px;
+  min-width: 44px;
+
+  padding: 0;
+  margin: 0;
+
+  border: 1px solid rgba(214, 178, 94, 0.35);
+  border-radius: 999px;
+
+  background: rgba(214, 178, 94, 0.04);
+  color: rgba(214, 178, 94, 0.8);
+
+  box-shadow: none;
+
+  font-size: 15px;
+  line-height: 1;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.other-group-row .switch-group-button:active {
+  transform: translateX(1px) scale(0.98);
+}
+
+.other-group-row .switch-group-button:hover {
+  background: rgba(214, 178, 94, 0.09);
+  border-color: rgba(214, 178, 94, 0.55);
+  color: #d6b25e;
+  transform: translateX(1px);
 }
 
 .readonly-field {
