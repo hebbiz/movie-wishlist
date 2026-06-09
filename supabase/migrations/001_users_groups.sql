@@ -336,3 +336,20 @@ to authenticated
 with check (
   created_by = auth.uid()
 );
+
+-- Owner Role Insert Policy for User’s Groups
+
+create policy "Users can create owner membership for own groups"
+on public.group_members
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+  and role = 'owner'
+  and exists (
+    select 1
+    from public.groups g
+    where g.id = group_members.group_id
+      and g.created_by = auth.uid()
+  )
+);
