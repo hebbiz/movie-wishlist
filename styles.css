@@ -36,7 +36,7 @@ body:not(.app-ready) .container {
   opacity: 1;
   visibility: visible;
 
-  transition: opacity 500ms ease, visibility 500ms ease;
+  transition: opacity 700ms ease, visibility 500ms ease;
 }
 
 .app-loader-content {
@@ -53,7 +53,7 @@ body:not(.app-ready) .container {
 
   opacity: 0;
   transform: translateX(6px);
-  transition: opacity 300ms ease;
+  transition: opacity 700ms ease;
 }
 
 .app-loader-text.visible {
