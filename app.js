@@ -102,16 +102,17 @@ function showAppLoader(message = null) {
 }
 
 function hideAppLoader() {
-  const loaderText =
-    document.getElementById("appLoaderText");
-
-  if (loaderText) {
-    loaderText.classList.remove("visible");
-    loaderText.textContent = "";
-  }
-
   setTimeout(() => {
     document.body.classList.add("app-ready");
+
+    setTimeout(() => {
+      const loaderText = document.getElementById("appLoaderText");
+
+      if (loaderText) {
+        loaderText.classList.remove("visible");
+        loaderText.textContent = "";
+      }
+    }, 500);
   }, 300);
 }
 
@@ -1116,10 +1117,10 @@ otherGroupsList.addEventListener("click", async (event) => {
     });
 
   } finally {
-
-    hideAppLoader();
-
-  }
+      setTimeout(() => {
+        hideAppLoader();
+      }, 1000);  
+    }
 });
 
 backFromGroupSettingsButton.addEventListener("click", () => {
