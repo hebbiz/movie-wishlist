@@ -17,24 +17,7 @@
   <meta name="msapplication-TileColor" content="#0B0F1A">
   <meta name="msapplication-config" content="/assets/icons/browserconfig.xml">
 </head>
-  
-<script>
-  const enterAppButton = document.getElementById("enterAppButton");
 
-  if (enterAppButton) {
-    enterAppButton.addEventListener("click", (event) => {
-      event.preventDefault();
-
-      enterAppButton.classList.add("loading");
-
-      setTimeout(() => {
-        window.location.href = "/app.html";
-      }, 350);
-    });
-  }
-</script>
-
-<body>
   <body class="app-ready">
   <div class="container landing-container">
 
@@ -132,5 +115,22 @@
     </footer>
 
   </div>
+
+<script>
+  const enterAppButton = document.getElementById("enterAppButton");
+
+  if (enterAppButton) {
+    enterAppButton.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      enterAppButton.classList.add("loading");
+
+      setTimeout(() => {
+        window.location.href = "/app.html";
+      }, 350);
+    });
+  }
+</script>
+    
 </body>
 </html>
