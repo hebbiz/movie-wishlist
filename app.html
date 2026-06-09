@@ -16,12 +16,18 @@
 </head>
 <body>
   <div id="appLoader" class="app-loader">
-    <div class="app-loader-logo-wrap">
-      <img
-        src="/assets/logo/movie-wishlist-master-transparent.svg"
-        alt="Movie Wishlist"
-        class="app-loader-logo"
-      />
+    <div class="app-loader-content">
+
+      <div class="app-loader-logo-wrap">
+        <img
+          src="/assets/logo/movie-wishlist-master-transparent.svg"
+          alt="Movie Wishlist"
+          class="app-loader-logo"
+        />
+      </div>
+
+      <div id="appLoaderText" class="app-loader-text"></div>
+
     </div>
   </div>
   <div class="container">
@@ -269,15 +275,16 @@
               class="group-members-editor"
               style="display:none;"
             ></div>
-
-            <div
-              id="groupMembersEditor"
-              class="group-members-editor"
-              style="display:none;"
-            ></div>
+            
           </div>
-          
         </div>
+
+          <section class="other-groups-section">
+            <h3 class="other-groups-title">Інші групи</h3>
+
+            <div id="otherGroupsList" class="other-groups-list"></div>
+          </section>
+        
       </div>
       
     </section>
@@ -346,9 +353,7 @@
 
   </section>
 </div>
-      
-  </main>
-
+  
   <script src="app.js"></script>
 </body>
 </html>

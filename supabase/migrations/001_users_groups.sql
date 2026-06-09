@@ -322,4 +322,46 @@ for select
 to authenticated
 using (true);
 
+-- Add created_by Reference Column to Groups
+
+alter table public.groups
+add column created_by uuid references auth.users(id);
+
+-- Allow Authenticated Group Creation
+
+create policy "Authenticated users can create groups"
+on public.groups
+for insert
+to authenticated
+with check (
+  created_by = auth.uid()
+);
+
+-- Owner Role Insert Policy for User’s Groups
+
+create policy "Users can create owner membership for own groups"
+on public.group_members
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+  and role = 'owner'
+  and exists (
+    select 1
+    from public.groups g
+    where g.id = group_members.group_id
+      and g.created_by = auth.uid()
+  )
+);
+
+-- Enable user group read access
+
+create policy "Users can read groups they created"
+on public.groups
+for select
+to authenticated
+using (
+  created_by = auth.uid()
+);
+
 

@@ -46,6 +46,7 @@ const groupSettingsView = document.getElementById("groupSettingsView");
 const backFromGroupSettingsButton = document.getElementById("backFromGroupSettingsButton");
 const groupSettingsName = document.getElementById("groupSettingsName");
 const groupSettingsType = document.getElementById("groupSettingsType");
+const otherGroupsList = document.getElementById("otherGroupsList");
 const createGroupButton = document.getElementById("createGroupButton");
 const groupFormView = document.getElementById("groupFormView");
 const backFromGroupFormButton = document.getElementById("backFromGroupFormButton");
@@ -82,15 +83,38 @@ let currentUserGroups = [];
 let currentGroupMembers = [];
 let appHasInitialized = false;
 let pendingInviteRole = null;
+let isLoggingOut = false;
 
-function showAppLoader() {
+function showAppLoader(message = null) {
+  const loaderText =
+    document.getElementById("appLoaderText");
+
+  if (loaderText) {
+    if (message) {
+      loaderText.textContent = message;
+      loaderText.classList.add("visible");
+    } else {
+      loaderText.textContent = "";
+      loaderText.classList.remove("visible");
+    }
+  }
+
   document.body.classList.remove("app-ready");
 }
 
 function hideAppLoader() {
   setTimeout(() => {
     document.body.classList.add("app-ready");
-  }, 1000);
+
+    setTimeout(() => {
+      const loaderText = document.getElementById("appLoaderText");
+
+      if (loaderText) {
+        loaderText.classList.remove("visible");
+        loaderText.textContent = "";
+      }
+    }, 500);
+  }, 300);
 }
 
 async function getDefaultGroupId() {
@@ -105,6 +129,14 @@ async function getDefaultGroupId() {
   }
 
   return data.id;
+}
+
+function saveActiveGroupId(groupId) {
+  localStorage.setItem("activeGroupId", groupId);
+}
+
+function getSavedActiveGroupId() {
+  return localStorage.getItem("activeGroupId");
 }
 
 async function ensureUserMembership() {
@@ -179,6 +211,8 @@ async function ensureUserMembership() {
 
     currentGroupId = invitation.group_id;
 
+    saveActiveGroupId(currentGroupId);
+
     await supabaseClient
       .from("invitations")
       .delete()
@@ -194,7 +228,6 @@ async function ensureUserMembership() {
     .from("group_members")
     .select("group_id")
     .eq("user_id", userId)
-    .limit(1);
 
   if (membershipsError) {
     alert("Помилка перевірки груп користувача\n\n" + membershipsError.message);
@@ -202,8 +235,19 @@ async function ensureUserMembership() {
   }
 
   if (memberships?.length) {
-    currentGroupId = memberships[0].group_id;
-    return;
+  const savedGroupId = getSavedActiveGroupId();
+
+  const savedMembership = memberships.find((membership) => {
+    return membership.group_id === savedGroupId;
+  });
+
+  currentGroupId = savedMembership
+    ? savedMembership.group_id
+    : memberships[0].group_id;
+
+  saveActiveGroupId(currentGroupId);
+
+  return;
   }
 
   const defaultGroupId = await getDefaultGroupId();
@@ -223,6 +267,9 @@ async function ensureUserMembership() {
   }
 
   currentGroupId = defaultGroupId;
+
+  saveActiveGroupId(currentGroupId);
+  
 }
 
 async function updateAuthUI() {
@@ -390,9 +437,11 @@ function openGroupSettingsView() {
   groupSelectorButton.classList.add("disabled");
 
   renderGroupSettings();
-    loadCurrentGroupMembers().then(() => {
+  renderOtherGroups();
+
+  loadCurrentGroupMembers().then(() => {
     renderGroupMembers();
-});
+  });
 
   window.scrollTo({
     top: groupSettingsView.offsetTop - 20,
@@ -431,6 +480,48 @@ function renderGroupSettings() {
   groupInfoMenuButton.style.display = isOwner() ? "flex" : "none";
   
   updateCreateGroupButtonVisibility();
+}
+
+function renderOtherGroups() {
+  otherGroupsList.innerHTML = "";
+
+  const otherGroups = currentUserGroups.filter((membership) => {
+    return membership.groups?.id !== currentGroupId;
+  });
+
+  if (!otherGroups.length) {
+    otherGroupsList.innerHTML = `
+      <p class="group-empty-note">
+        Інших груп немає.
+      </p>
+    `;
+    return;
+  }
+
+  otherGroups.forEach((membership) => {
+    const group = membership.groups;
+
+    const row = document.createElement("div");
+    row.className = "other-group-row";
+
+    row.innerHTML = `
+      <div class="other-group-name">
+        ${getGroupTypeNominativeLabel(group.type)}
+        ${escapeHtml(group.name)}
+      </div>
+
+      <button
+        type="button"
+        class="switch-group-button"
+        data-switch-group-id="${group.id}"
+        aria-label="Перейти до групи"
+      >
+        →
+      </button>
+    `;
+
+    otherGroupsList.appendChild(row);
+  });
 }
 
 function openCreateGroupView() {
@@ -493,6 +584,11 @@ backFromGroupFormButton.addEventListener("click", () => {
 groupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  if (!currentUser) {
+    alert("Потрібно увійти в акаунт.");
+    return;
+  }
+
   const groupType = groupTypeInput.value;
   const groupName = groupNameInput.value.trim();
 
@@ -501,7 +597,90 @@ groupForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  alert("Створення групи підключимо наступним кроком.");
+  const ownedTypes = getOwnedGroupTypes();
+
+  if (ownedTypes.includes(groupType)) {
+    alert("У вас вже є група цього типу.");
+    renderGroupTypeOptions();
+    return;
+  }
+
+  saveGroupButton.disabled = true;
+  saveGroupButton.textContent = "Створюю...";
+
+  try {
+    const { data: createdGroups, error: groupInsertError } =
+      await supabaseClient
+        .from("groups")
+        .insert({
+          name: groupName,
+          type: groupType,
+          created_by: currentUser.id,
+          is_default: false,
+        })
+        .select();
+
+    if (groupInsertError) {
+      alert(
+        "Помилка створення групи\n\n" +
+        "Message: " + groupInsertError.message
+      );
+      return;
+    }
+
+    const createdGroup = createdGroups?.[0];
+
+    if (!createdGroup) {
+      alert("Групу створено, але не отримано її id.");
+      return;
+    }
+
+    const { error: memberInsertError } = await supabaseClient
+      .from("group_members")
+      .insert({
+        group_id: createdGroup.id,
+        user_id: currentUser.id,
+        role: "owner",
+        is_group_subscriber: false,
+      });
+
+    if (memberInsertError) {
+      alert(
+        "Групу створено, але не вдалося додати вас як власника\n\n" +
+        "Message: " + memberInsertError.message
+      );
+      return;
+    }
+
+    currentGroupId = createdGroup.id;
+    currentGroup = createdGroup;
+    
+    saveActiveGroupId(createdGroup.id);
+
+    await loadCurrentUserGroups();
+    await loadCurrentRole();
+
+    await loadCurrentGroup();
+    renderCurrentGroupInfo();
+    renderGroupSettings();
+    renderOtherGroups();
+
+    movies = [];
+    applySearchAndFilters();
+
+    groupForm.reset();
+    backToGroupSettingsView();
+
+    await loadCurrentGroupMembers();
+    renderGroupMembers();
+
+    alert("Групу створено.");
+  } finally {
+    saveGroupButton.disabled = false;
+    saveGroupButton.textContent = editingGroupId
+      ? "Зберегти зміни"
+      : "Створити групу";
+  }
 });
 
 async function loadCurrentGroupMembers() {
@@ -900,6 +1079,51 @@ openGroupSettingsButton.addEventListener("click", (event) => {
   openGroupSettingsView();
 });
 
+otherGroupsList.addEventListener("click", async (event) => {
+  const button = event.target.closest(
+    "[data-switch-group-id]"
+  );
+
+  if (!button) return;
+
+  showAppLoader("Змінюємо поточну групу...");
+
+  try {
+
+    currentGroupId = button.dataset.switchGroupId;
+
+    saveActiveGroupId(currentGroupId);
+
+    await loadCurrentGroup();
+    await loadCurrentRole();
+    await loadCurrentGroupMembers();
+    await loadMovies();
+
+    renderCurrentGroupInfo();
+    renderGroupSettings();
+    renderGroupMembers();
+    renderOtherGroups();
+
+    groupInfoMenuDropdown.style.display = "none";
+
+    document
+      .querySelectorAll(".group-section-menu-dropdown")
+      .forEach((dropdown) => {
+        dropdown.style.display = "none";
+      });
+
+    window.scrollTo({
+      top: groupSettingsView.offsetTop - 20,
+      behavior: "smooth",
+    });
+
+  } finally {
+      setTimeout(() => {
+        hideAppLoader();
+      }, 1000);  
+    }
+});
+
 backFromGroupSettingsButton.addEventListener("click", () => {
   backToMainView();
 });
@@ -1034,15 +1258,34 @@ loginButton.addEventListener("click", async () => {
 });
 
 logoutButton.addEventListener("click", async () => {
+  isLoggingOut = true;
+
+  showAppLoader();
+
+  const start = Date.now();
+
   await supabaseClient.auth.signOut();
 
   currentRole = null;
+  currentGroup = null;
+  currentGroupId = null;
+  currentUserGroups = [];
+  currentGroupMembers = [];
+  movies = [];
 
   resetMykolaChat();
   clearMykolaFinishedState();
 
   await updateAuthUI();
   applyAccessLevel();
+
+  const elapsed = Date.now() - start;
+  const minDuration = 1200;
+
+  setTimeout(() => {
+    hideAppLoader();
+    isLoggingOut = false;
+  }, Math.max(0, minDuration - elapsed));
 });
 
 async function loadMovies() {
@@ -2864,12 +3107,8 @@ wireMykolaActionButtons();
 
 initApp();
 
-setTimeout(() => {
-  hideAppLoader();
-}, 6000);
-
 supabaseClient.auth.onAuthStateChange(() => {
-  if (appHasInitialized) {
+  if (appHasInitialized && !isLoggingOut) {
     initApp();
   }
 });

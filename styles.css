@@ -36,7 +36,32 @@ body:not(.app-ready) .container {
   opacity: 1;
   visibility: visible;
 
-  transition: opacity 500ms ease, visibility 500ms ease;
+  transition: opacity 700ms ease, visibility 500ms ease;
+}
+
+.app-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.app-loader-text {
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(214, 178, 94, 0.62);
+
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 700ms ease;
+}
+
+.app-loader-text.visible {
+  opacity: 1;
+}
+
+.app-loader-text.visible {
+  opacity: 1;
 }
 
 body.app-ready .app-loader {
@@ -504,6 +529,47 @@ p {
   bottom: auto;
 }
 
+.other-groups-section {
+  margin-top: 18px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.other-groups-title {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #9a9a9a;
+  text-transform: uppercase;
+}
+
+.other-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.other-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 10px 14px 10px 16px;
+
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+
+  background: rgba(255,255,255,0.015);
+}
+
+.other-group-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #f0f0f0;
+}
+
 .invite-confirm-button {
   background: #3b5d45;
   color: #f4f4f4;
@@ -670,6 +736,41 @@ button {
 
 button:hover {
   background: #e4c675;
+}
+
+.other-group-row .switch-group-button {
+  width: 44px;
+  height: 24px;
+  min-width: 44px;
+
+  padding: 0;
+  margin: 0;
+
+  border: 1px solid rgba(214, 178, 94, 0.35);
+  border-radius: 999px;
+
+  background: rgba(214, 178, 94, 0.04);
+  color: rgba(214, 178, 94, 0.8);
+
+  box-shadow: none;
+
+  font-size: 15px;
+  line-height: 1;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.other-group-row .switch-group-button:active {
+  transform: translateX(1px) scale(0.98);
+}
+
+.other-group-row .switch-group-button:hover {
+  background: rgba(214, 178, 94, 0.09);
+  border-color: rgba(214, 178, 94, 0.55);
+  color: #d6b25e;
+  transform: translateX(1px);
 }
 
 .readonly-field {
