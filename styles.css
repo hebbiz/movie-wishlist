@@ -46,17 +46,18 @@ body:not(.app-ready) .container {
 }
 
 .app-loader-text {
-  margin-top: 16px;
-
-  font-size: 13px;
+  margin-top: 14px;
+  font-size: 12px;
   font-weight: 500;
+  color: rgba(214, 178, 94, 0.62);
+
+  opacity: 0;
   transform: translateX(100px);
-
-  color: rgba(197, 161, 0, 0.65);
-
-  opacity: 1;
   transition: opacity 300ms ease;
-  outline: 1px solid red;
+}
+
+.app-loader-text.visible {
+  opacity: 1;
 }
 
 .app-loader-text.visible {
