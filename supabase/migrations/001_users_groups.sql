@@ -353,3 +353,15 @@ with check (
       and g.created_by = auth.uid()
   )
 );
+
+-- Enable user group read access
+
+create policy "Users can read groups they created"
+on public.groups
+for select
+to authenticated
+using (
+  created_by = auth.uid()
+);
+
+
