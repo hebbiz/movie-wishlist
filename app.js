@@ -83,6 +83,7 @@ let currentUserGroups = [];
 let currentGroupMembers = [];
 let appHasInitialized = false;
 let pendingInviteRole = null;
+let isLoggingOut = false;
 
 function showAppLoader(message = null) {
   const loaderText =
@@ -1257,6 +1258,12 @@ loginButton.addEventListener("click", async () => {
 });
 
 logoutButton.addEventListener("click", async () => {
+  isLoggingOut = true;
+
+  showAppLoader();
+
+  const start = Date.now();
+
   await supabaseClient.auth.signOut();
 
   currentRole = null;
@@ -1271,6 +1278,14 @@ logoutButton.addEventListener("click", async () => {
 
   await updateAuthUI();
   applyAccessLevel();
+
+  const elapsed = Date.now() - start;
+  const minDuration = 1200;
+
+  setTimeout(() => {
+    hideAppLoader();
+    isLoggingOut = false;
+  }, Math.max(0, minDuration - elapsed));
 });
 
 async function loadMovies() {
@@ -3092,12 +3107,8 @@ wireMykolaActionButtons();
 
 initApp();
 
-setTimeout(() => {
-  hideAppLoader();
-}, 6000);
-
 supabaseClient.auth.onAuthStateChange(() => {
-  if (appHasInitialized) {
+  if (appHasInitialized && !isLoggingOut) {
     initApp();
   }
 });
