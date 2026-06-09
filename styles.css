@@ -1508,6 +1508,9 @@ button:hover {
 }
 
 .cta-button {
+  position: relative;
+  overflow: hidden;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1522,14 +1525,36 @@ button:hover {
   text-decoration: none;
   font-weight: 600;
 
-  transition:
-    transform 0.15s ease,
-    opacity 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
 .cta-button:hover {
-  opacity: 0.92;
   transform: translateY(-1px);
+}
+
+.cta-button::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background: #c5a100;
+
+  transform: scaleX(0);
+  transform-origin: left center;
+
+  transition: transform 350ms ease;
+
+  z-index: 0;
+}
+
+.cta-button span {
+  position: relative;
+  z-index: 1;
+}
+
+.cta-button.loading::after {
+  transform: scaleX(1);
 }
 
 /* ---------- Motto ---------- */
