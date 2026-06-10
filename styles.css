@@ -1687,22 +1687,39 @@ button:hover {
   background: #0B0F1A;
 }
 
+.invite-page .container {
+  min-height: 100svh;
+}
+
 .invite-page .landing-main {
   gap: 56px;
 }
 
 .invite-hero {
+  min-height: calc(100svh - 48px);
   max-width: 760px;
   margin: 0 auto;
-  padding: 56px 20px 24px;
+  padding: clamp(36px, 6svh, 64px) 20px clamp(20px, 4svh, 40px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+
   text-align: center;
+}
+
+.invite-hero-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(24px, 4svh, 44px);
 }
 
 .invite-logo-wrap {
   position: relative;
   width: clamp(88px, 10vw, 128px);
   height: clamp(88px, 10vw, 128px);
-  margin: 0 auto 28px;
   overflow: hidden;
 
   -webkit-mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
@@ -1755,11 +1772,29 @@ button:hover {
 }
 
 .invite-description {
-  margin: 24px auto 32px;
+  margin: 0;
   max-width: 720px;
   color: #c8c8c8;
   font-size: clamp(1.15rem, 2.4vw, 1.35rem);
   line-height: 1.55;
+}
+
+.invite-hero-actions {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(32px, 5svh, 56px);
+}
+
+.invite-hero .cta-button {
+  min-width: min(100%, 360px);
+}
+
+.invite-motto-panel {
+  width: 100%;
+  margin: 0 auto;
 }
 
 @media (max-width: 600px) {
@@ -1770,7 +1805,6 @@ button:hover {
   .invite-logo-wrap {
     width: 88px;
     height: 88px;
-    margin-bottom: 28px;
   }
 
   .invite-description {
