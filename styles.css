@@ -1700,8 +1700,8 @@ button:hover {
 
 .invite-logo-wrap {
   position: relative;
-  width: clamp(72px, 9vw, 108px);
-  height: clamp(72px, 9vw, 108px);
+  width: clamp(88px, 10vw, 128px);
+  height: clamp(88px, 10vw, 128px);
   margin: 0 auto 28px;
   overflow: hidden;
 
@@ -1730,7 +1730,7 @@ button:hover {
   );
 
   transform: translateX(-120%);
-  animation: inviteLogoShimmer 9200ms ease-in-out infinite;
+  animation: inviteLogoShimmer 7200ms ease-in-out infinite;
 }
 
 @keyframes inviteLogoShimmer {
@@ -1738,7 +1738,7 @@ button:hover {
     transform: translateX(-120%);
   }
 
-  46% {
+  42% {
     transform: translateX(-120%);
   }
 
