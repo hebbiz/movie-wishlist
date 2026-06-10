@@ -1683,6 +1683,8 @@ button:hover {
   color: #d6b25e;
 }
 
+/* ---------- Invite Page ---------- */
+
 .invite-page {
   background: #0B0F1A;
 }
@@ -1698,7 +1700,7 @@ button:hover {
   flex-direction: column;
   justify-content: center;
 
-  gap: clamp(44px, 6svh, 72px);
+  gap: clamp(40px, 5.5svh, 72px);
 }
 
 .invite-hero {
@@ -1710,8 +1712,8 @@ button:hover {
 
 .invite-logo-wrap {
   position: relative;
-  width: clamp(88px, 10vw, 128px);
-  height: clamp(88px, 10vw, 128px);
+  width: clamp(88px, 9vw, 128px);
+  height: clamp(88px, 9vw, 128px);
   margin: 0 auto 28px;
   overflow: hidden;
 
@@ -1744,17 +1746,9 @@ button:hover {
 }
 
 @keyframes inviteLogoShimmer {
-  0% {
-    transform: translateX(-120%);
-  }
-
-  45% {
-    transform: translateX(120%);
-  }
-
-  100% {
-    transform: translateX(120%);
-  }
+  0% { transform: translateX(-120%); }
+  45% { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
 }
 
 .invite-title {
@@ -1772,11 +1766,40 @@ button:hover {
   line-height: 1.55;
 }
 
-@media (max-width: 600px) {
+/* iPad portrait / smaller tablets */
+@media (max-width: 900px) {
   .invite-scene {
-    min-height: auto;
-    padding: 48px 0 0;
     gap: 48px;
+  }
+
+  .invite-logo-wrap {
+    width: 88px;
+    height: 88px;
+    margin-bottom: 26px;
+  }
+
+  .invite-title {
+    font-size: clamp(44px, 7vw, 60px);
+  }
+
+  .invite-description {
+    margin: 22px auto 30px;
+  }
+
+  .landing-motto-panel {
+    padding: 42px 28px;
+  }
+}
+
+/* iPhone */
+@media (max-width: 600px) {
+  .invite-page .landing-main {
+    gap: 56px;
+  }
+
+  .invite-scene {
+    min-height: calc(100svh - 48px);
+    gap: 36px;
   }
 
   .invite-hero {
@@ -1784,12 +1807,56 @@ button:hover {
   }
 
   .invite-logo-wrap {
-    width: 88px;
-    height: 88px;
-    margin-bottom: 28px;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 24px;
+  }
+
+  .invite-title {
+    font-size: clamp(38px, 10.5vw, 48px);
+    line-height: 1.08;
   }
 
   .invite-description {
+    margin: 22px auto 28px;
     font-size: 1.15rem;
+    line-height: 1.55;
+  }
+
+  .landing-motto-panel {
+    padding: 32px 24px;
+  }
+
+  .landing-motto-panel p {
+    font-size: clamp(1.25rem, 6vw, 1.55rem);
+  }
+
+  .landing-motto-accent {
+    font-size: clamp(1.4rem, 6.8vw, 1.75rem);
+  }
+}
+
+/* very short screens */
+@media (max-height: 720px) {
+  .invite-scene {
+    gap: 32px;
+  }
+
+  .invite-logo-wrap {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 22px;
+  }
+
+  .invite-title {
+    font-size: clamp(36px, 9vw, 52px);
+  }
+
+  .invite-description {
+    margin: 18px auto 24px;
+  }
+
+  .landing-motto-panel {
+    padding: 28px 22px;
   }
 }
