@@ -1687,6 +1687,33 @@ button:hover {
   color: #d6b25e;
 }
 
+.invite-hero {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 20px 24px;
+  text-align: center;
+}
+
+.invite-logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 24px;
+}
+
+.invite-title {
+  margin: 0;
+  font-size: clamp(42px, 6vw, 72px);
+  line-height: 1.05;
+}
+
+.invite-description {
+  margin: 24px auto 32px;
+  max-width: 720px;
+  color: #b9b9b9;
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
 .invite-info-card {
   margin: 32px auto 0;
   max-width: 560px;
