@@ -1683,45 +1683,65 @@ button:hover {
   color: #d6b25e;
 }
 
+/* ---------- Invite Page ---------- */
+
 .invite-page {
   background: #0B0F1A;
 }
 
 .invite-page .landing-main {
-  min-height: calc(100svh - 48px);
-  justify-content: space-between;
   gap: 56px;
 }
 
 .invite-hero {
   max-width: 760px;
   margin: 0 auto;
-  padding: clamp(36px, 6svh, 56px) 20px 24px;
+
+  padding:
+    clamp(34px, 5.5svh, 56px)
+    20px
+    24px;
+
   text-align: center;
 
-  transform: translateY(clamp(-28px, -3svh, -16px));
+  transform:
+    translateY(
+      clamp(-22px, -2.4svh, -12px)
+    );
 }
 
 .invite-hero-top {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(24px, 4svh, 44px);
+
+  gap:
+    clamp(
+      22px,
+      3.4svh,
+      38px
+    );
 }
 
 .invite-logo-wrap {
   position: relative;
+
   width: clamp(88px, 10vw, 128px);
   height: clamp(88px, 10vw, 128px);
+
   margin: 0 auto;
+
   overflow: hidden;
 
   -webkit-mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
   mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
+
   -webkit-mask-size: contain;
   mask-size: contain;
+
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
+
   -webkit-mask-position: center;
   mask-position: center;
 
@@ -1730,6 +1750,7 @@ button:hover {
 
 .invite-logo-wrap::after {
   content: "";
+
   position: absolute;
   inset: -30%;
 
@@ -1741,7 +1762,12 @@ button:hover {
   );
 
   transform: translateX(-120%);
-  animation: inviteLogoShimmer 5000ms ease-in-out infinite;
+
+  animation:
+    inviteLogoShimmer
+    5000ms
+    ease-in-out
+    infinite;
 }
 
 @keyframes inviteLogoShimmer {
@@ -1760,21 +1786,42 @@ button:hover {
 
 .invite-title {
   margin: 0;
-  font-size: clamp(40px, 5.5vw, 68px);
+
+  font-size:
+    clamp(
+      40px,
+      5.5vw,
+      68px
+    );
+
   line-height: 1.05;
   white-space: normal;
 }
 
 .invite-description {
-  margin: 0 auto 32px;
+  margin: -4px auto 0;
+
   max-width: 720px;
+
   color: #c8c8c8;
-  font-size: clamp(1.15rem, 2.4vw, 1.35rem);
+
+  font-size:
+    clamp(
+      1.15rem,
+      2.4vw,
+      1.35rem
+    );
+
   line-height: 1.55;
 }
 
 .invite-hero-actions {
-  margin-top: 32px;
+  margin-top:
+    clamp(
+      26px,
+      4svh,
+      38px
+    );
 }
 
 .invite-hero .cta-button {
@@ -1784,12 +1831,22 @@ button:hover {
 .invite-motto-panel {
   width: 100%;
   max-width: 1100px;
-  margin: 24px auto 0;
+
+  margin:
+    clamp(
+      18px,
+      3svh,
+      30px
+    )
+    auto
+    0;
 }
 
 @media (max-width: 600px) {
+
   .invite-hero {
     padding: 40px 0 20px;
+
     transform: translateY(-14px);
   }
 
@@ -1800,5 +1857,24 @@ button:hover {
 
   .invite-description {
     font-size: 1.15rem;
+  }
+}
+
+@media (max-height: 720px) {
+
+  .invite-page .landing-main {
+    gap: 40px;
+  }
+
+  .invite-hero {
+    transform: translateY(-10px);
+  }
+
+  .invite-hero-top {
+    gap: 20px;
+  }
+
+  .invite-hero-actions {
+    margin-top: 24px;
   }
 }
