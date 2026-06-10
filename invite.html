@@ -18,49 +18,38 @@
   <meta name="msapplication-config" content="/assets/icons/browserconfig.xml">
   <meta property="og:title" content="Запрошення до Movie Wishlist">
   <meta property="og:description" content="Вас запросили до спільного списку фільмів">
-  <meta property="og:image" content="https://movies.denyslisovyi.link/assets/preview/invite-card-final.png">
+  <meta property="og:image" content="https://movies.denyslisovyi.link/assets/preview/invite-card.png">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://movies.denyslisovyi.link/invite.html">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
 </head>
 
-  <body class="app-ready">
+  <body class="app-ready invite-page">
   <div class="container landing-container">
-
-    <header class="site-header">
-      <div class="site-title-block">
-        <div class="site-logo-title">
-          <img
-            src="/assets/logo/movie-wishlist-master-transparent.svg"
-            alt="Movie Wishlist"
-            class="site-logo"
-          />
-
-          <h1>Movie Wishlist</h1>
-        </div>
-
-        <p class="site-subtitle landing-subtitle">
-          Вас запросили до спільного списку фільмів.
-        </p>
-      </div>
-    </header>
 
     <main class="landing-main">
 
-      <section class="landing-hero">
-        <h2>
-          Хороші рекомендації не повинні губитися.
-        </h2>
+      <section class="invite-hero">
 
-        <p>
-          Movie Wishlist допомагає збирати фільми в одному місці —
-          разом із тим, хто порадив, чому це варто переглянути і де це знайти.
+        <div
+          class="invite-logo-wrap"
+          aria-label="Movie Wishlist"
+        ></div>
+
+        <h1 class="invite-title">
+          Вас запросили до<br>
+          Movie Wishlist
+        </h1>
+
+        <p class="invite-description" id="inviteDescription">
+          Приєднуйтесь до спільного списку фільмів та рекомендацій.
         </p>
 
         <a href="/app.html" class="cta-button" id="enterAppButton">
-          <span>Перейти до списку</span>
+          <span>Прийняти запрошення</span>
         </a>
+
       </section>
 
       <section class="landing-motto-panel">
