@@ -1698,10 +1698,57 @@ button:hover {
   text-align: center;
 }
 
-.invite-logo {
-  width: 52px;
-  height: 52px;
-  margin-bottom: 28px;
+.invite-logo-wrap {
+  position: relative;
+  width: clamp(72px, 9vw, 108px);
+  height: clamp(72px, 9vw, 108px);
+  margin: 0 auto 28px;
+  overflow: hidden;
+
+  -webkit-mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
+  mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+
+  background: #d6b25e;
+}
+
+.invite-logo-wrap::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+
+  background: linear-gradient(
+    120deg,
+    transparent 35%,
+    rgba(255, 230, 160, 0.7) 50%,
+    transparent 65%
+  );
+
+  transform: translateX(-120%);
+  animation: inviteLogoShimmer 9200ms ease-in-out infinite;
+}
+
+@keyframes inviteLogoShimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  46% {
+    transform: translateX(-120%);
+  }
+
+  70% {
+    transform: translateX(120%);
+  }
+
+  100% {
+    transform: translateX(120%);
+  }
 }
 
 .invite-title {
@@ -1730,10 +1777,10 @@ button:hover {
     margin-bottom: 24px;
   }
 
-  .invite-title {
-    font-size: 42px;
-    line-height: 1.08;
-    white-space: normal;
+  .invite-logo-wrap {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 24px;
   }
 
   .invite-description {
