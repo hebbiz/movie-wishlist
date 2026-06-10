@@ -1688,13 +1688,23 @@ button:hover {
 }
 
 .invite-page .landing-main {
-  gap: 56px;
+  gap: 72px;
+}
+
+.invite-scene {
+  min-height: calc(100svh - 48px);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  gap: clamp(44px, 6svh, 72px);
 }
 
 .invite-hero {
   max-width: 760px;
   margin: 0 auto;
-  padding: 56px 20px 24px;
+  padding: 0 20px;
   text-align: center;
 }
 
@@ -1763,8 +1773,14 @@ button:hover {
 }
 
 @media (max-width: 600px) {
+  .invite-scene {
+    min-height: auto;
+    padding: 48px 0 0;
+    gap: 48px;
+  }
+
   .invite-hero {
-    padding: 48px 0 20px;
+    padding: 0;
   }
 
   .invite-logo-wrap {
