@@ -6,6 +6,13 @@
 
   <title>Movie Wishlist</title>
 
+  <style>
+    body.invite-page:not(.app-ready) .container {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+
   <link rel="stylesheet" href="styles.css" />
 
   <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
@@ -25,7 +32,7 @@
   <meta property="og:image:height" content="630">
 </head>
 
-  <body class="app-ready invite-page">
+<body class="invite-page">
   <div class="container landing-container">
 
     <main class="landing-main">
@@ -141,6 +148,7 @@
 
   async function loadInvitePreview() {
     if (!inviteGroupPhrase || !token) {
+      document.body.classList.add("app-ready");
       return;
     }
 
@@ -155,14 +163,14 @@
 
       const data = await response.json();
 
-      if (!data.groupType || !data.groupName) {
-        return;
+      if (data.groupType && data.groupName) {
+        inviteGroupPhrase.textContent =
+          " " + buildGroupPhrase(data.groupType, data.groupName) + ".";
       }
-
-      inviteGroupPhrase.textContent =
-        " " + buildGroupPhrase(data.groupType, data.groupName) + ".";
     } catch (error) {
       console.error("Failed to load invite preview", error);
+    } finally {
+      document.body.classList.add("app-ready");
     }
   }
 
