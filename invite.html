@@ -48,7 +48,7 @@
             <span class="invite-description-static">
               Приєднуйтесь до спільного списку фільмів та рекомендацій
             </span>
-            <span class="invite-description-group" id="inviteGroupPhrase"></span><span>.</span>
+            <span class="invite-description-group" id="inviteGroupPhrase"></span>
           </p>
 
           <a href="/app.html" class="cta-button" id="enterAppButton">
@@ -144,7 +144,7 @@
     const groupName = "Дениса";
 
     inviteGroupPhrase.textContent =
-      " " + buildGroupPhrase(groupType, groupName);
+      " " + buildGroupPhrase(groupType, groupName) + ".";
   }
 
   if (enterAppButton) {
