@@ -141,6 +141,7 @@
 
   async function loadInvitePreview() {
     if (!inviteGroupPhrase || !token) {
+      document.body.classList.add("app-ready");
       return;
     }
 
@@ -149,20 +150,21 @@
         "/.netlify/functions/invite-preview?token=" + encodeURIComponent(token)
       );
 
-      if (!response.ok) {
+        if (!response.ok) {
+        document.body.classList.add("app-ready");
         return;
       }
 
       const data = await response.json();
 
-      if (!data.groupType || !data.groupName) {
-        return;
+      if (data.groupType && data.groupName) {
+        inviteGroupPhrase.textContent =
+          " " + buildGroupPhrase(data.groupType, data.groupName) + ".";
       }
-
-      inviteGroupPhrase.textContent =
-        " " + buildGroupPhrase(data.groupType, data.groupName) + ".";
     } catch (error) {
       console.error("Failed to load invite preview", error);
+    } finally {
+      document.body.classList.add("app-ready");
     }
   }
 
