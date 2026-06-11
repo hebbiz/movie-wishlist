@@ -150,8 +150,7 @@
         "/.netlify/functions/invite-preview?token=" + encodeURIComponent(token)
       );
 
-        if (!response.ok) {
-        document.body.classList.add("app-ready");
+      if (!response.ok) {
         return;
       }
 
