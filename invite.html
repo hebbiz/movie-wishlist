@@ -45,7 +45,10 @@
           </h1>
 
           <p class="invite-description" id="inviteDescription">
-            Приєднуйтесь до спільного списку фільмів та рекомендацій.
+            <span class="invite-description-static">
+              Приєднуйтесь до спільного списку фільмів та рекомендацій
+            </span>
+            <span class="invite-description-group" id="inviteGroupPhrase"></span><span>.</span>
           </p>
 
           <a href="/app.html" class="cta-button" id="enterAppButton">
@@ -119,7 +122,30 @@
   <script>
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
-  const enterAppButton = document.getElementById("enterAppButton");
+  const enterAppButton = document.getElementById("enterAppButton")
+
+  const inviteGroupPhrase = document.getElementById("inviteGroupPhrase");
+
+  function buildGroupPhrase(groupType, groupName) {
+    switch (groupType) {
+      case "family":
+        return `сімʼї ${groupName}`;
+      case "friends":
+        return `друзів ${groupName}`;
+      case "community":
+        return `спільноти ${groupName}`;
+      default:
+        return `групи ${groupName}`;
+    }
+  }
+
+if (inviteGroupPhrase) {
+  const groupType = "family";
+  const groupName = "Дениса";
+
+  inviteGroupPhrase.textContent =
+    " " + buildGroupPhrase(groupType, groupName);
+}
 
   if (enterAppButton) {
     enterAppButton.addEventListener("click", (event) => {
