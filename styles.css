@@ -1689,6 +1689,10 @@ button:hover {
   background: #0B0F1A;
 }
 
+.invite-page .container {
+  transition: opacity 700ms ease;
+}
+
 .invite-page .landing-main {
   gap: 72px;
 }
