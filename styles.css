@@ -1683,18 +1683,29 @@ button:hover {
   color: #d6b25e;
 }
 
+/* ---------- Invite Page ---------- */
+
 .invite-page {
   background: #0B0F1A;
 }
 
 .invite-page .landing-main {
-  gap: 56px;
+  gap: 72px;
+}
+
+.invite-scene {
+  height: calc(100svh - 48px);
+
+  display: grid;
+  align-content: center;
+
+  gap: clamp(72px, 8svh, 104px);
 }
 
 .invite-hero {
   max-width: 760px;
   margin: 0 auto;
-  padding: 56px 20px 24px;
+  padding: 28 20px;
   text-align: center;
 }
 
@@ -1702,15 +1713,20 @@ button:hover {
   position: relative;
   width: clamp(88px, 10vw, 128px);
   height: clamp(88px, 10vw, 128px);
+
   margin: 0 auto 28px;
+
   overflow: hidden;
 
   -webkit-mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
   mask-image: url("/assets/logo/movie-wishlist-master-transparent.svg");
+
   -webkit-mask-size: contain;
   mask-size: contain;
+
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
+
   -webkit-mask-position: center;
   mask-position: center;
 
@@ -1749,31 +1765,65 @@ button:hover {
 
 .invite-title {
   margin: 0;
+
   font-size: clamp(40px, 5.5vw, 68px);
   line-height: 1.05;
+
   white-space: normal;
 }
 
 .invite-description {
   margin: 24px auto 32px;
+
   max-width: 720px;
+
   color: #c8c8c8;
+
   font-size: clamp(1.15rem, 2.4vw, 1.35rem);
   line-height: 1.55;
 }
 
+/* ---------- Mobile ---------- */
+
 @media (max-width: 600px) {
+
+  .invite-scene {
+    height: calc(106svh - 48px);
+    gap: 48px;
+  }
+
   .invite-hero {
-    padding: 48px 0 20px;
+    padding: 20px 0;
   }
 
   .invite-logo-wrap {
-    width: 88px;
-    height: 88px;
+    width: 72px;
+    height: 72px;
+
     margin-bottom: 28px;
   }
 
+  .invite-title {
+    font-size: clamp(34px, 10vw, 44px);
+    line-height: 1.08;
+  }
+
   .invite-description {
-    font-size: 1.15rem;
+    margin: 20px auto 32px;
+
+    font-size: 1.02rem;
+    line-height: 1.48;
+  }
+
+  .landing-motto-panel {
+    padding: 22px 20px;
+  }
+
+  .landing-motto-panel p {
+    font-size: 1.18rem;
+  }
+
+  .landing-motto-accent {
+    font-size: 1.38rem;
   }
 }
