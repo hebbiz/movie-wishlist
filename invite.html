@@ -45,7 +45,10 @@
           </h1>
 
           <p class="invite-description" id="inviteDescription">
-            Приєднуйтесь до спільного списку фільмів та рекомендацій.
+            <span class="invite-description-static">
+              Приєднуйтесь до спільного списку фільмів та рекомендацій
+            </span>
+            <span class="invite-description-group" id="inviteGroupPhrase"></span>
           </p>
 
           <a href="/app.html" class="cta-button" id="enterAppButton">
@@ -120,6 +123,50 @@
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
   const enterAppButton = document.getElementById("enterAppButton");
+
+  const inviteGroupPhrase = document.getElementById("inviteGroupPhrase");
+
+  function buildGroupPhrase(groupType, groupName) {
+    switch (groupType) {
+      case "family":
+        return `сімʼї ${groupName}`;
+      case "friends":
+        return `друзів ${groupName}`;
+      case "community":
+        return `спільноти ${groupName}`;
+      default:
+        return `групи ${groupName}`;
+    }
+  }
+
+  async function loadInvitePreview() {
+    if (!inviteGroupPhrase || !token) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "/.netlify/functions/invite-preview?token=" + encodeURIComponent(token)
+      );
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!data.groupType || !data.groupName) {
+        return;
+      }
+
+      inviteGroupPhrase.textContent =
+        " " + buildGroupPhrase(data.groupType, data.groupName) + ".";
+    } catch (error) {
+      console.error("Failed to load invite preview", error);
+    }
+  }
+
+  loadInvitePreview();
 
   if (enterAppButton) {
     enterAppButton.addEventListener("click", (event) => {
