@@ -1705,7 +1705,7 @@ button:hover {
 .invite-hero {
   max-width: 760px;
   margin: 0 auto;
-  padding: 28 20px;
+  padding: 36 20px;
   text-align: center;
 }
 
@@ -1793,7 +1793,7 @@ button:hover {
   }
 
   .invite-hero {
-    padding: 20px 0;
+    padding: 24px 0;
   }
 
   .invite-logo-wrap {
