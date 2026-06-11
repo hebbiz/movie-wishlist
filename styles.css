@@ -1699,7 +1699,7 @@ button:hover {
   display: grid;
   align-content: center;
 
-  gap: clamp(56px, 7svh, 88px);
+  gap: clamp(72px, 8svh, 104px);
 }
 
 .invite-hero {
@@ -1788,8 +1788,8 @@ button:hover {
 @media (max-width: 600px) {
 
   .invite-scene {
-    height: calc(100svh - 48px);
-    gap: 42px;
+    height: calc(106svh - 48px);
+    gap: 48px;
   }
 
   .invite-hero {
@@ -1826,9 +1826,4 @@ button:hover {
   .landing-motto-accent {
     font-size: 1.38rem;
   }
-}
-
-.invite-scene {
-  outline: 3px solid red !important;
-  gap: 120px !important;
 }
