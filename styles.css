@@ -1689,7 +1689,14 @@ button:hover {
   background: #0B0F1A;
 }
 
-.invite-page .container {
+body.invite-page:not(.app-ready) .container {
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+
+body.invite-page.app-ready .container {
+  opacity: 1;
   transition: opacity 700ms ease;
 }
 
