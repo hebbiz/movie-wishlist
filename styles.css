@@ -1697,7 +1697,7 @@ body.invite-page:not(.app-ready) .container {
 
 body.invite-page.app-ready .container {
   opacity: 1;
-  transition: opacity 700ms ease;
+  transition: opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .invite-page .landing-main {
