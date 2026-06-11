@@ -122,7 +122,7 @@
   <script>
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
-  const enterAppButton = document.getElementById("enterAppButton")
+  const enterAppButton = document.getElementById("enterAppButton");
 
   const inviteGroupPhrase = document.getElementById("inviteGroupPhrase");
 
@@ -139,13 +139,13 @@
     }
   }
 
-if (inviteGroupPhrase) {
-  const groupType = "family";
-  const groupName = "Дениса";
+  if (inviteGroupPhrase) {
+    const groupType = "family";
+    const groupName = "Дениса";
 
-  inviteGroupPhrase.textContent =
-    " " + buildGroupPhrase(groupType, groupName);
-}
+    inviteGroupPhrase.textContent =
+      " " + buildGroupPhrase(groupType, groupName);
+  }
 
   if (enterAppButton) {
     enterAppButton.addEventListener("click", (event) => {
