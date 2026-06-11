@@ -139,13 +139,34 @@
     }
   }
 
-  if (inviteGroupPhrase) {
-    const groupType = "family";
-    const groupName = "Дениса";
+  async function loadInvitePreview() {
+    if (!inviteGroupPhrase || !token) {
+      return;
+    }
 
-    inviteGroupPhrase.textContent =
-      " " + buildGroupPhrase(groupType, groupName) + ".";
+    try {
+      const response = await fetch(
+        "/.netlify/functions/invite-preview?token=" + encodeURIComponent(token)
+      );
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!data.groupType || !data.groupName) {
+        return;
+      }
+
+      inviteGroupPhrase.textContent =
+        " " + buildGroupPhrase(data.groupType, data.groupName) + ".";
+    } catch (error) {
+      console.error("Failed to load invite preview", error);
+    }
   }
+
+  loadInvitePreview();
 
   if (enterAppButton) {
     enterAppButton.addEventListener("click", (event) => {
