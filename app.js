@@ -1764,6 +1764,8 @@ function resetFormMode() {
   cancelEditButton.style.display = "none";
   formPanel.style.display = "none";
   showAddFormButton.style.display = "block";
+  document.getElementById("imdb_url").style.display = "block";
+  lookupButton.style.display = "block";
 
   updateFormVisibility();
 }
@@ -1784,6 +1786,9 @@ function startEditMovie(id) {
    showAddFormButton.style.display = "none";
    cancelEditButton.style.display = "block";
    formTitle.textContent = "Редагувати фільм";
+
+  document.getElementById("imdb_url").style.display = "none";
+  lookupButton.style.display = "none";
 
   fillForm(movie);
 
@@ -1816,7 +1821,33 @@ movieForm.addEventListener("submit", async (event) => {
        movieData.added_by = await getCurrentUserDisplayName();
     }
 
-console.log("Form data:", movieData);
+  console.log("Form data:", movieData);
+
+  if (editingMovieId) {
+    console.log("Updating movie:", editingMovieId);
+
+    const listData = getMovieGroupListData(movieData);
+
+    const { error: listUpdateError } = await supabaseClient
+      .from("movie_group_lists")
+      .update(listData)
+      .eq("id", editingMovieId);
+
+    if (listUpdateError) {
+      alert(
+        "Помилка оновлення фільму у списку\n\n" +
+        "Code: " + (listUpdateError.code || "N/A") + "\n" +
+        "Message: " + listUpdateError.message + "\n" +
+        "Details: " + (listUpdateError.details || "No details")
+      );
+      return;
+    }
+
+    alert("Зміни збережено");
+    resetFormMode();
+    loadMovies();
+    return;
+  }
 
   if (!movieData.title) {
     alert("Назва фільму обов'язкова.");
@@ -1848,45 +1879,6 @@ console.log("Form data:", movieData);
     alert("Такий фільм вже додано до списку.");
     return;
   }
-
-  if (editingMovieId) {
-  console.log("Updating movie:", editingMovieId);
-
-  const currentMovie = movies.find((movie) => movie.id === editingMovieId);
-
-  if (!currentMovie) {
-    alert("Фільм не знайдено.");
-    return;
-  }
-
-  const listData = getMovieGroupListData(movieData);
-
-  const { error: listUpdateError } = await supabaseClient
-    .from("movie_group_lists")
-    .update(listData)
-    .eq("id", editingMovieId);
-
-  if (listUpdateError) {
-    console.error("Movie list update error:", listUpdateError);
-
-    alert(
-      "Помилка оновлення фільму у списку\n\n" +
-      "Code: " + (listUpdateError.code || "N/A") + "\n" +
-      "Message: " + listUpdateError.message + "\n" +
-      "Details: " + (listUpdateError.details || "No details")
-    );
-
-    return;
-  }
-
-  alert("Зміни збережено");
-
-  resetFormMode();
-
-  loadMovies();
-
-  return;
-}
 
   console.log("Creating new movie");
 
