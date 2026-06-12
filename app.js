@@ -1838,10 +1838,11 @@ console.log("Form data:", movieData);
   movieData.imdb_id = imdbId;
 
   const duplicateMovie = movies.find((movie) => {
-    if (!movie.imdb_url) return false;
-
     return (
-      normalizeImdbIdFromUrl(movie.imdb_url) === imdbId &&
+      (
+        movie.imdb_id === imdbId ||
+        normalizeImdbIdFromUrl(movie.imdb_url) === imdbId
+      ) &&
       movie.id !== editingMovieId
     );
   });
