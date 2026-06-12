@@ -1049,6 +1049,10 @@ sendInviteButton.addEventListener("click", async () => {
     return;
   }
 
+  // invite.html uses ?token=...
+  // app.html uses ?invite=...
+  // The invite page converts token -> invite during redirect.
+
   const inviteUrl =
   `${window.location.origin}/invite.html?token=${token}`;
 
@@ -1349,6 +1353,7 @@ async function loadMovies() {
 
     title: item.movies?.title,
     year: item.movies?.year,
+    imdb_id: item.movies?.imdb_id,
     imdb_url: item.movies?.imdb_url,
     poster_url: item.movies?.poster_url,
     notes: item.movies?.notes,
@@ -1560,8 +1565,10 @@ function findMovieByImdbId(imdbId) {
   if (!imdbId) return null;
 
   return movies.find((movie) => {
-    const existingImdbId = normalizeImdbIdFromUrl(movie.imdb_url);
-    return existingImdbId === imdbId;
+    return (
+      movie.imdb_id === imdbId ||
+      normalizeImdbIdFromUrl(movie.imdb_url) === imdbId
+    );
   });
 }
 
@@ -1570,8 +1577,8 @@ async function findExistingMovieMetadataByImdbId(imdbId) {
 
   const { data, error } = await supabaseClient
     .from("movies")
-    .select("id, imdb_url")
-    .ilike("imdb_url", `%${imdbId}%`)
+    .select("id, imdb_id")
+    .eq("imdb_id", imdbId)
     .maybeSingle();
 
   if (error) {
@@ -1638,7 +1645,7 @@ function getMovieFormData() {
     title: document.getElementById("title").value.trim(),
     year: Number(document.getElementById("year").value) || null,
     imdb_url: document.getElementById("imdb_url").value.trim() || null,
-    poster_url: document.getElementById("poster_url").value.trim() || null,
+    poster_url: null,
     recommended_medium:
       document.getElementById("recommended_medium").value || null,
     status: document.getElementById("status").value,
@@ -1649,7 +1656,7 @@ function getMovieFormData() {
       document.getElementById("owned_medium").value.trim() || null,
     purchase_url:
       document.getElementById("purchase_url").value.trim() || null,
-    notes: document.getElementById("notes").value.trim() || null,
+    notes: null,
     added_by: document.getElementById("added_by").value.trim() || null,
   };
 }
@@ -1658,6 +1665,7 @@ function getMovieMetadataData(movieData) {
   return {
     title: movieData.title,
     year: movieData.year,
+    imdb_id: movieData.imdb_id,
     imdb_url: movieData.imdb_url,
     poster_url: movieData.poster_url,
     notes: movieData.notes,
@@ -1708,7 +1716,6 @@ function fillForm(movie) {
   document.getElementById("title").value = movie.title || "";
   document.getElementById("year").value = movie.year || "";
   document.getElementById("imdb_url").value = movie.imdb_url || "";
-  document.getElementById("poster_url").value = movie.poster_url || "";
   document.getElementById("recommended_medium").value =
     movie.recommended_medium || "";
   document.getElementById("status").value =
@@ -1717,8 +1724,6 @@ function fillForm(movie) {
     movie.owned_medium || "";
   document.getElementById("purchase_url").value =
     movie.purchase_url || "";
-  document.getElementById("notes").value =
-    movie.notes || "";
 setAddedByField(movie.added_by || "", !!movie.added_by);
   
 updateFormVisibility();
@@ -1818,14 +1823,23 @@ console.log("Form data:", movieData);
     return;
   }
 
-  if (movieData.imdb_url) {
-  const normalizedImdbId = normalizeImdbIdFromUrl(movieData.imdb_url);
+  const imdbId = normalizeImdbIdFromUrl(movieData.imdb_url);
+
+  if (!imdbId) {
+    alert(
+      "IMDb URL є обовʼязковим. Вставте посилання IMDb або IMDb ID у форматі tt1234567."
+    );
+    return;
+  }
+
+  movieData.imdb_id = imdbId;
 
   const duplicateMovie = movies.find((movie) => {
-    if (!movie.imdb_url) return false;
-
     return (
-      normalizeImdbIdFromUrl(movie.imdb_url) === normalizedImdbId &&
+      (
+        movie.imdb_id === imdbId ||
+        normalizeImdbIdFromUrl(movie.imdb_url) === imdbId
+      ) &&
       movie.id !== editingMovieId
     );
   });
@@ -1834,7 +1848,6 @@ console.log("Form data:", movieData);
     alert("Такий фільм вже додано до списку.");
     return;
   }
-}
 
   if (editingMovieId) {
   console.log("Updating movie:", editingMovieId);
@@ -1846,26 +1859,7 @@ console.log("Form data:", movieData);
     return;
   }
 
-  const movieMetadataData = getMovieMetadataData(movieData);
   const listData = getMovieGroupListData(movieData);
-
-  const { error: movieUpdateError } = await supabaseClient
-    .from("movies")
-    .update(movieMetadataData)
-    .eq("id", currentMovie.movie_id);
-
-  if (movieUpdateError) {
-    console.error("Movie metadata update error:", movieUpdateError);
-
-    alert(
-      "Помилка оновлення метаданих фільму\n\n" +
-      "Code: " + (movieUpdateError.code || "N/A") + "\n" +
-      "Message: " + movieUpdateError.message + "\n" +
-      "Details: " + (movieUpdateError.details || "No details")
-    );
-
-    return;
-  }
 
   const { error: listUpdateError } = await supabaseClient
     .from("movie_group_lists")
@@ -1896,8 +1890,6 @@ console.log("Form data:", movieData);
 
   console.log("Creating new movie");
 
-  const imdbId = normalizeImdbIdFromUrl(movieData.imdb_url);
-
   let movieId = null;
 
   const existingMetadataMovie =
@@ -1906,7 +1898,25 @@ console.log("Form data:", movieData);
   if (existingMetadataMovie) {
     movieId = existingMetadataMovie.id;
   } else {
-    const movieInsertData = getMovieMetadataData(movieData);
+    const lookupResponse = await fetch(
+      `/.netlify/functions/movie-lookup?imdbId=${imdbId}`
+    );
+
+    const lookupData = await lookupResponse.json();
+
+    if (!lookupResponse.ok) {
+      alert("Помилка IMDb/TMDb пошуку: " + (lookupData.error || lookupResponse.status));
+      return;
+    }
+
+    const movieInsertData = {
+      title: lookupData.title || movieData.title || "Без назви",
+      year: lookupData.year ? Number(lookupData.year) : movieData.year,
+      imdb_id: imdbId,
+      imdb_url: movieData.imdb_url,
+      poster_url: lookupData.poster_url || null,
+      notes: lookupData.overview || null,
+    };
 
     const { data: createdMovies, error: movieInsertError } = await supabaseClient
       .from("movies")
@@ -1947,7 +1957,10 @@ console.log("Form data:", movieData);
     .insert([listInsertData]);
 
   if (listInsertError) {
-    console.error("Movie list insert error:", listInsertError);
+    if (listInsertError.code === "23505") {
+      alert("Цей фільм вже є у поточному списку.");
+      return;
+    }
 
     alert(
       "Фільм створено, але не додано до списку\n\n" +
@@ -2116,6 +2129,7 @@ function applySearchAndFilters() {
       movie.status,
       movie.notes,
       movie.added_by,
+      movie.imdb_id,
       movie.imdb_url,
     ]
       .join(" ")
@@ -2832,11 +2846,6 @@ filterButtons.forEach((button) => {
 
     document.getElementById("title").value = data.title || "";
     document.getElementById("year").value = data.year || "";
-    document.getElementById("poster_url").value = data.poster_url || "";
-
-    if (data.overview) {
-      document.getElementById("notes").value = data.overview;
-    }
 
     alert("Дані фільму заповнено.");
   } catch (error) {
@@ -2909,6 +2918,7 @@ showAddFormButton.addEventListener("click", async () => {
         const movieInsertData = {
           title: data.title || "Без назви",
           year: data.year ? Number(data.year) : null,
+          imdb_id: pendingImdbId,
           imdb_url: pendingImdbUrl,
           poster_url: data.poster_url || null,
           notes: data.overview || null,
@@ -2955,12 +2965,18 @@ showAddFormButton.addEventListener("click", async () => {
         .insert([listInsertData]);
 
       if (listInsertError) {
+        if (listInsertError.code === "23505") {
+          alert("Цей фільм вже є у поточному списку.");
+          return;
+        }
+
         alert(
           "Фільм створено, але не додано до списку\n\n" +
           "Code: " + (listInsertError.code || "N/A") + "\n" +
           "Message: " + listInsertError.message + "\n" +
           "Details: " + (listInsertError.details || "No details")
         );
+
         return;
       }
 

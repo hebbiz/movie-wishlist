@@ -137,6 +137,10 @@ using (
   )
 );
 
+-- Enforce Unique Group–Movie Pairs
+
+create unique index movie_group_lists_group_movie_unique
+on movie_group_lists (group_id, movie_id);
 -- Add imdb_id Column to Movies
 
 alter table movies
