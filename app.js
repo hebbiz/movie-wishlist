@@ -1353,6 +1353,7 @@ async function loadMovies() {
 
     title: item.movies?.title,
     year: item.movies?.year,
+    imdb_id: item.movies?.imdb_id,
     imdb_url: item.movies?.imdb_url,
     poster_url: item.movies?.poster_url,
     notes: item.movies?.notes,
@@ -1564,8 +1565,10 @@ function findMovieByImdbId(imdbId) {
   if (!imdbId) return null;
 
   return movies.find((movie) => {
-    const existingImdbId = normalizeImdbIdFromUrl(movie.imdb_url);
-    return existingImdbId === imdbId;
+    return (
+      movie.imdb_id === imdbId ||
+      normalizeImdbIdFromUrl(movie.imdb_url) === imdbId
+    );
   });
 }
 
@@ -1957,7 +1960,10 @@ console.log("Form data:", movieData);
     .insert([listInsertData]);
 
   if (listInsertError) {
-    console.error("Movie list insert error:", listInsertError);
+    if (listInsertError.code === "23505") {
+      alert("Цей фільм вже є у поточному списку.");
+      return;
+    }
 
     alert(
       "Фільм створено, але не додано до списку\n\n" +
@@ -2126,6 +2132,7 @@ function applySearchAndFilters() {
       movie.status,
       movie.notes,
       movie.added_by,
+      movie.imdb_id,
       movie.imdb_url,
     ]
       .join(" ")
@@ -2919,6 +2926,7 @@ showAddFormButton.addEventListener("click", async () => {
         const movieInsertData = {
           title: data.title || "Без назви",
           year: data.year ? Number(data.year) : null,
+          imdb_id: pendingImdbId,
           imdb_url: pendingImdbUrl,
           poster_url: data.poster_url || null,
           notes: data.overview || null,
@@ -2965,12 +2973,18 @@ showAddFormButton.addEventListener("click", async () => {
         .insert([listInsertData]);
 
       if (listInsertError) {
+        if (listInsertError.code === "23505") {
+          alert("Цей фільм вже є у поточному списку.");
+          return;
+        }
+
         alert(
           "Фільм створено, але не додано до списку\n\n" +
           "Code: " + (listInsertError.code || "N/A") + "\n" +
           "Message: " + listInsertError.message + "\n" +
           "Details: " + (listInsertError.details || "No details")
         );
+
         return;
       }
 
