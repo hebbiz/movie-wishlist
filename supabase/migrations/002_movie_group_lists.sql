@@ -141,3 +141,30 @@ using (
 
 create unique index movie_group_lists_group_movie_unique
 on movie_group_lists (group_id, movie_id);
+-- Add imdb_id Column to Movies
+
+alter table movies
+add column if not exists imdb_id text;
+
+-- Populate missing IMDb IDs
+
+update movies
+set imdb_id = substring(imdb_url from '(tt[0-9]+)')
+where imdb_id is null
+  and imdb_url is not null;
+
+-- Make imdb_id Required
+
+alter table movies
+alter column imdb_id set not null;
+
+-- Enforce Unique IMDb IDs
+
+alter table movies
+add constraint movies_imdb_id_unique
+unique (imdb_id);
+
+-- Validate IMDb ID Format
+
+
+
