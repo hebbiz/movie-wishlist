@@ -1645,7 +1645,7 @@ function getMovieFormData() {
     title: document.getElementById("title").value.trim(),
     year: Number(document.getElementById("year").value) || null,
     imdb_url: document.getElementById("imdb_url").value.trim() || null,
-    poster_url: document.getElementById("poster_url").value.trim() || null,
+    poster_url: null,
     recommended_medium:
       document.getElementById("recommended_medium").value || null,
     status: document.getElementById("status").value,
@@ -1656,7 +1656,7 @@ function getMovieFormData() {
       document.getElementById("owned_medium").value.trim() || null,
     purchase_url:
       document.getElementById("purchase_url").value.trim() || null,
-    notes: document.getElementById("notes").value.trim() || null,
+    notes: null,
     added_by: document.getElementById("added_by").value.trim() || null,
   };
 }
@@ -1716,7 +1716,6 @@ function fillForm(movie) {
   document.getElementById("title").value = movie.title || "";
   document.getElementById("year").value = movie.year || "";
   document.getElementById("imdb_url").value = movie.imdb_url || "";
-  document.getElementById("poster_url").value = movie.poster_url || "";
   document.getElementById("recommended_medium").value =
     movie.recommended_medium || "";
   document.getElementById("status").value =
@@ -1725,8 +1724,6 @@ function fillForm(movie) {
     movie.owned_medium || "";
   document.getElementById("purchase_url").value =
     movie.purchase_url || "";
-  document.getElementById("notes").value =
-    movie.notes || "";
 setAddedByField(movie.added_by || "", !!movie.added_by);
   
 updateFormVisibility();
@@ -1862,26 +1859,7 @@ console.log("Form data:", movieData);
     return;
   }
 
-  const movieMetadataData = getMovieMetadataData(movieData);
   const listData = getMovieGroupListData(movieData);
-
-  const { error: movieUpdateError } = await supabaseClient
-    .from("movies")
-    .update(movieMetadataData)
-    .eq("id", currentMovie.movie_id);
-
-  if (movieUpdateError) {
-    console.error("Movie metadata update error:", movieUpdateError);
-
-    alert(
-      "Помилка оновлення метаданих фільму\n\n" +
-      "Code: " + (movieUpdateError.code || "N/A") + "\n" +
-      "Message: " + movieUpdateError.message + "\n" +
-      "Details: " + (movieUpdateError.details || "No details")
-    );
-
-    return;
-  }
 
   const { error: listUpdateError } = await supabaseClient
     .from("movie_group_lists")
@@ -1920,7 +1898,25 @@ console.log("Form data:", movieData);
   if (existingMetadataMovie) {
     movieId = existingMetadataMovie.id;
   } else {
-    const movieInsertData = getMovieMetadataData(movieData);
+    const lookupResponse = await fetch(
+      `/.netlify/functions/movie-lookup?imdbId=${imdbId}`
+    );
+
+    const lookupData = await lookupResponse.json();
+
+    if (!lookupResponse.ok) {
+      alert("Помилка IMDb/TMDb пошуку: " + (lookupData.error || lookupResponse.status));
+      return;
+    }
+
+    const movieInsertData = {
+      title: lookupData.title || movieData.title || "Без назви",
+      year: lookupData.year ? Number(lookupData.year) : movieData.year,
+      imdb_id: imdbId,
+      imdb_url: movieData.imdb_url,
+      poster_url: lookupData.poster_url || null,
+      notes: lookupData.overview || null,
+    };
 
     const { data: createdMovies, error: movieInsertError } = await supabaseClient
       .from("movies")
@@ -2850,11 +2846,6 @@ filterButtons.forEach((button) => {
 
     document.getElementById("title").value = data.title || "";
     document.getElementById("year").value = data.year || "";
-    document.getElementById("poster_url").value = data.poster_url || "";
-
-    if (data.overview) {
-      document.getElementById("notes").value = data.overview;
-    }
 
     alert("Дані фільму заповнено.");
   } catch (error) {
