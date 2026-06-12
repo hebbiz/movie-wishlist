@@ -1049,6 +1049,10 @@ sendInviteButton.addEventListener("click", async () => {
     return;
   }
 
+  // invite.html uses ?token=...
+  // app.html uses ?invite=...
+  // The invite page converts token -> invite during redirect.
+
   const inviteUrl =
   `${window.location.origin}/invite.html?token=${token}`;
 
@@ -1570,8 +1574,8 @@ async function findExistingMovieMetadataByImdbId(imdbId) {
 
   const { data, error } = await supabaseClient
     .from("movies")
-    .select("id, imdb_url")
-    .ilike("imdb_url", `%${imdbId}%`)
+    .select("id, imdb_id")
+    .eq("imdb_id", imdbId)
     .maybeSingle();
 
   if (error) {
@@ -1658,6 +1662,7 @@ function getMovieMetadataData(movieData) {
   return {
     title: movieData.title,
     year: movieData.year,
+    imdb_id: movieData.imdb_id,
     imdb_url: movieData.imdb_url,
     poster_url: movieData.poster_url,
     notes: movieData.notes,
@@ -1818,14 +1823,22 @@ console.log("Form data:", movieData);
     return;
   }
 
-  if (movieData.imdb_url) {
-  const normalizedImdbId = normalizeImdbIdFromUrl(movieData.imdb_url);
+  const imdbId = normalizeImdbIdFromUrl(movieData.imdb_url);
+
+  if (!imdbId) {
+    alert(
+      "IMDb URL є обовʼязковим. Вставте посилання IMDb або IMDb ID у форматі tt1234567."
+    );
+    return;
+  }
+
+  movieData.imdb_id = imdbId;
 
   const duplicateMovie = movies.find((movie) => {
     if (!movie.imdb_url) return false;
 
     return (
-      normalizeImdbIdFromUrl(movie.imdb_url) === normalizedImdbId &&
+      normalizeImdbIdFromUrl(movie.imdb_url) === imdbId &&
       movie.id !== editingMovieId
     );
   });
@@ -1834,7 +1847,6 @@ console.log("Form data:", movieData);
     alert("Такий фільм вже додано до списку.");
     return;
   }
-}
 
   if (editingMovieId) {
   console.log("Updating movie:", editingMovieId);
@@ -1895,8 +1907,6 @@ console.log("Form data:", movieData);
 }
 
   console.log("Creating new movie");
-
-  const imdbId = normalizeImdbIdFromUrl(movieData.imdb_url);
 
   let movieId = null;
 
