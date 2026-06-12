@@ -783,11 +783,11 @@ button:hover {
   transform: translateX(1px);
 }
 
+input[readonly],
 .readonly-field {
-  background: #232628 !important;
+  background: #232628;
   color: #d0d0d0;
   border: 1px solid #4a4f53;
-
   cursor: not-allowed;
 }
 
