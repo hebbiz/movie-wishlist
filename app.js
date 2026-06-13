@@ -71,6 +71,9 @@ let editingMovieId = null;
 let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
+let pendingSearchQuery = "";
+let imdbSearchResults = [];
+let isShowingImdbResults = false;
 let currentProfile = null;
 let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
@@ -1470,6 +1473,102 @@ function renderMovies(list) {
   attachPurchaseLinkHandlers();
 }
 
+function renderImdbSearchResults(list) {
+  isShowingImdbResults = true;
+
+  movieCount.textContent = `(${list.length})`;
+  moviesGrid.innerHTML = "";
+
+  if (list.length === 0) {
+    moviesGrid.innerHTML = "<p>На IMDb нічого не знайдено.</p>";
+    return;
+  }
+
+  list.forEach((movie) => {
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const poster = movie.poster_url
+      ? movie.poster_url
+      : "https://via.placeholder.com/400x600?text=No+Poster";
+
+    card.innerHTML = `
+      <div class="poster-wrapper">
+        <img src="${poster}" alt="${escapeHtml(movie.title)}" />
+      </div>
+
+      <div class="card-content">
+        <h3>${escapeHtml(movie.title)}</h3>
+
+        <div class="meta">
+          ${movie.year || "Рік не вказано"}<br>
+          IMDb ID: ${escapeHtml(movie.imdb_id)}
+        </div>
+
+        ${movie.imdb_id
+          ? `
+            <button type="button" data-add-imdb-id="${escapeHtml(movie.imdb_id)}">
+              Додати
+            </button>
+          `
+          : `
+            <button type="button" disabled>
+              IMDb ID відсутній
+            </button>
+          `
+        }
+      </div>
+    `;
+
+    moviesGrid.appendChild(card);
+  });
+}
+
+moviesGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-add-imdb-id]");
+
+  if (!button) return;
+
+  const imdbId = button.dataset.addImdbId;
+
+  const movie = imdbSearchResults.find((item) => {
+    return item.imdb_id === imdbId;
+  });
+
+  if (!movie) {
+    alert("Фільм не знайдено в результатах пошуку.");
+    return;
+  }
+
+  resetFormMode();
+
+  document.getElementById("imdb_url").value =
+    `https://www.imdb.com/title/${movie.imdb_id}/`;
+
+  document.getElementById("title").value = movie.title || "";
+  document.getElementById("year").value = movie.year || "";
+
+  getCurrentUserDisplayName().then((displayName) => {
+    if (displayName) {
+      setAddedByField(displayName, true);
+    } else {
+      setAddedByField("", false);
+    }
+  });
+
+  formPanel.style.display = "block";
+  showAddFormButton.style.display = "none";
+  cancelEditButton.style.display = "block";
+
+  formTitle.textContent = "Додати фільм";
+  submitButton.textContent = "Додати";
+
+  window.scrollTo({
+    top: formPanel.offsetTop - 20,
+    behavior: "smooth",
+  });
+});
+
 function attachPurchaseLinkHandlers() {
 
   document.querySelectorAll(".purchase-link").forEach((link) => {
@@ -1549,6 +1648,30 @@ function formatStatus(status) {
   return status || "не вказано";
 }
 
+function formatStatusTitle(status) {
+  const label = formatStatus(status);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function formatMovieCountWord(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return "фільмів";
+  }
+
+  if (lastDigit === 1) {
+    return "фільм";
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return "фільми";
+  }
+
+  return "фільмів";
+}
+
 function extractImdbId(value) {
   if (!value) return null;
 
@@ -1592,11 +1715,15 @@ async function findExistingMovieMetadataByImdbId(imdbId) {
 function resetSmartSearchState() {
   pendingImdbUrl = null;
   pendingImdbId = null;
+  pendingSearchQuery = "";
+  imdbSearchResults = [];
+  isShowingImdbResults = false;
 
   searchHint.textContent = "";
   searchHint.className = "search-hint";
 
   showAddFormButton.textContent = "Додати";
+  showAddFormButton.style.display = "block";
 }
 
 function getPurchaseLabel(movie) {
@@ -2112,22 +2239,25 @@ function applySearchAndFilters() {
     }
   }
 
-  const filtered = movies.filter((movie) => {
-    const searchableText = [
-      movie.title,
-      movie.year,
-      movie.recommended_medium,
-      movie.owned_medium,
-      movie.status,
-      movie.notes,
-      movie.added_by,
-      movie.imdb_id,
-      movie.imdb_url,
-    ]
-      .join(" ")
-      .toLowerCase();
+  const globalMatches = movies.filter((movie) => {
+  const searchableText = [
+    movie.title,
+    movie.year,
+    movie.recommended_medium,
+    movie.owned_medium,
+    movie.status,
+    movie.notes,
+    movie.added_by,
+    movie.imdb_id,
+    movie.imdb_url,
+  ]
+    .join(" ")
+    .toLowerCase();
 
-    const matchesSearch = searchableText.includes(query);
+  return searchableText.includes(query);
+});
+
+  const filtered = globalMatches.filter((movie) => {
 
     let matchesFilter = true;
 
@@ -2153,8 +2283,38 @@ function applySearchAndFilters() {
         movie.owned_medium === "4K UHD Blu-ray";
     }
 
-    return matchesSearch && matchesFilter;
+    return matchesFilter;
   });
+
+    if (
+    globalMatches.length === 0 &&
+    query.length >= 2 &&
+    !imdbId
+  ) {
+    pendingSearchQuery = searchInput.value.trim();
+    showAddFormButton.textContent = "Шукати на IMDb";
+    searchHint.textContent =
+      "У вашому списку нічого не знайдено. Можна пошукати фільм на IMDb.";
+    searchHint.className = "search-hint positive";
+  }
+
+  if (
+    filtered.length === 0 &&
+    globalMatches.length > 0 &&
+    activeFilter !== "all"
+  ) {
+    if (globalMatches.length === 1) {
+      searchHint.textContent =
+        `Фільм знайдено у списку «${formatStatusTitle(globalMatches[0].status)}».`;
+    } else {
+      const count = globalMatches.length;
+
+      searchHint.textContent =
+        `Знайдено ${count} ${formatMovieCountWord(count)} в інших списках.`;
+    }
+
+    searchHint.className = "search-hint warning";
+  }
 
   renderMovies(filtered);
 }
@@ -2868,6 +3028,40 @@ statusSelect.addEventListener("change", () => {
 updateFormVisibility();
 
 showAddFormButton.addEventListener("click", async () => {
+
+    if (pendingSearchQuery) {
+    showAddFormButton.textContent = "Шукаю...";
+    showAddFormButton.disabled = true;
+
+    try {
+      const response = await fetch(
+        `/.netlify/functions/movie-search?query=${encodeURIComponent(pendingSearchQuery)}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert("Помилка пошуку: " + (data.error || response.status));
+        return;
+      }
+
+      imdbSearchResults = data.results || [];
+
+      renderImdbSearchResults(imdbSearchResults);
+
+      searchHint.textContent = "Знайдено на IMDb";
+      searchHint.className = "search-hint positive";
+
+      showAddFormButton.style.display = "none";
+    } catch (error) {
+      alert("Помилка запиту: " + error.message);
+    } finally {
+      showAddFormButton.disabled = false;
+      showAddFormButton.textContent = "Додати";
+    }
+
+    return;
+  }
   
   if (pendingImdbUrl && pendingImdbId) {
       const existingMovie = findMovieByImdbId(pendingImdbId);
