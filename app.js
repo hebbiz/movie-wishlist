@@ -71,8 +71,6 @@ let editingMovieId = null;
 let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
-let externalSearchResults = [];
-let isExternalSearchMode = false;
 let pendingSearchQuery = "";
 let imdbSearchResults = [];
 let isShowingImdbResults = false;
@@ -1507,9 +1505,18 @@ function renderImdbSearchResults(list) {
           IMDb ID: ${escapeHtml(movie.imdb_id)}
         </div>
 
-        <button type="button" data-add-imdb-id="${escapeHtml(movie.imdb_id)}">
-          Додати
-        </button>
+        ${movie.imdb_id
+          ? `
+            <button type="button" data-add-imdb-id="${escapeHtml(movie.imdb_id)}">
+              Додати
+            </button>
+          `
+          : `
+            <button type="button" disabled>
+              IMDb ID відсутній
+            </button>
+          `
+        }
       </div>
     `;
 
@@ -1540,6 +1547,14 @@ moviesGrid.addEventListener("click", (event) => {
 
   document.getElementById("title").value = movie.title || "";
   document.getElementById("year").value = movie.year || "";
+
+  getCurrentUserDisplayName().then((displayName) => {
+    if (displayName) {
+      setAddedByField(displayName, true);
+    } else {
+      setAddedByField("", false);
+    }
+  });
 
   formPanel.style.display = "block";
   showAddFormButton.style.display = "none";
@@ -1676,11 +1691,15 @@ async function findExistingMovieMetadataByImdbId(imdbId) {
 function resetSmartSearchState() {
   pendingImdbUrl = null;
   pendingImdbId = null;
+  pendingSearchQuery = "";
+  imdbSearchResults = [];
+  isShowingImdbResults = false;
 
   searchHint.textContent = "";
   searchHint.className = "search-hint";
 
   showAddFormButton.textContent = "Додати";
+  showAddFormButton.style.display = "block";
 }
 
 function getPurchaseLabel(movie) {
@@ -2196,22 +2215,25 @@ function applySearchAndFilters() {
     }
   }
 
-  const filtered = movies.filter((movie) => {
-    const searchableText = [
-      movie.title,
-      movie.year,
-      movie.recommended_medium,
-      movie.owned_medium,
-      movie.status,
-      movie.notes,
-      movie.added_by,
-      movie.imdb_id,
-      movie.imdb_url,
-    ]
-      .join(" ")
-      .toLowerCase();
+  const globalMatches = movies.filter((movie) => {
+  const searchableText = [
+    movie.title,
+    movie.year,
+    movie.recommended_medium,
+    movie.owned_medium,
+    movie.status,
+    movie.notes,
+    movie.added_by,
+    movie.imdb_id,
+    movie.imdb_url,
+  ]
+    .join(" ")
+    .toLowerCase();
 
-    const matchesSearch = searchableText.includes(query);
+  return searchableText.includes(query);
+});
+
+  const filtered = globalMatches.filter((movie) => {
 
     let matchesFilter = true;
 
@@ -2237,11 +2259,11 @@ function applySearchAndFilters() {
         movie.owned_medium === "4K UHD Blu-ray";
     }
 
-    return matchesSearch && matchesFilter;
+    return matchesFilter;
   });
 
   if (
-    filtered.length === 0 &&
+    globalMatches.length === 0 &&
     query.length >= 2 &&
     !imdbId
   ) {
