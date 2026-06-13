@@ -71,6 +71,11 @@ let editingMovieId = null;
 let activeFilter = "all";
 let pendingImdbUrl = null;
 let pendingImdbId = null;
+let externalSearchResults = [];
+let isExternalSearchMode = false;
+let pendingSearchQuery = "";
+let imdbSearchResults = [];
+let isShowingImdbResults = false;
 let currentProfile = null;
 let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
@@ -1470,6 +1475,85 @@ function renderMovies(list) {
   attachPurchaseLinkHandlers();
 }
 
+function renderImdbSearchResults(list) {
+  isShowingImdbResults = true;
+
+  movieCount.textContent = `(${list.length})`;
+  moviesGrid.innerHTML = "";
+
+  if (list.length === 0) {
+    moviesGrid.innerHTML = "<p>На IMDb нічого не знайдено.</p>";
+    return;
+  }
+
+  list.forEach((movie) => {
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const poster = movie.poster_url
+      ? movie.poster_url
+      : "https://via.placeholder.com/400x600?text=No+Poster";
+
+    card.innerHTML = `
+      <div class="poster-wrapper">
+        <img src="${poster}" alt="${escapeHtml(movie.title)}" />
+      </div>
+
+      <div class="card-content">
+        <h3>${escapeHtml(movie.title)}</h3>
+
+        <div class="meta">
+          ${movie.year || "Рік не вказано"}<br>
+          IMDb ID: ${escapeHtml(movie.imdb_id)}
+        </div>
+
+        <button type="button" data-add-imdb-id="${escapeHtml(movie.imdb_id)}">
+          Додати
+        </button>
+      </div>
+    `;
+
+    moviesGrid.appendChild(card);
+  });
+}
+
+moviesGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-add-imdb-id]");
+
+  if (!button) return;
+
+  const imdbId = button.dataset.addImdbId;
+
+  const movie = imdbSearchResults.find((item) => {
+    return item.imdb_id === imdbId;
+  });
+
+  if (!movie) {
+    alert("Фільм не знайдено в результатах пошуку.");
+    return;
+  }
+
+  resetFormMode();
+
+  document.getElementById("imdb_url").value =
+    `https://www.imdb.com/title/${movie.imdb_id}/`;
+
+  document.getElementById("title").value = movie.title || "";
+  document.getElementById("year").value = movie.year || "";
+
+  formPanel.style.display = "block";
+  showAddFormButton.style.display = "none";
+  cancelEditButton.style.display = "block";
+
+  formTitle.textContent = "Додати фільм";
+  submitButton.textContent = "Додати";
+
+  window.scrollTo({
+    top: formPanel.offsetTop - 20,
+    behavior: "smooth",
+  });
+});
+
 function attachPurchaseLinkHandlers() {
 
   document.querySelectorAll(".purchase-link").forEach((link) => {
@@ -2156,7 +2240,20 @@ function applySearchAndFilters() {
     return matchesSearch && matchesFilter;
   });
 
+  if (
+    filtered.length === 0 &&
+    query.length >= 2 &&
+    !imdbId
+  ) {
+    pendingSearchQuery = searchInput.value.trim();
+    showAddFormButton.textContent = "Шукати на IMDb";
+    searchHint.textContent =
+      "У вашому списку нічого не знайдено. Можна пошукати фільм на IMDb.";
+    searchHint.className = "search-hint positive";
+  }
+
   renderMovies(filtered);
+  
 }
 
 function getRecommendationCandidates() {
