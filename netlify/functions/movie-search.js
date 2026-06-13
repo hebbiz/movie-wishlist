@@ -27,18 +27,38 @@ exports.handler = async function (event) {
       };
     }
 
-    const results = (data.results || []).slice(0, 8).map((movie) => ({
-      title: movie.title,
-      year: movie.release_date
-        ? Number(movie.release_date.slice(0, 4))
-        : null,
-      tmdb_id: movie.id,
-      imdb_id: null,
-      poster_url: movie.poster_path
-        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-        : null,
-      overview: movie.overview || null,
-    }));
+    const movies = (data.results || []).slice(0, 8);
+
+    const results = await Promise.all(
+      movies.map(async (movie) => {
+        let imdbId = null;
+
+        try {
+          const externalResponse = await fetch(
+            `https://api.themoviedb.org/3/movie/${movie.id}/external_ids?api_key=${apiKey}`
+          );
+
+          const externalData = await externalResponse.json();
+
+          imdbId = externalData.imdb_id || null;
+        } catch {
+          imdbId = null;
+        }
+
+        return {
+          title: movie.title,
+          year: movie.release_date
+            ? Number(movie.release_date.slice(0, 4))
+            : null,
+          tmdb_id: movie.id,
+          imdb_id: imdbId,
+          poster_url: movie.poster_path
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : null,
+          overview: movie.overview || null,
+        };
+      })
+    );
 
     return {
       statusCode: 200,
