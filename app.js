@@ -1648,6 +1648,30 @@ function formatStatus(status) {
   return status || "не вказано";
 }
 
+function formatStatusTitle(status) {
+  const label = formatStatus(status);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function formatMovieCountWord(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return "фільмів";
+  }
+
+  if (lastDigit === 1) {
+    return "фільм";
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return "фільми";
+  }
+
+  return "фільмів";
+}
+
 function extractImdbId(value) {
   if (!value) return null;
 
@@ -2262,7 +2286,7 @@ function applySearchAndFilters() {
     return matchesFilter;
   });
 
-  if (
+    if (
     globalMatches.length === 0 &&
     query.length >= 2 &&
     !imdbId
@@ -2274,8 +2298,25 @@ function applySearchAndFilters() {
     searchHint.className = "search-hint positive";
   }
 
+  if (
+    filtered.length === 0 &&
+    globalMatches.length > 0 &&
+    activeFilter !== "all"
+  ) {
+    if (globalMatches.length === 1) {
+      searchHint.textContent =
+        `Фільм знайдено у списку «${formatStatusTitle(globalMatches[0].status)}».`;
+    } else {
+      const count = globalMatches.length;
+
+      searchHint.textContent =
+        `Знайдено ${count} ${formatMovieCountWord(count)} в інших списках.`;
+    }
+
+    searchHint.className = "search-hint warning";
+  }
+
   renderMovies(filtered);
-  
 }
 
 function getRecommendationCandidates() {
