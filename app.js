@@ -2965,6 +2965,40 @@ statusSelect.addEventListener("change", () => {
 updateFormVisibility();
 
 showAddFormButton.addEventListener("click", async () => {
+
+    if (pendingSearchQuery) {
+    showAddFormButton.textContent = "Шукаю...";
+    showAddFormButton.disabled = true;
+
+    try {
+      const response = await fetch(
+        `/.netlify/functions/movie-search?query=${encodeURIComponent(pendingSearchQuery)}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert("Помилка пошуку: " + (data.error || response.status));
+        return;
+      }
+
+      imdbSearchResults = data.results || [];
+
+      renderImdbSearchResults(imdbSearchResults);
+
+      searchHint.textContent = "Знайдено на IMDb";
+      searchHint.className = "search-hint positive";
+
+      showAddFormButton.style.display = "none";
+    } catch (error) {
+      alert("Помилка запиту: " + error.message);
+    } finally {
+      showAddFormButton.disabled = false;
+      showAddFormButton.textContent = "Додати";
+    }
+
+    return;
+  }
   
   if (pendingImdbUrl && pendingImdbId) {
       const existingMovie = findMovieByImdbId(pendingImdbId);
