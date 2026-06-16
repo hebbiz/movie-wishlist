@@ -2286,16 +2286,21 @@ function applySearchAndFilters() {
     return matchesFilter;
   });
 
-    if (
-    globalMatches.length === 0 &&
-    query.length >= 2 &&
-    !imdbId
-  ) {
+  if (query.length >= 2 && !imdbId) {
     pendingSearchQuery = searchInput.value.trim();
     showAddFormButton.textContent = "Шукати на IMDb";
-    searchHint.textContent =
-      "У вашому списку нічого не знайдено. Можна пошукати фільм на IMDb.";
-    searchHint.className = "search-hint positive";
+
+    if (globalMatches.length === 0) {
+      searchHint.textContent =
+        "У ваших списках нічого не знайдено. Можна пошукати фільм на IMDb.";
+      searchHint.className = "search-hint positive";
+    } else if (activeFilter === "all" || filtered.length > 0) {
+      const count = globalMatches.length;
+
+      searchHint.textContent =
+        `Знайдено ${count} ${formatMovieCountWord(count)} у ваших списках. Можна також пошукати на IMDb.`;
+      searchHint.className = "search-hint positive";
+    }
   }
 
   if (
