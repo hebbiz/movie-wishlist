@@ -1492,9 +1492,32 @@ function renderImdbSearchResults(list) {
       ? movie.poster_url
       : "https://via.placeholder.com/400x600?text=No+Poster";
 
+    const existingMovie = findMovieByImdbId(movie.imdb_id);
+
+    const actionHtml = !movie.imdb_id
+      ? `
+        <button type="button" disabled>
+          IMDb ID відсутній
+        </button>
+      `
+      : existingMovie
+        ? `
+          <div class="imdb-existing-movie">
+            Є у списку «${formatStatusTitle(existingMovie.status)}»
+          </div>
+        `
+        : `
+          <button
+            type="button"
+            data-add-imdb-id="${escapeHtml(movie.imdb_id)}"
+          >
+            Додати
+          </button>
+        `;
+
     card.innerHTML = `
       <div class="poster-wrapper">
-        <img src="${poster}" alt="${escapeHtml(movie.title)}" />
+        <img src="${escapeHtml(poster)}" alt="${escapeHtml(movie.title)}" />
       </div>
 
       <div class="card-content">
@@ -1502,21 +1525,10 @@ function renderImdbSearchResults(list) {
 
         <div class="meta">
           ${movie.year || "Рік не вказано"}<br>
-          IMDb ID: ${escapeHtml(movie.imdb_id)}
+          IMDb ID: ${movie.imdb_id ? escapeHtml(movie.imdb_id) : "відсутній"}
         </div>
 
-        ${movie.imdb_id
-          ? `
-            <button type="button" data-add-imdb-id="${escapeHtml(movie.imdb_id)}">
-              Додати
-            </button>
-          `
-          : `
-            <button type="button" disabled>
-              IMDb ID відсутній
-            </button>
-          `
-        }
+        ${actionHtml}
       </div>
     `;
 
@@ -2286,16 +2298,21 @@ function applySearchAndFilters() {
     return matchesFilter;
   });
 
-    if (
-    globalMatches.length === 0 &&
-    query.length >= 2 &&
-    !imdbId
-  ) {
+  if (query.length >= 2 && !imdbId) {
     pendingSearchQuery = searchInput.value.trim();
     showAddFormButton.textContent = "Шукати на IMDb";
-    searchHint.textContent =
-      "У вашому списку нічого не знайдено. Можна пошукати фільм на IMDb.";
-    searchHint.className = "search-hint positive";
+
+    if (globalMatches.length === 0) {
+      searchHint.textContent =
+        "У ваших списках нічого не знайдено. Можна пошукати фільм на IMDb.";
+      searchHint.className = "search-hint positive";
+    } else if (activeFilter === "all" || filtered.length > 0) {
+      const count = globalMatches.length;
+
+      searchHint.textContent =
+        `Знайдено ${count} ${formatMovieCountWord(count)} у ваших списках. Можна також пошукати на IMDb.`;
+      searchHint.className = "search-hint positive";
+    }
   }
 
   if (
