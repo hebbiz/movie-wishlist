@@ -1507,11 +1507,22 @@ function renderImdbSearchResults(list) {
 
         ${movie.imdb_id
           ? `
-            <button type="button" data-add-imdb-id="${escapeHtml(movie.imdb_id)}">
-              Додати
-            </button>
-          `
-          : `
+            const existingMovie = findMovieByImdbId(movie.imdb_id);
+
+            const actionHtml = existingMovie
+              ? `
+                <div class="imdb-existing-movie">
+                  Є у списку «${formatStatus(existingMovie.status)}»
+                </div>
+              `
+            : `
+                <button
+                  type="button"
+                  data-add-imdb-id="${escapeHtml(movie.imdb_id)}"
+                >
+                  Додати
+                </button>
+              `;
             <button type="button" disabled>
               IMDb ID відсутній
             </button>
