@@ -580,6 +580,77 @@ p {
   color: #f0f0f0;
 }
 
+.recommended-groups-section {
+  margin-top: 18px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.recommended-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recommended-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 10px 14px 10px 16px;
+
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+
+  background: rgba(255,255,255,0.015);
+}
+
+.recommended-group-info {
+  min-width: 0;
+}
+
+.recommended-group-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #f0f0f0;
+}
+
+.recommended-group-meta {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #888;
+}
+
+.recommended-group-row .subscribe-group-button {
+  width: 44px;
+  height: 24px;
+  min-width: 44px;
+
+  padding: 0;
+  margin: 0;
+
+  border: 1px solid rgba(214, 178, 94, 0.35);
+  border-radius: 999px;
+
+  background: rgba(214, 178, 94, 0.04);
+  color: rgba(214, 178, 94, 0.8);
+
+  font-size: 18px;
+  line-height: 1;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recommended-group-row .subscribe-group-button:hover {
+  background: rgba(214, 178, 94, 0.09);
+  border-color: rgba(214, 178, 94, 0.55);
+  color: #d6b25e;
+  transform: translateX(1px);
+}
+
 .invite-confirm-button {
   background: #3b5d45;
   color: #f4f4f4;
