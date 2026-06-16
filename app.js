@@ -1492,9 +1492,32 @@ function renderImdbSearchResults(list) {
       ? movie.poster_url
       : "https://via.placeholder.com/400x600?text=No+Poster";
 
+    const existingMovie = findMovieByImdbId(movie.imdb_id);
+
+    const actionHtml = !movie.imdb_id
+      ? `
+        <button type="button" disabled>
+          IMDb ID відсутній
+        </button>
+      `
+      : existingMovie
+        ? `
+          <div class="imdb-existing-movie">
+            Є у списку «${formatStatusTitle(existingMovie.status)}»
+          </div>
+        `
+        : `
+          <button
+            type="button"
+            data-add-imdb-id="${escapeHtml(movie.imdb_id)}"
+          >
+            Додати
+          </button>
+        `;
+
     card.innerHTML = `
       <div class="poster-wrapper">
-        <img src="${poster}" alt="${escapeHtml(movie.title)}" />
+        <img src="${escapeHtml(poster)}" alt="${escapeHtml(movie.title)}" />
       </div>
 
       <div class="card-content">
@@ -1502,32 +1525,10 @@ function renderImdbSearchResults(list) {
 
         <div class="meta">
           ${movie.year || "Рік не вказано"}<br>
-          IMDb ID: ${escapeHtml(movie.imdb_id)}
+          IMDb ID: ${movie.imdb_id ? escapeHtml(movie.imdb_id) : "відсутній"}
         </div>
 
-        ${movie.imdb_id
-          ? `
-            const existingMovie = findMovieByImdbId(movie.imdb_id);
-
-            const actionHtml = existingMovie
-              ? `
-                <div class="imdb-existing-movie">
-                  Є у списку «${formatStatus(existingMovie.status)}»
-                </div>
-              `
-            : `
-                <button
-                  type="button"
-                  data-add-imdb-id="${escapeHtml(movie.imdb_id)}"
-                >
-                  Додати
-                </button>
-              `;
-            <button type="button" disabled>
-              IMDb ID відсутній
-            </button>
-          `
-        }
+        ${actionHtml}
       </div>
     `;
 
