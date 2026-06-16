@@ -60,6 +60,7 @@ const invitePanelTitle = document.getElementById("invitePanelTitle");
 const inviteEmailInput = document.getElementById("inviteEmailInput");
 const sendInviteButton = document.getElementById("sendInviteButton");
 const cancelInviteButton = document.getElementById("cancelInviteButton");
+const recommendedGroupsList = document.getElementById("recommendedGroupsList");
 const mainView = document.getElementById("mainView");
 const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
@@ -84,6 +85,7 @@ let currentGroupId = null;
 let editingGroupId = null;
 let currentUserGroups = [];
 let currentGroupMembers = [];
+let recommendedGroups = [];
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -444,6 +446,10 @@ function openGroupSettingsView() {
 
   loadCurrentGroupMembers().then(() => {
     renderGroupMembers();
+  });
+
+  loadRecommendedGroups().then(() => {
+    renderRecommendedGroups();
   });
 
   window.scrollTo({
@@ -828,6 +834,161 @@ function renderGroupMemberSection(title, members, roleType) {
   groupMembersList.appendChild(section);
 }
 
+async function loadRecommendedGroups() {
+  recommendedGroups = [];
+
+  if (!currentUser || !currentUserGroups.length) {
+    return;
+  }
+
+  const currentUserGroupIds = currentUserGroups
+    .map((membership) => membership.groups?.id)
+    .filter(Boolean);
+
+  const existingGroupIds = new Set(currentUserGroupIds);
+
+  const { data: sharedMembers, error: sharedMembersError } =
+    await supabaseClient
+      .from("group_members")
+      .select("user_id")
+      .in("group_id", currentUserGroupIds)
+      .neq("user_id", currentUser.id);
+
+  if (sharedMembersError) {
+    console.error("Recommended groups members error:", sharedMembersError);
+    return;
+  }
+
+  const connectedUserIds = [
+    ...new Set((sharedMembers || []).map((member) => member.user_id)),
+  ];
+
+  if (!connectedUserIds.length) {
+    return;
+  }
+
+  const { data: candidateGroups, error: candidateGroupsError } =
+    await supabaseClient
+      .from("groups")
+      .select("id, name, type, created_by")
+      .in("created_by", connectedUserIds);
+
+  if (candidateGroupsError) {
+    console.error("Recommended groups load error:", candidateGroupsError);
+    return;
+  }
+
+  const availableGroups = (candidateGroups || []).filter((group) => {
+    return !existingGroupIds.has(group.id);
+  });
+
+  const groupsWithCounts = await Promise.all(
+    availableGroups.map(async (group) => {
+      const { count, error } = await supabaseClient
+        .from("movie_group_lists")
+        .select("id", { count: "exact", head: true })
+        .eq("group_id", group.id);
+
+      return {
+        ...group,
+        movie_count: error ? 0 : count || 0,
+      };
+    })
+  );
+
+  recommendedGroups = groupsWithCounts
+    .sort((a, b) => b.movie_count - a.movie_count)
+    .slice(0, 5);
+}
+
+function renderRecommendedGroups() {
+  recommendedGroupsList.innerHTML = "";
+
+  if (!recommendedGroups.length) {
+    recommendedGroupsList.innerHTML = `
+      <p class="group-empty-note">
+        Поки немає рекомендованих груп.
+      </p>
+    `;
+    return;
+  }
+
+  recommendedGroups.forEach((group) => {
+    const row = document.createElement("div");
+    row.className = "recommended-group-row";
+
+    row.innerHTML = `
+      <div class="recommended-group-info">
+        <div class="recommended-group-name">
+          ${getGroupTypeNominativeLabel(group.type)}
+          ${escapeHtml(group.name)}
+        </div>
+
+        <div class="recommended-group-meta">
+          ${group.movie_count} ${formatMovieCountWord(group.movie_count)}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="subscribe-group-button"
+        data-subscribe-group-id="${group.id}"
+      >
+        +
+      </button>
+    `;
+
+    recommendedGroupsList.appendChild(row);
+  });
+}
+
+async function subscribeToRecommendedGroup(groupId) {
+  if (!currentUser) {
+    alert("Потрібно увійти в акаунт.");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("group_members")
+    .insert({
+      group_id: groupId,
+      user_id: currentUser.id,
+      role: "visitor",
+      is_group_subscriber: true,
+    });
+
+  if (error) {
+    if (error.code === "23505") {
+      alert("Ви вже підписані на цю групу.");
+      return;
+    }
+
+    alert(
+      "Помилка підписки на групу\n\n" +
+      "Message: " + error.message
+    );
+    return;
+  }
+
+  currentGroupId = groupId;
+  saveActiveGroupId(groupId);
+
+  await loadCurrentUserGroups();
+  await loadCurrentGroup();
+  await loadCurrentRole();
+  await loadCurrentGroupMembers();
+  await loadMovies();
+  await loadRecommendedGroups();
+
+  renderCurrentGroupInfo();
+  renderGroupSettings();
+  renderGroupMembers();
+  renderOtherGroups();
+  renderRecommendedGroups();
+
+  alert("Підписку додано.");
+}
+
 async function removeGroupMember(memberId, memberRole) {
   if (!isOwner()) {
     showAccessDenied(accessMessages.delete);
@@ -1132,11 +1293,13 @@ otherGroupsList.addEventListener("click", async (event) => {
     await loadCurrentRole();
     await loadCurrentGroupMembers();
     await loadMovies();
+    await loadRecommendedGroups();
 
     renderCurrentGroupInfo();
     renderGroupSettings();
     renderGroupMembers();
     renderOtherGroups();
+    renderRecommendedGroups();
 
     groupInfoMenuDropdown.style.display = "none";
 
@@ -1156,6 +1319,14 @@ otherGroupsList.addEventListener("click", async (event) => {
         hideAppLoader();
       }, 1000);  
     }
+});
+
+recommendedGroupsList?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-subscribe-group-id]");
+
+  if (!button) return;
+
+  await subscribeToRecommendedGroup(button.dataset.subscribeGroupId);
 });
 
 backFromGroupSettingsButton.addEventListener("click", () => {

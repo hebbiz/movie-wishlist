@@ -364,4 +364,71 @@ using (
   created_by = auth.uid()
 );
 
+-- Recommended groups: allow reading groups created by socially connected users
 
+create policy "Users can read groups created by shared group members"
+on public.groups
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.group_members my_membership
+    join public.group_members connected_membership
+      on connected_membership.group_id = my_membership.group_id
+    where my_membership.user_id = auth.uid()
+      and connected_membership.user_id = groups.created_by
+      and connected_membership.user_id <> auth.uid()
+  )
+);
+
+-- Allow social subscription to connected users' groups as visitor
+
+create policy "Users can subscribe to connected users groups as visitor"
+on public.group_members
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+  and role = 'visitor'
+  and is_group_subscriber = true
+  and exists (
+    select 1
+    from public.groups target_group
+    where target_group.id = group_members.group_id
+      and target_group.created_by <> auth.uid()
+      and exists (
+        select 1
+        from public.group_members my_membership
+        join public.group_members connected_membership
+          on connected_membership.group_id = my_membership.group_id
+        where my_membership.user_id = auth.uid()
+          and connected_membership.user_id = target_group.created_by
+          and connected_membership.user_id <> auth.uid()
+      )
+  )
+);
+
+-- Allow counting movie_group_lists for socially connected groups
+
+create policy "Users can count movie lists in socially connected groups"
+on public.movie_group_lists
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.groups target_group
+    where target_group.id = movie_group_lists.group_id
+      and target_group.created_by <> auth.uid()
+      and exists (
+        select 1
+        from public.group_members my_membership
+        join public.group_members connected_membership
+          on connected_membership.group_id = my_membership.group_id
+        where my_membership.user_id = auth.uid()
+          and connected_membership.user_id = target_group.created_by
+          and connected_membership.user_id <> auth.uid()
+      )
+  )
+);
