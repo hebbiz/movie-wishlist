@@ -118,3 +118,28 @@ using (
     where r.user_id = profiles.id
   )
 );
+
+drop policy if exists "profiles_select_visible_recommendation_users"
+on profiles;
+
+-- Allowa reading profiles of the socially connected group users
+
+drop policy if exists "profiles_select_visible_recommendation_users"
+on profiles;
+
+create policy "profiles_select_group_members"
+on profiles
+for select
+to authenticated
+using (
+  id = auth.uid()
+
+  or exists (
+    select 1
+    from group_members me
+    join group_members other_member
+      on other_member.group_id = me.group_id
+    where me.user_id = auth.uid()
+      and other_member.user_id = profiles.id
+  )
+);
