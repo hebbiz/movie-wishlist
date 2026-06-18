@@ -1195,6 +1195,12 @@ input[readonly],
   border-top: none;
 }
 
+.recommend-context-names {
+  color: #ddd;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
