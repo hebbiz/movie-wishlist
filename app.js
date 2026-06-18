@@ -1593,7 +1593,8 @@ async function loadMovieRecommendationCounts() {
   const { data, error } = await supabaseClient
     .from("recommendations")
     .select("movie_id")
-    .in("movie_id", movieIds);
+    .in("movie_id", movieIds)
+    .neq("user_id", currentUser.id);
 
   if (error) {
     console.error("Recommendation counts load error:", error);
@@ -1632,6 +1633,7 @@ async function loadMovieRecommendationDetails() {
       )
     `)
     .in("movie_id", movieIds);
+    .neq("user_id", currentUser.id);
 
   if (error) {
     alert(
