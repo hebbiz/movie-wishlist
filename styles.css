@@ -1080,76 +1080,68 @@ input[readonly],
 }
 
 .movie-social-section {
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .recommend-button {
-  position: relative;
-  overflow: hidden;
+  width: auto;
 
-  width: 100%;
-  margin-bottom: 0;
+  padding: 0;
+  margin: 0;
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 6px;
 
-  background: #2a2a2a;
-  color: #f4f4f4;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 
-  border: 1px solid rgba(179, 39, 61, 0.16);
+  color: #a8a8a8;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    color 250ms ease,
+    opacity 250ms ease;
 
   -webkit-tap-highlight-color: transparent;
 }
 
-.recommend-button:hover,
-.recommend-button:focus,
-.recommend-button:active {
-  background: #2a2a2a;
-  color: #f4f4f4;
+.recommend-button::before {
+  display: none;
+}
+
+.recommend-button span {
+  position: static;
 }
 
 .recommend-heart {
-  width: 22px;
-  height: 22px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 999px;
-
   color: #b3273d;
-  font-size: 15px;
+  font-size: 16px;
 
-  transition:
-    background 300ms ease,
-    color 300ms ease;
+  transition: color 250ms ease;
+}
+
+.recommend-button:hover,
+.recommend-button:focus {
+  background: transparent;
+  color: #ffffff;
 }
 
 .recommend-button.recommended {
-  background: #2a2a2a;
   color: #f4f4f4;
-  border-color: rgba(179, 39, 61, 0.22);
-  box-shadow: none;
 }
 
 .recommend-button.recommended .recommend-heart {
-  background: #b3273d;
-  color: #f4f4f4;
-}
-
-.recommend-button.recommended:hover,
-.recommend-button.recommended:focus,
-.recommend-button.recommended:active {
-  background: #2a2a2a;
-  color: #f4f4f4;
+  color: #ffffff;
 }
 
 .recommend-button:disabled {
-  cursor: default;
   opacity: 1;
+  cursor: default;
 }
 
 .group-member-menu .group-member-menu-dropdown {
