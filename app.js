@@ -363,6 +363,7 @@ async function loadCurrentUserGroups() {
     .from("group_members")
     .select(`
       role,
+      is_group_subscriber,
       groups (
         id,
         name,
@@ -1593,7 +1594,8 @@ async function loadMovieRecommendationCounts() {
   const { data, error } = await supabaseClient
     .from("recommendations")
     .select("movie_id")
-    .in("movie_id", movieIds);
+    .in("movie_id", movieIds)
+    .neq("user_id", currentUser.id);
 
   if (error) {
     console.error("Recommendation counts load error:", error);
@@ -1631,7 +1633,8 @@ async function loadMovieRecommendationDetails() {
         type
       )
     `)
-    .in("movie_id", movieIds);
+    .in("movie_id", movieIds)
+    .neq("user_id", currentUser.id);
 
   if (error) {
     alert(
@@ -1651,6 +1654,24 @@ async function loadMovieRecommendationDetails() {
   });
 }
 
+function getRecommendationPriority(item) {
+  if (item.context_group_id === currentGroupId) {
+    return 1;
+  }
+
+  const groupId = item.context_group_id;
+
+  const membership = currentUserGroups.find((membership) => {
+    return membership.groups?.id === groupId;
+  });
+
+  if (membership?.role === "visitor" && membership?.is_group_subscriber) {
+    return 2;
+  }
+
+  return 3;
+}
+
 function renderRecommendationContext(movieId) {
   const recommendations = movieRecommendationDetails[movieId] || [];
 
@@ -1658,18 +1679,25 @@ function renderRecommendationContext(movieId) {
     return "";
   }
 
-  const visibleItems = recommendations.slice(0, 5);
+  const isExpanded = !!expandedRecommendationMenus[movieId];
+
+  const sortedItems = [...recommendations].sort((a, b) => {
+    return getRecommendationPriority(a) - getRecommendationPriority(b);
+  });
+
+  const visibleItems = sortedItems.slice(0, isExpanded ? 8 : 5);
+  const hasMore = sortedItems.length > 5 && !isExpanded;
 
   const namesHtml = visibleItems
-  .map((item) => {
-    return (
-      item.profiles?.display_name ||
-      item.profiles?.email ||
-      "Користувач"
-    );
-  })
-  .map(escapeHtml)
-  .join(", ");
+    .map((item) => {
+      return (
+        item.profiles?.display_name ||
+        item.profiles?.email ||
+        "Користувач"
+      );
+    })
+    .map(escapeHtml)
+    .join(", ");
 
   return `
     <div
@@ -1682,6 +1710,21 @@ function renderRecommendationContext(movieId) {
 
       <div class="recommend-context-names">
         ${namesHtml}
+
+        ${
+          hasMore
+            ? `
+              <button
+                type="button"
+                class="recommend-expand-button"
+                data-expand-recommendations="${movieId}"
+                aria-label="Показати більше рекомендацій"
+              >
+                →
+              </button>
+            `
+            : ""
+        }
       </div>
     </div>
   `;
@@ -1864,6 +1907,7 @@ async function recommendMovie(movieId, button) {
     if (error.code === "23505") {
       await loadCurrentUserRecommendations();
       await loadMovieRecommendationCounts();
+      await loadMovieRecommendationDetails();
       applySearchAndFilters();
       return;
     }
@@ -1876,12 +1920,11 @@ async function recommendMovie(movieId, button) {
   }
 
   currentUserRecommendations.push(data);
-    movieRecommendationCounts[movieId] =
-    (movieRecommendationCounts[movieId] || 0) + 1;
 
   button.querySelector(".recommend-text").textContent = "Я рекомендую";
   button.disabled = false;
 
+  await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
   applySearchAndFilters();
 }
@@ -1922,15 +1965,13 @@ async function unrecommendMovie(movieId, button) {
       return item.id !== recommendation.id;
     });
 
-  movieRecommendationCounts[movieId] =
-  Math.max((movieRecommendationCounts[movieId] || 1) - 1, 0);
-
   button.classList.remove("recommended");
   button.querySelector(".recommend-heart").textContent = "♡";
   button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
   button.disabled = false;
 
+  await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
   applySearchAndFilters();
 }
@@ -2081,6 +2122,30 @@ moviesGrid.addEventListener("click", (event) => {
     menu.style.display =
       menu.style.display === "block" ? "none" : "block";
   }
+});
+
+moviesGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-expand-recommendations]");
+
+  if (!button) return;
+
+  event.stopPropagation();
+
+  const movieId = button.dataset.expandRecommendations;
+
+  expandedRecommendationMenus[movieId] = true;
+
+  applySearchAndFilters();
+
+  setTimeout(() => {
+    const menu = document.querySelector(
+      `[data-recommend-context-menu="${movieId}"]`
+    );
+
+    if (menu) {
+      menu.style.display = "block";
+    }
+  }, 0);
 });
 
 function attachPurchaseLinkHandlers() {
