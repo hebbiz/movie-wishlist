@@ -1,0 +1,51 @@
+-- Add table for recommendations & RLS
+
+create table if not exists public.recommendations (
+  id uuid primary key default gen_random_uuid(),
+
+  movie_id uuid not null references public.movies(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  context_group_id uuid not null references public.groups(id) on delete cascade,
+
+  created_at timestamptz not null default now(),
+
+  unique (movie_id, user_id)
+);
+
+alter table public.recommendations enable row level security;
+
+create policy "Users can read own recommendations"
+on public.recommendations
+for select
+to authenticated
+using (
+  user_id = auth.uid()
+);
+
+create policy "Users can create own recommendations in available group"
+on public.recommendations
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+  and exists (
+    select 1
+    from public.group_members gm
+    where gm.group_id = recommendations.context_group_id
+      and gm.user_id = auth.uid()
+  )
+  and exists (
+    select 1
+    from public.movie_group_lists mgl
+    where mgl.group_id = recommendations.context_group_id
+      and mgl.movie_id = recommendations.movie_id
+  )
+);
+
+create policy "Users can delete own recommendations"
+on public.recommendations
+for delete
+to authenticated
+using (
+  user_id = auth.uid()
+);
