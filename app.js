@@ -87,6 +87,7 @@ let currentUserGroups = [];
 let currentGroupMembers = [];
 let recommendedGroups = [];
 let currentUserRecommendations = [];
+let movieRecommendationCounts = {};
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1546,6 +1547,7 @@ async function loadMovies() {
 }));
 
   await loadCurrentUserRecommendations();
+  await loadMovieRecommendationCounts();
   
   applySearchAndFilters();
 }
@@ -1573,6 +1575,31 @@ async function loadCurrentUserRecommendations() {
 function hasCurrentUserRecommended(movieId) {
   return currentUserRecommendations.some((recommendation) => {
     return recommendation.movie_id === movieId;
+  });
+}
+
+async function loadMovieRecommendationCounts() {
+  movieRecommendationCounts = {};
+
+  const movieIds = movies
+    .map((movie) => movie.movie_id)
+    .filter(Boolean);
+
+  if (!movieIds.length) return;
+
+  const { data, error } = await supabaseClient
+    .from("recommendations")
+    .select("movie_id")
+    .in("movie_id", movieIds);
+
+  if (error) {
+    console.error("Recommendation counts load error:", error);
+    return;
+  }
+
+  (data || []).forEach((item) => {
+    movieRecommendationCounts[item.movie_id] =
+      (movieRecommendationCounts[item.movie_id] || 0) + 1;
   });
 }
 
@@ -1656,17 +1683,17 @@ function renderMovies(list) {
           Редагувати
         </button>
 
-                <div class="movie-social-section">
+        <div class="movie-social-section">
           <button
             type="button"
             class="recommend-button ${
               hasCurrentUserRecommended(movie.movie_id) ? "recommended" : ""
             }"
-            data-recommend-movie-id="${movie.movie_id}"
-          >
-            <span class="recommend-heart">
+           data-recommend-movie-id="${movie.movie_id}"
+         >
+           <span class="recommend-heart">
               ${hasCurrentUserRecommended(movie.movie_id) ? "♥" : "♡"}
-            </span>
+           </span>
 
             <span class="recommend-text">
               ${
@@ -1677,7 +1704,20 @@ function renderMovies(list) {
             </span>
           </button>
 
-          <div class="recommendations-summary"></div>
+          ${
+            (movieRecommendationCounts[movie.movie_id] || 0) > 0
+              ? `
+                <button
+                  type="button"
+                  class="recommend-count-button"
+                  data-recommend-context-movie-id="${movie.movie_id}"
+                  aria-label="Показати рекомендації"
+                >
+                  ♥ ${movieRecommendationCounts[movie.movie_id]}
+                </button>
+              `
+              : ""
+          }
         </div>
 
         <div class="card-menu">
@@ -1735,6 +1775,7 @@ async function recommendMovie(movieId, button) {
 
     if (error.code === "23505") {
       await loadCurrentUserRecommendations();
+      await loadMovieRecommendationCounts();
       applySearchAndFilters();
       return;
     }
@@ -1747,7 +1788,13 @@ async function recommendMovie(movieId, button) {
   }
 
   currentUserRecommendations.push(data);
+    movieRecommendationCounts[movieId] =
+    (movieRecommendationCounts[movieId] || 0) + 1;
+
+  button.querySelector(".recommend-text").textContent = "Я рекомендую";
   button.disabled = false;
+
+  applySearchAndFilters();
 }
 
 async function unrecommendMovie(movieId, button) {
@@ -1786,11 +1833,16 @@ async function unrecommendMovie(movieId, button) {
       return item.id !== recommendation.id;
     });
 
+  movieRecommendationCounts[movieId] =
+  Math.max((movieRecommendationCounts[movieId] || 1) - 1, 0);
+
   button.classList.remove("recommended");
   button.querySelector(".recommend-heart").textContent = "♡";
   button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
   button.disabled = false;
+
+  applySearchAndFilters();
 }
 
 function renderImdbSearchResults(list) {

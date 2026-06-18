@@ -1080,76 +1080,73 @@ input[readonly],
 }
 
 .movie-social-section {
-  margin-top: 6px;
-}
-
-.recommend-button {
-  position: relative;
-  overflow: hidden;
-
-  width: 100%;
-  margin-bottom: 0;
+  margin-top: 4px;
 
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
+}
 
-  background: #2a2a2a;
-  color: #f4f4f4;
+.recommend-button {
+  width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+  margin: 0;
+  padding: 4px 0;
 
-  border: 1px solid rgba(179, 39, 61, 0.16);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 
-  -webkit-tap-highlight-color: transparent;
+  background: transparent;
+  border: none;
+  color: #aaa;
+
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .recommend-button:hover,
 .recommend-button:focus,
 .recommend-button:active {
-  background: #2a2a2a;
+  background: transparent;
   color: #f4f4f4;
 }
 
 .recommend-heart {
-  width: 22px;
-  height: 22px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 999px;
-
   color: #b3273d;
   font-size: 15px;
-
-  transition:
-    background 300ms ease,
-    color 300ms ease;
 }
 
 .recommend-button.recommended {
-  background: #2a2a2a;
   color: #f4f4f4;
-  border-color: rgba(179, 39, 61, 0.22);
-  box-shadow: none;
 }
 
 .recommend-button.recommended .recommend-heart {
-  background: #b3273d;
-  color: #f4f4f4;
+  color: #ffffff;
 }
 
-.recommend-button.recommended:hover,
-.recommend-button.recommended:focus,
-.recommend-button.recommended:active {
-  background: #2a2a2a;
-  color: #f4f4f4;
+.recommend-count-button {
+  width: auto;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 3px 8px;
+
+  border-radius: 999px;
+  border: none;
+
+  background: rgba(255, 255, 255, 0.04);
+  color: #b3273d;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.recommend-button:disabled {
-  cursor: default;
-  opacity: 1;
+.recommend-count-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #d9475f;
 }
 
 .group-member-menu .group-member-menu-dropdown {
