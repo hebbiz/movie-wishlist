@@ -49,3 +49,31 @@ to authenticated
 using (
   user_id = auth.uid()
 );
+
+-- =====================================================
+-- 2026-06-18
+-- Recommendations visibility
+-- Allow users to see recommendations from socially
+-- connected users (shared group membership)
+-- =====================================================
+
+drop policy if exists "Users can read visible recommendations"
+on public.recommendations;
+
+create policy "Users can read visible recommendations"
+on public.recommendations
+for select
+to authenticated
+using (
+  user_id = auth.uid()
+
+  or exists (
+    select 1
+    from public.group_members my_membership
+    join public.group_members connected_membership
+      on connected_membership.group_id = my_membership.group_id
+    where my_membership.user_id = auth.uid()
+      and connected_membership.user_id = recommendations.user_id
+      and connected_membership.user_id <> auth.uid()
+  )
+);
