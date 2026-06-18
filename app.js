@@ -363,6 +363,7 @@ async function loadCurrentUserGroups() {
     .from("group_members")
     .select(`
       role,
+      is_group_subscriber,
       groups (
         id,
         name,
