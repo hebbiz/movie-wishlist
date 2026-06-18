@@ -1632,7 +1632,7 @@ async function loadMovieRecommendationDetails() {
         type
       )
     `)
-    .in("movie_id", movieIds);
+    .in("movie_id", movieIds)
     .neq("user_id", currentUser.id);
 
   if (error) {
@@ -1866,6 +1866,7 @@ async function recommendMovie(movieId, button) {
     if (error.code === "23505") {
       await loadCurrentUserRecommendations();
       await loadMovieRecommendationCounts();
+      await loadMovieRecommendationDetails();
       applySearchAndFilters();
       return;
     }
@@ -1878,12 +1879,11 @@ async function recommendMovie(movieId, button) {
   }
 
   currentUserRecommendations.push(data);
-    movieRecommendationCounts[movieId] =
-    (movieRecommendationCounts[movieId] || 0) + 1;
 
   button.querySelector(".recommend-text").textContent = "Я рекомендую";
   button.disabled = false;
 
+  await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
   applySearchAndFilters();
 }
@@ -1924,15 +1924,13 @@ async function unrecommendMovie(movieId, button) {
       return item.id !== recommendation.id;
     });
 
-  movieRecommendationCounts[movieId] =
-  Math.max((movieRecommendationCounts[movieId] || 1) - 1, 0);
-
   button.classList.remove("recommended");
   button.querySelector(".recommend-heart").textContent = "♡";
   button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
   button.disabled = false;
 
+  await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
   applySearchAndFilters();
 }
