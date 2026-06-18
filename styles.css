@@ -887,6 +887,9 @@ input[readonly],
   overflow: visible;
   border: 1px solid #2a2a2a;
   position: relative;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .poster-wrapper {
@@ -953,6 +956,10 @@ input[readonly],
 
 .card-content {
   padding: 14px;
+
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .card h3 {
@@ -1031,7 +1038,8 @@ input[readonly],
 
 .card-menu {
   position: relative;
-  margin-top: 24px;
+  margin-top: auto;
+  padding-top: 24px;
 }
 
 .menu-button {
