@@ -1090,7 +1090,7 @@ input[readonly],
   background: #2a2a2a;
   color: #f4f4f4;
 
-  border: 1px solid rgba(179, 39, 61, 0.35);
+  border: 1px solid rgba(179, 39, 61, 0.16);
 
   -webkit-tap-highlight-color: transparent;
 }
@@ -1123,13 +1123,13 @@ input[readonly],
 .recommend-button.recommended {
   background: #2a2a2a;
   color: #f4f4f4;
-  border-color: rgba(179, 39, 61, 0.45);
-  box-shadow: 0 0 0 1px rgba(179, 39, 61, 0.15);
+  border-color: rgba(179, 39, 61, 0.22);
+  box-shadow: none;
 }
 
 .recommend-button.recommended .recommend-heart {
   background: #b3273d;
-  color: #111;
+  color: #f4f4f4;
 }
 
 .recommend-button.recommended:hover,
