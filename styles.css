@@ -1092,84 +1092,56 @@ input[readonly],
 
   border: 1px solid rgba(179, 39, 61, 0.35);
 
-  transition:
-    color 500ms ease,
-    border-color 500ms ease;
-}
-
-.recommend-button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-
-  background: #b3273d;
-
-  transform: scaleX(0);
-  transform-origin: left center;
-
-  transition: transform 700ms ease;
-
-  z-index: 0;
-}
-
-.recommend-button span {
-  position: relative;
-  z-index: 1;
-}
-
-.recommend-heart {
-  color: #b3273d;
-  font-size: 17px;
-
-  transition: color 500ms ease;
-}
-
-.recommend-button.recommended {
-  color: #111;
-  border-color: #b3273d;
-}
-
-.recommend-button.recommended::before {
-  transform: scaleX(1);
-}
-
-.recommend-button.recommended .recommend-heart {
-  color: #111;
-}
-
-.recommend-button:disabled {
-  cursor: default;
-  opacity: 1;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .recommend-button:hover,
 .recommend-button:focus,
 .recommend-button:active {
   background: #2a2a2a;
+  color: #f4f4f4;
 }
 
-.recommend-button:hover .recommend-heart,
-.recommend-button:focus .recommend-heart,
-.recommend-button:active .recommend-heart {
+.recommend-heart {
+  width: 22px;
+  height: 22px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
   color: #b3273d;
+  font-size: 15px;
+
+  transition:
+    background 300ms ease,
+    color 300ms ease;
 }
 
-.recommend-button.recommended:hover .recommend-heart,
-.recommend-button.recommended:focus .recommend-heart,
-.recommend-button.recommended:active .recommend-heart {
+.recommend-button.recommended {
+  background: #2a2a2a;
+  color: #f4f4f4;
+  border-color: rgba(179, 39, 61, 0.45);
+  box-shadow: 0 0 0 1px rgba(179, 39, 61, 0.15);
+}
+
+.recommend-button.recommended .recommend-heart {
+  background: #b3273d;
   color: #111;
 }
 
-.recommend-button.recommended,
 .recommend-button.recommended:hover,
 .recommend-button.recommended:focus,
 .recommend-button.recommended:active {
   background: #2a2a2a;
-  color: #111;
+  color: #f4f4f4;
 }
 
-.recommend-button {
-  -webkit-tap-highlight-color: transparent;
+.recommend-button:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .group-member-menu .group-member-menu-dropdown {
