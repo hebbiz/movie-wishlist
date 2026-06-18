@@ -86,6 +86,7 @@ let editingGroupId = null;
 let currentUserGroups = [];
 let currentGroupMembers = [];
 let recommendedGroups = [];
+let currentUserRecommendations = [];
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1543,8 +1544,36 @@ async function loadMovies() {
     created_at: item.created_at,
     updated_at: item.updated_at,
 }));
+
+  await loadCurrentUserRecommendations();
   
   applySearchAndFilters();
+}
+
+async function loadCurrentUserRecommendations() {
+  if (!currentUser) {
+    currentUserRecommendations = [];
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("recommendations")
+    .select("id, movie_id")
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    console.error("Recommendations load error:", error);
+    currentUserRecommendations = [];
+    return;
+  }
+
+  currentUserRecommendations = data || [];
+}
+
+function hasCurrentUserRecommended(movieId) {
+  return currentUserRecommendations.some((recommendation) => {
+    return recommendation.movie_id === movieId;
+  });
 }
 
 function renderMovies(list) {
@@ -1627,6 +1656,30 @@ function renderMovies(list) {
           Редагувати
         </button>
 
+                <div class="movie-social-section">
+          <button
+            type="button"
+            class="recommend-button ${
+              hasCurrentUserRecommended(movie.movie_id) ? "recommended" : ""
+            }"
+            data-recommend-movie-id="${movie.movie_id}"
+          >
+            <span class="recommend-heart">
+              ${hasCurrentUserRecommended(movie.movie_id) ? "♥" : "♡"}
+            </span>
+
+            <span class="recommend-text">
+              ${
+                hasCurrentUserRecommended(movie.movie_id)
+                  ? "Я рекомендую"
+                  : "Рекомендувати"
+              }
+            </span>
+          </button>
+
+          <div class="recommendations-summary"></div>
+        </div>
+
         <div class="card-menu">
          <button class="menu-button" type="button" data-menu-id="${movie.id}">⋯</button>
 
@@ -1642,6 +1695,102 @@ function renderMovies(list) {
   });
   attachCardMenuHandlers();
   attachPurchaseLinkHandlers();
+}
+
+async function recommendMovie(movieId, button) {
+  if (!currentUser) {
+    alert("Потрібно увійти в акаунт.");
+    return;
+  }
+
+  if (!currentGroupId) {
+    alert("Поточну групу не визначено.");
+    return;
+  }
+
+  if (hasCurrentUserRecommended(movieId)) {
+    return;
+  }
+
+  button.disabled = true;
+  button.classList.add("recommended");
+  button.querySelector(".recommend-heart").textContent = "♥";
+  button.querySelector(".recommend-text").textContent = "Я рекомендую";
+
+  const { data, error } = await supabaseClient
+    .from("recommendations")
+    .insert({
+      movie_id: movieId,
+      user_id: currentUser.id,
+      context_group_id: currentGroupId,
+    })
+    .select("id, movie_id")
+    .single();
+
+  if (error) {
+    button.disabled = false;
+    button.classList.remove("recommended");
+    button.querySelector(".recommend-heart").textContent = "♡";
+    button.querySelector(".recommend-text").textContent = "Рекомендувати";
+
+    if (error.code === "23505") {
+      await loadCurrentUserRecommendations();
+      applySearchAndFilters();
+      return;
+    }
+
+    alert(
+      "Помилка збереження рекомендації\n\n" +
+      "Message: " + error.message
+    );
+    return;
+  }
+
+  currentUserRecommendations.push(data);
+  button.disabled = false;
+}
+
+async function unrecommendMovie(movieId, button) {
+  if (!currentUser) {
+    return;
+  }
+
+  const recommendation = currentUserRecommendations.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  if (!recommendation) {
+    return;
+  }
+
+  button.disabled = true;
+
+  const { error } = await supabaseClient
+    .from("recommendations")
+    .delete()
+    .eq("id", recommendation.id);
+
+  if (error) {
+    button.disabled = false;
+
+    alert(
+      "Помилка відкликання рекомендації\n\n" +
+      "Message: " + error.message
+    );
+
+    return;
+  }
+
+  currentUserRecommendations =
+    currentUserRecommendations.filter((item) => {
+      return item.id !== recommendation.id;
+    });
+
+  button.classList.remove("recommended");
+  button.querySelector(".recommend-heart").textContent = "♡";
+  button.querySelector(".recommend-text").textContent = "Рекомендувати";
+
+  button.disabled = false;
 }
 
 function renderImdbSearchResults(list) {
@@ -1750,6 +1899,20 @@ moviesGrid.addEventListener("click", (event) => {
     top: formPanel.offsetTop - 20,
     behavior: "smooth",
   });
+});
+
+moviesGrid.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-recommend-movie-id]");
+
+  if (!button) return;
+
+  const movieId = button.dataset.recommendMovieId;
+
+    if (hasCurrentUserRecommended(movieId)) {
+      await unrecommendMovie(movieId, button);
+    } else {
+      await recommendMovie(movieId, button);
+    }
 });
 
 function attachPurchaseLinkHandlers() {
