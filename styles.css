@@ -1142,6 +1142,36 @@ input[readonly],
   opacity: 1;
 }
 
+.recommend-button:hover,
+.recommend-button:focus,
+.recommend-button:active {
+  background: #2a2a2a;
+}
+
+.recommend-button:hover .recommend-heart,
+.recommend-button:focus .recommend-heart,
+.recommend-button:active .recommend-heart {
+  color: #b3273d;
+}
+
+.recommend-button.recommended:hover .recommend-heart,
+.recommend-button.recommended:focus .recommend-heart,
+.recommend-button.recommended:active .recommend-heart {
+  color: #111;
+}
+
+.recommend-button.recommended,
+.recommend-button.recommended:hover,
+.recommend-button.recommended:focus,
+.recommend-button.recommended:active {
+  background: #2a2a2a;
+  color: #111;
+}
+
+.recommend-button {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
