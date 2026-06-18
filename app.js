@@ -1671,7 +1671,7 @@ function renderMovies(list) {
             <span class="recommend-text">
               ${
                 hasCurrentUserRecommended(movie.movie_id)
-                  ? "Рекомендовано"
+                  ? "Я рекомендую"
                   : "Рекомендувати"
               }
             </span>
@@ -1715,7 +1715,7 @@ async function recommendMovie(movieId, button) {
   button.disabled = true;
   button.classList.add("recommended");
   button.querySelector(".recommend-heart").textContent = "♥";
-  button.querySelector(".recommend-text").textContent = "Рекомендовано";
+  button.querySelector(".recommend-text").textContent = "Я рекомендую";
 
   const { data, error } = await supabaseClient
     .from("recommendations")
@@ -1747,6 +1747,49 @@ async function recommendMovie(movieId, button) {
   }
 
   currentUserRecommendations.push(data);
+  button.disabled = false;
+}
+
+async function unrecommendMovie(movieId, button) {
+  if (!currentUser) {
+    return;
+  }
+
+  const recommendation = currentUserRecommendations.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  if (!recommendation) {
+    return;
+  }
+
+  button.disabled = true;
+
+  const { error } = await supabaseClient
+    .from("recommendations")
+    .delete()
+    .eq("id", recommendation.id);
+
+  if (error) {
+    button.disabled = false;
+
+    alert(
+      "Помилка відкликання рекомендації\n\n" +
+      "Message: " + error.message
+    );
+
+    return;
+  }
+
+  currentUserRecommendations =
+    currentUserRecommendations.filter((item) => {
+      return item.id !== recommendation.id;
+    });
+
+  button.classList.remove("recommended");
+  button.querySelector(".recommend-heart").textContent = "♡";
+  button.querySelector(".recommend-text").textContent = "Рекомендувати";
+
   button.disabled = false;
 }
 
@@ -1863,10 +1906,13 @@ moviesGrid.addEventListener("click", async (event) => {
 
   if (!button) return;
 
-  await recommendMovie(
-    button.dataset.recommendMovieId,
-    button
-  );
+  const movieId = button.dataset.recommendMovieId;
+
+    if (hasCurrentUserRecommended(movieId)) {
+      await unrecommendMovie(movieId, button);
+    } else {
+      await recommendMovie(movieId, button);
+    }
 });
 
 function attachPurchaseLinkHandlers() {
