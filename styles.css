@@ -1071,6 +1071,77 @@ input[readonly],
   color: #ff9b9b;
 }
 
+.movie-social-section {
+  margin-top: 8px;
+}
+
+.recommend-button {
+  position: relative;
+  overflow: hidden;
+
+  width: 100%;
+  margin-bottom: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  background: #2a2a2a;
+  color: #f4f4f4;
+
+  border: 1px solid rgba(179, 39, 61, 0.35);
+
+  transition:
+    color 500ms ease,
+    border-color 500ms ease;
+}
+
+.recommend-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: #b3273d;
+
+  transform: scaleX(0);
+  transform-origin: left center;
+
+  transition: transform 700ms ease;
+
+  z-index: 0;
+}
+
+.recommend-button span {
+  position: relative;
+  z-index: 1;
+}
+
+.recommend-heart {
+  color: #b3273d;
+  font-size: 17px;
+
+  transition: color 500ms ease;
+}
+
+.recommend-button.recommended {
+  color: #111;
+  border-color: #b3273d;
+}
+
+.recommend-button.recommended::before {
+  transform: scaleX(1);
+}
+
+.recommend-button.recommended .recommend-heart {
+  color: #111;
+}
+
+.recommend-button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
