@@ -1563,8 +1563,8 @@ async function loadCurrentUserRecommendations() {
 
   const { data, error } = await supabaseClient
     .from("recommendations")
-    .select("id, movie_id")
-    .eq("user_id", currentUser.id);
+    .select("*")
+    .limit(1);
 
   if (error) {
     console.error("Recommendations load error:", error);
