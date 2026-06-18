@@ -1578,25 +1578,6 @@ function hasCurrentUserRecommended(movieId) {
   });
 }
 
-function getRecommendationLabel(movieId) {
-  const count = movieRecommendationCounts[movieId] || 0;
-  const userRecommended = hasCurrentUserRecommended(movieId);
-
-  if (userRecommended) {
-    if (count <= 1) {
-      return "Я рекомендую";
-    }
-
-    return `Я рекомендую · ♥ ${count}`;
-  }
-
-  if (count > 0) {
-    return `Рекомендувати · ♥ ${count}`;
-  }
-
-  return "Рекомендувати";
-}
-
 async function loadMovieRecommendationCounts() {
   movieRecommendationCounts = {};
 
@@ -1702,24 +1683,41 @@ function renderMovies(list) {
           Редагувати
         </button>
 
-                <div class="movie-social-section">
+        <div class="movie-social-section">
           <button
             type="button"
             class="recommend-button ${
               hasCurrentUserRecommended(movie.movie_id) ? "recommended" : ""
             }"
-            data-recommend-movie-id="${movie.movie_id}"
-          >
-            <span class="recommend-heart">
+           data-recommend-movie-id="${movie.movie_id}"
+         >
+           <span class="recommend-heart">
               ${hasCurrentUserRecommended(movie.movie_id) ? "♥" : "♡"}
-            </span>
+           </span>
 
             <span class="recommend-text">
-              ${getRecommendationLabel(movie.movie_id)}
+              ${
+                hasCurrentUserRecommended(movie.movie_id)
+                  ? "Я рекомендую"
+                  : "Рекомендувати"
+              }
             </span>
           </button>
 
-          <div class="recommendations-summary"></div>
+          ${
+            (movieRecommendationCounts[movie.movie_id] || 0) > 0
+              ? `
+                <button
+                  type="button"
+                  class="recommend-count-button"
+                  data-recommend-context-movie-id="${movie.movie_id}"
+                  aria-label="Показати рекомендації"
+                >
+                  ♥ ${movieRecommendationCounts[movie.movie_id]}
+                </button>
+              `
+              : ""
+          }
         </div>
 
         <div class="card-menu">
@@ -1793,9 +1791,10 @@ async function recommendMovie(movieId, button) {
     movieRecommendationCounts[movieId] =
     (movieRecommendationCounts[movieId] || 0) + 1;
 
-  button.querySelector(".recommend-text").textContent =
-    getRecommendationLabel(movieId);
+  button.querySelector(".recommend-text").textContent = "Я рекомендую";
   button.disabled = false;
+
+  applySearchAndFilters();
 }
 
 async function unrecommendMovie(movieId, button) {
@@ -1839,10 +1838,11 @@ async function unrecommendMovie(movieId, button) {
 
   button.classList.remove("recommended");
   button.querySelector(".recommend-heart").textContent = "♡";
-  button.querySelector(".recommend-text").textContent =
-    getRecommendationLabel(movieId);
+  button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
   button.disabled = false;
+
+  applySearchAndFilters();
 }
 
 function renderImdbSearchResults(list) {
