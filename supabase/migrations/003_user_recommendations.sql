@@ -142,4 +142,43 @@ using (
     where me.user_id = auth.uid()
       and other_member.user_id = profiles.id
   )
+)
+
+-- Removed previous social recommendartion policies and created new final one
+
+-- Movie Wishlist
+-- Дозволяє читати рекомендації:
+-- 1) власні;
+-- 2) від користувачів, з якими поточний користувач має спільну групу;
+-- 3) з груп, де є хоча б один користувач, з яким поточний користувач має спільну групу
+
+drop policy if exists "Users can read visible social recommendations"
+on public.recommendations;
+
+create policy "Users can read visible social recommendations"
+on public.recommendations
+for select
+to authenticated
+using (
+  user_id = auth.uid()
+
+  or exists (
+    select 1
+    from public.group_members my_membership
+    join public.group_members connected_user
+      on connected_user.group_id = my_membership.group_id
+    where my_membership.user_id = auth.uid()
+      and connected_user.user_id = recommendations.user_id
+  )
+
+  or exists (
+    select 1
+    from public.group_members my_membership
+    join public.group_members connected_user
+      on connected_user.group_id = my_membership.group_id
+    join public.group_members connected_user_other_groups
+      on connected_user_other_groups.user_id = connected_user.user_id
+    where my_membership.user_id = auth.uid()
+      and connected_user_other_groups.group_id = recommendations.context_group_id
+  )
 );
