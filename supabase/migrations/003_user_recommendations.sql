@@ -100,3 +100,85 @@ using (
       and connected_movies.movie_id = recommendations.movie_id
   )
 );
+
+-- Movie Wishlist
+-- Дозволяє бачити профілі користувачів, чиї рекомендації доступні поточному користувачу
+
+drop policy if exists "profiles_select_visible_recommendation_users" on profiles;
+
+create policy "profiles_select_visible_recommendation_users"
+on profiles
+for select
+to authenticated
+using (
+  id = auth.uid()
+  or exists (
+    select 1
+    from recommendations r
+    where r.user_id = profiles.id
+  )
+);
+
+drop policy if exists "profiles_select_visible_recommendation_users"
+on profiles;
+
+-- Allowa reading profiles of the socially connected group users
+
+drop policy if exists "profiles_select_visible_recommendation_users"
+on profiles;
+
+create policy "profiles_select_group_members"
+on profiles
+for select
+to authenticated
+using (
+  id = auth.uid()
+
+  or exists (
+    select 1
+    from group_members me
+    join group_members other_member
+      on other_member.group_id = me.group_id
+    where me.user_id = auth.uid()
+      and other_member.user_id = profiles.id
+  )
+)
+
+-- Removed previous social recommendartion policies and created new final one
+
+-- Movie Wishlist
+-- Дозволяє читати рекомендації:
+-- 1) власні;
+-- 2) від користувачів, з якими поточний користувач має спільну групу;
+-- 3) з груп, де є хоча б один користувач, з яким поточний користувач має спільну групу
+
+drop policy if exists "Users can read visible social recommendations"
+on public.recommendations;
+
+create policy "Users can read visible social recommendations"
+on public.recommendations
+for select
+to authenticated
+using (
+  user_id = auth.uid()
+
+  or exists (
+    select 1
+    from public.group_members my_membership
+    join public.group_members connected_user
+      on connected_user.group_id = my_membership.group_id
+    where my_membership.user_id = auth.uid()
+      and connected_user.user_id = recommendations.user_id
+  )
+
+  or exists (
+    select 1
+    from public.group_members my_membership
+    join public.group_members connected_user
+      on connected_user.group_id = my_membership.group_id
+    join public.group_members connected_user_other_groups
+      on connected_user_other_groups.user_id = connected_user.user_id
+    where my_membership.user_id = auth.uid()
+      and connected_user_other_groups.group_id = recommendations.context_group_id
+  )
+);
