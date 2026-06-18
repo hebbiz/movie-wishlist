@@ -1661,19 +1661,15 @@ function renderRecommendationContext(movieId) {
   const visibleItems = recommendations.slice(0, 5);
 
   const namesHtml = visibleItems
-    .map((item) => {
-      const name =
-        item.profiles?.display_name ||
-        item.profiles?.email ||
-        "Користувач";
-
-      return `
-        <div class="recommend-context-name">
-          ${escapeHtml(name)}
-        </div>
-      `;
-    })
-    .join("");
+  .map((item) => {
+    return (
+      item.profiles?.display_name ||
+      item.profiles?.email ||
+      "Користувач"
+    );
+  })
+  .map(escapeHtml)
+  .join(", ");
 
   return `
     <div
@@ -1684,7 +1680,9 @@ function renderRecommendationContext(movieId) {
         Рекомендують
       </div>
 
-      ${namesHtml}
+      <div class="recommend-context-names">
+        ${namesHtml}
+      </div>
     </div>
   `;
 }
