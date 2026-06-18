@@ -1638,6 +1638,11 @@ async function loadMovieRecommendationDetails() {
     return;
   }
 
+  alert(
+    "Recommendation details:\n\n" +
+    JSON.stringify(data, null, 2)
+  );
+
   (data || []).forEach((item) => {
     if (!movieRecommendationDetails[item.movie_id]) {
       movieRecommendationDetails[item.movie_id] = [];
