@@ -1128,7 +1128,11 @@ input[readonly],
 .recommend-button:hover,
 .recommend-button:focus {
   background: transparent;
-  color: #ffffff;
+}
+
+.recommend-button:not(.recommended):hover,
+.recommend-button:not(.recommended):focus {
+  color: #d0d0d0;
 }
 
 .recommend-button.recommended {
