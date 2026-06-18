@@ -1563,8 +1563,8 @@ async function loadCurrentUserRecommendations() {
 
   const { data, error } = await supabaseClient
     .from("recommendations")
-    .select("*")
-    .limit(1);
+    .select("id, movie_id")
+    .eq("user_id", currentUser.id);
 
   if (error) {
     console.error("Recommendations load error:", error);
@@ -1621,11 +1621,11 @@ async function loadMovieRecommendationDetails() {
       movie_id,
       user_id,
       context_group_id,
-      profiles (
+      profiles!recommendations_user_id_fkey (
         display_name,
         email
       ),
-      groups (
+      groups!recommendations_context_group_id_fkey (
         id,
         name,
         type
@@ -1634,14 +1634,13 @@ async function loadMovieRecommendationDetails() {
     .in("movie_id", movieIds);
 
   if (error) {
+    alert(
+      "Recommendation details error:\n\n" +
+      error.message
+    );
     console.error("Recommendation details load error:", error);
     return;
   }
-
-  alert(
-    "Recommendation details:\n\n" +
-    JSON.stringify(data, null, 2)
-  );
 
   (data || []).forEach((item) => {
     if (!movieRecommendationDetails[item.movie_id]) {
