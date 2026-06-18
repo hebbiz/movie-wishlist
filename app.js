@@ -87,6 +87,7 @@ let currentUserGroups = [];
 let currentGroupMembers = [];
 let recommendedGroups = [];
 let currentUserRecommendations = [];
+let movieRecommendationCounts = {};
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1546,6 +1547,7 @@ async function loadMovies() {
 }));
 
   await loadCurrentUserRecommendations();
+  await loadMovieRecommendationCounts();
   
   applySearchAndFilters();
 }
@@ -1573,6 +1575,50 @@ async function loadCurrentUserRecommendations() {
 function hasCurrentUserRecommended(movieId) {
   return currentUserRecommendations.some((recommendation) => {
     return recommendation.movie_id === movieId;
+  });
+}
+
+function getRecommendationLabel(movieId) {
+  const count = movieRecommendationCounts[movieId] || 0;
+  const userRecommended = hasCurrentUserRecommended(movieId);
+
+  if (userRecommended) {
+    if (count <= 1) {
+      return "Я рекомендую";
+    }
+
+    return `Я рекомендую · ♥ ${count}`;
+  }
+
+  if (count > 0) {
+    return `Рекомендувати · ♥ ${count}`;
+  }
+
+  return "Рекомендувати";
+}
+
+async function loadMovieRecommendationCounts() {
+  movieRecommendationCounts = {};
+
+  const movieIds = movies
+    .map((movie) => movie.movie_id)
+    .filter(Boolean);
+
+  if (!movieIds.length) return;
+
+  const { data, error } = await supabaseClient
+    .from("recommendations")
+    .select("movie_id")
+    .in("movie_id", movieIds);
+
+  if (error) {
+    console.error("Recommendation counts load error:", error);
+    return;
+  }
+
+  (data || []).forEach((item) => {
+    movieRecommendationCounts[item.movie_id] =
+      (movieRecommendationCounts[item.movie_id] || 0) + 1;
   });
 }
 
@@ -1669,11 +1715,7 @@ function renderMovies(list) {
             </span>
 
             <span class="recommend-text">
-              ${
-                hasCurrentUserRecommended(movie.movie_id)
-                  ? "Я рекомендую"
-                  : "Рекомендувати"
-              }
+              ${getRecommendationLabel(movie.movie_id)}
             </span>
           </button>
 
@@ -1735,6 +1777,7 @@ async function recommendMovie(movieId, button) {
 
     if (error.code === "23505") {
       await loadCurrentUserRecommendations();
+      await loadMovieRecommendationCounts();
       applySearchAndFilters();
       return;
     }
@@ -1747,6 +1790,11 @@ async function recommendMovie(movieId, button) {
   }
 
   currentUserRecommendations.push(data);
+    movieRecommendationCounts[movieId] =
+    (movieRecommendationCounts[movieId] || 0) + 1;
+
+  button.querySelector(".recommend-text").textContent =
+    getRecommendationLabel(movieId);
   button.disabled = false;
 }
 
@@ -1786,9 +1834,13 @@ async function unrecommendMovie(movieId, button) {
       return item.id !== recommendation.id;
     });
 
+  movieRecommendationCounts[movieId] =
+  Math.max((movieRecommendationCounts[movieId] || 1) - 1, 0);
+
   button.classList.remove("recommended");
   button.querySelector(".recommend-heart").textContent = "♡";
-  button.querySelector(".recommend-text").textContent = "Рекомендувати";
+  button.querySelector(".recommend-text").textContent =
+    getRecommendationLabel(movieId);
 
   button.disabled = false;
 }
