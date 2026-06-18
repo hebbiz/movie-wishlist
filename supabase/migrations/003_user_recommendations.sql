@@ -77,3 +77,26 @@ using (
       and connected_membership.user_id <> auth.uid()
   )
 );
+
+-- Recommendations: allow users to read recommendations from socially connected groups
+drop policy if exists "Users can read recommendations from socially connected groups"
+on public.recommendations;
+
+create policy "Users can read recommendations from socially connected groups"
+on public.recommendations
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.group_members my_groups
+    join public.group_members connected_members
+      on connected_members.group_id = my_groups.group_id
+    join public.group_members connected_user_groups
+      on connected_user_groups.user_id = connected_members.user_id
+    join public.movie_group_lists connected_movies
+      on connected_movies.group_id = connected_user_groups.group_id
+    where my_groups.user_id = auth.uid()
+      and connected_movies.movie_id = recommendations.movie_id
+  )
+);
