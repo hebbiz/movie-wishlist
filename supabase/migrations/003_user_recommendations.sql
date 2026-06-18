@@ -100,3 +100,21 @@ using (
       and connected_movies.movie_id = recommendations.movie_id
   )
 );
+
+-- Movie Wishlist
+-- Дозволяє бачити профілі користувачів, чиї рекомендації доступні поточному користувачу
+
+drop policy if exists "profiles_select_visible_recommendation_users" on profiles;
+
+create policy "profiles_select_visible_recommendation_users"
+on profiles
+for select
+to authenticated
+using (
+  id = auth.uid()
+  or exists (
+    select 1
+    from recommendations r
+    where r.user_id = profiles.id
+  )
+);
