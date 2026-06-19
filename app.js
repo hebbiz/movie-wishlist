@@ -2367,17 +2367,6 @@ function getMovieFormData() {
   };
 }
 
-function getMovieMetadataData(movieData) {
-  return {
-    title: movieData.title,
-    year: movieData.year,
-    imdb_id: movieData.imdb_id,
-    imdb_url: movieData.imdb_url,
-    poster_url: movieData.poster_url,
-    notes: movieData.notes,
-  };
-}
-
 function getMovieGroupListData(movieData) {
   return {
     status: movieData.status,
@@ -2928,7 +2917,7 @@ function applySearchAndFilters() {
     searchHint.className = "search-hint warning";
   }
 
-  renderMovies(sortMoviesForDisplay(filtered));;
+  renderMovies(sortMoviesForDisplay(filtered));
 }
 
 function getRecommendationCandidates() {
