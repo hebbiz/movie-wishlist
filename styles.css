@@ -1172,16 +1172,6 @@ input[readonly],
 }
 
 .recommend-context-title {
-  margin-bottom: 8px;
-
-  color: #d6b25e;
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.recommend-context-title {
   margin-bottom: 4px;
   color: rgba(214, 178, 94, 0.75);
   font-size: 10px;
@@ -1194,6 +1184,30 @@ input[readonly],
   color: #ddd;
   font-size: 13px;
   line-height: 1.35;
+}
+
+.recommend-expand-button {
+  width: auto;
+  padding: 0 0 0 4px;
+  margin: 0;
+
+  display: inline;
+
+  background: transparent;
+  border: none;
+
+  color: #d6b25e;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.recommend-expand-button:hover {
+  background: transparent;
+  color: #e4c675;
+  transform: translateX(2px);
 }
 
 .group-member-menu .group-member-menu-dropdown {
