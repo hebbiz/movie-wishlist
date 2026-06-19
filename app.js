@@ -1498,6 +1498,110 @@ logoutButton.addEventListener("click", async () => {
   }, Math.max(0, minDuration - elapsed));
 });
 
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function hashString(value) {
+  let hash = 0;
+
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+
+  return hash;
+}
+
+function seededRandom(seed) {
+  return hashString(seed) / 4294967295;
+}
+
+function getSeededItem(items, seed) {
+  if (!items.length) return null;
+
+  const index = Math.floor(seededRandom(seed) * items.length);
+  return items[index];
+}
+
+function pickMykolaDailyRecommendationMovie() {
+  const candidates = getRecommendationCandidates();
+
+  if (!candidates.length) return null;
+
+  const seedBase = `${currentGroupId}:${getTodayKey()}`;
+
+  const ownedMovies = candidates.filter((movie) => {
+    return movie.status === "owned";
+  });
+
+  const streamingWishlistMovies = candidates.filter((movie) => {
+    return (
+      movie.status === "wishlist" &&
+      isStreamingMedium(movie.recommended_medium)
+    );
+  });
+
+  const otherMovies = candidates.filter((movie) => {
+    return (
+      movie.status !== "owned" &&
+      !(
+        movie.status === "wishlist" &&
+        isStreamingMedium(movie.recommended_medium)
+      )
+    );
+  });
+
+  const groups = [
+    { weight: 0.5, movies: ownedMovies, key: "owned" },
+    { weight: 0.4, movies: streamingWishlistMovies, key: "streaming" },
+    { weight: 0.1, movies: otherMovies, key: "other" },
+  ].filter((group) => group.movies.length > 0);
+
+  const totalWeight = groups.reduce((sum, group) => {
+    return sum + group.weight;
+  }, 0);
+
+  let randomValue = seededRandom(seedBase) * totalWeight;
+
+  for (const group of groups) {
+    randomValue -= group.weight;
+
+    if (randomValue <= 0) {
+      return getSeededItem(group.movies, `${seedBase}:${group.key}`);
+    }
+  }
+
+  return getSeededItem(
+    groups[groups.length - 1].movies,
+    `${seedBase}:fallback`
+  );
+}
+
+function applyMykolaDailyRecommendation() {
+  const movie = pickMykolaDailyRecommendationMovie();
+
+  if (!movie?.movie_id) return;
+
+  movieRecommendationCounts[movie.movie_id] =
+    (movieRecommendationCounts[movie.movie_id] || 0) + 1;
+
+  if (!movieRecommendationDetails[movie.movie_id]) {
+    movieRecommendationDetails[movie.movie_id] = [];
+  }
+
+  movieRecommendationDetails[movie.movie_id].push({
+    movie_id: movie.movie_id,
+    user_id: "mykola",
+    context_group_id: currentGroupId,
+    profiles: {
+      display_name: "Микола",
+      email: "mykola@movie-wishlist.local",
+    },
+    groups: currentGroup,
+    is_mykola: true,
+  });
+}
+
 async function loadMovies() {
   console.log("Loading movies...");
 
@@ -1552,6 +1656,8 @@ async function loadMovies() {
   await loadCurrentUserRecommendations();
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
+
+  applyMykolaDailyRecommendation();
   
   applySearchAndFilters();
 }
@@ -1908,6 +2014,7 @@ async function recommendMovie(movieId, button) {
       await loadCurrentUserRecommendations();
       await loadMovieRecommendationCounts();
       await loadMovieRecommendationDetails();
+      applyMykolaDailyRecommendation();
       applySearchAndFilters();
       return;
     }
@@ -1926,6 +2033,7 @@ async function recommendMovie(movieId, button) {
 
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
+  applyMykolaDailyRecommendation();
   applySearchAndFilters();
 }
 
@@ -1973,6 +2081,7 @@ async function unrecommendMovie(movieId, button) {
 
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
+  applyMykolaDailyRecommendation();
   applySearchAndFilters();
 }
 
