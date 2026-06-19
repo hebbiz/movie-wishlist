@@ -2783,6 +2783,34 @@ async function markAsWatched(id) {
   loadMovies();
 }
 
+function sortMoviesForDisplay(list) {
+  return [...list].sort((a, b) => {
+    if (activeFilter === "all") {
+      const aWatched = a.status === "watched";
+      const bWatched = b.status === "watched";
+
+      if (aWatched !== bWatched) {
+        return aWatched ? 1 : -1;
+      }
+    }
+
+    const aRecommendations =
+      movieRecommendationCounts[a.movie_id] || 0;
+
+    const bRecommendations =
+      movieRecommendationCounts[b.movie_id] || 0;
+
+    if (aRecommendations !== bRecommendations) {
+      return bRecommendations - aRecommendations;
+    }
+
+    const aDate = new Date(a.updated_at || a.created_at || 0).getTime();
+    const bDate = new Date(b.updated_at || b.created_at || 0).getTime();
+
+    return bDate - aDate;
+  });
+}
+
 function applySearchAndFilters() {
   const query = searchInput.value.toLowerCase().trim();
   const imdbId = extractImdbId(query);
@@ -2900,7 +2928,7 @@ function applySearchAndFilters() {
     searchHint.className = "search-hint warning";
   }
 
-  renderMovies(filtered);
+  renderMovies(sortMoviesForDisplay(filtered));;
 }
 
 function getRecommendationCandidates() {
