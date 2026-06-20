@@ -2045,6 +2045,12 @@ async function recommendMovie(movieId, button) {
   applySearchAndFilters();
 }
 
+function resetMykolaRecommendationFlow() {
+  mykolaChat.innerHTML = `
+    <div class="mykola-actions" id="mykolaActions"></div>
+  `;
+}
+
 function openMykolaRecommendationFlow(movieId, button) {
   const movie = movies.find((item) => item.movie_id === movieId);
 
@@ -2058,9 +2064,7 @@ function openMykolaRecommendationFlow(movieId, button) {
   groupFormView.classList.remove("active");
   mykolaView.classList.add("active");
 
-  mykolaChat.innerHTML = `
-    <div class="mykola-actions" id="mykolaActions"></div>
-  `;
+  resetMykolaRecommendationFlow();
 
   addUserBubble(`Рекомендую: ${movie.title}`);
 
