@@ -1118,19 +1118,14 @@ input[readonly],
   color: #f4f4f4;
 }
 
-.recommend-button.recommended .recommend-bubble-icon {
-  background: #f4f4f4;
-  border-color: #f4f4f4;
-  color: #f4f4f4;
-  opacity: 1;
+.recommend-button.recommended .recommend-bubble-icon path {
+  fill: #f4f4f4;
+  stroke: #f4f4f4;
 }
 
-.recommend-button.recommended.has-comment .recommend-bubble-icon {
-  background: #34495e;
-  border-color: rgba(214, 178, 94, 0.85);
-  color: rgba(214, 178, 94, 0.85);
-  box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.35);
-  opacity: 1;
+.recommend-button.recommended.has-comment .recommend-bubble-icon path {
+  fill: #34495e;
+  stroke: rgba(214, 178, 94, 0.85);
 }
 
 .recommend-button.recommended.has-comment .recommend-bubble-icon::before {
@@ -1148,6 +1143,7 @@ input[readonly],
   background: #d6b25e;
 
   box-shadow: 0 0 0 2px #1b1b1b;
+  transition: opacity 160ms ease;
 }
 
 .recommend-count-button {
@@ -1269,33 +1265,31 @@ input[readonly],
 }
 
 .recommend-bubble-icon {
-  width: 14px;
-  height: 12px;
-
-  display: inline-block;
-
-  border: 1.5px solid currentColor;
-  border-radius: 4px;
+  width: 16px;
+  height: 16px;
 
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
-  opacity: 0.7;
+  color: currentColor;
+  opacity: 0.75;
 }
 
-.recommend-bubble-icon::after {
-  content: "";
+.recommend-bubble-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
 
-  position: absolute;
-  bottom: -4px;
-  left: 3px;
-
-  width: 5px;
-  height: 5px;
-
-  border-left: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-
-  transform: rotate(-45deg);
+.recommend-bubble-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  transition: fill 160ms ease, stroke 160ms ease;
 }
 
 .recommend-count-icon {
