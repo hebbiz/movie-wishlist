@@ -1933,9 +1933,7 @@ function renderMovies(list) {
             }"
            data-recommend-movie-id="${movie.movie_id}"
          >
-           <span class="recommend-heart">
-              ${hasCurrentUserRecommended(movie.movie_id) ? "♥" : "♡"}
-           </span>
+           <span class="recommend-bubble-icon"></span>
 
             <span class="recommend-text">
               ${
@@ -1956,7 +1954,8 @@ function renderMovies(list) {
                     data-recommend-context-movie-id="${movie.movie_id}"
                     aria-label="Показати рекомендації"
                   >
-                    ♥ ${movieRecommendationCounts[movie.movie_id]}
+                    <span class="recommend-count-icon"></span>
+                    ${movieRecommendationCounts[movie.movie_id]}
                   </button>
 
                   ${renderRecommendationContext(movie.movie_id)}
