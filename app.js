@@ -1670,7 +1670,7 @@ async function loadCurrentUserRecommendations() {
 
   const { data, error } = await supabaseClient
     .from("recommendations")
-    .select("id, movie_id")
+    .select("id, movie_id, comment")
     .eq("user_id", currentUser.id);
 
   if (error) {
@@ -2132,8 +2132,72 @@ function addMykolaRecommendationActions(movieId, button) {
 
       addUserBubble("Так");
 
+      showMykolaRecommendationCommentForm(movieId, button);
+    });
+}
+
+function showMykolaRecommendationCommentForm(movieId, button) {
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+  row.id = "mykolaRecommendationCommentForm";
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-bubble mykola-comment-form-bubble">
+      <textarea
+        id="mykolaRecommendationCommentInput"
+        placeholder="Кілька слів для інших..."
+      ></textarea>
+
+      <div class="mykola-comment-form-actions">
+        <button id="mykolaSaveCommentButton" type="button">
+          Зберегти
+        </button>
+
+        <button id="mykolaCancelCommentButton" type="button">
+          Без коментаря
+        </button>
+      </div>
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+
+  document
+    .getElementById("mykolaSaveCommentButton")
+    .addEventListener("click", async () => {
+      const comment = document
+        .getElementById("mykolaRecommendationCommentInput")
+        .value
+        .trim();
+
+      if (!comment) {
+        alert("Коментар не може бути порожнім.");
+        return;
+      }
+
+      await recommendMovie(movieId, button, comment);
+
+      row.remove();
+
       runWithMykolaThinking(() => {
-        addMykolaBubble("Форму для коментаря додамо наступним кроком.");
+        addMykolaBubble("Занотував. Тепер це вже не просто рекомендація, а майже джерело.");
+      }, 900);
+    });
+
+  document
+    .getElementById("mykolaCancelCommentButton")
+    .addEventListener("click", async () => {
+      await recommendMovie(movieId, button);
+
+      row.remove();
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble("Добре. Зафіксуємо без додаткових приміток.");
       }, 900);
     });
 }
