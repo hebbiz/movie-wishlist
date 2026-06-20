@@ -1126,9 +1126,9 @@ input[readonly],
 }
 
 .recommend-button.recommended.has-comment .recommend-bubble-icon {
-  background: #34495e;
-  border-color: rgba(214, 178, 94, 0.85);
-  color: rgba(214, 178, 94, 0.85);
+  background: #22344d;
+  border-color: #22344d;
+  color: #22344d;
   opacity: 1;
 }
 
