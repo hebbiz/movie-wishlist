@@ -1132,6 +1132,23 @@ input[readonly],
   opacity: 1;
 }
 
+.recommend-button.recommended.has-comment .recommend-bubble-icon::before {
+  content: "";
+
+  position: absolute;
+  top: -3px;
+  right: -3px;
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: #d6b25e;
+
+  box-shadow: 0 0 0 2px #1b1b1b;
+}
+
 .recommend-count-button {
   width: auto;
   flex-shrink: 0;
