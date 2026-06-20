@@ -182,3 +182,8 @@ using (
       and connected_user_other_groups.group_id = recommendations.context_group_id
   )
 );
+
+-- Add recommendation comments
+
+alter table recommendations
+add column comment text;
