@@ -1688,6 +1688,14 @@ function hasCurrentUserRecommended(movieId) {
   });
 }
 
+function currentUserRecommendationHasComment(movieId) {
+  const recommendation = currentUserRecommendations.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  return !!recommendation?.comment;
+}
+
 async function loadMovieRecommendationCounts() {
   movieRecommendationCounts = {};
 
@@ -1930,6 +1938,8 @@ function renderMovies(list) {
             type="button"
             class="recommend-button ${
               hasCurrentUserRecommended(movie.movie_id) ? "recommended" : ""
+            } ${
+            currentUserRecommendationHasComment(movie.movie_id) ? "has-comment" : ""
             }"
            data-recommend-movie-id="${movie.movie_id}"
          >
