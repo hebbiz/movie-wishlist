@@ -1999,7 +1999,7 @@ async function recommendMovie(movieId, button) {
 
   button.disabled = true;
   button.classList.add("recommended");
-  button.querySelector(".recommend-heart").textContent = "♥";
+  // button.querySelector(".recommend-heart").textContent = "♥";
   button.querySelector(".recommend-text").textContent = "Я рекомендую";
 
   const { data, error } = await supabaseClient
@@ -2015,7 +2015,7 @@ async function recommendMovie(movieId, button) {
   if (error) {
     button.disabled = false;
     button.classList.remove("recommended");
-    button.querySelector(".recommend-heart").textContent = "♡";
+    // button.querySelector(".recommend-heart").textContent = "♡";
     button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
     if (error.code === "23505") {
@@ -2082,7 +2082,7 @@ async function unrecommendMovie(movieId, button) {
     });
 
   button.classList.remove("recommended");
-  button.querySelector(".recommend-heart").textContent = "♡";
+  // button.querySelector(".recommend-heart").textContent = "♡";
   button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
   button.disabled = false;
