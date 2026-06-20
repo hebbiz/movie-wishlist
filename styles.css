@@ -1210,6 +1210,66 @@ input[readonly],
   transform: translateX(2px);
 }
 
+.recommend-bubble-icon {
+  width: 14px;
+  height: 12px;
+
+  display: inline-block;
+
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+
+  position: relative;
+
+  opacity: 0.7;
+}
+
+.recommend-bubble-icon::after {
+  content: "";
+
+  position: absolute;
+  bottom: -4px;
+  left: 3px;
+
+  width: 5px;
+  height: 5px;
+
+  border-left: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+
+  transform: rotate(-45deg);
+}
+
+.recommend-count-icon {
+  width: 12px;
+  height: 10px;
+
+  display: inline-block;
+
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+
+  position: relative;
+
+  margin-right: 4px;
+}
+
+.recommend-count-icon::after {
+  content: "";
+
+  position: absolute;
+  bottom: -3px;
+  left: 2px;
+
+  width: 4px;
+  height: 4px;
+
+  border-left: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+
+  transform: rotate(-45deg);
+}
+
 .recommend-context-person {
   display: inline-flex;
   align-items: center;
