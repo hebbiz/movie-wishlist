@@ -2045,6 +2045,86 @@ async function recommendMovie(movieId, button) {
   applySearchAndFilters();
 }
 
+function openMykolaRecommendationFlow(movieId, button) {
+  const movie = movies.find((item) => item.movie_id === movieId);
+
+  if (!movie) {
+    alert("Фільм не знайдено.");
+    return;
+  }
+
+  mainView.classList.remove("active");
+  groupSettingsView.classList.remove("active");
+  groupFormView.classList.remove("active");
+  mykolaView.classList.add("active");
+
+  addUserBubble(`Рекомендую: ${movie.title}`);
+
+  runWithMykolaThinking(() => {
+    addMykolaBubble(getRandomItem(mykolaRecommendationAcceptReplies));
+    addMykolaRecommendationActions(movieId, button);
+  }, 1400);
+
+  window.scrollTo({
+    top: mykolaView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
+const mykolaRecommendationAcceptReplies = [
+  "Зрозуміло. Зафіксуємо вашу рекомендацію в картотеці. Додасте пару слів для інших?",
+  "Прийнято. Рекомендацію внесемо до картотеки. Залишите короткий коментар для інших?",
+  "Добре. Картотека поповнюється. Додасте кілька слів, щоб інші розуміли, чому фільм варто переглянути?",
+  "Зафіксовано майже офіційно. Бракує лише вашого короткого пояснення. Додасте пару слів?",
+];
+
+function addMykolaRecommendationActions(movieId, button) {
+  const row = document.createElement("div");
+  row.className = "mykola-actions";
+  row.id = "mykolaRecommendationActions";
+
+  row.innerHTML = `
+    <button id="mykolaAddCommentButton" type="button">
+      Так
+    </button>
+
+    <button id="mykolaSkipCommentButton" type="button">
+      Ні, пізніше
+    </button>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+
+  document
+    .getElementById("mykolaSkipCommentButton")
+    .addEventListener("click", async () => {
+      row.remove();
+
+      addUserBubble("Ні, пізніше");
+
+      await recommendMovie(movieId, button);
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble("Зафіксовано. Можете повертатись до списку.");
+      }, 900);
+    });
+
+  document
+    .getElementById("mykolaAddCommentButton")
+    .addEventListener("click", () => {
+      row.remove();
+
+      addUserBubble("Так");
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble("Форму для коментаря додамо наступним кроком.");
+      }, 900);
+    });
+}
+
 async function unrecommendMovie(movieId, button) {
   if (!currentUser) {
     return;
@@ -2208,11 +2288,12 @@ moviesGrid.addEventListener("click", async (event) => {
 
   const movieId = button.dataset.recommendMovieId;
 
-    if (hasCurrentUserRecommended(movieId)) {
-      await unrecommendMovie(movieId, button);
-    } else {
-      await recommendMovie(movieId, button);
-    }
+  if (hasCurrentUserRecommended(movieId)) {
+    await unrecommendMovie(movieId, button);
+    return;
+  }
+
+  openMykolaRecommendationFlow(movieId, button);
 });
 
 moviesGrid.addEventListener("click", (event) => {
