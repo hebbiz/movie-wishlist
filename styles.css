@@ -1114,17 +1114,21 @@ input[readonly],
   color: #f4f4f4;
 }
 
-.recommend-heart {
-  color: #b3273d;
-  font-size: 15px;
-}
-
 .recommend-button.recommended {
   color: #f4f4f4;
 }
 
-.recommend-button.recommended .recommend-heart {
-  color: #ffffff;
+.recommend-button.recommended .recommend-bubble-icon {
+  background: #f4f4f4;
+  border-color: #f4f4f4;
+  color: #f4f4f4;
+  opacity: 1;
+}
+
+.recommend-button.recommended.has-comment .recommend-bubble-icon {
+  background: #34495e;
+  border-color: #34495e;
+  color: #34495e;
 }
 
 .recommend-count-button {
@@ -1133,11 +1137,15 @@ input[readonly],
   margin: 0;
   padding: 3px 8px;
 
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
   border-radius: 999px;
   border: none;
 
   background: rgba(255, 255, 255, 0.04);
-  color: #b3273d;
+  color: #aaa;
 
   font-size: 12px;
   font-weight: 700;
@@ -1146,7 +1154,38 @@ input[readonly],
 
 .recommend-count-button:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #d9475f;
+  color: #d6b25e;
+}
+
+.recommend-button.recommended.has-comment {
+  color: #f4f4f4;
+}
+
+.recommend-comment-icon {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+
+  position: relative;
+}
+
+.recommend-comment-icon::after {
+  content: "";
+
+  position: absolute;
+  bottom: -3px;
+  left: 2px;
+
+  width: 4px;
+  height: 4px;
+
+  border-left: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+
+  transform: rotate(-45deg);
 }
 
 .recommend-count-wrapper {
@@ -1274,33 +1313,6 @@ input[readonly],
   display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-
-.recommend-comment-icon {
-  width: 10px;
-  height: 10px;
-  display: inline-block;
-
-  border: 1.5px solid currentColor;
-  border-radius: 3px;
-
-  position: relative;
-}
-
-.recommend-comment-icon::after {
-  content: "";
-
-  position: absolute;
-  bottom: -3px;
-  left: 2px;
-
-  width: 4px;
-  height: 4px;
-
-  border-left: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-
-  transform: rotate(-45deg);
 }
 
 .group-member-menu .group-member-menu-dropdown {
