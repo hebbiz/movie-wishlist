@@ -1982,7 +1982,11 @@ function renderMovies(list) {
   attachPurchaseLinkHandlers();
 }
 
-async function recommendMovie(movieId, button) {
+async function recommendMovie(
+  movieId,
+  button,
+  comment = null
+) {
   if (!currentUser) {
     alert("Потрібно увійти в акаунт.");
     return;
@@ -2008,8 +2012,9 @@ async function recommendMovie(movieId, button) {
       movie_id: movieId,
       user_id: currentUser.id,
       context_group_id: currentGroupId,
+      comment,
     })
-    .select("id, movie_id")
+    .select("id, movie_id, comment")
     .single();
 
   if (error) {
