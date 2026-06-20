@@ -2058,6 +2058,10 @@ function openMykolaRecommendationFlow(movieId, button) {
   groupFormView.classList.remove("active");
   mykolaView.classList.add("active");
 
+  mykolaChat.innerHTML = `
+    <div class="mykola-actions" id="mykolaActions"></div>
+  `;
+
   addUserBubble(`Рекомендую: ${movie.title}`);
 
   runWithMykolaThinking(() => {
