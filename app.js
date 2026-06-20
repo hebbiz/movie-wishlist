@@ -1729,6 +1729,7 @@ async function loadMovieRecommendationDetails() {
       movie_id,
       user_id,
       context_group_id,
+      comment,
       profiles!recommendations_user_id_fkey (
         display_name,
         email
@@ -1796,13 +1797,21 @@ function renderRecommendationContext(movieId) {
 
   const namesHtml = visibleItems
     .map((item) => {
-      return (
+      const name =
         item.profiles?.display_name ||
         item.profiles?.email ||
-        "Користувач"
-      );
+        "Користувач";
+
+      const commentIcon = item.comment
+        ? `<span class="recommend-comment-icon" title="Є коментар"></span>`
+        : "";
+
+      return `
+        <span class="recommend-context-person">
+          ${escapeHtml(name)}${commentIcon}
+        </span>
+      `;
     })
-    .map(escapeHtml)
     .join(", ");
 
   return `
