@@ -1210,6 +1210,39 @@ input[readonly],
   transform: translateX(2px);
 }
 
+.recommend-context-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.recommend-comment-icon {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+
+  position: relative;
+}
+
+.recommend-comment-icon::after {
+  content: "";
+
+  position: absolute;
+  bottom: -3px;
+  left: 2px;
+
+  width: 4px;
+  height: 4px;
+
+  border-left: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+
+  transform: rotate(-45deg);
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
