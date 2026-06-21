@@ -1801,7 +1801,6 @@ function renderRecommendationContext(movieId) {
   });
 
   const visibleItems = sortedItems.slice(0, isExpanded ? 8 : 5);
-  const hasMore = sortedItems.length > 5 && !isExpanded;
 
   const namesHtml = visibleItems
     .map((item) => {
@@ -1833,21 +1832,6 @@ function renderRecommendationContext(movieId) {
 
       <div class="recommend-context-names">
         ${namesHtml}
-
-        ${
-          hasMore
-            ? `
-              <button
-                type="button"
-                class="recommend-expand-button"
-                data-expand-recommendations="${movieId}"
-                aria-label="Показати більше рекомендацій"
-              >
-                →
-              </button>
-            `
-            : ""
-        }
       </div>
 
       <button
@@ -2426,30 +2410,6 @@ moviesGrid.addEventListener("click", (event) => {
     menu.style.display =
       menu.style.display === "block" ? "none" : "block";
   }
-});
-
-moviesGrid.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-expand-recommendations]");
-
-  if (!button) return;
-
-  event.stopPropagation();
-
-  const movieId = button.dataset.expandRecommendations;
-
-  expandedRecommendationMenus[movieId] = true;
-
-  applySearchAndFilters();
-
-  setTimeout(() => {
-    const menu = document.querySelector(
-      `[data-recommend-context-menu="${movieId}"]`
-    );
-
-    if (menu) {
-      menu.style.display = "block";
-    }
-  }, 0);
 });
 
 function attachPurchaseLinkHandlers() {
