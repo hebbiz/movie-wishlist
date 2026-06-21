@@ -1093,6 +1093,7 @@ input[readonly],
   min-width: 0;
   flex: 0 1 auto;
   margin: 0;
+  margin-left: -4px;
   padding: 4px 0;
 
   display: inline-flex;
