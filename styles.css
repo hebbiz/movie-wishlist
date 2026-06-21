@@ -1119,29 +1119,60 @@ input[readonly],
 }
 
 .recommend-bubble-icon {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
 
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  opacity: 0.9;
-
   flex-shrink: 0;
-
+  opacity: 0.72;
   transform: translateY(1px);
 }
 
 .recommend-bubble-image {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   display: block;
+  object-fit: contain;
 }
 
+/* ще не рекомендовано */
+.recommend-button:not(.recommended) .recommend-bubble-image {
+  filter: brightness(0) saturate(100%) invert(70%);
+}
+
+/* рекомендовано без коментаря */
 .recommend-button.recommended .recommend-bubble-icon {
   opacity: 1;
+  transform: translateY(1px) scale(1.04);
+}
+
+.recommend-button.recommended .recommend-bubble-image {
+  filter: brightness(0) saturate(100%) invert(96%);
+}
+
+/* рекомендовано з коментарем */
+.recommend-button.recommended.has-comment .recommend-bubble-image {
+  filter: none;
+}
+
+.recommend-button.recommended.has-comment .recommend-bubble-icon::before {
+  content: "";
+
+  position: absolute;
+  top: 1px;
+  right: 1px;
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+  background: #d6b25e;
+
+  box-shadow: 0 0 0 2px #1b1b1b;
 }
 
 .recommend-count-button {
