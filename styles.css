@@ -1171,7 +1171,7 @@ input[readonly],
   -webkit-mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
   mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
 
-  transform: translateY(0px) scale(1.14);
+  transform: translateY(0px) scale(1.24);
 }
 
 .recommend-count-button {
