@@ -1838,9 +1838,9 @@ function renderRecommendationContext(movieId) {
         type="button"
         class="recommend-context-open-button"
         data-open-mykola-context="${movieId}"
-        aria-label="Відкрити картотеку Миколи"
+        aria-label="Всі поради"
       >
-        →
+        Всі поради <span class="mykola-hint-arrow">→</span>
       </button>
     </div>
   `;
