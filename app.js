@@ -1963,12 +1963,16 @@ function renderMovies(list) {
                 <div class="recommend-count-wrapper">
                   <button
                     type="button"
-                    class="recommend-count-button"
+                    class="recommend-count-button has-recommendations ${
+                      (movieRecommendationDetails[movie.movie_id] || []).some((item) => item.comment)
+                        ? "has-comments"
+                        : ""
+                    }"
                     data-recommend-context-movie-id="${movie.movie_id}"
                     aria-label="Показати рекомендації"
                   >
                     <span class="recommend-count-icon"></span>
-                    ${movieRecommendationCounts[movie.movie_id]}
+                      ${movieRecommendationCounts[movie.movie_id]}
                   </button>
 
                   ${renderRecommendationContext(movie.movie_id)}
