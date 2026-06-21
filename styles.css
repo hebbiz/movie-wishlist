@@ -1232,6 +1232,11 @@ input[readonly],
   color: #f4f4f4;
 }
 
+.recommend-count-button.has-comments .recommend-count-icon {
+  -webkit-mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
+  mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
+}
+
 .recommend-count-button.has-comments {
   color: #d6b25e;
 }
