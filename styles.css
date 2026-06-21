@@ -1336,18 +1336,22 @@ input[readonly],
 
 .recommend-context-open-button {
   width: auto;
-  padding: 0;
+
   margin: 10px 0 0;
+
+  padding: 0;
 
   display: inline-flex;
   align-items: center;
+  gap: 6px;
 
   background: transparent;
   border: none;
 
   color: #d6b25e;
-  font-size: 18px;
-  font-weight: 800;
+
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1;
 
   cursor: pointer;
@@ -1356,7 +1360,6 @@ input[readonly],
 .recommend-context-open-button:hover {
   background: transparent;
   color: #e4c675;
-  transform: translateX(2px);
 }
 
 .group-member-menu .group-member-menu-dropdown {
