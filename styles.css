@@ -1118,32 +1118,27 @@ input[readonly],
   color: #f4f4f4;
 }
 
-.recommend-button.recommended .recommend-bubble-icon path {
-  fill: #f4f4f4;
-  stroke: #f4f4f4;
+.recommend-bubble-icon {
+  width: 18px;
+  height: 18px;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  opacity: 0.8;
+  transform: translateY(1px);
 }
 
-.recommend-button.recommended.has-comment .recommend-bubble-icon path {
-  fill: #34495e;
-  stroke: rgba(214, 178, 94, 0.85);
+.recommend-bubble-image {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
-.recommend-button.recommended.has-comment .recommend-bubble-icon::before {
-  content: "";
-
-  position: absolute;
-  top: -3px;
-  right: -3px;
-
-  width: 6px;
-  height: 6px;
-
-  border-radius: 50%;
-
-  background: #d6b25e;
-
-  box-shadow: 0 0 0 2px #1b1b1b;
-  transition: opacity 160ms ease;
+.recommend-button.recommended .recommend-bubble-icon {
+  opacity: 1;
 }
 
 .recommend-count-button {
@@ -1264,33 +1259,6 @@ input[readonly],
   transform: translateX(2px);
 }
 
-.recommend-bubble-icon {
-  width: 18px;
-  height: 18px;
-
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  color: currentColor;
-  opacity: 0.8;
-  transform: translateY(1px);
-}
-
-.recommend-bubble-icon svg {
-  width: 18px;
-  height: 18px;
-  display: block;
-}
-
-.recommend-bubble-icon path {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.1;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
 
 .recommend-count-icon {
   width: 12px;
