@@ -1816,7 +1816,7 @@ function renderRecommendationContext(movieId) {
 
       return `
         <span class="recommend-context-person">
-          ${escapeHtml(name)}${commentIcon}
+          ${commentIcon}${escapeHtml(name)}
         </span>
       `;
     })
