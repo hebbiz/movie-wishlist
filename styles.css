@@ -1097,7 +1097,7 @@ input[readonly],
 
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 
   background: transparent;
   border: none;
@@ -1119,8 +1119,8 @@ input[readonly],
 }
 
 .recommend-bubble-icon {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
 
   position: relative;
   display: inline-block;
