@@ -1811,16 +1811,16 @@ function renderRecommendationContext(movieId) {
         "Користувач";
 
       const commentIcon = item.comment
-        ? `<span class="recommend-comment-icon" title="Є коментар"></span>`
+        ? `<span class="recommend-context-comment-icon" title="Є коментар"></span>`
         : "";
 
       return `
         <span class="recommend-context-person">
-          ${escapeHtml(name)}${commentIcon}
+          ${commentIcon}${escapeHtml(name)}
         </span>
       `;
     })
-    .join(", ");
+    .join("");
 
   return `
     <div
