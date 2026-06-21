@@ -1294,33 +1294,35 @@ input[readonly],
 
 
 .recommend-count-icon {
-  width: 12px;
-  height: 10px;
+  width: 18px;
+  height: 18px;
 
   display: inline-block;
+  flex-shrink: 0;
 
-  border: 1.5px solid currentColor;
-  border-radius: 3px;
+  background-color: currentColor;
 
-  position: relative;
+  -webkit-mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+  mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
 
-  margin-right: 4px;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  -webkit-mask-position: center;
+  mask-position: center;
+
+  transform: scaleX(-1);
 }
 
-.recommend-count-icon::after {
-  content: "";
+.recommend-count-button.has-recommendations {
+  color: #f4f4f4;
+}
 
-  position: absolute;
-  bottom: -3px;
-  left: 2px;
-
-  width: 4px;
-  height: 4px;
-
-  border-left: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-
-  transform: rotate(-45deg);
+.recommend-count-button.has-comments {
+  color: #d6b25e;
 }
 
 .recommend-context-person {
