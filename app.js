@@ -1944,11 +1944,15 @@ function renderMovies(list) {
            data-recommend-movie-id="${movie.movie_id}"
          >
            <span class="recommend-bubble-icon" aria-hidden="true">
-             <svg viewBox="0 0 24 24" focusable="false">
-               <path
-                 d="M6.2 6.4C6.2 5.1 7.3 4 8.6 4h6.8c1.3 0 2.4 1.1 2.4 2.4v5.4c0 1.3-1.1 2.4-2.4 2.4h-4.7l-3.5 3.1c-.4.4-1 .1-1-.5v-2.8c-1.2-.1-2.1-1.1-2.1-2.3V6.4Z"
-               />
-             </svg>
+             <img
+               src="${
+                 currentUserRecommendationHasComment(movie.movie_id)
+                   ? "/assets/icons/speech-bubble-active-mw.svg"
+                   : "/assets/icons/speech-bubble-blank-mw.svg"
+               }"
+               alt=""
+               class="recommend-bubble-image"
+             >
            </span>
 
             <span class="recommend-text">
@@ -2022,6 +2026,16 @@ async function recommendMovie(
   // button.querySelector(".recommend-heart").textContent = "♥";
   button.querySelector(".recommend-text").textContent = "Я рекомендую";
 
+  const bubbleImage = button.querySelector(".recommend-bubble-image");
+
+  if (bubbleImage) {
+    bubbleImage.src = comment
+      ? "/assets/icons/speech-bubble-active-mw.svg"
+      : "/assets/icons/speech-bubble-blank-mw.svg";
+  }
+
+button.classList.toggle("has-comment", !!comment);
+
   const { data, error } = await supabaseClient
     .from("recommendations")
     .insert({
@@ -2036,6 +2050,13 @@ async function recommendMovie(
   if (error) {
     button.disabled = false;
     button.classList.remove("recommended");
+    button.classList.remove("has-comment");
+
+    const bubbleImage = button.querySelector(".recommend-bubble-image");
+
+    if (bubbleImage) {
+      bubbleImage.src = "/assets/icons/speech-bubble-blank-mw.svg";
+    }
     // button.querySelector(".recommend-heart").textContent = "♡";
     button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
