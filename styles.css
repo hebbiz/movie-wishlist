@@ -1097,7 +1097,7 @@ input[readonly],
 
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 
   background: transparent;
   border: none;
@@ -1119,21 +1119,24 @@ input[readonly],
 }
 
 .recommend-bubble-icon {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
 
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  opacity: 0.8;
+  opacity: 0.9;
+
+  flex-shrink: 0;
+
   transform: translateY(1px);
 }
 
 .recommend-bubble-image {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   display: block;
 }
 
