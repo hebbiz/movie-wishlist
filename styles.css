@@ -1319,7 +1319,7 @@ input[readonly],
   -webkit-mask-position: center;
   mask-position: center;
 
-  transform: scaleX(-1) translateY(0px);
+  transform: scaleX(-1) translateY(-1px);
 }
 
 .recommend-count-button.has-recommendations {
