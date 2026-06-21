@@ -1119,60 +1119,47 @@ input[readonly],
 }
 
 .recommend-bubble-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
+  display: inline-block;
   flex-shrink: 0;
-  opacity: 0.72;
-  transform: translateY(1px);
+
+  transform: translateY(2px);
+
+  background-color: #aaa;
+
+  -webkit-mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+  mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+
+  -webkit-mask-size: contain;
+  mask-size: contain;
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  -webkit-mask-position: center;
+  mask-position: center;
 }
 
-.recommend-bubble-image {
-  width: 24px;
-  height: 24px;
-  display: block;
-  object-fit: contain;
+/* hover */
+.recommend-button:hover .recommend-bubble-icon {
+  background-color: #f4f4f4;
 }
 
-/* ще не рекомендовано */
-.recommend-button:not(.recommended) .recommend-bubble-image {
-  filter: brightness(0) saturate(100%) invert(70%);
-}
-
-/* рекомендовано без коментаря */
+/* рекомендовано */
 .recommend-button.recommended .recommend-bubble-icon {
-  opacity: 1;
-  transform: translateY(1px) scale(1.04);
-}
-
-.recommend-button.recommended .recommend-bubble-image {
-  filter: brightness(0) saturate(100%) invert(96%);
+  background-color: #f4f4f4;
+  transform: translateY(2px) scale(1.04);
 }
 
 /* рекомендовано з коментарем */
-.recommend-button.recommended.has-comment .recommend-bubble-image {
-  filter: none;
-}
+.recommend-button.recommended.has-comment .recommend-bubble-icon {
+  background-color: #d6b25e;
 
-.recommend-button.recommended.has-comment .recommend-bubble-icon::before {
-  content: "";
-
-  position: absolute;
-  top: 1px;
-  right: 1px;
-
-  width: 6px;
-  height: 6px;
-
-  border-radius: 50%;
-  background: #d6b25e;
-
-  box-shadow: 0 0 0 2px #1b1b1b;
+  -webkit-mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
+  mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
 }
 
 .recommend-count-button {
