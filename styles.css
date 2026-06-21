@@ -1098,6 +1098,7 @@ input[readonly],
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  line-height: 1;
 
   background: transparent;
   border: none;
@@ -1105,6 +1106,12 @@ input[readonly],
 
   font-size: 14px;
   font-weight: 600;
+}
+
+.recommend-text {
+  display: inline-block;
+  line-height: 1;
+  transform: translateY(-1px);
 }
 
 .recommend-button:hover,
@@ -1126,7 +1133,7 @@ input[readonly],
   display: inline-block;
   flex-shrink: 0;
 
-  transform: translateY(2px);
+  transform: translateY(1px);
 
   background-color: #aaa;
 
@@ -1160,6 +1167,8 @@ input[readonly],
 
   -webkit-mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
   mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
+
+  transform: translateY(1px) scale(1.14);
 }
 
 .recommend-count-button {
