@@ -1820,7 +1820,7 @@ function renderRecommendationContext(movieId) {
         </span>
       `;
     })
-    .join(", ");
+    .join("");
 
   return `
     <div
