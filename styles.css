@@ -1119,8 +1119,8 @@ input[readonly],
 }
 
 .recommend-bubble-icon {
-  width: 24px;
-  height: 24px;
+  width: 96px;
+  height: 96px;
 
   position: relative;
   display: inline-flex;
@@ -1135,8 +1135,8 @@ input[readonly],
 }
 
 .recommend-bubble-image {
-  width: 24px;
-  height: 24px;
+  width: 96px;
+  height: 96px;
   display: block;
 }
 
