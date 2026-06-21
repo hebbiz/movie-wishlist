@@ -1299,30 +1299,6 @@ input[readonly],
   line-height: 1.05;
 }
 
-.recommend-expand-button {
-  width: auto;
-  padding: 0 0 0 4px;
-  margin: 0;
-
-  display: inline;
-
-  background: transparent;
-  border: none;
-
-  color: #d6b25e;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1;
-
-  cursor: pointer;
-}
-
-.recommend-expand-button:hover {
-  background: transparent;
-  color: #e4c675;
-  transform: translateX(2px);
-}
-
 .recommend-context-person {
   display: inline-flex;
   align-items: center;
