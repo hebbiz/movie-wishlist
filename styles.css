@@ -1327,6 +1327,11 @@ input[readonly],
   gap: 4px;
 }
 
+.recommend-context-person:not(:last-child)::after {
+  content: ", ";
+  color: #ddd;
+}
+
 .recommend-context-comment-icon {
   width: 28px;
   height: 28px;
