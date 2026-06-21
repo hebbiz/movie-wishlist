@@ -1943,17 +1943,10 @@ function renderMovies(list) {
             }"
            data-recommend-movie-id="${movie.movie_id}"
          >
-           <span class="recommend-bubble-icon" aria-hidden="true">
-             <img
-               src="${
-                 currentUserRecommendationHasComment(movie.movie_id)
-                   ? "/assets/icons/speech-bubble-active-mw.svg"
-                   : "/assets/icons/speech-bubble-blank-mw.svg"
-               }"
-               alt=""
-               class="recommend-bubble-image"
-             >
-           </span>
+           <span
+             class="recommend-bubble-icon"
+               aria-hidden="true"
+            ></span>
 
             <span class="recommend-text">
               ${
@@ -2026,14 +2019,6 @@ async function recommendMovie(
   // button.querySelector(".recommend-heart").textContent = "♥";
   button.querySelector(".recommend-text").textContent = "Я рекомендую";
 
-  const bubbleImage = button.querySelector(".recommend-bubble-image");
-
-  if (bubbleImage) {
-    bubbleImage.src = comment
-      ? "/assets/icons/speech-bubble-active-mw.svg"
-      : "/assets/icons/speech-bubble-blank-mw.svg";
-  }
-
 button.classList.toggle("has-comment", !!comment);
 
   const { data, error } = await supabaseClient
@@ -2051,12 +2036,6 @@ button.classList.toggle("has-comment", !!comment);
     button.disabled = false;
     button.classList.remove("recommended");
     button.classList.remove("has-comment");
-
-    const bubbleImage = button.querySelector(".recommend-bubble-image");
-
-    if (bubbleImage) {
-      bubbleImage.src = "/assets/icons/speech-bubble-blank-mw.svg";
-    }
     // button.querySelector(".recommend-heart").textContent = "♡";
     button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
@@ -2276,7 +2255,7 @@ async function unrecommendMovie(movieId, button) {
     });
 
   button.classList.remove("recommended");
-  // button.querySelector(".recommend-heart").textContent = "♡";
+  button.classList.remove("has-comment");
   button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
   button.disabled = false;
