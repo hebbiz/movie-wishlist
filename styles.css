@@ -1093,11 +1093,13 @@ input[readonly],
   min-width: 0;
   flex: 0 1 auto;
   margin: 0;
+  margin-left: -4px;
   padding: 4px 0;
 
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
+  line-height: 1;
 
   background: transparent;
   border: none;
@@ -1107,6 +1109,13 @@ input[readonly],
   font-weight: 600;
 }
 
+.recommend-text {
+  display: inline-block;
+  line-height: 1;
+  margin-left: -3px;
+  transform: translateY(-1px);
+}
+
 .recommend-button:hover,
 .recommend-button:focus,
 .recommend-button:active {
@@ -1114,44 +1123,151 @@ input[readonly],
   color: #f4f4f4;
 }
 
-.recommend-heart {
-  color: #b3273d;
-  font-size: 15px;
-}
-
 .recommend-button.recommended {
   color: #f4f4f4;
 }
 
-.recommend-button.recommended .recommend-heart {
-  color: #ffffff;
+.recommend-button.recommended.has-comment {
+  color: #f4f4f4;
+}
+
+.recommend-bubble-icon {
+  width: 36px;
+  height: 36px;
+  margin-left: -3px;
+
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+
+  transform: translateY(0px);
+
+  background-color: #aaa;
+
+  -webkit-mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+  mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+
+  -webkit-mask-size: contain;
+  mask-size: contain;
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* hover */
+.recommend-button:hover .recommend-bubble-icon {
+  background-color: #f4f4f4;
+}
+
+/* рекомендовано */
+.recommend-button.recommended .recommend-bubble-icon {
+  background-color: #f4f4f4;
+  transform: translateY(0px) scale(1.04);
+}
+
+/* рекомендовано з коментарем */
+.recommend-button.recommended.has-comment .recommend-bubble-icon {
+  background-color: #d6b25e;
+
+  -webkit-mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
+  mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
+
+  transform: translateY(0px) scale(1.24);
 }
 
 .recommend-count-button {
   width: auto;
-  flex-shrink: 0;
+  min-width: 40px;
+  height: 30px;
   margin: 0;
-  padding: 3px 8px;
+  padding: 0 9px 0 7px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
 
   border-radius: 999px;
-  border: none;
-
   background: rgba(255, 255, 255, 0.04);
-  color: #b3273d;
+  color: #aaa;
 
   font-size: 12px;
   font-weight: 700;
-  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.recommend-count-icon {
+  width: 28px;
+  height: 28px;
+  margin-right: -4px;
+
+  display: inline-block;
+  flex-shrink: 0;
+
+  background-color: currentColor;
+
+  -webkit-mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+  mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+
+  transform: scaleX(-1) translateY(1px);
 }
 
 .recommend-count-button:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #d9475f;
+  color: #d6b25e;
+}
+
+.recommend-count-button.has-recommendations {
+  color: #f4f4f4;
+}
+
+.recommend-count-button.has-comments {
+  color: #d6b25e;
+}
+
+.recommend-comment-icon {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+
+  position: relative;
+  flex-shrink: 0;
+}
+
+.recommend-comment-icon::after {
+  content: "";
+
+  position: absolute;
+  bottom: -3px;
+  left: 2px;
+
+  width: 4px;
+  height: 4px;
+
+  border-left: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+
+  transform: rotate(-45deg);
 }
 
 .recommend-count-wrapper {
   position: relative;
   flex-shrink: 0;
+  transform: translateY(-1px);
 }
 
 .recommend-context-menu {
@@ -1208,6 +1324,12 @@ input[readonly],
   background: transparent;
   color: #e4c675;
   transform: translateX(2px);
+}
+
+.recommend-context-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .group-member-menu .group-member-menu-dropdown {

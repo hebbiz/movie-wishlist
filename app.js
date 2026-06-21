@@ -1670,7 +1670,7 @@ async function loadCurrentUserRecommendations() {
 
   const { data, error } = await supabaseClient
     .from("recommendations")
-    .select("id, movie_id")
+    .select("id, movie_id, comment")
     .eq("user_id", currentUser.id);
 
   if (error) {
@@ -1686,6 +1686,14 @@ function hasCurrentUserRecommended(movieId) {
   return currentUserRecommendations.some((recommendation) => {
     return recommendation.movie_id === movieId;
   });
+}
+
+function currentUserRecommendationHasComment(movieId) {
+  const recommendation = currentUserRecommendations.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  return !!recommendation?.comment;
 }
 
 async function loadMovieRecommendationCounts() {
@@ -1729,6 +1737,7 @@ async function loadMovieRecommendationDetails() {
       movie_id,
       user_id,
       context_group_id,
+      comment,
       profiles!recommendations_user_id_fkey (
         display_name,
         email
@@ -1796,13 +1805,21 @@ function renderRecommendationContext(movieId) {
 
   const namesHtml = visibleItems
     .map((item) => {
-      return (
+      const name =
         item.profiles?.display_name ||
         item.profiles?.email ||
-        "Користувач"
-      );
+        "Користувач";
+
+      const commentIcon = item.comment
+        ? `<span class="recommend-comment-icon" title="Є коментар"></span>`
+        : "";
+
+      return `
+        <span class="recommend-context-person">
+          ${escapeHtml(name)}${commentIcon}
+        </span>
+      `;
     })
-    .map(escapeHtml)
     .join(", ");
 
   return `
@@ -1921,12 +1938,15 @@ function renderMovies(list) {
             type="button"
             class="recommend-button ${
               hasCurrentUserRecommended(movie.movie_id) ? "recommended" : ""
+            } ${
+            currentUserRecommendationHasComment(movie.movie_id) ? "has-comment" : ""
             }"
            data-recommend-movie-id="${movie.movie_id}"
          >
-           <span class="recommend-heart">
-              ${hasCurrentUserRecommended(movie.movie_id) ? "♥" : "♡"}
-           </span>
+           <span
+             class="recommend-bubble-icon"
+               aria-hidden="true"
+            ></span>
 
             <span class="recommend-text">
               ${
@@ -1943,11 +1963,16 @@ function renderMovies(list) {
                 <div class="recommend-count-wrapper">
                   <button
                     type="button"
-                    class="recommend-count-button"
+                    class="recommend-count-button has-recommendations ${
+                      (movieRecommendationDetails[movie.movie_id] || []).some((item) => item.comment)
+                        ? "has-comments"
+                        : ""
+                    }"
                     data-recommend-context-movie-id="${movie.movie_id}"
                     aria-label="Показати рекомендації"
                   >
-                    ♥ ${movieRecommendationCounts[movie.movie_id]}
+                    <span class="recommend-count-icon"></span>
+                      ${movieRecommendationCounts[movie.movie_id]}
                   </button>
 
                   ${renderRecommendationContext(movie.movie_id)}
@@ -1974,7 +1999,11 @@ function renderMovies(list) {
   attachPurchaseLinkHandlers();
 }
 
-async function recommendMovie(movieId, button) {
+async function recommendMovie(
+  movieId,
+  button,
+  comment = null
+) {
   if (!currentUser) {
     alert("Потрібно увійти в акаунт.");
     return;
@@ -1991,8 +2020,10 @@ async function recommendMovie(movieId, button) {
 
   button.disabled = true;
   button.classList.add("recommended");
-  button.querySelector(".recommend-heart").textContent = "♥";
+  // button.querySelector(".recommend-heart").textContent = "♥";
   button.querySelector(".recommend-text").textContent = "Я рекомендую";
+
+button.classList.toggle("has-comment", !!comment);
 
   const { data, error } = await supabaseClient
     .from("recommendations")
@@ -2000,14 +2031,16 @@ async function recommendMovie(movieId, button) {
       movie_id: movieId,
       user_id: currentUser.id,
       context_group_id: currentGroupId,
+      comment,
     })
-    .select("id, movie_id")
+    .select("id, movie_id, comment")
     .single();
 
   if (error) {
     button.disabled = false;
     button.classList.remove("recommended");
-    button.querySelector(".recommend-heart").textContent = "♡";
+    button.classList.remove("has-comment");
+    // button.querySelector(".recommend-heart").textContent = "♡";
     button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
     if (error.code === "23505") {
@@ -2035,6 +2068,158 @@ async function recommendMovie(movieId, button) {
   await loadMovieRecommendationDetails();
   applyMykolaDailyRecommendation();
   applySearchAndFilters();
+}
+
+function resetMykolaRecommendationFlow() {
+  mykolaChat.innerHTML = `
+    <div class="mykola-actions" id="mykolaActions"></div>
+  `;
+}
+
+function openMykolaRecommendationFlow(movieId, button) {
+  const movie = movies.find((item) => item.movie_id === movieId);
+
+  if (!movie) {
+    alert("Фільм не знайдено.");
+    return;
+  }
+
+  mainView.classList.remove("active");
+  groupSettingsView.classList.remove("active");
+  groupFormView.classList.remove("active");
+  mykolaView.classList.add("active");
+
+  resetMykolaRecommendationFlow();
+
+  addUserBubble(`Рекомендую: ${movie.title}`);
+
+  runWithMykolaThinking(() => {
+    addMykolaBubble(getRandomItem(mykolaRecommendationAcceptReplies));
+    addMykolaRecommendationActions(movieId, button);
+  }, 1400);
+
+  window.scrollTo({
+    top: mykolaView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
+const mykolaRecommendationAcceptReplies = [
+  "Зрозуміло. Зафіксуємо вашу рекомендацію в картотеці. Додасте пару слів для інших?",
+  "Прийнято. Рекомендацію внесемо до картотеки. Після погодження кафедрою, звичайно. Залишите короткий коментар для інших?",
+  "Добре. Картотека поповнюється. Додасте кілька слів, щоб інші розуміли, чому фільм варто переглянути?",
+  "Зафіксовано майже офіційно. Бракує лише вашого короткого пояснення. Додасте пару слів?",
+];
+
+function addMykolaRecommendationActions(movieId, button) {
+  const row = document.createElement("div");
+  row.className = "mykola-actions";
+  row.id = "mykolaRecommendationActions";
+
+  row.innerHTML = `
+    <button id="mykolaAddCommentButton" type="button">
+      Так
+    </button>
+
+    <button id="mykolaSkipCommentButton" type="button">
+      Ні, пізніше
+    </button>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+
+  document
+    .getElementById("mykolaSkipCommentButton")
+    .addEventListener("click", async () => {
+      row.remove();
+
+      addUserBubble("Ні, пізніше");
+
+      await recommendMovie(movieId, button);
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble("Зафіксовано. Можете повертатись до списку.");
+      }, 900);
+    });
+
+  document
+    .getElementById("mykolaAddCommentButton")
+    .addEventListener("click", () => {
+      row.remove();
+
+      addUserBubble("Так");
+
+      showMykolaRecommendationCommentForm(movieId, button);
+    });
+}
+
+function showMykolaRecommendationCommentForm(movieId, button) {
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+  row.id = "mykolaRecommendationCommentForm";
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-bubble mykola-comment-form-bubble">
+      <textarea
+        id="mykolaRecommendationCommentInput"
+        placeholder="Кілька слів для інших..."
+      ></textarea>
+
+      <div class="mykola-comment-form-actions">
+        <button id="mykolaSaveCommentButton" type="button">
+          Зберегти
+        </button>
+
+        <button id="mykolaCancelCommentButton" type="button">
+          Без коментаря
+        </button>
+      </div>
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+
+  document
+    .getElementById("mykolaSaveCommentButton")
+    .addEventListener("click", async () => {
+      const comment = document
+        .getElementById("mykolaRecommendationCommentInput")
+        .value
+        .trim();
+
+      if (!comment) {
+        alert("Коментар не може бути порожнім.");
+        return;
+      }
+
+      await recommendMovie(movieId, button, comment);
+
+      row.remove();
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble("Занотував. Тепер це вже не просто рекомендація, а майже джерело.");
+      }, 900);
+    });
+
+  document
+    .getElementById("mykolaCancelCommentButton")
+    .addEventListener("click", async () => {
+      await recommendMovie(movieId, button);
+
+      row.remove();
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble("Добре. Зафіксуємо без додаткових приміток.");
+      }, 900);
+    });
 }
 
 async function unrecommendMovie(movieId, button) {
@@ -2074,7 +2259,7 @@ async function unrecommendMovie(movieId, button) {
     });
 
   button.classList.remove("recommended");
-  button.querySelector(".recommend-heart").textContent = "♡";
+  button.classList.remove("has-comment");
   button.querySelector(".recommend-text").textContent = "Рекомендувати";
 
   button.disabled = false;
@@ -2200,11 +2385,12 @@ moviesGrid.addEventListener("click", async (event) => {
 
   const movieId = button.dataset.recommendMovieId;
 
-    if (hasCurrentUserRecommended(movieId)) {
-      await unrecommendMovie(movieId, button);
-    } else {
-      await recommendMovie(movieId, button);
-    }
+  if (hasCurrentUserRecommended(movieId)) {
+    await unrecommendMovie(movieId, button);
+    return;
+  }
+
+  openMykolaRecommendationFlow(movieId, button);
 });
 
 moviesGrid.addEventListener("click", (event) => {
