@@ -1267,6 +1267,7 @@ input[readonly],
 .recommend-count-wrapper {
   position: relative;
   flex-shrink: 0;
+  transform: translateY(-1px);
 }
 
 .recommend-context-menu {
