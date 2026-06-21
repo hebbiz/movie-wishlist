@@ -1111,6 +1111,7 @@ input[readonly],
 .recommend-text {
   display: inline-block;
   line-height: 1;
+  margin-left: -2px;
   transform: translateY(-1px);
 }
 
@@ -1128,6 +1129,7 @@ input[readonly],
 .recommend-bubble-icon {
   width: 36px;
   height: 36px;
+  margin-left: -3px;
 
   position: relative;
   display: inline-block;
