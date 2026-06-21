@@ -1038,7 +1038,7 @@ input[readonly],
 
 .card-menu {
   position: relative;
-  z-index: 1
+  z-index: 1;
   margin-top: auto;
   padding-top: 24px;
 }
@@ -1356,6 +1356,31 @@ input[readonly],
   mask-position: center;
 
   transform: scaleX(-1) translateY(1px) scale(1.18);
+}
+
+.recommend-context-open-button {
+  width: auto;
+  padding: 0;
+  margin: 10px 0 0;
+
+  display: inline-flex;
+  align-items: center;
+
+  background: transparent;
+  border: none;
+
+  color: #d6b25e;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.recommend-context-open-button:hover {
+  background: transparent;
+  color: #e4c675;
+  transform: translateX(2px);
 }
 
 .group-member-menu .group-member-menu-dropdown {
