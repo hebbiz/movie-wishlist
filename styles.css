@@ -1235,6 +1235,8 @@ input[readonly],
 .recommend-count-button.has-comments .recommend-count-icon {
   -webkit-mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
   mask-image: url("/assets/icons/speech-bubble-active-mw.svg");
+
+  transform: scaleX(-1) translateY(1px) scale(1.18);
 }
 
 .recommend-count-button.has-comments {
