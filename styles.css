@@ -1127,6 +1127,10 @@ input[readonly],
   color: #f4f4f4;
 }
 
+.recommend-button.recommended.has-comment {
+  color: #f4f4f4;
+}
+
 .recommend-bubble-icon {
   width: 36px;
   height: 36px;
@@ -1178,18 +1182,15 @@ input[readonly],
   width: auto;
   min-width: 40px;
   height: 30px;
-  flex-shrink: 0;
   margin: 0;
-  padding: 0px 8px;
+  padding: 0 9px 0 7px;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0;
 
   border-radius: 999px;
-  border: none;
-
   background: rgba(255, 255, 255, 0.04);
   color: #aaa;
 
@@ -1199,13 +1200,40 @@ input[readonly],
   line-height: 1;
 }
 
+.recommend-count-icon {
+  width: 28px;
+  height: 28px;
+  margin-right: -4px;
+
+  display: inline-block;
+  flex-shrink: 0;
+
+  background-color: currentColor;
+
+  -webkit-mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+  mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
+
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+
+  transform: scaleX(-1) translateY(1px);
+}
+
 .recommend-count-button:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #d6b25e;
 }
 
-.recommend-button.recommended.has-comment {
+.recommend-count-button.has-recommendations {
   color: #f4f4f4;
+}
+
+.recommend-count-button.has-comments {
+  color: #d6b25e;
 }
 
 .recommend-comment-icon {
@@ -1295,39 +1323,6 @@ input[readonly],
   background: transparent;
   color: #e4c675;
   transform: translateX(2px);
-}
-
-
-.recommend-count-icon {
-  width: 28px;
-  height: 28px;
-
-  display: inline-block;
-  flex-shrink: 0;
-
-  background-color: currentColor;
-
-  -webkit-mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
-  mask-image: url("/assets/icons/speech-bubble-blank-mw.svg");
-
-  -webkit-mask-size: contain;
-  mask-size: contain;
-
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-
-  -webkit-mask-position: center;
-  mask-position: center;
-
-  transform: scaleX(-1) translateY(1px);
-}
-
-.recommend-count-button.has-recommendations {
-  color: #f4f4f4;
-}
-
-.recommend-count-button.has-comments {
-  color: #d6b25e;
 }
 
 .recommend-context-person {
