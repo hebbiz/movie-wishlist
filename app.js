@@ -1849,6 +1849,15 @@ function renderRecommendationContext(movieId) {
             : ""
         }
       </div>
+
+      <button
+        type="button"
+        class="recommend-context-open-button"
+        data-open-mykola-context="${movieId}"
+        aria-label="Відкрити картотеку Миколи"
+      >
+        →
+      </button>
     </div>
   `;
 }
