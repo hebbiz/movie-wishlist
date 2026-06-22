@@ -2066,6 +2066,19 @@ function resetMykolaRecommendationFlow() {
   `;
 }
 
+function openMykolaContextView() {
+  mainView.classList.remove("active");
+  groupSettingsView.classList.remove("active");
+  groupFormView.classList.remove("active");
+
+  mykolaView.classList.add("active");
+
+  window.scrollTo({
+    top: mykolaView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
 function openMykolaRecommendationFlow(movieId, button) {
   const movie = movies.find((item) => item.movie_id === movieId);
 
@@ -2074,10 +2087,7 @@ function openMykolaRecommendationFlow(movieId, button) {
     return;
   }
 
-  mainView.classList.remove("active");
-  groupSettingsView.classList.remove("active");
-  groupFormView.classList.remove("active");
-  mykolaView.classList.add("active");
+  openMykolaContextView();
 
   resetMykolaRecommendationFlow();
 
@@ -2088,10 +2098,6 @@ function openMykolaRecommendationFlow(movieId, button) {
     addMykolaRecommendationActions(movieId, button);
   }, 1400);
 
-  window.scrollTo({
-    top: mykolaView.offsetTop - 20,
-    behavior: "smooth",
-  });
 }
 
 const mykolaRecommendationAcceptReplies = [
@@ -2224,10 +2230,7 @@ function openMykolaRecommendationContext(movieId) {
 
   const recommendations = movieRecommendationDetails[movieId] || [];
 
-  mainView.classList.remove("active");
-  groupSettingsView.classList.remove("active");
-  groupFormView.classList.remove("active");
-  mykolaView.classList.add("active");
+  openMykolaContextView();
 
   resetMykolaRecommendationFlow();
 
@@ -2242,10 +2245,6 @@ function openMykolaRecommendationContext(movieId) {
     }, 350);
   }, 1000);
 
-  window.scrollTo({
-    top: mykolaView.offsetTop - 20,
-    behavior: "smooth",
-  });
 }
 
 function addMykolaRecommendationCards(recommendations) {
