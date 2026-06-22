@@ -432,3 +432,26 @@ using (
       )
   )
 );
+
+-- profiles_select_visible_recommendation_users
+
+drop policy if exists "profiles_select_visible_recommendation_users"
+on public.profiles;
+
+drop policy if exists "profiles_select_group_members"
+on public.profiles;
+
+create policy "profiles_select_visible_recommendation_users"
+on public.profiles
+for select
+to authenticated
+using (
+  id = auth.uid()
+
+  or exists (
+    select 1
+    from public.recommendations r
+    where r.user_id = profiles.id
+      and public.can_read_recommendation(r.user_id, r.context_group_id)
+  )
+);
