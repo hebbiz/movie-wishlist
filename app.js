@@ -2248,24 +2248,56 @@ function openMykolaRecommendationContext(movieId) {
 }
 
 function addMykolaRecommendationCards(recommendations) {
-  if (!recommendations.length) {
+  const humanRecommendations = recommendations.filter((item) => {
+    return !item.is_mykola;
+  });
+
+  if (!humanRecommendations.length) {
     addMykolaBubble("Порожньо. Картотека мовчить.");
     return;
   }
 
-  recommendations.forEach((item) => {
-    const name =
-      item.profiles?.display_name ||
-      item.profiles?.email ||
-      "Користувач";
+  const sortedItems = [...humanRecommendations].sort((a, b) => {
+    const aHasComment = !!a.comment;
+    const bHasComment = !!b.comment;
 
-    const comment = item.comment || "Без коментаря. Лаконічно, але підозріло.";
+    if (aHasComment !== bHasComment) {
+      return aHasComment ? -1 : 1;
+    }
 
-    addMykolaBubble(`
-      <strong>${escapeHtml(name)}</strong><br>
-      ${escapeHtml(comment)}
-    `);
+    return getRecommendationPriority(a) - getRecommendationPriority(b);
   });
+
+  sortedItems.forEach((item) => {
+    addMykolaRecommendationCard(item);
+  });
+
+  runWithMykolaThinking(() => {
+    addMykolaBubble("На цьому доказова база закінчується. Робіть висновки.");
+  }, 900);
+}
+
+function addMykolaRecommendationCard(item) {
+  const name =
+    item.profiles?.display_name ||
+    item.profiles?.email ||
+    "Користувач";
+
+  const groupName = item.groups?.name
+    ? `${getGroupTypeNominativeLabel(item.groups.type)} ${item.groups.name}`
+    : "Група не вказана";
+
+  const comment =
+    item.comment ||
+    "Без коментаря. Лаконічно, але підозріло.";
+
+  addMykolaBubble(`
+    <strong>${escapeHtml(name)}</strong><br>
+    <span style="color:#aaa;font-size:12px;">
+      ${escapeHtml(groupName)}
+    </span><br><br>
+    ${escapeHtml(comment)}
+  `);
 }
 
 async function unrecommendMovie(movieId, button) {
