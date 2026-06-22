@@ -2288,27 +2288,19 @@ function addMykolaRecommendationCard(item) {
   scrollMykolaChatToBottom();
 }
 
-function addMykolaRecommendationCard(item) {
-  const name =
-    item.profiles?.display_name ||
-    item.profiles?.email ||
-    "Користувач";
+function addMykolaRecommendationCards(recommendations) {
+  if (!recommendations.length) {
+    addMykolaBubble("Порожньо. Картотека мовчить.");
+    return;
+  }
 
-  const groupName = item.groups?.name
-    ? `${getGroupTypeNominativeLabel(item.groups.type)} ${item.groups.name}`
-    : "Група не вказана";
+  const sortedItems = [...recommendations].sort((a, b) => {
+    return getRecommendationPriority(a) - getRecommendationPriority(b);
+  });
 
-  const comment =
-    item.comment ||
-    "Без коментаря. Лаконічно, але підозріло.";
-
-  addMykolaBubble(`
-    <strong>${escapeHtml(name)}</strong><br>
-    <span style="color:#aaa;font-size:12px;">
-      ${escapeHtml(groupName)}
-    </span><br><br>
-    ${escapeHtml(comment)}
-  `);
+  sortedItems.forEach((item) => {
+    addMykolaRecommendationCard(item);
+  });
 }
 
 async function unrecommendMovie(movieId, button) {
