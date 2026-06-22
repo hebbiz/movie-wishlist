@@ -2242,6 +2242,10 @@ function openMykolaRecommendationContext(movieId) {
     setTimeout(() => {
       addMykolaMovieBubble(movie);
       addMykolaRecommendationCards(recommendations);
+
+      setTimeout(() => {
+        addMykolaBubble("Ось така картотека. Не ідеальна, але людство теж не дуже.");
+      }, 500);
     }, 350);
   }, 1000);
 
