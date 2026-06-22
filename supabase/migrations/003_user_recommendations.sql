@@ -187,3 +187,58 @@ using (
 
 alter table recommendations
 add column comment text;
+
+-- Update social recommendations read policies model
+
+drop policy if exists "Users can read visible recommendations"
+on public.recommendations;
+
+drop policy if exists "Users can read recommendations from socially connected groups"
+on public.recommendations;
+
+drop policy if exists "Users can read visible social recommendations"
+on public.recommendations;
+
+create or replace function public.can_read_recommendation(
+  recommendation_user_id uuid,
+  recommendation_group_id uuid
+)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    recommendation_user_id = auth.uid()
+
+    or exists (
+      select 1
+      from public.group_members me
+      join public.group_members direct_user
+        on direct_user.group_id = me.group_id
+      where me.user_id = auth.uid()
+        and direct_user.user_id = recommendation_user_id
+    )
+
+    or exists (
+      select 1
+      from public.group_members me
+      join public.group_members bridge_user
+        on bridge_user.group_id = me.group_id
+      join public.group_members bridge_user_groups
+        on bridge_user_groups.user_id = bridge_user.user_id
+      join public.group_members second_level_user
+        on second_level_user.group_id = bridge_user_groups.group_id
+      where me.user_id = auth.uid()
+        and second_level_user.user_id = recommendation_user_id
+        and second_level_user.group_id = recommendation_group_id
+    );
+$$;
+
+create policy "Users can read socially visible recommendations"
+on public.recommendations
+for select
+to authenticated
+using (
+  public.can_read_recommendation(user_id, context_group_id)
+);

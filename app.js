@@ -89,7 +89,6 @@ let recommendedGroups = [];
 let currentUserRecommendations = [];
 let movieRecommendationCounts = {};
 let movieRecommendationDetails = {};
-let expandedRecommendationMenus = {};
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1794,14 +1793,11 @@ function renderRecommendationContext(movieId) {
     return "";
   }
 
-  const isExpanded = !!expandedRecommendationMenus[movieId];
-
   const sortedItems = [...recommendations].sort((a, b) => {
     return getRecommendationPriority(a) - getRecommendationPriority(b);
   });
 
-  const visibleItems = sortedItems.slice(0, isExpanded ? 8 : 5);
-  const hasMore = sortedItems.length > 5 && !isExpanded;
+  const visibleItems = sortedItems.slice(0, 5);
 
   const namesHtml = visibleItems
     .map((item) => {
@@ -1833,22 +1829,16 @@ function renderRecommendationContext(movieId) {
 
       <div class="recommend-context-names">
         ${namesHtml}
-
-        ${
-          hasMore
-            ? `
-              <button
-                type="button"
-                class="recommend-expand-button"
-                data-expand-recommendations="${movieId}"
-                aria-label="Показати більше рекомендацій"
-              >
-                →
-              </button>
-            `
-            : ""
-        }
       </div>
+
+      <button
+        type="button"
+        class="recommend-context-open-button"
+        data-open-mykola-context="${movieId}"
+        aria-label="Всі поради"
+      >
+        Всі поради <span class="mykola-hint-arrow">→</span>
+      </button>
     </div>
   `;
 }
@@ -2076,6 +2066,19 @@ function resetMykolaRecommendationFlow() {
   `;
 }
 
+function openMykolaContextView() {
+  mainView.classList.remove("active");
+  groupSettingsView.classList.remove("active");
+  groupFormView.classList.remove("active");
+
+  mykolaView.classList.add("active");
+
+  window.scrollTo({
+    top: mykolaView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
 function openMykolaRecommendationFlow(movieId, button) {
   const movie = movies.find((item) => item.movie_id === movieId);
 
@@ -2084,10 +2087,7 @@ function openMykolaRecommendationFlow(movieId, button) {
     return;
   }
 
-  mainView.classList.remove("active");
-  groupSettingsView.classList.remove("active");
-  groupFormView.classList.remove("active");
-  mykolaView.classList.add("active");
+  openMykolaContextView();
 
   resetMykolaRecommendationFlow();
 
@@ -2098,10 +2098,6 @@ function openMykolaRecommendationFlow(movieId, button) {
     addMykolaRecommendationActions(movieId, button);
   }, 1400);
 
-  window.scrollTo({
-    top: mykolaView.offsetTop - 20,
-    behavior: "smooth",
-  });
 }
 
 const mykolaRecommendationAcceptReplies = [
@@ -2220,6 +2216,95 @@ function showMykolaRecommendationCommentForm(movieId, button) {
         addMykolaBubble("Добре. Зафіксуємо без додаткових приміток.");
       }, 900);
     });
+}
+
+function openMykolaRecommendationContext(movieId) {
+  const movie = movies.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  if (!movie) {
+    alert("Фільм не знайдено.");
+    return;
+  }
+
+  const recommendations = movieRecommendationDetails[movieId] || [];
+
+  openMykolaContextView();
+
+  resetMykolaRecommendationFlow();
+
+  addUserBubble(`Покажи всі поради: ${movie.title}`);
+
+  runWithMykolaThinking(() => {
+    addMykolaBubble("Дістаю картку з картотеки. Тут є що почитати.");
+
+    setTimeout(() => {
+      addMykolaMovieBubble(movie);
+      addMykolaRecommendationCards(recommendations);
+
+      setTimeout(() => {
+        addMykolaBubble("Ось така картотека. Не ідеальна, але людство теж не дуже.");
+      }, 500);
+    }, 350);
+  }, 1000);
+
+}
+
+function addMykolaRecommendationCard(item) {
+  const name =
+    item.profiles?.display_name ||
+    item.profiles?.email ||
+    "Користувач";
+
+  const groupName = item.groups?.name
+    ? `${getGroupTypeNominativeLabel(item.groups.type)} ${item.groups.name}`
+    : "Група не вказана";
+
+  const comment =
+    item.comment ||
+    "Без коментаря. Лаконічно, але підозріло.";
+
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-recommendation-card">
+      <div class="mykola-recommendation-card-name">
+        ${escapeHtml(name)}
+      </div>
+
+      <div class="mykola-recommendation-card-group">
+        ${escapeHtml(groupName)}
+      </div>
+
+      <div class="mykola-recommendation-card-comment">
+        ${escapeHtml(comment)}
+      </div>
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+}
+
+function addMykolaRecommendationCards(recommendations) {
+  if (!recommendations.length) {
+    addMykolaBubble("Порожньо. Картотека мовчить.");
+    return;
+  }
+
+  const sortedItems = [...recommendations].sort((a, b) => {
+    return getRecommendationPriority(a) - getRecommendationPriority(b);
+  });
+
+  sortedItems.forEach((item) => {
+    addMykolaRecommendationCard(item);
+  });
 }
 
 async function unrecommendMovie(movieId, button) {
@@ -2420,27 +2505,15 @@ moviesGrid.addEventListener("click", (event) => {
 });
 
 moviesGrid.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-expand-recommendations]");
+  const button = event.target.closest("[data-open-mykola-context]");
 
   if (!button) return;
 
   event.stopPropagation();
 
-  const movieId = button.dataset.expandRecommendations;
+  const movieId = button.dataset.openMykolaContext;
 
-  expandedRecommendationMenus[movieId] = true;
-
-  applySearchAndFilters();
-
-  setTimeout(() => {
-    const menu = document.querySelector(
-      `[data-recommend-context-menu="${movieId}"]`
-    );
-
-    if (menu) {
-      menu.style.display = "block";
-    }
-  }, 0);
+  openMykolaRecommendationContext(movieId);
 });
 
 function attachPurchaseLinkHandlers() {
