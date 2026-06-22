@@ -1366,6 +1366,35 @@ input[readonly],
   color: #e4c675;
 }
 
+.mykola-recommendation-card {
+  min-width: 220px;
+  max-width: 80%;
+
+  padding: 12px 14px;
+  border-radius: 14px;
+
+  background: #242424;
+  border: 1px solid #333;
+
+  color: #f4f4f4;
+  line-height: 1.45;
+}
+
+.mykola-recommendation-card-name {
+  font-weight: 800;
+}
+
+.mykola-recommendation-card-group {
+  margin-top: 2px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.mykola-recommendation-card-comment {
+  margin-top: 10px;
+  color: #ddd;
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
