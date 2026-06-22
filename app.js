@@ -89,7 +89,6 @@ let recommendedGroups = [];
 let currentUserRecommendations = [];
 let movieRecommendationCounts = {};
 let movieRecommendationDetails = {};
-let expandedRecommendationMenus = {};
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1794,13 +1793,11 @@ function renderRecommendationContext(movieId) {
     return "";
   }
 
-  const isExpanded = !!expandedRecommendationMenus[movieId];
-
   const sortedItems = [...recommendations].sort((a, b) => {
     return getRecommendationPriority(a) - getRecommendationPriority(b);
   });
 
-  const visibleItems = sortedItems.slice(0, isExpanded ? 8 : 5);
+  const visibleItems = sortedItems.slice(0, 5);
 
   const namesHtml = visibleItems
     .map((item) => {
@@ -2215,6 +2212,63 @@ function showMykolaRecommendationCommentForm(movieId, button) {
     });
 }
 
+function openMykolaRecommendationContext(movieId) {
+  const movie = movies.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  if (!movie) {
+    alert("Фільм не знайдено.");
+    return;
+  }
+
+  const recommendations = movieRecommendationDetails[movieId] || [];
+
+  mainView.classList.remove("active");
+  groupSettingsView.classList.remove("active");
+  groupFormView.classList.remove("active");
+  mykolaView.classList.add("active");
+
+  resetMykolaRecommendationFlow();
+
+  addUserBubble(`Покажи всі поради: ${movie.title}`);
+
+  runWithMykolaThinking(() => {
+    addMykolaBubble("Дістаю картку з картотеки. Тут є що почитати.");
+
+    setTimeout(() => {
+      addMykolaMovieBubble(movie);
+      addMykolaRecommendationCards(recommendations);
+    }, 350);
+  }, 1000);
+
+  window.scrollTo({
+    top: mykolaView.offsetTop - 20,
+    behavior: "smooth",
+  });
+}
+
+function addMykolaRecommendationCards(recommendations) {
+  if (!recommendations.length) {
+    addMykolaBubble("Порожньо. Картотека мовчить.");
+    return;
+  }
+
+  recommendations.forEach((item) => {
+    const name =
+      item.profiles?.display_name ||
+      item.profiles?.email ||
+      "Користувач";
+
+    const comment = item.comment || "Без коментаря. Лаконічно, але підозріло.";
+
+    addMykolaBubble(`
+      <strong>${escapeHtml(name)}</strong><br>
+      ${escapeHtml(comment)}
+    `);
+  });
+}
+
 async function unrecommendMovie(movieId, button) {
   if (!currentUser) {
     return;
@@ -2410,6 +2464,18 @@ moviesGrid.addEventListener("click", (event) => {
     menu.style.display =
       menu.style.display === "block" ? "none" : "block";
   }
+});
+
+moviesGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-open-mykola-context]");
+
+  if (!button) return;
+
+  event.stopPropagation();
+
+  const movieId = button.dataset.openMykolaContext;
+
+  openMykolaRecommendationContext(movieId);
 });
 
 function attachPurchaseLinkHandlers() {
