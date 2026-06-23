@@ -89,6 +89,8 @@ let recommendedGroups = [];
 let currentUserRecommendations = [];
 let movieRecommendationCounts = {};
 let movieRecommendationDetails = {};
+let activeRecommendationStack = [];
+let activeRecommendationStackOffset = 0;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -2290,6 +2292,14 @@ function openMykolaRecommendationContext(movieId) {
   }, 1000);
 }
 
+function rotateRecommendationStack(items, offset) {
+  if (!items.length) return [];
+
+  return items.map((_, index) => {
+    return items[(index + offset) % items.length];
+  });
+}
+
 function createMykolaRecommendationCard(item, index, total) {
   const name =
     item.profiles?.display_name ||
@@ -2340,7 +2350,7 @@ function addMykolaRecommendationCards(recommendations) {
     return;
   }
 
-  const sortedItems = [...recommendations].sort((a, b) => {
+  activeRecommendationStack = [...recommendations].sort((a, b) => {
     const priorityDiff =
       getRecommendationPriority(a) - getRecommendationPriority(b);
 
@@ -2352,18 +2362,35 @@ function addMykolaRecommendationCards(recommendations) {
     return bDate - aDate;
   });
 
+  activeRecommendationStackOffset = 0;
+
+  renderMykolaRecommendationStack();
+}
+
+function renderMykolaRecommendationStack() {
+  const oldRow = document.querySelector(".mykola-card-stack-row");
+
+  if (oldRow) {
+    oldRow.remove();
+  }
+
+  const visibleItems = rotateRecommendationStack(
+    activeRecommendationStack,
+    activeRecommendationStackOffset
+  );
+
   const row = document.createElement("div");
   row.className = "mykola-message-row mykola-card-stack-row";
 
   const stack = document.createElement("div");
   stack.className = "mykola-card-stack";
 
-  sortedItems.forEach((item, index) => {
+  visibleItems.forEach((item, index) => {
     stack.appendChild(
       createMykolaRecommendationCard(
         item,
         index,
-        sortedItems.length
+        activeRecommendationStack.length
       )
     );
   });
@@ -2373,7 +2400,25 @@ function addMykolaRecommendationCards(recommendations) {
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
 
+  attachMykolaStackHandlers();
+
   scrollMykolaChatToBottom();
+}
+
+function attachMykolaStackHandlers() {
+  const topCard = document.querySelector(".mykola-stack-card:nth-child(1)");
+
+  if (!topCard || activeRecommendationStack.length <= 1) {
+    return;
+  }
+
+  topCard.addEventListener("click", () => {
+    activeRecommendationStackOffset =
+      (activeRecommendationStackOffset + 1) %
+      activeRecommendationStack.length;
+
+    renderMykolaRecommendationStack();
+  });
 }
 
 async function unrecommendMovie(movieId, button) {
