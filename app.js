@@ -2424,11 +2424,15 @@ function attachMykolaStackHandlers() {
   let touchEndX = 0;
 
   function showNextCard() {
-    activeRecommendationStackOffset =
-      (activeRecommendationStackOffset + 1) %
-      activeRecommendationStack.length;
+    topCard.classList.add("mykola-stack-card-exit");
 
-    renderMykolaRecommendationStack();
+    setTimeout(() => {
+      activeRecommendationStackOffset =
+        (activeRecommendationStackOffset + 1) %
+        activeRecommendationStack.length;
+
+      renderMykolaRecommendationStack();
+    }, 180);
   }
 
   topCard.addEventListener("click", showNextCard);
