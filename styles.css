@@ -1446,6 +1446,16 @@ input[readonly],
   pointer-events: none;
 }
 
+.mykola-stack-card.is-promoting {
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 260ms ease;
+}
+
+.mykola-stack-card.is-soft-hidden {
+  opacity: 0;
+}
+
 .mykola-stack-card:not(:first-child) {
   margin-top: -82px;
 }
