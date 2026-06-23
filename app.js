@@ -2309,13 +2309,23 @@ function addMykolaRecommendationCard(item) {
     <div class="mykola-avatar">М</div>
 
     <div class="mykola-recommendation-card">
-      <div class="mykola-recommendation-card-name">
-        ${escapeHtml(name)}
+      <div class="mykola-recommendation-card-header">
+        <div>
+          <div class="mykola-recommendation-card-name">
+            ${escapeHtml(name)}
+          </div>
+
+          <div class="mykola-recommendation-card-group">
+            ${escapeHtml(groupName)}
+          </div>
+        </div>
+
+        <div class="mykola-recommendation-card-label">
+          Порада
+        </div>
       </div>
 
-      <div class="mykola-recommendation-card-group">
-        ${escapeHtml(groupName)}
-      </div>
+      <div class="mykola-recommendation-card-divider"></div>
 
       <div class="mykola-recommendation-card-comment">
         ${escapeHtml(comment)}
