@@ -279,3 +279,24 @@ as $$
         and second_level_user.user_id = recommendation_user_id
     );
 $$;
+
+-- Add read policy for group metadata on socially visible recommendations
+
+drop policy if exists "groups_select_visible_recommendation_contexts"
+on public.groups;
+
+create policy "groups_select_visible_recommendation_contexts"
+on public.groups
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.recommendations r
+    where r.context_group_id = groups.id
+      and public.can_read_recommendation(
+        r.user_id,
+        r.context_group_id
+      )
+  )
+);
