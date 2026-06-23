@@ -2288,7 +2288,7 @@ function openMykolaRecommendationContext(movieId) {
   }, 1000);
 }
 
-function addMykolaRecommendationCard(item) {
+function addMykolaRecommendationCard(item, index = 0) {
   const name =
     item.profiles?.display_name ||
     item.profiles?.email ||
@@ -2303,7 +2303,7 @@ function addMykolaRecommendationCard(item) {
     "Без коментаря. Лаконічно, але підозріло.";
 
   const row = document.createElement("div");
-  row.className = "mykola-message-row";
+  row.className = `mykola-message-row mykola-card-row mykola-card-row-${index % 3}`;
 
   row.innerHTML = `
     <div class="mykola-avatar">М</div>
@@ -2345,8 +2345,8 @@ function addMykolaRecommendationCards(recommendations) {
     return getRecommendationPriority(a) - getRecommendationPriority(b);
   });
 
-  sortedItems.forEach((item) => {
-    addMykolaRecommendationCard(item);
+  sortedItems.forEach((item, index) => {
+    addMykolaRecommendationCard(item, index);
   });
 }
 
