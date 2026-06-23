@@ -2305,6 +2305,8 @@ function addMykolaRecommendationCard(item, index = 0) {
   const row = document.createElement("div");
   row.className = `mykola-card-stack-row mykola-card-stack-row-${index % 3}`;
 
+  row.style.zIndex = String(100 - index);
+
   row.innerHTML = `
     <div class="mykola-recommendation-card">
       <div class="mykola-recommendation-card-header">
