@@ -2303,11 +2303,9 @@ function addMykolaRecommendationCard(item, index = 0) {
     "Без коментаря. Лаконічно, але підозріло.";
 
   const row = document.createElement("div");
-  row.className = `mykola-message-row mykola-card-row mykola-card-row-${index % 3}`;
+  row.className = `mykola-card-stack-row mykola-card-stack-row-${index % 3}`;
 
   row.innerHTML = `
-    <div class="mykola-avatar">М</div>
-
     <div class="mykola-recommendation-card">
       <div class="mykola-recommendation-card-header">
         <div>
