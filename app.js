@@ -2491,14 +2491,18 @@ function attachMykolaStackHandlers(stack) {
     }
 
     setTimeout(() => {
+      topCard.style.visibility = "hidden";
+
       activeRecommendationStackOffset =
         direction > 0
           ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
           : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
             activeRecommendationStack.length;
 
-      renderMykolaRecommendationStack();
-    }, 270);
+      requestAnimationFrame(() => {
+        renderMykolaRecommendationStack();
+      });
+    }, 320);
   }
 
   topCard.addEventListener("pointerdown", (event) => {
