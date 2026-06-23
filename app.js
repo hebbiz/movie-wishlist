@@ -2417,6 +2417,9 @@ function attachMykolaStackHandlers(stack) {
   if (!stack || activeRecommendationStack.length <= 1) return;
 
   const topCard = stack.querySelector(".mykola-stack-card:first-child");
+  const secondCard = stack.querySelector(".mykola-stack-card:nth-child(2)");
+  const thirdCard = stack.querySelector(".mykola-stack-card:nth-child(3)");
+  
   if (!topCard) return;
 
   topCard.classList.add("is-clickable");
@@ -2436,37 +2439,70 @@ function attachMykolaStackHandlers(stack) {
     topCard.style.transform = "translateX(0) translateY(0) rotate(0deg) scale(1)";
     topCard.style.opacity = "1";
 
+    if (secondCard) {
+      secondCard.style.transform = "";
+      secondCard.style.opacity = "";
+    }
+
+    if (thirdCard) {
+      thirdCard.style.transform = "";
+      thirdCard.style.opacity = "";
+    }
+
     setTimeout(() => {
       topCard.classList.remove("is-settling");
       topCard.style.transform = "";
-    }, 280);
+    }, 420);
   }
 
   function completeSwipe(direction) {
     topCard.classList.remove("is-dragging");
     topCard.classList.add("is-settling");
 
-    const exitX = direction > 0 ? 520 : -520;
-    const rotate = direction > 0 ? 12 : -12;
+    const exitX = direction > 0 ? 620 : -620;
+    const rotate = direction > 0 ? 10 : -10;
 
     topCard.style.transform = `
       translateX(${exitX}px)
-      translateY(-24px)
+      translateY(-26px)
       rotate(${rotate}deg)
       scale(0.96)
     `;
-
     topCard.style.opacity = "0";
 
+    if (secondCard) {
+      secondCard.classList.add("is-promoting");
+      secondCard.style.transform = `
+        translateX(0)
+        translateY(0)
+        scale(1)
+      `;
+      secondCard.style.opacity = "1";
+    }
+
+    if (thirdCard) {
+      thirdCard.classList.add("is-promoting");
+      thirdCard.style.transform = `
+        translateX(14px)
+        translateY(8px)
+        scale(0.985)
+      `;
+      thirdCard.style.opacity = "0.92";
+    }
+
     setTimeout(() => {
+      topCard.style.visibility = "hidden";
+
       activeRecommendationStackOffset =
         direction > 0
           ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
           : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
             activeRecommendationStack.length;
 
-      renderMykolaRecommendationStack();
-    }, 300);
+      requestAnimationFrame(() => {
+        renderMykolaRecommendationStack();
+      });
+    }, 420);
   }
 
   topCard.addEventListener("pointerdown", (event) => {
@@ -2501,6 +2537,26 @@ function attachMykolaStackHandlers(stack) {
       rotate(${rotate}deg)
       scale(1.01)
     `;
+    
+    const progress = Math.min(Math.abs(currentX) / 160, 1);
+
+    if (secondCard) {
+      secondCard.style.transform = `
+        translateX(${14 - progress * 14}px)
+        translateY(${8 - progress * 8}px)
+        scale(${0.985 + progress * 0.015})
+      `;
+      secondCard.style.opacity = `${0.92 + progress * 0.08}`;
+    }
+
+    if (thirdCard) {
+      thirdCard.style.transform = `
+        translateX(${28 - progress * 14}px)
+        translateY(${16 - progress * 8}px)
+        scale(${0.97 + progress * 0.015})
+      `;
+      thirdCard.style.opacity = `${0.78 + progress * 0.14}`;
+    }
   });
 
   topCard.addEventListener("pointerup", () => {
