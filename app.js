@@ -2234,8 +2234,8 @@ function getMykolaArchiveIntro(count) {
   if (count <= 3) {
     return getRandomItem([
       `Переглядаю картотеку. Знайдено ${count} ${formatMovieCountWord(count)}.`,
-      `Відкриваю шухляду. Тут ${count} ${formatMovieCountWord(count)} щодо цього фільму.`
-      `У картотеці є ${count} ${formatMovieCountWord(count)}. Уже можна робити вигляд, що це дослідження.`
+      `Відкриваю шухляду. Тут ${count} ${formatMovieCountWord(count)} щодо цього фільму.`,
+      `У картотеці є ${count} ${formatMovieCountWord(count)}. Уже можна робити вигляд, що це дослідження.`,
     ]);
   }
 
