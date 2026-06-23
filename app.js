@@ -2408,17 +2408,16 @@ function renderMykolaRecommendationStack() {
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
 
-  attachMykolaStackHandlers();
+  attachMykolaStackHandlers(stack);
 
   scrollMykolaChatToBottom();
 }
 
-function attachMykolaStackHandlers() {
-  const topCard = document.querySelector(".mykola-stack-card:nth-child(1)");
+function attachMykolaStackHandlers(stack) {
+  if (!stack || activeRecommendationStack.length <= 1) return;
 
-  if (!topCard || activeRecommendationStack.length <= 1) {
-    return;
-  }
+  const topCard = stack.querySelector(".mykola-stack-card:first-child");
+  if (!topCard) return;
 
   topCard.classList.add("is-clickable");
 
@@ -2430,25 +2429,12 @@ function attachMykolaStackHandlers() {
 
   const threshold = 80;
 
-  function moveCard(deltaX, deltaY) {
-    const rotate = deltaX * 0.035;
-
-    topCard.style.transform = `
-      translateX(${deltaX}px)
-      translateY(${deltaY}px)
-      rotate(${rotate}deg)
-      scale(1.01)
-    `;
-  }
-
   function resetCard() {
     topCard.classList.remove("is-dragging");
     topCard.classList.add("is-settling");
 
-    requestAnimationFrame(() => {
-      topCard.style.transform =
-        "translateX(0) translateY(0) rotate(0deg) scale(1)";
-    });
+    topCard.style.transform = "translateX(0) translateY(0) rotate(0deg) scale(1)";
+    topCard.style.opacity = "1";
 
     setTimeout(() => {
       topCard.classList.remove("is-settling");
@@ -2463,16 +2449,14 @@ function attachMykolaStackHandlers() {
     const exitX = direction > 0 ? 520 : -520;
     const rotate = direction > 0 ? 12 : -12;
 
-    requestAnimationFrame(() => {
-      topCard.style.transform = `
-        translateX(${exitX}px)
-        translateY(-24px)
-        rotate(${rotate}deg)
-        scale(0.96)
-      `;
+    topCard.style.transform = `
+      translateX(${exitX}px)
+      translateY(-24px)
+      rotate(${rotate}deg)
+      scale(0.96)
+    `;
 
-      topCard.style.opacity = "0";
-    });
+    topCard.style.opacity = "0";
 
     setTimeout(() => {
       activeRecommendationStackOffset =
@@ -2486,24 +2470,37 @@ function attachMykolaStackHandlers() {
   }
 
   topCard.addEventListener("pointerdown", (event) => {
-    isDragging = true;
+    event.preventDefault();
 
+    isDragging = true;
     startX = event.clientX;
     startY = event.clientY;
     currentX = 0;
     currentY = 0;
 
     topCard.classList.add("is-dragging");
-    topCard.setPointerCapture(event.pointerId);
+
+    try {
+      topCard.setPointerCapture(event.pointerId);
+    } catch (error) {}
   });
 
   topCard.addEventListener("pointermove", (event) => {
     if (!isDragging) return;
 
+    event.preventDefault();
+
     currentX = event.clientX - startX;
     currentY = event.clientY - startY;
 
-    moveCard(currentX, currentY);
+    const rotate = currentX * 0.035;
+
+    topCard.style.transform = `
+      translateX(${currentX}px)
+      translateY(${currentY}px)
+      rotate(${rotate}deg)
+      scale(1.01)
+    `;
   });
 
   topCard.addEventListener("pointerup", () => {
