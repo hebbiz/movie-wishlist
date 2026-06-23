@@ -1408,6 +1408,32 @@ input[readonly],
   color: #dddddd;
 }
 
+.mykola-card-row {
+  transition: transform 180ms ease;
+}
+
+.mykola-card-row-0 {
+  transform: translateX(0);
+}
+
+.mykola-card-row-1 {
+  transform: translateX(16px);
+}
+
+.mykola-card-row-2 {
+  transform: translateX(32px);
+}
+
+@media (max-width: 600px) {
+  .mykola-card-row-1 {
+    transform: translateX(8px);
+  }
+
+  .mykola-card-row-2 {
+    transform: translateX(16px);
+  }
+}
+
 .mykola-comment-form-bubble {
   width: min(520px, 80%);
 }
