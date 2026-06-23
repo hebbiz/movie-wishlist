@@ -2218,6 +2218,34 @@ function showMykolaRecommendationCommentForm(movieId, button) {
     });
 }
 
+function getMykolaArchiveIntro(count) {
+  if (count === 0) {
+    return "Переглядаю картотеку. Порожньо. Навіть пилюка розчарована.";
+  }
+
+  if (count === 1) {
+    return getRandomItem([
+      "У картотеці лише одна згадка про цей фільм.",
+      "Знайшов один запис. Небагато, але вже не тиша.",
+      "Є один запис у картотеці. Скромно, але офіційно.",
+    ]);
+  }
+
+  if (count <= 3) {
+    return getRandomItem([
+      `Переглядаю картотеку. Знайдено ${count} ${formatMovieCountWord(count)}.`,
+      `Відкриваю шухляду. Тут ${count} ${formatMovieCountWord(count)} щодо цього фільму.`
+      `У картотеці є ${count} ${formatMovieCountWord(count)}. Уже можна робити вигляд, що це дослідження.`
+    ]);
+  }
+
+  return getRandomItem([
+    `Картотека не мовчить. Знайдено ${count} ${formatMovieCountWord(count)}.`,
+    `Відкриваю шухляду. Тут уже ${count} записів щодо цього фільму.`,
+    `Знайдено ${count} записів. Схоже, фільм залишив слід у колективній памʼяті.`,
+  ]);
+}
+
 function openMykolaRecommendationContext(movieId) {
   const movie = movies.find((item) => {
     return item.movie_id === movieId;
@@ -2237,18 +2265,16 @@ function openMykolaRecommendationContext(movieId) {
   addUserBubble(`Покажи всі поради: ${movie.title}`);
 
   runWithMykolaThinking(() => {
-    addMykolaBubble("Дістаю картку з картотеки. Тут є що почитати.");
+    addMykolaBubble(getMykolaArchiveIntro(recommendations.length));
 
     setTimeout(() => {
       addMykolaMovieBubble(movie);
-      addMykolaRecommendationCards(recommendations);
 
       setTimeout(() => {
-        addMykolaBubble("Ось така картотека. Не ідеальна, але людство теж не дуже.");
-      }, 500);
-    }, 350);
+        addMykolaRecommendationCards(recommendations);
+      }, 450);
+    }, 450);
   }, 1000);
-
 }
 
 function addMykolaRecommendationCard(item) {
