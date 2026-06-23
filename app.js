@@ -2060,6 +2060,17 @@ button.classList.toggle("has-comment", !!comment);
   applySearchAndFilters();
 }
 
+function formatAdviceCountWord(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return "порад";
+  if (lastDigit === 1) return "порада";
+  if (lastDigit >= 2 && lastDigit <= 4) return "поради";
+
+  return "порад";
+}
+
 function resetMykolaRecommendationFlow() {
   mykolaChat.innerHTML = `
     <div class="mykola-actions" id="mykolaActions"></div>
@@ -2091,7 +2102,7 @@ function openMykolaRecommendationFlow(movieId, button) {
 
   resetMykolaRecommendationFlow();
 
-  addUserBubble(`Рекомендую: ${movie.title}`);
+  addUserBubble(`Раджу: ${movie.title}`);
 
   runWithMykolaThinking(() => {
     addMykolaBubble(getRandomItem(mykolaRecommendationAcceptReplies));
@@ -2101,8 +2112,8 @@ function openMykolaRecommendationFlow(movieId, button) {
 }
 
 const mykolaRecommendationAcceptReplies = [
-  "Зрозуміло. Зафіксуємо вашу рекомендацію в картотеці. Додасте пару слів для інших?",
-  "Прийнято. Рекомендацію внесемо до картотеки. Після погодження кафедрою, звичайно. Залишите короткий коментар для інших?",
+  "Зрозуміло. Зафіксуємо вашу пораду в картотеці. Додасте пару слів для інших?",
+  "Прийнято. Пораду внесемо до картотеки після погодження кафедрою. Залишите короткий коментар для інших?",
   "Добре. Картотека поповнюється. Додасте кілька слів, щоб інші розуміли, чому фільм варто переглянути?",
   "Зафіксовано майже офіційно. Бракує лише вашого короткого пояснення. Додасте пару слів?",
 ];
@@ -2218,6 +2229,34 @@ function showMykolaRecommendationCommentForm(movieId, button) {
     });
 }
 
+function getMykolaArchiveIntro(count) {
+  if (count === 0) {
+    return "Переглядаю картотеку. Порожньо. Навіть пилюка розчарована.";
+  }
+
+  if (count === 1) {
+    return getRandomItem([
+      "У картотеці лише одна згадка про цей фільм.",
+      "Знайшов один запис. Небагато, але вже не тиша.",
+      "Є один запис у картотеці. Скромно, але офіційно.",
+    ]);
+  }
+
+  if (count <= 3) {
+    return getRandomItem([
+      `Переглядаю картотеку. Знайдено ${count} ${formatAdviceCountWord(count)}.`,
+      `Відкриваю шухляду. Тут ${count} ${formatAdviceCountWord(count)} щодо цього фільму.`,
+      `У картотеці є ${count} ${formatAdviceCountWord(count)}. Уже можна робити вигляд, що це дослідження.`,
+    ]);
+  }
+
+  return getRandomItem([
+    `Картотека не мовчить. Знайдено ${count} ${formatAdviceCountWord(count)}.`,
+    `Відкриваю шухляду. Тут уже ${count} ${formatAdviceCountWord(count)} щодо цього фільму.`,
+    `Знайдено ${count} ${formatAdviceCountWord(count)}. Схоже, фільм залишив слід у колективній памʼяті.`,
+  ]);
+}
+
 function openMykolaRecommendationContext(movieId) {
   const movie = movies.find((item) => {
     return item.movie_id === movieId;
@@ -2237,18 +2276,16 @@ function openMykolaRecommendationContext(movieId) {
   addUserBubble(`Покажи всі поради: ${movie.title}`);
 
   runWithMykolaThinking(() => {
-    addMykolaBubble("Дістаю картку з картотеки. Тут є що почитати.");
+    addMykolaBubble(getMykolaArchiveIntro(recommendations.length));
 
     setTimeout(() => {
       addMykolaMovieBubble(movie);
-      addMykolaRecommendationCards(recommendations);
 
       setTimeout(() => {
-        addMykolaBubble("Ось така картотека. Не ідеальна, але людство теж не дуже.");
-      }, 500);
-    }, 350);
+        addMykolaRecommendationCards(recommendations);
+      }, 450);
+    }, 450);
   }, 1000);
-
 }
 
 function addMykolaRecommendationCard(item) {
@@ -2272,13 +2309,19 @@ function addMykolaRecommendationCard(item) {
     <div class="mykola-avatar">М</div>
 
     <div class="mykola-recommendation-card">
-      <div class="mykola-recommendation-card-name">
-        ${escapeHtml(name)}
+      <div class="mykola-recommendation-card-header">
+        <div>
+          <div class="mykola-recommendation-card-name">
+            ${escapeHtml(name)}
+          </div>
+
+          <div class="mykola-recommendation-card-group">
+            ${escapeHtml(groupName)}
+          </div>
+        </div>
       </div>
 
-      <div class="mykola-recommendation-card-group">
-        ${escapeHtml(groupName)}
-      </div>
+      <div class="mykola-recommendation-card-divider"></div>
 
       <div class="mykola-recommendation-card-comment">
         ${escapeHtml(comment)}
