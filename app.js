@@ -2064,17 +2064,9 @@ function formatAdviceCountWord(count) {
   const lastDigit = count % 10;
   const lastTwoDigits = count % 100;
 
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-    return "порад";
-  }
-
-  if (lastDigit === 1) {
-    return "порада";
-  }
-
-  if (lastDigit >= 2 && lastDigit <= 4) {
-    return "поради";
-  }
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return "порад";
+  if (lastDigit === 1) return "порада";
+  if (lastDigit >= 2 && lastDigit <= 4) return "поради";
 
   return "порад";
 }
@@ -2110,7 +2102,7 @@ function openMykolaRecommendationFlow(movieId, button) {
 
   resetMykolaRecommendationFlow();
 
-  addUserBubble(`Рекомендую: ${movie.title}`);
+  addUserBubble(`Раджу: ${movie.title}`);
 
   runWithMykolaThinking(() => {
     addMykolaBubble(getRandomItem(mykolaRecommendationAcceptReplies));
@@ -2120,8 +2112,8 @@ function openMykolaRecommendationFlow(movieId, button) {
 }
 
 const mykolaRecommendationAcceptReplies = [
-  "Зрозуміло. Зафіксуємо вашу рекомендацію в картотеці. Додасте пару слів для інших?",
-  "Прийнято. Рекомендацію внесемо до картотеки. Після погодження кафедрою, звичайно. Залишите короткий коментар для інших?",
+  "Зрозуміло. Зафіксуємо вашу пораду в картотеці. Додасте пару слів для інших?",
+  "Прийнято. Пораду внесемо до картотеки після погодження кафедрою. Залишите короткий коментар для інших?",
   "Добре. Картотека поповнюється. Додасте кілька слів, щоб інші розуміли, чому фільм варто переглянути?",
   "Зафіксовано майже офіційно. Бракує лише вашого короткого пояснення. Додасте пару слів?",
 ];
@@ -2645,7 +2637,7 @@ function formatStatusTitle(status) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-function formatAdviceCountWord(count) {
+function formatMovieCountWord(count) {
   const lastDigit = count % 10;
   const lastTwoDigits = count % 100;
 
@@ -3307,7 +3299,7 @@ function applySearchAndFilters() {
       const count = globalMatches.length;
 
       searchHint.textContent =
-        `Знайдено ${count} ${formatAdviceCountWord(count)} у ваших списках. Можна також пошукати на IMDb.`;
+        `Знайдено ${count} ${formatMovieCountWord(count)} у ваших списках. Можна також пошукати на IMDb.`;
       searchHint.className = "search-hint positive";
     }
   }
@@ -3324,7 +3316,7 @@ function applySearchAndFilters() {
       const count = globalMatches.length;
 
       searchHint.textContent =
-        `Знайдено ${count} ${formatAdviceCountWord(count)} в інших списках.`;
+        `Знайдено ${count} ${formatMovieCountWord(count)} в інших списках.`;
     }
 
     searchHint.className = "search-hint warning";
