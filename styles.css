@@ -1432,6 +1432,16 @@ input[readonly],
   width: 100%;
   transition: transform 280ms ease, opacity 280ms ease;
   cursor: default;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.mykola-stack-card.is-dragging {
+  transition: none;
+}
+
+.mykola-stack-card.is-settling {
+  pointer-events: none;
 }
 
 .mykola-stack-card:not(:first-child) {
