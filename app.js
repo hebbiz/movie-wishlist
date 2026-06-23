@@ -2420,41 +2420,122 @@ function attachMykolaStackHandlers() {
     return;
   }
 
-  let touchStartX = 0;
-  let touchEndX = 0;
-  let isAnimating = false;
-
-  function showNextCard() {
-    if (isAnimating) return;
-
-    isAnimating = true;
-    topCard.classList.add("is-leaving");
-
-    setTimeout(() => {
-      activeRecommendationStackOffset =
-        (activeRecommendationStackOffset + 1) %
-        activeRecommendationStack.length;
-
-      renderMykolaRecommendationStack();
-    }, 420);
-  }
-
   topCard.classList.add("is-clickable");
 
-  topCard.addEventListener("click", showNextCard);
+  let startX = 0;
+  let startY = 0;
+  let currentX = 0;
+  let currentY = 0;
+  let isDragging = false;
+  let hasMoved = false;
 
-  topCard.addEventListener("touchstart", (event) => {
-    touchStartX = event.changedTouches[0].screenX;
+  const threshold = 80;
+
+  function moveCard(deltaX, deltaY) {
+    const rotate = deltaX * 0.035;
+
+    topCard.style.transform = `
+      translateX(${deltaX}px)
+      translateY(${deltaY}px)
+      rotate(${rotate}deg)
+      scale(1.01)
+    `;
+  }
+
+  function resetCard() {
+    topCard.classList.remove("is-dragging");
+    topCard.classList.add("is-settling");
+
+    topCard.style.transform =
+      "translateX(0) translateY(0) rotate(0deg) scale(1)";
+
+    setTimeout(() => {
+      topCard.classList.remove("is-settling");
+      topCard.style.transform = "";
+    }, 280);
+  }
+
+  function completeSwipe(direction) {
+    topCard.classList.remove("is-dragging");
+    topCard.classList.add("is-settling");
+
+    const exitX = direction > 0 ? 520 : -520;
+    const rotate = direction > 0 ? 12 : -12;
+
+    topCard.style.transform = `
+      translateX(${exitX}px)
+      translateY(-24px)
+      rotate(${rotate}deg)
+      scale(0.96)
+    `;
+
+    topCard.style.opacity = "0";
+
+    setTimeout(() => {
+      if (direction > 0) {
+        activeRecommendationStackOffset =
+          (activeRecommendationStackOffset + 1) %
+          activeRecommendationStack.length;
+      } else {
+        activeRecommendationStackOffset =
+          (
+            activeRecommendationStackOffset -
+            1 +
+            activeRecommendationStack.length
+          ) %
+          activeRecommendationStack.length;
+      }
+
+      renderMykolaRecommendationStack();
+    }, 280);
+  }
+
+  topCard.addEventListener("pointerdown", (event) => {
+    isDragging = true;
+    hasMoved = false;
+
+    startX = event.clientX;
+    startY = event.clientY;
+
+    currentX = 0;
+    currentY = 0;
+
+    topCard.classList.add("is-dragging");
+    topCard.setPointerCapture(event.pointerId);
   });
 
-  topCard.addEventListener("touchend", (event) => {
-    touchEndX = event.changedTouches[0].screenX;
+  topCard.addEventListener("pointermove", (event) => {
+    if (!isDragging) return;
 
-    const swipeDistance = touchStartX - touchEndX;
+    currentX = event.clientX - startX;
+    currentY = event.clientY - startY;
 
-    if (Math.abs(swipeDistance) > 40) {
-      showNextCard();
+    if (Math.abs(currentX) > 4 || Math.abs(currentY) > 4) {
+      hasMoved = true;
     }
+
+    moveCard(currentX, currentY);
+  });
+
+  topCard.addEventListener("pointerup", () => {
+    if (!isDragging) return;
+
+    isDragging = false;
+
+    if (Math.abs(currentX) >= threshold) {
+      completeSwipe(currentX > 0 ? 1 : -1);
+    } else if (!hasMoved) {
+      completeSwipe(1);
+    } else {
+      resetCard();
+    }
+  });
+
+  topCard.addEventListener("pointercancel", () => {
+    if (!isDragging) return;
+
+    isDragging = false;
+    resetCard();
   });
 }
 
