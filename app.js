@@ -2427,7 +2427,6 @@ function attachMykolaStackHandlers() {
   let currentX = 0;
   let currentY = 0;
   let isDragging = false;
-  let hasMoved = false;
 
   const threshold = 80;
 
@@ -2446,8 +2445,10 @@ function attachMykolaStackHandlers() {
     topCard.classList.remove("is-dragging");
     topCard.classList.add("is-settling");
 
-    topCard.style.transform =
-      "translateX(0) translateY(0) rotate(0deg) scale(1)";
+    requestAnimationFrame(() => {
+      topCard.style.transform =
+        "translateX(0) translateY(0) rotate(0deg) scale(1)";
+    });
 
     setTimeout(() => {
       topCard.classList.remove("is-settling");
@@ -2462,41 +2463,33 @@ function attachMykolaStackHandlers() {
     const exitX = direction > 0 ? 520 : -520;
     const rotate = direction > 0 ? 12 : -12;
 
-    topCard.style.transform = `
-      translateX(${exitX}px)
-      translateY(-24px)
-      rotate(${rotate}deg)
-      scale(0.96)
-    `;
+    requestAnimationFrame(() => {
+      topCard.style.transform = `
+        translateX(${exitX}px)
+        translateY(-24px)
+        rotate(${rotate}deg)
+        scale(0.96)
+      `;
 
-    topCard.style.opacity = "0";
+      topCard.style.opacity = "0";
+    });
 
     setTimeout(() => {
-      if (direction > 0) {
-        activeRecommendationStackOffset =
-          (activeRecommendationStackOffset + 1) %
-          activeRecommendationStack.length;
-      } else {
-        activeRecommendationStackOffset =
-          (
-            activeRecommendationStackOffset -
-            1 +
-            activeRecommendationStack.length
-          ) %
-          activeRecommendationStack.length;
-      }
+      activeRecommendationStackOffset =
+        direction > 0
+          ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
+          : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
+            activeRecommendationStack.length;
 
       renderMykolaRecommendationStack();
-    }, 280);
+    }, 300);
   }
 
   topCard.addEventListener("pointerdown", (event) => {
     isDragging = true;
-    hasMoved = false;
 
     startX = event.clientX;
     startY = event.clientY;
-
     currentX = 0;
     currentY = 0;
 
@@ -2510,10 +2503,6 @@ function attachMykolaStackHandlers() {
     currentX = event.clientX - startX;
     currentY = event.clientY - startY;
 
-    if (Math.abs(currentX) > 4 || Math.abs(currentY) > 4) {
-      hasMoved = true;
-    }
-
     moveCard(currentX, currentY);
   });
 
@@ -2524,8 +2513,6 @@ function attachMykolaStackHandlers() {
 
     if (Math.abs(currentX) >= threshold) {
       completeSwipe(currentX > 0 ? 1 : -1);
-    } else if (!hasMoved) {
-      completeSwipe(1);
     } else {
       resetCard();
     }
