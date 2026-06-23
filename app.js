@@ -2417,6 +2417,9 @@ function attachMykolaStackHandlers(stack) {
   if (!stack || activeRecommendationStack.length <= 1) return;
 
   const topCard = stack.querySelector(".mykola-stack-card:first-child");
+  const secondCard = stack.querySelector(".mykola-stack-card:nth-child(2)");
+  const thirdCard = stack.querySelector(".mykola-stack-card:nth-child(3)");
+  
   if (!topCard) return;
 
   topCard.classList.add("is-clickable");
@@ -2435,6 +2438,16 @@ function attachMykolaStackHandlers(stack) {
 
     topCard.style.transform = "translateX(0) translateY(0) rotate(0deg) scale(1)";
     topCard.style.opacity = "1";
+
+    if (secondCard) {
+      secondCard.style.transform = "";
+      secondCard.style.opacity = "";
+    }
+
+    if (thirdCard) {
+      thirdCard.style.transform = "";
+      thirdCard.style.opacity = "";
+    }
 
     setTimeout(() => {
       topCard.classList.remove("is-settling");
@@ -2501,6 +2514,26 @@ function attachMykolaStackHandlers(stack) {
       rotate(${rotate}deg)
       scale(1.01)
     `;
+    
+    const progress = Math.min(Math.abs(currentX) / 160, 1);
+
+    if (secondCard) {
+      secondCard.style.transform = `
+        translateX(${14 - progress * 14}px)
+        translateY(${8 - progress * 8}px)
+        scale(${0.985 + progress * 0.015})
+      `;
+      secondCard.style.opacity = `${0.92 + progress * 0.08}`;
+    }
+
+    if (thirdCard) {
+      thirdCard.style.transform = `
+        translateX(${28 - progress * 14}px)
+        translateY(${16 - progress * 8}px)
+        scale(${0.97 + progress * 0.015})
+      `;
+      thirdCard.style.opacity = `${0.78 + progress * 0.14}`;
+    }
   });
 
   topCard.addEventListener("pointerup", () => {
