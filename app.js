@@ -1592,6 +1592,7 @@ function applyMykolaDailyRecommendation() {
     movie_id: movie.movie_id,
     user_id: "mykola",
     context_group_id: currentGroupId,
+    created_at: new Date().toISOString(),
     profiles: {
       display_name: "Микола",
       email: "mykola@movie-wishlist.local",
@@ -1737,6 +1738,7 @@ async function loadMovieRecommendationDetails() {
       user_id,
       context_group_id,
       comment,
+      created_at,
       profiles!recommendations_user_id_fkey (
         display_name,
         email
@@ -2288,7 +2290,7 @@ function openMykolaRecommendationContext(movieId) {
   }, 1000);
 }
 
-function addMykolaRecommendationCard(item, index = 0) {
+function createMykolaRecommendationCard(item, index, total) {
   const name =
     item.profiles?.display_name ||
     item.profiles?.email ||
@@ -2302,37 +2304,34 @@ function addMykolaRecommendationCard(item, index = 0) {
     item.comment ||
     "Без коментаря. Лаконічно, але підозріло.";
 
-  const row = document.createElement("div");
-  row.className = `mykola-card-stack-row mykola-card-stack-row-${index % 3}`;
+  const card = document.createElement("div");
+  card.className = `mykola-recommendation-card mykola-stack-card mykola-stack-card-${index}`;
 
-  row.style.zIndex = String(100 - index);
+  card.innerHTML = `
+    <div class="mykola-recommendation-card-header">
+      <div>
+        <div class="mykola-recommendation-card-name">
+          ${escapeHtml(name)}
+        </div>
 
-  row.innerHTML = `
-    <div class="mykola-recommendation-card">
-      <div class="mykola-recommendation-card-header">
-        <div>
-          <div class="mykola-recommendation-card-name">
-            ${escapeHtml(name)}
-          </div>
-
-          <div class="mykola-recommendation-card-group">
-            ${escapeHtml(groupName)}
-          </div>
+        <div class="mykola-recommendation-card-group">
+          ${escapeHtml(groupName)}
         </div>
       </div>
 
-      <div class="mykola-recommendation-card-divider"></div>
-
-      <div class="mykola-recommendation-card-comment">
-        ${escapeHtml(comment)}
+      <div class="mykola-recommendation-card-index">
+        ${index + 1}/${total}
       </div>
+    </div>
+
+    <div class="mykola-recommendation-card-divider"></div>
+
+    <div class="mykola-recommendation-card-comment">
+      ${escapeHtml(comment)}
     </div>
   `;
 
-  const actions = document.getElementById("mykolaActions");
-  mykolaChat.insertBefore(row, actions);
-
-  scrollMykolaChatToBottom();
+  return card;
 }
 
 function addMykolaRecommendationCards(recommendations) {
@@ -2342,12 +2341,39 @@ function addMykolaRecommendationCards(recommendations) {
   }
 
   const sortedItems = [...recommendations].sort((a, b) => {
-    return getRecommendationPriority(a) - getRecommendationPriority(b);
+    const priorityDiff =
+      getRecommendationPriority(a) - getRecommendationPriority(b);
+
+    if (priorityDiff !== 0) return priorityDiff;
+
+    const aDate = new Date(a.created_at || 0).getTime();
+    const bDate = new Date(b.created_at || 0).getTime();
+
+    return bDate - aDate;
   });
 
+  const row = document.createElement("div");
+  row.className = "mykola-message-row mykola-card-stack-row";
+
+  const stack = document.createElement("div");
+  stack.className = "mykola-card-stack";
+
   sortedItems.forEach((item, index) => {
-    addMykolaRecommendationCard(item, index);
+    stack.appendChild(
+      createMykolaRecommendationCard(
+        item,
+        index,
+        sortedItems.length
+      )
+    );
   });
+
+  row.appendChild(stack);
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
 }
 
 async function unrecommendMovie(movieId, button) {
