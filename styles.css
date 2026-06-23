@@ -1431,12 +1431,7 @@ input[readonly],
   position: relative;
   width: 100%;
   transition: transform 280ms ease, opacity 280ms ease;
-  cursor: pointer;
-}
-
-.mykola-stack-card-exit {
-  transform: translateX(110px) rotate(4deg) scale(0.97) !important;
-  opacity: 0 !important;
+  cursor: default;
 }
 
 .mykola-stack-card:not(:first-child) {
@@ -1446,7 +1441,19 @@ input[readonly],
 .mykola-stack-card:nth-child(1) {
   z-index: 30;
   transform: translateX(0) scale(1);
-  cursor: pointer;
+  animation: mykolaCardEnter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes mykolaCardEnter {
+  0% {
+    opacity: 0;
+    transform: translateX(-18px) translateY(10px) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
 }
 
 .mykola-stack-card:nth-child(2) {
@@ -1486,6 +1493,36 @@ input[readonly],
 
   .mykola-stack-card:nth-child(3) {
     transform: translateX(16px) translateY(16px) scale(0.97);
+  }
+}
+
+.mykola-stack-card.is-clickable {
+  cursor: pointer;
+}
+
+.mykola-stack-card.is-clickable:hover {
+  transform: translateX(0) translateY(-3px) scale(1.005);
+}
+
+.mykola-stack-card.is-leaving {
+  pointer-events: none;
+  animation: mykolaCardLeave 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes mykolaCardLeave {
+  0% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translateX(18px) translateY(-8px) scale(1.015);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(90px) translateY(-18px) scale(0.96);
   }
 }
 
