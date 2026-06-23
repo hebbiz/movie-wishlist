@@ -242,3 +242,61 @@ to authenticated
 using (
   public.can_read_recommendation(user_id, context_group_id)
 );
+
+-- Updated recommendations visibility function
+
+create or replace function public.can_read_recommendation(
+  recommendation_user_id uuid,
+  recommendation_group_id uuid
+)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    recommendation_user_id = auth.uid()
+
+    or exists (
+      select 1
+      from public.group_members me
+      join public.group_members shared_user
+        on shared_user.group_id = me.group_id
+      where me.user_id = auth.uid()
+        and shared_user.user_id = recommendation_user_id
+    )
+
+    or exists (
+      select 1
+      from public.group_members me
+      join public.group_members shared_user
+        on shared_user.group_id = me.group_id
+      join public.group_members shared_user_groups
+        on shared_user_groups.user_id = shared_user.user_id
+      join public.group_members second_level_user
+        on second_level_user.group_id = shared_user_groups.group_id
+      where me.user_id = auth.uid()
+        and second_level_user.user_id = recommendation_user_id
+    );
+$$;
+
+-- Add read policy for group metadata on socially visible recommendations
+
+drop policy if exists "groups_select_visible_recommendation_contexts"
+on public.groups;
+
+create policy "groups_select_visible_recommendation_contexts"
+on public.groups
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.recommendations r
+    where r.context_group_id = groups.id
+      and public.can_read_recommendation(
+        r.user_id,
+        r.context_group_id
+      )
+  )
+);
