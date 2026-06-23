@@ -2452,15 +2452,15 @@ function attachMykolaStackHandlers(stack) {
     setTimeout(() => {
       topCard.classList.remove("is-settling");
       topCard.style.transform = "";
-    }, 280);
+    }, 420);
   }
 
   function completeSwipe(direction) {
     topCard.classList.remove("is-dragging");
     topCard.classList.add("is-settling");
 
-    const exitX = direction > 0 ? 560 : -560;
-    const rotate = direction > 0 ? 13 : -13;
+    const exitX = direction > 0 ? 620 : -620;
+    const rotate = direction > 0 ? 10 : -10;
 
     topCard.style.transform = `
       translateX(${exitX}px)
@@ -2502,7 +2502,7 @@ function attachMykolaStackHandlers(stack) {
       requestAnimationFrame(() => {
         renderMykolaRecommendationStack();
       });
-    }, 320);
+    }, 420);
   }
 
   topCard.addEventListener("pointerdown", (event) => {
