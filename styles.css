@@ -1408,6 +1408,12 @@ input[readonly],
   color: #dddddd;
 }
 
+.mykola-recommendation-card-index {
+  opacity: 0.35;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .mykola-card-stack-row {
   margin-left: 50px;
 }
