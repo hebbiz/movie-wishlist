@@ -2471,6 +2471,8 @@ function attachMykolaStackHandlers(stack) {
 
     topCard.style.opacity = "0";
 
+    // no actions to second and third cards
+
     setTimeout(() => {
       activeRecommendationStackOffset =
         direction > 0
