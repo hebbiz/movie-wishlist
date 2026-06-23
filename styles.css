@@ -1371,10 +1371,10 @@ input[readonly],
   max-width: 520px;
   background: #262626;
   color: #f4f4f4;
-  border: 1px solid rgba(214, 178, 94, 0.18);
+  border: 1px solid rgba(214, 178, 94, 0.16);
   border-radius: 12px;
   padding: 14px 16px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.26);
 }
 
 .mykola-recommendation-card-header {
@@ -1399,13 +1399,109 @@ input[readonly],
 .mykola-recommendation-card-divider {
   height: 1px;
   margin: 11px 0 12px;
-  background: rgba(214, 178, 94, 0.16);
+  background: rgba(214, 178, 94, 0.12);
 }
 
 .mykola-recommendation-card-comment {
   font-size: 0.95rem;
   line-height: 1.45;
   color: #dddddd;
+}
+
+.mykola-recommendation-card-index {
+  opacity: 0.32;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1;
+  transform: translateY(2px);
+}
+
+.mykola-card-stack-row {
+  margin-left: 50px;
+  margin-top: 12px;
+}
+
+.mykola-card-stack {
+  position: relative;
+  width: 540px;
+  padding-bottom: 52px;
+}
+
+.mykola-stack-card {
+  position: relative;
+  width: 100%;
+  transition: transform 280ms ease, opacity 280ms ease;
+  cursor: default;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mykola-stack-card.is-dragging {
+  transition: none;
+  cursor: grabbing;
+}
+
+.mykola-stack-card.is-settling {
+  pointer-events: none;
+}
+
+.mykola-stack-card:not(:first-child) {
+  margin-top: -82px;
+}
+
+.mykola-stack-card:nth-child(1) {
+  z-index: 30;
+  transform: translateX(0) translateY(0) scale(1);
+  animation: none;
+}
+
+.mykola-stack-card:nth-child(2) {
+  z-index: 20;
+  transform: translateX(14px) translateY(8px) scale(0.985);
+  opacity: 0.92;
+}
+
+.mykola-stack-card:nth-child(3) {
+  z-index: 10;
+  transform: translateX(28px) translateY(16px) scale(0.97);
+  opacity: 0.78;
+}
+
+.mykola-stack-card:nth-child(n+4) {
+  display: none;
+}
+
+.mykola-stack-card.is-clickable {
+  cursor: grab;
+}
+
+.mykola-stack-card.is-clickable:hover:not(.is-dragging):not(.is-settling) {
+  transform: translateX(0) translateY(-3px) scale(1.005);
+}
+
+@media (max-width: 600px) {
+  .mykola-card-stack-row {
+    margin-left: 0;
+    margin-top: 12px;
+  }
+
+  .mykola-card-stack {
+    width: 100%;
+    padding-bottom: 44px;
+  }
+
+  .mykola-stack-card:not(:first-child) {
+    margin-top: -78px;
+  }
+
+  .mykola-stack-card:nth-child(2) {
+    transform: translateX(8px) translateY(8px) scale(0.985);
+  }
+
+  .mykola-stack-card:nth-child(3) {
+    transform: translateX(16px) translateY(16px) scale(0.97);
+  }
 }
 
 .mykola-comment-form-bubble {

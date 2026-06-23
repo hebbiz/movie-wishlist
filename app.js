@@ -89,6 +89,8 @@ let recommendedGroups = [];
 let currentUserRecommendations = [];
 let movieRecommendationCounts = {};
 let movieRecommendationDetails = {};
+let activeRecommendationStack = [];
+let activeRecommendationStackOffset = 0;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1592,6 +1594,7 @@ function applyMykolaDailyRecommendation() {
     movie_id: movie.movie_id,
     user_id: "mykola",
     context_group_id: currentGroupId,
+    created_at: new Date().toISOString(),
     profiles: {
       display_name: "Микола",
       email: "mykola@movie-wishlist.local",
@@ -1737,6 +1740,7 @@ async function loadMovieRecommendationDetails() {
       user_id,
       context_group_id,
       comment,
+      created_at,
       profiles!recommendations_user_id_fkey (
         display_name,
         email
@@ -2288,7 +2292,15 @@ function openMykolaRecommendationContext(movieId) {
   }, 1000);
 }
 
-function addMykolaRecommendationCard(item) {
+function rotateRecommendationStack(items, offset) {
+  if (!items.length) return [];
+
+  return items.map((_, index) => {
+    return items[(index + offset) % items.length];
+  });
+}
+
+function createMykolaRecommendationCard(item, index, total) {
   const name =
     item.profiles?.display_name ||
     item.profiles?.email ||
@@ -2302,37 +2314,34 @@ function addMykolaRecommendationCard(item) {
     item.comment ||
     "Без коментаря. Лаконічно, але підозріло.";
 
-  const row = document.createElement("div");
-  row.className = "mykola-message-row";
+  const card = document.createElement("div");
+  card.className = `mykola-recommendation-card mykola-stack-card mykola-stack-card-${index}`;
 
-  row.innerHTML = `
-    <div class="mykola-avatar">М</div>
+  card.innerHTML = `
+    <div class="mykola-recommendation-card-header">
+      <div>
+        <div class="mykola-recommendation-card-name">
+          ${escapeHtml(name)}
+        </div>
 
-    <div class="mykola-recommendation-card">
-      <div class="mykola-recommendation-card-header">
-        <div>
-          <div class="mykola-recommendation-card-name">
-            ${escapeHtml(name)}
-          </div>
-
-          <div class="mykola-recommendation-card-group">
-            ${escapeHtml(groupName)}
-          </div>
+        <div class="mykola-recommendation-card-group">
+          ${escapeHtml(groupName)}
         </div>
       </div>
 
-      <div class="mykola-recommendation-card-divider"></div>
-
-      <div class="mykola-recommendation-card-comment">
-        ${escapeHtml(comment)}
+      <div class="mykola-recommendation-card-index">
+        ${item.displayIndex}/${total}
       </div>
+    </div>
+
+    <div class="mykola-recommendation-card-divider"></div>
+
+    <div class="mykola-recommendation-card-comment">
+      ${escapeHtml(comment)}
     </div>
   `;
 
-  const actions = document.getElementById("mykolaActions");
-  mykolaChat.insertBefore(row, actions);
-
-  scrollMykolaChatToBottom();
+  return card;
 }
 
 function addMykolaRecommendationCards(recommendations) {
@@ -2341,12 +2350,176 @@ function addMykolaRecommendationCards(recommendations) {
     return;
   }
 
-  const sortedItems = [...recommendations].sort((a, b) => {
-    return getRecommendationPriority(a) - getRecommendationPriority(b);
+  activeRecommendationStack = [...recommendations]
+    .sort((a, b) => {
+      const priorityDiff =
+        getRecommendationPriority(a) - getRecommendationPriority(b);
+
+      if (priorityDiff !== 0) return priorityDiff;
+
+      const aDate = new Date(a.created_at || 0).getTime();
+      const bDate = new Date(b.created_at || 0).getTime();
+
+      return bDate - aDate;
+    })
+    .map((item, index) => ({
+      ...item,
+      originalIndex: index,
+    }));
+
+  activeRecommendationStackOffset = 0;
+
+  renderMykolaRecommendationStack();
+}
+
+function renderMykolaRecommendationStack() {
+  const oldRow = document.querySelector(".mykola-card-stack-row");
+
+  if (oldRow) {
+    oldRow.remove();
+  }
+
+  const visibleItems = rotateRecommendationStack(
+    activeRecommendationStack,
+    activeRecommendationStackOffset
+  );
+
+  const row = document.createElement("div");
+  row.className = "mykola-message-row mykola-card-stack-row";
+
+  const stack = document.createElement("div");
+  stack.className = "mykola-card-stack";
+
+  visibleItems.slice(0, 3).forEach((item, index) => {
+    stack.appendChild(
+      createMykolaRecommendationCard(
+        {
+          ...item,
+          displayIndex: item.originalIndex + 1,
+        },
+        index,
+        activeRecommendationStack.length
+      )
+    );
   });
 
-  sortedItems.forEach((item) => {
-    addMykolaRecommendationCard(item);
+  row.appendChild(stack);
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  attachMykolaStackHandlers(stack);
+
+  scrollMykolaChatToBottom();
+}
+
+function attachMykolaStackHandlers(stack) {
+  if (!stack || activeRecommendationStack.length <= 1) return;
+
+  const topCard = stack.querySelector(".mykola-stack-card:first-child");
+  if (!topCard) return;
+
+  topCard.classList.add("is-clickable");
+
+  let startX = 0;
+  let startY = 0;
+  let currentX = 0;
+  let currentY = 0;
+  let isDragging = false;
+
+  const threshold = 80;
+
+  function resetCard() {
+    topCard.classList.remove("is-dragging");
+    topCard.classList.add("is-settling");
+
+    topCard.style.transform = "translateX(0) translateY(0) rotate(0deg) scale(1)";
+    topCard.style.opacity = "1";
+
+    setTimeout(() => {
+      topCard.classList.remove("is-settling");
+      topCard.style.transform = "";
+    }, 280);
+  }
+
+  function completeSwipe(direction) {
+    topCard.classList.remove("is-dragging");
+    topCard.classList.add("is-settling");
+
+    const exitX = direction > 0 ? 520 : -520;
+    const rotate = direction > 0 ? 12 : -12;
+
+    topCard.style.transform = `
+      translateX(${exitX}px)
+      translateY(-24px)
+      rotate(${rotate}deg)
+      scale(0.96)
+    `;
+
+    topCard.style.opacity = "0";
+
+    setTimeout(() => {
+      activeRecommendationStackOffset =
+        direction > 0
+          ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
+          : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
+            activeRecommendationStack.length;
+
+      renderMykolaRecommendationStack();
+    }, 300);
+  }
+
+  topCard.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+
+    isDragging = true;
+    startX = event.clientX;
+    startY = event.clientY;
+    currentX = 0;
+    currentY = 0;
+
+    topCard.classList.add("is-dragging");
+
+    try {
+      topCard.setPointerCapture(event.pointerId);
+    } catch (error) {}
+  });
+
+  topCard.addEventListener("pointermove", (event) => {
+    if (!isDragging) return;
+
+    event.preventDefault();
+
+    currentX = event.clientX - startX;
+    currentY = event.clientY - startY;
+
+    const rotate = currentX * 0.035;
+
+    topCard.style.transform = `
+      translateX(${currentX}px)
+      translateY(${currentY}px)
+      rotate(${rotate}deg)
+      scale(1.01)
+    `;
+  });
+
+  topCard.addEventListener("pointerup", () => {
+    if (!isDragging) return;
+
+    isDragging = false;
+
+    if (Math.abs(currentX) >= threshold) {
+      completeSwipe(currentX > 0 ? 1 : -1);
+    } else {
+      resetCard();
+    }
+  });
+
+  topCard.addEventListener("pointercancel", () => {
+    if (!isDragging) return;
+
+    isDragging = false;
+    resetCard();
   });
 }
 
