@@ -2459,19 +2459,36 @@ function attachMykolaStackHandlers(stack) {
     topCard.classList.remove("is-dragging");
     topCard.classList.add("is-settling");
 
-    const exitX = direction > 0 ? 520 : -520;
-    const rotate = direction > 0 ? 12 : -12;
+    const exitX = direction > 0 ? 560 : -560;
+    const rotate = direction > 0 ? 13 : -13;
 
     topCard.style.transform = `
       translateX(${exitX}px)
-      translateY(-24px)
+      translateY(-26px)
       rotate(${rotate}deg)
       scale(0.96)
     `;
-
     topCard.style.opacity = "0";
 
-    // no actions to second and third cards
+    if (secondCard) {
+      secondCard.classList.add("is-promoting");
+      secondCard.style.transform = `
+        translateX(0)
+        translateY(0)
+        scale(1)
+      `;
+      secondCard.style.opacity = "1";
+    }
+
+    if (thirdCard) {
+      thirdCard.classList.add("is-promoting");
+      thirdCard.style.transform = `
+        translateX(14px)
+        translateY(8px)
+        scale(0.985)
+      `;
+      thirdCard.style.opacity = "0.92";
+    }
 
     setTimeout(() => {
       activeRecommendationStackOffset =
@@ -2481,7 +2498,7 @@ function attachMykolaStackHandlers(stack) {
             activeRecommendationStack.length;
 
       renderMykolaRecommendationStack();
-    }, 300);
+    }, 270);
   }
 
   topCard.addEventListener("pointerdown", (event) => {
