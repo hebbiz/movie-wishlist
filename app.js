@@ -2319,10 +2319,6 @@ function addMykolaRecommendationCard(item) {
             ${escapeHtml(groupName)}
           </div>
         </div>
-
-        <div class="mykola-recommendation-card-label">
-          Порада
-        </div>
       </div>
 
       <div class="mykola-recommendation-card-divider"></div>
