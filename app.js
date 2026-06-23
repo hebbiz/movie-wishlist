@@ -2422,9 +2422,13 @@ function attachMykolaStackHandlers() {
 
   let touchStartX = 0;
   let touchEndX = 0;
+  let isAnimating = false;
 
   function showNextCard() {
-    topCard.classList.add("mykola-stack-card-exit");
+    if (isAnimating) return;
+
+    isAnimating = true;
+    topCard.classList.add("is-leaving");
 
     setTimeout(() => {
       activeRecommendationStackOffset =
@@ -2432,8 +2436,10 @@ function attachMykolaStackHandlers() {
         activeRecommendationStack.length;
 
       renderMykolaRecommendationStack();
-    }, 180);
+    }, 420);
   }
+
+  topCard.classList.add("is-clickable");
 
   topCard.addEventListener("click", showNextCard);
 
