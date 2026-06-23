@@ -1369,12 +1369,12 @@ input[readonly],
 .mykola-recommendation-card {
   width: min(520px, calc(100vw - 98px));
   max-width: 520px;
-  background: #f3ead8;
-  color: #241f18;
-  border: 1px solid rgba(80, 60, 35, 0.28);
-  border-radius: 10px;
+  background: #1b1b1b;
+  color: #f4f4f4;
+  border: 1px solid rgba(214, 178, 94, 0.18);
+  border-radius: 12px;
   padding: 14px 16px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
 }
 
 .mykola-recommendation-card-header {
@@ -1393,26 +1393,19 @@ input[readonly],
 .mykola-recommendation-card-group {
   margin-top: 3px;
   font-size: 0.78rem;
-  color: rgba(36, 31, 24, 0.62);
-}
-
-.mykola-recommendation-card-label {
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(36, 31, 24, 0.48);
-  white-space: nowrap;
+  color: #9a9a9a;
 }
 
 .mykola-recommendation-card-divider {
   height: 1px;
   margin: 11px 0 12px;
-  background: rgba(80, 60, 35, 0.22);
+  background: rgba(214, 178, 94, 0.16);
 }
 
 .mykola-recommendation-card-comment {
   font-size: 0.95rem;
   line-height: 1.45;
+  color: #dddddd;
 }
 
 .mykola-comment-form-bubble {
