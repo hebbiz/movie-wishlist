@@ -2330,7 +2330,7 @@ function createMykolaRecommendationCard(item, index, total) {
       </div>
 
       <div class="mykola-recommendation-card-index">
-        ${index + 1}/${total}
+        ${item.displayIndex}/${total}
       </div>
     </div>
 
@@ -2350,17 +2350,22 @@ function addMykolaRecommendationCards(recommendations) {
     return;
   }
 
-  activeRecommendationStack = [...recommendations].sort((a, b) => {
-    const priorityDiff =
-      getRecommendationPriority(a) - getRecommendationPriority(b);
+  activeRecommendationStack = [...recommendations]
+    .sort((a, b) => {
+      const priorityDiff =
+        getRecommendationPriority(a) - getRecommendationPriority(b);
 
-    if (priorityDiff !== 0) return priorityDiff;
+      if (priorityDiff !== 0) return priorityDiff;
 
-    const aDate = new Date(a.created_at || 0).getTime();
-    const bDate = new Date(b.created_at || 0).getTime();
+      const aDate = new Date(a.created_at || 0).getTime();
+      const bDate = new Date(b.created_at || 0).getTime();
 
-    return bDate - aDate;
-  });
+      return bDate - aDate;
+    })
+    .map((item, index) => ({
+      ...item,
+      originalIndex: index,
+    }));
 
   activeRecommendationStackOffset = 0;
 
@@ -2385,10 +2390,13 @@ function renderMykolaRecommendationStack() {
   const stack = document.createElement("div");
   stack.className = "mykola-card-stack";
 
-  visibleItems.forEach((item, index) => {
+  visibleItems.slice(0, 3).forEach((item, index) => {
     stack.appendChild(
       createMykolaRecommendationCard(
-        item,
+        {
+          ...item,
+          displayIndex: item.originalIndex + 1,
+        },
         index,
         activeRecommendationStack.length
       )
