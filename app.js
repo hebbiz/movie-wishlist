@@ -2060,6 +2060,25 @@ button.classList.toggle("has-comment", !!comment);
   applySearchAndFilters();
 }
 
+function formatAdviceCountWord(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return "порад";
+  }
+
+  if (lastDigit === 1) {
+    return "порада";
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return "поради";
+  }
+
+  return "порад";
+}
+
 function resetMykolaRecommendationFlow() {
   mykolaChat.innerHTML = `
     <div class="mykola-actions" id="mykolaActions"></div>
@@ -2233,16 +2252,16 @@ function getMykolaArchiveIntro(count) {
 
   if (count <= 3) {
     return getRandomItem([
-      `Переглядаю картотеку. Знайдено ${count} ${formatMovieCountWord(count)}.`,
-      `Відкриваю шухляду. Тут ${count} ${formatMovieCountWord(count)} щодо цього фільму.`,
-      `У картотеці є ${count} ${formatMovieCountWord(count)}. Уже можна робити вигляд, що це дослідження.`,
+      `Переглядаю картотеку. Знайдено ${count} ${formatAdviceCountWord(count)}.`,
+      `Відкриваю шухляду. Тут ${count} ${formatAdviceCountWord(count)} щодо цього фільму.`,
+      `У картотеці є ${count} ${formatAdviceCountWord(count)}. Уже можна робити вигляд, що це дослідження.`,
     ]);
   }
 
   return getRandomItem([
-    `Картотека не мовчить. Знайдено ${count} ${formatMovieCountWord(count)}.`,
-    `Відкриваю шухляду. Тут уже ${count} записів щодо цього фільму.`,
-    `Знайдено ${count} записів. Схоже, фільм залишив слід у колективній памʼяті.`,
+    `Картотека не мовчить. Знайдено ${count} ${formatAdviceCountWord(count)}.`,
+    `Відкриваю шухляду. Тут уже ${count} ${formatAdviceCountWord(count)} щодо цього фільму.`,
+    `Знайдено ${count} ${formatAdviceCountWord(count)}. Схоже, фільм залишив слід у колективній памʼяті.`,
   ]);
 }
 
@@ -2626,7 +2645,7 @@ function formatStatusTitle(status) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-function formatMovieCountWord(count) {
+function formatAdviceCountWord(count) {
   const lastDigit = count % 10;
   const lastTwoDigits = count % 100;
 
@@ -3288,7 +3307,7 @@ function applySearchAndFilters() {
       const count = globalMatches.length;
 
       searchHint.textContent =
-        `Знайдено ${count} ${formatMovieCountWord(count)} у ваших списках. Можна також пошукати на IMDb.`;
+        `Знайдено ${count} ${formatAdviceCountWord(count)} у ваших списках. Можна також пошукати на IMDb.`;
       searchHint.className = "search-hint positive";
     }
   }
@@ -3305,7 +3324,7 @@ function applySearchAndFilters() {
       const count = globalMatches.length;
 
       searchHint.textContent =
-        `Знайдено ${count} ${formatMovieCountWord(count)} в інших списках.`;
+        `Знайдено ${count} ${formatAdviceCountWord(count)} в інших списках.`;
     }
 
     searchHint.className = "search-hint warning";
