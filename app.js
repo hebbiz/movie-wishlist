@@ -2420,12 +2420,31 @@ function attachMykolaStackHandlers() {
     return;
   }
 
-  topCard.addEventListener("click", () => {
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  function showNextCard() {
     activeRecommendationStackOffset =
       (activeRecommendationStackOffset + 1) %
       activeRecommendationStack.length;
 
     renderMykolaRecommendationStack();
+  }
+
+  topCard.addEventListener("click", showNextCard);
+
+  topCard.addEventListener("touchstart", (event) => {
+    touchStartX = event.changedTouches[0].screenX;
+  });
+
+  topCard.addEventListener("touchend", (event) => {
+    touchEndX = event.changedTouches[0].screenX;
+
+    const swipeDistance = touchStartX - touchEndX;
+
+    if (Math.abs(swipeDistance) > 40) {
+      showNextCard();
+    }
   });
 }
 
