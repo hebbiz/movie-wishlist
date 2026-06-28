@@ -887,9 +887,16 @@ input[readonly],
   overflow: visible;
   border: 1px solid #2a2a2a;
   position: relative;
+  z-index: 1;
 
   display: flex;
   flex-direction: column;
+}
+
+.card.has-open-advice,
+.card.has-open-context {
+  position: relative;
+  z-index: 1000;
 }
 
 .poster-wrapper {
@@ -1081,12 +1088,95 @@ input[readonly],
 }
 
 .movie-social-section {
+  position: relative;
   margin-top: 4px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.my-advice-card {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px);
+  z-index: 4000;
+
+  width: min(260px, calc(100vw - 72px));
+  padding: 13px 14px 12px;
+
+  background: #262626;
+  color: #f4f4f4;
+
+  border: 1px solid rgba(214, 178, 94, 0.2);
+  border-radius: 12px;
+
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.42),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+  transform-origin: top left;
+  animation: myAdviceCardPop 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes myAdviceCardPop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.94);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.025);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.my-advice-card-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.my-advice-card-group {
+  margin-top: 3px;
+  font-size: 0.76rem;
+  color: #9a9a9a;
+}
+
+.my-advice-card-divider {
+  height: 1px;
+  margin: 10px 0 11px;
+  background: rgba(214, 178, 94, 0.14);
+}
+
+.my-advice-card-comment {
+  color: #dddddd;
+  font-size: 0.92rem;
+  line-height: 1.42;
+}
+
+.my-advice-edit-button {
+  width: auto;
+  margin: 12px 0 0;
+  padding: 0;
+
+  background: transparent;
+  color: #d6b25e;
+
+  border: none;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.my-advice-edit-button:hover {
+  background: transparent;
+  color: #e4c675;
 }
 
 .recommend-button {
@@ -1336,10 +1426,8 @@ input[readonly],
 
 .recommend-context-open-button {
   width: auto;
-
-  margin: 10px 0 0;
-
-  padding: 0;
+  margin: 12px 0 0;
+  padding: 8px 0 0;
 
   display: inline-flex;
   align-items: center;
@@ -1347,6 +1435,7 @@ input[readonly],
 
   background: transparent;
   border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
 
   color: #d6b25e;
 
@@ -1355,10 +1444,6 @@ input[readonly],
   line-height: 1;
 
   cursor: pointer;
-
-  margin-top: 12px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .recommend-context-open-button:hover {
@@ -1545,6 +1630,67 @@ input[readonly],
 
 #mykolaCancelCommentButton:hover {
   background: #333;
+}
+
+@media (max-width: 600px) {
+  .mykola-comment-form-bubble {
+    width: 100%;
+    max-width: calc(100vw - 62px);
+  }
+
+  .mykola-comment-form-actions {
+    flex-wrap: wrap;
+  }
+}
+
+.user-input-row {
+  align-items: flex-start;
+}
+
+.user-comment-form-bubble {
+  width: min(520px, 80%);
+  max-width: 80%;
+}
+
+.user-comment-form-bubble textarea {
+  width: 100%;
+  margin-bottom: 10px;
+  resize: vertical;
+
+  background: #0f0f0f;
+  color: #f4f4f4;
+  border: 1px solid #333;
+}
+
+.user-comment-form-actions {
+  justify-content: flex-end;
+}
+
+.user-comment-form-actions button {
+  width: auto;
+  margin-bottom: 0;
+  padding: 9px 14px;
+}
+
+#mykolaWithdrawAdviceButton {
+  background: #2a2a2a;
+  color: #ff9b9b;
+}
+
+#mykolaWithdrawAdviceButton:hover {
+  background: #333;
+  color: #ffb3b3;
+}
+
+@media (max-width: 600px) {
+  .user-comment-form-bubble {
+    width: 100%;
+    max-width: calc(100vw - 62px);
+  }
+
+  .user-comment-form-actions {
+    flex-wrap: wrap;
+  }
 }
 
 .group-member-menu .group-member-menu-dropdown {
@@ -1808,6 +1954,17 @@ input[readonly],
 .user-bubble {
   background: #d6b25e;
   color: #111;
+}
+
+.user-bubble.user-comment-form-bubble {
+  background: #242424;
+  color: #f4f4f4;
+}
+
+.user-bubble.user-comment-form-bubble textarea {
+  background: #0f0f0f;
+  color: #f4f4f4;
+  border: 1px solid #333;
 }
 
 .mykola-actions {
