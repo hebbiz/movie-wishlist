@@ -1180,12 +1180,17 @@ input[readonly],
 }
 
 #mykolaWithdrawAdviceButton {
-  background: #3a2424;
-  color: #ffb3b3;
+  background: transparent;
+  color: #ff9b9b;
+  padding: 0;
+  margin-top: 14px;
+  width: auto;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 #mykolaWithdrawAdviceButton:hover {
-  background: #4a2c2c;
+  background: transparent;
 }
 
 .recommend-button {
