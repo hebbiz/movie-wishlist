@@ -1891,17 +1891,15 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
 }
 
 async function updateMyRecommendation(movieId, comment) {
-  const recommendation = getCurrentUserRecommendation(movieId);
-
-  if (!recommendation) {
-    alert("Пораду не знайдено.");
+  if (!currentUser) {
+    alert("Потрібно увійти в акаунт.");
     return false;
   }
 
   const { data, error } = await supabaseClient
     .from("recommendations")
     .update({ comment })
-    .eq("id", recommendation.id)
+    .eq("movie_id", movieId)
     .eq("user_id", currentUser.id)
     .select(`
       id,
@@ -1922,12 +1920,15 @@ async function updateMyRecommendation(movieId, comment) {
     .maybeSingle();
 
   if (error || !data) {
-    alert("Помилка оновлення поради\n\n" + (error?.message || "Пораду не знайдено."));
+    alert(
+      "Помилка оновлення поради\n\n" +
+      (error?.message || "Пораду не знайдено.")
+    );
     return false;
   }
 
   currentUserRecommendations = currentUserRecommendations.map((item) => {
-    return item.id === recommendation.id ? data : item;
+    return item.movie_id === movieId ? data : item;
   });
 
   await loadMovieRecommendationCounts();
@@ -1939,17 +1940,16 @@ async function updateMyRecommendation(movieId, comment) {
 }
 
 async function withdrawMyRecommendation(movieId) {
-  const recommendation = getCurrentUserRecommendation(movieId);
-
-  if (!recommendation) {
-    alert("Пораду не знайдено.");
+  if (!currentUser) {
+    alert("Потрібно увійти в акаунт.");
     return false;
   }
 
   const { error } = await supabaseClient
     .from("recommendations")
     .delete()
-    .eq("id", recommendation.id);
+    .eq("movie_id", movieId)
+    .eq("user_id", currentUser.id);
 
   if (error) {
     alert("Помилка відкликання поради\n\n" + error.message);
@@ -1957,7 +1957,7 @@ async function withdrawMyRecommendation(movieId) {
   }
 
   currentUserRecommendations = currentUserRecommendations.filter((item) => {
-    return item.id !== recommendation.id;
+    return item.movie_id !== movieId;
   });
 
   await loadMovieRecommendationCounts();
