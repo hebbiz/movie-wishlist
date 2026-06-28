@@ -78,6 +78,8 @@ let isShowingImdbResults = false;
 let currentProfile = null;
 let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
+let mykolaMode = "main";
+let savedMainMykolaChatHtml = null;
 let currentUser = null;
 let currentRole = null;
 let currentGroup = null;
@@ -1798,7 +1800,8 @@ function openMyAdviceEditFlow(movieId) {
     return;
   }
 
-  openMykolaContextView();
+  openMykolaAdviceContextView();
+  
   resetMykolaRecommendationFlow();
 
   addUserBubble(`Змінити мою пораду: ${movie.title}`);
@@ -2362,11 +2365,13 @@ function resetMykolaRecommendationFlow() {
   `;
 }
 
-function openMykolaContextView() {
+function openMykolaAdviceContextView() {
+  saveMainMykolaContext();
+  mykolaMode = "advice";
+
   mainView.classList.remove("active");
   groupSettingsView.classList.remove("active");
   groupFormView.classList.remove("active");
-
   mykolaView.classList.add("active");
 
   window.scrollTo({
@@ -2383,7 +2388,7 @@ function openMykolaRecommendationFlow(movieId, button) {
     return;
   }
 
-  openMykolaContextView();
+  openMykolaAdviceContextView();
 
   resetMykolaRecommendationFlow();
 
@@ -2556,7 +2561,7 @@ function openMykolaRecommendationContext(movieId) {
 
   const recommendations = movieRecommendationDetails[movieId] || [];
 
-  openMykolaContextView();
+  openMykolaAdviceContextView();
 
   resetMykolaRecommendationFlow();
 
@@ -4272,6 +4277,9 @@ function addMykolaFollowUpActions() {
 }
 
 function resetMykolaChat() {
+  mykolaMode = "main";
+  savedMainMykolaChatHtml = null;
+  
   mykolaChat.innerHTML = `
     <div class="mykola-message-row">
       <div class="mykola-avatar">М</div>
@@ -4312,10 +4320,24 @@ function clearMykolaFinishedState() {
   saveMykolaState();
 }
 
+function saveMainMykolaContext() {
+  if (mykolaMode !== "main") return;
+  savedMainMykolaChatHtml = mykolaChat.innerHTML;
+}
+
 function openMykolaView() {
+  mykolaMode = "main";
   mainView.classList.remove("active");
   groupSettingsView.classList.remove("active");
   groupFormView.classList.remove("active");
+
+  if (savedMainMykolaChatHtml) {
+    mykolaChat.innerHTML = savedMainMykolaChatHtml;
+
+    if (document.getElementById("mykolaYesButton")) {
+      wireMykolaActionButtons();
+    }
+  }
 
   if (mykolaConversationFinished) {
     resetMykolaChat();
@@ -4362,6 +4384,8 @@ function wireMykolaActionButtons() {
   const yesButton = document.getElementById("mykolaYesButton");
   const noButton = document.getElementById("mykolaNoButton");
   const actions = document.getElementById("mykolaActions");
+
+  if (!yesButton || !noButton || !actions) return;
 
   yesButton.addEventListener("click", () => {
     addUserBubble("Так");
