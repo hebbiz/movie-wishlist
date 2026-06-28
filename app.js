@@ -1724,6 +1724,10 @@ function toggleMyAdviceCard(movieId, button) {
     `[data-my-advice-card="${movieId}"]`
   );
 
+  document.querySelectorAll(".card.has-open-advice").forEach((card) => {
+    card.classList.remove("has-open-advice");
+  });
+
   document.querySelectorAll(".my-advice-card").forEach((card) => {
     if (card !== existingCard) {
       card.remove();
@@ -1781,6 +1785,7 @@ function toggleMyAdviceCard(movieId, button) {
   `;
 
   const wrapper = button.closest(".movie-social-section");
+  wrapper.closest(".card")?.classList.add("has-open-advice");
   wrapper.appendChild(card);
 }
 
@@ -2101,7 +2106,7 @@ async function recommendMovie(
   button.disabled = true;
   button.classList.add("recommended");
   // button.querySelector(".recommend-heart").textContent = "♥";
-  button.querySelector(".recommend-text").textContent = "Я рекомендую";
+  button.querySelector(".recommend-text").textContent = "Зберігаю";
 
 button.classList.toggle("has-comment", !!comment);
 
@@ -4614,6 +4619,10 @@ document.addEventListener("click", (event) => {
   if (!clickedInsideMyAdvice) {
     document.querySelectorAll(".my-advice-card").forEach((card) => {
       card.remove();
+    });
+
+    document.querySelectorAll(".card.has-open-advice").forEach((card) => {
+      card.classList.remove("has-open-advice");
     });
   }
   
