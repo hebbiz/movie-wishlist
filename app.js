@@ -1891,15 +1891,22 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
 }
 
 async function updateMyRecommendation(movieId, comment) {
-  if (!currentUser) {
-    alert("Потрібно увійти в акаунт.");
+  const { data: recommendation, error: lookupError } = await supabaseClient
+    .from("recommendations")
+    .select("id")
+    .eq("movie_id", movieId)
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if (lookupError || !recommendation) {
+    alert("Пораду не знайдено для цього фільму.");
     return false;
   }
 
   const { data, error } = await supabaseClient
     .from("recommendations")
     .update({ comment })
-    .eq("movie_id", movieId)
+    .eq("id", recommendation.id)
     .eq("user_id", currentUser.id)
     .select(`
       id,
@@ -1920,17 +1927,11 @@ async function updateMyRecommendation(movieId, comment) {
     .maybeSingle();
 
   if (error || !data) {
-    alert(
-      "Помилка оновлення поради\n\n" +
-      (error?.message || "Пораду не знайдено.")
-    );
+    alert("Помилка оновлення поради\n\n" + (error?.message || "Пораду не оновлено."));
     return false;
   }
 
-  currentUserRecommendations = currentUserRecommendations.map((item) => {
-    return item.movie_id === movieId ? data : item;
-  });
-
+  await loadCurrentUserRecommendations();
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
   applyMykolaDailyRecommendation();
@@ -1940,15 +1941,22 @@ async function updateMyRecommendation(movieId, comment) {
 }
 
 async function withdrawMyRecommendation(movieId) {
-  if (!currentUser) {
-    alert("Потрібно увійти в акаунт.");
+  const { data: recommendation, error: lookupError } = await supabaseClient
+    .from("recommendations")
+    .select("id")
+    .eq("movie_id", movieId)
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if (lookupError || !recommendation) {
+    alert("Пораду не знайдено для цього фільму.");
     return false;
   }
 
   const { error } = await supabaseClient
     .from("recommendations")
     .delete()
-    .eq("movie_id", movieId)
+    .eq("id", recommendation.id)
     .eq("user_id", currentUser.id);
 
   if (error) {
@@ -1956,10 +1964,7 @@ async function withdrawMyRecommendation(movieId) {
     return false;
   }
 
-  currentUserRecommendations = currentUserRecommendations.filter((item) => {
-    return item.movie_id !== movieId;
-  });
-
+  await loadCurrentUserRecommendations();
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
   applyMykolaDailyRecommendation();
