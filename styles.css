@@ -1510,6 +1510,7 @@ input[readonly],
   position: relative;
   width: 540px;
   padding-bottom: 52px;
+  touch-action: pan-y;
 }
 
 .mykola-stack-card {
