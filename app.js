@@ -2652,10 +2652,10 @@ function addMykolaRecommendationCards(recommendations) {
 
   activeRecommendationStackOffset = 0;
 
-  renderMykolaRecommendationStack();
+  renderMykolaRecommendationStack(true);
 }
 
-function renderMykolaRecommendationStack() {
+function renderMykolaRecommendationStack(shouldScroll = false) {
   const oldRow = document.querySelector(".mykola-card-stack-row");
 
   if (oldRow) {
@@ -2693,7 +2693,9 @@ function renderMykolaRecommendationStack() {
 
   attachMykolaStackHandlers(stack);
 
-  scrollMykolaChatToBottom();
+  if (shouldScroll) {
+    scrollMykolaChatToBottom();
+  }
 }
 
 function attachMykolaStackHandlers(stack) {
@@ -2783,7 +2785,7 @@ function attachMykolaStackHandlers(stack) {
             activeRecommendationStack.length;
 
       requestAnimationFrame(() => {
-        renderMykolaRecommendationStack();
+        renderMykolaRecommendationStack(false);
       });
     }, 420);
   }
