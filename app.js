@@ -2880,6 +2880,17 @@ moviesGrid.addEventListener("click", (event) => {
     menu.style.display =
       menu.style.display === "block" ? "none" : "block";
   }
+
+  const card = button.closest(".card");
+
+  document.querySelectorAll(".card.has-open-context").forEach((c) => {
+    c.classList.remove("has-open-context");
+  });
+
+  if (menu?.style.display === "block") {
+    card?.classList.add("has-open-context");
+  }
+  
 });
 
 moviesGrid.addEventListener("click", (event) => {
@@ -4597,6 +4608,9 @@ document.addEventListener("click", (event) => {
       .forEach((dropdown) => {
         dropdown.style.display = "none";
       });
+    document.querySelectorAll(".card.has-open-context").forEach((card) => {
+      card.classList.remove("has-open-context");
+    });
   }
 
   groupInfoMenuDropdown.style.display = "none";
