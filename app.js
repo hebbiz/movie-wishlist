@@ -1818,19 +1818,17 @@ function openMyAdviceEditFlow(movieId) {
 
 function showMykolaEditRecommendationForm(movieId, currentComment = "") {
   const row = document.createElement("div");
-  row.className = "mykola-message-row";
+  row.className = "user-message-row user-input-row";
   row.id = "mykolaEditRecommendationForm";
 
   row.innerHTML = `
-    <div class="mykola-avatar">М</div>
-
-    <div class="mykola-bubble mykola-comment-form-bubble">
+    <div class="user-bubble user-comment-form-bubble">
       <textarea
         id="mykolaEditRecommendationInput"
         placeholder="Оновіть вашу пораду..."
       >${escapeHtml(currentComment)}</textarea>
 
-      <div class="mykola-comment-form-actions">
+      <div class="mykola-comment-form-actions user-comment-form-actions">
         <button id="mykolaUpdateAdviceButton" type="button">
           Зберегти
         </button>
@@ -1839,6 +1837,10 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
           Відкликати
         </button>
       </div>
+    </div>
+
+    <div class="user-avatar">
+      ${getUserAvatarLetter()}
     </div>
   `;
 
@@ -2448,19 +2450,17 @@ function addMykolaRecommendationActions(movieId, button) {
 
 function showMykolaRecommendationCommentForm(movieId, button) {
   const row = document.createElement("div");
-  row.className = "mykola-message-row";
+  row.className = "user-message-row user-input-row";
   row.id = "mykolaRecommendationCommentForm";
 
   row.innerHTML = `
-    <div class="mykola-avatar">М</div>
-
-    <div class="mykola-bubble mykola-comment-form-bubble">
+    <div class="user-bubble user-comment-form-bubble">
       <textarea
         id="mykolaRecommendationCommentInput"
         placeholder="Кілька слів для інших..."
       ></textarea>
 
-      <div class="mykola-comment-form-actions">
+      <div class="mykola-comment-form-actions user-comment-form-actions">
         <button id="mykolaSaveCommentButton" type="button">
           Зберегти
         </button>
@@ -2469,6 +2469,10 @@ function showMykolaRecommendationCommentForm(movieId, button) {
           Без коментаря
         </button>
       </div>
+    </div>
+
+    <div class="user-avatar">
+      ${getUserAvatarLetter()}
     </div>
   `;
 
