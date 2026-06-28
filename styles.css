@@ -893,8 +893,10 @@ input[readonly],
   flex-direction: column;
 }
 
-.card.has-open-advice {
-  z-index: 5000;
+.card.has-open-advice,
+.card.has-open-context {
+  position: relative;
+  z-index: 1000;
 }
 
 .poster-wrapper {
