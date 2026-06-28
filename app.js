@@ -93,6 +93,7 @@ let movieRecommendationCounts = {};
 let movieRecommendationDetails = {};
 let activeRecommendationStack = [];
 let activeRecommendationStackOffset = 0;
+let isRecommendationStackInteracting = false;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1891,10 +1892,15 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
 }
 
 async function updateMyRecommendation(movieId, comment) {
-  const recommendation = getCurrentUserRecommendation(movieId);
+  const { data: recommendation, error: lookupError } = await supabaseClient
+    .from("recommendations")
+    .select("id")
+    .eq("movie_id", movieId)
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
 
-  if (!recommendation) {
-    alert("Пораду не знайдено.");
+  if (lookupError || !recommendation) {
+    alert("Пораду не знайдено для цього фільму.");
     return false;
   }
 
@@ -1902,6 +1908,7 @@ async function updateMyRecommendation(movieId, comment) {
     .from("recommendations")
     .update({ comment })
     .eq("id", recommendation.id)
+    .eq("user_id", currentUser.id)
     .select(`
       id,
       movie_id,
@@ -1918,17 +1925,14 @@ async function updateMyRecommendation(movieId, comment) {
         type
       )
     `)
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    alert("Помилка оновлення поради\n\n" + error.message);
+  if (error || !data) {
+    alert("Помилка оновлення поради\n\n" + (error?.message || "Пораду не оновлено."));
     return false;
   }
 
-  currentUserRecommendations = currentUserRecommendations.map((item) => {
-    return item.id === recommendation.id ? data : item;
-  });
-
+  await loadCurrentUserRecommendations();
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
   applyMykolaDailyRecommendation();
@@ -1938,27 +1942,30 @@ async function updateMyRecommendation(movieId, comment) {
 }
 
 async function withdrawMyRecommendation(movieId) {
-  const recommendation = getCurrentUserRecommendation(movieId);
+  const { data: recommendation, error: lookupError } = await supabaseClient
+    .from("recommendations")
+    .select("id")
+    .eq("movie_id", movieId)
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
 
-  if (!recommendation) {
-    alert("Пораду не знайдено.");
+  if (lookupError || !recommendation) {
+    alert("Пораду не знайдено для цього фільму.");
     return false;
   }
 
   const { error } = await supabaseClient
     .from("recommendations")
     .delete()
-    .eq("id", recommendation.id);
+    .eq("id", recommendation.id)
+    .eq("user_id", currentUser.id);
 
   if (error) {
     alert("Помилка відкликання поради\n\n" + error.message);
     return false;
   }
 
-  currentUserRecommendations = currentUserRecommendations.filter((item) => {
-    return item.id !== recommendation.id;
-  });
-
+  await loadCurrentUserRecommendations();
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
   applyMykolaDailyRecommendation();
@@ -2661,10 +2668,7 @@ function addMykolaRecommendationCards(recommendations) {
 }
 
 function renderMykolaRecommendationStack(shouldScroll = false) {
-
-  // Запам'ятовуємо поточну позицію чату
-  const previousScrollTop = mykolaChat.scrollTop;
-  const previousScrollHeight = mykolaChat.scrollHeight;
+  const previousScrollY = window.scrollY;
 
   const oldRow = document.querySelector(".mykola-card-stack-row");
 
@@ -2704,22 +2708,15 @@ function renderMykolaRecommendationStack(shouldScroll = false) {
   attachMykolaStackHandlers(stack);
 
   if (shouldScroll) {
-
     scrollMykolaChatToBottom();
-
   } else {
-
-    // Відновлюємо scroll після перерендеру
     requestAnimationFrame(() => {
-      const newScrollHeight = mykolaChat.scrollHeight;
-
-      mykolaChat.scrollTop =
-        previousScrollTop +
-        (newScrollHeight - previousScrollHeight);
+      window.scrollTo({
+        top: previousScrollY,
+        behavior: "auto",
+      });
     });
-
   }
-
 }
 
 function attachMykolaStackHandlers(stack) {
@@ -2761,6 +2758,7 @@ function attachMykolaStackHandlers(stack) {
     setTimeout(() => {
       topCard.classList.remove("is-settling");
       topCard.style.transform = "";
+      isRecommendationStackInteracting = false;
     }, 420);
   }
 
@@ -2799,23 +2797,28 @@ function attachMykolaStackHandlers(stack) {
       thirdCard.style.opacity = "0.92";
     }
 
-    setTimeout(() => {
-      topCard.style.visibility = "hidden";
+      setTimeout(() => {
+        topCard.style.visibility = "hidden";
 
-      activeRecommendationStackOffset =
-        direction > 0
-          ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
-          : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
-            activeRecommendationStack.length;
+        activeRecommendationStackOffset =
+          direction > 0
+            ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
+            : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
+                activeRecommendationStack.length;
 
-      requestAnimationFrame(() => {
-        renderMykolaRecommendationStack(false);
-      });
-    }, 420);
-  }
+        requestAnimationFrame(() => {
+          renderMykolaRecommendationStack(false);
+
+          setTimeout(() => {
+            isRecommendationStackInteracting = false;
+          }, 250);
+        });
+      }, 420);
+    }
 
   topCard.addEventListener("pointerdown", (event) => {
     event.preventDefault();
+    isRecommendationStackInteracting = true;
 
     isDragging = true;
     startX = event.clientX;
@@ -4430,6 +4433,8 @@ function wireMykolaActionButtons() {
 }
 
 function scrollMykolaChatToBottom() {
+  if (isRecommendationStackInteracting) return;
+
   const bottomOffset = 72;
 
   const targetPosition =
