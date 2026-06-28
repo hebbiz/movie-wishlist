@@ -1179,6 +1179,15 @@ input[readonly],
   color: #e4c675;
 }
 
+#mykolaWithdrawAdviceButton {
+  background: #3a2424;
+  color: #ffb3b3;
+}
+
+#mykolaWithdrawAdviceButton:hover {
+  background: #4a2c2c;
+}
+
 .recommend-button {
   width: auto;
   min-width: 0;
@@ -1426,10 +1435,8 @@ input[readonly],
 
 .recommend-context-open-button {
   width: auto;
-
-  margin: 10px 0 0;
-
-  padding: 0;
+  margin: 12px 0 0;
+  padding: 8px 0 0;
 
   display: inline-flex;
   align-items: center;
@@ -1437,6 +1444,7 @@ input[readonly],
 
   background: transparent;
   border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
 
   color: #d6b25e;
 
@@ -1445,10 +1453,6 @@ input[readonly],
   line-height: 1;
 
   cursor: pointer;
-
-  margin-top: 12px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .recommend-context-open-button:hover {
@@ -1635,6 +1639,17 @@ input[readonly],
 
 #mykolaCancelCommentButton:hover {
   background: #333;
+}
+
+@media (max-width: 600px) {
+  .mykola-comment-form-bubble {
+    width: 100%;
+    max-width: calc(100vw - 62px);
+  }
+
+  .mykola-comment-form-actions {
+    flex-wrap: wrap;
+  }
 }
 
 .group-member-menu .group-member-menu-dropdown {
