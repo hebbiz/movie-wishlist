@@ -1664,6 +1664,12 @@ async function loadMovies() {
   applySearchAndFilters();
 }
 
+function getCurrentUserRecommendation(movieId) {
+  return currentUserRecommendations.find((item) => {
+    return item.movie_id === movieId;
+  });
+}
+
 async function loadCurrentUserRecommendations() {
   if (!currentUser) {
     currentUserRecommendations = [];
@@ -1672,7 +1678,22 @@ async function loadCurrentUserRecommendations() {
 
   const { data, error } = await supabaseClient
     .from("recommendations")
-    .select("id, movie_id, comment")
+    .select(`
+      id,
+      movie_id,
+      comment,
+      context_group_id,
+      created_at,
+      profiles!recommendations_user_id_fkey (
+        display_name,
+        email
+      ),
+      groups!recommendations_context_group_id_fkey (
+        id,
+        name,
+        type
+      )
+    `)
     .eq("user_id", currentUser.id);
 
   if (error) {
@@ -1696,6 +1717,71 @@ function currentUserRecommendationHasComment(movieId) {
   });
 
   return !!recommendation?.comment;
+}
+
+function toggleMyAdviceCard(movieId, button) {
+  const existingCard = document.querySelector(
+    `[data-my-advice-card="${movieId}"]`
+  );
+
+  document.querySelectorAll(".my-advice-card").forEach((card) => {
+    if (card !== existingCard) {
+      card.remove();
+    }
+  });
+
+  if (existingCard) {
+    existingCard.remove();
+    return;
+  }
+
+  const recommendation = getCurrentUserRecommendation(movieId);
+
+  if (!recommendation) return;
+
+  const name =
+    recommendation.profiles?.display_name ||
+    recommendation.profiles?.email ||
+    getUserAvatarLetter();
+
+  const groupName = recommendation.groups?.name
+    ? `${getGroupTypeNominativeLabel(recommendation.groups.type)} ${recommendation.groups.name}`
+    : "Поточна група";
+
+  const comment =
+    recommendation.comment ||
+    "Коментар ще не додано.";
+
+  const card = document.createElement("div");
+  card.className = "my-advice-card";
+  card.dataset.myAdviceCard = movieId;
+
+  card.innerHTML = `
+    <div class="my-advice-card-name">
+      ${escapeHtml(name)}
+    </div>
+
+    <div class="my-advice-card-group">
+      ${escapeHtml(groupName)}
+    </div>
+
+    <div class="my-advice-card-divider"></div>
+
+    <div class="my-advice-card-comment">
+      ${escapeHtml(comment)}
+    </div>
+
+    <button
+      type="button"
+      class="my-advice-edit-button"
+      data-edit-my-advice="${movieId}"
+    >
+      ${recommendation.comment ? "Змінити" : "Додати коментар"}
+    </button>
+  `;
+
+  const wrapper = button.closest(".movie-social-section");
+  wrapper.appendChild(card);
 }
 
 async function loadMovieRecommendationCounts() {
@@ -1945,8 +2031,8 @@ function renderMovies(list) {
             <span class="recommend-text">
               ${
                 hasCurrentUserRecommended(movie.movie_id)
-                  ? "Я рекомендую"
-                  : "Рекомендувати"
+                  ? "Моя порада"
+                  : "Порадити"
               }
             </span>
           </button>
@@ -2027,7 +2113,22 @@ button.classList.toggle("has-comment", !!comment);
       context_group_id: currentGroupId,
       comment,
     })
-    .select("id, movie_id, comment")
+    .select(`
+      id,
+      movie_id,
+      comment,
+      context_group_id,
+      created_at,
+      profiles!recommendations_user_id_fkey (
+        display_name,
+        email
+      ),
+      groups!recommendations_context_group_id_fkey (
+        id,
+        name,
+        type
+      )
+    `)
     .single();
 
   if (error) {
@@ -2035,7 +2136,7 @@ button.classList.toggle("has-comment", !!comment);
     button.classList.remove("recommended");
     button.classList.remove("has-comment");
     // button.querySelector(".recommend-heart").textContent = "♡";
-    button.querySelector(".recommend-text").textContent = "Рекомендувати";
+    button.querySelector(".recommend-text").textContent = "Порадити";
 
     if (error.code === "23505") {
       await loadCurrentUserRecommendations();
@@ -2055,7 +2156,7 @@ button.classList.toggle("has-comment", !!comment);
 
   currentUserRecommendations.push(data);
 
-  button.querySelector(".recommend-text").textContent = "Я рекомендую";
+  button.querySelector(".recommend-text").textContent = "Моя порада";
   button.disabled = false;
 
   await loadMovieRecommendationCounts();
@@ -2617,7 +2718,7 @@ async function unrecommendMovie(movieId, button) {
 
   button.classList.remove("recommended");
   button.classList.remove("has-comment");
-  button.querySelector(".recommend-text").textContent = "Рекомендувати";
+  button.querySelector(".recommend-text").textContent = "Порадити";
 
   button.disabled = false;
 
@@ -2743,7 +2844,7 @@ moviesGrid.addEventListener("click", async (event) => {
   const movieId = button.dataset.recommendMovieId;
 
   if (hasCurrentUserRecommended(movieId)) {
-    await unrecommendMovie(movieId, button);
+    toggleMyAdviceCard(movieId, button);
     return;
   }
 
@@ -4505,6 +4606,16 @@ document.addEventListener("click", (event) => {
   .forEach((dropdown) => {
     dropdown.style.display = "none";
   });
+
+  const clickedInsideMyAdvice =
+    event.target.closest(".my-advice-card") ||
+    event.target.closest(".recommend-button");
+
+  if (!clickedInsideMyAdvice) {
+    document.querySelectorAll(".my-advice-card").forEach((card) => {
+      card.remove();
+    });
+  }
   
 });
 
