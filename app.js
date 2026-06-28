@@ -2668,9 +2668,11 @@ function addMykolaRecommendationCards(recommendations) {
 }
 
 function renderMykolaRecommendationStack(shouldScroll = false) {
-  const previousScrollY = window.scrollY;
-
   const oldRow = document.querySelector(".mykola-card-stack-row");
+
+  const previousTop = oldRow
+    ? oldRow.getBoundingClientRect().top
+    : null;
 
   if (oldRow) {
     oldRow.remove();
@@ -2709,14 +2711,20 @@ function renderMykolaRecommendationStack(shouldScroll = false) {
 
   if (shouldScroll) {
     scrollMykolaChatToBottom();
-  } else {
-    requestAnimationFrame(() => {
-      window.scrollTo({
-        top: previousScrollY,
-        behavior: "auto",
-      });
-    });
+    return;
   }
+
+  requestAnimationFrame(() => {
+    if (previousTop === null) return;
+
+    const newTop = row.getBoundingClientRect().top;
+    const delta = newTop - previousTop;
+
+    window.scrollBy({
+      top: delta,
+      behavior: "auto",
+    });
+  });
 }
 
 function attachMykolaStackHandlers(stack) {
