@@ -1179,20 +1179,6 @@ input[readonly],
   color: #e4c675;
 }
 
-#mykolaWithdrawAdviceButton {
-  background: transparent;
-  color: #ff9b9b;
-  padding: 0;
-  margin-top: 14px;
-  width: auto;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-#mykolaWithdrawAdviceButton:hover {
-  background: transparent;
-}
-
 .recommend-button {
   width: auto;
   min-width: 0;
@@ -1653,6 +1639,61 @@ input[readonly],
   }
 
   .mykola-comment-form-actions {
+    flex-wrap: wrap;
+  }
+}
+
+.user-input-row {
+  align-items: flex-start;
+}
+
+.user-comment-form-bubble {
+  width: min(520px, 80%);
+  max-width: 80%;
+}
+
+.user-comment-form-bubble textarea {
+  width: 100%;
+  margin-bottom: 10px;
+  resize: vertical;
+
+  background: rgba(17, 17, 17, 0.16);
+  color: #111;
+  border: 1px solid rgba(17, 17, 17, 0.22);
+}
+
+.user-comment-form-actions {
+  justify-content: flex-end;
+}
+
+.user-comment-form-actions button {
+  width: auto;
+  margin-bottom: 0;
+  padding: 9px 14px;
+}
+
+#mykolaWithdrawAdviceButton {
+  background: transparent;
+  color: #6b1f1f;
+  padding: 9px 0;
+  margin: 0;
+  width: auto;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#mykolaWithdrawAdviceButton:hover {
+  background: transparent;
+  color: #3f1111;
+}
+
+@media (max-width: 600px) {
+  .user-comment-form-bubble {
+    width: 100%;
+    max-width: calc(100vw - 62px);
+  }
+
+  .user-comment-form-actions {
     flex-wrap: wrap;
   }
 }
