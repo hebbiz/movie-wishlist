@@ -1902,6 +1902,7 @@ async function updateMyRecommendation(movieId, comment) {
     .from("recommendations")
     .update({ comment })
     .eq("id", recommendation.id)
+    .eq("user_id", currentUser.id)
     .select(`
       id,
       movie_id,
@@ -1918,10 +1919,10 @@ async function updateMyRecommendation(movieId, comment) {
         type
       )
     `)
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    alert("Помилка оновлення поради\n\n" + error.message);
+  if (error || !data) {
+    alert("Помилка оновлення поради\n\n" + (error?.message || "Пораду не знайдено."));
     return false;
   }
 
