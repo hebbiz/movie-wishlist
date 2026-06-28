@@ -300,3 +300,12 @@ using (
       )
   )
 );
+
+-- Add policy for users to updated their recommendations 
+
+create policy "Users can update own recommendations"
+on public.recommendations
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
