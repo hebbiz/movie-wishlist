@@ -93,6 +93,7 @@ let movieRecommendationCounts = {};
 let movieRecommendationDetails = {};
 let activeRecommendationStack = [];
 let activeRecommendationStackOffset = 0;
+let isRecommendationStackInteracting = false;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -2667,10 +2668,7 @@ function addMykolaRecommendationCards(recommendations) {
 }
 
 function renderMykolaRecommendationStack(shouldScroll = false) {
-
-  // Запам'ятовуємо поточну позицію чату
-  const previousScrollTop = mykolaChat.scrollTop;
-  const previousScrollHeight = mykolaChat.scrollHeight;
+  const previousScrollY = window.scrollY;
 
   const oldRow = document.querySelector(".mykola-card-stack-row");
 
@@ -2710,22 +2708,15 @@ function renderMykolaRecommendationStack(shouldScroll = false) {
   attachMykolaStackHandlers(stack);
 
   if (shouldScroll) {
-
     scrollMykolaChatToBottom();
-
   } else {
-
-    // Відновлюємо scroll після перерендеру
     requestAnimationFrame(() => {
-      const newScrollHeight = mykolaChat.scrollHeight;
-
-      mykolaChat.scrollTop =
-        previousScrollTop +
-        (newScrollHeight - previousScrollHeight);
+      window.scrollTo({
+        top: previousScrollY,
+        behavior: "auto",
+      });
     });
-
   }
-
 }
 
 function attachMykolaStackHandlers(stack) {
@@ -2767,6 +2758,7 @@ function attachMykolaStackHandlers(stack) {
     setTimeout(() => {
       topCard.classList.remove("is-settling");
       topCard.style.transform = "";
+      isRecommendationStackInteracting = false;
     }, 420);
   }
 
@@ -2805,23 +2797,28 @@ function attachMykolaStackHandlers(stack) {
       thirdCard.style.opacity = "0.92";
     }
 
-    setTimeout(() => {
-      topCard.style.visibility = "hidden";
+      setTimeout(() => {
+        topCard.style.visibility = "hidden";
 
-      activeRecommendationStackOffset =
-        direction > 0
-          ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
-          : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
-            activeRecommendationStack.length;
+        activeRecommendationStackOffset =
+          direction > 0
+            ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
+            : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
+                activeRecommendationStack.length;
 
-      requestAnimationFrame(() => {
-        renderMykolaRecommendationStack(false);
-      });
-    }, 420);
-  }
+        requestAnimationFrame(() => {
+          renderMykolaRecommendationStack(false);
+
+          setTimeout(() => {
+            isRecommendationStackInteracting = false;
+          }, 250);
+        });
+      }, 420);
+    }
 
   topCard.addEventListener("pointerdown", (event) => {
     event.preventDefault();
+    isRecommendationStackInteracting = true;
 
     isDragging = true;
     startX = event.clientX;
@@ -4436,6 +4433,8 @@ function wireMykolaActionButtons() {
 }
 
 function scrollMykolaChatToBottom() {
+  if (isRecommendationStackInteracting) return;
+
   const bottomOffset = 72;
 
   const targetPosition =
