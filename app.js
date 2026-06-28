@@ -1832,11 +1832,11 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
 
       <div class="mykola-comment-form-actions">
         <button id="mykolaUpdateAdviceButton" type="button">
-          Зберегти зміни
+          Зберегти
         </button>
 
         <button id="mykolaWithdrawAdviceButton" type="button">
-          Відкликати пораду
+          Відкликати
         </button>
       </div>
     </div>
