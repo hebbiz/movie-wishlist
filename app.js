@@ -4240,16 +4240,20 @@ function openMovieFromMykola(movie) {
 }
 
 function addMykolaFollowUpActions() {
+  document
+    .querySelectorAll("#mykolaFollowUpActions")
+    .forEach((item) => item.remove());
+
   const row = document.createElement("div");
   row.className = "mykola-actions";
   row.id = "mykolaFollowUpActions";
 
   row.innerHTML = `
-    <button id="mykolaAnotherButton" type="button">
+    <button type="button" data-mykola-action="another">
       Порадь ще
     </button>
 
-    <button id="mykolaThanksButton" type="button">
+    <button type="button" data-mykola-action="thanks">
       Дякую, хороший смак
     </button>
   `;
@@ -4259,49 +4263,42 @@ function addMykolaFollowUpActions() {
 
   scrollMykolaChatToBottom();
 
-  document.getElementById("mykolaAnotherButton").addEventListener("click", () => {
+  const anotherButton = row.querySelector('[data-mykola-action="another"]');
+  const thanksButton = row.querySelector('[data-mykola-action="thanks"]');
+
+  anotherButton.addEventListener("click", () => {
     row.remove();
 
     addUserBubble("Порадь ще");
 
-      runWithMykolaThinking(() => {
-        addMykolaBubble(getRandomItem(mykolaAnotherReplies));
+    runWithMykolaThinking(() => {
+      addMykolaBubble(getRandomItem(mykolaAnotherReplies));
 
-        runWithMykolaThinking(() => {
+      runWithMykolaThinking(() => {
         recommendMykolaMovie();
-        }, 2200);
-      }, 1600);
+      }, 2200);
+    }, 1600);
   });
 
-  document.getElementById("mykolaThanksButton").addEventListener("click", () => {
-  row.remove();
+  thanksButton.addEventListener("click", () => {
+    row.remove();
 
     addUserBubble("Дякую, хороший смак");
 
     runWithMykolaThinking(() => {
-
       const showGif = Math.random() < MYKOLA_GIF_CHANCE;
 
       if (showGif) {
-
         addMykolaBubble("Хороший смак я схвалюю.");
-
         finishMykolaConversation();
 
         setTimeout(() => {
           addMykolaGif();
         }, 1200);
-
       } else {
-
-        addMykolaBubble(
-          getRandomItem(mykolaThankYouReplies)
-        );
-
+        addMykolaBubble(getRandomItem(mykolaThankYouReplies));
         finishMykolaConversation();
-
       }
-
     }, 1800);
   });
 }
