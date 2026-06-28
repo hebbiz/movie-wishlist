@@ -1650,9 +1650,6 @@ input[readonly],
 .user-comment-form-bubble {
   width: min(520px, 80%);
   max-width: 80%;
-
-  background: #242424;
-  color: #f4f4f4;
 }
 
 .user-comment-form-bubble textarea {
@@ -1962,6 +1959,17 @@ input[readonly],
 .user-bubble {
   background: #d6b25e;
   color: #111;
+}
+
+.user-bubble.user-comment-form-bubble {
+  background: #242424;
+  color: #f4f4f4;
+}
+
+.user-bubble.user-comment-form-bubble textarea {
+  background: #0f0f0f;
+  color: #f4f4f4;
+  border: 1px solid #333;
 }
 
 .mykola-actions {
