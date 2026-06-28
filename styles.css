@@ -1578,6 +1578,13 @@ input[readonly],
   transform: translateX(0) translateY(-3px) scale(1.005);
 }
 
+#mykolaChat,
+.mykola-card-stack-row,
+.mykola-card-stack,
+.mykola-stack-card {
+  overflow-anchor: none;
+}
+
 @media (max-width: 600px) {
   .mykola-card-stack-row {
     margin-left: 0;
