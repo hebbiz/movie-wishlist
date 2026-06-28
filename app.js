@@ -2661,6 +2661,11 @@ function addMykolaRecommendationCards(recommendations) {
 }
 
 function renderMykolaRecommendationStack(shouldScroll = false) {
+
+  // Запам'ятовуємо поточну позицію чату
+  const previousScrollTop = mykolaChat.scrollTop;
+  const previousScrollHeight = mykolaChat.scrollHeight;
+
   const oldRow = document.querySelector(".mykola-card-stack-row");
 
   if (oldRow) {
@@ -2699,8 +2704,22 @@ function renderMykolaRecommendationStack(shouldScroll = false) {
   attachMykolaStackHandlers(stack);
 
   if (shouldScroll) {
+
     scrollMykolaChatToBottom();
+
+  } else {
+
+    // Відновлюємо scroll після перерендеру
+    requestAnimationFrame(() => {
+      const newScrollHeight = mykolaChat.scrollHeight;
+
+      mykolaChat.scrollTop =
+        previousScrollTop +
+        (newScrollHeight - previousScrollHeight);
+    });
+
   }
+
 }
 
 function attachMykolaStackHandlers(stack) {
