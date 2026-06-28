@@ -78,6 +78,7 @@ let isShowingImdbResults = false;
 let currentProfile = null;
 let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
+let mykolaMode = "main";
 let savedMainMykolaChatHtml = null;
 let currentUser = null;
 let currentRole = null;
@@ -2366,6 +2367,7 @@ function resetMykolaRecommendationFlow() {
 
 function openMykolaAdviceContextView() {
   saveMainMykolaContext();
+  mykolaMode = "advice";
 
   mainView.classList.remove("active");
   groupSettingsView.classList.remove("active");
@@ -4275,6 +4277,7 @@ function addMykolaFollowUpActions() {
 }
 
 function resetMykolaChat() {
+  mykolaMode = "main";
   savedMainMykolaChatHtml = null;
   
   mykolaChat.innerHTML = `
@@ -4318,10 +4321,12 @@ function clearMykolaFinishedState() {
 }
 
 function saveMainMykolaContext() {
+  if (mykolaMode !== "main") return;
   savedMainMykolaChatHtml = mykolaChat.innerHTML;
 }
 
 function openMykolaView() {
+  mykolaMode = "main";
   mainView.classList.remove("active");
   groupSettingsView.classList.remove("active");
   groupFormView.classList.remove("active");
