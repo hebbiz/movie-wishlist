@@ -1789,6 +1789,179 @@ function toggleMyAdviceCard(movieId, button) {
   wrapper.appendChild(card);
 }
 
+function openMyAdviceEditFlow(movieId) {
+  const movie = movies.find((item) => item.movie_id === movieId);
+  const recommendation = getCurrentUserRecommendation(movieId);
+
+  if (!movie || !recommendation) {
+    alert("Пораду не знайдено.");
+    return;
+  }
+
+  openMykolaContextView();
+  resetMykolaRecommendationFlow();
+
+  addUserBubble(`Змінити мою пораду: ${movie.title}`);
+
+  runWithMykolaThinking(() => {
+    addMykolaBubble(
+      getRandomItem([
+        "Бачу вашу попередню пораду. Переписувати історію — справа серйозна.",
+        "Знайшов вашу картку. Внесемо правки акуратно, без архівного вандалізму.",
+        "Ось ваша порада. Можна уточнити формулювання, посилити аргумент або просто зробити її менш загадковою.",
+      ])
+    );
+
+    showMykolaEditRecommendationForm(movieId, recommendation.comment || "");
+  }, 900);
+}
+
+function showMykolaEditRecommendationForm(movieId, currentComment = "") {
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+  row.id = "mykolaEditRecommendationForm";
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-bubble mykola-comment-form-bubble">
+      <textarea
+        id="mykolaEditRecommendationInput"
+        placeholder="Оновіть вашу пораду..."
+      >${escapeHtml(currentComment)}</textarea>
+
+      <div class="mykola-comment-form-actions">
+        <button id="mykolaUpdateAdviceButton" type="button">
+          Зберегти зміни
+        </button>
+
+        <button id="mykolaWithdrawAdviceButton" type="button">
+          Відкликати пораду
+        </button>
+      </div>
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+
+  scrollMykolaChatToBottom();
+
+  document
+    .getElementById("mykolaUpdateAdviceButton")
+    .addEventListener("click", async () => {
+      const comment = document
+        .getElementById("mykolaEditRecommendationInput")
+        .value
+        .trim();
+
+      const success = await updateMyRecommendation(movieId, comment || null);
+
+      if (!success) return;
+
+      row.remove();
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble("Зміни внесено. Картка знову виглядає пристойно.");
+      }, 800);
+    });
+
+  document
+    .getElementById("mykolaWithdrawAdviceButton")
+    .addEventListener("click", async () => {
+      const confirmed = confirm("Відкликати вашу пораду?");
+
+      if (!confirmed) return;
+
+      const success = await withdrawMyRecommendation(movieId);
+
+      if (!success) return;
+
+      row.remove();
+
+      runWithMykolaThinking(() => {
+        addMykolaBubble("Пораду відкликано. Архів зробив вигляд, що нічого не бачив.");
+      }, 800);
+    });
+}
+
+async function updateMyRecommendation(movieId, comment) {
+  const recommendation = getCurrentUserRecommendation(movieId);
+
+  if (!recommendation) {
+    alert("Пораду не знайдено.");
+    return false;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("recommendations")
+    .update({ comment })
+    .eq("id", recommendation.id)
+    .select(`
+      id,
+      movie_id,
+      comment,
+      context_group_id,
+      created_at,
+      profiles!recommendations_user_id_fkey (
+        display_name,
+        email
+      ),
+      groups!recommendations_context_group_id_fkey (
+        id,
+        name,
+        type
+      )
+    `)
+    .single();
+
+  if (error) {
+    alert("Помилка оновлення поради\n\n" + error.message);
+    return false;
+  }
+
+  currentUserRecommendations = currentUserRecommendations.map((item) => {
+    return item.id === recommendation.id ? data : item;
+  });
+
+  await loadMovieRecommendationCounts();
+  await loadMovieRecommendationDetails();
+  applyMykolaDailyRecommendation();
+  applySearchAndFilters();
+
+  return true;
+}
+
+async function withdrawMyRecommendation(movieId) {
+  const recommendation = getCurrentUserRecommendation(movieId);
+
+  if (!recommendation) {
+    alert("Пораду не знайдено.");
+    return false;
+  }
+
+  const { error } = await supabaseClient
+    .from("recommendations")
+    .delete()
+    .eq("id", recommendation.id);
+
+  if (error) {
+    alert("Помилка відкликання поради\n\n" + error.message);
+    return false;
+  }
+
+  currentUserRecommendations = currentUserRecommendations.filter((item) => {
+    return item.id !== recommendation.id;
+  });
+
+  await loadMovieRecommendationCounts();
+  await loadMovieRecommendationDetails();
+  applyMykolaDailyRecommendation();
+  applySearchAndFilters();
+
+  return true;
+}
+
 async function loadMovieRecommendationCounts() {
   movieRecommendationCounts = {};
 
@@ -2685,54 +2858,6 @@ function attachMykolaStackHandlers(stack) {
   });
 }
 
-async function unrecommendMovie(movieId, button) {
-  if (!currentUser) {
-    return;
-  }
-
-  const recommendation = currentUserRecommendations.find((item) => {
-    return item.movie_id === movieId;
-  });
-
-  if (!recommendation) {
-    return;
-  }
-
-  button.disabled = true;
-
-  const { error } = await supabaseClient
-    .from("recommendations")
-    .delete()
-    .eq("id", recommendation.id);
-
-  if (error) {
-    button.disabled = false;
-
-    alert(
-      "Помилка відкликання рекомендації\n\n" +
-      "Message: " + error.message
-    );
-
-    return;
-  }
-
-  currentUserRecommendations =
-    currentUserRecommendations.filter((item) => {
-      return item.id !== recommendation.id;
-    });
-
-  button.classList.remove("recommended");
-  button.classList.remove("has-comment");
-  button.querySelector(".recommend-text").textContent = "Порадити";
-
-  button.disabled = false;
-
-  await loadMovieRecommendationCounts();
-  await loadMovieRecommendationDetails();
-  applyMykolaDailyRecommendation();
-  applySearchAndFilters();
-}
-
 function renderImdbSearchResults(list) {
   isShowingImdbResults = true;
 
@@ -2903,6 +3028,26 @@ moviesGrid.addEventListener("click", (event) => {
   const movieId = button.dataset.openMykolaContext;
 
   openMykolaRecommendationContext(movieId);
+});
+
+moviesGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-edit-my-advice]");
+
+  if (!button) return;
+
+  event.stopPropagation();
+
+  const movieId = button.dataset.editMyAdvice;
+
+  document.querySelectorAll(".my-advice-card").forEach((card) => {
+    card.remove();
+  });
+
+  document.querySelectorAll(".card.has-open-advice").forEach((card) => {
+    card.classList.remove("has-open-advice");
+  });
+
+  openMyAdviceEditFlow(movieId);
 });
 
 function attachPurchaseLinkHandlers() {
