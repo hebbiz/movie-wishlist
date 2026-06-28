@@ -1650,6 +1650,9 @@ input[readonly],
 .user-comment-form-bubble {
   width: min(520px, 80%);
   max-width: 80%;
+
+  background: #242424;
+  color: #f4f4f4;
 }
 
 .user-comment-form-bubble textarea {
@@ -1657,9 +1660,9 @@ input[readonly],
   margin-bottom: 10px;
   resize: vertical;
 
-  background: rgba(17, 17, 17, 0.16);
-  color: #111;
-  border: 1px solid rgba(17, 17, 17, 0.22);
+  background: #0f0f0f;
+  color: #f4f4f4;
+  border: 1px solid #333;
 }
 
 .user-comment-form-actions {
@@ -1674,7 +1677,7 @@ input[readonly],
 
 #mykolaWithdrawAdviceButton {
   background: transparent;
-  color: #6b1f1f;
+  color: #ff9b9b;
   padding: 9px 0;
   margin: 0;
   width: auto;
@@ -1684,7 +1687,7 @@ input[readonly],
 
 #mykolaWithdrawAdviceButton:hover {
   background: transparent;
-  color: #3f1111;
+  color: #ffb3b3;
 }
 
 @media (max-width: 600px) {
