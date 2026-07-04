@@ -1843,6 +1843,11 @@ body {
   color: rgba(214, 178, 94, 0.45);
 }
 
+.mykola-archive-mark-label .icon {
+    font-size: 0.9em;
+    opacity: .65;
+}
+
 .mykola-archive-mark-text {
   font-size: 0.82rem;
   line-height: 1.35;
