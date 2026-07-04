@@ -2822,7 +2822,7 @@ function createMykolaRecommendationCard(item, index, total) {
     ${archiveMark ? `
       <div class="mykola-archive-mark">
         <div class="mykola-archive-mark-label">
-          ✎ Позначка архіву
+          ✎ М. для архіву:
         </div>
 
         <div class="mykola-archive-mark-text">
