@@ -2104,7 +2104,7 @@ function renderRecommendationContext(movieId) {
       data-recommend-context-menu="${movieId}"
     >
       <div class="recommend-context-title">
-        Рекомендують
+        ${recommendations.length === 1 ? "Порада" : "Поради"}
       </div>
 
       <div class="recommend-context-names">
@@ -2117,7 +2117,7 @@ function renderRecommendationContext(movieId) {
         data-open-mykola-context="${movieId}"
         aria-label="Всі поради"
       >
-        Всі поради <span class="mykola-hint-arrow">→</span>
+        Дивитись <span class="mykola-hint-arrow">→</span>
       </button>
     </div>
   `;
