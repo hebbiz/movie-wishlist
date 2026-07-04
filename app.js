@@ -2513,23 +2513,28 @@ function createRatingSliderHtml(value = 10) {
         <span class="rating-label-ok">Не погано</span>
         <span>Шедевр</span>
       </div>
-
-      <div class="mykola-rating-note">
-        ${escapeHtml(getMykolaRatingInterpretation(value))}
-      </div>
     </div>
   `;
 }
 
 function wireRatingSlider(row) {
   const slider = row.querySelector(".mykola-rating-slider");
-  const note = row.querySelector(".mykola-rating-note");
 
-  if (!slider || !note) return;
+  if (!slider) return;
 
-  slider.addEventListener("input", () => {
-    note.textContent = getMykolaRatingInterpretation(slider.value);
-  });
+  function updateSliderProgress() {
+    const min = Number(slider.min);
+    const max = Number(slider.max);
+    const value = Number(slider.value);
+
+    const progress = ((value - min) / (max - min)) * 100;
+
+    slider.style.setProperty("--rating-progress", `${progress}%`);
+  }
+
+  slider.addEventListener("input", updateSliderProgress);
+
+  updateSliderProgress();
 }
 
 function getRatingValue(row) {
