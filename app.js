@@ -1705,6 +1705,7 @@ async function loadCurrentUserRecommendations() {
     .select(`
       id,
       movie_id,
+      user_id,
       comment,
       rating_value,
       context_group_id,
@@ -1781,6 +1782,8 @@ function toggleMyAdviceCard(movieId, button) {
     recommendation.comment ||
     "Коментар ще не додано.";
 
+  const archiveMark = getMykolaArchiveMark(recommendation);
+
   const card = document.createElement("div");
   card.className = "my-advice-card";
   card.dataset.myAdviceCard = movieId;
@@ -1799,6 +1802,18 @@ function toggleMyAdviceCard(movieId, button) {
     <div class="my-advice-card-comment">
       ${escapeHtml(comment)}
     </div>
+
+    ${archiveMark ? `
+      <div class="mykola-archive-mark">
+        <div class="mykola-archive-mark-label">
+          <span class="icon">✎</span> М. для архіву:
+        </div>
+
+        <div class="mykola-archive-mark-text">
+          ${escapeHtml(archiveMark)}
+        </div>
+      </div>
+    ` : ""}
 
     <button
       type="button"
@@ -1954,6 +1969,7 @@ async function updateMyRecommendation(movieId, comment, ratingValue = null) {
     .select(`
       id,
       movie_id,
+      user_id,
       comment,
       rating_value,
       context_group_id,
@@ -2352,6 +2368,7 @@ button.classList.toggle("has-comment", !!comment);
     .select(`
       id,
       movie_id,
+      user_id,
       comment,
       rating_value,
       context_group_id,
@@ -2630,7 +2647,7 @@ function getMykolaArchiveMark(item) {
   const variants = mykolaArchiveMarkScale[rating - 1];
 
   const seed =
-    `${item.movie_id}:${item.user_id}:${item.rating_value}:${item.comment || ""}:archive-mark`;
+    `${item.movie_id}:${item.user_id || currentUser?.id || "current-user"}:${item.rating_value}:${item.comment || ""}:archive-mark`;
 
   return getSeededItem(variants, seed);
 }
