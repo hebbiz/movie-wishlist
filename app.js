@@ -2086,7 +2086,7 @@ function renderRecommendationContext(movieId) {
         item.profiles?.email ||
         "Користувач";
 
-      const commentIcon = item.comment
+      const commentIcon = item.comment || item.is_mykola
         ? `<span class="recommend-context-comment-icon" title="Є коментар"></span>`
         : "";
 
@@ -2234,7 +2234,7 @@ function renderMovies(list) {
                   <button
                     type="button"
                     class="recommend-count-button has-recommendations ${
-                      (movieRecommendationDetails[movie.movie_id] || []).some((item) => item.comment)
+                      (movieRecommendationDetails[movie.movie_id] || []).some((item) => item.comment || item.is_mykola)
                         ? "has-comments"
                         : ""
                     }"
@@ -2413,6 +2413,7 @@ const mykolaRecommendationAcceptReplies = [
   "Прийнято. Пораду внесемо до картотеки після погодження кафедрою. Залишите короткий коментар для інших?",
   "Добре. Картотека поповнюється. Додасте кілька слів, щоб інші розуміли, чому фільм варто переглянути?",
   "Зафіксовано майже офіційно. Бракує лише вашого короткого пояснення. Додасте пару слів?",
+  "Фіксую вашу пораду. Але картка без пояснення — це як титри без фільму. Додасте коментар?",
 ];
 
 function addMykolaRecommendationActions(movieId, button) {
@@ -2595,6 +2596,21 @@ function rotateRecommendationStack(items, offset) {
   });
 }
 
+const mykolaDailyRecommendationComments = [
+  "Моя порада на сьогодні. Не гарантія геніальності, але дуже близько.",
+  "Сьогодні картотека схиляється саме до цього варіанту.",
+  "Микола радить. Архів погоджується мовчазним кивком.",
+  "Добрий кандидат на вечір, коли хочеться не просто щось увімкнути.",
+  "Не наполягаю. Просто залишаю це тут із дуже серйозним виглядом.",
+];
+
+function getMykolaDailyComment(item) {
+  const seed = `${item.movie_id || ""}:${getTodayKey()}:mykola-comment`;
+  const index = hashString(seed) % mykolaDailyRecommendationComments.length;
+
+  return mykolaDailyRecommendationComments[index];
+}
+
 function createMykolaRecommendationCard(item, index, total) {
   const name =
     item.profiles?.display_name ||
@@ -2607,7 +2623,9 @@ function createMykolaRecommendationCard(item, index, total) {
 
   const comment =
     item.comment ||
-    "Без коментаря. Лаконічно, але підозріло.";
+    (item.is_mykola
+      ? getMykolaDailyComment(item)
+      : "Без коментаря. Лаконічно, але підозріло.");
 
   const card = document.createElement("div");
   card.className = `mykola-recommendation-card mykola-stack-card mykola-stack-card-${index}`;
