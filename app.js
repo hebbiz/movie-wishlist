@@ -1685,6 +1685,7 @@ async function loadCurrentUserRecommendations() {
       id,
       movie_id,
       comment,
+      rating_value,
       context_group_id,
       created_at,
       profiles!recommendations_user_id_fkey (
@@ -2016,6 +2017,7 @@ async function loadMovieRecommendationDetails() {
       user_id,
       context_group_id,
       comment,
+      rating_value,
       created_at,
       profiles!recommendations_user_id_fkey (
         display_name,
@@ -2272,7 +2274,8 @@ function renderMovies(list) {
 async function recommendMovie(
   movieId,
   button,
-  comment = null
+  comment = null,
+  ratingValue = null
 ) {
   if (!currentUser) {
     alert("Потрібно увійти в акаунт.");
@@ -2302,11 +2305,13 @@ button.classList.toggle("has-comment", !!comment);
       user_id: currentUser.id,
       context_group_id: currentGroupId,
       comment,
+      rating_value: ratingValue,
     })
     .select(`
       id,
       movie_id,
       comment,
+      rating_value,
       context_group_id,
       created_at,
       profiles!recommendations_user_id_fkey (
@@ -2461,6 +2466,77 @@ function addMykolaRecommendationActions(movieId, button) {
     });
 }
 
+const mykolaRatingScale = [
+  "Архів радить забути, але архів усе памʼятає.",
+  "Це було важко захищати навіть Миколі.",
+  "Є фільми, які просто існують. Це один із них.",
+  "Щось у цьому є, але краще не питати що саме.",
+  "Не провал, але й не подія.",
+  "Фільм працює на мінімальних обертах.",
+  "Місцями живий. Місцями прикидається.",
+  "Непогано, але без фанфар.",
+  "Є за що зачепитись.",
+  "Міцний середняк із людським обличчям.",
+  "Не Скорсезе, але фільм працює на глядача.",
+  "Добре зроблено. Без зайвої магії, але чесно.",
+  "Сильна робота, яку не соромно радити.",
+  "Це вже територія дуже доброго кіно.",
+  "Фільм явно знає, що робить.",
+  "Майже великий. Місцями — без майже.",
+  "Серйозна заявка на полицю памʼяті.",
+  "Дуже близько до шедевра.",
+  "Микола знімає капелюха. Повільно.",
+  "Шедевр. Картотека аплодує стоячи.",
+];
+
+function getMykolaRatingInterpretation(value) {
+  const safeValue = Math.max(1, Math.min(20, Number(value) || 10));
+  const index = Math.round(safeValue) - 1;
+
+  return mykolaRatingScale[index];
+}
+
+function createRatingSliderHtml(value = 10) {
+  return `
+    <div class="mykola-rating-block">
+      <input
+        type="range"
+        class="mykola-rating-slider"
+        min="1"
+        max="20"
+        step="0.5"
+        value="${value}"
+      >
+
+      <div class="mykola-rating-labels">
+        <span>Ну, таке…</span>
+        <span class="rating-label-ok">Не погано</span>
+        <span>Шедевр</span>
+      </div>
+
+      <div class="mykola-rating-note">
+        ${escapeHtml(getMykolaRatingInterpretation(value))}
+      </div>
+    </div>
+  `;
+}
+
+function wireRatingSlider(row) {
+  const slider = row.querySelector(".mykola-rating-slider");
+  const note = row.querySelector(".mykola-rating-note");
+
+  if (!slider || !note) return;
+
+  slider.addEventListener("input", () => {
+    note.textContent = getMykolaRatingInterpretation(slider.value);
+  });
+}
+
+function getRatingValue(row) {
+  const slider = row.querySelector(".mykola-rating-slider");
+  return slider ? Number(slider.value) : null;
+}
+
 function showMykolaRecommendationCommentForm(movieId, button) {
   const row = document.createElement("div");
   row.className = "user-message-row user-input-row";
@@ -2472,6 +2548,8 @@ function showMykolaRecommendationCommentForm(movieId, button) {
         id="mykolaRecommendationCommentInput"
         placeholder="Кілька слів для інших..."
       ></textarea>
+
+      ${createRatingSliderHtml(10)}
 
       <div class="mykola-comment-form-actions user-comment-form-actions">
         <button id="mykolaSaveCommentButton" type="button">
@@ -2494,6 +2572,8 @@ function showMykolaRecommendationCommentForm(movieId, button) {
 
   scrollMykolaChatToBottom();
 
+  wireRatingSlider(row);
+
   document
     .getElementById("mykolaSaveCommentButton")
     .addEventListener("click", async () => {
@@ -2507,7 +2587,9 @@ function showMykolaRecommendationCommentForm(movieId, button) {
         return;
       }
 
-      await recommendMovie(movieId, button, comment);
+      const ratingValue = getRatingValue(row);
+
+      await recommendMovie(movieId, button, comment, ratingValue);
 
       row.remove();
 
@@ -2519,7 +2601,8 @@ function showMykolaRecommendationCommentForm(movieId, button) {
   document
     .getElementById("mykolaCancelCommentButton")
     .addEventListener("click", async () => {
-      await recommendMovie(movieId, button);
+      const ratingValue = getRatingValue(row);
+      await recommendMovie(movieId, button, null, ratingValue);
 
       row.remove();
 
