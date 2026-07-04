@@ -2538,6 +2538,41 @@ function getMykolaRatingInterpretation(value) {
   return mykolaRatingScale[index];
 }
 
+function getMykolaArchiveMark(item) {
+  if (!item.rating_value) return null;
+
+  const rating = Number(item.rating_value);
+  const hasComment = !!item.comment?.trim();
+
+  if (rating >= 18) {
+    return hasComment
+      ? "Оцінка майже беззаперечна. Архів це помітив."
+      : "Оцінка говорить голосніше за коментар.";
+  }
+
+  if (rating >= 15) {
+    return "Схоже, цей фільм справді зачепив.";
+  }
+
+  if (rating >= 12) {
+    return hasComment
+      ? "Рекомендація впевнена, але без фанатизму."
+      : "Стримано, але прихильно.";
+  }
+
+  if (rating >= 9) {
+    return "Міцна середина. Архів не заперечує.";
+  }
+
+  if (rating >= 6) {
+    return hasComment
+      ? "Коментар, здається, рятує оцінку."
+      : "Порада є. Ентузіазм — помірний.";
+  }
+
+  return "Цікаво. Радить, але ніби з внутрішнім спротивом.";
+}
+
 function createRatingSliderHtml(value = 10) {
   return `
     <div class="mykola-rating-block">
@@ -2757,6 +2792,8 @@ function createMykolaRecommendationCard(item, index, total) {
       ? getMykolaDailyComment(item)
       : "Без коментаря. Лаконічно, але підозріло.");
 
+  const archiveMark = getMykolaArchiveMark(item);
+
   const card = document.createElement("div");
   card.className = `mykola-recommendation-card mykola-stack-card mykola-stack-card-${index}`;
 
@@ -2782,6 +2819,17 @@ function createMykolaRecommendationCard(item, index, total) {
     <div class="mykola-recommendation-card-comment">
       ${escapeHtml(comment)}
     </div>
+    ${archiveMark ? `
+      <div class="mykola-archive-mark">
+        <div class="mykola-archive-mark-label">
+          ✎ Позначка архіву
+        </div>
+
+        <div class="mykola-archive-mark-text">
+          ${escapeHtml(archiveMark)}
+        </div>
+      </div>
+    ` : ""}
   `;
 
   return card;
