@@ -298,7 +298,6 @@ using (
         r.user_id,
         r.context_group_id
       )
-  )
 );
 
 -- Add policy for users to updated their recommendations 
@@ -309,3 +308,20 @@ for update
 to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
+
+-- Add ratings column into recommendations
+
+alter table recommendations
+add column rating_value numeric(3,1);
+
+alter table recommendations
+add constraint recommendations_rating_value_check
+check (
+  rating_value is null
+  or (
+    rating_value >= 1
+    and rating_value <= 20
+  )
+);
+
+

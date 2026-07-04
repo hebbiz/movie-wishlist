@@ -1715,6 +1715,144 @@ body {
   }
 }
 
+.mykola-rating-block {
+  margin: 14px 0 16px;
+}
+
+.mykola-rating-slider {
+  --rating-progress: 47.36%;
+
+  width: 100%;
+  height: 28px;
+
+  padding: 0;
+  margin: 0;
+
+  border: none;
+  border-radius: 999px;
+
+  background: transparent;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  cursor: pointer;
+}
+
+/* Chrome / Safari */
+.mykola-rating-slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+
+  background: linear-gradient(
+    to right,
+    #d6b25e 0%,
+    #d6b25e var(--rating-progress),
+    rgba(255,255,255,0.18) var(--rating-progress),
+    rgba(255,255,255,0.18) 100%
+  );
+}
+
+.mykola-rating-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+
+  width: 18px;
+  height: 18px;
+
+  margin-top: -7px;
+
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.28);
+
+  background: #d6b25e;
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.45),
+    0 0 0 4px rgba(214,178,94,0.12);
+}
+
+/* Firefox */
+.mykola-rating-slider::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+}
+
+.mykola-rating-slider::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: #d6b25e;
+}
+
+.mykola-rating-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.28);
+
+  background: #d6b25e;
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.35),
+    0 0 0 4px rgba(214,178,94,0.12);
+}
+
+.mykola-rating-labels {
+  position: relative;
+
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: 4px;
+
+  font-size: 0.72rem;
+  color: rgba(244,244,244,0.72);
+}
+
+.rating-label-ok {
+  position: absolute;
+  left: 36%;
+  transform: translateX(-50%);
+}
+
+.mykola-rating-note {
+  display: none;
+}
+
+.mykola-archive-mark {
+  margin-top: 14px;
+  margin-left: auto;
+  max-width: 78%;
+
+  color: rgba(214, 178, 94, 0.72);
+
+  font-style: italic;
+  text-align: right;
+}
+
+.mykola-archive-mark-label {
+  margin-bottom: 3px;
+
+  font-size: 0.62rem;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  text-transform: none;
+
+  color: rgba(214, 178, 94, 0.45);
+}
+
+.mykola-archive-mark-label .icon {
+    font-size: 0.9em;
+    opacity: .65;
+}
+
+.mykola-archive-mark-text {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
