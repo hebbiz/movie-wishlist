@@ -2746,12 +2746,24 @@ function attachMykolaStackHandlers(stack) {
 
   const threshold = 80;
 
+  function lockHorizontalOverflow() {
+    document.body.style.overflowX = "hidden";
+    document.documentElement.style.overflowX = "hidden";
+  }
+
+  function unlockHorizontalOverflow() {
+    document.body.style.overflowX = "";
+    document.documentElement.style.overflowX = "";
+  }
+
   function resetCard() {
     topCard.classList.remove("is-dragging");
     topCard.classList.add("is-settling");
 
     topCard.style.transform = "translateX(0) translateY(0) rotate(0deg) scale(1)";
     topCard.style.opacity = "1";
+
+    unlockHorizontalOverflow();
 
     if (secondCard) {
       secondCard.style.transform = "";
@@ -2774,7 +2786,7 @@ function attachMykolaStackHandlers(stack) {
     topCard.classList.remove("is-dragging");
     topCard.classList.add("is-settling");
 
-    const exitX = direction > 0 ? 620 : -620;
+    const exitX = direction > 0 ? 360 : -360;
     const rotate = direction > 0 ? 10 : -10;
 
     topCard.style.transform = `
@@ -2808,6 +2820,8 @@ function attachMykolaStackHandlers(stack) {
       setTimeout(() => {
         topCard.style.visibility = "hidden";
 
+        unlockHorizontalOverflow();
+
         activeRecommendationStackOffset =
           direction > 0
             ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
@@ -2822,13 +2836,16 @@ function attachMykolaStackHandlers(stack) {
           }, 250);
         });
       }, 420);
-    }
+  }
 
   topCard.addEventListener("pointerdown", (event) => {
     event.preventDefault();
-    isRecommendationStackInteracting = true;
 
+    lockHorizontalOverflow();
+
+    isRecommendationStackInteracting = true;
     isDragging = true;
+
     startX = event.clientX;
     startY = event.clientY;
     currentX = 0;
@@ -2892,6 +2909,13 @@ function attachMykolaStackHandlers(stack) {
   });
 
   topCard.addEventListener("pointercancel", () => {
+    if (!isDragging) return;
+
+    isDragging = false;
+    resetCard();
+  });
+  
+  topCard.addEventListener("lostpointercapture", () => {
     if (!isDragging) return;
 
     isDragging = false;
