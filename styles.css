@@ -1715,6 +1715,41 @@ body {
   }
 }
 
+.mykola-rating-block {
+  margin-top: 12px;
+  margin: 12px 0 14px;
+}
+
+.mykola-rating-slider {
+  width: 100%;
+  padding: 0;
+  margin: 4px 0 0;
+  border: none;
+  background: transparent;
+}
+
+.mykola-rating-labels {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+.rating-label-ok {
+  position: absolute;
+  left: 36%;
+  transform: translateX(-50%);
+}
+
+.mykola-rating-note {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  opacity: 0.85;
+  font-style: italic;
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
