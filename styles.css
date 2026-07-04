@@ -1501,6 +1501,20 @@ input[readonly],
   transform: translateY(2px);
 }
 
+html,
+body {
+  overscroll-behavior-x: none;
+  overflow-x: hidden;
+}
+
+.mykola-card-stack,
+.mykola-stack-card {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .mykola-card-stack-row {
   margin-left: 50px;
   margin-top: 12px;
@@ -1510,7 +1524,7 @@ input[readonly],
   position: relative;
   width: 540px;
   padding-bottom: 52px;
-  touch-action: pan-y;
+  touch-action: none;
 }
 
 .mykola-stack-card {
