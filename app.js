@@ -2573,6 +2573,79 @@ function getMykolaArchiveMark(item) {
   return "Цікаво. Радить, але ніби з внутрішнім спротивом.";
 }
 
+function getAverageRecommendationRating(recommendations) {
+  const ratings = recommendations
+    .filter((item) => !item.is_mykola)
+    .map((item) => Number(item.rating_value))
+    .filter((value) => Number.isFinite(value));
+
+  if (!ratings.length) return null;
+
+  const total = ratings.reduce((sum, value) => sum + value, 0);
+
+  return total / ratings.length;
+}
+
+function getMykolaArchiveMoodLabel(averageRating) {
+  if (!averageRating) return null;
+
+  if (averageRating >= 18) return "майже одностайне захоплення";
+  if (averageRating >= 15) return "явна прихильність";
+  if (averageRating >= 12) return "стримано позитивний настрій";
+  if (averageRating >= 9) return "обережна підтримка";
+  if (averageRating >= 6) return "помірний ентузіазм";
+
+  return "суперечлива прихильність";
+}
+
+function getMykolaArchiveSummary(averageRating) {
+  if (!averageRating) return null;
+
+  if (averageRating >= 18) {
+    return "Картотека майже не вагається: фільм явно залишив сильний слід.";
+  }
+
+  if (averageRating >= 15) {
+    return "Загальний настрій картотеки прихильний. Тут радять не з ввічливості.";
+  }
+
+  if (averageRating >= 12) {
+    return "Фільм радять упевнено, але без фанатизму. Архів це поважає.";
+  }
+
+  if (averageRating >= 9) {
+    return "Картотека ставиться до фільму стримано, але без заперечень.";
+  }
+
+  if (averageRating >= 6) {
+    return "Рекомендації є, але ентузіазм помірний. Микола занотував обережно.";
+  }
+
+  return "Цікава ситуація: фільм радять, хоча оцінки звучать майже з внутрішнім спротивом.";
+}
+
+function addMykolaArchiveSummaryBubble(recommendations) {
+  const averageRating = getAverageRecommendationRating(recommendations);
+
+  if (!averageRating) return;
+
+  const moodLabel = getMykolaArchiveMoodLabel(averageRating);
+  const summary = getMykolaArchiveSummary(averageRating);
+
+  addMykolaBubble(`
+    <div class="mykola-archive-summary">
+      <div class="mykola-archive-summary-label">
+        Загальний настрій картотеки:
+        <span>${escapeHtml(moodLabel)}</span>
+      </div>
+
+      <div class="mykola-archive-summary-text">
+        ${escapeHtml(summary)}
+      </div>
+    </div>
+  `);
+}
+
 function createRatingSliderHtml(value = 10) {
   return `
     <div class="mykola-rating-block">
@@ -2743,13 +2816,17 @@ function openMykolaRecommendationContext(movieId) {
   runWithMykolaThinking(() => {
     addMykolaBubble(getMykolaArchiveIntro(recommendations.length));
 
-    setTimeout(() => {
-      addMykolaMovieBubble(movie);
-
       setTimeout(() => {
-        addMykolaRecommendationCards(recommendations);
+        addMykolaArchiveSummaryBubble(recommendations);
+
+        setTimeout(() => {
+          addMykolaMovieBubble(movie);
+
+          setTimeout(() => {
+            addMykolaRecommendationCards(recommendations);
+          }, 450);
+        }, 450);
       }, 450);
-    }, 450);
   }, 1000);
 }
 
