@@ -1820,6 +1820,34 @@ body {
   display: none;
 }
 
+.mykola-archive-mark {
+  margin-top: 14px;
+  margin-left: auto;
+  max-width: 78%;
+
+  color: rgba(214, 178, 94, 0.72);
+
+  font-style: italic;
+  text-align: right;
+}
+
+.mykola-archive-mark-label {
+  margin-bottom: 4px;
+
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+
+  color: rgba(214, 178, 94, 0.5);
+}
+
+.mykola-archive-mark-text {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
