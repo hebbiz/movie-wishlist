@@ -2576,6 +2576,13 @@ function getMykolaArchiveMark(item) {
 function getAverageRecommendationRating(recommendations) {
   const ratings = recommendations
     .filter((item) => !item.is_mykola)
+    .filter((item) => {
+      return (
+        item.rating_value !== null &&
+        item.rating_value !== undefined &&
+        item.rating_value !== ""
+      );
+    })
     .map((item) => Number(item.rating_value))
     .filter((value) => Number.isFinite(value));
 
