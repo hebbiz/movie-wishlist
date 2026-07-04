@@ -1853,6 +1853,26 @@ body {
   line-height: 1.35;
 }
 
+.mykola-archive-summary {
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.mykola-archive-summary-label {
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: rgba(244, 244, 244, 0.62);
+}
+
+.mykola-archive-summary-label span {
+  color: #d6b25e;
+}
+
+.mykola-archive-summary-text {
+  color: rgba(244, 244, 244, 0.9);
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
