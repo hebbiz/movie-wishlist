@@ -1741,7 +1741,7 @@ body {
 
 /* Chrome / Safari */
 .mykola-rating-slider::-webkit-slider-runnable-track {
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
 
   background: linear-gradient(
@@ -1756,46 +1756,46 @@ body {
 .mykola-rating-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
 
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 
-  margin-top: -8px;
+  margin-top: -7px;
 
   border-radius: 50%;
-  border: 2px solid #111;
+  border: 1px solid rgba(255,255,255,0.28);
 
   background: #d6b25e;
 
   box-shadow:
     0 2px 8px rgba(0,0,0,0.45),
-    0 0 0 1px rgba(255,255,255,0.18);
+    0 0 0 4px rgba(214,178,94,0.12);
 }
 
 /* Firefox */
 .mykola-rating-slider::-moz-range-track {
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
   background: rgba(255,255,255,0.18);
 }
 
 .mykola-rating-slider::-moz-range-progress {
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
   background: #d6b25e;
 }
 
 .mykola-rating-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 
   border-radius: 50%;
-  border: 2px solid #111;
+  border: 2px solid rgba(255,255,255,0.28);
 
   background: #d6b25e;
 
   box-shadow:
-    0 2px 8px rgba(0,0,0,0.45),
-    0 0 0 1px rgba(255,255,255,0.18);
+    0 2px 8px rgba(0,0,0,0.35),
+    0 0 0 4px rgba(214,178,94,0.12);
 }
 
 .mykola-rating-labels {
