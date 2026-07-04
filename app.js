@@ -1582,6 +1582,27 @@ function pickMykolaDailyRecommendationMovie() {
 }
 
 function applyMykolaDailyRecommendation() {
+  // прибираємо попередню тимчасову пораду Миколи
+  Object.keys(movieRecommendationDetails).forEach((movieId) => {
+    movieRecommendationDetails[movieId] =
+      movieRecommendationDetails[movieId].filter((item) => !item.is_mykola);
+
+    if (movieRecommendationDetails[movieId].length === 0) {
+      delete movieRecommendationDetails[movieId];
+    }
+  });
+
+  Object.keys(movieRecommendationCounts).forEach((movieId) => {
+    const realCount =
+      movieRecommendationDetails[movieId]?.length || 0;
+
+    if (realCount > 0) {
+      movieRecommendationCounts[movieId] = realCount;
+    } else {
+      delete movieRecommendationCounts[movieId];
+    }
+  });
+
   const movie = pickMykolaDailyRecommendationMovie();
 
   if (!movie?.movie_id) return;
@@ -1597,7 +1618,7 @@ function applyMykolaDailyRecommendation() {
     movie_id: movie.movie_id,
     user_id: "mykola",
     context_group_id: currentGroupId,
-    created_at: new Date().toISOString(),
+    created_at: `${getTodayKey()}T00:00:00.000Z`,
     profiles: {
       display_name: "Микола",
       email: "mykola@movie-wishlist.local",
@@ -1817,11 +1838,19 @@ function openMyAdviceEditFlow(movieId) {
       ])
     );
 
-    showMykolaEditRecommendationForm(movieId, recommendation.comment || "");
+    showMykolaEditRecommendationForm(
+      movieId,
+      recommendation.comment || "",
+      recommendation.rating_value || 10
+    );
   }, 900);
 }
 
-function showMykolaEditRecommendationForm(movieId, currentComment = "") {
+function showMykolaEditRecommendationForm(
+  movieId,
+  currentComment = "",
+  currentRatingValue = 10
+) {
   const row = document.createElement("div");
   row.className = "user-message-row user-input-row";
   row.id = "mykolaEditRecommendationForm";
@@ -1832,6 +1861,8 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
         id="mykolaEditRecommendationInput"
         placeholder="Оновіть вашу пораду..."
       >${escapeHtml(currentComment)}</textarea>
+
+      ${createRatingSliderHtml(currentRatingValue)}
 
       <div class="mykola-comment-form-actions user-comment-form-actions">
         <button id="mykolaUpdateAdviceButton" type="button">
@@ -1853,6 +1884,7 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
   mykolaChat.insertBefore(row, actions);
 
   scrollMykolaChatToBottom();
+  wireRatingSlider(row);
 
   document
     .getElementById("mykolaUpdateAdviceButton")
@@ -1862,7 +1894,13 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
         .value
         .trim();
 
-      const success = await updateMyRecommendation(movieId, comment || null);
+      const ratingValue = getRatingValue(row);
+
+      const success = await updateMyRecommendation(
+        movieId,
+        comment || null,
+        ratingValue
+      );
 
       if (!success) return;
 
@@ -1892,7 +1930,7 @@ function showMykolaEditRecommendationForm(movieId, currentComment = "") {
     });
 }
 
-async function updateMyRecommendation(movieId, comment) {
+async function updateMyRecommendation(movieId, comment, ratingValue = null) {
   const { data: recommendation, error: lookupError } = await supabaseClient
     .from("recommendations")
     .select("id")
@@ -1907,13 +1945,17 @@ async function updateMyRecommendation(movieId, comment) {
 
   const { data, error } = await supabaseClient
     .from("recommendations")
-    .update({ comment })
+    .update({
+      comment,
+      rating_value: ratingValue,
+    })
     .eq("id", recommendation.id)
     .eq("user_id", currentUser.id)
     .select(`
       id,
       movie_id,
       comment,
+      rating_value,
       context_group_id,
       created_at,
       profiles!recommendations_user_id_fkey (
