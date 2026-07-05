@@ -30,3 +30,28 @@ create table advice_rooms (
 
 create index advice_rooms_lookup_idx
 on advice_rooms(group_id,movie_id,status);
+
+-- Add advice_room_participants table
+
+create table advice_room_participants (
+
+    id uuid primary key default gen_random_uuid(),
+
+    room_id uuid not null
+        references advice_rooms(id)
+        on delete cascade,
+
+    user_id uuid not null
+        references auth.users(id),
+
+    status text not null
+        check (status in ('active','finished','left')),
+
+    joined_at timestamptz not null default now(),
+
+    finished_at timestamptz,
+
+    last_seen_at timestamptz not null default now()
+);
+
+-- 
