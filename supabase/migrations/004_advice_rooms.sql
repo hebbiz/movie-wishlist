@@ -154,3 +154,9 @@ begin
     v_room.expires_at;
 end;
 $$;
+
+-- Lets authenticated user use RPC function to enter advice room
+
+grant execute on function enter_advice_room(uuid, uuid) to authenticated;
+
+
