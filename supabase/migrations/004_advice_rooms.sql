@@ -67,4 +67,90 @@ is 'Temporary collaborative recommendation room';
 comment on table advice_room_participants
 is 'Participants of collaborative recommendation rooms';
 
--- 
+-- Add RPC function - Enter advice room
+
+create or replace function enter_advice_room(
+  p_movie_id uuid,
+  p_group_id uuid
+)
+returns table (
+  room_id uuid,
+  room_status text,
+  participant_count integer,
+  expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_room advice_rooms;
+  v_count integer;
+begin
+  select *
+  into v_room
+  from advice_rooms
+  where movie_id = p_movie_id
+    and group_id = p_group_id
+    and status in ('waiting', 'discussion')
+    and expires_at > now()
+  order by opened_at desc
+  limit 1;
+
+  if v_room.id is null then
+    insert into advice_rooms (
+      movie_id,
+      group_id,
+      created_by,
+      status,
+      expires_at
+    )
+    values (
+      p_movie_id,
+      p_group_id,
+      auth.uid(),
+      'waiting',
+      now() + interval '1 minute'
+    )
+    returning * into v_room;
+  end if;
+
+  insert into advice_room_participants (
+    room_id,
+    user_id,
+    status,
+    last_seen_at
+  )
+  values (
+    v_room.id,
+    auth.uid(),
+    'active',
+    now()
+  )
+  on conflict (room_id, user_id)
+  do update set
+    status = 'active',
+    last_seen_at = now(),
+    finished_at = null;
+
+  select count(*)
+  into v_count
+  from advice_room_participants
+  where room_id = v_room.id
+    and status = 'active';
+
+  if v_count > 1 and v_room.status = 'waiting' then
+    update advice_rooms
+    set status = 'discussion'
+    where id = v_room.id
+    returning * into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status,
+    v_count,
+    v_room.expires_at;
+end;
+$$;
