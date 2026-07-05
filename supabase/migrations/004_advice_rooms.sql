@@ -58,3 +58,13 @@ create table advice_room_participants (
 
 create unique index advice_room_unique_user
 on advice_room_participants(room_id,user_id);
+
+-- Comment on tables
+
+comment on table advice_rooms
+is 'Temporary collaborative recommendation room';
+
+comment on table advice_room_participants
+is 'Participants of collaborative recommendation rooms';
+
+-- 
