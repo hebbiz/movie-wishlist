@@ -54,4 +54,7 @@ create table advice_room_participants (
     last_seen_at timestamptz not null default now()
 );
 
--- 
+-- Ensure no duplicates in advice_room_participants
+
+create unique index advice_room_unique_user
+on advice_room_participants(room_id,user_id);
