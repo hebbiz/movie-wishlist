@@ -25,3 +25,8 @@ create table advice_rooms (
 
     result_generated boolean not null default false
 );
+
+-- Add index to advice_rooms
+
+create index advice_rooms_lookup_idx
+on advice_rooms(group_id,movie_id,status);
