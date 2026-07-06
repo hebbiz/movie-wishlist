@@ -159,4 +159,19 @@ $$;
 
 grant execute on function enter_advice_room(uuid, uuid) to authenticated;
 
+-- Add policy to read advice room
+
+create policy advice_rooms_select
+on advice_rooms
+for select
+to authenticated
+using (
+    exists (
+        select 1
+        from group_members gm
+        where gm.group_id = advice_rooms.group_id
+          and gm.user_id = auth.uid()
+    )
+);
+
 
