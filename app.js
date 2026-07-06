@@ -2481,10 +2481,10 @@ async function openMykolaRecommendationFlow(movieId, button) {
   const room = roomData?.[0];
 
   debugAdviceRoom(
-  `Кімната відкрита
+    `Кімната відкрита
 
-  Статус: ${room.room_status}
-  Учасників: ${room.participant_count}`
+  Статус: ${room.result_room_status}
+  Учасників: ${room.result_participant_count}`
   );
 
   openMykolaAdviceContextView();
