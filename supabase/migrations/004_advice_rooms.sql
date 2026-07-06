@@ -200,10 +200,10 @@ create function public.enter_advice_room(
   p_group_id uuid
 )
 returns table (
-  room_id uuid,
-  room_status text,
-  participant_count integer,
-  room_expires_at timestamptz
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_room_expires_at timestamptz
 )
 language plpgsql
 security definer
@@ -253,7 +253,7 @@ begin
     'active',
     now()
   )
-  on conflict on constraint advice_room_participants_room_id_user_id_key
+  on conflict (room_id, user_id)
   do update set
     status = 'active',
     last_seen_at = now(),
