@@ -174,4 +174,20 @@ using (
     )
 );
 
+-- Add policy to read advice room participants
+
+create policy advice_room_participants_select
+on advice_room_participants
+for select
+to authenticated
+using (
+    exists (
+        select 1
+        from advice_rooms r
+        join group_members gm
+          on gm.group_id = r.group_id
+        where r.id = advice_room_participants.room_id
+          and gm.user_id = auth.uid()
+    )
+);
 
