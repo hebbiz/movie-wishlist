@@ -66,6 +66,7 @@ const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
 const backFromMykolaButton = document.getElementById("backFromMykolaButton");
 const mykolaChat = document.getElementById("mykolaChat");
+const DEBUG_ADVICE_ROOM = true;
 
 let movies = [];
 let editingMovieId = null;
@@ -97,6 +98,11 @@ let isRecommendationStackInteracting = false;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
+
+function debugAdviceRoom(message) {
+  if (!DEBUG_ADVICE_ROOM) return;
+  alert(message);
+}
 
 function showAppLoader(message = null) {
   const loaderText =
@@ -2451,13 +2457,35 @@ function openMykolaAdviceContextView() {
   });
 }
 
-function openMykolaRecommendationFlow(movieId, button) {
+async function openMykolaRecommendationFlow(movieId, button) {
   const movie = movies.find((item) => item.movie_id === movieId);
 
   if (!movie) {
     alert("Фільм не знайдено.");
     return;
   }
+
+  const { data: roomData, error: roomError } =
+    await supabaseClient.rpc("enter_advice_room", {
+      p_movie_id: movieId,
+      p_group_id: currentGroupId,
+    });
+
+  if (roomError) {
+    debugAdviceRoom(
+      `Помилка кімнати:\n${roomError.message}`
+    );
+    return;
+  }
+
+  const room = roomData?.[0];
+
+  debugAdviceRoom(
+  `Кімната відкрита
+
+  Статус: ${room.room_status}
+  Учасників: ${room.participant_count}`
+  );
 
   openMykolaAdviceContextView();
 
