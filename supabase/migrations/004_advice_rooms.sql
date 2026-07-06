@@ -253,7 +253,7 @@ begin
     'active',
     now()
   )
-  on conflict (room_id, user_id)
+  on conflict on constraint advice_room_participants_room_id_user_id_key
   do update set
     status = 'active',
     last_seen_at = now(),
