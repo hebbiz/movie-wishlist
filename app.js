@@ -2513,6 +2513,19 @@ function startAdviceRoomPolling() {
   }, 3000);
 }
 
+async function leaveActiveAdviceRoom() {
+  if (!activeAdviceRoom?.result_room_id) return;
+
+  const roomId = activeAdviceRoom.result_room_id;
+
+  activeAdviceRoom = null;
+  stopAdviceRoomPolling();
+
+  await supabaseClient.rpc("leave_advice_room", {
+    p_room_id: roomId,
+  });
+}
+
 async function openMykolaRecommendationFlow(movieId, button) {
   const movie = movies.find((item) => item.movie_id === movieId);
 
@@ -2597,6 +2610,7 @@ function addMykolaRecommendationActions(movieId, button) {
       addUserBubble("Ні, пізніше");
 
       await recommendMovie(movieId, button);
+      await leaveActiveAdviceRoom();
 
       runWithMykolaThinking(() => {
         addMykolaBubble("Зафіксовано. Можете повертатись до списку.");
@@ -3026,6 +3040,7 @@ function showMykolaRecommendationCommentForm(movieId, button) {
       const ratingValue = getRatingValue(row);
 
       await recommendMovie(movieId, button, comment, ratingValue);
+      await leaveActiveAdviceRoom();
 
       row.remove();
 
@@ -4973,9 +4988,8 @@ openMykolaButton.addEventListener("click", () => {
   openMykolaView();
 });
 
-backFromMykolaButton.addEventListener("click", () => {
-  stopAdviceRoomPolling();
-  activeAdviceRoom = null;
+backFromMykolaButton.addEventListener("click", async () => {
+  await leaveActiveAdviceRoom();
 
   mykolaView.classList.remove("active");
 
