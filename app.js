@@ -100,6 +100,7 @@ let pendingInviteRole = null;
 let isLoggingOut = false;
 let activeAdviceRoom = null;
 let adviceRoomPollingTimer = null;
+let adviceRoomResultShown = false;
 
 function debugAdviceRoom(message) {
   if (!DEBUG_ADVICE_ROOM) return;
@@ -2491,20 +2492,54 @@ function stopAdviceRoomPolling() {
 async function refreshAdviceRoomState() {
   if (!activeAdviceRoom?.result_room_id) return;
 
-  const { data, error } = await supabaseClient
-    .from("advice_room_participants")
-    .select("status")
-    .eq("room_id", activeAdviceRoom.result_room_id)
-    .eq("status", "active");
+  const { data, error } = await supabaseClient.rpc("get_advice_room_state", {
+    p_room_id: activeAdviceRoom.result_room_id,
+  });
 
   if (error) {
     console.warn("Advice room polling error:", error);
     return;
   }
 
-  activeAdviceRoom.result_participant_count = data?.length || 1;
+  const roomState = data?.[0];
+
+  if (!roomState) return;
+
+  activeAdviceRoom = {
+    ...activeAdviceRoom,
+    ...roomState,
+  };
 
   renderAdviceRoomIndicator(activeAdviceRoom);
+
+  if (
+    roomState.result_is_complete &&
+    !adviceRoomResultShown
+  ) {
+    adviceRoomResultShown = true;
+    stopAdviceRoomPolling();
+
+    await loadMovieRecommendationDetails();
+    applyMykolaDailyRecommendation();
+
+    renderAdviceRoomIndicator(null);
+
+    runWithMykolaThinking(() => {
+      const movieId = activeAdviceRoom.result_movie_id;
+        const otherRecommendations = movieRecommendationDetails[movieId] || [];
+        const myRecommendation = getCurrentUserRecommendation(movieId);
+
+      const recommendations = myRecommendation
+        ? [myRecommendation, ...otherRecommendations]
+        : otherRecommendations;
+
+      addMykolaArchiveSummaryBubble(recommendations, movieId);
+
+      setTimeout(() => {
+        addMykolaBubble("Думки зафіксовано. Кафедра знову жива.");
+      }, 700);
+    }, 900);
+  }
 }
 
 function startAdviceRoomPolling() {
@@ -2532,61 +2567,20 @@ async function leaveActiveAdviceRoom() {
 async function finishActiveAdviceRoom() {
   if (!activeAdviceRoom?.result_room_id) return null;
 
-  await refreshAdviceRoomState();
-
-  const roomId = activeAdviceRoom.result_room_id;
-  const participantCountBeforeFinish =
-    activeAdviceRoom.result_participant_count || 1;
-
-  activeAdviceRoom = null;
-  stopAdviceRoomPolling();
-  renderAdviceRoomIndicator(null);
-
-  const { data, error } = await supabaseClient.rpc("finish_advice_room", {
-    p_room_id: roomId,
+  const { error } = await supabaseClient.rpc("finish_advice_room", {
+    p_room_id: activeAdviceRoom.result_room_id,
   });
 
   if (error) {
     console.warn("Finish advice room error:", error);
-    return {
-      result_participant_count: participantCountBeforeFinish,
-    };
+    return null;
   }
 
-  const result = Array.isArray(data) ? data[0] : data;
+  activeAdviceRoom.user_has_finished = true;
 
-  return {
-    ...(result || {}),
-    result_participant_count: Math.max(
-      result?.result_participant_count || 1,
-      participantCountBeforeFinish
-    ),
-  };
-}
+  await refreshAdviceRoomState();
 
-function handleAdviceRoomResult(roomResult, movieId) {
-  if (!roomResult || roomResult.result_participant_count <= 1) {
-    return false;
-  }
-
-  const otherRecommendations = movieRecommendationDetails[movieId] || [];
-  const myRecommendation = getCurrentUserRecommendation(movieId);
-
-  const recommendations = myRecommendation
-    ? [myRecommendation, ...otherRecommendations]
-    : otherRecommendations;
-
-  setTimeout(() => {
-    addMykolaArchiveSummaryBubble(recommendations, movieId);
-
-    setTimeout(() => {
-      addMykolaBubble(
-        "Думки зафіксовано. Кафедра знову жива."
-      );
-    }, 700);
-  }, 1200);
-
-  return true;
+  return activeAdviceRoom;
 }
 
 async function openMykolaRecommendationFlow(movieId, button) {
@@ -2612,7 +2606,17 @@ async function openMykolaRecommendationFlow(movieId, button) {
 
   const room = roomData?.[0];
 
-  activeAdviceRoom = room;
+  if (!room) {
+    alert("Кімнату порад не вдалося створити.");
+    return;
+  }
+
+  activeAdviceRoom = {
+    ...room,
+    result_movie_id: movieId,
+    user_has_finished: false,
+  };
+  adviceRoomResultShown = false;
 
   debugAdviceRoom(
     `Кімната відкрита
@@ -2678,13 +2682,19 @@ function addMykolaRecommendationActions(movieId, button) {
 
       const roomResult = await finishActiveAdviceRoom();
 
-      const hasRoomResult = handleAdviceRoomResult(roomResult, movieId);
+      if (roomResult?.result_is_complete) {
+        return;
+      }
+
+      const shouldWaitForRoom =
+        roomResult?.result_participant_count > 1 &&
+        !roomResult?.result_is_complete;
 
       runWithMykolaThinking(() => {
         addMykolaBubble(
-          hasRoomResult
-            ? "Кімнату закрито. Підбиваю підсумки."
-            : "Зафіксовано. Можете повертатись до списку."
+        shouldWaitForRoom
+          ? "Вашу пораду зафіксовано. Чекаю, поки інші завершать голосування."
+          : "Зафіксовано. Можете повертатись до списку."
         );
       }, 900);
     });
@@ -3117,14 +3127,21 @@ function showMykolaRecommendationCommentForm(movieId, button) {
 
       const roomResult = await finishActiveAdviceRoom();
 
-      row.remove();
+      if (roomResult?.result_is_complete) {
+        row.remove();
+        return;
+      }
 
-      const hasRoomResult = handleAdviceRoomResult(roomResult, movieId);
+      const shouldWaitForRoom =
+        roomResult?.result_participant_count > 1 &&
+        !roomResult?.result_is_complete;
+
+      row.remove();
 
       runWithMykolaThinking(() => {
         addMykolaBubble(
-          hasRoomResult
-            ? "Кімнату закрито. Підбиваю підсумки."
+          shouldWaitForRoom
+            ? "Вашу пораду збережено. Чекаю, поки інші завершать голосування."
             : "Занотував. Тепер це вже не просто рекомендація, а майже джерело."
         );
       }, 900);
@@ -3140,14 +3157,21 @@ function showMykolaRecommendationCommentForm(movieId, button) {
       
       const roomResult = await finishActiveAdviceRoom();
 
-      row.remove();
+      if (roomResult?.result_is_complete) {
+        row.remove();
+        return;
+      }
 
-      const hasRoomResult = handleAdviceRoomResult(roomResult, movieId);
+      const shouldWaitForRoom =
+        roomResult?.result_participant_count > 1 &&
+        !roomResult?.result_is_complete;
+
+      row.remove();
 
       runWithMykolaThinking(() => {
         addMykolaBubble(
-          hasRoomResult
-            ? "Кімнату закрито. Підбиваю підсумки."
+          shouldWaitForRoom
+            ? "Вашу пораду зафіксовано. Чекаю, поки інші завершать голосування."
             : "Зафіксовано. Можете повертатись до списку."
         );
       }, 900);
