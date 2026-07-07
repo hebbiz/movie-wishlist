@@ -66,7 +66,7 @@ const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
 const backFromMykolaButton = document.getElementById("backFromMykolaButton");
 const mykolaChat = document.getElementById("mykolaChat");
-const DEBUG_ADVICE_ROOM = true;
+const DEBUG_ADVICE_ROOM = false;
 
 let movies = [];
 let editingMovieId = null;
@@ -98,6 +98,7 @@ let isRecommendationStackInteracting = false;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
+let activeAdviceRoom = null;
 
 function debugAdviceRoom(message) {
   if (!DEBUG_ADVICE_ROOM) return;
@@ -2457,6 +2458,26 @@ function openMykolaAdviceContextView() {
   });
 }
 
+function renderAdviceRoomIndicator(room) {
+  const existing = document.getElementById("adviceRoomIndicator");
+
+  if (existing) {
+    existing.remove();
+  }
+
+  if (!room) return;
+
+  const indicator = document.createElement("div");
+  indicator.id = "adviceRoomIndicator";
+  indicator.className = "advice-room-indicator";
+
+  indicator.innerHTML = `
+    <span>У кімнаті порад: ${room.result_participant_count}</span>
+  `;
+
+  mykolaChat.prepend(indicator);
+}
+
 async function openMykolaRecommendationFlow(movieId, button) {
   const movie = movies.find((item) => item.movie_id === movieId);
 
@@ -2480,6 +2501,8 @@ async function openMykolaRecommendationFlow(movieId, button) {
 
   const room = roomData?.[0];
 
+  activeAdviceRoom = room;
+
   debugAdviceRoom(
     `Кімната відкрита
 
@@ -2490,6 +2513,8 @@ async function openMykolaRecommendationFlow(movieId, button) {
   openMykolaAdviceContextView();
 
   resetMykolaRecommendationFlow();
+
+  renderAdviceRoomIndicator(activeAdviceRoom);
 
   addUserBubble(`Раджу: ${movie.title}`);
 
