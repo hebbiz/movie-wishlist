@@ -2520,6 +2520,7 @@ async function leaveActiveAdviceRoom() {
 
   activeAdviceRoom = null;
   stopAdviceRoomPolling();
+  renderAdviceRoomIndicator(null);
 
   await supabaseClient.rpc("leave_advice_room", {
     p_room_id: roomId,
@@ -3054,6 +3055,7 @@ function showMykolaRecommendationCommentForm(movieId, button) {
     .addEventListener("click", async () => {
       const ratingValue = getRatingValue(row);
       await recommendMovie(movieId, button, null, ratingValue);
+      await leaveActiveAdviceRoom();
 
       row.remove();
 
