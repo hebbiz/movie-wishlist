@@ -99,6 +99,7 @@ let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
 let activeAdviceRoom = null;
+let adviceRoomPollingTimer = null;
 
 function debugAdviceRoom(message) {
   if (!DEBUG_ADVICE_ROOM) return;
@@ -2478,6 +2479,40 @@ function renderAdviceRoomIndicator(room) {
   mykolaChat.prepend(indicator);
 }
 
+function stopAdviceRoomPolling() {
+  if (adviceRoomPollingTimer) {
+    clearInterval(adviceRoomPollingTimer);
+    adviceRoomPollingTimer = null;
+  }
+}
+
+async function refreshAdviceRoomState() {
+  if (!activeAdviceRoom?.result_room_id) return;
+
+  const { data, error } = await supabaseClient
+    .from("advice_room_participants")
+    .select("status")
+    .eq("room_id", activeAdviceRoom.result_room_id)
+    .eq("status", "active");
+
+  if (error) {
+    console.warn("Advice room polling error:", error);
+    return;
+  }
+
+  activeAdviceRoom.result_participant_count = data?.length || 1;
+
+  renderAdviceRoomIndicator(activeAdviceRoom);
+}
+
+function startAdviceRoomPolling() {
+  stopAdviceRoomPolling();
+
+  adviceRoomPollingTimer = setInterval(() => {
+    refreshAdviceRoomState();
+  }, 3000);
+}
+
 async function openMykolaRecommendationFlow(movieId, button) {
   const movie = movies.find((item) => item.movie_id === movieId);
 
@@ -2515,6 +2550,7 @@ async function openMykolaRecommendationFlow(movieId, button) {
   resetMykolaRecommendationFlow();
 
   renderAdviceRoomIndicator(activeAdviceRoom);
+  startAdviceRoomPolling();
 
   addUserBubble(`Раджу: ${movie.title}`);
 
@@ -4938,6 +4974,8 @@ openMykolaButton.addEventListener("click", () => {
 });
 
 backFromMykolaButton.addEventListener("click", () => {
+  stopAdviceRoomPolling();
+  activeAdviceRoom = null;
 
   mykolaView.classList.remove("active");
 
