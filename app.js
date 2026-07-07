@@ -2345,16 +2345,16 @@ async function recommendMovie(
 ) {
   if (!currentUser) {
     alert("Потрібно увійти в акаунт.");
-    return;
+    return false;
   }
 
   if (!currentGroupId) {
     alert("Поточну групу не визначено.");
-    return;
+    return false;
   }
 
   if (hasCurrentUserRecommended(movieId)) {
-    return;
+    return false;
   }
 
   button.disabled = true;
@@ -2406,14 +2406,14 @@ button.classList.toggle("has-comment", !!comment);
       await loadMovieRecommendationDetails();
       applyMykolaDailyRecommendation();
       applySearchAndFilters();
-      return;
+      return false;
     }
 
     alert(
       "Помилка збереження рекомендації\n\n" +
       "Message: " + error.message
     );
-    return;
+    return false;
   }
 
   currentUserRecommendations.push(data);
@@ -2425,6 +2425,8 @@ button.classList.toggle("has-comment", !!comment);
   await loadMovieRecommendationDetails();
   applyMykolaDailyRecommendation();
   applySearchAndFilters();
+
+  return true;
 }
 
 function formatAdviceCountWord(count) {
@@ -2527,6 +2529,20 @@ async function leaveActiveAdviceRoom() {
   });
 }
 
+async function finishActiveAdviceRoom() {
+  if (!activeAdviceRoom?.result_room_id) return;
+
+  const roomId = activeAdviceRoom.result_room_id;
+
+  activeAdviceRoom = null;
+  stopAdviceRoomPolling();
+  renderAdviceRoomIndicator(null);
+
+  await supabaseClient.rpc("finish_advice_room", {
+    p_room_id: roomId,
+  });
+}
+
 async function openMykolaRecommendationFlow(movieId, button) {
   const movie = movies.find((item) => item.movie_id === movieId);
 
@@ -2610,8 +2626,11 @@ function addMykolaRecommendationActions(movieId, button) {
 
       addUserBubble("Ні, пізніше");
 
-      await recommendMovie(movieId, button);
-      await leaveActiveAdviceRoom();
+      const success = await recommendMovie(movieId, button);
+
+      if (!success) return;
+      
+      await finishActiveAdviceRoom();
 
       runWithMykolaThinking(() => {
         addMykolaBubble("Зафіксовано. Можете повертатись до списку.");
@@ -3040,8 +3059,11 @@ function showMykolaRecommendationCommentForm(movieId, button) {
 
       const ratingValue = getRatingValue(row);
 
-      await recommendMovie(movieId, button, comment, ratingValue);
-      await leaveActiveAdviceRoom();
+      const success = await recommendMovie(movieId, button, comment, ratingValue);
+
+      if (!success) return;
+
+      await finishActiveAdviceRoom();
 
       row.remove();
 
@@ -3054,8 +3076,11 @@ function showMykolaRecommendationCommentForm(movieId, button) {
     .getElementById("mykolaCancelCommentButton")
     .addEventListener("click", async () => {
       const ratingValue = getRatingValue(row);
-      await recommendMovie(movieId, button, null, ratingValue);
-      await leaveActiveAdviceRoom();
+      const success = await recommendMovie(movieId, button, null, ratingValue);
+      
+      if (!success) return;
+      
+      await finishActiveAdviceRoom();
 
       row.remove();
 
