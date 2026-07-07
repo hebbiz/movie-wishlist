@@ -319,3 +319,75 @@ begin
 end;
 $$;
 
+-- Change finish advice room function
+
+create or replace function public.finish_advice_room(p_room_id uuid)
+returns table (
+  result_room_id uuid,
+  result_participant_count int,
+  result_finished_count int,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update advice_room_participants arp
+  set
+    status = 'finished',
+    finished_at = now(),
+    last_seen_at = now()
+  where arp.room_id = p_room_id
+    and arp.user_id = auth.uid();
+
+  return query
+  select
+    ar.id as result_room_id,
+    count(arp.id)::int as result_participant_count,
+    count(arp.id) filter (where arp.status = 'finished')::int as result_finished_count,
+    (
+      count(arp.id) > 0
+      and count(arp.id) = count(arp.id) filter (where arp.status = 'finished')
+    ) as result_is_complete
+  from advice_rooms ar
+  join advice_room_participants arp
+    on arp.room_id = ar.id
+  where ar.id = p_room_id
+  group by ar.id;
+end;
+$$;
+
+-- Add function to monitor advice room state
+
+create or replace function public.get_advice_room_state(p_room_id uuid)
+returns table (
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count int,
+  result_finished_count int,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select
+    ar.id,
+    ar.status,
+    count(arp.id)::int,
+    count(arp.id) filter (where arp.status = 'finished')::int,
+    (
+      count(arp.id) > 0
+      and count(arp.id) = count(arp.id) filter (where arp.status = 'finished')
+    )
+  from advice_rooms ar
+  join advice_room_participants arp
+    on arp.room_id = ar.id
+  where ar.id = p_room_id
+  group by ar.id, ar.status;
+end;
+$$;
+
