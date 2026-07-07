@@ -1873,6 +1873,18 @@ body {
   color: rgba(244, 244, 244, 0.9);
 }
 
+.advice-room-indicator {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(214, 178, 94, 0.45);
+  border-radius: 999px;
+  color: #d6b25e;
+  background: rgba(214, 178, 94, 0.08);
+  font-size: 14px;
+  font-weight: 600;
+  width: fit-content;
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
