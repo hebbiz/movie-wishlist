@@ -2530,7 +2530,7 @@ async function leaveActiveAdviceRoom() {
 }
 
 async function finishActiveAdviceRoom() {
-  if (!activeAdviceRoom?.result_room_id) return;
+  if (!activeAdviceRoom?.result_room_id) return null;
 
   const roomId = activeAdviceRoom.result_room_id;
 
@@ -2538,9 +2538,16 @@ async function finishActiveAdviceRoom() {
   stopAdviceRoomPolling();
   renderAdviceRoomIndicator(null);
 
-  await supabaseClient.rpc("finish_advice_room", {
+  const { data, error } = await supabaseClient.rpc("finish_advice_room", {
     p_room_id: roomId,
   });
+
+  if (error) {
+    console.warn("Finish advice room error:", error);
+    return null;
+  }
+
+  return data?.[0] || null;
 }
 
 async function openMykolaRecommendationFlow(movieId, button) {
@@ -2629,11 +2636,15 @@ function addMykolaRecommendationActions(movieId, button) {
       const success = await recommendMovie(movieId, button);
 
       if (!success) return;
-      
-      await finishActiveAdviceRoom();
+
+      const roomResult = await finishActiveAdviceRoom();
 
       runWithMykolaThinking(() => {
-        addMykolaBubble("Зафіксовано. Можете повертатись до списку.");
+        addMykolaBubble(
+          roomResult?.result_participant_count > 1
+            ? "Пораду зафіксовано. Результат оцінювання оголошу, щойно погоджу з кафедрою, зачекайте буквально хвилинку"
+            : "Зафіксовано. Можете повертатись до списку."
+        );
       }, 900);
     });
 
@@ -3063,12 +3074,16 @@ function showMykolaRecommendationCommentForm(movieId, button) {
 
       if (!success) return;
 
-      await finishActiveAdviceRoom();
+      const roomResult = await finishActiveAdviceRoom();
 
       row.remove();
 
       runWithMykolaThinking(() => {
-        addMykolaBubble("Занотував. Тепер це вже не просто рекомендація, а майже джерело.");
+        addMykolaBubble(
+          roomResult?.result_participant_count > 1
+            ? "Пораду збережено. Кімнату закрито, кафедра готує висновок."
+            : "Занотував. Тепер це вже не просто рекомендація, а майже джерело."
+        );
       }, 900);
     });
 
@@ -3080,12 +3095,16 @@ function showMykolaRecommendationCommentForm(movieId, button) {
       
       if (!success) return;
       
-      await finishActiveAdviceRoom();
+      const roomResult = await finishActiveAdviceRoom();
 
       row.remove();
 
       runWithMykolaThinking(() => {
-        addMykolaBubble("Добре. Зафіксуємо без додаткових приміток.");
+        addMykolaBubble(
+          roomResult?.result_participant_count > 1
+            ? "Пораду збережено. Кімнату закрито, кафедра готує висновок."
+            : "Занотував. Тепер це вже не просто рекомендація, а майже джерело."
+        );
       }, 900);
     });
 }
