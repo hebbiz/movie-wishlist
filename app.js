@@ -2532,7 +2532,11 @@ async function leaveActiveAdviceRoom() {
 async function finishActiveAdviceRoom() {
   if (!activeAdviceRoom?.result_room_id) return null;
 
+  await refreshAdviceRoomState();
+
   const roomId = activeAdviceRoom.result_room_id;
+  const participantCountBeforeFinish =
+    activeAdviceRoom.result_participant_count || 1;
 
   activeAdviceRoom = null;
   stopAdviceRoomPolling();
@@ -2544,10 +2548,20 @@ async function finishActiveAdviceRoom() {
 
   if (error) {
     console.warn("Finish advice room error:", error);
-    return null;
+    return {
+      result_participant_count: participantCountBeforeFinish,
+    };
   }
 
-  return data?.[0] || null;
+  const result = Array.isArray(data) ? data[0] : data;
+
+  return {
+    ...(result || {}),
+    result_participant_count: Math.max(
+      result?.result_participant_count || 1,
+      participantCountBeforeFinish
+    ),
+  };
 }
 
 function handleAdviceRoomResult(roomResult, movieId) {
