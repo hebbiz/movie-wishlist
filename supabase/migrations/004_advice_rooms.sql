@@ -300,3 +300,22 @@ begin
 end;
 $$;
 
+-- Add finish advice room function
+
+create or replace function public.finish_advice_room(p_room_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update advice_room_participants arp
+  set
+    status = 'finished',
+    finished_at = now(),
+    last_seen_at = now()
+  where arp.room_id = p_room_id
+    and arp.user_id = auth.uid();
+end;
+$$;
+
