@@ -281,3 +281,22 @@ begin
 end;
 $$;
 
+-- Create function to leave advice room
+
+create or replace function public.leave_advice_room(p_room_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update advice_room_participants arp
+  set
+    status = 'left',
+    finished_at = now(),
+    last_seen_at = now()
+  where arp.room_id = p_room_id
+    and arp.user_id = auth.uid();
+end;
+$$;
+
