@@ -940,3 +940,73 @@ begin
 end;
 $function$;
 
+-- Update function get advice room status
+
+create or replace function public.get_advice_room_state(p_room_id uuid)
+returns table(
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_finished_count integer,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  v_room advice_rooms;
+  v_participant_count integer;
+  v_finished_count integer;
+  v_is_complete boolean;
+begin
+  select ar.*
+  into v_room
+  from advice_rooms ar
+  where ar.id = p_room_id;
+
+  if v_room.id is null then
+    return;
+  end if;
+
+  select
+    count(*) filter (
+      where arp.status in ('active', 'finished')
+    )::integer,
+    count(*) filter (
+      where arp.status = 'finished'
+    )::integer
+  into
+    v_participant_count,
+    v_finished_count
+  from advice_room_participants arp
+  where arp.room_id = p_room_id;
+
+  v_is_complete :=
+    v_participant_count > 0
+    and (
+      v_finished_count = v_participant_count
+      or v_room.expires_at <= now()
+      or v_room.status = 'closed'
+    );
+
+  if v_is_complete and v_room.status <> 'closed' then
+    update advice_rooms ar
+    set
+      status = 'closed',
+      closed_at = coalesce(ar.closed_at, now()),
+      result_generated = true
+    where ar.id = p_room_id
+    returning ar.* into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_participant_count,
+    v_finished_count,
+    v_is_complete;
+end;
+$function$;
+
