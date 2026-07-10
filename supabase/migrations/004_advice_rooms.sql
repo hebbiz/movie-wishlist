@@ -786,3 +786,98 @@ begin
 end;
 $function$;
 
+-- Change previous function
+
+create or replace function public.enter_advice_room(
+  p_movie_id uuid,
+  p_group_id uuid
+)
+returns table(
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_room_expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_room advice_rooms;
+  v_count integer;
+begin
+  select ar.*
+  into v_room
+  from advice_rooms ar
+  where ar.movie_id = p_movie_id
+    and ar.group_id = p_group_id
+    and (
+      ar.status = 'waiting'
+      or (
+        ar.status = 'discussion'
+        and ar.expires_at > now()
+      )
+    )
+  order by ar.opened_at desc
+  limit 1;
+
+  if v_room.id is null then
+    insert into advice_rooms (
+      movie_id,
+      group_id,
+      created_by,
+      status,
+      expires_at
+    )
+    values (
+      p_movie_id,
+      p_group_id,
+      auth.uid(),
+      'waiting',
+      'infinity'::timestamptz
+    )
+    returning * into v_room;
+  end if;
+
+  insert into advice_room_participants (
+    room_id,
+    user_id,
+    status,
+    last_seen_at
+  )
+  values (
+    v_room.id,
+    auth.uid(),
+    'active',
+    now()
+  )
+  on conflict (room_id, user_id)
+  do update set
+    status = 'active',
+    last_seen_at = now(),
+    finished_at = null;
+
+  select count(*)
+  into v_count
+  from advice_room_participants arp
+  where arp.room_id = v_room.id
+    and arp.status in ('active', 'finished');
+
+  if v_count > 1 and v_room.status = 'waiting' then
+    update advice_rooms ar
+    set
+      status = 'discussion',
+      expires_at = now() + interval '1 minute'
+    where ar.id = v_room.id
+    returning ar.* into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_count,
+    v_room.expires_at;
+end;
+$function$;
+
