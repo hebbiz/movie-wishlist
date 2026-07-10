@@ -2565,53 +2565,72 @@ async function leaveActiveAdviceRoom() {
 }
 
 async function finishActiveAdviceRoom() {
-  if (!activeAdviceRoom?.result_room_id) {
-    console.error("Finish advice room: active room is missing");
-    return null;
-  }
+  if (!activeAdviceRoom?.result_room_id) return null;
 
-  const roomId = activeAdviceRoom.result_room_id;
-
-  const { data, error } = await supabaseClient.rpc(
-    "finish_advice_room",
-    {
-      p_room_id: roomId,
-    }
-  );
+  const { data, error } = await supabaseClient.rpc("finish_advice_room", {
+    p_room_id: activeAdviceRoom.result_room_id,
+  });
 
   if (error) {
-    console.error("Finish advice room error:", error);
-
+    console.warn("Finish advice room error:", error);
     alert(
       "Не вдалося завершити участь у кімнаті порад.\n\n" +
       error.message
     );
-
     return null;
   }
 
-  const result = data?.[0];
+  const roomResult = data?.[0];
 
-  if (!result) {
-    console.error("Finish advice room returned no data:", data);
-
-    alert("Кімната порад не повернула результат завершення.");
+  if (!roomResult) {
+    console.warn("Finish advice room returned no data");
     return null;
   }
 
   activeAdviceRoom = {
     ...activeAdviceRoom,
-    ...result,
+    ...roomResult,
     user_has_finished: true,
   };
 
   renderAdviceRoomIndicator(activeAdviceRoom);
 
   if (
-    result.result_is_complete &&
+    roomResult.result_is_complete &&
     !adviceRoomResultShown
   ) {
-    await refreshAdviceRoomState();
+    adviceRoomResultShown = true;
+    stopAdviceRoomPolling();
+
+    await loadCurrentUserRecommendations();
+    await loadMovieRecommendationDetails();
+    applyMykolaDailyRecommendation();
+
+    renderAdviceRoomIndicator(null);
+
+    const movieId = activeAdviceRoom.result_movie_id;
+    const otherRecommendations =
+      movieRecommendationDetails[movieId] || [];
+
+    const myRecommendation =
+      getCurrentUserRecommendation(movieId);
+
+    const recommendations = myRecommendation
+      ? [myRecommendation, ...otherRecommendations]
+      : otherRecommendations;
+
+    runWithMykolaThinking(() => {
+      addMykolaArchiveSummaryBubble(
+        recommendations,
+        movieId
+      );
+
+      setTimeout(() => {
+        addMykolaBubble(
+          "Думки зафіксовано. Кафедра знову жива."
+        );
+      }, 700);
+    }, 900);
   }
 
   return activeAdviceRoom;
