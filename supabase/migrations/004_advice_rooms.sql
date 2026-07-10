@@ -881,3 +881,62 @@ begin
 end;
 $function$;
 
+-- Updated finish advice room function
+
+create or replace function public.finish_advice_room(p_room_id uuid)
+returns table(
+  result_room_id uuid,
+  result_participant_count integer,
+  result_finished_count integer,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_participant_count integer;
+  v_finished_count integer;
+  v_is_complete boolean;
+begin
+  update advice_room_participants
+  set
+    status = 'finished',
+    finished_at = now(),
+    last_seen_at = now()
+  where room_id = p_room_id
+    and user_id = auth.uid()
+    and status in ('active', 'finished');
+
+  select
+    count(*)::integer,
+    count(*) filter (
+      where status = 'finished'
+    )::integer
+  into
+    v_participant_count,
+    v_finished_count
+  from advice_room_participants
+  where room_id = p_room_id
+    and status in ('active', 'finished');
+
+  v_is_complete :=
+    v_participant_count > 0
+    and v_participant_count = v_finished_count;
+
+  if v_is_complete then
+    update advice_rooms
+    set status = 'summarizing'
+    where id = p_room_id
+      and status in ('waiting', 'discussion');
+  end if;
+
+  return query
+  select
+    p_room_id,
+    v_participant_count,
+    v_finished_count,
+    v_is_complete;
+end;
+$function$;
+
