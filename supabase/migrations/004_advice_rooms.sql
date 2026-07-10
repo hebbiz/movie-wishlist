@@ -391,3 +391,161 @@ begin
 end;
 $$;
 
+-- Helpers for server based advice room timer
+
+select
+  n.nspname as schema_name,
+  p.proname as function_name,
+  pg_get_functiondef(p.oid) as function_definition
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in (
+    'enter_advice_room',
+    'get_advice_room_state',
+    'finish_advice_room',
+    'leave_advice_room'
+  )
+order by p.proname;
+
+-- second SQL 
+
+select
+  table_name,
+  column_name,
+  data_type,
+  is_nullable,
+  column_default
+from information_schema.columns
+where table_schema = 'public'
+  and table_name like 'advice_room%'
+order by table_name, ordinal_position;
+
+-- Add SQL for advice room timer logic
+
+begin;
+
+alter table public.advice_rooms
+  alter column expires_at drop not null;
+
+create or replace function public.enter_advice_room(
+  p_movie_id uuid,
+  p_group_id uuid
+)
+returns table(
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_room_expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_room public.advice_rooms;
+  v_count integer;
+begin
+  /*
+    Шукаємо:
+
+    1. waiting-кімнату, в якій ще є активний учасник;
+    2. discussion-кімнату, таймер якої ще не завершився.
+  */
+  select ar.*
+  into v_room
+  from public.advice_rooms ar
+  where ar.movie_id = p_movie_id
+    and ar.group_id = p_group_id
+    and (
+      (
+        ar.status = 'waiting'
+        and exists (
+          select 1
+          from public.advice_room_participants arp
+          where arp.room_id = ar.id
+            and arp.status = 'active'
+        )
+      )
+      or
+      (
+        ar.status = 'discussion'
+        and ar.expires_at > now()
+      )
+    )
+  order by ar.opened_at desc
+  limit 1;
+
+  /*
+    Перший учасник створює waiting-кімнату без таймера.
+  */
+  if v_room.id is null then
+    insert into public.advice_rooms (
+      movie_id,
+      group_id,
+      created_by,
+      status,
+      expires_at
+    )
+    values (
+      p_movie_id,
+      p_group_id,
+      auth.uid(),
+      'waiting',
+      null
+    )
+    returning *
+    into v_room;
+  end if;
+
+  insert into public.advice_room_participants (
+    room_id,
+    user_id,
+    status,
+    last_seen_at
+  )
+  values (
+    v_room.id,
+    auth.uid(),
+    'active',
+    now()
+  )
+  on conflict (room_id, user_id)
+  do update set
+    status = 'active',
+    last_seen_at = now(),
+    finished_at = null;
+
+  select count(*)
+  into v_count
+  from public.advice_room_participants arp
+  where arp.room_id = v_room.id
+    and arp.status = 'active';
+
+  /*
+    Другий учасник запускає дискусію і хвилинний таймер.
+    Наступні учасники таймер не перезапускають.
+  */
+  if v_count > 1 and v_room.status = 'waiting' then
+    update public.advice_rooms ar
+    set
+      status = 'discussion',
+      opened_at = now(),
+      expires_at = now() + interval '1 minute'
+    where ar.id = v_room.id
+      and ar.status = 'waiting'
+    returning ar.*
+    into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_count,
+    v_room.expires_at;
+end;
+$function$;
+
+commit;
+
