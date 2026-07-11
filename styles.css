@@ -1890,6 +1890,7 @@ body {
   margin-top: 24px;
   padding-top: 8px;
   padding-bottom: 48px;
+  overflow: visible;
 }
 
 .advice-result-scale-line {
@@ -1917,9 +1918,6 @@ body {
   position: absolute;
   top: 18px;
 
-  width: min(190px, calc(100% - 16px));
-  max-width: calc(100% - 16px);
-
   color: rgba(255, 255, 255, 0.72);
 
   font-size: 11px;
@@ -1927,6 +1925,12 @@ body {
 
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.advice-result-scale-label-min,
+.advice-result-scale-label-max {
+  width: max-content;
+  max-width: min(190px, calc(100% - 16px));
 }
 
 .advice-result-scale-label.is-left {
@@ -1949,6 +1953,39 @@ body {
   max-width: calc(100% - 16px);
 
   color: rgba(255, 255, 255, 0.78);
+  text-align: center;
+}
+
+.advice-result-scale-label.is-floating {
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+/* За замовчуванням показуємо окремі підписи. */
+
+.advice-result-scale-label-combined.is-floating {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* При зіткненні ховаємо окремі підписи. */
+
+.advice-result-scale.uses-combined-label
+.advice-result-scale-label-min,
+.advice-result-scale.uses-combined-label
+.advice-result-scale-label-max {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* І показуємо об’єднаний підпис. */
+
+.advice-result-scale.uses-combined-label
+.advice-result-scale-label-combined.is-floating {
+  visibility: visible;
+  opacity: 1;
 }
 
 @media (max-width: 600px) {
@@ -1957,9 +1994,13 @@ body {
   }
 
   .advice-result-scale-label {
-    width: 44%;
-    max-width: 44%;
     font-size: 10px;
+  }
+
+  .advice-result-scale-label-min,
+  .advice-result-scale-label-max {
+    width: max-content;
+    max-width: 44%;
   }
 
   .advice-result-scale-label-combined {
@@ -1970,6 +2011,11 @@ body {
   .advice-result-scale-label-combined.is-center {
     width: 72%;
     max-width: 72%;
+  }
+
+  .advice-result-scale-label-combined.is-floating {
+    width: min(280px, calc(100% - 16px));
+    max-width: calc(100% - 16px);
   }
 }
 

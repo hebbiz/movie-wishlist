@@ -66,7 +66,6 @@ const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
 const backFromMykolaButton = document.getElementById("backFromMykolaButton");
 const mykolaChat = document.getElementById("mykolaChat");
-const ADVICE_SCALE_MERGE_SPREAD = 3;
 const DEBUG_ADVICE_ROOM = false;
 
 let movies = [];
@@ -3124,6 +3123,76 @@ function getRatedRecommendations(recommendations) {
     });
 }
 
+function positionFloatingAdviceLabels(container) {
+  const labels = container.querySelectorAll(
+    ".advice-result-scale-label.is-floating"
+  );
+
+  labels.forEach((label) => {
+    const scale = label.closest(".advice-result-scale");
+    const line = scale?.querySelector(".advice-result-scale-line");
+
+    if (!scale || !line) return;
+
+    const targetPosition =
+      Number(label.dataset.targetPosition);
+
+    if (!Number.isFinite(targetPosition)) return;
+
+    const scaleRect = scale.getBoundingClientRect();
+    const lineRect = line.getBoundingClientRect();
+
+    const lineStart =
+      lineRect.left - scaleRect.left;
+
+    const desiredCenter =
+      lineStart +
+      lineRect.width * (targetPosition / 100);
+
+    const edgePadding = 8;
+
+    label.style.left = "";
+    label.style.right = "";
+    label.style.transform = "";
+    label.style.textAlign = "";
+
+    if (targetPosition <= 25) {
+      label.style.left = `${edgePadding}px`;
+      label.style.right = "auto";
+      label.style.transform = "none";
+      label.style.textAlign = "left";
+    } else if (targetPosition >= 75) {
+      label.style.left = "auto";
+      label.style.right = `${edgePadding}px`;
+      label.style.transform = "none";
+      label.style.textAlign = "right";
+    } else {
+      const labelWidth = label.offsetWidth;
+
+      const minimumCenter =
+        labelWidth / 2 + edgePadding;
+
+      const maximumCenter =
+        scale.clientWidth -
+        labelWidth / 2 -
+        edgePadding;
+
+      const actualCenter =
+        minimumCenter <= maximumCenter
+          ? Math.max(
+              minimumCenter,
+              Math.min(maximumCenter, desiredCenter)
+            )
+          : scale.clientWidth / 2;
+
+      label.style.left = `${actualCenter}px`;
+      label.style.right = "auto";
+      label.style.transform = "translateX(-50%)";
+      label.style.textAlign = "center";
+    }
+  });
+}
+
 function createAdviceRoomRatingScaleHtml(recommendations) {
   const ratedItems =
     getRatedRecommendations(recommendations);
@@ -3137,9 +3206,6 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
 
   const maxRating =
     ratedItems[ratedItems.length - 1].numericRating;
-
-  const spread =
-    maxRating - minRating;
 
   const minItems = ratedItems.filter((item) => {
     return item.numericRating === minRating;
@@ -3267,38 +3333,8 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
    *
    * Проміжні голоси залишаються лише поділками.
    */
-  if (spread <= ADVICE_SCALE_MERGE_SPREAD) {
-    const middleRating =
-      (minRating + maxRating) / 2;
 
-    const middlePosition =
-      ratingToPercent(middleRating);
-
-    const anchorClass =
-      getLabelAnchorClass(middlePosition);
-
-    const combinedNames =
-      `${minNames} • ${maxNames}`;
-
-    return `
-      <div class="advice-result-scale">
-        <div class="advice-result-scale-line">
-          ${ticksHtml}
-        </div>
-
-        <div
-          class="
-            advice-result-scale-label
-            advice-result-scale-label-combined
-            ${anchorClass}
-          "
-          style="left: ${middlePosition}%"
-        >
-          ${escapeHtml(combinedNames)}
-        </div>
-      </div>
-    `;
-  }
+  // тут був старий блок показу вузького діапазону
 
   /*
    * Ширший діапазон:
@@ -3316,6 +3352,15 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
 
   const maxAnchorClass =
     getLabelAnchorClass(maxPosition);
+
+  const middleRating =
+    (minRating + maxRating) / 2;
+
+  const middlePosition =
+    ratingToPercent(middleRating);
+
+  const combinedNames =
+    `${minNames} • ${maxNames}`;
 
   return `
     <div class="advice-result-scale">
@@ -3344,9 +3389,81 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
       >
         ${escapeHtml(maxNames)}
       </div>
+
+      <div
+        class="
+          advice-result-scale-label
+          advice-result-scale-label-combined
+          is-floating
+        "
+        data-target-position="${middlePosition}"
+      >
+        ${escapeHtml(combinedNames)}
+      </div>
     </div>
   `;
 }
+
+function resolveAdviceScaleLabelCollisions(container) {
+  const scales = container.querySelectorAll(
+    ".advice-result-scale"
+  );
+
+  scales.forEach((scale) => {
+    const minLabel = scale.querySelector(
+      ".advice-result-scale-label-min"
+    );
+
+    const maxLabel = scale.querySelector(
+      ".advice-result-scale-label-max"
+    );
+
+    const combinedLabel = scale.querySelector(
+      ".advice-result-scale-label-combined.is-floating"
+    );
+
+    if (!minLabel || !maxLabel || !combinedLabel) {
+      return;
+    }
+
+    /*
+     * Спершу вмикаємо окремі підписи,
+     * щоб виміряти їх у природному стані.
+     */
+    scale.classList.remove("uses-combined-label");
+
+    const minRect =
+      minLabel.getBoundingClientRect();
+
+    const maxRect =
+      maxLabel.getBoundingClientRect();
+
+    const safetyGap = 8;
+
+    const hasCollision =
+      minRect.right + safetyGap > maxRect.left;
+
+    scale.classList.toggle(
+      "uses-combined-label",
+      hasCollision
+    );
+  });
+}
+
+let adviceScaleResizeTimer = null;
+
+window.addEventListener("resize", () => {
+  clearTimeout(adviceScaleResizeTimer);
+
+  adviceScaleResizeTimer = setTimeout(() => {
+    document
+      .querySelectorAll(".mykola-message-row")
+      .forEach((row) => {
+        resolveAdviceScaleLabelCollisions(row);
+        positionFloatingAdviceLabels(row);
+      });
+  }, 120);
+});
 
 function getAdviceAgreementPhrase(recommendations) {
   const ratedItems = getRatedRecommendations(recommendations);
@@ -3463,6 +3580,11 @@ function addMykolaArchiveSummaryBubble(
       ${ratingScaleHtml}
     </div>
   `);
+
+  requestAnimationFrame(() => {
+    resolveAdviceScaleLabelCollisions(row);
+    positionFloatingAdviceLabels(row);
+  });
 
   if (options.animate && row) {
     row.classList.add("mykola-result-reveal");
