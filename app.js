@@ -3274,8 +3274,10 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
     const middlePosition =
       ratingToPercent(middleRating);
 
-    const anchorClass =
-      getLabelAnchorClass(middlePosition);
+    const safeMiddlePosition =
+      Math.max(18, Math.min(82, middlePosition));
+
+    const anchorClass = "is-center";
 
     const combinedNames =
       `${minNames} • ${maxNames}`;
@@ -3292,7 +3294,7 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
             advice-result-scale-label-combined
             ${anchorClass}
           "
-          style="left: ${middlePosition}%"
+          style="left: ${safeMiddlePosition}%"
         >
           ${escapeHtml(combinedNames)}
         </div>
