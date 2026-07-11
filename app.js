@@ -3124,6 +3124,55 @@ function getRatedRecommendations(recommendations) {
     });
 }
 
+function positionFloatingAdviceLabels(container) {
+  const labels = container.querySelectorAll(
+    ".advice-result-scale-label.is-floating"
+  );
+
+  labels.forEach((label) => {
+    const scale = label.closest(".advice-result-scale");
+    const line = scale?.querySelector(".advice-result-scale-line");
+
+    if (!scale || !line) return;
+
+    const targetPosition =
+      Number(label.dataset.targetPosition);
+
+    if (!Number.isFinite(targetPosition)) return;
+
+    const scaleRect = scale.getBoundingClientRect();
+    const lineRect = line.getBoundingClientRect();
+    const labelWidth = label.offsetWidth;
+
+    const lineStart =
+      lineRect.left - scaleRect.left;
+
+    const desiredCenter =
+      lineStart +
+      lineRect.width * (targetPosition / 100);
+
+    const edgePadding = 8;
+
+    const minimumCenter =
+      labelWidth / 2 + edgePadding;
+
+    const maximumCenter =
+      scale.clientWidth -
+      labelWidth / 2 -
+      edgePadding;
+
+    const actualCenter =
+      minimumCenter <= maximumCenter
+        ? Math.max(
+            minimumCenter,
+            Math.min(maximumCenter, desiredCenter)
+          )
+        : scale.clientWidth / 2;
+
+    label.style.left = `${actualCenter}px`;
+  });
+}
+
 function createAdviceRoomRatingScaleHtml(recommendations) {
   const ratedItems =
     getRatedRecommendations(recommendations);
@@ -3274,11 +3323,6 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
     const middlePosition =
       ratingToPercent(middleRating);
 
-    const safeMiddlePosition =
-      Math.max(18, Math.min(82, middlePosition));
-
-    const anchorClass = "is-center";
-
     const combinedNames =
       `${minNames} • ${maxNames}`;
 
@@ -3292,9 +3336,9 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
           class="
             advice-result-scale-label
             advice-result-scale-label-combined
-            ${anchorClass}
+            is-floating
           "
-          style="left: ${safeMiddlePosition}%"
+          data-target-position="${middlePosition}"
         >
           ${escapeHtml(combinedNames)}
         </div>
@@ -3465,6 +3509,10 @@ function addMykolaArchiveSummaryBubble(
       ${ratingScaleHtml}
     </div>
   `);
+
+  requestAnimationFrame(() => {
+    positionFloatingAdviceLabels(row);
+  });
 
   if (options.animate && row) {
     row.classList.add("mykola-result-reveal");
