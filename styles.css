@@ -1890,6 +1890,7 @@ body {
   margin-top: 24px;
   padding-top: 8px;
   padding-bottom: 48px;
+  overflow: visible;
 }
 
 .advice-result-scale-line {
@@ -1949,6 +1950,12 @@ body {
   max-width: calc(100% - 16px);
 
   color: rgba(255, 255, 255, 0.78);
+  text-align: center;
+}
+
+.advice-result-scale-label.is-floating {
+  transform: translateX(-50%);
+  text-align: center;
 }
 
 @media (max-width: 600px) {
@@ -1970,6 +1977,11 @@ body {
   .advice-result-scale-label-combined.is-center {
     width: 72%;
     max-width: 72%;
+  }
+
+  .advice-result-scale-label-combined.is-floating {
+    width: min(280px, calc(100% - 16px));
+    max-width: calc(100% - 16px);
   }
 }
 
