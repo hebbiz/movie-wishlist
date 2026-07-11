@@ -1917,8 +1917,8 @@ body {
   position: absolute;
   top: 18px;
 
-  width: max-content;
-  max-width: min(190px, 48%);
+  width: min(190px, calc(100% - 16px));
+  max-width: calc(100% - 16px);
 
   color: rgba(255, 255, 255, 0.72);
 
@@ -1929,21 +1929,24 @@ body {
   overflow-wrap: anywhere;
 }
 
-.advice-result-scale-label-min {
+.advice-result-scale-label.is-left {
   transform: translateX(0);
   text-align: left;
 }
 
-.advice-result-scale-label-max {
+.advice-result-scale-label.is-center {
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.advice-result-scale-label.is-right {
   transform: translateX(-100%);
   text-align: right;
 }
 
 .advice-result-scale-label-combined {
-  max-width: min(280px, 86%);
-
-  transform: translateX(-50%);
-  text-align: center;
+  width: min(280px, calc(100% - 16px));
+  max-width: calc(100% - 16px);
 
   color: rgba(255, 255, 255, 0.78);
 }
@@ -1954,12 +1957,19 @@ body {
   }
 
   .advice-result-scale-label {
+    width: 44%;
     max-width: 44%;
     font-size: 10px;
   }
 
   .advice-result-scale-label-combined {
+    width: 88%;
     max-width: 88%;
+  }
+
+  .advice-result-scale-label-combined.is-center {
+    width: 72%;
+    max-width: 72%;
   }
 }
 
