@@ -3160,13 +3160,21 @@ function positionFloatingAdviceLabels(container) {
       labelWidth / 2 -
       edgePadding;
 
-    const actualCenter =
-      minimumCenter <= maximumCenter
-        ? Math.max(
-            minimumCenter,
-            Math.min(maximumCenter, desiredCenter)
-          )
-        : scale.clientWidth / 2;
+    let actualCenter;
+
+    if (targetPosition <= 25) {
+      actualCenter = minimumCenter;
+    } else if (targetPosition >= 75) {
+      actualCenter = maximumCenter;
+    } else {
+      actualCenter =
+        minimumCenter <= maximumCenter
+          ? Math.max(
+              minimumCenter,
+              Math.min(maximumCenter, desiredCenter)
+            )
+          : scale.clientWidth / 2;
+    }
 
     label.style.left = `${actualCenter}px`;
   });
