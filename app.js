@@ -2489,6 +2489,48 @@ function stopAdviceRoomPolling() {
   }
 }
 
+async function getActiveAdviceRoomRecommendations(movieId) {
+  if (!activeAdviceRoom?.result_room_id) {
+    return [];
+  }
+
+  const { data: participants, error } = await supabaseClient
+    .from("advice_room_participants")
+    .select("user_id")
+    .eq("room_id", activeAdviceRoom.result_room_id)
+    .in("status", ["active", "finished"]);
+
+  if (error) {
+    console.warn("Advice room participants load error:", error);
+    return [];
+  }
+
+  const participantIds = new Set(
+    (participants || []).map((participant) => participant.user_id)
+  );
+
+  if (!participantIds.size) {
+    return [];
+  }
+
+  const allRecommendations = [
+    ...(movieRecommendationDetails[movieId] || []),
+  ];
+
+  const myRecommendation = getCurrentUserRecommendation(movieId);
+
+  if (myRecommendation) {
+    allRecommendations.push(myRecommendation);
+  }
+
+  return allRecommendations.filter((recommendation) => {
+    return (
+      !recommendation.is_mykola &&
+      participantIds.has(recommendation.user_id)
+    );
+  });
+}
+
 async function refreshAdviceRoomState() {
   if (!activeAdviceRoom?.result_room_id) return;
 
@@ -2524,21 +2566,33 @@ async function refreshAdviceRoomState() {
 
     renderAdviceRoomIndicator(null);
 
+    const movieId = activeAdviceRoom.result_movie_id;
+
+    const recommendations =
+        await getActiveAdviceRoomRecommendations(movieId);
+
     runWithMykolaThinking(() => {
-      const movieId = activeAdviceRoom.result_movie_id;
-        const otherRecommendations = movieRecommendationDetails[movieId] || [];
-        const myRecommendation = getCurrentUserRecommendation(movieId);
-
-      const recommendations = myRecommendation
-        ? [myRecommendation, ...otherRecommendations]
-        : otherRecommendations;
-
-      addMykolaArchiveSummaryBubble(recommendations, movieId);
+      addMykolaBubble(
+        "Думки зафіксовано. Розберемо їх детальніше."
+      );
 
       setTimeout(() => {
-        addMykolaBubble("Думки зафіксовано. Кафедра знову жива.");
-      }, 700);
-    }, 900);
+        addMykolaArchiveSummaryBubble(
+          recommendations,
+          movieId,
+          {
+            showRatingScale: true,
+            animate: true,
+          }
+        );
+
+        setTimeout(() => {
+          addMykolaBubble(
+            getAdviceAgreementPhrase(recommendations)
+          );
+        }, 1500);
+      }, 800);
+    }, 700);
   }
 }
 
@@ -2609,28 +2663,32 @@ async function finishActiveAdviceRoom() {
     renderAdviceRoomIndicator(null);
 
     const movieId = activeAdviceRoom.result_movie_id;
-    const otherRecommendations =
-      movieRecommendationDetails[movieId] || [];
-
-    const myRecommendation =
-      getCurrentUserRecommendation(movieId);
-
-    const recommendations = myRecommendation
-      ? [myRecommendation, ...otherRecommendations]
-      : otherRecommendations;
+    
+    const recommendations =
+      await getActiveAdviceRoomRecommendations(movieId);
 
     runWithMykolaThinking(() => {
-      addMykolaArchiveSummaryBubble(
-        recommendations,
-        movieId
+      addMykolaBubble(
+        "Думки зафіксовано. Розберемо їх детальніше."
       );
 
       setTimeout(() => {
-        addMykolaBubble(
-          "Думки зафіксовано. Кафедра знову жива."
+        addMykolaArchiveSummaryBubble(
+          recommendations,
+          movieId,
+          {
+            showRatingScale: true,
+            animate: true,
+          }
         );
-      }, 700);
-    }, 900);
+
+        setTimeout(() => {
+          addMykolaBubble(
+            getAdviceAgreementPhrase(recommendations)
+          );
+        }, 1500);
+      }, 800);
+    }, 700);  
   }
 
   return activeAdviceRoom;
@@ -3052,17 +3110,223 @@ function getMykolaArchiveSummary(averageRating, seedBase = "") {
   return getSeededItem(variants, `${seedBase}:${rating}:summary`);
 }
 
-function addMykolaArchiveSummaryBubble(recommendations, movieId = "") {
-  const averageRating = getAverageRecommendationRating(recommendations);
+function getRecommendationDisplayName(item) {
+  return (
+    item.profiles?.display_name ||
+    item.profiles?.email ||
+    "Користувач"
+  );
+}
 
-  if (!averageRating) return;
+function getRatedRecommendations(recommendations) {
+  return recommendations
+    .filter((item) => !item.is_mykola)
+    .filter((item) => {
+      return (
+        item.rating_value !== null &&
+        item.rating_value !== undefined &&
+        item.rating_value !== "" &&
+        Number.isFinite(Number(item.rating_value))
+      );
+    })
+    .map((item) => ({
+      ...item,
+      numericRating: Number(item.rating_value),
+    }))
+    .sort((a, b) => a.numericRating - b.numericRating);
+}
 
-  const seedBase = `${movieId}:${averageRating}:${recommendations.length}`;
+function createAdviceRoomRatingScaleHtml(recommendations) {
+  const ratedItems = getRatedRecommendations(recommendations);
 
-  const moodLabel = getMykolaArchiveMoodLabel(averageRating, seedBase);
-  const summary = getMykolaArchiveSummary(averageRating, seedBase);
+  if (ratedItems.length < 2) {
+    return "";
+  }
 
-  addMykolaBubble(`
+  const minRating = ratedItems[0].numericRating;
+  const maxRating = ratedItems[ratedItems.length - 1].numericRating;
+
+  const minItems = ratedItems.filter((item) => {
+    return item.numericRating === minRating;
+  });
+
+  const maxItems = ratedItems.filter((item) => {
+    return item.numericRating === maxRating;
+  });
+
+  const minNames = minItems
+    .map(getRecommendationDisplayName)
+    .join(", ");
+
+  const maxNames = maxItems
+    .map(getRecommendationDisplayName)
+    .join(", ");
+
+  const ticksHtml = ratedItems
+    .map((item, index) => {
+      const position =
+        ((item.numericRating - 1) / 19) * 100;
+
+      return `
+        <span
+          class="advice-result-scale-tick"
+          style="left: ${position}%"
+          data-rating-index="${index}"
+        ></span>
+      `;
+    })
+    .join("");
+
+  if (minRating === maxRating) {
+    const allNames = ratedItems
+      .map(getRecommendationDisplayName)
+      .join(", ");
+
+    const position =
+      ((minRating - 1) / 19) * 100;
+
+    return `
+      <div class="advice-result-scale">
+        <div class="advice-result-scale-line">
+          ${ticksHtml}
+        </div>
+
+        <div
+          class="advice-result-scale-unanimous"
+          style="left: ${position}%"
+        >
+          ${escapeHtml(allNames)}
+        </div>
+      </div>
+    `;
+  }
+
+  const minPosition =
+    ((minRating - 1) / 19) * 100;
+
+  const maxPosition =
+    ((maxRating - 1) / 19) * 100;
+
+  return `
+    <div class="advice-result-scale">
+      <div class="advice-result-scale-line">
+        ${ticksHtml}
+      </div>
+
+      <div
+        class="advice-result-scale-label advice-result-scale-label-min"
+        style="left: ${minPosition}%"
+      >
+        ${escapeHtml(minNames)}
+      </div>
+
+      <div
+        class="advice-result-scale-label advice-result-scale-label-max"
+        style="left: ${maxPosition}%"
+      >
+        ${escapeHtml(maxNames)}
+      </div>
+    </div>
+  `;
+}
+
+function getAdviceAgreementPhrase(recommendations) {
+  const ratedItems = getRatedRecommendations(recommendations);
+
+  if (ratedItems.length < 2) {
+    return "Для дискусії замало голосів. Але картотека все одно все занотувала.";
+  }
+
+  const ratings = ratedItems.map((item) => item.numericRating);
+
+  const minRating = Math.min(...ratings);
+  const maxRating = Math.max(...ratings);
+  const spread = maxRating - minRating;
+
+  const seedBase = ratings
+    .slice()
+    .sort((a, b) => a - b)
+    .join(":");
+
+  if (spread <= 1.5) {
+    return getSeededItem(
+      [
+        "Обійшлося без бійки. І це вже результат.",
+        "Рідкісний випадок: кафедра майже одностайна.",
+        "Дивовижно. Майже всі дивилися один і той самий фільм.",
+      ],
+      `${seedBase}:agreement:very-high`
+    );
+  }
+
+  if (spread <= 4) {
+    return getSeededItem(
+      [
+        "Погодилися в головному. Деталі традиційно стали проблемою.",
+        "Загальний напрям зрозумілий. Розбіжності залишилися в межах пристойності.",
+        "Кафедра загалом погодилася. Протокол можна не ховати.",
+      ],
+      `${seedBase}:agreement:high`
+    );
+  }
+
+  if (spread <= 7) {
+    return getSeededItem(
+      [
+        "Спільний висновок є. Але кожен прийшов до нього своєю дорогою.",
+        "Погляди відрізняються, хоча барикади ще не будують.",
+        "Дискусія була помітною. Консенсус — умовним.",
+      ],
+      `${seedBase}:agreement:medium`
+    );
+  }
+
+  if (spread <= 11) {
+    return getSeededItem(
+      [
+        "Думки суттєво розійшлися. Кафедра знову жива.",
+        "Єдиного висновку немає. Зате дискусія вдалася.",
+        "Погляди розійшлися настільки, що знадобиться окреме засідання.",
+      ],
+      `${seedBase}:agreement:low`
+    );
+  }
+
+  return getSeededItem(
+    [
+      "Схоже, ви дивилися різні фільми.",
+      "Кафедра розділилася на два табори. Олівці вже загострені.",
+      "Єдності немає навіть у питанні, чи був це той самий сеанс.",
+    ],
+    `${seedBase}:agreement:very-low`
+  );
+}
+
+function addMykolaArchiveSummaryBubble(
+  recommendations,
+  movieId = "",
+  options = {}
+) {
+  const averageRating =
+    getAverageRecommendationRating(recommendations);
+
+  if (!averageRating) return null;
+
+  const seedBase =
+    `${movieId}:${averageRating}:${recommendations.length}`;
+
+  const moodLabel =
+    getMykolaArchiveMoodLabel(averageRating, seedBase);
+
+  const summary =
+    getMykolaArchiveSummary(averageRating, seedBase);
+
+  const ratingScaleHtml =
+    options.showRatingScale
+      ? createAdviceRoomRatingScaleHtml(recommendations)
+      : "";
+
+  const row = addMykolaBubble(`
     <div class="mykola-archive-summary">
       <div class="mykola-archive-summary-label">
         Загальний настрій картотеки:
@@ -3072,8 +3336,22 @@ function addMykolaArchiveSummaryBubble(recommendations, movieId = "") {
       <div class="mykola-archive-summary-text">
         ${escapeHtml(summary)}
       </div>
+
+      ${ratingScaleHtml}
     </div>
   `);
+
+  if (options.animate && row) {
+    row.classList.add("mykola-result-reveal");
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        row.classList.add("visible");
+      });
+    });
+  }
+
+  return row;
 }
 
 function createRatingSliderHtml(value = 10) {
@@ -4791,6 +5069,8 @@ function addMykolaBubble(text) {
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
   scrollMykolaChatToBottom();
+
+  return row;
 }
 
 function addMykolaGif() {
