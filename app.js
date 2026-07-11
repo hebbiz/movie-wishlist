@@ -2577,21 +2577,27 @@ async function refreshAdviceRoomState() {
       );
 
       setTimeout(() => {
-        addMykolaArchiveSummaryBubble(
-          recommendations,
-          movieId,
-          {
-            showRatingScale: true,
-            animate: true,
-          }
-        );
+        const typingRow = addMykolaTypingBubble();
 
         setTimeout(() => {
-          addMykolaBubble(
-            getAdviceAgreementPhrase(recommendations)
+          typingRow?.remove();
+
+          addMykolaArchiveSummaryBubble(
+            recommendations,
+            movieId,
+            {
+              showRatingScale: true,
+              animate: true,
+            }
           );
-        }, 1500);
-      }, 800);
+
+          setTimeout(() => {
+            addMykolaBubble(
+              getAdviceAgreementPhrase(recommendations)
+            );
+          }, 2200);
+        }, 2200);
+      }, 900);
     }, 700);
   }
 }
@@ -2673,21 +2679,27 @@ async function finishActiveAdviceRoom() {
       );
 
       setTimeout(() => {
-        addMykolaArchiveSummaryBubble(
-          recommendations,
-          movieId,
-          {
-            showRatingScale: true,
-            animate: true,
-          }
-        );
+        const typingRow = addMykolaTypingBubble();
 
         setTimeout(() => {
-          addMykolaBubble(
-            getAdviceAgreementPhrase(recommendations)
+          typingRow?.remove();
+
+          addMykolaArchiveSummaryBubble(
+            recommendations,
+            movieId,
+            {
+              showRatingScale: true,
+              animate: true,
+            }
           );
-        }, 1500);
-      }, 800);
+
+          setTimeout(() => {
+            addMykolaBubble(
+              getAdviceAgreementPhrase(recommendations)
+            );
+          }, 2200);
+        }, 2200);
+      }, 900);
     }, 700);  
   }
 
