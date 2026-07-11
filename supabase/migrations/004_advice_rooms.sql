@@ -1,0 +1,1012 @@
+-- Create advice rooms table
+
+create table advice_rooms (
+    id uuid primary key default gen_random_uuid(),
+
+    movie_id uuid not null
+        references movies(id)
+        on delete cascade,
+
+    group_id uuid not null
+        references groups(id)
+        on delete cascade,
+
+    created_by uuid not null
+        references auth.users(id),
+
+    status text not null
+        check (status in ('waiting','discussion','summarizing','closed')),
+
+    opened_at timestamptz not null default now(),
+
+    expires_at timestamptz not null,
+
+    closed_at timestamptz,
+
+    result_generated boolean not null default false
+);
+
+-- Add index to advice_rooms
+
+create index advice_rooms_lookup_idx
+on advice_rooms(group_id,movie_id,status);
+
+-- Add advice_room_participants table
+
+create table advice_room_participants (
+
+    id uuid primary key default gen_random_uuid(),
+
+    room_id uuid not null
+        references advice_rooms(id)
+        on delete cascade,
+
+    user_id uuid not null
+        references auth.users(id),
+
+    status text not null
+        check (status in ('active','finished','left')),
+
+    joined_at timestamptz not null default now(),
+
+    finished_at timestamptz,
+
+    last_seen_at timestamptz not null default now()
+);
+
+-- Ensure no duplicates in advice_room_participants
+
+create unique index advice_room_unique_user
+on advice_room_participants(room_id,user_id);
+
+-- Comment on tables
+
+comment on table advice_rooms
+is 'Temporary collaborative recommendation room';
+
+comment on table advice_room_participants
+is 'Participants of collaborative recommendation rooms';
+
+-- Add RPC function - Enter advice room
+
+create or replace function enter_advice_room(
+  p_movie_id uuid,
+  p_group_id uuid
+)
+returns table (
+  room_id uuid,
+  room_status text,
+  participant_count integer,
+  expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_room advice_rooms;
+  v_count integer;
+begin
+  select *
+  into v_room
+  from advice_rooms
+  where movie_id = p_movie_id
+    and group_id = p_group_id
+    and status in ('waiting', 'discussion')
+    and expires_at > now()
+  order by opened_at desc
+  limit 1;
+
+  if v_room.id is null then
+    insert into advice_rooms (
+      movie_id,
+      group_id,
+      created_by,
+      status,
+      expires_at
+    )
+    values (
+      p_movie_id,
+      p_group_id,
+      auth.uid(),
+      'waiting',
+      now() + interval '1 minute'
+    )
+    returning * into v_room;
+  end if;
+
+  insert into advice_room_participants (
+    room_id,
+    user_id,
+    status,
+    last_seen_at
+  )
+  values (
+    v_room.id,
+    auth.uid(),
+    'active',
+    now()
+  )
+  on conflict (room_id, user_id)
+  do update set
+    status = 'active',
+    last_seen_at = now(),
+    finished_at = null;
+
+  select count(*)
+  into v_count
+  from advice_room_participants
+  where room_id = v_room.id
+    and status = 'active';
+
+  if v_count > 1 and v_room.status = 'waiting' then
+    update advice_rooms
+    set status = 'discussion'
+    where id = v_room.id
+    returning * into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status,
+    v_count,
+    v_room.expires_at;
+end;
+$$;
+
+-- Lets authenticated user use RPC function to enter advice room
+
+grant execute on function enter_advice_room(uuid, uuid) to authenticated;
+
+-- Add policy to read advice room
+
+create policy advice_rooms_select
+on advice_rooms
+for select
+to authenticated
+using (
+    exists (
+        select 1
+        from group_members gm
+        where gm.group_id = advice_rooms.group_id
+          and gm.user_id = auth.uid()
+    )
+);
+
+-- Add policy to read advice room participants
+
+create policy advice_room_participants_select
+on advice_room_participants
+for select
+to authenticated
+using (
+    exists (
+        select 1
+        from advice_rooms r
+        join group_members gm
+          on gm.group_id = r.group_id
+        where r.id = advice_room_participants.room_id
+          and gm.user_id = auth.uid()
+    )
+);
+
+-- Updated room query function
+
+drop function if exists public.enter_advice_room(uuid, uuid);
+
+create function public.enter_advice_room(
+  p_movie_id uuid,
+  p_group_id uuid
+)
+returns table (
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_room_expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_room advice_rooms;
+  v_count integer;
+begin
+  select ar.*
+  into v_room
+  from advice_rooms ar
+  where ar.movie_id = p_movie_id
+    and ar.group_id = p_group_id
+    and ar.status in ('waiting', 'discussion')
+    and ar.expires_at > now()
+  order by ar.opened_at desc
+  limit 1;
+
+  if v_room.id is null then
+    insert into advice_rooms (
+      movie_id,
+      group_id,
+      created_by,
+      status,
+      expires_at
+    )
+    values (
+      p_movie_id,
+      p_group_id,
+      auth.uid(),
+      'waiting',
+      now() + interval '1 minute'
+    )
+    returning * into v_room;
+  end if;
+
+  insert into advice_room_participants (
+    room_id,
+    user_id,
+    status,
+    last_seen_at
+  )
+  values (
+    v_room.id,
+    auth.uid(),
+    'active',
+    now()
+  )
+  on conflict (room_id, user_id)
+  do update set
+    status = 'active',
+    last_seen_at = now(),
+    finished_at = null;
+
+  select count(*)
+  into v_count
+  from advice_room_participants arp
+  where arp.room_id = v_room.id
+    and arp.status = 'active';
+
+  if v_count > 1 and v_room.status = 'waiting' then
+    update advice_rooms ar
+    set status = 'discussion'
+    where ar.id = v_room.id
+    returning ar.* into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_count,
+    v_room.expires_at;
+end;
+$$;
+
+-- Create function to leave advice room
+
+create or replace function public.leave_advice_room(p_room_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update advice_room_participants arp
+  set
+    status = 'left',
+    finished_at = now(),
+    last_seen_at = now()
+  where arp.room_id = p_room_id
+    and arp.user_id = auth.uid();
+end;
+$$;
+
+-- Add finish advice room function
+
+create or replace function public.finish_advice_room(p_room_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update advice_room_participants arp
+  set
+    status = 'finished',
+    finished_at = now(),
+    last_seen_at = now()
+  where arp.room_id = p_room_id
+    and arp.user_id = auth.uid();
+end;
+$$;
+
+-- Change finish advice room function
+
+create or replace function public.finish_advice_room(p_room_id uuid)
+returns table (
+  result_room_id uuid,
+  result_participant_count int,
+  result_finished_count int,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update advice_room_participants arp
+  set
+    status = 'finished',
+    finished_at = now(),
+    last_seen_at = now()
+  where arp.room_id = p_room_id
+    and arp.user_id = auth.uid();
+
+  return query
+  select
+    ar.id as result_room_id,
+    count(arp.id)::int as result_participant_count,
+    count(arp.id) filter (where arp.status = 'finished')::int as result_finished_count,
+    (
+      count(arp.id) > 0
+      and count(arp.id) = count(arp.id) filter (where arp.status = 'finished')
+    ) as result_is_complete
+  from advice_rooms ar
+  join advice_room_participants arp
+    on arp.room_id = ar.id
+  where ar.id = p_room_id
+  group by ar.id;
+end;
+$$;
+
+-- Add function to monitor advice room state
+
+create or replace function public.get_advice_room_state(p_room_id uuid)
+returns table (
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count int,
+  result_finished_count int,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select
+    ar.id,
+    ar.status,
+    count(arp.id)::int,
+    count(arp.id) filter (where arp.status = 'finished')::int,
+    (
+      count(arp.id) > 0
+      and count(arp.id) = count(arp.id) filter (where arp.status = 'finished')
+    )
+  from advice_rooms ar
+  join advice_room_participants arp
+    on arp.room_id = ar.id
+  where ar.id = p_room_id
+  group by ar.id, ar.status;
+end;
+$$;
+
+-- Helpers for server based advice room timer
+
+select
+  n.nspname as schema_name,
+  p.proname as function_name,
+  pg_get_functiondef(p.oid) as function_definition
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in (
+    'enter_advice_room',
+    'get_advice_room_state',
+    'finish_advice_room',
+    'leave_advice_room'
+  )
+order by p.proname;
+
+-- second SQL 
+
+select
+  table_name,
+  column_name,
+  data_type,
+  is_nullable,
+  column_default
+from information_schema.columns
+where table_schema = 'public'
+  and table_name like 'advice_room%'
+order by table_name, ordinal_position;
+
+-- Add SQL for advice room timer logic
+
+begin;
+
+alter table public.advice_rooms
+  alter column expires_at drop not null;
+
+create or replace function public.enter_advice_room(
+  p_movie_id uuid,
+  p_group_id uuid
+)
+returns table(
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_room_expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_room public.advice_rooms;
+  v_count integer;
+begin
+  /*
+    Шукаємо:
+
+    1. waiting-кімнату, в якій ще є активний учасник;
+    2. discussion-кімнату, таймер якої ще не завершився.
+  */
+  select ar.*
+  into v_room
+  from public.advice_rooms ar
+  where ar.movie_id = p_movie_id
+    and ar.group_id = p_group_id
+    and (
+      (
+        ar.status = 'waiting'
+        and exists (
+          select 1
+          from public.advice_room_participants arp
+          where arp.room_id = ar.id
+            and arp.status = 'active'
+        )
+      )
+      or
+      (
+        ar.status = 'discussion'
+        and ar.expires_at > now()
+      )
+    )
+  order by ar.opened_at desc
+  limit 1;
+
+  /*
+    Перший учасник створює waiting-кімнату без таймера.
+  */
+  if v_room.id is null then
+    insert into public.advice_rooms (
+      movie_id,
+      group_id,
+      created_by,
+      status,
+      expires_at
+    )
+    values (
+      p_movie_id,
+      p_group_id,
+      auth.uid(),
+      'waiting',
+      null
+    )
+    returning *
+    into v_room;
+  end if;
+
+  insert into public.advice_room_participants (
+    room_id,
+    user_id,
+    status,
+    last_seen_at
+  )
+  values (
+    v_room.id,
+    auth.uid(),
+    'active',
+    now()
+  )
+  on conflict (room_id, user_id)
+  do update set
+    status = 'active',
+    last_seen_at = now(),
+    finished_at = null;
+
+  select count(*)
+  into v_count
+  from public.advice_room_participants arp
+  where arp.room_id = v_room.id
+    and arp.status = 'active';
+
+  /*
+    Другий учасник запускає дискусію і хвилинний таймер.
+    Наступні учасники таймер не перезапускають.
+  */
+  if v_count > 1 and v_room.status = 'waiting' then
+    update public.advice_rooms ar
+    set
+      status = 'discussion',
+      opened_at = now(),
+      expires_at = now() + interval '1 minute'
+    where ar.id = v_room.id
+      and ar.status = 'waiting'
+    returning ar.*
+    into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_count,
+    v_room.expires_at;
+end;
+$function$;
+
+commit;
+
+-- Updated logic for handling advice room including timer
+
+create or replace function public.enter_advice_room(
+  p_movie_id uuid,
+  p_group_id uuid
+)
+returns table(
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_room_expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_room advice_rooms;
+  v_count integer;
+begin
+  select ar.*
+  into v_room
+  from advice_rooms ar
+  where ar.movie_id = p_movie_id
+    and ar.group_id = p_group_id
+    and ar.status in ('waiting', 'discussion')
+    and ar.expires_at > now()
+  order by ar.opened_at desc
+  limit 1;
+
+  if v_room.id is null then
+    insert into advice_rooms (
+      movie_id,
+      group_id,
+      created_by,
+      status,
+      expires_at
+    )
+    values (
+      p_movie_id,
+      p_group_id,
+      auth.uid(),
+      'waiting',
+      now() + interval '1 minute'
+    )
+    returning * into v_room;
+  end if;
+
+  insert into advice_room_participants (
+    room_id,
+    user_id,
+    status,
+    last_seen_at
+  )
+  values (
+    v_room.id,
+    auth.uid(),
+    'active',
+    now()
+  )
+  on conflict (room_id, user_id)
+  do update set
+    status = 'active',
+    last_seen_at = now(),
+    finished_at = null;
+
+  select count(*)
+  into v_count
+  from advice_room_participants arp
+  where arp.room_id = v_room.id
+    and arp.status in ('active', 'finished');
+
+  /*
+   * Повна хвилина починається саме тоді,
+   * коли до кімнати приєднався другий учасник.
+   */
+  if v_count > 1 and v_room.status = 'waiting' then
+    update advice_rooms ar
+    set
+      status = 'discussion',
+      expires_at = now() + interval '1 minute'
+    where ar.id = v_room.id
+    returning ar.* into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_count,
+    v_room.expires_at;
+end;
+$function$;
+
+
+create or replace function public.finish_advice_room(
+  p_room_id uuid
+)
+returns table(
+  result_room_id uuid,
+  result_participant_count integer,
+  result_finished_count integer,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_participant_count integer;
+  v_finished_count integer;
+  v_is_expired boolean;
+  v_is_complete boolean;
+begin
+  update advice_room_participants arp
+  set
+    status = 'finished',
+    finished_at = coalesce(arp.finished_at, now()),
+    last_seen_at = now()
+  where arp.room_id = p_room_id
+    and arp.user_id = auth.uid()
+    and arp.status <> 'left';
+
+  select
+    count(*) filter (
+      where arp.status in ('active', 'finished')
+    )::integer,
+    count(*) filter (
+      where arp.status = 'finished'
+    )::integer
+  into
+    v_participant_count,
+    v_finished_count
+  from advice_room_participants arp
+  where arp.room_id = p_room_id;
+
+  select ar.expires_at <= now()
+  into v_is_expired
+  from advice_rooms ar
+  where ar.id = p_room_id;
+
+  v_is_complete :=
+    v_participant_count > 0
+    and (
+      v_finished_count = v_participant_count
+      or v_is_expired
+    );
+
+  if v_is_complete then
+    update advice_rooms ar
+    set
+      status = 'finished',
+      closed_at = coalesce(ar.closed_at, now()),
+      result_generated = true
+    where ar.id = p_room_id;
+  end if;
+
+  return query
+  select
+    p_room_id,
+    v_participant_count,
+    v_finished_count,
+    v_is_complete;
+end;
+$function$;
+
+
+create or replace function public.get_advice_room_state(
+  p_room_id uuid
+)
+returns table(
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_finished_count integer,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_room advice_rooms;
+  v_participant_count integer;
+  v_finished_count integer;
+  v_is_complete boolean;
+begin
+  select ar.*
+  into v_room
+  from advice_rooms ar
+  where ar.id = p_room_id;
+
+  if v_room.id is null then
+    return;
+  end if;
+
+  select
+    count(*) filter (
+      where arp.status in ('active', 'finished')
+    )::integer,
+    count(*) filter (
+      where arp.status = 'finished'
+    )::integer
+  into
+    v_participant_count,
+    v_finished_count
+  from advice_room_participants arp
+  where arp.room_id = p_room_id;
+
+  v_is_complete :=
+    v_participant_count > 0
+    and (
+      v_finished_count = v_participant_count
+      or v_room.expires_at <= now()
+      or v_room.status = 'finished'
+    );
+
+  if v_is_complete and v_room.status <> 'finished' then
+    update advice_rooms ar
+    set
+      status = 'finished',
+      closed_at = coalesce(ar.closed_at, now()),
+      result_generated = true
+    where ar.id = p_room_id
+    returning ar.* into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_participant_count,
+    v_finished_count,
+    v_is_complete;
+end;
+$function$;
+
+-- Change previous function
+
+create or replace function public.enter_advice_room(
+  p_movie_id uuid,
+  p_group_id uuid
+)
+returns table(
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_room_expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_room advice_rooms;
+  v_count integer;
+begin
+  select ar.*
+  into v_room
+  from advice_rooms ar
+  where ar.movie_id = p_movie_id
+    and ar.group_id = p_group_id
+    and (
+      ar.status = 'waiting'
+      or (
+        ar.status = 'discussion'
+        and ar.expires_at > now()
+      )
+    )
+  order by ar.opened_at desc
+  limit 1;
+
+  if v_room.id is null then
+    insert into advice_rooms (
+      movie_id,
+      group_id,
+      created_by,
+      status,
+      expires_at
+    )
+    values (
+      p_movie_id,
+      p_group_id,
+      auth.uid(),
+      'waiting',
+      'infinity'::timestamptz
+    )
+    returning * into v_room;
+  end if;
+
+  insert into advice_room_participants (
+    room_id,
+    user_id,
+    status,
+    last_seen_at
+  )
+  values (
+    v_room.id,
+    auth.uid(),
+    'active',
+    now()
+  )
+  on conflict (room_id, user_id)
+  do update set
+    status = 'active',
+    last_seen_at = now(),
+    finished_at = null;
+
+  select count(*)
+  into v_count
+  from advice_room_participants arp
+  where arp.room_id = v_room.id
+    and arp.status in ('active', 'finished');
+
+  if v_count > 1 and v_room.status = 'waiting' then
+    update advice_rooms ar
+    set
+      status = 'discussion',
+      expires_at = now() + interval '1 minute'
+    where ar.id = v_room.id
+    returning ar.* into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_count,
+    v_room.expires_at;
+end;
+$function$;
+
+-- Updated finish advice room function
+
+create or replace function public.finish_advice_room(p_room_id uuid)
+returns table(
+  result_room_id uuid,
+  result_participant_count integer,
+  result_finished_count integer,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $function$
+declare
+  v_participant_count integer;
+  v_finished_count integer;
+  v_is_complete boolean;
+begin
+  update advice_room_participants
+  set
+    status = 'finished',
+    finished_at = now(),
+    last_seen_at = now()
+  where room_id = p_room_id
+    and user_id = auth.uid()
+    and status in ('active', 'finished');
+
+  select
+    count(*)::integer,
+    count(*) filter (
+      where status = 'finished'
+    )::integer
+  into
+    v_participant_count,
+    v_finished_count
+  from advice_room_participants
+  where room_id = p_room_id
+    and status in ('active', 'finished');
+
+  v_is_complete :=
+    v_participant_count > 0
+    and v_participant_count = v_finished_count;
+
+  if v_is_complete then
+    update advice_rooms
+    set status = 'summarizing'
+    where id = p_room_id
+      and status in ('waiting', 'discussion');
+  end if;
+
+  return query
+  select
+    p_room_id,
+    v_participant_count,
+    v_finished_count,
+    v_is_complete;
+end;
+$function$;
+
+-- Update function get advice room status
+
+create or replace function public.get_advice_room_state(p_room_id uuid)
+returns table(
+  result_room_id uuid,
+  result_room_status text,
+  result_participant_count integer,
+  result_finished_count integer,
+  result_is_complete boolean
+)
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  v_room advice_rooms;
+  v_participant_count integer;
+  v_finished_count integer;
+  v_is_complete boolean;
+begin
+  select ar.*
+  into v_room
+  from advice_rooms ar
+  where ar.id = p_room_id;
+
+  if v_room.id is null then
+    return;
+  end if;
+
+  select
+    count(*) filter (
+      where arp.status in ('active', 'finished')
+    )::integer,
+    count(*) filter (
+      where arp.status = 'finished'
+    )::integer
+  into
+    v_participant_count,
+    v_finished_count
+  from advice_room_participants arp
+  where arp.room_id = p_room_id;
+
+  v_is_complete :=
+    v_participant_count > 0
+    and (
+      v_finished_count = v_participant_count
+      or v_room.expires_at <= now()
+      or v_room.status = 'closed'
+    );
+
+  if v_is_complete and v_room.status <> 'closed' then
+    update advice_rooms ar
+    set
+      status = 'closed',
+      closed_at = coalesce(ar.closed_at, now()),
+      result_generated = true
+    where ar.id = p_room_id
+    returning ar.* into v_room;
+  end if;
+
+  return query
+  select
+    v_room.id,
+    v_room.status::text,
+    v_participant_count,
+    v_finished_count,
+    v_is_complete;
+end;
+$function$;
+
