@@ -66,7 +66,6 @@ const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
 const backFromMykolaButton = document.getElementById("backFromMykolaButton");
 const mykolaChat = document.getElementById("mykolaChat");
-const ADVICE_SCALE_MERGE_SPREAD = 3;
 const DEBUG_ADVICE_ROOM = false;
 
 let movies = [];
@@ -3187,9 +3186,6 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
   const maxRating =
     ratedItems[ratedItems.length - 1].numericRating;
 
-  const spread =
-    maxRating - minRating;
-
   const minItems = ratedItems.filter((item) => {
     return item.numericRating === minRating;
   });
@@ -3316,35 +3312,8 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
    *
    * Проміжні голоси залишаються лише поділками.
    */
-  if (spread <= ADVICE_SCALE_MERGE_SPREAD) {
-    const middleRating =
-      (minRating + maxRating) / 2;
 
-    const middlePosition =
-      ratingToPercent(middleRating);
-
-    const combinedNames =
-      `${minNames} • ${maxNames}`;
-
-    return `
-      <div class="advice-result-scale">
-        <div class="advice-result-scale-line">
-          ${ticksHtml}
-        </div>
-
-        <div
-          class="
-            advice-result-scale-label
-            advice-result-scale-label-combined
-            is-floating
-          "
-          data-target-position="${middlePosition}"
-        >
-          ${escapeHtml(combinedNames)}
-        </div>
-      </div>
-    `;
-  }
+  // тут був старий блок показу вузького діапазону
 
   /*
    * Ширший діапазон:
@@ -3362,6 +3331,15 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
 
   const maxAnchorClass =
     getLabelAnchorClass(maxPosition);
+
+  const middleRating =
+    (minRating + maxRating) / 2;
+
+  const middlePosition =
+    ratingToPercent(middleRating);
+
+  const combinedNames =
+    `${minNames} • ${maxNames}`;
 
   return `
     <div class="advice-result-scale">
@@ -3390,9 +3368,81 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
       >
         ${escapeHtml(maxNames)}
       </div>
+
+      <div
+        class="
+          advice-result-scale-label
+          advice-result-scale-label-combined
+          is-floating
+        "
+        data-target-position="${middlePosition}"
+      >
+        ${escapeHtml(combinedNames)}
+      </div>
     </div>
   `;
 }
+
+function resolveAdviceScaleLabelCollisions(container) {
+  const scales = container.querySelectorAll(
+    ".advice-result-scale"
+  );
+
+  scales.forEach((scale) => {
+    const minLabel = scale.querySelector(
+      ".advice-result-scale-label-min"
+    );
+
+    const maxLabel = scale.querySelector(
+      ".advice-result-scale-label-max"
+    );
+
+    const combinedLabel = scale.querySelector(
+      ".advice-result-scale-label-combined.is-floating"
+    );
+
+    if (!minLabel || !maxLabel || !combinedLabel) {
+      return;
+    }
+
+    /*
+     * Спершу вмикаємо окремі підписи,
+     * щоб виміряти їх у природному стані.
+     */
+    scale.classList.remove("uses-combined-label");
+
+    const minRect =
+      minLabel.getBoundingClientRect();
+
+    const maxRect =
+      maxLabel.getBoundingClientRect();
+
+    const safetyGap = 8;
+
+    const hasCollision =
+      minRect.right + safetyGap > maxRect.left;
+
+    scale.classList.toggle(
+      "uses-combined-label",
+      hasCollision
+    );
+  });
+}
+
+let adviceScaleResizeTimer = null;
+
+window.addEventListener("resize", () => {
+  clearTimeout(adviceScaleResizeTimer);
+
+  adviceScaleResizeTimer = setTimeout(() => {
+    document
+      .querySelectorAll(".mykola-message-row")
+      .forEach((row) => {
+        resolveAdviceScaleLabelCollisions(row);
+        positionFloatingAdviceLabels(row);
+      });
+  }, 120);
+});
 
 function getAdviceAgreementPhrase(recommendations) {
   const ratedItems = getRatedRecommendations(recommendations);
@@ -3511,6 +3561,7 @@ function addMykolaArchiveSummaryBubble(
   `);
 
   requestAnimationFrame(() => {
+    resolveAdviceScaleLabelCollisions(row);
     positionFloatingAdviceLabels(row);
   });
 
