@@ -1830,7 +1830,7 @@ function toggleMyAdviceCard(movieId, button) {
       class="my-advice-edit-button"
       data-edit-my-advice="${movieId}"
     >
-      ${recommendation.comment ? "Змінити" : "Додати коментар"}
+      "Змінити"
     </button>
   `;
 
@@ -1968,11 +1968,26 @@ async function updateMyRecommendation(movieId, comment, ratingValue = null) {
     return false;
   }
 
+  const numericRating = Number(ratingValue);
+
+  if (
+    ratingValue === null ||
+    ratingValue === undefined ||
+    ratingValue === "" ||
+    !Number.isFinite(numericRating) ||
+    !Number.isInteger(numericRating * 2) ||
+    numericRating < 1 ||
+    numericRating > 20
+  ) {
+    alert("Оберіть оцінку фільму.");
+    return false;
+  }
+
   const { data, error } = await supabaseClient
     .from("recommendations")
     .update({
       comment,
-      rating_value: ratingValue,
+      rating_value: numericRating,
     })
     .eq("id", recommendation.id)
     .eq("user_id", currentUser.id)
@@ -2359,6 +2374,21 @@ async function recommendMovie(
     return false;
   }
 
+  const numericRating = Number(ratingValue);
+
+  if (
+    ratingValue === null ||
+    ratingValue === undefined ||
+    ratingValue === "" ||
+    !Number.isFinite(numericRating) ||
+    !Number.isInteger(numericRating * 2) ||
+    numericRating < 1 ||
+    numericRating > 20
+  ) {
+    alert("Оберіть оцінку фільму.");
+    return false;
+  }
+
   button.disabled = true;
   button.classList.add("recommended");
   // button.querySelector(".recommend-heart").textContent = "♥";
@@ -2373,7 +2403,7 @@ button.classList.toggle("has-comment", !!comment);
       user_id: currentUser.id,
       context_group_id: currentGroupId,
       comment,
-      rating_value: ratingValue,
+      rating_value: numericRating,
     })
     .select(`
       id,
@@ -2738,98 +2768,30 @@ async function openMykolaRecommendationFlow(movieId, button) {
     result_movie_id: movieId,
     user_has_finished: false,
   };
+
   adviceRoomResultShown = false;
 
   debugAdviceRoom(
     `Кімната відкрита
 
-  Статус: ${room.result_room_status}
-  Учасників: ${room.result_participant_count}`
+Статус: ${room.result_room_status}
+Учасників: ${room.result_participant_count}`
   );
 
   openMykolaAdviceContextView();
-
   resetMykolaRecommendationFlow();
 
   renderAdviceRoomIndicator(activeAdviceRoom);
   startAdviceRoomPolling();
 
-  addUserBubble(`Раджу: ${movie.title}`);
+  addUserBubble(
+    `Моя порада щодо: ${movie.title}`
+  );
 
-  runWithMykolaThinking(() => {
-    addMykolaBubble(getRandomItem(mykolaRecommendationAcceptReplies));
-    addMykolaRecommendationActions(movieId, button);
-  }, 1400);
-
-}
-
-const mykolaRecommendationAcceptReplies = [
-  "Зрозуміло. Зафіксуємо вашу пораду в картотеці. Додасте пару слів для інших?",
-  "Прийнято. Пораду внесемо до картотеки після погодження кафедрою. Залишите короткий коментар для інших?",
-  "Добре. Картотека поповнюється. Додасте кілька слів, щоб інші розуміли, чому фільм варто переглянути?",
-  "Зафіксовано майже офіційно. Бракує лише вашого короткого пояснення. Додасте пару слів?",
-  "Фіксую вашу пораду. Але картка без пояснення — це як титри без фільму. Додасте коментар?",
-];
-
-function addMykolaRecommendationActions(movieId, button) {
-  const row = document.createElement("div");
-  row.className = "mykola-actions";
-  row.id = "mykolaRecommendationActions";
-
-  row.innerHTML = `
-    <button id="mykolaAddCommentButton" type="button">
-      Так
-    </button>
-
-    <button id="mykolaSkipCommentButton" type="button">
-      Ні, пізніше
-    </button>
-  `;
-
-  const actions = document.getElementById("mykolaActions");
-  mykolaChat.insertBefore(row, actions);
-
-  scrollMykolaChatToBottom();
-
-  document
-    .getElementById("mykolaSkipCommentButton")
-    .addEventListener("click", async () => {
-      row.remove();
-
-      addUserBubble("Ні, пізніше");
-
-      const success = await recommendMovie(movieId, button);
-
-      if (!success) return;
-
-      const roomResult = await finishActiveAdviceRoom();
-
-      if (roomResult?.result_is_complete) {
-        return;
-      }
-
-      const shouldWaitForRoom =
-        roomResult?.result_participant_count > 1 &&
-        !roomResult?.result_is_complete;
-
-      runWithMykolaThinking(() => {
-        addMykolaBubble(
-        shouldWaitForRoom
-          ? "Вашу пораду зафіксовано. Чекаю, поки інші завершать голосування."
-          : "Зафіксовано. Можете повертатись до списку."
-        );
-      }, 900);
-    });
-
-  document
-    .getElementById("mykolaAddCommentButton")
-    .addEventListener("click", () => {
-      row.remove();
-
-      addUserBubble("Так");
-
-      showMykolaRecommendationCommentForm(movieId, button);
-    });
+  showMykolaRecommendationCommentForm(
+    movieId,
+    button
+  );
 }
 
 const mykolaArchiveMarkScale = [
@@ -3527,7 +3489,7 @@ function createRatingSliderHtml(value = 10) {
 
       <div class="mykola-rating-labels">
         <span>Ну, таке…</span>
-        <span class="rating-label-ok">Не погано</span>
+        <span class="rating-label-ok">Непогано</span>
         <span>Шедевр</span>
       </div>
     </div>
@@ -3568,7 +3530,7 @@ function showMykolaRecommendationCommentForm(movieId, button) {
     <div class="user-bubble user-comment-form-bubble">
       <textarea
         id="mykolaRecommendationCommentInput"
-        placeholder="Кілька слів для інших..."
+        placeholder="Додайте коментар, якщо хочете..."
       ></textarea>
 
       ${createRatingSliderHtml(10)}
