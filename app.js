@@ -2531,6 +2531,51 @@ async function getActiveAdviceRoomRecommendations(movieId) {
   });
 }
 
+function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function showAdviceRoomResult(recommendations, movieId) {
+  addMykolaBubble(
+    "Думки зафіксовано. Розберемо їх детальніше."
+  );
+
+  await wait(750);
+
+  const preparationRow = addMykolaBubble(
+    "Оформлюю висновок…"
+  );
+
+  preparationRow.classList.add(
+    "mykola-result-preparation"
+  );
+
+  await wait(1100);
+
+  preparationRow.classList.add("is-fading");
+
+  await wait(550);
+
+  preparationRow.remove();
+
+  addMykolaArchiveSummaryBubble(
+    recommendations,
+    movieId,
+    {
+      showRatingScale: true,
+      animate: true,
+    }
+  );
+
+  await wait(2100);
+
+  addMykolaBubble(
+    getAdviceAgreementPhrase(recommendations)
+  );
+}
+
 async function refreshAdviceRoomState() {
   if (!activeAdviceRoom?.result_room_id) return;
 
@@ -2571,34 +2616,10 @@ async function refreshAdviceRoomState() {
     const recommendations =
         await getActiveAdviceRoomRecommendations(movieId);
 
-    runWithMykolaThinking(() => {
-      addMykolaBubble(
-        "Думки зафіксовано. Розберемо їх детальніше."
-      );
-
-      setTimeout(() => {
-        const typingRow = addMykolaTypingBubble();
-
-        setTimeout(() => {
-          typingRow?.remove();
-
-          addMykolaArchiveSummaryBubble(
-            recommendations,
-            movieId,
-            {
-              showRatingScale: true,
-              animate: true,
-            }
-          );
-
-          setTimeout(() => {
-            addMykolaBubble(
-              getAdviceAgreementPhrase(recommendations)
-            );
-          }, 2200);
-        }, 2200);
-      }, 900);
-    }, 700);
+    await showAdviceRoomResult(
+      recommendations,
+      movieId
+    );
   }
 }
 
@@ -2673,34 +2694,10 @@ async function finishActiveAdviceRoom() {
     const recommendations =
       await getActiveAdviceRoomRecommendations(movieId);
 
-    runWithMykolaThinking(() => {
-      addMykolaBubble(
-        "Думки зафіксовано. Розберемо їх детальніше."
-      );
-
-      setTimeout(() => {
-        const typingRow = addMykolaTypingBubble();
-
-        setTimeout(() => {
-          typingRow?.remove();
-
-          addMykolaArchiveSummaryBubble(
-            recommendations,
-            movieId,
-            {
-              showRatingScale: true,
-              animate: true,
-            }
-          );
-
-          setTimeout(() => {
-            addMykolaBubble(
-              getAdviceAgreementPhrase(recommendations)
-            );
-          }, 2200);
-        }, 2200);
-      }, 900);
-    }, 700);  
+    await showAdviceRoomResult(
+      recommendations,
+      movieId
+    );  
   }
 
   return activeAdviceRoom;
@@ -3356,11 +3353,9 @@ function addMykolaArchiveSummaryBubble(
   if (options.animate && row) {
     row.classList.add("mykola-result-reveal");
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        row.classList.add("visible");
-      });
-    });
+    setTimeout(() => {
+      row.classList.add("visible");
+    }, 80);
   }
 
   return row;
@@ -3468,18 +3463,17 @@ function showMykolaRecommendationCommentForm(movieId, button) {
 
       if (!success) return;
 
+      row.remove();
+
       const roomResult = await finishActiveAdviceRoom();
 
       if (roomResult?.result_is_complete) {
-        row.remove();
         return;
       }
 
       const shouldWaitForRoom =
         roomResult?.result_participant_count > 1 &&
         !roomResult?.result_is_complete;
-
-      row.remove();
 
       runWithMykolaThinking(() => {
         addMykolaBubble(
@@ -3497,19 +3491,18 @@ function showMykolaRecommendationCommentForm(movieId, button) {
       const success = await recommendMovie(movieId, button, null, ratingValue);
       
       if (!success) return;
+
+      row.remove();
       
       const roomResult = await finishActiveAdviceRoom();
 
       if (roomResult?.result_is_complete) {
-        row.remove();
         return;
       }
 
       const shouldWaitForRoom =
         roomResult?.result_participant_count > 1 &&
         !roomResult?.result_is_complete;
-
-      row.remove();
 
       runWithMykolaThinking(() => {
         addMykolaBubble(
