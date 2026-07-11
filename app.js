@@ -3141,7 +3141,6 @@ function positionFloatingAdviceLabels(container) {
 
     const scaleRect = scale.getBoundingClientRect();
     const lineRect = line.getBoundingClientRect();
-    const labelWidth = label.offsetWidth;
 
     const lineStart =
       lineRect.left - scaleRect.left;
@@ -3152,31 +3151,45 @@ function positionFloatingAdviceLabels(container) {
 
     const edgePadding = 8;
 
-    const minimumCenter =
-      labelWidth / 2 + edgePadding;
-
-    const maximumCenter =
-      scale.clientWidth -
-      labelWidth / 2 -
-      edgePadding;
-
-    let actualCenter;
+    label.style.left = "";
+    label.style.right = "";
+    label.style.transform = "";
+    label.style.textAlign = "";
 
     if (targetPosition <= 25) {
-      actualCenter = minimumCenter;
+      label.style.left = `${edgePadding}px`;
+      label.style.right = "auto";
+      label.style.transform = "none";
+      label.style.textAlign = "left";
     } else if (targetPosition >= 75) {
-      actualCenter = maximumCenter;
+      label.style.left = "auto";
+      label.style.right = `${edgePadding}px`;
+      label.style.transform = "none";
+      label.style.textAlign = "right";
     } else {
-      actualCenter =
+      const labelWidth = label.offsetWidth;
+
+      const minimumCenter =
+        labelWidth / 2 + edgePadding;
+
+      const maximumCenter =
+        scale.clientWidth -
+        labelWidth / 2 -
+        edgePadding;
+
+      const actualCenter =
         minimumCenter <= maximumCenter
           ? Math.max(
               minimumCenter,
               Math.min(maximumCenter, desiredCenter)
             )
           : scale.clientWidth / 2;
-    }
 
-    label.style.left = `${actualCenter}px`;
+      label.style.left = `${actualCenter}px`;
+      label.style.right = "auto";
+      label.style.transform = "translateX(-50%)";
+      label.style.textAlign = "center";
+    }
   });
 }
 
