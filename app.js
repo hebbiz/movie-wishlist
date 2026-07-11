@@ -66,6 +66,7 @@ const mykolaView = document.getElementById("mykolaView");
 const openMykolaButton = document.getElementById("openMykolaButton");
 const backFromMykolaButton = document.getElementById("backFromMykolaButton");
 const mykolaChat = document.getElementById("mykolaChat");
+const ADVICE_SCALE_MERGE_SPREAD = 3;
 const DEBUG_ADVICE_ROOM = false;
 
 let movies = [];
@@ -2564,6 +2565,7 @@ async function showAdviceRoomResult(recommendations, movieId) {
     recommendations,
     movieId,
     {
+      title: "Загальний настрій кімнати",
       showRatingScale: true,
       animate: true,
     }
@@ -3153,7 +3155,10 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
   }
 
   const minRating = ratedItems[0].numericRating;
-  const maxRating = ratedItems[ratedItems.length - 1].numericRating;
+  const maxRating =
+    ratedItems[ratedItems.length - 1].numericRating;
+
+  const spread = maxRating - minRating;
 
   const minItems = ratedItems.filter((item) => {
     return item.numericRating === minRating;
@@ -3165,34 +3170,72 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
 
   const minNames = minItems
     .map(getRecommendationDisplayName)
-    .join(", ");
+    .join(" • ");
 
   const maxNames = maxItems
     .map(getRecommendationDisplayName)
-    .join(", ");
+    .join(" • ");
 
-  const ticksHtml = ratedItems
-    .map((item, index) => {
-      const position =
-        ((item.numericRating - 1) / 19) * 100;
+  const ratingToPercent = (rating) => {
+    return ((rating - 1) / 19) * 100;
+  };
 
-      return `
-        <span
-          class="advice-result-scale-tick"
-          style="left: ${position}%"
-          data-rating-index="${index}"
-        ></span>
-      `;
+  const clamp = (value, min, max) => {
+    return Math.min(Math.max(value, min), max);
+  };
+
+  /*
+   * Усі голоси залишаються поділками.
+   * При однакових оцінках поділки трохи розсуваються,
+   * щоб не накладатися абсолютно одна на одну.
+   */
+  const ratingGroups = new Map();
+
+  ratedItems.forEach((item) => {
+    const key = item.numericRating;
+
+    if (!ratingGroups.has(key)) {
+      ratingGroups.set(key, []);
+    }
+
+    ratingGroups.get(key).push(item);
+  });
+
+  const ticksHtml = [...ratingGroups.entries()]
+    .flatMap(([rating, items]) => {
+      const position = ratingToPercent(Number(rating));
+
+      return items.map((_, index) => {
+        const groupCenter = (items.length - 1) / 2;
+        const offset = (index - groupCenter) * 4;
+
+        return `
+          <span
+            class="advice-result-scale-tick"
+            style="
+              left: ${position}%;
+              margin-left: ${offset}px;
+            "
+          ></span>
+        `;
+      });
     })
     .join("");
 
+  /*
+   * Повна одностайність:
+   * один спільний підпис біля єдиної позиції.
+   */
   if (minRating === maxRating) {
     const allNames = ratedItems
       .map(getRecommendationDisplayName)
-      .join(", ");
+      .join(" • ");
 
-    const position =
-      ((minRating - 1) / 19) * 100;
+    const position = clamp(
+      ratingToPercent(minRating),
+      12,
+      88
+    );
 
     return `
       <div class="advice-result-scale">
@@ -3201,7 +3244,10 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
         </div>
 
         <div
-          class="advice-result-scale-unanimous"
+          class="
+            advice-result-scale-label
+            advice-result-scale-label-combined
+          "
           style="left: ${position}%"
         >
           ${escapeHtml(allNames)}
@@ -3210,11 +3256,61 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
     `;
   }
 
-  const minPosition =
-    ((minRating - 1) / 19) * 100;
+  /*
+   * Вузький діапазон:
+   * нижнє та верхнє ім’я об’єднуються одним підписом.
+   *
+   * Порядок завжди:
+   * нижча оцінка • вища оцінка
+   */
+  if (spread <= ADVICE_SCALE_MERGE_SPREAD) {
+    const middleRating =
+      (minRating + maxRating) / 2;
 
-  const maxPosition =
-    ((maxRating - 1) / 19) * 100;
+    const middlePosition = clamp(
+      ratingToPercent(middleRating),
+      14,
+      86
+    );
+
+    const combinedNames =
+      `${minNames} • ${maxNames}`;
+
+    return `
+      <div class="advice-result-scale">
+        <div class="advice-result-scale-line">
+          ${ticksHtml}
+        </div>
+
+        <div
+          class="
+            advice-result-scale-label
+            advice-result-scale-label-combined
+          "
+          style="left: ${middlePosition}%"
+        >
+          ${escapeHtml(combinedNames)}
+        </div>
+      </div>
+    `;
+  }
+
+  /*
+   * Звичайний діапазон:
+   * підписуються лише крайні голоси.
+   * Усі проміжні залишаються поділками без імен.
+   */
+  const minPosition = clamp(
+    ratingToPercent(minRating),
+    0,
+    82
+  );
+
+  const maxPosition = clamp(
+    ratingToPercent(maxRating),
+    18,
+    100
+  );
 
   return `
     <div class="advice-result-scale">
@@ -3223,14 +3319,20 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
       </div>
 
       <div
-        class="advice-result-scale-label advice-result-scale-label-min"
+        class="
+          advice-result-scale-label
+          advice-result-scale-label-min
+        "
         style="left: ${minPosition}%"
       >
         ${escapeHtml(minNames)}
       </div>
 
       <div
-        class="advice-result-scale-label advice-result-scale-label-max"
+        class="
+          advice-result-scale-label
+          advice-result-scale-label-max
+        "
         style="left: ${maxPosition}%"
       >
         ${escapeHtml(maxNames)}
@@ -3316,6 +3418,11 @@ function addMykolaArchiveSummaryBubble(
   movieId = "",
   options = {}
 ) {
+  
+  const summaryTitle =
+    options.title ||
+    "Загальний настрій картотеки";
+  
   const averageRating =
     getAverageRecommendationRating(recommendations);
 
@@ -3338,7 +3445,7 @@ function addMykolaArchiveSummaryBubble(
   const row = addMykolaBubble(`
     <div class="mykola-archive-summary">
       <div class="mykola-archive-summary-label">
-        Загальний настрій картотеки:
+        ${escapeHtml(summaryTitle)}:
         <span>${escapeHtml(moodLabel)}</span>
       </div>
 
