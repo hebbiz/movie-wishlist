@@ -3144,21 +3144,40 @@ function getRatedRecommendations(recommendations) {
       ...item,
       numericRating: Number(item.rating_value),
     }))
-    .sort((a, b) => a.numericRating - b.numericRating);
+    .sort((a, b) => {
+      const ratingDifference =
+        a.numericRating - b.numericRating;
+
+      if (ratingDifference !== 0) {
+        return ratingDifference;
+      }
+
+      /*
+       * Стабільний порядок для однакових оцінок.
+       * Не залежить від того, хто зараз переглядає результат.
+       */
+      return String(a.user_id || "").localeCompare(
+        String(b.user_id || "")
+      );
+    });
 }
 
 function createAdviceRoomRatingScaleHtml(recommendations) {
-  const ratedItems = getRatedRecommendations(recommendations);
+  const ratedItems =
+    getRatedRecommendations(recommendations);
 
   if (ratedItems.length < 2) {
     return "";
   }
 
-  const minRating = ratedItems[0].numericRating;
+  const minRating =
+    ratedItems[0].numericRating;
+
   const maxRating =
     ratedItems[ratedItems.length - 1].numericRating;
 
-  const spread = maxRating - minRating;
+  const spread =
+    maxRating - minRating;
 
   const minItems = ratedItems.filter((item) => {
     return item.numericRating === minRating;
@@ -3168,6 +3187,11 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
     return item.numericRating === maxRating;
   });
 
+  /*
+   * Порядок імен стабільний, оскільки ratedItems
+   * уже відсортований спочатку за оцінкою,
+   * а для однакових оцінок — за user_id.
+   */
   const minNames = minItems
     .map(getRecommendationDisplayName)
     .join(" • ");
@@ -3180,34 +3204,50 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
     return ((rating - 1) / 19) * 100;
   };
 
-  const clamp = (value, min, max) => {
-    return Math.min(Math.max(value, min), max);
+  /*
+   * Підпис залишається точно на координаті своєї оцінки.
+   * Клас визначає лише напрямок розгортання тексту.
+   */
+  const getLabelAnchorClass = (position) => {
+    if (position <= 24) {
+      return "is-left";
+    }
+
+    if (position >= 76) {
+      return "is-right";
+    }
+
+    return "is-center";
   };
 
   /*
-   * Усі голоси залишаються поділками.
-   * При однакових оцінках поділки трохи розсуваються,
-   * щоб не накладатися абсолютно одна на одну.
+   * Групуємо голоси за оцінкою.
+   * Однакові оцінки показуємо окремими поділками,
+   * трохи розсунутими горизонтально.
    */
   const ratingGroups = new Map();
 
   ratedItems.forEach((item) => {
-    const key = item.numericRating;
+    const rating = item.numericRating;
 
-    if (!ratingGroups.has(key)) {
-      ratingGroups.set(key, []);
+    if (!ratingGroups.has(rating)) {
+      ratingGroups.set(rating, []);
     }
 
-    ratingGroups.get(key).push(item);
+    ratingGroups.get(rating).push(item);
   });
 
   const ticksHtml = [...ratingGroups.entries()]
     .flatMap(([rating, items]) => {
-      const position = ratingToPercent(Number(rating));
+      const position =
+        ratingToPercent(Number(rating));
 
-      return items.map((_, index) => {
-        const groupCenter = (items.length - 1) / 2;
-        const offset = (index - groupCenter) * 4;
+      return items.map((item, index) => {
+        const groupCenter =
+          (items.length - 1) / 2;
+
+        const offset =
+          (index - groupCenter) * 4;
 
         return `
           <span
@@ -3224,18 +3264,18 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
 
   /*
    * Повна одностайність:
-   * один спільний підпис біля єдиної позиції.
+   * усі імена в одному підписі біля спільної оцінки.
    */
   if (minRating === maxRating) {
     const allNames = ratedItems
       .map(getRecommendationDisplayName)
       .join(" • ");
 
-    const position = clamp(
-      ratingToPercent(minRating),
-      12,
-      88
-    );
+    const position =
+      ratingToPercent(minRating);
+
+    const anchorClass =
+      getLabelAnchorClass(position);
 
     return `
       <div class="advice-result-scale">
@@ -3247,6 +3287,7 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
           class="
             advice-result-scale-label
             advice-result-scale-label-combined
+            ${anchorClass}
           "
           style="left: ${position}%"
         >
@@ -3258,20 +3299,21 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
 
   /*
    * Вузький діапазон:
-   * нижнє та верхнє ім’я об’єднуються одним підписом.
+   * один спільний підпис у правильному порядку:
    *
-   * Порядок завжди:
    * нижча оцінка • вища оцінка
+   *
+   * Проміжні голоси залишаються лише поділками.
    */
   if (spread <= ADVICE_SCALE_MERGE_SPREAD) {
     const middleRating =
       (minRating + maxRating) / 2;
 
-    const middlePosition = clamp(
-      ratingToPercent(middleRating),
-      14,
-      86
-    );
+    const middlePosition =
+      ratingToPercent(middleRating);
+
+    const anchorClass =
+      getLabelAnchorClass(middlePosition);
 
     const combinedNames =
       `${minNames} • ${maxNames}`;
@@ -3286,6 +3328,7 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
           class="
             advice-result-scale-label
             advice-result-scale-label-combined
+            ${anchorClass}
           "
           style="left: ${middlePosition}%"
         >
@@ -3296,21 +3339,21 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
   }
 
   /*
-   * Звичайний діапазон:
-   * підписуються лише крайні голоси.
-   * Усі проміжні залишаються поділками без імен.
+   * Ширший діапазон:
+   * підписуємо лише найнижчу і найвищу оцінки.
+   * Кожен підпис розташований точно біля своєї поділки.
    */
-  const minPosition = clamp(
-    ratingToPercent(minRating),
-    0,
-    82
-  );
+  const minPosition =
+    ratingToPercent(minRating);
 
-  const maxPosition = clamp(
-    ratingToPercent(maxRating),
-    18,
-    100
-  );
+  const maxPosition =
+    ratingToPercent(maxRating);
+
+  const minAnchorClass =
+    getLabelAnchorClass(minPosition);
+
+  const maxAnchorClass =
+    getLabelAnchorClass(maxPosition);
 
   return `
     <div class="advice-result-scale">
@@ -3322,6 +3365,7 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
         class="
           advice-result-scale-label
           advice-result-scale-label-min
+          ${minAnchorClass}
         "
         style="left: ${minPosition}%"
       >
@@ -3332,6 +3376,7 @@ function createAdviceRoomRatingScaleHtml(recommendations) {
         class="
           advice-result-scale-label
           advice-result-scale-label-max
+          ${maxAnchorClass}
         "
         style="left: ${maxPosition}%"
       >
