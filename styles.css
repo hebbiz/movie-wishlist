@@ -1885,6 +1885,73 @@ body {
   width: fit-content;
 }
 
+.mykola-result-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 650ms ease,
+    transform 650ms ease;
+}
+
+.mykola-result-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.advice-result-scale {
+  position: relative;
+  margin-top: 24px;
+  padding-top: 8px;
+  padding-bottom: 30px;
+}
+
+.advice-result-scale-line {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.advice-result-scale-tick {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+}
+
+.advice-result-scale-label {
+  position: absolute;
+  top: 18px;
+  max-width: 45%;
+  font-size: 11px;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+}
+
+.advice-result-scale-label-min {
+  transform: translateX(0);
+}
+
+.advice-result-scale-label-max {
+  transform: translateX(-100%);
+  text-align: right;
+}
+
+.advice-result-scale-unanimous {
+  position: absolute;
+  top: 18px;
+  max-width: 90%;
+  font-size: 11px;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
 .group-member-menu .group-member-menu-dropdown {
   display: none;
   position: absolute;
