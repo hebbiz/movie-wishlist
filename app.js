@@ -1830,7 +1830,7 @@ function toggleMyAdviceCard(movieId, button) {
       class="my-advice-edit-button"
       data-edit-my-advice="${movieId}"
     >
-      "Змінити"
+      Змінити
     </button>
   `;
 
