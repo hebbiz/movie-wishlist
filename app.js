@@ -1487,6 +1487,7 @@ logoutButton.addEventListener("click", async () => {
 
   const start = Date.now();
 
+  await leaveActiveAdviceRoom();
   await supabaseClient.auth.signOut();
 
   currentRole = null;
@@ -2528,7 +2529,7 @@ async function getActiveAdviceRoomRecommendations(movieId) {
     .from("advice_room_participants")
     .select("user_id")
     .eq("room_id", activeAdviceRoom.result_room_id)
-    .in("status", ["active", "finished"]);
+    .not("submitted_at", "is", null);
 
   if (error) {
     console.warn("Advice room participants load error:", error);
@@ -2547,7 +2548,8 @@ async function getActiveAdviceRoomRecommendations(movieId) {
     ...(movieRecommendationDetails[movieId] || []),
   ];
 
-  const myRecommendation = getCurrentUserRecommendation(movieId);
+  const myRecommendation =
+    getCurrentUserRecommendation(movieId);
 
   if (myRecommendation) {
     allRecommendations.push(myRecommendation);
@@ -2667,13 +2669,23 @@ async function leaveActiveAdviceRoom() {
 
   const roomId = activeAdviceRoom.result_room_id;
 
-  activeAdviceRoom = null;
   stopAdviceRoomPolling();
   renderAdviceRoomIndicator(null);
 
-  await supabaseClient.rpc("leave_advice_room", {
-    p_room_id: roomId,
-  });
+  const { error } = await supabaseClient.rpc(
+    "leave_advice_room",
+    {
+      p_room_id: roomId,
+    }
+  );
+
+  if (error) {
+    console.warn("Leave advice room error:", error);
+    return;
+  }
+
+  activeAdviceRoom = null;
+  adviceRoomResultShown = false;
 }
 
 async function finishActiveAdviceRoom() {

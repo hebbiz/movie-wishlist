@@ -1010,3 +1010,29 @@ begin
 end;
 $function$;
 
+-- Update function leave advice room
+
+declare
+  v_has_present_participants boolean;
+begin
+  update advice_room_participants arp
+  set
+    status = 'left',
+    last_seen_at = now()
+  where arp.room_id = p_room_id
+    and arp.user_id = auth.uid()
+    and arp.status in ('active', 'finished');
+
+  v_has_present_participants := exists (
+    select 1
+    from advice_room_participants arp
+    where arp.room_id = p_room_id
+      and arp.status in ('active', 'finished')
+  );
+
+  if not v_has_present_participants then
+    delete from advice_rooms
+    where id = p_room_id;
+  end if;
+end;
+
