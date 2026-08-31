@@ -281,3 +281,101 @@ on function public.replace_movie_catalog_activity(
   text
 )
 from public, anon, authenticated;
+
+/*
+  Movie Wishlist
+  Movie Activity — Stage 4
+
+  Автоматично створює / замінює activity
+  після INSERT або реальної зміни status
+  у movie_group_lists.
+*/
+
+
+create or replace function public.handle_movie_group_list_activity()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor_user_id uuid;
+begin
+
+  /*
+    Користувач, який виконав зміну через Supabase client.
+  */
+  v_actor_user_id := auth.uid();
+
+
+  /*
+    Якщо операція виконана без authenticated user,
+    activity не створюємо.
+
+    Це захищає від технічних/admin операцій,
+    імпортів або SQL Editor змін.
+  */
+  if v_actor_user_id is null then
+    return NEW;
+  end if;
+
+
+  /* ==========================================================
+     INSERT
+
+     Новий фільм додано до групового каталогу.
+     from_status = NULL
+     to_status   = NEW.status
+     ========================================================== */
+
+  if TG_OP = 'INSERT' then
+
+    perform public.replace_movie_catalog_activity(
+      NEW.group_id,
+      NEW.movie_id,
+      v_actor_user_id,
+      null,
+      NEW.status
+    );
+
+    return NEW;
+
+  end if;
+
+
+  /* ==========================================================
+     UPDATE
+
+     Activity створюємо ТІЛЬКИ якщо status реально змінився.
+     Зміна purchase_url, recommended_medium, notes тощо
+     не повинна породжувати activity.
+     ========================================================== */
+
+  if TG_OP = 'UPDATE'
+     and OLD.status is distinct from NEW.status then
+
+    perform public.replace_movie_catalog_activity(
+      NEW.group_id,
+      NEW.movie_id,
+      v_actor_user_id,
+      OLD.status,
+      NEW.status
+    );
+
+  end if;
+
+
+  return NEW;
+
+end;
+$$;
+
+
+/*
+  Це trigger-function.
+  Клієнт напряму її не викликає.
+*/
+
+revoke execute
+on function public.handle_movie_group_list_activity()
+from public, anon, authenticated;
