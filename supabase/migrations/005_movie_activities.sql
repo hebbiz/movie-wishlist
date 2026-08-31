@@ -379,3 +379,13 @@ $$;
 revoke execute
 on function public.handle_movie_group_list_activity()
 from public, anon, authenticated;
+
+drop trigger if exists trg_movie_group_list_activity
+on public.movie_group_lists;
+
+
+create trigger trg_movie_group_list_activity
+after insert or update of status
+on public.movie_group_lists
+for each row
+execute function public.handle_movie_group_list_activity();
