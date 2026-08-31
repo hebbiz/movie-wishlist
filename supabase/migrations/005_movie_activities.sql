@@ -101,3 +101,183 @@ alter table public.movie_activity
 
 alter table public.movie_activity_recipients
   enable row level security;
+
+/*
+  Movie Wishlist
+  Movie Activity — Stage 2
+
+  Internal helper:
+  створює або повністю замінює актуальну
+  catalog_status activity для одного фільму.
+
+  Поки НЕ підключена до trigger.
+*/
+
+
+create or replace function public.replace_movie_catalog_activity(
+  p_group_id uuid,
+  p_movie_id uuid,
+  p_actor_user_id uuid,
+  p_from_status text,
+  p_to_status text
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_activity_id uuid;
+  v_recipient_count integer;
+begin
+
+  -- ----------------------------------------------------------
+  -- 1. Базова перевірка аргументів
+  -- ----------------------------------------------------------
+
+  if p_group_id is null
+     or p_movie_id is null
+     or p_actor_user_id is null
+     or p_to_status is null then
+
+    raise exception
+      'Movie activity requires group_id, movie_id, actor_user_id and to_status';
+  end if;
+
+
+  -- ----------------------------------------------------------
+  -- 2. Actor повинен бути учасником цієї групи
+  --
+  -- У group_members знаходяться owner / member / visitor,
+  -- тому це також захищає функцію від довільного actor UUID.
+  -- ----------------------------------------------------------
+
+  if not exists (
+    select 1
+    from public.group_members gm
+    where gm.group_id = p_group_id
+      and gm.user_id = p_actor_user_id
+  ) then
+
+    raise exception
+      'Actor is not a member of this group';
+  end if;
+
+
+  -- ----------------------------------------------------------
+  -- 3. Фільм повинен реально існувати у каталозі цієї групи
+  -- ----------------------------------------------------------
+
+  if not exists (
+    select 1
+    from public.movie_group_lists mgl
+    where mgl.group_id = p_group_id
+      and mgl.movie_id = p_movie_id
+  ) then
+
+    raise exception
+      'Movie is not present in this group';
+  end if;
+
+
+  -- ----------------------------------------------------------
+  -- 4. Прибираємо попередню status activity цього фільму
+  --
+  -- movie_activity_recipients видаляться автоматично
+  -- через ON DELETE CASCADE.
+  -- ----------------------------------------------------------
+
+  delete from public.movie_activity
+  where group_id = p_group_id
+    and movie_id = p_movie_id
+    and activity_category = 'catalog_status';
+
+
+  -- ----------------------------------------------------------
+  -- 5. Створюємо нову актуальну activity
+  -- ----------------------------------------------------------
+
+  insert into public.movie_activity (
+    group_id,
+    movie_id,
+    actor_user_id,
+    activity_category,
+    from_status,
+    to_status,
+    created_at
+  )
+  values (
+    p_group_id,
+    p_movie_id,
+    p_actor_user_id,
+    'catalog_status',
+    p_from_status,
+    p_to_status,
+    now()
+  )
+  returning id into v_activity_id;
+
+
+  -- ----------------------------------------------------------
+  -- 6. Snapshot recipients
+  --
+  -- Беремо ВСІХ поточних учасників групи:
+  -- owner / member / visitor,
+  -- але виключаємо автора зміни.
+  -- ----------------------------------------------------------
+
+  insert into public.movie_activity_recipients (
+    activity_id,
+    user_id,
+    seen_at
+  )
+  select
+    v_activity_id,
+    gm.user_id,
+    null
+  from public.group_members gm
+  where gm.group_id = p_group_id
+    and gm.user_id <> p_actor_user_id;
+
+
+  get diagnostics v_recipient_count = row_count;
+
+
+  -- ----------------------------------------------------------
+  -- 7. Якщо нікому доставляти activity — вона не потрібна
+  --
+  -- Наприклад: персональна група, де є тільки owner.
+  -- ----------------------------------------------------------
+
+  if v_recipient_count = 0 then
+
+    delete from public.movie_activity
+    where id = v_activity_id;
+
+    return null;
+
+  end if;
+
+
+  return v_activity_id;
+
+end;
+$$;
+
+
+/*
+  Це внутрішня серверна функція.
+
+  З app.js напряму ми її викликати не будемо,
+  тому забороняємо execute клієнтським ролям.
+*/
+
+revoke execute
+on function public.replace_movie_catalog_activity(
+  uuid,
+  uuid,
+  uuid,
+  text,
+  text
+)
+from public, anon, authenticated;
