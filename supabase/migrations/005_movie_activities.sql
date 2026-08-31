@@ -389,3 +389,90 @@ after insert or update of status
 on public.movie_group_lists
 for each row
 execute function public.handle_movie_group_list_activity();
+
+/*
+  Movie Wishlist
+  Movie Activity — Stage 5
+
+  Recipient позначає activity як seen.
+
+  Якщо unseen recipients більше не залишилося:
+  - movie_activity видаляється;
+  - movie_activity_recipients видаляються через ON DELETE CASCADE.
+*/
+
+
+create or replace function public.mark_movie_activity_seen(
+  p_activity_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+begin
+
+  v_user_id := auth.uid();
+
+
+  -- ----------------------------------------------------------
+  -- 1. RPC дозволена тільки authenticated user
+  -- ----------------------------------------------------------
+
+  if v_user_id is null then
+    raise exception 'Authentication required';
+  end if;
+
+
+  -- ----------------------------------------------------------
+  -- 2. Позначаємо activity переглянутою тільки якщо
+  --    поточний user справді є її recipient.
+  --
+  --    Повторний виклик для вже seen activity є допустимим.
+  -- ----------------------------------------------------------
+
+  update public.movie_activity_recipients
+  set seen_at = coalesce(seen_at, now())
+  where activity_id = p_activity_id
+    and user_id = v_user_id;
+
+
+  if not found then
+    raise exception 'Activity is not assigned to current user';
+  end if;
+
+
+  -- ----------------------------------------------------------
+  -- 3. Якщо більше немає unseen recipients,
+  --    activity виконала свою задачу.
+  -- ----------------------------------------------------------
+
+  if not exists (
+    select 1
+    from public.movie_activity_recipients
+    where activity_id = p_activity_id
+      and seen_at is null
+  ) then
+
+    delete from public.movie_activity
+    where id = p_activity_id;
+
+  end if;
+
+end;
+$$;
+
+
+/*
+  RPC доступна authenticated користувачам.
+*/
+
+revoke execute
+on function public.mark_movie_activity_seen(uuid)
+from public, anon;
+
+grant execute
+on function public.mark_movie_activity_seen(uuid)
+to authenticated;
