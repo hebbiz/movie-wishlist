@@ -143,12 +143,76 @@
       <p id="searchHint" class="search-hint"></p>
     </section>
 
-    <section class="panel filters">
-      <button type="button" class="filter-btn active" data-filter="all">Усі</button>
-      <button type="button" class="filter-btn" data-filter="wishlist">Хочу переглянути</button>
-      <button type="button" class="filter-btn" data-filter="ordered">Замовлено</button>
-      <button type="button" class="filter-btn" data-filter="owned">Придбано</button>
-      <button type="button" class="filter-btn" data-filter="watched">Переглянуто</button>
+    <section class="panel filters-panel">
+
+      <div class="filters">
+        <button
+          type="button"
+          class="filter-btn active"
+          data-filter="all"
+        >
+          Усі
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn"
+          data-filter="wishlist"
+        >
+          Хочу переглянути
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn"
+          data-filter="ordered"
+        >
+          Замовлено
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn"
+          data-filter="owned"
+        >
+          Придбано
+        </button>
+
+        <button
+          type="button"
+          class="filter-btn"
+          data-filter="watched"
+        >
+          Переглянуто
+        </button>
+
+        <button
+          id="extraListsToggle"
+          type="button"
+          class="extra-lists-toggle"
+          aria-expanded="false"
+          aria-label="Додаткові списки"
+        >
+          <span id="extraListsActiveLabel"></span>
+          <span class="extra-lists-arrow">▾</span>
+        </button>
+      </div>
+
+      <div
+        id="extraListsPanel"
+        class="extra-lists-panel"
+      >
+        <div class="extra-lists-panel-inner">
+          <button
+            type="button"
+            class="extra-list-btn"
+            data-extra-filter="unavailable"
+          >
+            Недоступні
+          </button>
+        </div>
+      </div>
+
     </section>
 
     <section class="panel actions-panel">

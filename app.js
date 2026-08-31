@@ -10,6 +10,10 @@ const searchInput = document.getElementById("searchInput");
 const clearSearchButton = document.getElementById("clearSearchButton");
 const searchHint = document.getElementById("searchHint");
 const filterButtons = document.querySelectorAll(".filter-btn");
+const extraListsToggle = document.getElementById("extraListsToggle");
+const extraListsPanel = document.getElementById("extraListsPanel");
+const extraListsActiveLabel = document.getElementById("extraListsActiveLabel");
+const extraListButtons = document.querySelectorAll(".extra-list-btn");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
 const formPanel = document.getElementById("formPanel");
@@ -2212,10 +2216,20 @@ function renderMovies(list) {
   moviesGrid.innerHTML = "";
   movieCount.textContent = `(${list.length})`;
 
-  if (list.length === 0) {
-    moviesGrid.innerHTML = "<p>Нічого не знайдено.</p>";
-    return;
+if (list.length === 0) {
+  if (
+    activeFilter === "unavailable" &&
+    !searchInput.value.trim()
+  ) {
+    moviesGrid.innerHTML =
+      "<p>Немає недоступних фільмів.</p>";
+  } else {
+    moviesGrid.innerHTML =
+      "<p>Нічого не знайдено.</p>";
   }
+
+  return;
+}
 
   list.forEach((movie) => {
     const card = document.createElement("article");
@@ -5108,6 +5122,12 @@ function applySearchAndFilters() {
       matchesFilter = movie.status === "watched";
     }
 
+    if (activeFilter === "unavailable") {
+      matchesFilter =
+        movie.status === "wishlist" &&
+        movie.recommended_medium === "Наразі недоступний";
+    }
+
     if (activeFilter === "uhd") {
       matchesFilter =
         movie.recommended_medium === "4K UHD Blu-ray" ||
@@ -5513,19 +5533,9 @@ function openMovieFromMykola(movie) {
   mykolaView.classList.remove("active");
   mainView.classList.add("active");
 
-  activeFilter = movie.status;
-
-  filterButtons.forEach((btn) => {
-    btn.classList.remove("active");
-
-    if (btn.dataset.filter === movie.status) {
-      btn.classList.add("active");
-    }
-  });
-
   searchInput.value = movie.title;
 
-  applySearchAndFilters();
+  setActiveFilter(movie.status);
 
   window.scrollTo({
     top: moviesGrid.offsetTop - 20,
@@ -5815,14 +5825,79 @@ function showMykolaReturnPrompt() {
 
 searchInput.addEventListener("input", applySearchAndFilters);
 
+function closeExtraListsPanel() {
+  extraListsPanel.classList.remove("open");
+
+  extraListsToggle.setAttribute(
+    "aria-expanded",
+    "false"
+  );
+}
+
+function updateActiveListUI() {
+  filterButtons.forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.filter === activeFilter
+    );
+  });
+
+  extraListButtons.forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.extraFilter === activeFilter
+    );
+  });
+
+  const isExtraList =
+    activeFilter === "unavailable";
+
+  extraListsToggle.classList.toggle(
+    "active",
+    isExtraList
+  );
+
+  extraListsActiveLabel.textContent =
+    isExtraList
+      ? "Недоступні"
+      : "";
+}
+
+
+function setActiveFilter(filter) {
+  activeFilter = filter;
+
+  closeExtraListsPanel();
+  updateActiveListUI();
+  applySearchAndFilters();
+}
+
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    activeFilter = button.dataset.filter;
+    setActiveFilter(button.dataset.filter);
+  });
+});
 
-    filterButtons.forEach((btn) => btn.classList.remove("active"));
-    button.classList.add("active");
+extraListsToggle.addEventListener("click", () => {
+  const isOpen =
+    extraListsPanel.classList.contains("open");
 
-    applySearchAndFilters();
+  extraListsPanel.classList.toggle(
+    "open",
+    !isOpen
+  );
+
+  extraListsToggle.setAttribute(
+    "aria-expanded",
+    String(!isOpen)
+  );
+});
+
+extraListButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setActiveFilter(
+      button.dataset.extraFilter
+    );
   });
 });
 
@@ -6096,6 +6171,13 @@ document.addEventListener("click", (event) => {
 
   if (!clickedInsideGroupSelector) {
     groupSelectorDropdown.style.display = "none";
+  }
+
+  const clickedInsideExtraLists =
+    event.target.closest(".filters-panel");
+
+  if (!clickedInsideExtraLists) {
+    closeExtraListsPanel();
   }
 
   const clickedInsideRecommendContext =
