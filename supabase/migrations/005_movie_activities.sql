@@ -476,3 +476,81 @@ from public, anon;
 grant execute
 on function public.mark_movie_activity_seen(uuid)
 to authenticated;
+
+/*
+  Movie Wishlist
+  Movie Activity — Stage 6
+
+  RLS:
+  - authenticated бачить тільки activity,
+    де він є recipient;
+  - authenticated бачить тільки власний recipient row;
+  - direct writes із frontend заборонені.
+*/
+
+
+-- ============================================================
+-- 1. Явно прибираємо клієнтські права
+-- ============================================================
+
+revoke all privileges
+on table public.movie_activity
+from anon, authenticated;
+
+revoke all privileges
+on table public.movie_activity_recipients
+from anon, authenticated;
+
+
+/*
+  Frontend потрібен тільки SELECT.
+*/
+
+grant select
+on table public.movie_activity
+to authenticated;
+
+grant select
+on table public.movie_activity_recipients
+to authenticated;
+
+
+/* ============================================================
+   2. Recipient може бачити тільки свій рядок
+   ============================================================ */
+
+drop policy if exists
+  movie_activity_recipients_select_own
+on public.movie_activity_recipients;
+
+
+create policy movie_activity_recipients_select_own
+on public.movie_activity_recipients
+for select
+to authenticated
+using (
+  user_id = (select auth.uid())
+);
+
+
+/* ============================================================
+   3. Activity доступна тільки її recipient
+   ============================================================ */
+
+drop policy if exists
+  movie_activity_select_assigned
+on public.movie_activity;
+
+
+create policy movie_activity_select_assigned
+on public.movie_activity
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.movie_activity_recipients mar
+    where mar.activity_id = movie_activity.id
+      and mar.user_id = (select auth.uid())
+  )
+);
