@@ -996,9 +996,14 @@ input[readonly],
   margin-top: 12px;
 }
 
+.filters-panel {
+  display: block;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
 }
 
@@ -1013,6 +1018,106 @@ input[readonly],
 .filter-btn.active {
   background: #d6b25e;
   color: #111;
+}
+
+
+/* ---------- Додаткові списки ---------- */
+
+.extra-lists-toggle {
+  width: auto;
+  margin: 0;
+  padding: 10px 12px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  background: #2a2a2a;
+  color: #f4f4f4;
+
+  border-radius: 10px;
+}
+
+.extra-lists-toggle:hover {
+  background: #333;
+}
+
+.extra-lists-toggle.active {
+  background: #d6b25e;
+  color: #111;
+}
+
+.extra-lists-arrow {
+  display: inline-block;
+
+  font-size: 12px;
+  line-height: 1;
+
+  transition: transform 180ms ease;
+}
+
+.extra-lists-toggle[aria-expanded="true"] .extra-lists-arrow {
+  transform: rotate(180deg);
+}
+
+
+/* Закрита додаткова панель */
+
+.extra-lists-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+
+  opacity: 0;
+
+  transition:
+    grid-template-rows 180ms ease,
+    opacity 180ms ease;
+}
+
+.extra-lists-panel-inner {
+  overflow: hidden;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+
+/* Відкрита додаткова панель */
+
+.extra-lists-panel.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.extra-lists-panel.open .extra-lists-panel-inner {
+  padding-top: 12px;
+}
+
+
+/* Кнопки додаткових списків */
+
+.extra-list-btn {
+  width: auto;
+  margin: 0;
+  padding: 9px 13px;
+
+  background: #242424;
+  color: #bbb;
+
+  border: 1px solid #333;
+}
+
+.extra-list-btn:hover {
+  background: #2a2a2a;
+  color: #f4f4f4;
+}
+
+.extra-list-btn.active {
+  background: #d6b25e;
+  color: #111;
+  border-color: #d6b25e;
 }
 
 .actions-panel {
