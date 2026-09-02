@@ -1710,6 +1710,9 @@ async function loadUnseenMovieActivities() {
   if (!currentUser || !currentGroupId) {
     unseenMovieActivities = [];
     unseenMovieActivityByMovieId = {};
+
+    updateMovieActivityCountUI();
+
     return;
   }
 
@@ -1741,6 +1744,8 @@ async function loadUnseenMovieActivities() {
     unseenMovieActivities = [];
     unseenMovieActivityByMovieId = {};
 
+    updateMovieActivityCountUI();
+
     return;
   }
 
@@ -1764,6 +1769,46 @@ async function loadUnseenMovieActivities() {
     "Unseen movie activity by movie:",
     unseenMovieActivityByMovieId
   );
+
+  updateMovieActivityCountUI();
+}
+
+function updateMovieActivityCountUI() {
+  const counts = {
+    wishlist: 0,
+    ordered: 0,
+    owned: 0,
+    watched: 0,
+  };
+
+  unseenMovieActivities.forEach((activity) => {
+    if (Object.prototype.hasOwnProperty.call(counts, activity.to_status)) {
+      counts[activity.to_status] += 1;
+    }
+  });
+
+  filterButtons.forEach((button) => {
+    const existingCount =
+      button.querySelector(".filter-new-count");
+
+    if (existingCount) {
+      existingCount.remove();
+    }
+
+    const status = button.dataset.filter;
+    const count = counts[status] || 0;
+
+    if (count === 0) {
+      return;
+    }
+
+    const countElement = document.createElement("span");
+
+    countElement.className = "filter-new-count";
+    countElement.textContent = `+${count}`;
+
+    button.appendChild(countElement);
+  });
 }
 
 function getCurrentUserRecommendation(movieId) {
