@@ -944,6 +944,11 @@ input[readonly],
   color: #cfe3c4;
 }
 
+.new-activity-badge {
+  background: rgba(214, 178, 94, 0.9);
+  color: #111;
+}
+
 .group-current-badge {
   display: inline-block;
 
