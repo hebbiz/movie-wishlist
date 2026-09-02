@@ -71,6 +71,8 @@ const openMykolaButton = document.getElementById("openMykolaButton");
 const backFromMykolaButton = document.getElementById("backFromMykolaButton");
 const mykolaChat = document.getElementById("mykolaChat");
 const DEBUG_ADVICE_ROOM = false;
+const movieActivitySeenTimers = new Map();
+const movieActivityMarking = new Set();
 
 let movies = [];
 let editingMovieId = null;
@@ -101,6 +103,7 @@ let activeRecommendationStackOffset = 0;
 let isRecommendationStackInteracting = false;
 let unseenMovieActivities = [];
 let unseenMovieActivityByMovieId = {};
+let movieActivityObserver = null;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1811,6 +1814,170 @@ function updateMovieActivityCountUI() {
   });
 }
 
+function resetMovieActivityObserver() {
+  if (movieActivityObserver) {
+    movieActivityObserver.disconnect();
+    movieActivityObserver = null;
+  }
+
+  movieActivitySeenTimers.forEach((timerId) => {
+    clearTimeout(timerId);
+  });
+
+  movieActivitySeenTimers.clear();
+}
+
+async function markMovieActivitySeen(card) {
+  const activityId = card.dataset.activityId;
+  const movieId = card.dataset.movieId;
+
+  if (!activityId || !movieId) {
+    return;
+  }
+
+  if (movieActivityMarking.has(activityId)) {
+    return;
+  }
+
+  movieActivityMarking.add(activityId);
+
+  const { error } = await supabaseClient.rpc(
+    "mark_movie_activity_seen",
+    {
+      p_activity_id: activityId,
+    }
+  );
+
+  if (error) {
+    console.warn(
+      "Mark movie activity seen error:",
+      error
+    );
+
+    movieActivityMarking.delete(activityId);
+
+    /*
+     * Activity могла бути замінена або видалена
+     * іншим статусним оновленням, поки сторінка
+     * була відкрита.
+     *
+     * У такому випадку просто синхронізуємо
+     * локальний стан з БД.
+     */
+    await loadUnseenMovieActivities();
+    applySearchAndFilters();
+
+    return;
+  }
+
+  unseenMovieActivities =
+    unseenMovieActivities.filter((activity) => {
+      return activity.id !== activityId;
+    });
+
+  const currentActivity =
+    unseenMovieActivityByMovieId[movieId];
+
+  if (currentActivity?.id === activityId) {
+    delete unseenMovieActivityByMovieId[movieId];
+  }
+
+  updateMovieActivityCountUI();
+
+  if (movieActivityObserver) {
+    movieActivityObserver.unobserve(card);
+  }
+
+  card.removeAttribute("data-activity-id");
+  card.removeAttribute("data-movie-id");
+
+  const badge =
+    card.querySelector(".new-activity-badge");
+
+  if (badge) {
+    badge.classList.add("is-seen");
+
+    setTimeout(() => {
+      badge.remove();
+    }, 240);
+  }
+
+  movieActivityMarking.delete(activityId);
+}
+
+function attachMovieActivityObserver() {
+  resetMovieActivityObserver();
+
+  const activityCards =
+    moviesGrid.querySelectorAll(
+      ".card[data-activity-id]"
+    );
+
+  if (!activityCards.length) {
+    return;
+  }
+
+  movieActivityObserver =
+    new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const card = entry.target;
+          const activityId =
+            card.dataset.activityId;
+
+          if (!activityId) {
+            return;
+          }
+
+          const isVisibleEnough =
+            entry.isIntersecting &&
+            entry.intersectionRatio >= 0.5;
+
+          if (isVisibleEnough) {
+            if (
+              movieActivitySeenTimers.has(activityId)
+            ) {
+              return;
+            }
+
+            const timerId = setTimeout(() => {
+              movieActivitySeenTimers.delete(
+                activityId
+              );
+
+              markMovieActivitySeen(card);
+            }, 700);
+
+            movieActivitySeenTimers.set(
+              activityId,
+              timerId
+            );
+
+            return;
+          }
+
+          const existingTimer =
+            movieActivitySeenTimers.get(activityId);
+
+          if (existingTimer) {
+            clearTimeout(existingTimer);
+
+            movieActivitySeenTimers.delete(
+              activityId
+            );
+          }
+        });
+      },
+      {
+        threshold: 0.5,
+      }
+    );
+
+  activityCards.forEach((card) => {
+    movieActivityObserver.observe(card);
+  });
+}
+
 function getCurrentUserRecommendation(movieId) {
   return currentUserRecommendations.find((item) => {
     return item.movie_id === movieId;
@@ -2322,6 +2489,8 @@ function renderRecommendationContext(movieId) {
 }
 
 function renderMovies(list) {
+  resetMovieActivityObserver();
+  
   moviesGrid.innerHTML = "";
   movieCount.textContent = `(${list.length})`;
 
@@ -2488,6 +2657,7 @@ if (list.length === 0) {
   });
   attachCardMenuHandlers();
   attachPurchaseLinkHandlers();
+  attachMovieActivityObserver();
 }
 
 async function recommendMovie(
