@@ -99,6 +99,8 @@ let movieRecommendationDetails = {};
 let activeRecommendationStack = [];
 let activeRecommendationStackOffset = 0;
 let isRecommendationStackInteracting = false;
+let unseenMovieActivities = [];
+let unseenMovieActivityByMovieId = {};
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1693,6 +1695,8 @@ async function loadMovies() {
     updated_at: item.updated_at,
 }));
 
+  await loadUnseenMovieActivities();
+
   await loadCurrentUserRecommendations();
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
@@ -1700,6 +1704,66 @@ async function loadMovies() {
   applyMykolaDailyRecommendation();
   
   applySearchAndFilters();
+}
+
+async function loadUnseenMovieActivities() {
+  if (!currentUser || !currentGroupId) {
+    unseenMovieActivities = [];
+    unseenMovieActivityByMovieId = {};
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("movie_activity_recipients")
+    .select(`
+      activity_id,
+      seen_at,
+      movie_activity!inner (
+        id,
+        group_id,
+        movie_id,
+        from_status,
+        to_status,
+        created_at
+      )
+    `)
+    .eq("user_id", currentUser.id)
+    .is("seen_at", null)
+    .eq("movie_activity.group_id", currentGroupId)
+    .order("created_at", {
+      foreignTable: "movie_activity",
+      ascending: false,
+    });
+
+  if (error) {
+    console.error("Load unseen movie activities error:", error);
+
+    unseenMovieActivities = [];
+    unseenMovieActivityByMovieId = {};
+
+    return;
+  }
+
+  unseenMovieActivities = (data || [])
+    .map((item) => item.movie_activity)
+    .filter(Boolean);
+
+  unseenMovieActivityByMovieId = Object.fromEntries(
+    unseenMovieActivities.map((activity) => [
+      activity.movie_id,
+      activity,
+    ])
+  );
+
+  console.log(
+    "Unseen movie activities:",
+    unseenMovieActivities
+  );
+
+  console.log(
+    "Unseen movie activity by movie:",
+    unseenMovieActivityByMovieId
+  );
 }
 
 function getCurrentUserRecommendation(movieId) {
