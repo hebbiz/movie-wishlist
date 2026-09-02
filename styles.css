@@ -947,6 +947,15 @@ input[readonly],
 .new-activity-badge {
   background: rgba(214, 178, 94, 0.9);
   color: #111;
+
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.new-activity-badge.is-seen {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.96);
 }
 
 .group-current-badge {
