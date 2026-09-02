@@ -2513,7 +2513,11 @@ if (list.length === 0) {
     const card = document.createElement("article");
     card.className = "card";
 
-    const unseenActivity = unseenMovieActivityByMovieId[movie.movie_id];
+    const unseenActivityCandidate = unseenMovieActivityByMovieId[movie.movie_id];
+
+    const unseenActivity = unseenActivityCandidate && activeFilter === unseenActivityCandidate.to_status
+      ? unseenActivityCandidate
+      : null;
 
     if (unseenActivity) {
       card.dataset.activityId = unseenActivity.id;
