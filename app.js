@@ -6595,6 +6595,52 @@ async function initApp() {
   }
 }
 
+let appResumeRefreshInProgress = false;
+let lastAppResumeRefreshAt = 0;
+
+async function refreshAppDataOnResume() {
+  if (
+    !appHasInitialized ||
+    isLoggingOut ||
+    isAnonymous() ||
+    !currentGroupId ||
+    appResumeRefreshInProgress
+  ) {
+    return;
+  }
+
+  const now = Date.now();
+
+  // Захист від подвійного visibility/pageshow
+  if (now - lastAppResumeRefreshAt < 1500) {
+    return;
+  }
+
+  lastAppResumeRefreshAt = now;
+  appResumeRefreshInProgress = true;
+
+  try {
+    await loadMovies();
+  } catch (error) {
+    console.warn(
+      "App resume refresh error:",
+      error
+    );
+  } finally {
+    appResumeRefreshInProgress = false;
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    refreshAppDataOnResume();
+  }
+});
+
+window.addEventListener("pageshow", () => {
+  refreshAppDataOnResume();
+});
+
 wireMykolaActionButtons();
 
 initApp();
