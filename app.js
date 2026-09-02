@@ -71,6 +71,8 @@ const openMykolaButton = document.getElementById("openMykolaButton");
 const backFromMykolaButton = document.getElementById("backFromMykolaButton");
 const mykolaChat = document.getElementById("mykolaChat");
 const DEBUG_ADVICE_ROOM = false;
+const movieActivitySeenTimers = new Map();
+const movieActivityMarking = new Set();
 
 let movies = [];
 let editingMovieId = null;
@@ -99,6 +101,9 @@ let movieRecommendationDetails = {};
 let activeRecommendationStack = [];
 let activeRecommendationStackOffset = 0;
 let isRecommendationStackInteracting = false;
+let unseenMovieActivities = [];
+let unseenMovieActivityByMovieId = {};
+let movieActivityObserver = null;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1693,6 +1698,8 @@ async function loadMovies() {
     updated_at: item.updated_at,
 }));
 
+  await loadUnseenMovieActivities();
+
   await loadCurrentUserRecommendations();
   await loadMovieRecommendationCounts();
   await loadMovieRecommendationDetails();
@@ -1700,6 +1707,275 @@ async function loadMovies() {
   applyMykolaDailyRecommendation();
   
   applySearchAndFilters();
+}
+
+async function loadUnseenMovieActivities() {
+  if (!currentUser || !currentGroupId) {
+    unseenMovieActivities = [];
+    unseenMovieActivityByMovieId = {};
+
+    updateMovieActivityCountUI();
+
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("movie_activity_recipients")
+    .select(`
+      activity_id,
+      seen_at,
+      movie_activity!inner (
+        id,
+        group_id,
+        movie_id,
+        from_status,
+        to_status,
+        created_at
+      )
+    `)
+    .eq("user_id", currentUser.id)
+    .is("seen_at", null)
+    .eq("movie_activity.group_id", currentGroupId)
+    .order("created_at", {
+      foreignTable: "movie_activity",
+      ascending: false,
+    });
+
+  if (error) {
+    console.error("Load unseen movie activities error:", error);
+
+    unseenMovieActivities = [];
+    unseenMovieActivityByMovieId = {};
+
+    updateMovieActivityCountUI();
+
+    return;
+  }
+
+  unseenMovieActivities = (data || [])
+    .map((item) => item.movie_activity)
+    .filter(Boolean);
+
+  unseenMovieActivityByMovieId = Object.fromEntries(
+    unseenMovieActivities.map((activity) => [
+      activity.movie_id,
+      activity,
+    ])
+  );
+
+  console.log(
+    "Unseen movie activities:",
+    unseenMovieActivities
+  );
+
+  console.log(
+    "Unseen movie activity by movie:",
+    unseenMovieActivityByMovieId
+  );
+
+  updateMovieActivityCountUI();
+}
+
+function updateMovieActivityCountUI() {
+  const counts = {
+    wishlist: 0,
+    ordered: 0,
+    owned: 0,
+    watched: 0,
+  };
+
+  unseenMovieActivities.forEach((activity) => {
+    if (Object.prototype.hasOwnProperty.call(counts, activity.to_status)) {
+      counts[activity.to_status] += 1;
+    }
+  });
+
+  filterButtons.forEach((button) => {
+    const existingCount =
+      button.querySelector(".filter-new-count");
+
+    if (existingCount) {
+      existingCount.remove();
+    }
+
+    const status = button.dataset.filter;
+    const count = counts[status] || 0;
+
+    if (count === 0) {
+      return;
+    }
+
+    const countElement = document.createElement("span");
+
+    countElement.className = "filter-new-count";
+    countElement.textContent = `+${count}`;
+
+    button.appendChild(countElement);
+  });
+}
+
+function resetMovieActivityObserver() {
+  if (movieActivityObserver) {
+    movieActivityObserver.disconnect();
+    movieActivityObserver = null;
+  }
+
+  movieActivitySeenTimers.forEach((timerId) => {
+    clearTimeout(timerId);
+  });
+
+  movieActivitySeenTimers.clear();
+}
+
+async function markMovieActivitySeen(card) {
+  const activityId = card.dataset.activityId;
+  const movieId = card.dataset.movieId;
+
+  if (!activityId || !movieId) {
+    return;
+  }
+
+  if (movieActivityMarking.has(activityId)) {
+    return;
+  }
+
+  movieActivityMarking.add(activityId);
+
+  const { error } = await supabaseClient.rpc(
+    "mark_movie_activity_seen",
+    {
+      p_activity_id: activityId,
+    }
+  );
+
+  if (error) {
+    console.warn(
+      "Mark movie activity seen error:",
+      error
+    );
+
+    movieActivityMarking.delete(activityId);
+
+    /*
+     * Activity могла бути замінена або видалена
+     * іншим статусним оновленням, поки сторінка
+     * була відкрита.
+     *
+     * У такому випадку просто синхронізуємо
+     * локальний стан з БД.
+     */
+    await loadUnseenMovieActivities();
+    applySearchAndFilters();
+
+    return;
+  }
+
+  unseenMovieActivities =
+    unseenMovieActivities.filter((activity) => {
+      return activity.id !== activityId;
+    });
+
+  const currentActivity =
+    unseenMovieActivityByMovieId[movieId];
+
+  if (currentActivity?.id === activityId) {
+    delete unseenMovieActivityByMovieId[movieId];
+  }
+
+  updateMovieActivityCountUI();
+
+  if (movieActivityObserver) {
+    movieActivityObserver.unobserve(card);
+  }
+
+  card.removeAttribute("data-activity-id");
+  card.removeAttribute("data-movie-id");
+
+  const badge =
+    card.querySelector(".new-activity-badge");
+
+  if (badge) {
+    badge.classList.add("is-seen");
+
+    setTimeout(() => {
+      badge.remove();
+    }, 240);
+  }
+
+  movieActivityMarking.delete(activityId);
+}
+
+function attachMovieActivityObserver() {
+  resetMovieActivityObserver();
+
+  const activityCards =
+    moviesGrid.querySelectorAll(
+      ".card[data-activity-id]"
+    );
+
+  if (!activityCards.length) {
+    return;
+  }
+
+  movieActivityObserver =
+    new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const card = entry.target;
+          const activityId =
+            card.dataset.activityId;
+
+          if (!activityId) {
+            return;
+          }
+
+          const isVisibleEnough =
+            entry.isIntersecting &&
+            entry.intersectionRatio >= 0.5;
+
+          if (isVisibleEnough) {
+            if (
+              movieActivitySeenTimers.has(activityId)
+            ) {
+              return;
+            }
+
+            const timerId = setTimeout(() => {
+              movieActivitySeenTimers.delete(
+                activityId
+              );
+
+              markMovieActivitySeen(card);
+            }, 700);
+
+            movieActivitySeenTimers.set(
+              activityId,
+              timerId
+            );
+
+            return;
+          }
+
+          const existingTimer =
+            movieActivitySeenTimers.get(activityId);
+
+          if (existingTimer) {
+            clearTimeout(existingTimer);
+
+            movieActivitySeenTimers.delete(
+              activityId
+            );
+          }
+        });
+      },
+      {
+        threshold: 0.5,
+      }
+    );
+
+  activityCards.forEach((card) => {
+    movieActivityObserver.observe(card);
+  });
 }
 
 function getCurrentUserRecommendation(movieId) {
@@ -2213,6 +2489,8 @@ function renderRecommendationContext(movieId) {
 }
 
 function renderMovies(list) {
+  resetMovieActivityObserver();
+  
   moviesGrid.innerHTML = "";
   movieCount.textContent = `(${list.length})`;
 
@@ -2235,6 +2513,17 @@ if (list.length === 0) {
     const card = document.createElement("article");
     card.className = "card";
 
+    const unseenActivityCandidate = unseenMovieActivityByMovieId[movie.movie_id];
+
+    const unseenActivity = unseenActivityCandidate && activeFilter === unseenActivityCandidate.to_status
+      ? unseenActivityCandidate
+      : null;
+
+    if (unseenActivity) {
+      card.dataset.activityId = unseenActivity.id;
+      card.dataset.movieId = movie.movie_id;
+    }
+
     const poster = movie.poster_url
       ? movie.poster_url
       : "https://via.placeholder.com/400x600?text=No+Poster";
@@ -2244,6 +2533,12 @@ if (list.length === 0) {
         <img src="${poster}" alt="${movie.title}" />
 
         <div class="poster-badges">
+           ${
+             unseenActivity
+               ? `<span class="poster-badge new-activity-badge">Нове</span>`
+               : ""
+           }
+
            ${
              movie.recommended_medium === "Наразі недоступний"
                ? `<span class="poster-badge unavailable-badge">Наразі недоступний</span>`
@@ -2366,6 +2661,7 @@ if (list.length === 0) {
   });
   attachCardMenuHandlers();
   attachPurchaseLinkHandlers();
+  attachMovieActivityObserver();
 }
 
 async function recommendMovie(

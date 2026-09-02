@@ -944,6 +944,20 @@ input[readonly],
   color: #cfe3c4;
 }
 
+.new-activity-badge {
+  background: rgba(214, 178, 94, 0.9);
+  color: #111;
+
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.new-activity-badge.is-seen {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.96);
+}
+
 .group-current-badge {
   display: inline-block;
 
@@ -1017,6 +1031,29 @@ input[readonly],
 
 .filter-btn.active {
   background: #d6b25e;
+  color: #111;
+}
+
+.filter-new-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-left: 6px;
+  padding: 2px 6px;
+
+  border-radius: 999px;
+
+  background: rgba(214, 178, 94, 0.16);
+  color: #d6b25e;
+
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.filter-btn.active .filter-new-count {
+  background: rgba(17, 17, 17, 0.14);
   color: #111;
 }
 
