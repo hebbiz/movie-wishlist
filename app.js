@@ -2344,6 +2344,13 @@ if (list.length === 0) {
     const card = document.createElement("article");
     card.className = "card";
 
+    const unseenActivity = unseenMovieActivityByMovieId[movie.movie_id];
+
+    if (unseenActivity) {
+      card.dataset.activityId = unseenActivity.id;
+      card.dataset.movieId = movie.movie_id;
+    }
+
     const poster = movie.poster_url
       ? movie.poster_url
       : "https://via.placeholder.com/400x600?text=No+Poster";
@@ -2353,6 +2360,12 @@ if (list.length === 0) {
         <img src="${poster}" alt="${movie.title}" />
 
         <div class="poster-badges">
+           ${
+             unseenActivity
+               ? `<span class="poster-badge new-activity-badge">Нове</span>`
+               : ""
+           }
+
            ${
              movie.recommended_medium === "Наразі недоступний"
                ? `<span class="poster-badge unavailable-badge">Наразі недоступний</span>`
