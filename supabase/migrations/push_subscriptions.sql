@@ -62,3 +62,44 @@ to authenticated
 using (
   user_id = auth.uid()
 );
+
+-- create movie activity trigger for push notifications
+
+create or replace function public.notify_movie_activity_push()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, extensions, vault
+as $$
+declare
+  edge_secret text;
+  function_url text;
+begin
+  select decrypted_secret
+  into edge_secret
+  from vault.decrypted_secrets
+  where name = 'movie_wishlist_edge_secret'
+  limit 1;
+
+  if edge_secret is null then
+    raise warning 'movie_wishlist_edge_secret not found';
+    return new;
+  end if;
+
+  function_url :=
+    'https://mttkectgdqqmejpenkrn.supabase.co/functions/v1/send-movie-activity-push';
+
+  perform net.http_post(
+    url := function_url,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'apikey', edge_secret
+    ),
+    body := jsonb_build_object(
+      'activity_id', new.id
+    )
+  );
+
+  return new;
+end;
+$$;
