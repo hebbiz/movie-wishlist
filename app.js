@@ -1499,6 +1499,17 @@ logoutButton.addEventListener("click", async () => {
   await leaveActiveAdviceRoom();
   await supabaseClient.auth.signOut();
 
+  if ("clearAppBadge" in navigator) {
+    try {
+      await navigator.clearAppBadge();
+    } catch (error) {
+      console.warn(
+        "App badge clear on logout error:",
+        error
+      );
+    }
+  }
+
   currentRole = null;
   currentGroup = null;
   currentGroupId = null;
@@ -1715,6 +1726,7 @@ async function loadUnseenMovieActivities() {
     unseenMovieActivityByMovieId = {};
 
     updateMovieActivityCountUI();
+    await updateAppIconBadge();
 
     return;
   }
@@ -1748,6 +1760,7 @@ async function loadUnseenMovieActivities() {
     unseenMovieActivityByMovieId = {};
 
     updateMovieActivityCountUI();
+    await updateAppIconBadge();
 
     return;
   }
@@ -1774,6 +1787,7 @@ async function loadUnseenMovieActivities() {
   );
 
   updateMovieActivityCountUI();
+  await updateAppIconBadge();
 }
 
 function updateMovieActivityCountUI() {
@@ -1812,6 +1826,42 @@ function updateMovieActivityCountUI() {
 
     button.appendChild(countElement);
   });
+}
+
+async function updateAppIconBadge() {
+  if (!("setAppBadge" in navigator)) {
+    return;
+  }
+
+  const notificationsEnabled =
+    currentProfile?.notifications_enabled === true;
+
+  const permissionGranted =
+    "Notification" in window &&
+    Notification.permission === "granted";
+
+  try {
+    if (
+      !notificationsEnabled ||
+      !permissionGranted ||
+      unseenMovieActivities.length === 0
+    ) {
+      if ("clearAppBadge" in navigator) {
+        await navigator.clearAppBadge();
+      }
+
+      return;
+    }
+
+    await navigator.setAppBadge(
+      unseenMovieActivities.length
+    );
+  } catch (error) {
+    console.warn(
+      "App icon badge update error:",
+      error
+    );
+  }
 }
 
 function resetMovieActivityObserver() {
@@ -1883,6 +1933,7 @@ async function markMovieActivitySeen(card) {
   }
 
   updateMovieActivityCountUI();
+  await updateAppIconBadge();
 
   if (movieActivityObserver) {
     movieActivityObserver.unobserve(card);
@@ -6622,6 +6673,8 @@ saveProfileButton.addEventListener("click", async () => {
     display_name: displayName,
     notifications_enabled: notificationsEnabled,
   };
+
+  await updateAppIconBadge();
 
   userEmail.textContent = displayName;
   profilePanel.style.display = "none";
