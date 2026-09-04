@@ -223,6 +223,89 @@ async function ensurePushSubscription() {
   }
 }
 
+async function resetPushSubscription() {
+  if (
+    !currentUser ||
+    !("serviceWorker" in navigator)
+  ) {
+    return false;
+  }
+
+  try {
+    const registration =
+      await navigator.serviceWorker.ready;
+
+    const existingSubscription =
+      await registration.pushManager.getSubscription();
+
+    if (existingSubscription) {
+      await existingSubscription.unsubscribe();
+
+      await supabaseClient
+        .from("push_subscriptions")
+        .delete()
+        .eq(
+          "endpoint",
+          existingSubscription.endpoint
+        );
+    }
+
+    const newSubscription =
+      await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey:
+          urlBase64ToUint8Array(
+            VAPID_PUBLIC_KEY
+          ),
+      });
+
+    const subscriptionJson =
+      newSubscription.toJSON();
+
+    const { error } = await supabaseClient
+      .from("push_subscriptions")
+      .upsert(
+        {
+          user_id: currentUser.id,
+          endpoint:
+            newSubscription.endpoint,
+          p256dh:
+            subscriptionJson.keys?.p256dh,
+          auth:
+            subscriptionJson.keys?.auth,
+          expiration_time:
+            newSubscription.expirationTime ?? null,
+          updated_at:
+            new Date().toISOString(),
+        },
+        {
+          onConflict: "endpoint",
+        }
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    alert(
+      "Push-підписку оновлено."
+    );
+
+    return true;
+  } catch (error) {
+    console.warn(
+      "Push subscription reset error:",
+      error
+    );
+
+    alert(
+      "Не вдалося оновити push-підписку."
+    );
+
+    return false;
+  }
+}
+
 function debugAdviceRoom(message) {
   if (!DEBUG_ADVICE_ROOM) return;
   alert(message);
