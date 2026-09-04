@@ -6561,6 +6561,7 @@ saveProfileButton.addEventListener("click", async () => {
   currentProfile = {
     ...(currentProfile || {}),
     display_name: displayName,
+    notifications_enabled: notificationsEnabled,
   };
 
   userEmail.textContent = displayName;
