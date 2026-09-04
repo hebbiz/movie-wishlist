@@ -760,6 +760,11 @@ p {
   background: #333;
 }
 
+.profile-notifications-option {
+  margin-top: 4px;
+  margin-bottom: 18px;
+}
+
 #logoutButton {
   color: #ffb3b3;
 }
