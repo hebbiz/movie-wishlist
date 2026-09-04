@@ -318,7 +318,7 @@ async function updateAuthUI() {
 
     const { data: profile, error } = await supabaseClient
       .from("profiles")
-      .select("display_name, email")
+      .select("display_name, email, notifications_enabled")
       .eq("id", session.user.id)
       .single();
 
@@ -6446,6 +6446,10 @@ userMenuButton.addEventListener("click", () => {
 
 editProfileButton.addEventListener("click", () => {
   displayNameInput.value = currentProfile?.display_name || "";
+  const notificationsEnabledInput =
+    document.getElementById("notificationsEnabledInput");
+  notificationsEnabledInput.checked =
+    currentProfile?.notifications_enabled === true;
   profilePanel.style.display = "block";
   userMenuDropdown.style.display = "none";
 
@@ -6519,7 +6523,68 @@ document.addEventListener("click", (event) => {
   
 });
 
+async function resolveNotificationPreference(wantsNotifications) {
+  if (!wantsNotifications) {
+    return false;
+  }
+
+  if (!("Notification" in window)) {
+    alert(
+      "Сповіщення недоступні в цьому режимі. " +
+      "На iPhone та iPad відкрийте Movie Wishlist як web app з домашнього екрана."
+    );
+
+    return false;
+  }
+
+  if (Notification.permission === "granted") {
+    return true;
+  }
+
+  if (Notification.permission === "denied") {
+    alert(
+      "Сповіщення для Movie Wishlist заблоковані в налаштуваннях пристрою. " +
+      "Щоб увімкнути їх, дозвольте сповіщення для Movie Wishlist у Settings."
+    );
+
+    return false;
+  }
+
+  try {
+    const permission =
+      await Notification.requestPermission();
+
+    return permission === "granted";
+  } catch (error) {
+    console.warn(
+      "Notification permission request error:",
+      error
+    );
+
+    return false;
+  }
+}
+
 saveProfileButton.addEventListener("click", async () => {
+  const notificationsEnabledInput =
+    document.getElementById("notificationsEnabledInput");
+
+  const wantsNotifications =
+    notificationsEnabledInput.checked;
+
+  /*
+   * ВАЖЛИВО:
+   * permission request виконуємо одразу після click,
+   * до інших await, щоб не втратити user activation.
+   */
+  const notificationsEnabled =
+    await resolveNotificationPreference(
+      wantsNotifications
+    );
+
+  notificationsEnabledInput.checked =
+    notificationsEnabled;
+
   const {
     data: { session },
   } = await supabaseClient.auth.getSession();
@@ -6540,6 +6605,7 @@ saveProfileButton.addEventListener("click", async () => {
     .from("profiles")
     .update({
       display_name: displayName,
+      notifications_enabled: notificationsEnabled
     })
     .eq("id", session.user.id);
 
@@ -6554,6 +6620,7 @@ saveProfileButton.addEventListener("click", async () => {
   currentProfile = {
     ...(currentProfile || {}),
     display_name: displayName,
+    notifications_enabled: notificationsEnabled,
   };
 
   userEmail.textContent = displayName;
