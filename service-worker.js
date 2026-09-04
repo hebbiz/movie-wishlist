@@ -16,7 +16,9 @@ self.addEventListener("push", (event) => {
   } catch (error) {
     payload = {
       title: "Movie Wishlist",
-      body: event.data?.text() || "Нова активність",
+      body:
+        event.data?.text() ||
+        "Нова активність",
     };
   }
 
@@ -25,12 +27,10 @@ self.addEventListener("push", (event) => {
 
   const options = {
     body:
-      payload.body || "У ваших списках є нова активність.",
+      payload.body ||
+      "У ваших списках є нова активність.",
 
     icon:
-      "/assets/icons/android-chrome-192x192.png",
-
-    badge:
       "/assets/icons/android-chrome-192x192.png",
 
     data: {
@@ -39,11 +39,26 @@ self.addEventListener("push", (event) => {
     },
   };
 
-  event.waitUntil(
+  const tasks = [];
+
+  if (
+    self.navigator &&
+    "setAppBadge" in self.navigator
+  ) {
+    tasks.push(
+      self.navigator.setAppBadge(9)
+    );
+  }
+
+  tasks.push(
     self.registration.showNotification(
       title,
       options
     )
+  );
+
+  event.waitUntil(
+    Promise.all(tasks)
   );
 });
 
