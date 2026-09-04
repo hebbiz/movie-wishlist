@@ -318,7 +318,7 @@ async function updateAuthUI() {
 
     const { data: profile, error } = await supabaseClient
       .from("profiles")
-      .select("display_name, email")
+      .select("display_name, email, notifications_enabled")
       .eq("id", session.user.id)
       .single();
 
@@ -6446,6 +6446,10 @@ userMenuButton.addEventListener("click", () => {
 
 editProfileButton.addEventListener("click", () => {
   displayNameInput.value = currentProfile?.display_name || "";
+  const notificationsEnabledInput =
+    document.getElementById("notificationsEnabledInput");
+  notificationsEnabledInput.checked =
+    currentProfile?.notifications_enabled === true;
   profilePanel.style.display = "block";
   userMenuDropdown.style.display = "none";
 
@@ -6530,6 +6534,8 @@ saveProfileButton.addEventListener("click", async () => {
   }
 
   const displayName = displayNameInput.value.trim();
+  const notificationsEnabledInput = document.getElementById("notificationsEnabledInput");
+  const notificationsEnabled = notificationsEnabledInput.checked;
 
   if (!displayName) {
     alert("Ім'я не може бути порожнім.");
@@ -6540,6 +6546,7 @@ saveProfileButton.addEventListener("click", async () => {
     .from("profiles")
     .update({
       display_name: displayName,
+      notifications_enabled: notificationsEnabled
     })
     .eq("id", session.user.id);
 
