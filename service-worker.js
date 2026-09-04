@@ -39,26 +39,11 @@ self.addEventListener("push", (event) => {
     },
   };
 
-  const tasks = [];
-
-  if (
-    self.navigator &&
-    "setAppBadge" in self.navigator
-  ) {
-    tasks.push(
-      self.navigator.setAppBadge(9)
-    );
-  }
-
-  tasks.push(
+  event.waitUntil(
     self.registration.showNotification(
       title,
       options
     )
-  );
-
-  event.waitUntil(
-    Promise.all(tasks)
   );
 });
 
