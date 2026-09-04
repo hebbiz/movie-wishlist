@@ -25,3 +25,40 @@ alter table public.push_subscriptions
   enable row level security;
 
 commit;
+
+-- add RLS to push subscriptions table
+
+create policy "Users can read own push subscriptions"
+on public.push_subscriptions
+for select
+to authenticated
+using (
+  user_id = auth.uid()
+);
+
+create policy "Users can insert own push subscriptions"
+on public.push_subscriptions
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+);
+
+create policy "Users can update own push subscriptions"
+on public.push_subscriptions
+for update
+to authenticated
+using (
+  user_id = auth.uid()
+)
+with check (
+  user_id = auth.uid()
+);
+
+create policy "Users can delete own push subscriptions"
+on public.push_subscriptions
+for delete
+to authenticated
+using (
+  user_id = auth.uid()
+);
