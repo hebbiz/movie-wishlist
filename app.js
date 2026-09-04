@@ -6870,7 +6870,7 @@ saveProfileButton.addEventListener("click", async () => {
   };
 
   if (notificationsEnabled) {
-    await ensurePushSubscription();
+    await resetPushSubscription();
   }
 
   await updateAppIconBadge();
