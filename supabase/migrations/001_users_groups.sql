@@ -455,3 +455,9 @@ using (
       and public.can_read_recommendation(r.user_id, r.context_group_id)
   )
 );
+
+-- add notifications consent and user profile setting
+
+alter table public.profiles
+add column notifications_enabled boolean not null default false;
+
