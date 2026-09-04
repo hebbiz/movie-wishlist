@@ -2,6 +2,7 @@ const SUPABASE_URL = "https://mttkectgdqqmejpenkrn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_LS48R8c2aoDZ_MSe4LWl9Q__n1M7zf_";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const VAPID_PUBLIC_KEY = "BPgVaxmvt_du_vRxrQCTmeTdtvA3MkPtqpDbQJhky2Q3E6Cnw0bCaP9WfBQ8xBIKgZnyvGaXMaA4pwRo1zF9JQU";
 
 const movieForm = document.getElementById("movieForm");
 const moviesGrid = document.getElementById("moviesGrid");
@@ -110,6 +111,117 @@ let isLoggingOut = false;
 let activeAdviceRoom = null;
 let adviceRoomPollingTimer = null;
 let adviceRoomResultShown = false;
+
+function urlBase64ToUint8Array(base64String) {
+  const padding =
+    "=".repeat((4 - (base64String.length % 4)) % 4);
+
+  const base64 =
+    (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+  const rawData = window.atob(base64);
+
+  return Uint8Array.from(
+    [...rawData].map((character) =>
+      character.charCodeAt(0)
+    )
+  );
+}
+
+async function ensurePushSubscription() {
+  if (
+    !currentUser ||
+    currentProfile?.notifications_enabled !== true ||
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window) ||
+    Notification.permission !== "granted"
+  ) {
+    return false;
+  }
+
+  try {
+    const registration =
+      await navigator.serviceWorker.ready;
+
+    let subscription =
+      await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription =
+        await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey:
+            urlBase64ToUint8Array(
+              VAPID_PUBLIC_KEY
+            ),
+        });
+    }
+
+    const subscriptionJson =
+      subscription.toJSON();
+
+    const p256dh =
+      subscriptionJson.keys?.p256dh;
+
+    const auth =
+      subscriptionJson.keys?.auth;
+
+    if (
+      !subscription.endpoint ||
+      !p256dh ||
+      !auth
+    ) {
+      console.warn(
+        "Push subscription is incomplete."
+      );
+
+      return false;
+    }
+
+    const { error } = await supabaseClient
+      .from("push_subscriptions")
+      .upsert(
+        {
+          user_id: currentUser.id,
+          endpoint: subscription.endpoint,
+          p256dh,
+          auth,
+          expiration_time:
+            subscription.expirationTime ?? null,
+          updated_at:
+            new Date().toISOString(),
+        },
+        {
+          onConflict: "endpoint",
+        }
+      );
+
+    if (error) {
+      console.warn(
+        "Push subscription save error:",
+        error
+      );
+
+      return false;
+    }
+
+    console.log(
+      "Push subscription saved."
+    );
+
+    return true;
+  } catch (error) {
+    console.warn(
+      "Push subscription setup error:",
+      error
+    );
+
+    return false;
+  }
+}
 
 function debugAdviceRoom(message) {
   if (!DEBUG_ADVICE_ROOM) return;
@@ -6673,6 +6785,10 @@ saveProfileButton.addEventListener("click", async () => {
     display_name: displayName,
     notifications_enabled: notificationsEnabled,
   };
+
+  if (notificationsEnabled) {
+    await ensurePushSubscription();
+  }
 
   await updateAppIconBadge();
 
