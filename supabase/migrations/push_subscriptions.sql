@@ -103,3 +103,14 @@ begin
   return new;
 end;
 $$;
+
+-- trigger
+
+drop trigger if exists trg_movie_activity_push
+on public.movie_activity;
+
+create trigger trg_movie_activity_push
+after insert
+on public.movie_activity
+for each row
+execute function public.notify_movie_activity_push();
