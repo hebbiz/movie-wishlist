@@ -6761,6 +6761,34 @@ window.addEventListener("pageshow", () => {
   refreshAppDataOnResume();
 });
 
+async function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  try {
+    const registration =
+      await navigator.serviceWorker.register(
+        "/service-worker.js",
+        {
+          scope: "/",
+        }
+      );
+
+    console.log(
+      "Service Worker registered:",
+      registration.scope
+    );
+  } catch (error) {
+    console.warn(
+      "Service Worker registration error:",
+      error
+    );
+  }
+}
+
+registerServiceWorker();
+
 wireMykolaActionButtons();
 
 initApp();
