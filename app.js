@@ -224,34 +224,31 @@ async function ensurePushSubscription() {
 }
 
 async function disablePushSubscription() {
-  if (!("serviceWorker" in navigator)) {
+  if (!currentUser) {
     return;
   }
 
   try {
-    const registration =
-      await navigator.serviceWorker.ready;
+    if ("serviceWorker" in navigator) {
+      const registration =
+        await navigator.serviceWorker.ready;
 
-    const subscription =
-      await registration.pushManager.getSubscription();
+      const subscription =
+        await registration.pushManager.getSubscription();
 
-    if (!subscription) {
-      return;
+      if (subscription) {
+        await subscription.unsubscribe();
+      }
     }
-
-    const endpoint =
-      subscription.endpoint;
-
-    await subscription.unsubscribe();
 
     const { error } = await supabaseClient
       .from("push_subscriptions")
       .delete()
-      .eq("endpoint", endpoint);
+      .eq("user_id", currentUser.id);
 
     if (error) {
       console.warn(
-        "Push subscription delete error:",
+        "Push subscriptions delete error:",
         error
       );
     }
