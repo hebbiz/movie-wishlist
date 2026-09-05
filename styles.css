@@ -2785,6 +2785,42 @@ body {
 
 }
 
+/* Cross-group unseen activity */
+
+.group-activity-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+
+  margin-left: 6px;
+
+  border-radius: 50%;
+
+  background: #d6a84b;
+
+  box-shadow:
+    0 0 0 2px rgba(214, 168, 75, 0.12);
+}
+
+.other-group-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.other-group-activity {
+  font-size: 12px;
+  line-height: 1.25;
+
+  color: #d6a84b;
+
+  font-weight: 500;
+}
+
 /* ---------- Landing Page ---------- */
 
 .landing-container {

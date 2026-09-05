@@ -105,6 +105,7 @@ let isRecommendationStackInteracting = false;
 let unseenMovieActivities = [];
 let unseenMovieActivityByMovieId = {};
 let globalUnseenMovieActivityCount = 0;
+let unseenMovieActivityCountByGroupId = {};
 let movieActivityObserver = null;
 let appHasInitialized = false;
 let pendingInviteRole = null;
@@ -671,9 +672,15 @@ function renderGroupSettings() {
 function renderOtherGroups() {
   otherGroupsList.innerHTML = "";
 
-  const otherGroups = currentUserGroups.filter((membership) => {
-    return membership.groups?.id !== currentGroupId;
-  });
+  const otherGroups =
+    currentUserGroups.filter(
+      (membership) => {
+        return (
+          membership.groups?.id !==
+          currentGroupId
+        );
+      }
+    );
 
   if (!otherGroups.length) {
     otherGroupsList.innerHTML = `
@@ -681,19 +688,47 @@ function renderOtherGroups() {
         Інших груп немає.
       </p>
     `;
+
     return;
   }
 
   otherGroups.forEach((membership) => {
-    const group = membership.groups;
+    const group =
+      membership.groups;
 
-    const row = document.createElement("div");
-    row.className = "other-group-row";
+    const unseenCount =
+      unseenMovieActivityCountByGroupId[
+        group.id
+      ] || 0;
+
+    const activityHtml =
+      unseenCount > 0
+        ? `
+          <div class="other-group-activity">
+            +${unseenCount}
+            ${formatActivityCountWord(
+              unseenCount
+            )}
+          </div>
+        `
+        : "";
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "other-group-row";
 
     row.innerHTML = `
-      <div class="other-group-name">
-        ${getGroupTypeNominativeLabel(group.type)}
-        ${escapeHtml(group.name)}
+      <div class="other-group-info">
+        <div class="other-group-name">
+          ${getGroupTypeNominativeLabel(
+            group.type
+          )}
+          ${escapeHtml(group.name)}
+        </div>
+
+        ${activityHtml}
       </div>
 
       <button
@@ -1873,29 +1908,147 @@ async function loadMovies() {
 async function loadGlobalUnseenMovieActivityCount() {
   if (!currentUser) {
     globalUnseenMovieActivityCount = 0;
+    unseenMovieActivityCountByGroupId = {};
+
+    updateCrossGroupActivityUI();
     return;
   }
 
-  const { count, error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("movie_activity_recipients")
-    .select("activity_id", {
-      count: "exact",
-      head: true,
-    })
+    .select(`
+      activity_id,
+      movie_activity!inner (
+        group_id
+      )
+    `)
     .eq("user_id", currentUser.id)
     .is("seen_at", null);
 
   if (error) {
     console.warn(
-      "Global unseen movie activity count error:",
+      "Global unseen movie activity load error:",
       error
     );
 
     return;
   }
 
+  const rows = data || [];
+
   globalUnseenMovieActivityCount =
-    count || 0;
+    rows.length;
+
+  unseenMovieActivityCountByGroupId = {};
+
+  rows.forEach((row) => {
+    const groupId =
+      row.movie_activity?.group_id;
+
+    if (!groupId) {
+      return;
+    }
+
+    unseenMovieActivityCountByGroupId[groupId] =
+      (
+        unseenMovieActivityCountByGroupId[groupId] ||
+        0
+      ) + 1;
+  });
+
+  updateCrossGroupActivityUI();
+}
+
+function formatActivityCountWord(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (
+    lastTwoDigits >= 11 &&
+    lastTwoDigits <= 14
+  ) {
+    return "нових активностей";
+  }
+
+  if (lastDigit === 1) {
+    return "нова активність";
+  }
+
+  if (
+    lastDigit >= 2 &&
+    lastDigit <= 4
+  ) {
+    return "нові активності";
+  }
+
+  return "нових активностей";
+}
+
+function hasUnseenActivityInOtherGroups() {
+  return Object.entries(
+    unseenMovieActivityCountByGroupId
+  ).some(([groupId, count]) => {
+    return (
+      groupId !== currentGroupId &&
+      count > 0
+    );
+  });
+}
+
+function updateGroupSelectorActivityIndicator() {
+  if (!groupSelectorButton) {
+    return;
+  }
+
+  let indicator =
+    groupSelectorButton.querySelector(
+      ".group-activity-indicator"
+    );
+
+  const shouldShow =
+    hasUnseenActivityInOtherGroups();
+
+  if (!shouldShow) {
+    if (indicator) {
+      indicator.remove();
+    }
+
+    return;
+  }
+
+  if (!indicator) {
+    indicator =
+      document.createElement("span");
+
+    indicator.className =
+      "group-activity-indicator";
+
+    indicator.setAttribute(
+      "aria-label",
+      "Є нові активності в інших групах"
+    );
+
+    groupSelectorButton.appendChild(
+      indicator
+    );
+  }
+}
+
+function updateCrossGroupActivityUI() {
+  updateGroupSelectorActivityIndicator();
+
+  /*
+   * Якщо сторінка керування групами
+   * вже відкрита — перемальовуємо
+   * список з актуальними count.
+   */
+  if (
+    groupSettingsView?.classList.contains(
+      "active"
+    )
+  ) {
+    renderOtherGroups();
+  }
 }
 
 async function loadUnseenMovieActivities() {
@@ -1903,7 +2056,9 @@ async function loadUnseenMovieActivities() {
     unseenMovieActivities = [];
     unseenMovieActivityByMovieId = {};
     globalUnseenMovieActivityCount = 0;
+    unseenMovieActivityCountByGroupId = {};
 
+    updateCrossGroupActivityUI();
     updateMovieActivityCountUI();
     await updateAppIconBadge();
 
