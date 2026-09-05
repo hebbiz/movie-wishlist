@@ -39,11 +39,41 @@ self.addEventListener("push", (event) => {
     },
   };
 
-  event.waitUntil(
+  const tasks = [];
+
+  const badgeCount =
+    Number(payload.badge_count);
+
+  if (
+    "setAppBadge" in self.navigator &&
+    Number.isFinite(badgeCount) &&
+    badgeCount > 0
+  ) {
+    tasks.push(
+      self.navigator.setAppBadge(
+        badgeCount
+      )
+    );
+  }
+
+  if (
+    "clearAppBadge" in self.navigator &&
+    badgeCount === 0
+  ) {
+    tasks.push(
+      self.navigator.clearAppBadge()
+    );
+  }
+
+  tasks.push(
     self.registration.showNotification(
       title,
       options
     )
+  );
+
+  event.waitUntil(
+    Promise.all(tasks)
   );
 });
 
