@@ -105,6 +105,7 @@ let isRecommendationStackInteracting = false;
 let unseenMovieActivities = [];
 let unseenMovieActivityByMovieId = {};
 let globalUnseenMovieActivityCount = 0;
+let unseenMovieActivityCountByGroupId = {};
 let movieActivityObserver = null;
 let appHasInitialized = false;
 let pendingInviteRole = null;
@@ -1873,29 +1874,61 @@ async function loadMovies() {
 async function loadGlobalUnseenMovieActivityCount() {
   if (!currentUser) {
     globalUnseenMovieActivityCount = 0;
+    unseenMovieActivityCountByGroupId = {};
     return;
   }
 
-  const { count, error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("movie_activity_recipients")
-    .select("activity_id", {
-      count: "exact",
-      head: true,
-    })
+    .select(`
+      activity_id,
+      movie_activity!inner (
+        group_id
+      )
+    `)
     .eq("user_id", currentUser.id)
     .is("seen_at", null);
 
   if (error) {
     console.warn(
-      "Global unseen movie activity count error:",
+      "Global unseen movie activity load error:",
       error
     );
 
     return;
   }
 
+  const rows = data || [];
+
   globalUnseenMovieActivityCount =
-    count || 0;
+    rows.length;
+
+  unseenMovieActivityCountByGroupId = {};
+
+  rows.forEach((row) => {
+    const groupId =
+      row.movie_activity?.group_id;
+
+    if (!groupId) {
+      return;
+    }
+
+    unseenMovieActivityCountByGroupId[groupId] =
+      (
+        unseenMovieActivityCountByGroupId[groupId] ||
+        0
+      ) + 1;
+  });
+
+  console.log(
+    "Global unseen movie activity count:",
+    globalUnseenMovieActivityCount
+  );
+
+  console.log(
+    "Unseen movie activity count by group:",
+    unseenMovieActivityCountByGroupId
+  );
 }
 
 async function loadUnseenMovieActivities() {
@@ -1903,6 +1936,7 @@ async function loadUnseenMovieActivities() {
     unseenMovieActivities = [];
     unseenMovieActivityByMovieId = {};
     globalUnseenMovieActivityCount = 0;
+    unseenMovieActivityCountByGroupId = {};
 
     updateMovieActivityCountUI();
     await updateAppIconBadge();
