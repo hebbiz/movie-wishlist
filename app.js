@@ -104,6 +104,7 @@ let activeRecommendationStackOffset = 0;
 let isRecommendationStackInteracting = false;
 let unseenMovieActivities = [];
 let unseenMovieActivityByMovieId = {};
+let globalUnseenMovieActivityCount = 0;
 let movieActivityObserver = null;
 let appHasInitialized = false;
 let pendingInviteRole = null;
@@ -1869,10 +1870,39 @@ async function loadMovies() {
   applySearchAndFilters();
 }
 
+async function loadGlobalUnseenMovieActivityCount() {
+  if (!currentUser) {
+    globalUnseenMovieActivityCount = 0;
+    return;
+  }
+
+  const { count, error } = await supabaseClient
+    .from("movie_activity_recipients")
+    .select("activity_id", {
+      count: "exact",
+      head: true,
+    })
+    .eq("user_id", currentUser.id)
+    .is("seen_at", null);
+
+  if (error) {
+    console.warn(
+      "Global unseen movie activity count error:",
+      error
+    );
+
+    return;
+  }
+
+  globalUnseenMovieActivityCount =
+    count || 0;
+}
+
 async function loadUnseenMovieActivities() {
   if (!currentUser || !currentGroupId) {
     unseenMovieActivities = [];
     unseenMovieActivityByMovieId = {};
+    globalUnseenMovieActivityCount = 0;
 
     updateMovieActivityCountUI();
     await updateAppIconBadge();
@@ -1924,6 +1954,8 @@ async function loadUnseenMovieActivities() {
       activity,
     ])
   );
+
+  await loadGlobalUnseenMovieActivityCount();
 
   console.log(
     "Unseen movie activities:",
@@ -1993,7 +2025,7 @@ async function updateAppIconBadge() {
     if (
       !notificationsEnabled ||
       !permissionGranted ||
-      unseenMovieActivities.length === 0
+      globalUnseenMovieActivityCount === 0
     ) {
       if ("clearAppBadge" in navigator) {
         await navigator.clearAppBadge();
@@ -2003,7 +2035,7 @@ async function updateAppIconBadge() {
     }
 
     await navigator.setAppBadge(
-      unseenMovieActivities.length
+      globalUnseenMovieActivityCount
     );
   } catch (error) {
     console.warn(
@@ -2080,6 +2112,8 @@ async function markMovieActivitySeen(card) {
   if (currentActivity?.id === activityId) {
     delete unseenMovieActivityByMovieId[movieId];
   }
+
+  await loadGlobalUnseenMovieActivityCount();
 
   updateMovieActivityCountUI();
   await updateAppIconBadge();
