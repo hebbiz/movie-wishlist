@@ -223,6 +223,46 @@ async function ensurePushSubscription() {
   }
 }
 
+async function disablePushSubscription() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  try {
+    const registration =
+      await navigator.serviceWorker.ready;
+
+    const subscription =
+      await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      return;
+    }
+
+    const endpoint =
+      subscription.endpoint;
+
+    await subscription.unsubscribe();
+
+    const { error } = await supabaseClient
+      .from("push_subscriptions")
+      .delete()
+      .eq("endpoint", endpoint);
+
+    if (error) {
+      console.warn(
+        "Push subscription delete error:",
+        error
+      );
+    }
+  } catch (error) {
+    console.warn(
+      "Push subscription disable error:",
+      error
+    );
+  }
+}
+
 function debugAdviceRoom(message) {
   if (!DEBUG_ADVICE_ROOM) return;
   alert(message);
@@ -6788,6 +6828,8 @@ saveProfileButton.addEventListener("click", async () => {
 
   if (notificationsEnabled) {
     await ensurePushSubscription();
+  } else {
+    await disablePushSubscription();
   }
 
   await updateAppIconBadge();
