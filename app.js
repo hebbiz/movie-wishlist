@@ -2058,6 +2058,7 @@ async function loadUnseenMovieActivities() {
     globalUnseenMovieActivityCount = 0;
     unseenMovieActivityCountByGroupId = {};
 
+    updateCrossGroupActivityUI();
     updateMovieActivityCountUI();
     await updateAppIconBadge();
 
