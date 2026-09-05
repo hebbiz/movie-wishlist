@@ -620,7 +620,7 @@ function openGroupSettingsView() {
   groupSelectorButton.classList.add("disabled");
 
   renderGroupSettings();
-  renderOtherGroups();
+  ();
 
   loadCurrentGroupMembers().then(() => {
     renderGroupMembers();
@@ -672,9 +672,15 @@ function renderGroupSettings() {
 function renderOtherGroups() {
   otherGroupsList.innerHTML = "";
 
-  const otherGroups = currentUserGroups.filter((membership) => {
-    return membership.groups?.id !== currentGroupId;
-  });
+  const otherGroups =
+    currentUserGroups.filter(
+      (membership) => {
+        return (
+          membership.groups?.id !==
+          currentGroupId
+        );
+      }
+    );
 
   if (!otherGroups.length) {
     otherGroupsList.innerHTML = `
@@ -682,19 +688,47 @@ function renderOtherGroups() {
         Інших груп немає.
       </p>
     `;
+
     return;
   }
 
   otherGroups.forEach((membership) => {
-    const group = membership.groups;
+    const group =
+      membership.groups;
 
-    const row = document.createElement("div");
-    row.className = "other-group-row";
+    const unseenCount =
+      unseenMovieActivityCountByGroupId[
+        group.id
+      ] || 0;
+
+    const activityHtml =
+      unseenCount > 0
+        ? `
+          <div class="other-group-activity">
+            +${unseenCount}
+            ${formatActivityCountWord(
+              unseenCount
+            )}
+          </div>
+        `
+        : "";
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "other-group-row";
 
     row.innerHTML = `
-      <div class="other-group-name">
-        ${getGroupTypeNominativeLabel(group.type)}
-        ${escapeHtml(group.name)}
+      <div class="other-group-info">
+        <div class="other-group-name">
+          ${getGroupTypeNominativeLabel(
+            group.type
+          )}
+          ${escapeHtml(group.name)}
+        </div>
+
+        ${activityHtml}
       </div>
 
       <button
@@ -1875,6 +1909,8 @@ async function loadGlobalUnseenMovieActivityCount() {
   if (!currentUser) {
     globalUnseenMovieActivityCount = 0;
     unseenMovieActivityCountByGroupId = {};
+
+    updateCrossGroupActivityUI();
     return;
   }
 
@@ -1920,15 +1956,99 @@ async function loadGlobalUnseenMovieActivityCount() {
       ) + 1;
   });
 
-  console.log(
-    "Global unseen movie activity count:",
-    globalUnseenMovieActivityCount
-  );
+  updateCrossGroupActivityUI();
+}
 
-  console.log(
-    "Unseen movie activity count by group:",
+function formatActivityCountWord(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (
+    lastTwoDigits >= 11 &&
+    lastTwoDigits <= 14
+  ) {
+    return "нових активностей";
+  }
+
+  if (lastDigit === 1) {
+    return "нова активність";
+  }
+
+  if (
+    lastDigit >= 2 &&
+    lastDigit <= 4
+  ) {
+    return "нові активності";
+  }
+
+  return "нових активностей";
+}
+
+function hasUnseenActivityInOtherGroups() {
+  return Object.entries(
     unseenMovieActivityCountByGroupId
-  );
+  ).some(([groupId, count]) => {
+    return (
+      groupId !== currentGroupId &&
+      count > 0
+    );
+  });
+}
+
+function updateGroupSelectorActivityIndicator() {
+  if (!groupSelectorButton) {
+    return;
+  }
+
+  let indicator =
+    groupSelectorButton.querySelector(
+      ".group-activity-indicator"
+    );
+
+  const shouldShow =
+    hasUnseenActivityInOtherGroups();
+
+  if (!shouldShow) {
+    if (indicator) {
+      indicator.remove();
+    }
+
+    return;
+  }
+
+  if (!indicator) {
+    indicator =
+      document.createElement("span");
+
+    indicator.className =
+      "group-activity-indicator";
+
+    indicator.setAttribute(
+      "aria-label",
+      "Є нові активності в інших групах"
+    );
+
+    groupSelectorButton.appendChild(
+      indicator
+    );
+  }
+}
+
+function updateCrossGroupActivityUI() {
+  updateGroupSelectorActivityIndicator();
+
+  /*
+   * Якщо сторінка керування групами
+   * вже відкрита — перемальовуємо
+   * список з актуальними count.
+   */
+  if (
+    groupSettingsView?.classList.contains(
+      "active"
+    )
+  ) {
+    renderOtherGroups();
+  }
 }
 
 async function loadUnseenMovieActivities() {
