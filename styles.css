@@ -958,9 +958,88 @@ input[readonly],
     transform 220ms ease;
 }
 
+/* Unseen movie card emphasis */
+
+.card.has-unseen-activity {
+  border-color: rgba(214, 178, 94, 0.62);
+
+  box-shadow:
+    0 0 0 1px rgba(214, 178, 94, 0.08);
+}
+
+.card.activity-seen-settling {
+  animation:
+    movieCardSeenSettle 620ms
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes movieCardSeenSettle {
+  0% {
+    transform: translateY(0);
+  }
+
+  38% {
+    transform: translateY(-4px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+
+/* Badge shimmer during seen transition */
+
+.new-activity-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.new-activity-badge::after {
+  content: "";
+
+  position: absolute;
+  inset: -40%;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      120deg,
+      transparent 35%,
+      rgba(255, 238, 185, 0.9) 50%,
+      transparent 65%
+    );
+
+  transform: translateX(-130%);
+  opacity: 0;
+}
+
+.new-activity-badge.is-being-seen::after {
+  opacity: 1;
+
+  animation:
+    newActivityBadgeShimmer 420ms
+    ease-out
+    forwards;
+}
+
+@keyframes newActivityBadgeShimmer {
+  from {
+    transform: translateX(-130%);
+  }
+
+  to {
+    transform: translateX(130%);
+  }
+}
+
 .new-activity-badge.is-seen {
   opacity: 0;
-  transform: translateY(-4px) scale(0.96);
+
+  transform:
+    translateY(-3px)
+    scale(0.96);
 }
 
 .group-current-badge {

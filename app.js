@@ -2283,12 +2283,42 @@ async function markMovieActivitySeen(card) {
   const badge =
     card.querySelector(".new-activity-badge");
 
+  card.classList.add(
+    "activity-seen-settling"
+  );
+
   if (badge) {
-    badge.classList.add("is-seen");
+    badge.classList.add(
+      "is-being-seen"
+    );
+
+    setTimeout(() => {
+      badge.classList.add(
+        "is-seen"
+      );
+
+      card.classList.remove(
+        "has-unseen-activity"
+      );
+    }, 220);
 
     setTimeout(() => {
       badge.remove();
-    }, 240);
+
+      card.classList.remove(
+        "activity-seen-settling"
+      );
+    }, 620);
+  } else {
+    card.classList.remove(
+      "has-unseen-activity"
+    );
+
+    setTimeout(() => {
+      card.classList.remove(
+        "activity-seen-settling"
+      );
+    }, 620);
   }
 
   movieActivityMarking.delete(activityId);
@@ -2335,7 +2365,7 @@ function attachMovieActivityObserver() {
               );
 
               markMovieActivitySeen(card);
-            }, 700);
+            }, 1000);
 
             movieActivitySeenTimers.set(
               activityId,
@@ -2911,6 +2941,8 @@ if (list.length === 0) {
     if (unseenActivity) {
       card.dataset.activityId = unseenActivity.id;
       card.dataset.movieId = movie.movie_id;
+
+      card.classList.add("has-unseen-activity");
     }
 
     const poster = movie.poster_url
