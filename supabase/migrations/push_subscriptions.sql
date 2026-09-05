@@ -87,7 +87,7 @@ begin
   end if;
 
   function_url :=
-    'https://mttkectgdqqmejpenkrn.supabase.co/functions/v1/send-movie-activity-push';
+    'https://MY_PROJECT_REF.supabase.co/functions/v1/send-movie-activity-push';
 
   perform net.http_post(
     url := function_url,
