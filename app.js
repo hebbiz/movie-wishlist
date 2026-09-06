@@ -2385,7 +2385,7 @@ async function markMovieActivitySeen(card) {
       card.classList.remove(
         "has-unseen-activity"
       );
-    }, 220);
+    }, 420);
 
     setTimeout(() => {
       badge.remove();
@@ -2393,7 +2393,7 @@ async function markMovieActivitySeen(card) {
       card.classList.remove(
         "activity-seen-settling"
       );
-    }, 620);
+    }, 820);
   } else {
     card.classList.remove(
       "has-unseen-activity"
@@ -2403,7 +2403,7 @@ async function markMovieActivitySeen(card) {
       card.classList.remove(
         "activity-seen-settling"
       );
-    }, 620);
+    }, 820);
   }
 
   movieActivityMarking.delete(activityId);
@@ -2435,7 +2435,7 @@ function attachMovieActivityObserver() {
 
           const isVisibleEnough =
             entry.isIntersecting &&
-            entry.intersectionRatio >= 0.5;
+            entry.intersectionRatio >= 0.7;
 
           if (isVisibleEnough) {
             if (
@@ -2450,7 +2450,7 @@ function attachMovieActivityObserver() {
               );
 
               markMovieActivitySeen(card);
-            }, 1000);
+            }, 1500);
 
             movieActivitySeenTimers.set(
               activityId,
@@ -2473,7 +2473,7 @@ function attachMovieActivityObserver() {
         });
       },
       {
-        threshold: 0.5,
+        threshold: 0.7,
       }
     );
 
