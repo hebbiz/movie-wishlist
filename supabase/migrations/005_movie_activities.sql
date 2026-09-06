@@ -554,3 +554,24 @@ using (
       and mar.user_id = (select auth.uid())
   )
 );
+
+
+-- Видаляємо активність та записи у підрядних таблицях після 30 днів
+
+create or replace function public.cleanup_old_movie_activity()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  deleted_count integer;
+begin
+  delete from public.movie_activity
+  where created_at < now() - interval '30 days';
+
+  get diagnostics deleted_count = row_count;
+
+  return deleted_count;
+end;
+$$;
