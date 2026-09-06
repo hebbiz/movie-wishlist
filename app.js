@@ -2364,7 +2364,6 @@ async function markMovieActivitySeen(card) {
   }
 
   card.removeAttribute("data-activity-id");
-  card.removeAttribute("data-movie-id");
 
   const badge =
     card.querySelector(".new-activity-badge");
@@ -7217,21 +7216,27 @@ cancelProfileButton.addEventListener("click", () => {
 
 async function initApp() {
   showAppLoader();
-  const pushDeepLink = getPushDeepLink();
+
+  const pushDeepLink =
+    getPushDeepLink();
+
+  let pushDeepLinkApplied = false;
 
   try {
     await updateAuthUI();
     await ensureUserMembership();
-    
+
     if (!isAnonymous()) {
       await loadCurrentUserGroups();
-      if (pushDeepLink) { 
-        applyPushDeepLinkGroup( 
-          pushDeepLink
-        );
+
+      if (pushDeepLink) {
+        pushDeepLinkApplied =
+          applyPushDeepLinkGroup(
+            pushDeepLink
+          );
       }
     }
-    
+
     await loadCurrentRole();
 
     if (!isAnonymous()) {
@@ -7244,14 +7249,22 @@ async function initApp() {
     if (!isAnonymous()) {
       await loadMovies();
 
-      if (pushDeepLink) {
+      if (
+        pushDeepLink &&
+        pushDeepLinkApplied
+      ) {
         finishPushDeepLinkNavigation(
           pushDeepLink
         );
+      } else if (pushDeepLink) {
+        clearPushDeepLink();
       }
     }
   } catch (error) {
-    console.error("App initialization error:", error);
+    console.error(
+      "App initialization error:",
+      error
+    );
   } finally {
     appHasInitialized = true;
     hideAppLoader();
