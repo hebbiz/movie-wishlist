@@ -2450,7 +2450,7 @@ function attachMovieActivityObserver() {
               );
 
               markMovieActivitySeen(card);
-            }, 1500);
+            }, 1800);
 
             movieActivitySeenTimers.set(
               activityId,
