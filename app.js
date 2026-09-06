@@ -321,6 +321,59 @@ function getSavedActiveGroupId() {
   return localStorage.getItem("activeGroupId");
 }
 
+function getPushDeepLink() {
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  if (params.get("push") !== "1") {
+    return null;
+  }
+
+  const groupId =
+    params.get("group");
+
+  const status =
+    params.get("status");
+
+  const activityId =
+    params.get("activity");
+
+  const movieId =
+    params.get("movie");
+
+  if (!groupId) {
+    return null;
+  }
+
+  return {
+    groupId,
+    status,
+    activityId,
+    movieId,
+  };
+}
+
+function clearPushDeepLink() {
+  const url =
+    new URL(window.location.href);
+
+  url.searchParams.delete("push");
+  url.searchParams.delete("group");
+  url.searchParams.delete("status");
+  url.searchParams.delete("activity");
+  url.searchParams.delete("movie");
+
+  window.history.replaceState(
+    {},
+    document.title,
+    url.pathname +
+      url.search +
+      url.hash
+  );
+}
+
 async function ensureUserMembership() {
   const {
     data: { session },
@@ -552,6 +605,39 @@ async function loadCurrentUserGroups() {
   }
 
   currentUserGroups = data || [];
+}
+
+function applyPushDeepLinkGroup(
+  deepLink
+) {
+  if (!deepLink?.groupId) {
+    return false;
+  }
+
+  const membership =
+    currentUserGroups.find(
+      (item) =>
+        item.groups?.id ===
+        deepLink.groupId
+    );
+
+  if (!membership) {
+    console.warn(
+      "Push deep-link group is not accessible:",
+      deepLink.groupId
+    );
+
+    return false;
+  }
+
+  currentGroupId =
+    deepLink.groupId;
+
+  saveActiveGroupId(
+    currentGroupId
+  );
+
+  return true;
 }
 
 function getOwnedGroupTypes() {
@@ -2931,6 +3017,7 @@ if (list.length === 0) {
   list.forEach((movie) => {
     const card = document.createElement("article");
     card.className = "card";
+    card.dataset.movieId = movie.movie_id;
 
     const unseenActivityCandidate = unseenMovieActivityByMovieId[movie.movie_id];
 
@@ -2940,8 +3027,6 @@ if (list.length === 0) {
 
     if (unseenActivity) {
       card.dataset.activityId = unseenActivity.id;
-      card.dataset.movieId = movie.movie_id;
-
       card.classList.add("has-unseen-activity");
     }
 
@@ -6589,6 +6674,76 @@ function setActiveFilter(filter) {
   applySearchAndFilters();
 }
 
+function finishPushDeepLinkNavigation(
+  deepLink
+) {
+  if (!deepLink) {
+    return;
+  }
+
+  const allowedStatuses = [
+    "wishlist",
+    "ordered",
+    "owned",
+    "watched",
+  ];
+
+  if (
+    deepLink.status &&
+    allowedStatuses.includes(
+      deepLink.status
+    )
+  ) {
+    setActiveFilter(
+      deepLink.status
+    );
+  }
+
+  /*
+   * Чекаємо завершення renderMovies()
+   * після setActiveFilter().
+   */
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      let card = null;
+
+      if (deepLink.activityId) {
+        card =
+          moviesGrid.querySelector(
+            `.card[data-activity-id="${CSS.escape(
+              deepLink.activityId
+            )}"]`
+          );
+      }
+
+      /*
+       * Activity могла вже стати seen,
+       * тому fallback — сама картка фільму.
+       */
+      if (
+        !card &&
+        deepLink.movieId
+      ) {
+        card =
+          moviesGrid.querySelector(
+            `.card[data-movie-id="${CSS.escape(
+              deepLink.movieId
+            )}"]`
+          );
+      }
+
+      if (card) {
+        card.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+
+      clearPushDeepLink();
+    });
+  });
+}
+
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => {
     setActiveFilter(button.dataset.filter);
@@ -7062,6 +7217,7 @@ cancelProfileButton.addEventListener("click", () => {
 
 async function initApp() {
   showAppLoader();
+  const pushDeepLink = getPushDeepLink();
 
   try {
     await updateAuthUI();
@@ -7069,6 +7225,11 @@ async function initApp() {
     
     if (!isAnonymous()) {
       await loadCurrentUserGroups();
+      if (pushDeepLink) { 
+        applyPushDeepLinkGroup( 
+          pushDeepLink
+        );
+      }
     }
     
     await loadCurrentRole();
@@ -7082,6 +7243,12 @@ async function initApp() {
 
     if (!isAnonymous()) {
       await loadMovies();
+
+      if (pushDeepLink) {
+        finishPushDeepLinkNavigation(
+          pushDeepLink
+        );
+      }
     }
   } catch (error) {
     console.error("App initialization error:", error);
