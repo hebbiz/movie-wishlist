@@ -6664,13 +6664,43 @@ function updateActiveListUI() {
       : "";
 }
 
-
 function setActiveFilter(filter) {
   activeFilter = filter;
 
   closeExtraListsPanel();
   updateActiveListUI();
   applySearchAndFilters();
+
+  const hasUnseenInFilter =
+    filter !== "all" &&
+    unseenMovieActivities.some(
+      (activity) =>
+        activity.to_status === filter
+    );
+
+  if (hasUnseenInFilter) {
+    scrollToFirstUnseenActivityCard();
+  }
+}
+
+function scrollToFirstUnseenActivityCard() {
+  const card =
+    moviesGrid.querySelector(
+      ".card[data-activity-id]"
+    );
+
+  if (!card) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      card.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+  });
 }
 
 function finishPushDeepLinkNavigation(
