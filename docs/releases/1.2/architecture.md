@@ -591,4 +591,4 @@ The source-code state corresponding to this architecture is identified by:
 
     v1.2.0
 
-The Git tag should be created only after all release documentation has been committed.
+The v1.2.0 Git tag identifies the production source-code state released on September 6, 2026. Release documentation was added subsequently as an archival record of that production milestone.
