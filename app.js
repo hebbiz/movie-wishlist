@@ -97,62 +97,67 @@ const MEDIA_SUBLIST_META = {
     label: "4K UHD Blu-ray",
     icon: "assets/icons/media/ultra-hd-blu-ray.svg",
     order: 10,
-    wide: true,
+    iconWidth: 34,
   },
   "Blu-ray": {
     label: "Blu-ray",
     icon: "assets/icons/media/blu-ray-disc.svg",
     order: 20,
-    wide: true,
+    iconWidth: 31,
   },
   "DVD": {
     label: "DVD",
     icon: "assets/icons/media/dvd-video.svg",
     order: 30,
-    wide: true,
+    iconWidth: 30,
   },
   "Netflix": {
     label: "Netflix",
     icon: "assets/icons/media/netflix.svg",
     order: 40,
+    iconWidth: 15,
   },
   "Apple TV / iTunes": {
     label: "Apple TV",
     icon: "assets/icons/media/appletv.svg",
     order: 50,
+    iconWidth: 23,
   },
   "HBO Max": {
     label: "HBO Max",
     icon: "assets/icons/media/hbomax.svg",
     order: 60,
-    wide: true,
+    iconWidth: 34,
   },
   "Prime Video": {
     label: "Prime Video",
     icon: "assets/icons/media/primevideo.svg",
     order: 70,
-    wide: true,
+    iconWidth: 34,
   },
   "Disney+": {
     label: "Disney+",
     icon: "assets/icons/media/disney-plus.svg",
     order: 80,
-    wide: true,
+    iconWidth: 30,
   },
   "Megogo": {
     label: "MEGOGO",
     icon: "assets/icons/media/megogo.svg",
     order: 90,
+    iconWidth: 23,
   },
   "MEGOGO": {
     label: "MEGOGO",
     icon: "assets/icons/media/megogo.svg",
     order: 90,
+    iconWidth: 23,
   },
   "Rakuten TV": {
     label: "Rakuten TV",
     icon: "assets/icons/media/rakuten.svg",
     order: 100,
+    iconWidth: 18,
   },
   "Інше": {
     label: "Інше",
@@ -6832,9 +6837,9 @@ function setSublistIcon(element, meta) {
     `url("${meta.icon}")`
   );
 
-  element.classList.toggle(
-    "wide",
-    meta.wide === true
+  element.style.setProperty(
+    "--sublist-mark-width",
+    `${meta.iconWidth || 18}px`
   );
 }
 
