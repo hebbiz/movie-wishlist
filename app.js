@@ -178,6 +178,13 @@ const UNAVAILABLE_SUBLIST_META = {
   icon: "assets/icons/media/circle-off.svg",
   order: 10,
 };
+
+const UNSPECIFIED_MEDIUM_SUBLIST_META = {
+  value: "unspecified-medium",
+  label: "Носій не вказано",
+  icon: "assets/icons/media/circle-help.svg",
+  order: 5,
+};
 let currentUser = null;
 let currentRole = null;
 let currentGroup = null;
@@ -5980,6 +5987,10 @@ function movieMatchesActiveList(movie) {
   }
 
   if (sublistMode === "recommended_medium") {
+    if (activeSublist === "unspecified-medium") {
+      return !movie.recommended_medium;
+    }
+
     return movie.recommended_medium === activeSublist;
   }
 
@@ -6796,6 +6807,7 @@ function getAvailableSublistOptions(filter = activeFilter) {
       : "owned";
 
   const values = new Set();
+  let hasUnspecifiedMedium = false;
 
   movies.forEach((movie) => {
     if (movie.status !== status) {
@@ -6804,17 +6816,22 @@ function getAvailableSublistOptions(filter = activeFilter) {
 
     const value = movie[mode];
 
-    if (
-      !value ||
-      value === "Наразі недоступний"
-    ) {
+    if (!value) {
+      if (mode === "recommended_medium") {
+        hasUnspecifiedMedium = true;
+      }
+
+      return;
+    }
+
+    if (value === "Наразі недоступний") {
       return;
     }
 
     values.add(value);
   });
 
-  return [...values]
+  const options = [...values]
     .map((value) => ({
       value,
       ...getMediaSublistMeta(value),
@@ -6829,6 +6846,12 @@ function getAvailableSublistOptions(filter = activeFilter) {
         "uk"
       );
     });
+
+  if (hasUnspecifiedMedium) {
+    options.unshift(UNSPECIFIED_MEDIUM_SUBLIST_META);
+  }
+
+  return options;
 }
 
 function setSublistIcon(element, meta) {
