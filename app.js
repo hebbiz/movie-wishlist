@@ -11,10 +11,12 @@ const searchInput = document.getElementById("searchInput");
 const clearSearchButton = document.getElementById("clearSearchButton");
 const searchHint = document.getElementById("searchHint");
 const filterButtons = document.querySelectorAll(".filter-btn");
-const extraListsToggle = document.getElementById("extraListsToggle");
-const extraListsPanel = document.getElementById("extraListsPanel");
-const extraListsActiveLabel = document.getElementById("extraListsActiveLabel");
-const extraListButtons = document.querySelectorAll(".extra-list-btn");
+const sublistSlot = document.getElementById("sublistSlot");
+const sublistToggle = document.getElementById("sublistToggle");
+const sublistPanel = document.getElementById("sublistPanel");
+const sublistOptions = document.getElementById("sublistOptions");
+const sublistActiveLabel = document.getElementById("sublistActiveLabel");
+const sublistToggleIcon = document.getElementById("sublistToggleIcon");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
 const formPanel = document.getElementById("formPanel");
@@ -78,6 +80,7 @@ const movieActivityMarking = new Set();
 let movies = [];
 let editingMovieId = null;
 let activeFilter = "all";
+let activeSublist = null;
 let pendingImdbUrl = null;
 let pendingImdbId = null;
 let pendingSearchQuery = "";
@@ -88,6 +91,88 @@ let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
 let mykolaMode = "main";
 let savedMainMykolaChatHtml = null;
+
+const MEDIA_SUBLIST_META = {
+  "4K UHD Blu-ray": {
+    label: "4K UHD Blu-ray",
+    icon: "assets/icons/media/ultra-hd-blu-ray.svg",
+    order: 10,
+    wide: true,
+  },
+  "Blu-ray": {
+    label: "Blu-ray",
+    icon: "assets/icons/media/blu-ray-disc.svg",
+    order: 20,
+    wide: true,
+  },
+  "DVD": {
+    label: "DVD",
+    icon: "assets/icons/media/dvd-video.svg",
+    order: 30,
+    wide: true,
+  },
+  "Netflix": {
+    label: "Netflix",
+    icon: "assets/icons/media/netflix.svg",
+    order: 40,
+  },
+  "Apple TV / iTunes": {
+    label: "Apple TV",
+    icon: "assets/icons/media/appletv.svg",
+    order: 50,
+  },
+  "HBO Max": {
+    label: "HBO Max",
+    icon: "assets/icons/media/hbomax.svg",
+    order: 60,
+    wide: true,
+  },
+  "Prime Video": {
+    label: "Prime Video",
+    icon: "assets/icons/media/primevideo.svg",
+    order: 70,
+    wide: true,
+  },
+  "Disney+": {
+    label: "Disney+",
+    icon: "assets/icons/media/disney-plus.svg",
+    order: 80,
+    wide: true,
+  },
+  "Megogo": {
+    label: "MEGOGO",
+    icon: "assets/icons/media/megogo.svg",
+    order: 90,
+  },
+  "MEGOGO": {
+    label: "MEGOGO",
+    icon: "assets/icons/media/megogo.svg",
+    order: 90,
+  },
+  "Rakuten TV": {
+    label: "Rakuten TV",
+    icon: "assets/icons/media/rakuten.svg",
+    order: 100,
+  },
+  "Інше": {
+    label: "Інше",
+    icon: "assets/icons/media/dots.svg",
+    order: 900,
+  },
+};
+
+const DEFAULT_SUBLIST_META = {
+  label: "Усі",
+  icon: "assets/icons/media/layout-grid.svg",
+  order: 0,
+};
+
+const UNAVAILABLE_SUBLIST_META = {
+  value: "unavailable",
+  label: "Недоступні",
+  icon: "assets/icons/media/circle-off.svg",
+  order: 10,
+};
 let currentUser = null;
 let currentRole = null;
 let currentGroup = null;
@@ -1987,7 +2072,8 @@ async function loadMovies() {
   await loadMovieRecommendationDetails();
 
   applyMykolaDailyRecommendation();
-  
+
+  updateActiveListUI();
   applySearchAndFilters();
 }
 
@@ -3000,7 +3086,8 @@ function renderMovies(list) {
 
 if (list.length === 0) {
   if (
-    activeFilter === "unavailable" &&
+    activeFilter === "all" &&
+    activeSublist === "unavailable" &&
     !searchInput.value.trim()
   ) {
     moviesGrid.innerHTML =
@@ -5363,6 +5450,7 @@ function getPurchaseLabel(movie) {
   "Apple TV / iTunes",
   "Prime Video",
   "Megogo",
+  "Rakuten TV",
   ];
 
   const displayNames = {
@@ -5372,6 +5460,7 @@ function getPurchaseLabel(movie) {
   "Disney+": "Disney+",
   "Netflix": "Netflix",
   "Megogo": "Megogo",
+  "Rakuten TV": "Rakuten TV",
   };
 
   const isPurchasedStatus = ["ordered", "owned", "watched"].includes(
@@ -5850,6 +5939,52 @@ function sortMoviesForDisplay(list) {
   });
 }
 
+function movieMatchesActiveList(movie) {
+  let matchesFilter = true;
+
+  if (activeFilter === "wishlist") {
+    matchesFilter = movie.status === "wishlist";
+  }
+
+  if (activeFilter === "ordered") {
+    matchesFilter = movie.status === "ordered";
+  }
+
+  if (activeFilter === "owned") {
+    matchesFilter = movie.status === "owned";
+  }
+
+  if (activeFilter === "watched") {
+    matchesFilter = movie.status === "watched";
+  }
+
+  if (!matchesFilter || !activeSublist) {
+    return matchesFilter;
+  }
+
+  const sublistMode = getSublistMode();
+
+  if (
+    sublistMode === "unavailable" &&
+    activeSublist === "unavailable"
+  ) {
+    return (
+      movie.status === "wishlist" &&
+      movie.recommended_medium === "Наразі недоступний"
+    );
+  }
+
+  if (sublistMode === "recommended_medium") {
+    return movie.recommended_medium === activeSublist;
+  }
+
+  if (sublistMode === "owned_medium") {
+    return movie.owned_medium === activeSublist;
+  }
+
+  return matchesFilter;
+}
+
 function applySearchAndFilters() {
   const query = searchInput.value.toLowerCase().trim();
   const imdbId = extractImdbId(query);
@@ -5903,40 +6038,9 @@ function applySearchAndFilters() {
   return searchableText.includes(query);
 });
 
-  const filtered = globalMatches.filter((movie) => {
-
-    let matchesFilter = true;
-
-    if (activeFilter === "wishlist") {
-      matchesFilter = movie.status === "wishlist";
-    }
-
-    if (activeFilter === "ordered") {
-      matchesFilter = movie.status === "ordered";
-    }
-
-    if (activeFilter === "owned") {
-      matchesFilter = movie.status === "owned";
-    }
-
-    if (activeFilter === "watched") {
-      matchesFilter = movie.status === "watched";
-    }
-
-    if (activeFilter === "unavailable") {
-      matchesFilter =
-        movie.status === "wishlist" &&
-        movie.recommended_medium === "Наразі недоступний";
-    }
-
-    if (activeFilter === "uhd") {
-      matchesFilter =
-        movie.recommended_medium === "4K UHD Blu-ray" ||
-        movie.owned_medium === "4K UHD Blu-ray";
-    }
-
-    return matchesFilter;
-  });
+  const filtered = globalMatches.filter(
+    movieMatchesActiveList
+  );
 
   if (query.length >= 2 && !imdbId) {
     pendingSearchQuery = searchInput.value.trim();
@@ -5958,9 +6062,19 @@ function applySearchAndFilters() {
   if (
     filtered.length === 0 &&
     globalMatches.length > 0 &&
-    activeFilter !== "all"
+    (
+      activeFilter !== "all" ||
+      activeSublist !== null
+    )
   ) {
-    if (globalMatches.length === 1) {
+    if (activeSublist !== null) {
+      const count = globalMatches.length;
+
+      searchHint.textContent =
+        count === 1
+          ? "Фільм знайдено поза вибраним підсписком."
+          : `Знайдено ${count} ${formatMovieCountWord(count)} поза вибраним підсписком.`;
+    } else if (globalMatches.length === 1) {
       searchHint.textContent =
         `Фільм знайдено у списку «${formatStatusTitle(globalMatches[0].status)}».`;
     } else {
@@ -5994,6 +6108,7 @@ function isStreamingMedium(medium) {
     "Apple TV / iTunes",
     "Prime Video",
     "Megogo",
+    "Rakuten TV",
   ];
 
   return streamingServices.includes(medium);
@@ -6626,13 +6741,149 @@ function showMykolaReturnPrompt() {
 
 searchInput.addEventListener("input", applySearchAndFilters);
 
-function closeExtraListsPanel() {
-  extraListsPanel.classList.remove("open");
+function getSublistMode(filter = activeFilter) {
+  if (filter === "all") {
+    return "unavailable";
+  }
 
-  extraListsToggle.setAttribute(
+  if (filter === "wishlist") {
+    return "recommended_medium";
+  }
+
+  if (filter === "owned") {
+    return "owned_medium";
+  }
+
+  return null;
+}
+
+function getMediaSublistMeta(value) {
+  return MEDIA_SUBLIST_META[value] || {
+    label: value,
+    icon: "assets/icons/media/dots.svg",
+    order: 800,
+  };
+}
+
+function getAvailableSublistOptions(filter = activeFilter) {
+  const mode = getSublistMode(filter);
+
+  if (!mode) {
+    return [];
+  }
+
+  if (mode === "unavailable") {
+    const hasUnavailableMovies = movies.some((movie) => {
+      return (
+        movie.status === "wishlist" &&
+        movie.recommended_medium === "Наразі недоступний"
+      );
+    });
+
+    return hasUnavailableMovies
+      ? [UNAVAILABLE_SUBLIST_META]
+      : [];
+  }
+
+  const status =
+    mode === "recommended_medium"
+      ? "wishlist"
+      : "owned";
+
+  const values = new Set();
+
+  movies.forEach((movie) => {
+    if (movie.status !== status) {
+      return;
+    }
+
+    const value = movie[mode];
+
+    if (
+      !value ||
+      value === "Наразі недоступний"
+    ) {
+      return;
+    }
+
+    values.add(value);
+  });
+
+  return [...values]
+    .map((value) => ({
+      value,
+      ...getMediaSublistMeta(value),
+    }))
+    .sort((a, b) => {
+      if (a.order !== b.order) {
+        return a.order - b.order;
+      }
+
+      return a.label.localeCompare(
+        b.label,
+        "uk"
+      );
+    });
+}
+
+function setSublistIcon(element, meta) {
+  element.style.setProperty(
+    "--sublist-icon",
+    `url("${meta.icon}")`
+  );
+
+  element.classList.toggle(
+    "wide",
+    meta.wide === true
+  );
+}
+
+function closeSublistPanel() {
+  sublistPanel.classList.remove("open");
+
+  sublistToggle.setAttribute(
     "aria-expanded",
     "false"
   );
+}
+
+function renderSublistOptions(options) {
+  sublistOptions.replaceChildren();
+
+  const items = [
+    {
+      value: "",
+      ...DEFAULT_SUBLIST_META,
+    },
+    ...options,
+  ];
+
+  items.forEach((item) => {
+    const button = document.createElement("button");
+    const icon = document.createElement("span");
+    const label = document.createElement("span");
+    const isActive =
+      (activeSublist || "") === item.value;
+
+    button.type = "button";
+    button.className = "sublist-option";
+    button.dataset.sublistValue = item.value;
+    button.setAttribute("role", "menuitemradio");
+    button.setAttribute(
+      "aria-checked",
+      String(isActive)
+    );
+    button.classList.toggle("active", isActive);
+
+    icon.className = "sublist-icon";
+    icon.setAttribute("aria-hidden", "true");
+    setSublistIcon(icon, item);
+
+    label.textContent = item.label;
+
+    button.append(icon, label);
+    sublistOptions.append(button);
+  });
 }
 
 function updateActiveListUI() {
@@ -6643,31 +6894,55 @@ function updateActiveListUI() {
     );
   });
 
-  extraListButtons.forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.extraFilter === activeFilter
-    );
-  });
-
-  const isExtraList =
-    activeFilter === "unavailable";
-
-  extraListsToggle.classList.toggle(
-    "active",
-    isExtraList
+  const mode = getSublistMode();
+  const options = getAvailableSublistOptions();
+  const hasSublistMenu =
+    mode !== null && options.length > 0;
+  const activeOption = options.find(
+    (option) => option.value === activeSublist
   );
 
-  extraListsActiveLabel.textContent =
-    isExtraList
-      ? "Недоступні"
-      : "";
+  if (activeSublist && !activeOption) {
+    activeSublist = null;
+  }
+
+  const activeMeta =
+    options.find(
+      (option) => option.value === activeSublist
+    ) || DEFAULT_SUBLIST_META;
+
+  sublistSlot.classList.toggle(
+    "dormant",
+    !hasSublistMenu
+  );
+  sublistSlot.setAttribute(
+    "aria-hidden",
+    String(!hasSublistMenu)
+  );
+  sublistToggle.disabled = !hasSublistMenu;
+  sublistToggle.classList.toggle(
+    "active",
+    activeSublist !== null
+  );
+  sublistToggle.setAttribute(
+    "aria-label",
+    `Підсписки: ${activeMeta.label}`
+  );
+  sublistActiveLabel.textContent = activeMeta.label;
+  setSublistIcon(sublistToggleIcon, activeMeta);
+
+  renderSublistOptions(options);
+
+  if (!hasSublistMenu) {
+    closeSublistPanel();
+  }
 }
 
 function setActiveFilter(filter) {
   activeFilter = filter;
+  activeSublist = null;
 
-  closeExtraListsPanel();
+  closeSublistPanel();
   updateActiveListUI();
   applySearchAndFilters();
 
@@ -6779,27 +7054,40 @@ filterButtons.forEach((button) => {
   });
 });
 
-extraListsToggle.addEventListener("click", () => {
-  const isOpen =
-    extraListsPanel.classList.contains("open");
+sublistToggle.addEventListener("click", () => {
+  if (sublistToggle.disabled) {
+    return;
+  }
 
-  extraListsPanel.classList.toggle(
+  const isOpen =
+    sublistPanel.classList.contains("open");
+
+  sublistPanel.classList.toggle(
     "open",
     !isOpen
   );
 
-  extraListsToggle.setAttribute(
+  sublistToggle.setAttribute(
     "aria-expanded",
     String(!isOpen)
   );
 });
 
-extraListButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    setActiveFilter(
-      button.dataset.extraFilter
-    );
-  });
+sublistOptions.addEventListener("click", (event) => {
+  const button = event.target.closest(
+    "[data-sublist-value]"
+  );
+
+  if (!button) {
+    return;
+  }
+
+  activeSublist =
+    button.dataset.sublistValue || null;
+
+  closeSublistPanel();
+  updateActiveListUI();
+  applySearchAndFilters();
 });
 
   lookupButton.addEventListener("click", async () => {
@@ -7078,11 +7366,11 @@ document.addEventListener("click", (event) => {
     groupSelectorDropdown.style.display = "none";
   }
 
-  const clickedInsideExtraLists =
-    event.target.closest(".filters-panel");
+  const clickedInsideSublist =
+    event.target.closest(".sublist-slot");
 
-  if (!clickedInsideExtraLists) {
-    closeExtraListsPanel();
+  if (!clickedInsideSublist) {
+    closeSublistPanel();
   }
 
   const clickedInsideRecommendContext =

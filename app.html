@@ -195,30 +195,23 @@
           Переглянуто
         </button>
 
-        <button
-          id="extraListsToggle"
-          type="button"
-          class="extra-lists-toggle"
-          aria-expanded="false"
-          aria-label="Додаткові списки"
-        >
-          <span id="extraListsActiveLabel"></span>
-          <span class="extra-lists-arrow">▾</span>
-        </button>
-      </div>
-
-      <div
-        id="extraListsPanel"
-        class="extra-lists-panel"
-      >
-        <div class="extra-lists-panel-inner">
+        <div id="sublistSlot" class="sublist-slot dormant" aria-hidden="true">
           <button
+            id="sublistToggle"
             type="button"
-            class="extra-list-btn"
-            data-extra-filter="unavailable"
+            class="sublist-toggle"
+            aria-expanded="false"
+            aria-haspopup="menu"
+            aria-label="Підсписки"
           >
-            Недоступні
+            <span id="sublistToggleIcon" class="sublist-icon" aria-hidden="true"></span>
+            <span id="sublistActiveLabel">Усі</span>
+            <span class="sublist-arrow" aria-hidden="true">▾</span>
           </button>
+
+          <div id="sublistPanel" class="sublist-panel" role="menu" aria-labelledby="sublistToggle">
+            <div id="sublistOptions" class="sublist-options"></div>
+          </div>
         </div>
       </div>
 

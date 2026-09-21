@@ -1168,103 +1168,224 @@ input[readonly],
 }
 
 
-/* ---------- Додаткові списки ---------- */
+/* ---------- Контекстні підсписки ---------- */
 
-.extra-lists-toggle {
+.sublist-slot {
+  position: relative;
+  z-index: 20;
+
+  flex: 0 0 172px;
+  min-width: 172px;
+  min-height: 40px;
+  margin-left: auto;
+
+  display: flex;
+  justify-content: flex-end;
+
+  opacity: 1;
+
+  transition:
+    opacity 200ms ease,
+    min-width 200ms ease,
+    flex-basis 200ms ease;
+}
+
+.sublist-toggle {
   width: auto;
+  max-width: 172px;
+  min-height: 40px;
   margin: 0;
-  padding: 10px 12px;
+  padding: 8px 11px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
 
-  background: #2a2a2a;
+  overflow: hidden;
+  white-space: nowrap;
+
+  background: #1f1f1f;
+  color: #c8c8c8;
+  border: 1px solid #343434;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: right center;
+
+  transition:
+    max-width 200ms ease,
+    padding 200ms ease,
+    opacity 180ms ease,
+    transform 200ms ease,
+    color 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.sublist-toggle:hover {
+  background: #292929;
   color: #f4f4f4;
-
-  border-radius: 10px;
+  border-color: #444;
 }
 
-.extra-lists-toggle:hover {
-  background: #333;
-}
-
-.extra-lists-toggle.active {
+.sublist-toggle.active {
   background: #d6b25e;
   color: #111;
+  border-color: #d6b25e;
 }
 
-.extra-lists-arrow {
-  display: inline-block;
+.sublist-slot.dormant {
+  pointer-events: none;
+}
 
-  font-size: 12px;
+.sublist-slot.dormant .sublist-toggle {
+  max-width: 38px;
+  padding-inline: 0;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.sublist-icon {
+  width: 18px;
+  height: 16px;
+  flex: 0 0 auto;
+
+  display: inline-block;
+  background: currentColor;
+
+  -webkit-mask: var(--sublist-icon) center / contain no-repeat;
+  mask: var(--sublist-icon) center / contain no-repeat;
+}
+
+.sublist-icon.wide {
+  width: 28px;
+}
+
+.sublist-arrow {
+  flex: 0 0 auto;
+  color: currentColor;
+  font-size: 11px;
   line-height: 1;
+  opacity: 0.65;
 
   transition: transform 180ms ease;
 }
 
-.extra-lists-toggle[aria-expanded="true"] .extra-lists-arrow {
+.sublist-toggle[aria-expanded="true"] .sublist-arrow {
   transform: rotate(180deg);
 }
 
+.sublist-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
 
-/* Закрита додаткова панель */
+  min-width: 210px;
+  max-width: min(320px, calc(100vw - 48px));
+  max-height: min(430px, 60vh);
+  padding: 7px;
+  overflow-y: auto;
 
-.extra-lists-panel {
-  display: grid;
-  grid-template-rows: 0fr;
+  background: #191919;
+  border: 1px solid #343434;
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38);
 
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-5px) scale(0.98);
+  transform-origin: top right;
 
   transition:
-    grid-template-rows 180ms ease,
-    opacity 180ms ease;
+    opacity 180ms ease,
+    transform 200ms ease,
+    visibility 0s linear 200ms;
 }
 
-.extra-lists-panel-inner {
-  overflow: hidden;
+.sublist-panel.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+
+  transition:
+    opacity 180ms ease,
+    transform 200ms ease,
+    visibility 0s;
+}
+
+.sublist-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sublist-option {
+  width: 100%;
+  min-height: 36px;
+  margin: 0;
+  padding: 8px 10px;
 
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  gap: 9px;
+
+  background: transparent;
+  color: #c8c8c8;
+  border: 0;
+  border-radius: 9px;
+
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-
-/* Відкрита додаткова панель */
-
-.extra-lists-panel.open {
-  grid-template-rows: 1fr;
-  opacity: 1;
-}
-
-.extra-lists-panel.open .extra-lists-panel-inner {
-  padding-top: 12px;
-}
-
-
-/* Кнопки додаткових списків */
-
-.extra-list-btn {
-  width: auto;
-  margin: 0;
-  padding: 9px 13px;
-
-  background: #242424;
-  color: #bbb;
-
-  border: 1px solid #333;
-}
-
-.extra-list-btn:hover {
-  background: #2a2a2a;
+.sublist-option:hover {
+  background: #272727;
   color: #f4f4f4;
 }
 
-.extra-list-btn.active {
-  background: #d6b25e;
-  color: #111;
-  border-color: #d6b25e;
+.sublist-option.active {
+  background: rgba(214, 178, 94, 0.14);
+  color: #e1c77f;
+}
+
+@media (max-width: 760px) {
+  .sublist-slot {
+    flex-basis: 100%;
+    min-width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+
+  .sublist-slot.dormant {
+    flex-basis: 0;
+    min-width: 0;
+    min-height: 0;
+    height: 0;
+  }
+
+  .sublist-panel {
+    right: auto;
+    left: 0;
+    transform-origin: top left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sublist-slot,
+  .sublist-toggle,
+  .sublist-arrow,
+  .sublist-panel {
+    transition-duration: 0.01ms;
+  }
 }
 
 .actions-panel {
