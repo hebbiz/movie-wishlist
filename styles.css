@@ -1251,8 +1251,8 @@ input[readonly],
 }
 
 .sublist-icon {
-  width: 18px;
-  height: 16px;
+  width: var(--sublist-mark-width, 18px);
+  height: 18px;
   flex: 0 0 auto;
 
   display: inline-block;
@@ -1260,10 +1260,6 @@ input[readonly],
 
   -webkit-mask: var(--sublist-icon) center / contain no-repeat;
   mask: var(--sublist-icon) center / contain no-repeat;
-}
-
-.sublist-icon.wide {
-  width: 28px;
 }
 
 .sublist-arrow {
@@ -1333,9 +1329,10 @@ input[readonly],
   margin: 0;
   padding: 8px 10px;
 
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
   align-items: center;
-  gap: 9px;
+  column-gap: 8px;
 
   background: transparent;
   color: #c8c8c8;
@@ -1345,6 +1342,17 @@ input[readonly],
   text-align: left;
   font-size: 13px;
   font-weight: 600;
+}
+
+.sublist-option .sublist-icon {
+  width: 40px;
+  height: 18px;
+  justify-self: center;
+
+  -webkit-mask-size: var(--sublist-mark-width, 18px) auto;
+  mask-size: var(--sublist-mark-width, 18px) auto;
+  -webkit-mask-position: center;
+  mask-position: center;
 }
 
 .sublist-option:hover {
@@ -1359,23 +1367,36 @@ input[readonly],
 
 @media (max-width: 760px) {
   .sublist-slot {
-    flex-basis: 100%;
-    min-width: 100%;
-    justify-content: flex-start;
+    flex: 0 0 42px;
+    min-width: 42px;
+    justify-content: center;
     margin-left: 0;
   }
 
   .sublist-slot.dormant {
-    flex-basis: 0;
-    min-width: 0;
-    min-height: 0;
-    height: 0;
+    flex-basis: 42px;
+    min-width: 42px;
+    min-height: 40px;
+    height: auto;
+  }
+
+  .sublist-toggle,
+  .sublist-slot.dormant .sublist-toggle {
+    width: 42px;
+    max-width: 42px;
+    padding-inline: 0;
+    gap: 0;
+  }
+
+  .sublist-toggle #sublistActiveLabel,
+  .sublist-toggle .sublist-arrow {
+    display: none;
   }
 
   .sublist-panel {
-    right: auto;
-    left: 0;
-    transform-origin: top left;
+    right: 0;
+    left: auto;
+    transform-origin: top right;
   }
 }
 
