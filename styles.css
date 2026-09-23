@@ -3049,9 +3049,13 @@ body {
 }
 
 .mykola-add-social-movie-button {
+  position: relative;
   align-self: flex-start;
-  padding: 0;
+  width: auto;
+  margin: 0;
+  padding: 0 0 3px;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: #e4c675;
   font: inherit;
@@ -3060,15 +3064,64 @@ body {
   line-height: 1.25;
   text-align: left;
   cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  transition:
+    color 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
-.mykola-add-social-movie-button:hover:not(:disabled) {
+.mykola-add-social-movie-button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+
+  transition:
+    opacity 220ms ease,
+    transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mykola-add-social-movie-button:hover:not(:disabled),
+.mykola-add-social-movie-button:focus-visible,
+.mykola-add-social-movie-button:active {
+  background: transparent;
   color: #f0d98f;
 }
 
 .mykola-add-social-movie-button:disabled {
+  background: transparent;
   color: rgba(244, 244, 244, 0.48);
   cursor: default;
+}
+
+.mykola-add-social-movie-button.is-loading {
+  opacity: 0.58;
+}
+
+.mykola-add-social-movie-button.is-added {
+  color: #e4c675;
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.mykola-add-social-movie-button.is-added::after {
+  opacity: 0.72;
+  transform: scaleX(1);
+}
+
+.mykola-add-social-movie-button.is-existing {
+  color: rgba(244, 244, 244, 0.68);
+  opacity: 1;
 }
 
 @media (max-width: 600px) {
