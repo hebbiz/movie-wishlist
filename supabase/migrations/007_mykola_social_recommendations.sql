@@ -270,3 +270,196 @@ revoke all on function public.add_mykola_social_movie_to_wishlist(uuid, uuid)
 from public;
 grant execute on function public.add_mykola_social_movie_to_wishlist(uuid, uuid)
 to authenticated;
+
+-- 
+-- Mykola social archive aggregation
+--
+-- Keeps the exact direct-connection boundary introduced in migration 006,
+-- but aggregates every visible rating for a movie across adjacent groups.
+-- The client uses average_rating only as a small random-selection bias.
+
+create index if not exists recommendations_mykola_archive_lookup_idx
+on public.recommendations (
+  context_group_id,
+  movie_id,
+  rating_value,
+  created_at desc
+);
+
+create or replace function public.get_mykola_social_candidates_v2(
+  p_current_group_id uuid
+)
+returns table (
+  movie_id uuid,
+  title text,
+  year text,
+  poster_url text,
+  imdb_url text,
+  source_medium text,
+  average_rating numeric,
+  rating_count bigint,
+  recommendations jsonb
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then
+    raise exception 'Authentication required'
+      using errcode = '42501';
+  end if;
+
+  if not exists (
+    select 1
+    from public.group_members current_membership
+    where current_membership.group_id = p_current_group_id
+      and current_membership.user_id = v_user_id
+  ) then
+    raise exception 'Current group is not available to this user'
+      using errcode = '42501';
+  end if;
+
+  return query
+  with direct_connections as (
+    select distinct connected_member.user_id
+    from public.group_members my_membership
+    join public.group_members connected_member
+      on connected_member.group_id = my_membership.group_id
+    where my_membership.user_id = v_user_id
+      and connected_member.user_id <> v_user_id
+  ),
+  adjacent_groups as (
+    select distinct user_group.group_id
+    from public.group_members user_group
+    where user_group.user_id = v_user_id
+      and user_group.group_id <> p_current_group_id
+
+    union
+
+    select connected_group.id
+    from public.groups connected_group
+    join direct_connections connection
+      on connection.user_id = connected_group.created_by
+    where connected_group.id <> p_current_group_id
+  ),
+  visible_recommendations as (
+    select
+      recommendation.id as recommendation_id,
+      recommendation.movie_id,
+      movie.title,
+      movie.year::text as year,
+      movie.poster_url,
+      movie.imdb_url,
+      coalesce(
+        source_list.owned_medium,
+        source_list.recommended_medium,
+        'Носій не вказано'
+      ) as source_medium,
+      recommendation.user_id,
+      recommendation.comment,
+      recommendation.rating_value,
+      recommendation.created_at,
+      coalesce(nullif(trim(profile.display_name), ''), 'Користувач')
+        as recommender_name,
+      source_group.id as source_group_id,
+      source_group.name as source_group_name,
+      source_group.type as source_group_type
+    from public.recommendations recommendation
+    join direct_connections connection
+      on connection.user_id = recommendation.user_id
+    join adjacent_groups adjacent_group
+      on adjacent_group.group_id = recommendation.context_group_id
+    join public.groups source_group
+      on source_group.id = recommendation.context_group_id
+    join public.movie_group_lists source_list
+      on source_list.group_id = recommendation.context_group_id
+      and source_list.movie_id = recommendation.movie_id
+    join public.movies movie
+      on movie.id = recommendation.movie_id
+    left join public.profiles profile
+      on profile.id = recommendation.user_id
+    where recommendation.user_id <> v_user_id
+      and not exists (
+        select 1
+        from public.movie_group_lists current_list
+        where current_list.group_id = p_current_group_id
+          and current_list.movie_id = recommendation.movie_id
+      )
+  ),
+  movie_aggregates as (
+    select
+      visible.movie_id,
+      max(visible.title) as title,
+      max(visible.year) as year,
+      max(visible.poster_url) as poster_url,
+      max(visible.imdb_url) as imdb_url,
+      avg(visible.rating_value) filter (
+        where visible.rating_value is not null
+      ) as average_rating,
+      count(visible.rating_value) as rating_count,
+      jsonb_agg(
+        jsonb_build_object(
+          'recommendation_id', visible.recommendation_id,
+          'movie_id', visible.movie_id,
+          'user_id', visible.user_id,
+          'comment', visible.comment,
+          'rating_value', visible.rating_value,
+          'created_at', visible.created_at,
+          'recommender_name', visible.recommender_name,
+          'source_group_id', visible.source_group_id,
+          'source_group_name', visible.source_group_name,
+          'source_group_type', visible.source_group_type
+        )
+        order by
+          visible.rating_value desc nulls last,
+          visible.created_at desc,
+          visible.recommendation_id
+      ) filter (
+        where nullif(trim(visible.comment), '') is not null
+      ) as recommendations
+    from visible_recommendations visible
+    group by visible.movie_id
+    having
+      avg(visible.rating_value) filter (
+        where visible.rating_value is not null
+      ) >= 8
+      and count(*) filter (
+        where nullif(trim(visible.comment), '') is not null
+      ) > 0
+  ),
+  preferred_sources as (
+    select distinct on (visible.movie_id)
+      visible.movie_id,
+      visible.source_medium
+    from visible_recommendations visible
+    order by
+      visible.movie_id,
+      visible.rating_value desc nulls last,
+      visible.created_at desc,
+      visible.recommendation_id
+  )
+  select
+    aggregate.movie_id,
+    aggregate.title,
+    aggregate.year,
+    aggregate.poster_url,
+    aggregate.imdb_url,
+    preferred_source.source_medium,
+    aggregate.average_rating,
+    aggregate.rating_count,
+    aggregate.recommendations
+  from movie_aggregates aggregate
+  join preferred_sources preferred_source
+    on preferred_source.movie_id = aggregate.movie_id
+  order by aggregate.movie_id;
+end;
+$$;
+
+revoke all on function public.get_mykola_social_candidates_v2(uuid)
+from public;
+grant execute on function public.get_mykola_social_candidates_v2(uuid)
+to authenticated;
+

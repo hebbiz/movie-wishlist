@@ -91,6 +91,20 @@ let mykolaConversationFinished =
   localStorage.getItem("mykolaConversationFinished") === "true";
 let mykolaMode = "main";
 let savedMainMykolaChatHtml = null;
+let pendingMykolaAddedMovieId = null;
+
+function createMykolaRecommendationSession(groupId = currentGroupId) {
+  return {
+    groupId,
+    shownLocalMovieIds: new Set(),
+    shownSocialMovieIds: new Set(),
+    socialLayerUnlocked: false,
+    socialCandidates: null,
+  };
+}
+
+let mykolaRecommendationSession =
+  createMykolaRecommendationSession(null);
 
 const MEDIA_SUBLIST_META = {
   "4K UHD Blu-ray": {
@@ -765,6 +779,9 @@ function renderGroupTypeOptions() {
 }
 
 async function loadCurrentGroup() {
+  const shouldResetMykolaSession =
+    mykolaRecommendationSession.groupId !== currentGroupId;
+
   const { data, error } = await supabaseClient
     .from("groups")
     .select("id, name, type")
@@ -778,6 +795,10 @@ async function loadCurrentGroup() {
   }
 
   currentGroup = data;
+
+  if (shouldResetMykolaSession) {
+    resetMykolaChat();
+  }
 }
 
 function renderCurrentGroupInfo() {
@@ -2087,6 +2108,7 @@ async function loadMovies() {
 
   updateActiveListUI();
   applySearchAndFilters();
+  syncMykolaSocialMovieButtons();
 }
 
 async function loadGlobalUnseenMovieActivityCount() {
@@ -3117,6 +3139,13 @@ if (list.length === 0) {
     card.className = "card";
     card.dataset.movieId = movie.movie_id;
 
+    const isMykolaAddedMovie =
+      pendingMykolaAddedMovieId === movie.movie_id;
+
+    if (isMykolaAddedMovie) {
+      card.classList.add("has-mykola-added-highlight");
+    }
+
     const unseenActivityCandidate = unseenMovieActivityByMovieId[movie.movie_id];
 
     const unseenActivity = unseenActivityCandidate && activeFilter === unseenActivityCandidate.to_status
@@ -3137,6 +3166,12 @@ if (list.length === 0) {
         <img src="${poster}" alt="${movie.title}" />
 
         <div class="poster-badges">
+           ${
+             isMykolaAddedMovie
+               ? `<span class="poster-badge mykola-added-badge">Нове</span>`
+               : ""
+           }
+
            ${
              unseenActivity
                ? `<span class="poster-badge new-activity-badge">Нове</span>`
@@ -4762,15 +4797,43 @@ function getMykolaDailyComment(item) {
   return mykolaDailyRecommendationComments[index];
 }
 
-function createMykolaRecommendationCard(item, index, total) {
+function getSocialRecommendationGroupLabel(groupType, groupName) {
+  const safeName = groupName || "без назви";
+
+  const prefixes = {
+    family: "у сімʼї",
+    friends: "у групі друзів",
+    community: "у спільноті",
+  };
+
+  return `${prefixes[groupType] || "у групі"} ${safeName}`;
+}
+
+function createMykolaRecommendationCard(
+  item,
+  index,
+  total,
+  options = {}
+) {
+  const {
+    compact = false,
+    showIndex = true,
+    showArchiveMark = true,
+  } = options;
+
+  const stacked = options.stacked ?? !compact;
+
   const name =
     item.profiles?.display_name ||
     item.profiles?.email ||
+    item.recommender_name ||
     "Користувач";
 
-  const groupName = item.groups?.name
-    ? `${getGroupTypeNominativeLabel(item.groups.type)} ${item.groups.name}`
-    : "Група не вказана";
+  const groupName = item.social_group_label || (
+    item.groups?.name
+      ? `${getGroupTypeNominativeLabel(item.groups.type)} ${item.groups.name}`
+      : "Група не вказана"
+  );
 
   const comment =
     item.comment ||
@@ -4778,10 +4841,17 @@ function createMykolaRecommendationCard(item, index, total) {
       ? getMykolaDailyComment(item)
       : "Без коментаря. Лаконічно, але підозріло.");
 
-  const archiveMark = getMykolaArchiveMark(item);
+  const archiveMark = showArchiveMark
+    ? getMykolaArchiveMark(item)
+    : null;
 
   const card = document.createElement("div");
-  card.className = `mykola-recommendation-card mykola-stack-card mykola-stack-card-${index}`;
+  card.className = [
+    "mykola-recommendation-card",
+    compact ? "mykola-social-recommendation-card" : "",
+    stacked ? "mykola-stack-card" : "",
+    stacked ? `mykola-stack-card-${index}` : "",
+  ].filter(Boolean).join(" ");
 
   card.innerHTML = `
     <div class="mykola-recommendation-card-header">
@@ -4795,9 +4865,11 @@ function createMykolaRecommendationCard(item, index, total) {
         </div>
       </div>
 
-      <div class="mykola-recommendation-card-index">
-        ${item.displayIndex}/${total}
-      </div>
+      ${showIndex ? `
+        <div class="mykola-recommendation-card-index">
+          ${item.displayIndex}/${total}
+        </div>
+      ` : ""}
     </div>
 
     <div class="mykola-recommendation-card-divider"></div>
@@ -4909,8 +4981,20 @@ function renderMykolaRecommendationStack(shouldScroll = false) {
   });
 }
 
-function attachMykolaStackHandlers(stack) {
-  if (!stack || activeRecommendationStack.length <= 1) return;
+function attachMykolaStackHandlers(stack, configuration = {}) {
+  const itemCount = configuration.itemCount ??
+    activeRecommendationStack.length;
+
+  const advanceStack = configuration.onAdvance || ((direction) => {
+    activeRecommendationStackOffset =
+      direction > 0
+        ? (activeRecommendationStackOffset + 1) % itemCount
+        : (activeRecommendationStackOffset - 1 + itemCount) % itemCount;
+
+    renderMykolaRecommendationStack(false);
+  });
+
+  if (!stack || itemCount <= 1) return;
 
   const topCard = stack.querySelector(".mykola-stack-card:first-child");
   const secondCard = stack.querySelector(".mykola-stack-card:nth-child(2)");
@@ -5004,14 +5088,8 @@ function attachMykolaStackHandlers(stack) {
 
         unlockHorizontalOverflow();
 
-        activeRecommendationStackOffset =
-          direction > 0
-            ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
-            : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
-                activeRecommendationStack.length;
-
         requestAnimationFrame(() => {
-          renderMykolaRecommendationStack(false);
+          advanceStack(direction);
 
           setTimeout(() => {
             isRecommendationStackInteracting = false;
@@ -6116,6 +6194,21 @@ function getRecommendationCandidates() {
   });
 }
 
+function resetMykolaRecommendationSession() {
+  mykolaRecommendationSession =
+    createMykolaRecommendationSession(currentGroupId);
+}
+
+function ensureMykolaRecommendationSession() {
+  if (
+    mykolaRecommendationSession.groupId !== currentGroupId
+  ) {
+    resetMykolaRecommendationSession();
+  }
+
+  return mykolaRecommendationSession;
+}
+
 function isStreamingMedium(medium) {
   const streamingServices = [
     "Netflix",
@@ -6131,10 +6224,21 @@ function isStreamingMedium(medium) {
 }
 
 function pickMykolaMovie() {
-  const candidates = getRecommendationCandidates();
+  const session = ensureMykolaRecommendationSession();
+  const allCandidates = getRecommendationCandidates();
+  const candidates = allCandidates.filter((movie) => {
+    return !session.shownLocalMovieIds.has(movie.movie_id);
+  });
+
+  const hadFilteredRepeats =
+    candidates.length < allCandidates.length;
 
   if (candidates.length === 0) {
-    return null;
+    return {
+      movie: null,
+      hadFilteredRepeats,
+      hasEligibleLocalCandidates: allCandidates.length > 0,
+    };
   }
 
   const ownedMovies = candidates.filter((movie) => {
@@ -6174,7 +6278,11 @@ function pickMykolaMovie() {
   ].filter((group) => group.movies.length > 0);
 
   if (groups.length === 0) {
-    return null;
+    return {
+      movie: null,
+      hadFilteredRepeats,
+      hasEligibleLocalCandidates: allCandidates.length > 0,
+    };
   }
 
   const totalWeight = groups.reduce((sum, group) => {
@@ -6187,11 +6295,25 @@ function pickMykolaMovie() {
     randomValue -= group.weight;
 
     if (randomValue <= 0) {
-      return getRandomItem(group.movies);
+      const movie = getRandomItem(group.movies);
+      session.shownLocalMovieIds.add(movie.movie_id);
+
+      return {
+        movie,
+        hadFilteredRepeats,
+        hasEligibleLocalCandidates: true,
+      };
     }
   }
 
-  return getRandomItem(groups[groups.length - 1].movies);
+  const movie = getRandomItem(groups[groups.length - 1].movies);
+  session.shownLocalMovieIds.add(movie.movie_id);
+
+  return {
+    movie,
+    hadFilteredRepeats,
+    hasEligibleLocalCandidates: true,
+  };
 }
 
 function getRandomItem(items) {
@@ -6214,6 +6336,30 @@ const mykolaRecommendationPhrases = [
   "Не сперечайтесь із Миколою. Просто увімкніть:",
   "Це не порада. Це майже консенсус кафедри:",
   "Скажу культурно: кращого варіанту зараз не бачу.",
+];
+
+const mykolaSocialSupplementPhrases = [
+  "Я також бачу, що інші радять ось це:",
+  "До речі, у сусідніх списках хвалять ще й це:",
+  "Є ще одна порада від людей, чиєму смаку тут довіряють:",
+  "Поки переглядав записи, знайшов ще такий варіант:",
+  "Інші теж залишили дещо варте уваги:",
+  "Ось що радять неподалік:",
+  "Ще один варіант прийшов із суміжної групи:",
+  "Є й стороння думка — доволі переконлива:",
+  "Соціальне коло підкинуло ще це:",
+  "А ось рекомендація не від мене, але з хорошими аргументами:",
+  "У сусідній картотеці це оцінили високо:",
+  "Ще одна порада, цього разу від знайомих вам людей:",
+];
+
+const mykolaSocialFallbackPhrases = [
+  "У цьому списку поки нічого не знайшов. Але ось що радять інші:",
+  "Тут варіанти закінчилися, зате в суміжній групі є дещо цікаве:",
+  "Звернімося до досвіду сусідів:",
+  "Власна картотека мовчить. Соціальна — ні:",
+  "Серед ваших списків кандидатів немає, але є така порада:",
+  "Локальний список вичерпано. Зате знайомі залишили аргумент:",
 ];
 
 const mykolaAnotherReplies = [
@@ -6361,31 +6507,159 @@ function runWithMykolaThinking(callback, delay = 2400) {
   }, delay);
 }
 
-function recommendMykolaMovie() {
-  const movie = pickMykolaMovie();
+function waitForMykola(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
 
-  if (!movie) {
-    addMykolaBubble(
-      "Я б і радий щось порадити, але список бажаного або порожній, або все тимчасово недоступне. Навіть Микола тут безсилий."
-    );
+async function loadMykolaSocialCandidates() {
+  const session = ensureMykolaRecommendationSession();
+
+  if (Array.isArray(session.socialCandidates)) {
+    return session.socialCandidates;
+  }
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_mykola_social_candidates_v2",
+    {
+      p_current_group_id: currentGroupId,
+    }
+  );
+
+  if (error) {
+    console.warn("Mykola social candidates load error:", error);
+    session.socialCandidates = [];
+    return session.socialCandidates;
+  }
+
+  session.socialCandidates = data || [];
+  return session.socialCandidates;
+}
+
+const MYKOLA_SOCIAL_MIN_AVERAGE_RATING = 8;
+const MYKOLA_SOCIAL_MAX_RATING = 20;
+const MYKOLA_SOCIAL_RATING_BIAS = 0.25;
+
+function getMykolaSocialCandidateWeight(candidate) {
+  const averageRating = Number(candidate.average_rating);
+
+  if (!Number.isFinite(averageRating)) {
+    return 1;
+  }
+
+  const normalizedRating = Math.max(
+    0,
+    Math.min(
+      1,
+      (
+        averageRating - MYKOLA_SOCIAL_MIN_AVERAGE_RATING
+      ) /
+      (
+        MYKOLA_SOCIAL_MAX_RATING -
+        MYKOLA_SOCIAL_MIN_AVERAGE_RATING
+      )
+    )
+  );
+
+  return 1 + normalizedRating * MYKOLA_SOCIAL_RATING_BIAS;
+}
+
+function pickWeightedMykolaSocialCandidate(candidates) {
+  if (!candidates.length) return null;
+
+  const weightedCandidates = candidates.map((candidate) => ({
+    candidate,
+    weight: getMykolaSocialCandidateWeight(candidate),
+  }));
+
+  const totalWeight = weightedCandidates.reduce((sum, item) => {
+    return sum + item.weight;
+  }, 0);
+
+  let randomValue = Math.random() * totalWeight;
+
+  for (const item of weightedCandidates) {
+    randomValue -= item.weight;
+
+    if (randomValue <= 0) {
+      return item.candidate;
+    }
+  }
+
+  return weightedCandidates[weightedCandidates.length - 1].candidate;
+}
+
+async function pickMykolaSocialCandidate() {
+  const session = ensureMykolaRecommendationSession();
+  const candidates = await loadMykolaSocialCandidates();
+
+  const availableCandidates = candidates.filter((item) => {
+    return !session.shownSocialMovieIds.has(item.movie_id);
+  });
+
+  const candidate = pickWeightedMykolaSocialCandidate(
+    availableCandidates
+  );
+
+  if (!candidate) {
+    return null;
+  }
+
+  session.shownSocialMovieIds.add(candidate.movie_id);
+  return candidate;
+}
+
+async function recommendMykolaMovie() {
+  const session = ensureMykolaRecommendationSession();
+  const localResult = pickMykolaMovie();
+
+  if (
+    localResult.hadFilteredRepeats ||
+    !localResult.movie
+  ) {
+    session.socialLayerUnlocked = true;
+  }
+
+  const socialCandidate = session.socialLayerUnlocked
+    ? await pickMykolaSocialCandidate()
+    : null;
+
+  if (!localResult.movie && !socialCandidate) {
+    const message = localResult.hasEligibleLocalCandidates
+      ? "На цю сесію варіанти закінчилися. Повторюватися не буду — навіть заради науки."
+      : "У поточній групі немає доступних кандидатів, а соціальна картотека цього разу теж мовчить.";
+
+    addMykolaBubble(message);
     return;
   }
 
-  const phrase = getRandomItem(mykolaRecommendationPhrases);
+  if (localResult.movie) {
+    addMykolaBubble(getRandomItem(mykolaRecommendationPhrases));
+    await waitForMykola(350);
+    addMykolaMovieBubble(localResult.movie);
+  }
 
-  addMykolaBubble(phrase);
+  if (socialCandidate) {
+    await waitForMykola(localResult.movie ? 450 : 0);
 
-    setTimeout(() => {
+    addMykolaBubble(
+      getRandomItem(
+        localResult.movie
+          ? mykolaSocialSupplementPhrases
+          : mykolaSocialFallbackPhrases
+      )
+    );
 
-      addMykolaMovieBubble(movie);
+    await waitForMykola(350);
+    addMykolaSocialMovieBubble(socialCandidate);
 
-    }, 350);
+    await waitForMykola(300);
+    addMykolaSocialRecommendationStack(socialCandidate);
+  }
 
-    setTimeout(() => {
-      
-      addMykolaFollowUpActions();
-  
-    }, 700);
+  await waitForMykola(350);
+  addMykolaFollowUpActions();
 }
 
 function getMykolaRecommendedMedium(movie) {
@@ -6458,6 +6732,316 @@ function addMykolaMovieBubble(movie) {
       openMovieFromMykola(movie);
     });
   }
+}
+
+function addMykolaSocialMovieBubble(movie) {
+  const row = document.createElement("div");
+  row.className = "mykola-message-row";
+
+  const poster = movie.poster_url
+    ? movie.poster_url
+    : "https://via.placeholder.com/300x450?text=No+Poster";
+
+  const canAdd = canAddMovie();
+
+  row.innerHTML = `
+    <div class="mykola-avatar">М</div>
+
+    <div class="mykola-movie-bubble mykola-social-movie-bubble">
+      <div class="mykola-movie-poster-wrapper">
+        <img
+          src="${escapeHtml(poster)}"
+          alt="${escapeHtml(movie.title)}"
+          class="mykola-movie-poster"
+        >
+
+        <div class="mykola-movie-medium-badge">
+          ${escapeHtml(movie.source_medium || "Носій не вказано")}
+        </div>
+
+        <div class="mykola-movie-title mykola-social-movie-title">
+          <span>${escapeHtml(movie.title)}</span>
+
+          <button
+            type="button"
+            class="mykola-add-social-movie-button"
+            data-mykola-social-movie-id="${escapeHtml(movie.movie_id)}"
+            aria-label="Додати ${escapeHtml(movie.title)} до списку Хочу переглянути"
+            ${canAdd ? "" : "disabled"}
+          >
+            ${canAdd ? "Хочу переглянути →" : "Лише для учасників"}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+  scrollMykolaChatToBottom();
+
+  const img = row.querySelector("img");
+
+  if (img) {
+    img.addEventListener("load", () => {
+      scrollMykolaChatToBottom();
+    });
+  }
+
+  const button = row.querySelector(".mykola-add-social-movie-button");
+
+  if (button && canAdd) {
+    wireMykolaSocialMovieButton(button, movie);
+  }
+}
+
+function wireMykolaSocialMovieButton(button, movie) {
+  if (!button || !movie || button.mykolaSocialAddHandlerAttached) {
+    return;
+  }
+
+  button.mykolaSocialAddHandlerAttached = true;
+
+  button.addEventListener("click", () => {
+    addSocialMovieToWishlist(movie, button);
+  });
+}
+
+function syncMykolaSocialMovieButtons() {
+  if (!mykolaChat) return;
+
+  const session = ensureMykolaRecommendationSession();
+
+  mykolaChat
+    .querySelectorAll("[data-mykola-social-movie-id]")
+    .forEach((button) => {
+      const movieId = button.dataset.mykolaSocialMovieId;
+      const isInCurrentGroup = movies.some((movie) => {
+        return movie.movie_id === movieId;
+      });
+
+      button.classList.remove(
+        "is-loading",
+        "is-added",
+        "is-existing"
+      );
+
+      if (isInCurrentGroup) {
+        button.disabled = true;
+        button.classList.add("is-added");
+        button.textContent = "Додано";
+        return;
+      }
+
+      if (!canAddMovie()) {
+        button.disabled = true;
+        button.textContent = "Лише для учасників";
+        return;
+      }
+
+      button.disabled = false;
+      button.textContent = "Хочу переглянути →";
+
+      const socialMovie = session.socialCandidates?.find((candidate) => {
+        return candidate.movie_id === movieId;
+      });
+
+      if (socialMovie) {
+        wireMykolaSocialMovieButton(button, socialMovie);
+      }
+    });
+}
+
+function addMykolaSocialRecommendationStack(item) {
+  const recommendations = Array.isArray(item.recommendations)
+    ? item.recommendations
+    : [];
+
+  if (!recommendations.length) {
+    return;
+  }
+
+  const stackItems = recommendations.map((recommendation, index) => ({
+    ...recommendation,
+    profiles: {
+      display_name: recommendation.recommender_name,
+    },
+    social_group_label: getSocialRecommendationGroupLabel(
+      recommendation.source_group_type,
+      recommendation.source_group_name
+    ),
+    originalIndex: index,
+  }));
+
+  const row = document.createElement("div");
+  row.className = [
+    "mykola-message-row",
+    "mykola-card-stack-row",
+    "mykola-social-card-stack-row",
+  ].join(" ");
+
+  const stack = document.createElement("div");
+  stack.className = "mykola-card-stack mykola-social-card-stack";
+
+  let offset = 0;
+
+  function renderSocialStack() {
+    const visibleItems = rotateRecommendationStack(
+      stackItems,
+      offset
+    );
+
+    stack.innerHTML = "";
+
+    visibleItems.slice(0, 3).forEach((recommendation, index) => {
+      stack.appendChild(
+        createMykolaRecommendationCard(
+          {
+            ...recommendation,
+            displayIndex: recommendation.originalIndex + 1,
+          },
+          index,
+          stackItems.length,
+          {
+            compact: true,
+            stacked: true,
+            showIndex: true,
+            showArchiveMark: false,
+          }
+        )
+      );
+    });
+
+    attachMykolaStackHandlers(stack, {
+      itemCount: stackItems.length,
+      onAdvance(direction) {
+        offset = direction > 0
+          ? (offset + 1) % stackItems.length
+          : (offset - 1 + stackItems.length) % stackItems.length;
+
+        renderSocialStack();
+      },
+    });
+  }
+
+  renderSocialStack();
+  row.appendChild(stack);
+
+  const actions = document.getElementById("mykolaActions");
+  mykolaChat.insertBefore(row, actions);
+  scrollMykolaChatToBottom();
+}
+
+async function addSocialMovieToWishlist(movie, button) {
+  if (!canAddMovie()) {
+    showAccessDenied(accessMessages.addOrEdit);
+    return;
+  }
+
+  button.disabled = true;
+  button.classList.add("is-loading");
+  button.textContent = "Додаю…";
+
+  const { data, error } = await supabaseClient.rpc(
+    "add_mykola_social_movie_to_wishlist",
+    {
+      p_current_group_id: currentGroupId,
+      p_movie_id: movie.movie_id,
+    }
+  );
+
+  if (error) {
+    console.error("Add Mykola social movie error:", error);
+    button.disabled = false;
+    button.classList.remove("is-loading");
+    button.textContent = "Хочу переглянути →";
+    alert("Не вдалося додати фільм до списку. Спробуйте ще раз.");
+    return;
+  }
+
+  const result = data?.[0];
+
+  if (!result) {
+    button.disabled = false;
+    button.classList.remove("is-loading");
+    button.textContent = "Хочу переглянути →";
+    alert("Не вдалося підтвердити додавання фільму.");
+    return;
+  }
+
+  button.classList.remove("is-loading");
+  button.classList.add(
+    result.inserted ? "is-added" : "is-existing"
+  );
+  button.textContent = result.inserted ? "Додано" : "Уже у списку";
+
+  pendingMykolaAddedMovieId = result.inserted
+    ? movie.movie_id
+    : null;
+
+  const confirmationStartedAt = Date.now();
+
+  await loadMovies();
+
+  const minimumConfirmationDuration = result.inserted ? 480 : 260;
+  const elapsedConfirmationDuration =
+    Date.now() - confirmationStartedAt;
+
+  if (elapsedConfirmationDuration < minimumConfirmationDuration) {
+    await waitForMykola(
+      minimumConfirmationDuration - elapsedConfirmationDuration
+    );
+  }
+
+  openAddedMykolaMovie(
+    movie.movie_id,
+    result.status || "wishlist",
+    !!result.inserted
+  );
+}
+
+function openAddedMykolaMovie(
+  movieId,
+  status,
+  shouldHighlight
+) {
+  mykolaView.classList.remove("active");
+  mainView.classList.add("active");
+
+  searchInput.value = "";
+  resetSmartSearchState();
+  setActiveFilter(status);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const card = moviesGrid.querySelector(
+        `.card[data-movie-id="${CSS.escape(movieId)}"]`
+      );
+
+      if (!card) return;
+
+      card.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      if (!shouldHighlight) return;
+
+      card.classList.add("has-mykola-added-highlight");
+
+      const badge = card.querySelector(".mykola-added-badge");
+
+      setTimeout(() => {
+        badge?.classList.add("is-leaving");
+        card.classList.remove("has-mykola-added-highlight");
+      }, 1500);
+
+      setTimeout(() => {
+        badge?.remove();
+        pendingMykolaAddedMovieId = null;
+      }, 1900);
+    });
+  });
 }
 
 function openMovieFromMykola(movie) {
@@ -6542,6 +7126,7 @@ function addMykolaFollowUpActions() {
 function resetMykolaChat() {
   mykolaMode = "main";
   savedMainMykolaChatHtml = null;
+  resetMykolaRecommendationSession();
   
   mykolaChat.innerHTML = `
     <div class="mykola-message-row">
@@ -6614,6 +7199,8 @@ function openMykolaView() {
 
     clearMykolaFinishedState();
   }
+
+  syncMykolaSocialMovieButtons();
 
   mykolaView.classList.add("active");
 
