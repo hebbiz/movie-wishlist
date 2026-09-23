@@ -2108,6 +2108,7 @@ async function loadMovies() {
 
   updateActiveListUI();
   applySearchAndFilters();
+  syncMykolaSocialMovieButtons();
 }
 
 async function loadGlobalUnseenMovieActivityCount() {
@@ -6764,6 +6765,7 @@ function addMykolaSocialMovieBubble(movie) {
           <button
             type="button"
             class="mykola-add-social-movie-button"
+            data-mykola-social-movie-id="${escapeHtml(movie.movie_id)}"
             aria-label="Додати ${escapeHtml(movie.title)} до списку Хочу переглянути"
             ${canAdd ? "" : "disabled"}
           >
@@ -6789,10 +6791,65 @@ function addMykolaSocialMovieBubble(movie) {
   const button = row.querySelector(".mykola-add-social-movie-button");
 
   if (button && canAdd) {
-    button.addEventListener("click", () => {
-      addSocialMovieToWishlist(movie, button);
-    });
+    wireMykolaSocialMovieButton(button, movie);
   }
+}
+
+function wireMykolaSocialMovieButton(button, movie) {
+  if (!button || !movie || button.mykolaSocialAddHandlerAttached) {
+    return;
+  }
+
+  button.mykolaSocialAddHandlerAttached = true;
+
+  button.addEventListener("click", () => {
+    addSocialMovieToWishlist(movie, button);
+  });
+}
+
+function syncMykolaSocialMovieButtons() {
+  if (!mykolaChat) return;
+
+  const session = ensureMykolaRecommendationSession();
+
+  mykolaChat
+    .querySelectorAll("[data-mykola-social-movie-id]")
+    .forEach((button) => {
+      const movieId = button.dataset.mykolaSocialMovieId;
+      const isInCurrentGroup = movies.some((movie) => {
+        return movie.movie_id === movieId;
+      });
+
+      button.classList.remove(
+        "is-loading",
+        "is-added",
+        "is-existing"
+      );
+
+      if (isInCurrentGroup) {
+        button.disabled = true;
+        button.classList.add("is-added");
+        button.textContent = "Додано";
+        return;
+      }
+
+      if (!canAddMovie()) {
+        button.disabled = true;
+        button.textContent = "Лише для учасників";
+        return;
+      }
+
+      button.disabled = false;
+      button.textContent = "Хочу переглянути →";
+
+      const socialMovie = session.socialCandidates?.find((candidate) => {
+        return candidate.movie_id === movieId;
+      });
+
+      if (socialMovie) {
+        wireMykolaSocialMovieButton(button, socialMovie);
+      }
+    });
 }
 
 function addMykolaSocialRecommendationStack(item) {
@@ -7142,6 +7199,8 @@ function openMykolaView() {
 
     clearMykolaFinishedState();
   }
+
+  syncMykolaSocialMovieButtons();
 
   mykolaView.classList.add("active");
 
