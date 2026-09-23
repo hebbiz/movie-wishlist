@@ -575,3 +575,86 @@ begin
   return deleted_count;
 end;
 $$;
+
+-- Remove catalog activity when a movie leaves a group list.
+--
+-- movie_activity references the global movie record, not movie_group_lists.
+-- Without this trigger, deleting only the group-list row leaves unseen
+-- recipients with an activity that no visible card can mark as seen.
+
+create or replace function public.handle_movie_group_list_activity_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from public.movie_activity activity
+  where activity.group_id = OLD.group_id
+    and activity.movie_id = OLD.movie_id
+    and activity.activity_category = 'catalog_status';
+
+  return OLD;
+end;
+$$;
+
+revoke execute
+on function public.handle_movie_group_list_activity_delete()
+from public, anon, authenticated;
+
+drop trigger if exists trg_movie_group_list_activity_delete
+on public.movie_group_lists;
+
+create trigger trg_movie_group_list_activity_delete
+after delete
+on public.movie_group_lists
+for each row
+execute function public.handle_movie_group_list_activity_delete();
+
+-- One-time repair for activities orphaned before this trigger existed.
+-- Deleting the parent activity also deletes every recipient through the
+-- existing movie_activity_recipients.activity_id ON DELETE CASCADE.
+
+delete from public.movie_activity activity
+where activity.activity_category = 'catalog_status'
+  and not exists (
+    select 1
+    from public.movie_group_lists list_item
+    where list_item.group_id = activity.group_id
+      and list_item.movie_id = activity.movie_id
+  );
+
+-- Keep the scheduled 30-day cleanup defensive as well. This also repairs an
+-- orphan if a future administrative operation ever bypasses the trigger.
+
+create or replace function public.cleanup_old_movie_activity()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  deleted_count integer;
+begin
+  delete from public.movie_activity activity
+  where activity.created_at < now() - interval '30 days'
+    or (
+      activity.activity_category = 'catalog_status'
+      and not exists (
+        select 1
+        from public.movie_group_lists list_item
+        where list_item.group_id = activity.group_id
+          and list_item.movie_id = activity.movie_id
+      )
+    );
+
+  get diagnostics deleted_count = row_count;
+
+  return deleted_count;
+end;
+$$;
+
+revoke execute
+on function public.cleanup_old_movie_activity()
+from public, anon, authenticated;
+
