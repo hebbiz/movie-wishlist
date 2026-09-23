@@ -4820,6 +4820,8 @@ function createMykolaRecommendationCard(
     showArchiveMark = true,
   } = options;
 
+  const stacked = options.stacked ?? !compact;
+
   const name =
     item.profiles?.display_name ||
     item.profiles?.email ||
@@ -4843,9 +4845,12 @@ function createMykolaRecommendationCard(
     : null;
 
   const card = document.createElement("div");
-  card.className = compact
-    ? "mykola-recommendation-card mykola-social-recommendation-card"
-    : `mykola-recommendation-card mykola-stack-card mykola-stack-card-${index}`;
+  card.className = [
+    "mykola-recommendation-card",
+    compact ? "mykola-social-recommendation-card" : "",
+    stacked ? "mykola-stack-card" : "",
+    stacked ? `mykola-stack-card-${index}` : "",
+  ].filter(Boolean).join(" ");
 
   card.innerHTML = `
     <div class="mykola-recommendation-card-header">
@@ -4975,8 +4980,20 @@ function renderMykolaRecommendationStack(shouldScroll = false) {
   });
 }
 
-function attachMykolaStackHandlers(stack) {
-  if (!stack || activeRecommendationStack.length <= 1) return;
+function attachMykolaStackHandlers(stack, configuration = {}) {
+  const itemCount = configuration.itemCount ??
+    activeRecommendationStack.length;
+
+  const advanceStack = configuration.onAdvance || ((direction) => {
+    activeRecommendationStackOffset =
+      direction > 0
+        ? (activeRecommendationStackOffset + 1) % itemCount
+        : (activeRecommendationStackOffset - 1 + itemCount) % itemCount;
+
+    renderMykolaRecommendationStack(false);
+  });
+
+  if (!stack || itemCount <= 1) return;
 
   const topCard = stack.querySelector(".mykola-stack-card:first-child");
   const secondCard = stack.querySelector(".mykola-stack-card:nth-child(2)");
@@ -5070,14 +5087,8 @@ function attachMykolaStackHandlers(stack) {
 
         unlockHorizontalOverflow();
 
-        activeRecommendationStackOffset =
-          direction > 0
-            ? (activeRecommendationStackOffset + 1) % activeRecommendationStack.length
-            : (activeRecommendationStackOffset - 1 + activeRecommendationStack.length) %
-                activeRecommendationStack.length;
-
         requestAnimationFrame(() => {
-          renderMykolaRecommendationStack(false);
+          advanceStack(direction);
 
           setTimeout(() => {
             isRecommendationStackInteracting = false;
@@ -6509,7 +6520,7 @@ async function loadMykolaSocialCandidates() {
   }
 
   const { data, error } = await supabaseClient.rpc(
-    "get_mykola_social_candidates",
+    "get_mykola_social_candidates_v2",
     {
       p_current_group_id: currentGroupId,
     }
@@ -6525,13 +6536,70 @@ async function loadMykolaSocialCandidates() {
   return session.socialCandidates;
 }
 
+const MYKOLA_SOCIAL_MIN_AVERAGE_RATING = 8;
+const MYKOLA_SOCIAL_MAX_RATING = 20;
+const MYKOLA_SOCIAL_RATING_BIAS = 0.25;
+
+function getMykolaSocialCandidateWeight(candidate) {
+  const averageRating = Number(candidate.average_rating);
+
+  if (!Number.isFinite(averageRating)) {
+    return 1;
+  }
+
+  const normalizedRating = Math.max(
+    0,
+    Math.min(
+      1,
+      (
+        averageRating - MYKOLA_SOCIAL_MIN_AVERAGE_RATING
+      ) /
+      (
+        MYKOLA_SOCIAL_MAX_RATING -
+        MYKOLA_SOCIAL_MIN_AVERAGE_RATING
+      )
+    )
+  );
+
+  return 1 + normalizedRating * MYKOLA_SOCIAL_RATING_BIAS;
+}
+
+function pickWeightedMykolaSocialCandidate(candidates) {
+  if (!candidates.length) return null;
+
+  const weightedCandidates = candidates.map((candidate) => ({
+    candidate,
+    weight: getMykolaSocialCandidateWeight(candidate),
+  }));
+
+  const totalWeight = weightedCandidates.reduce((sum, item) => {
+    return sum + item.weight;
+  }, 0);
+
+  let randomValue = Math.random() * totalWeight;
+
+  for (const item of weightedCandidates) {
+    randomValue -= item.weight;
+
+    if (randomValue <= 0) {
+      return item.candidate;
+    }
+  }
+
+  return weightedCandidates[weightedCandidates.length - 1].candidate;
+}
+
 async function pickMykolaSocialCandidate() {
   const session = ensureMykolaRecommendationSession();
   const candidates = await loadMykolaSocialCandidates();
 
-  const candidate = candidates.find((item) => {
+  const availableCandidates = candidates.filter((item) => {
     return !session.shownSocialMovieIds.has(item.movie_id);
   });
+
+  const candidate = pickWeightedMykolaSocialCandidate(
+    availableCandidates
+  );
 
   if (!candidate) {
     return null;
@@ -6586,7 +6654,7 @@ async function recommendMykolaMovie() {
     addMykolaSocialMovieBubble(socialCandidate);
 
     await waitForMykola(300);
-    addMykolaSocialRecommendationCard(socialCandidate);
+    addMykolaSocialRecommendationStack(socialCandidate);
   }
 
   await waitForMykola(350);
@@ -6727,36 +6795,80 @@ function addMykolaSocialMovieBubble(movie) {
   }
 }
 
-function addMykolaSocialRecommendationCard(item) {
-  const row = document.createElement("div");
-  row.className = "mykola-message-row mykola-social-recommendation-row";
+function addMykolaSocialRecommendationStack(item) {
+  const recommendations = Array.isArray(item.recommendations)
+    ? item.recommendations
+    : [];
 
-  const avatar = document.createElement("div");
-  avatar.className = "mykola-avatar";
-  avatar.textContent = "М";
+  if (!recommendations.length) {
+    return;
+  }
 
-  const card = createMykolaRecommendationCard(
-    {
-      ...item,
-      profiles: {
-        display_name: item.recommender_name,
-      },
-      social_group_label: getSocialRecommendationGroupLabel(
-        item.source_group_type,
-        item.source_group_name
-      ),
+  const stackItems = recommendations.map((recommendation, index) => ({
+    ...recommendation,
+    profiles: {
+      display_name: recommendation.recommender_name,
     },
-    0,
-    1,
-    {
-      compact: true,
-      showIndex: false,
-      showArchiveMark: false,
-    }
-  );
+    social_group_label: getSocialRecommendationGroupLabel(
+      recommendation.source_group_type,
+      recommendation.source_group_name
+    ),
+    originalIndex: index,
+  }));
 
-  row.appendChild(avatar);
-  row.appendChild(card);
+  const row = document.createElement("div");
+  row.className = [
+    "mykola-message-row",
+    "mykola-card-stack-row",
+    "mykola-social-card-stack-row",
+  ].join(" ");
+
+  const stack = document.createElement("div");
+  stack.className = "mykola-card-stack mykola-social-card-stack";
+
+  let offset = 0;
+
+  function renderSocialStack() {
+    const visibleItems = rotateRecommendationStack(
+      stackItems,
+      offset
+    );
+
+    stack.innerHTML = "";
+
+    visibleItems.slice(0, 3).forEach((recommendation, index) => {
+      stack.appendChild(
+        createMykolaRecommendationCard(
+          {
+            ...recommendation,
+            displayIndex: recommendation.originalIndex + 1,
+          },
+          index,
+          stackItems.length,
+          {
+            compact: true,
+            stacked: true,
+            showIndex: true,
+            showArchiveMark: false,
+          }
+        )
+      );
+    });
+
+    attachMykolaStackHandlers(stack, {
+      itemCount: stackItems.length,
+      onAdvance(direction) {
+        offset = direction > 0
+          ? (offset + 1) % stackItems.length
+          : (offset - 1 + stackItems.length) % stackItems.length;
+
+        renderSocialStack();
+      },
+    });
+  }
+
+  renderSocialStack();
+  row.appendChild(stack);
 
   const actions = document.getElementById("mykolaActions");
   mykolaChat.insertBefore(row, actions);
