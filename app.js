@@ -6882,6 +6882,7 @@ async function addSocialMovieToWishlist(movie, button) {
   }
 
   button.disabled = true;
+  button.classList.add("is-loading");
   button.textContent = "Додаю…";
 
   const { data, error } = await supabaseClient.rpc(
@@ -6895,6 +6896,7 @@ async function addSocialMovieToWishlist(movie, button) {
   if (error) {
     console.error("Add Mykola social movie error:", error);
     button.disabled = false;
+    button.classList.remove("is-loading");
     button.textContent = "Хочу переглянути →";
     alert("Не вдалося додати фільм до списку. Спробуйте ще раз.");
     return;
@@ -6904,25 +6906,39 @@ async function addSocialMovieToWishlist(movie, button) {
 
   if (!result) {
     button.disabled = false;
+    button.classList.remove("is-loading");
     button.textContent = "Хочу переглянути →";
     alert("Не вдалося підтвердити додавання фільму.");
     return;
   }
 
-  button.textContent = result.inserted
-    ? "Додано"
-    : "Уже у списку";
+  button.classList.remove("is-loading");
+  button.classList.add(
+    result.inserted ? "is-added" : "is-existing"
+  );
+  button.textContent = result.inserted ? "Додано" : "Уже у списку";
 
   pendingMykolaAddedMovieId = result.inserted
     ? movie.movie_id
     : null;
 
+  const confirmationStartedAt = Date.now();
+
   await loadMovies();
+
+  const minimumConfirmationDuration = result.inserted ? 480 : 260;
+  const elapsedConfirmationDuration =
+    Date.now() - confirmationStartedAt;
+
+  if (elapsedConfirmationDuration < minimumConfirmationDuration) {
+    await waitForMykola(
+      minimumConfirmationDuration - elapsedConfirmationDuration
+    );
+  }
 
   openAddedMykolaMovie(
     movie.movie_id,
     result.status || "wishlist",
-    result.recommended_medium || null,
     !!result.inserted
   );
 }
@@ -6930,7 +6946,6 @@ async function addSocialMovieToWishlist(movie, button) {
 function openAddedMykolaMovie(
   movieId,
   status,
-  recommendedMedium,
   shouldHighlight
 ) {
   mykolaView.classList.remove("active");
@@ -6939,12 +6954,6 @@ function openAddedMykolaMovie(
   searchInput.value = "";
   resetSmartSearchState();
   setActiveFilter(status);
-
-  if (status === "wishlist") {
-    activeSublist = recommendedMedium || "unspecified-medium";
-    updateActiveListUI();
-    applySearchAndFilters();
-  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
