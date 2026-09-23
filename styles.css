@@ -1962,6 +1962,10 @@ body {
   touch-action: none;
 }
 
+.mykola-social-card-stack {
+  width: 380px;
+}
+
 .mykola-stack-card {
   position: relative;
   width: 100%;
@@ -2044,6 +2048,10 @@ body {
   .mykola-card-stack {
     width: 100%;
     padding-bottom: 44px;
+  }
+
+  .mykola-social-card-stack {
+    width: 100%;
   }
 
   .mykola-stack-card:not(:first-child) {
