@@ -1762,16 +1762,16 @@ input[readonly],
 .social-advice-summary-button {
   width: auto;
   max-width: 100%;
-  min-height: 32px;
-  padding: 0 10px 0 7px;
-  gap: 4px;
+  min-height: 40px;
+  padding: 5px 10px 5px 7px;
+  gap: 7px;
 
   background: rgba(214, 178, 94, 0.08);
   border-color: rgba(214, 178, 94, 0.18);
   color: #d6b25e;
 
   font-size: 12px;
-  white-space: nowrap;
+  text-align: left;
 }
 
 .social-advice-summary-button:hover {
@@ -1781,6 +1781,27 @@ input[readonly],
 
 .social-advice-summary-button .recommend-count-icon {
   flex: 0 0 auto;
+}
+
+.social-advice-summary-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.15;
+}
+
+.social-advice-summary-count {
+  color: #f4f4f4;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.social-advice-summary-mood {
+  color: #d6b25e;
+  font-size: 11px;
+  white-space: normal;
 }
 
 .recommend-comment-icon::after {
