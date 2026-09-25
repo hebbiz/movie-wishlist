@@ -1797,39 +1797,42 @@ input[readonly],
 }
 
 .social-advice-feature-byline {
-  margin: 7px 0 0 23px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 
   color: #929292;
   font-size: 11px;
   line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.social-advice-feature-footer {
-  margin-top: 13px;
+.social-advice-feature-meta {
+  margin: 9px 0 0 23px;
 
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
 .social-advice-feature-mood {
-  min-width: 0;
+  margin: 10px 0 0 23px;
 
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 4px;
+
+  min-width: 0;
   color: #929292;
   font-size: 11px;
   line-height: 1.3;
   text-align: left;
 }
 
-.social-advice-feature-mood span,
 .social-advice-feature-mood strong {
-  display: block;
-}
-
-.social-advice-feature-mood strong {
-  margin-top: 2px;
-
   color: #d6b25e;
   font-size: 12px;
   font-weight: 600;
