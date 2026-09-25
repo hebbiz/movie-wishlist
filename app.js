@@ -3166,14 +3166,21 @@ function getVisibleRecommendationDetails(movieId) {
   return movieRecommendationDetails[movieId] || [];
 }
 
-function formatSocialAdviceRating(value) {
-  const rating = Number(value);
+function getSocialAdviceMoodLabel(movie) {
+  const averageRating = Number(movie?.average_rating);
+  const recommendationCount = Number(movie?.recommendation_count || 0);
 
-  if (!Number.isFinite(rating)) {
-    return "—";
+  if (!Number.isFinite(averageRating)) {
+    return "настрій не визначено";
   }
 
-  return rating.toFixed(1).replace(/\.0$/, "");
+  const seedBase =
+    `${movie.movie_id}:${averageRating}:${recommendationCount}`;
+
+  return (
+    getMykolaArchiveMoodLabel(averageRating, seedBase) ||
+    "настрій не визначено"
+  );
 }
 
 function renderRecommendationContext(movieId) {
@@ -3383,10 +3390,14 @@ if (list.length === 0) {
                 aria-label="Показати соціальні рекомендації"
               >
                 <span class="recommend-count-icon"></span>
-                <span>
-                  ${movie.recommendation_count}
-                  ${formatAdviceCountWord(movie.recommendation_count)}
-                  · ${formatSocialAdviceRating(movie.average_rating)}
+                <span class="social-advice-summary-copy">
+                  <span class="social-advice-summary-count">
+                    ${movie.recommendation_count}
+                    ${formatAdviceCountWord(movie.recommendation_count)}
+                  </span>
+                  <span class="social-advice-summary-mood">
+                    ${escapeHtml(getSocialAdviceMoodLabel(movie))}
+                  </span>
                 </span>
               </button>
 
