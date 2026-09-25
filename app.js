@@ -3183,6 +3183,44 @@ function getSocialAdviceMoodLabel(movie) {
   );
 }
 
+function getSocialAdviceFeaturedRecommendation(movie) {
+  const recommendations =
+    socialAdviceRecommendationDetails[movie?.movie_id] || [];
+
+  const commentedRecommendations = recommendations.filter((item) => {
+    return typeof item.comment === "string" && item.comment.trim();
+  });
+
+  if (!commentedRecommendations.length) {
+    return null;
+  }
+
+  const seed = [
+    movie.movie_id,
+    currentUser?.id || "anonymous",
+    getTodayKey(),
+    "social-advice-featured-comment",
+  ].join(":");
+
+  return getSeededItem(commentedRecommendations, seed);
+}
+
+function getSocialAdviceFeaturedByline(recommendation) {
+  if (!recommendation) return "";
+
+  const name =
+    recommendation.profiles?.display_name ||
+    recommendation.recommender_name ||
+    "Користувач";
+
+  const groupLabel = getSocialRecommendationGroupLabel(
+    recommendation.groups?.type,
+    recommendation.groups?.name
+  );
+
+  return `${name} · ${groupLabel}`;
+}
+
 function renderRecommendationContext(movieId) {
   const recommendations = getVisibleRecommendationDetails(movieId);
 
@@ -3271,6 +3309,9 @@ if (list.length === 0) {
   list.forEach((movie) => {
     const card = document.createElement("article");
     const isSocialAdviceMovie = movie.is_social_advice === true;
+    const featuredRecommendation = isSocialAdviceMovie
+      ? getSocialAdviceFeaturedRecommendation(movie)
+      : null;
 
     card.className = isSocialAdviceMovie
       ? "card social-advice-card"
@@ -3382,27 +3423,41 @@ if (list.length === 0) {
 
         <div class="movie-social-section">
           ${isSocialAdviceMovie ? `
-            <div class="recommend-count-wrapper social-advice-context-wrapper">
-              <button
-                type="button"
-                class="recommend-count-button social-advice-summary-button has-recommendations has-comments"
-                data-recommend-context-movie-id="${movie.movie_id}"
-                aria-label="Показати соціальні рекомендації"
-              >
-                <span class="recommend-count-icon"></span>
-                <span class="social-advice-summary-copy">
-                  <span class="social-advice-summary-count">
-                    ${movie.recommendation_count}
-                    ${formatAdviceCountWord(movie.recommendation_count)}
-                  </span>
-                  <span class="social-advice-summary-mood">
-                    ${escapeHtml(getSocialAdviceMoodLabel(movie))}
-                  </span>
-                </span>
-              </button>
+            <section class="social-advice-feature" aria-label="Вибрана порада">
+              ${featuredRecommendation ? `
+                <div class="social-advice-feature-quote-row">
+                  <span class="social-advice-feature-quote-mark" aria-hidden="true">“</span>
+                  <p class="social-advice-feature-quote">
+                    ${escapeHtml(featuredRecommendation.comment.trim())}
+                  </p>
+                </div>
 
-              ${renderRecommendationContext(movie.movie_id)}
-            </div>
+                <div class="social-advice-feature-byline">
+                  ${escapeHtml(getSocialAdviceFeaturedByline(featuredRecommendation))}
+                </div>
+              ` : ""}
+
+              <div class="social-advice-feature-footer">
+                <div class="social-advice-feature-mood">
+                  <span>Загальний настрій картотеки</span>
+                  <strong>${escapeHtml(getSocialAdviceMoodLabel(movie))}</strong>
+                </div>
+
+                <div class="recommend-count-wrapper social-advice-context-wrapper">
+                  <button
+                    type="button"
+                    class="recommend-count-button social-advice-count-button has-recommendations has-comments"
+                    data-recommend-context-movie-id="${movie.movie_id}"
+                    aria-label="Показати ${movie.recommendation_count} ${formatAdviceCountWord(movie.recommendation_count)}"
+                  >
+                    <span class="recommend-count-icon"></span>
+                    <span>${movie.recommendation_count} ${formatAdviceCountWord(movie.recommendation_count)}</span>
+                  </button>
+
+                  ${renderRecommendationContext(movie.movie_id)}
+                </div>
+              </div>
+            </section>
           ` : `
             <button
               type="button"
