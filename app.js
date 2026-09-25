@@ -78,6 +78,8 @@ const movieActivitySeenTimers = new Map();
 const movieActivityMarking = new Set();
 
 let movies = [];
+let socialAdviceMovies = [];
+let socialAdviceRecommendationDetails = {};
 let editingMovieId = null;
 let activeFilter = "all";
 let activeSublist = null;
@@ -191,6 +193,14 @@ const UNAVAILABLE_SUBLIST_META = {
   label: "Недоступні",
   icon: "assets/icons/media/circle-off.svg",
   order: 10,
+};
+
+const SOCIAL_ADVICE_SUBLIST_META = {
+  value: "social-advice",
+  label: "Поради",
+  icon: "assets/icons/speech-bubble-active-mw.svg",
+  order: 20,
+  iconWidth: 22,
 };
 
 const UNSPECIFIED_MEDIUM_SUBLIST_META = {
@@ -1905,6 +1915,8 @@ logoutButton.addEventListener("click", async () => {
   currentUserGroups = [];
   currentGroupMembers = [];
   movies = [];
+  socialAdviceMovies = [];
+  socialAdviceRecommendationDetails = {};
 
   resetMykolaChat();
   clearMykolaFinishedState();
@@ -2047,6 +2059,88 @@ function applyMykolaDailyRecommendation() {
   });
 }
 
+function normalizeSocialAdviceRecommendations(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.map((item) => ({
+    recommendation_id: item.recommendation_id,
+    movie_id: item.movie_id,
+    user_id: item.user_id,
+    context_group_id: item.source_group_id,
+    comment: item.comment,
+    rating_value: item.rating_value,
+    created_at: item.created_at,
+    recommender_name: item.recommender_name,
+    profiles: {
+      display_name: item.recommender_name || "Користувач",
+      email: null,
+    },
+    groups: {
+      id: item.source_group_id,
+      name: item.source_group_name,
+      type: item.source_group_type,
+    },
+  }));
+}
+
+async function loadSocialAdviceMovies() {
+  socialAdviceMovies = [];
+  socialAdviceRecommendationDetails = {};
+
+  if (!currentUser) {
+    return;
+  }
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_social_advice_movies"
+  );
+
+  if (error) {
+    console.warn("Social advice movies load error:", error);
+    return;
+  }
+
+  socialAdviceMovies = (data || []).map((item, index) => {
+    const recommendations = normalizeSocialAdviceRecommendations(
+      item.recommendations
+    );
+
+    socialAdviceRecommendationDetails[item.movie_id] = recommendations;
+
+    return {
+      id: null,
+      movie_id: item.movie_id,
+      group_id: null,
+      title: item.title,
+      year: item.year,
+      imdb_id: extractImdbId(item.imdb_url),
+      imdb_url: item.imdb_url,
+      poster_url: item.poster_url,
+      notes: null,
+      status: null,
+      recommended_medium: item.source_medium,
+      owned_medium: null,
+      purchase_url: null,
+      added_by: null,
+      is_owned: false,
+      created_at: item.latest_recommendation_at,
+      updated_at: item.latest_recommendation_at,
+      latest_recommendation_at: item.latest_recommendation_at,
+      average_rating: Number(item.average_rating),
+      rating_count: Number(item.rating_count || 0),
+      recommendation_count: Number(item.recommendation_count || 0),
+      comment_count: Number(item.comment_count || 0),
+      became_eligible_at: item.became_eligible_at,
+      seen_at: item.seen_at,
+      is_new: item.is_new === true,
+      is_social_advice: true,
+      social_advice_order: index,
+    };
+  });
+}
+
 async function loadMovies() {
   console.log("Loading movies...");
 
@@ -2097,6 +2191,8 @@ async function loadMovies() {
     created_at: item.created_at,
     updated_at: item.updated_at,
 }));
+
+  await loadSocialAdviceMovies();
 
   await loadUnseenMovieActivities();
 
@@ -3055,8 +3151,33 @@ function getRecommendationPriority(item) {
   return 3;
 }
 
+function isSocialAdviceView() {
+  return (
+    activeFilter === "all" &&
+    activeSublist === "social-advice"
+  );
+}
+
+function getVisibleRecommendationDetails(movieId) {
+  if (isSocialAdviceView()) {
+    return socialAdviceRecommendationDetails[movieId] || [];
+  }
+
+  return movieRecommendationDetails[movieId] || [];
+}
+
+function formatSocialAdviceRating(value) {
+  const rating = Number(value);
+
+  if (!Number.isFinite(rating)) {
+    return "—";
+  }
+
+  return rating.toFixed(1).replace(/\.0$/, "");
+}
+
 function renderRecommendationContext(movieId) {
-  const recommendations = movieRecommendationDetails[movieId] || [];
+  const recommendations = getVisibleRecommendationDetails(movieId);
 
   if (!recommendations.length) {
     return "";
@@ -3126,6 +3247,12 @@ if (list.length === 0) {
   ) {
     moviesGrid.innerHTML =
       "<p>Немає недоступних фільмів.</p>";
+  } else if (
+    isSocialAdviceView() &&
+    !searchInput.value.trim()
+  ) {
+    moviesGrid.innerHTML =
+      "<p>Поки немає фільмів, що відповідають критеріям Порад.</p>";
   } else {
     moviesGrid.innerHTML =
       "<p>Нічого не знайдено.</p>";
@@ -3136,7 +3263,11 @@ if (list.length === 0) {
 
   list.forEach((movie) => {
     const card = document.createElement("article");
-    card.className = "card";
+    const isSocialAdviceMovie = movie.is_social_advice === true;
+
+    card.className = isSocialAdviceMovie
+      ? "card social-advice-card"
+      : "card";
     card.dataset.movieId = movie.movie_id;
 
     const isMykolaAddedMovie =
@@ -3146,7 +3277,9 @@ if (list.length === 0) {
       card.classList.add("has-mykola-added-highlight");
     }
 
-    const unseenActivityCandidate = unseenMovieActivityByMovieId[movie.movie_id];
+    const unseenActivityCandidate = isSocialAdviceMovie
+      ? null
+      : unseenMovieActivityByMovieId[movie.movie_id];
 
     const unseenActivity = unseenActivityCandidate && activeFilter === unseenActivityCandidate.to_status
       ? unseenActivityCandidate
@@ -3194,15 +3327,17 @@ if (list.length === 0) {
       </div>
 
       <div class="card-content">
-        <h3>${movie.title}</h3>
+        <h3>${escapeHtml(movie.title)}</h3>
 
         <div class="meta">
           ${movie.year || "Рік не вказано"}<br>
           Рекомендовано: ${movie.recommended_medium || "не вказано"}<br>
-          Статус: ${formatStatus(movie.status)}<br>
-          Придбано: ${movie.is_owned ? "так" : "ні"}<br>
-          ${movie.owned_medium ? "Носій: " + movie.owned_medium + "<br>" : ""}
-          ${movie.added_by ? "Додав: " + movie.added_by + "<br>" : ""}
+          ${isSocialAdviceMovie ? "" : `
+            Статус: ${formatStatus(movie.status)}<br>
+            Придбано: ${movie.is_owned ? "так" : "ні"}<br>
+            ${movie.owned_medium ? "Носій: " + movie.owned_medium + "<br>" : ""}
+            ${movie.added_by ? "Додав: " + movie.added_by + "<br>" : ""}
+          `}
         </div>
 
         ${movie.notes ? `
@@ -3217,7 +3352,7 @@ if (list.length === 0) {
             : ""
           }
 
-          ${movie.purchase_url
+          ${movie.purchase_url && !isSocialAdviceMovie
             ? `
              <a
                href="#"
@@ -3232,36 +3367,57 @@ if (list.length === 0) {
           }
         </div>
 
-        <button onclick="startEditMovie('${movie.id}')">
-          Редагувати
-        </button>
+        ${isSocialAdviceMovie ? "" : `
+          <button onclick="startEditMovie('${movie.id}')">
+            Редагувати
+          </button>
+        `}
 
         <div class="movie-social-section">
-          <button
-            type="button"
-            class="recommend-button ${
-              hasCurrentUserRecommended(movie.movie_id) ? "recommended" : ""
-            } ${
-            currentUserRecommendationHasComment(movie.movie_id) ? "has-comment" : ""
-            }"
-           data-recommend-movie-id="${movie.movie_id}"
-         >
-           <span
-             class="recommend-bubble-icon"
-               aria-hidden="true"
-            ></span>
+          ${isSocialAdviceMovie ? `
+            <div class="recommend-count-wrapper social-advice-context-wrapper">
+              <button
+                type="button"
+                class="recommend-count-button social-advice-summary-button has-recommendations has-comments"
+                data-recommend-context-movie-id="${movie.movie_id}"
+                aria-label="Показати соціальні рекомендації"
+              >
+                <span class="recommend-count-icon"></span>
+                <span>
+                  ${movie.recommendation_count}
+                  ${formatAdviceCountWord(movie.recommendation_count)}
+                  · ${formatSocialAdviceRating(movie.average_rating)}
+                </span>
+              </button>
 
-            <span class="recommend-text">
-              ${
-                hasCurrentUserRecommended(movie.movie_id)
-                  ? "Моя порада"
-                  : "Порадити"
-              }
-            </span>
-          </button>
+              ${renderRecommendationContext(movie.movie_id)}
+            </div>
+          ` : `
+            <button
+              type="button"
+              class="recommend-button ${
+                hasCurrentUserRecommended(movie.movie_id) ? "recommended" : ""
+              } ${
+                currentUserRecommendationHasComment(movie.movie_id) ? "has-comment" : ""
+              }"
+              data-recommend-movie-id="${movie.movie_id}"
+            >
+              <span
+                class="recommend-bubble-icon"
+                aria-hidden="true"
+              ></span>
 
-          ${
-            (movieRecommendationCounts[movie.movie_id] || 0) > 0
+              <span class="recommend-text">
+                ${
+                  hasCurrentUserRecommended(movie.movie_id)
+                    ? "Моя порада"
+                    : "Порадити"
+                }
+              </span>
+            </button>
+
+            ${
+              (movieRecommendationCounts[movie.movie_id] || 0) > 0
               ? `
                 <div class="recommend-count-wrapper">
                   <button
@@ -3282,17 +3438,20 @@ if (list.length === 0) {
                   </div>
                 `
                 : ""
-              }
+            }
+          `}
         </div>
 
-        <div class="card-menu">
-         <button class="menu-button" type="button" data-menu-id="${movie.id}">⋯</button>
+        ${isSocialAdviceMovie ? "" : `
+          <div class="card-menu">
+           <button class="menu-button" type="button" data-menu-id="${movie.id}">⋯</button>
 
-        <div class="menu-dropdown" id="menu-${movie.id}">
-         <button type="button" data-watch-id="${movie.id}">Позначити як переглянуте</button>
-         <button type="button" class="delete-option" data-delete-id="${movie.id}">Видалити</button>
-        </div>
-       </div>
+          <div class="menu-dropdown" id="menu-${movie.id}">
+           <button type="button" data-watch-id="${movie.id}">Позначити як переглянуте</button>
+           <button type="button" class="delete-option" data-delete-id="${movie.id}">Видалити</button>
+          </div>
+         </div>
+        `}
       </div>
     `;
     
@@ -4508,13 +4667,18 @@ function addMykolaArchiveSummaryBubble(
     options.title ||
     "Загальний настрій картотеки";
   
-  const averageRating =
-    getAverageRecommendationRating(recommendations);
+  const suppliedAverageRating = Number(options.averageRating);
+  const averageRating = Number.isFinite(suppliedAverageRating)
+    ? suppliedAverageRating
+    : getAverageRecommendationRating(recommendations);
 
   if (!averageRating) return null;
 
+  const recommendationCount =
+    Number(options.recommendationCount) || recommendations.length;
+
   const seedBase =
-    `${movieId}:${averageRating}:${recommendations.length}`;
+    `${movieId}:${averageRating}:${recommendationCount}`;
 
   const moodLabel =
     getMykolaArchiveMoodLabel(averageRating, seedBase);
@@ -4740,7 +4904,11 @@ function getMykolaArchiveIntro(count) {
 }
 
 function openMykolaRecommendationContext(movieId) {
-  const movie = movies.find((item) => {
+  const sourceMovies = isSocialAdviceView()
+    ? socialAdviceMovies
+    : movies;
+
+  const movie = sourceMovies.find((item) => {
     return item.movie_id === movieId;
   });
 
@@ -4749,7 +4917,10 @@ function openMykolaRecommendationContext(movieId) {
     return;
   }
 
-  const recommendations = movieRecommendationDetails[movieId] || [];
+  const recommendations = getVisibleRecommendationDetails(movieId);
+  const recommendationCount = movie.is_social_advice
+    ? movie.recommendation_count
+    : recommendations.length;
 
   openMykolaAdviceContextView();
 
@@ -4758,10 +4929,19 @@ function openMykolaRecommendationContext(movieId) {
   addUserBubble(`Покажи всі поради: ${movie.title}`);
 
   runWithMykolaThinking(() => {
-    addMykolaBubble(getMykolaArchiveIntro(recommendations.length));
+    addMykolaBubble(getMykolaArchiveIntro(recommendationCount));
 
       setTimeout(() => {
-        addMykolaArchiveSummaryBubble(recommendations, movieId);
+        addMykolaArchiveSummaryBubble(
+          recommendations,
+          movieId,
+          movie.is_social_advice
+            ? {
+                averageRating: movie.average_rating,
+                recommendationCount,
+              }
+            : {}
+        );
 
         setTimeout(() => {
           addMykolaMovieBubble(movie);
@@ -6003,6 +6183,13 @@ async function markAsWatched(id) {
 
 function sortMoviesForDisplay(list) {
   return [...list].sort((a, b) => {
+    if (isSocialAdviceView()) {
+      return (
+        (a.social_advice_order ?? Number.MAX_SAFE_INTEGER) -
+        (b.social_advice_order ?? Number.MAX_SAFE_INTEGER)
+      );
+    }
+
     if (activeFilter === "all") {
       const aWatched = a.status === "watched";
       const bWatched = b.status === "watched";
@@ -6030,6 +6217,10 @@ function sortMoviesForDisplay(list) {
 }
 
 function movieMatchesActiveList(movie) {
+  if (isSocialAdviceView()) {
+    return movie.is_social_advice === true;
+  }
+
   let matchesFilter = true;
 
   if (activeFilter === "wishlist") {
@@ -6055,7 +6246,7 @@ function movieMatchesActiveList(movie) {
   const sublistMode = getSublistMode();
 
   if (
-    sublistMode === "unavailable" &&
+    sublistMode === "extra" &&
     activeSublist === "unavailable"
   ) {
     return (
@@ -6082,13 +6273,25 @@ function movieMatchesActiveList(movie) {
 function applySearchAndFilters() {
   const query = searchInput.value.toLowerCase().trim();
   const imdbId = extractImdbId(query);
+  const sourceMovies = isSocialAdviceView()
+    ? socialAdviceMovies
+    : movies;
 
   resetSmartSearchState();
 
   if (imdbId) {
-    const existingMovie = findMovieByImdbId(imdbId);
+    const existingMovie = sourceMovies.find((movie) => {
+      return (
+        movie.imdb_id === imdbId ||
+        normalizeImdbIdFromUrl(movie.imdb_url) === imdbId
+      );
+    });
 
     if (existingMovie) {
+      if (isSocialAdviceView()) {
+        searchHint.textContent = "Фільм знайдено у Порадах.";
+        searchHint.className = "search-hint positive";
+      } else {
       const isUnavailable =
         existingMovie.recommended_medium === "Наразі недоступний";
 
@@ -6100,6 +6303,7 @@ function applySearchAndFilters() {
       } else {
         searchHint.textContent = "Цей фільм вже є у ваших списках.";
         searchHint.className = "search-hint warning";
+      }
       }
     }
     else {
@@ -6114,7 +6318,7 @@ function applySearchAndFilters() {
     }
   }
 
-  const globalMatches = movies.filter((movie) => {
+  const globalMatches = sourceMovies.filter((movie) => {
   const searchableText = [
     movie.title,
     movie.year,
@@ -6142,13 +6346,17 @@ function applySearchAndFilters() {
 
     if (globalMatches.length === 0) {
       searchHint.textContent =
-        "У ваших списках нічого не знайдено. Можна пошукати фільм на IMDb.";
+        isSocialAdviceView()
+          ? "У Порадах нічого не знайдено."
+          : "У ваших списках нічого не знайдено. Можна пошукати фільм на IMDb.";
       searchHint.className = "search-hint positive";
     } else if (activeFilter === "all" || filtered.length > 0) {
       const count = globalMatches.length;
 
       searchHint.textContent =
-        `Знайдено ${count} ${formatMovieCountWord(count)} у ваших списках. Можна також пошукати на IMDb.`;
+        isSocialAdviceView()
+          ? `Знайдено ${count} ${formatMovieCountWord(count)} у Порадах.`
+          : `Знайдено ${count} ${formatMovieCountWord(count)} у ваших списках. Можна також пошукати на IMDb.`;
       searchHint.className = "search-hint positive";
     }
   }
@@ -7346,7 +7554,7 @@ searchInput.addEventListener("input", applySearchAndFilters);
 
 function getSublistMode(filter = activeFilter) {
   if (filter === "all") {
-    return "unavailable";
+    return "extra";
   }
 
   if (filter === "wishlist") {
@@ -7375,7 +7583,7 @@ function getAvailableSublistOptions(filter = activeFilter) {
     return [];
   }
 
-  if (mode === "unavailable") {
+  if (mode === "extra") {
     const hasUnavailableMovies = movies.some((movie) => {
       return (
         movie.status === "wishlist" &&
@@ -7383,9 +7591,12 @@ function getAvailableSublistOptions(filter = activeFilter) {
       );
     });
 
-    return hasUnavailableMovies
-      ? [UNAVAILABLE_SUBLIST_META]
-      : [];
+    return [
+      ...(hasUnavailableMovies
+        ? [UNAVAILABLE_SUBLIST_META]
+        : []),
+      SOCIAL_ADVICE_SUBLIST_META,
+    ];
   }
 
   const status =
