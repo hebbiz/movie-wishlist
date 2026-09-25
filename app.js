@@ -3432,18 +3432,15 @@ if (list.length === 0) {
                   </p>
                 </div>
 
+                <div class="social-advice-feature-byline">
+                  ${escapeHtml(getSocialAdviceFeaturedByline(featuredRecommendation))}
+                </div>
               ` : ""}
 
-              <div class="social-advice-feature-meta">
-                <div
-                  class="social-advice-feature-byline"
-                  title="${featuredRecommendation
-                    ? escapeHtml(getSocialAdviceFeaturedByline(featuredRecommendation))
-                    : ""}"
-                >
-                  ${featuredRecommendation
-                    ? escapeHtml(getSocialAdviceFeaturedByline(featuredRecommendation))
-                    : ""}
+              <div class="social-advice-feature-footer">
+                <div class="social-advice-feature-mood">
+                  <span>Картотека:</span>
+                  <strong>${escapeHtml(getSocialAdviceMoodLabel(movie))}</strong>
                 </div>
 
                 <div class="recommend-count-wrapper social-advice-context-wrapper">
@@ -3459,11 +3456,6 @@ if (list.length === 0) {
 
                   ${renderRecommendationContext(movie.movie_id)}
                 </div>
-              </div>
-
-              <div class="social-advice-feature-mood">
-                <span>Картотека:</span>
-                <strong>${escapeHtml(getSocialAdviceMoodLabel(movie))}</strong>
               </div>
             </section>
           ` : `
