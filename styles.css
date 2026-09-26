@@ -1749,6 +1749,158 @@ input[readonly],
   color: #d6b25e;
 }
 
+.social-advice-card .movie-social-section {
+  margin-top: 4px;
+  padding-top: 0;
+  justify-content: flex-start;
+}
+
+.social-advice-card h3 {
+  min-height: 2.4em;
+  line-height: 1.2;
+
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.social-advice-card .meta {
+  min-height: 2.8em;
+  line-height: 1.4;
+}
+
+.social-advice-meta-year,
+.social-advice-meta-medium {
+  display: inline;
+}
+
+.social-advice-meta-medium::before {
+  content: " · ";
+  color: #666;
+}
+
+.social-advice-card .links {
+  min-height: 32px;
+  margin-bottom: 0;
+}
+
+.social-advice-context-wrapper {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.social-advice-feature {
+  width: 100%;
+  padding-top: 13px;
+
+  display: grid;
+  grid-template-rows: 30px 60px 30px 30px;
+  row-gap: 8px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.social-advice-feature-mood {
+  min-width: 0;
+  overflow: hidden;
+
+  color: #858585;
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.social-advice-feature-mood span,
+.social-advice-feature-mood strong {
+  display: block;
+}
+
+.social-advice-feature-mood strong {
+  color: #ad9562;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.social-advice-feature-quote-row {
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.social-advice-feature-quote-mark {
+  color: #d6b25e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  line-height: 0.9;
+  opacity: 0.72;
+}
+
+.social-advice-feature-quote {
+  margin: 0;
+
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+
+  color: #d2d2cf;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.42;
+}
+
+.social-advice-feature-byline {
+  margin: 0 0 0 23px;
+
+  color: #898989;
+  font-size: 11px;
+  line-height: 1.35;
+
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.social-advice-feature-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.recommend-count-button.social-advice-count-button {
+  white-space: nowrap;
+}
+
+.recommend-count-button.social-advice-count-button .social-advice-count-icon {
+  background:
+    transparent
+    url("/assets/icons/speech-bubbles-double-active-mw.svg?v=20260926-2")
+    center / contain no-repeat;
+
+  -webkit-mask-image: none;
+  mask-image: none;
+
+  transform: translateY(1px);
+  flex: 0 0 auto;
+}
+
+.social-advice-card {
+  align-self: start;
+}
+
+.social-advice-card .card-content {
+  flex: 0 0 auto;
+}
+
 .recommend-comment-icon::after {
   content: "";
 
