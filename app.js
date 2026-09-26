@@ -17,6 +17,7 @@ const sublistPanel = document.getElementById("sublistPanel");
 const sublistOptions = document.getElementById("sublistOptions");
 const sublistActiveLabel = document.getElementById("sublistActiveLabel");
 const sublistToggleIcon = document.getElementById("sublistToggleIcon");
+const sublistToggleBadge = document.getElementById("sublistToggleBadge");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
 const formPanel = document.getElementById("formPanel");
@@ -88,6 +89,8 @@ const movieActivityMarking = new Set();
 let movies = [];
 let socialAdviceMovies = [];
 let socialAdviceRecommendationDetails = {};
+let socialAdviceUnreadCount = 0;
+let socialAdviceMarkSeenInProgress = false;
 let editingMovieId = null;
 let activeFilter = "all";
 let activeSublist = null;
@@ -1927,6 +1930,8 @@ logoutButton.addEventListener("click", async () => {
   movies = [];
   socialAdviceMovies = [];
   socialAdviceRecommendationDetails = {};
+  socialAdviceUnreadCount = 0;
+  socialAdviceMarkSeenInProgress = false;
 
   resetMykolaChat();
   clearMykolaFinishedState();
@@ -2098,6 +2103,7 @@ function normalizeSocialAdviceRecommendations(items) {
 async function loadSocialAdviceMovies() {
   socialAdviceMovies = [];
   socialAdviceRecommendationDetails = {};
+  socialAdviceUnreadCount = 0;
 
   if (!currentUser) {
     return;
@@ -2149,6 +2155,65 @@ async function loadSocialAdviceMovies() {
       social_advice_order: index,
     };
   });
+
+  socialAdviceUnreadCount = socialAdviceMovies.filter((movie) => {
+    return movie.is_new;
+  }).length;
+}
+
+async function markSocialAdviceMoviesAsSeen() {
+  if (
+    socialAdviceMarkSeenInProgress ||
+    socialAdviceUnreadCount <= 0
+  ) {
+    return;
+  }
+
+  const unseenMovieIds = socialAdviceMovies
+    .filter((movie) => movie.is_new)
+    .map((movie) => movie.movie_id);
+
+  if (!unseenMovieIds.length) {
+    socialAdviceUnreadCount = 0;
+    updateActiveListUI();
+    return;
+  }
+
+  socialAdviceMarkSeenInProgress = true;
+
+  try {
+    const { data, error } = await supabaseClient.rpc(
+      "mark_social_advice_movies_seen",
+      {
+        p_movie_ids: unseenMovieIds,
+      }
+    );
+
+    if (error) {
+      console.warn("Social advice mark seen error:", error);
+      return;
+    }
+
+    const markedAt = data?.[0]?.marked_at || new Date().toISOString();
+    const markedMovieIds = new Set(unseenMovieIds);
+
+    socialAdviceMovies.forEach((movie) => {
+      if (!markedMovieIds.has(movie.movie_id)) {
+        return;
+      }
+
+      movie.seen_at = markedAt;
+      movie.is_new = false;
+    });
+
+    socialAdviceUnreadCount = socialAdviceMovies.filter((movie) => {
+      return movie.is_new;
+    }).length;
+
+    updateActiveListUI();
+  } finally {
+    socialAdviceMarkSeenInProgress = false;
+  }
 }
 
 async function loadMovies() {
@@ -2215,6 +2280,10 @@ async function loadMovies() {
   updateActiveListUI();
   applySearchAndFilters();
   syncMykolaSocialMovieButtons();
+
+  if (isSocialAdviceView()) {
+    void markSocialAdviceMoviesAsSeen();
+  }
 }
 
 async function loadGlobalUnseenMovieActivityCount() {
@@ -8094,8 +8163,10 @@ function renderSublistOptions(options) {
     const button = document.createElement("button");
     const icon = document.createElement("span");
     const label = document.createElement("span");
+    const unreadBadge = document.createElement("span");
     const isActive =
       (activeSublist || "") === item.value;
+    const isSocialAdvice = item.value === "social-advice";
 
     button.type = "button";
     button.className = "sublist-option";
@@ -8106,6 +8177,12 @@ function renderSublistOptions(options) {
       String(isActive)
     );
     button.classList.toggle("active", isActive);
+    button.setAttribute(
+      "aria-label",
+      isSocialAdvice && socialAdviceUnreadCount > 0
+        ? `${item.label}, нових: ${socialAdviceUnreadCount}`
+        : item.label
+    );
 
     icon.className = "sublist-icon";
     icon.setAttribute("aria-hidden", "true");
@@ -8113,7 +8190,13 @@ function renderSublistOptions(options) {
 
     label.textContent = item.label;
 
-    button.append(icon, label);
+    unreadBadge.className = "sublist-option-unread-badge";
+    unreadBadge.textContent = `+${socialAdviceUnreadCount}`;
+    unreadBadge.hidden = !(
+      isSocialAdvice && socialAdviceUnreadCount > 0
+    );
+
+    button.append(icon, label, unreadBadge);
     sublistOptions.append(button);
   });
 }
@@ -8158,9 +8241,15 @@ function updateActiveListUI() {
   );
   sublistToggle.setAttribute(
     "aria-label",
-    `Підсписки: ${activeMeta.label}`
+    mode === "extra" && socialAdviceUnreadCount > 0
+      ? `Підсписки: ${activeMeta.label}. Нових порад: ${socialAdviceUnreadCount}`
+      : `Підсписки: ${activeMeta.label}`
   );
   sublistActiveLabel.textContent = activeMeta.label;
+  sublistToggleBadge.textContent = `+${socialAdviceUnreadCount}`;
+  sublistToggleBadge.hidden = !(
+    mode === "extra" && socialAdviceUnreadCount > 0
+  );
   setSublistIcon(sublistToggleIcon, activeMeta);
 
   renderSublistOptions(options);
@@ -8320,6 +8409,10 @@ sublistOptions.addEventListener("click", (event) => {
   closeSublistPanel();
   updateActiveListUI();
   applySearchAndFilters();
+
+  if (activeSublist === "social-advice") {
+    void markSocialAdviceMoviesAsSeen();
+  }
 });
 
   lookupButton.addEventListener("click", async () => {
