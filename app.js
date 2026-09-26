@@ -198,7 +198,7 @@ const UNAVAILABLE_SUBLIST_META = {
 const SOCIAL_ADVICE_SUBLIST_META = {
   value: "social-advice",
   label: "Поради",
-  icon: "assets/icons/speech-bubble-active-mw.svg",
+  icon: "assets/icons/speech-bubbles-double-blank-mw.svg",
   order: 20,
   iconWidth: 22,
 };
@@ -3457,7 +3457,7 @@ if (list.length === 0) {
                     data-recommend-context-movie-id="${movie.movie_id}"
                     aria-label="Показати ${movie.recommendation_count} ${formatAdviceCountWord(movie.recommendation_count)}"
                   >
-                    <span class="recommend-count-icon"></span>
+                    <span class="recommend-count-icon social-advice-count-icon"></span>
                     <span>${movie.recommendation_count} ${formatAdviceCountWord(movie.recommendation_count)}</span>
                   </button>
 
