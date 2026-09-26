@@ -85,12 +85,13 @@ const mykolaChat = document.getElementById("mykolaChat");
 const DEBUG_ADVICE_ROOM = false;
 const movieActivitySeenTimers = new Map();
 const movieActivityMarking = new Set();
+const socialAdviceSeenTimers = new Map();
+const socialAdviceMarking = new Set();
 
 let movies = [];
 let socialAdviceMovies = [];
 let socialAdviceRecommendationDetails = {};
 let socialAdviceUnreadCount = 0;
-let socialAdviceMarkSeenInProgress = false;
 let editingMovieId = null;
 let activeFilter = "all";
 let activeSublist = null;
@@ -241,6 +242,7 @@ let unseenMovieActivityByMovieId = {};
 let globalUnseenMovieActivityCount = 0;
 let unseenMovieActivityCountByGroupId = {};
 let movieActivityObserver = null;
+let socialAdviceObserver = null;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1931,7 +1933,7 @@ logoutButton.addEventListener("click", async () => {
   socialAdviceMovies = [];
   socialAdviceRecommendationDetails = {};
   socialAdviceUnreadCount = 0;
-  socialAdviceMarkSeenInProgress = false;
+  resetSocialAdviceObserver();
 
   resetMykolaChat();
   clearMykolaFinishedState();
@@ -2161,61 +2163,6 @@ async function loadSocialAdviceMovies() {
   }).length;
 }
 
-async function markSocialAdviceMoviesAsSeen() {
-  if (
-    socialAdviceMarkSeenInProgress ||
-    socialAdviceUnreadCount <= 0
-  ) {
-    return;
-  }
-
-  const unseenMovieIds = socialAdviceMovies
-    .filter((movie) => movie.is_new)
-    .map((movie) => movie.movie_id);
-
-  if (!unseenMovieIds.length) {
-    socialAdviceUnreadCount = 0;
-    updateActiveListUI();
-    return;
-  }
-
-  socialAdviceMarkSeenInProgress = true;
-
-  try {
-    const { data, error } = await supabaseClient.rpc(
-      "mark_social_advice_movies_seen",
-      {
-        p_movie_ids: unseenMovieIds,
-      }
-    );
-
-    if (error) {
-      console.warn("Social advice mark seen error:", error);
-      return;
-    }
-
-    const markedAt = data?.[0]?.marked_at || new Date().toISOString();
-    const markedMovieIds = new Set(unseenMovieIds);
-
-    socialAdviceMovies.forEach((movie) => {
-      if (!markedMovieIds.has(movie.movie_id)) {
-        return;
-      }
-
-      movie.seen_at = markedAt;
-      movie.is_new = false;
-    });
-
-    socialAdviceUnreadCount = socialAdviceMovies.filter((movie) => {
-      return movie.is_new;
-    }).length;
-
-    updateActiveListUI();
-  } finally {
-    socialAdviceMarkSeenInProgress = false;
-  }
-}
-
 async function loadMovies() {
   console.log("Loading movies...");
 
@@ -2280,10 +2227,6 @@ async function loadMovies() {
   updateActiveListUI();
   applySearchAndFilters();
   syncMykolaSocialMovieButtons();
-
-  if (isSocialAdviceView()) {
-    void markSocialAdviceMoviesAsSeen();
-  }
 }
 
 async function loadGlobalUnseenMovieActivityCount() {
@@ -2774,6 +2717,150 @@ function attachMovieActivityObserver() {
 
   activityCards.forEach((card) => {
     movieActivityObserver.observe(card);
+  });
+}
+
+function resetSocialAdviceObserver() {
+  if (socialAdviceObserver) {
+    socialAdviceObserver.disconnect();
+    socialAdviceObserver = null;
+  }
+
+  socialAdviceSeenTimers.forEach((timerId) => {
+    clearTimeout(timerId);
+  });
+
+  socialAdviceSeenTimers.clear();
+}
+
+function animateSocialAdviceSeen(card) {
+  const badge = card.querySelector(".new-activity-badge");
+
+  card.classList.add("activity-seen-settling");
+
+  if (badge) {
+    badge.classList.add("is-being-seen");
+
+    setTimeout(() => {
+      badge.classList.add("is-seen");
+      card.classList.remove("has-unseen-activity");
+    }, 420);
+
+    setTimeout(() => {
+      badge.remove();
+      card.classList.remove("activity-seen-settling");
+    }, 820);
+
+    return;
+  }
+
+  card.classList.remove("has-unseen-activity");
+
+  setTimeout(() => {
+    card.classList.remove("activity-seen-settling");
+  }, 820);
+}
+
+async function markSocialAdviceMovieSeen(card) {
+  const movieId = card.dataset.movieId;
+
+  if (!movieId || socialAdviceMarking.has(movieId)) {
+    return;
+  }
+
+  socialAdviceMarking.add(movieId);
+
+  const { data, error } = await supabaseClient.rpc(
+    "mark_social_advice_movies_seen",
+    {
+      p_movie_ids: [movieId],
+    }
+  );
+
+  if (error) {
+    console.warn("Social advice mark seen error:", error);
+    socialAdviceMarking.delete(movieId);
+    return;
+  }
+
+  const movie = socialAdviceMovies.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  if (movie) {
+    movie.seen_at = data?.[0]?.marked_at || new Date().toISOString();
+    movie.is_new = false;
+  }
+
+  socialAdviceUnreadCount = socialAdviceMovies.filter((item) => {
+    return item.is_new;
+  }).length;
+
+  updateActiveListUI();
+
+  if (socialAdviceObserver) {
+    socialAdviceObserver.unobserve(card);
+  }
+
+  card.removeAttribute("data-social-advice-unseen");
+  animateSocialAdviceSeen(card);
+  socialAdviceMarking.delete(movieId);
+}
+
+function attachSocialAdviceObserver() {
+  resetSocialAdviceObserver();
+
+  const unseenCards = moviesGrid.querySelectorAll(
+    '.card[data-social-advice-unseen="true"]'
+  );
+
+  if (!unseenCards.length) {
+    return;
+  }
+
+  socialAdviceObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const card = entry.target;
+        const movieId = card.dataset.movieId;
+
+        if (!movieId) {
+          return;
+        }
+
+        const isVisibleEnough =
+          entry.isIntersecting &&
+          entry.intersectionRatio >= 0.7;
+
+        if (isVisibleEnough) {
+          if (socialAdviceSeenTimers.has(movieId)) {
+            return;
+          }
+
+          const timerId = setTimeout(() => {
+            socialAdviceSeenTimers.delete(movieId);
+            markSocialAdviceMovieSeen(card);
+          }, 1600);
+
+          socialAdviceSeenTimers.set(movieId, timerId);
+          return;
+        }
+
+        const existingTimer = socialAdviceSeenTimers.get(movieId);
+
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+          socialAdviceSeenTimers.delete(movieId);
+        }
+      });
+    },
+    {
+      threshold: 0.7,
+    }
+  );
+
+  unseenCards.forEach((card) => {
+    socialAdviceObserver.observe(card);
   });
 }
 
@@ -3359,6 +3446,7 @@ function renderRecommendationContext(movieId) {
 
 function renderMovies(list) {
   resetMovieActivityObserver();
+  resetSocialAdviceObserver();
   
   moviesGrid.innerHTML = "";
   movieCount.textContent = `(${list.length})`;
@@ -3388,6 +3476,8 @@ if (list.length === 0) {
   list.forEach((movie) => {
     const card = document.createElement("article");
     const isSocialAdviceMovie = movie.is_social_advice === true;
+    const isUnseenSocialAdvice =
+      isSocialAdviceMovie && movie.is_new === true;
     const featuredRecommendation = isSocialAdviceMovie
       ? getSocialAdviceFeaturedRecommendation(movie)
       : null;
@@ -3402,6 +3492,11 @@ if (list.length === 0) {
 
     if (isMykolaAddedMovie) {
       card.classList.add("has-mykola-added-highlight");
+    }
+
+    if (isUnseenSocialAdvice) {
+      card.dataset.socialAdviceUnseen = "true";
+      card.classList.add("has-unseen-activity");
     }
 
     const unseenActivityCandidate = isSocialAdviceMovie
@@ -3434,6 +3529,12 @@ if (list.length === 0) {
 
            ${
              unseenActivity
+               ? `<span class="poster-badge new-activity-badge">Нове</span>`
+               : ""
+           }
+
+           ${
+             isUnseenSocialAdvice
                ? `<span class="poster-badge new-activity-badge">Нове</span>`
                : ""
            }
@@ -3627,6 +3728,7 @@ if (list.length === 0) {
   attachCardMenuHandlers();
   attachPurchaseLinkHandlers();
   attachMovieActivityObserver();
+  attachSocialAdviceObserver();
 }
 
 async function recommendMovie(
@@ -8299,6 +8401,25 @@ function scrollToFirstUnseenActivityCard() {
   });
 }
 
+function scrollToFirstUnseenSocialAdviceCard() {
+  const card = moviesGrid.querySelector(
+    '.card[data-social-advice-unseen="true"]'
+  );
+
+  if (!card) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      card.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+  });
+}
+
 function finishPushDeepLinkNavigation(
   deepLink
 ) {
@@ -8411,7 +8532,7 @@ sublistOptions.addEventListener("click", (event) => {
   applySearchAndFilters();
 
   if (activeSublist === "social-advice") {
-    void markSocialAdviceMoviesAsSeen();
+    scrollToFirstUnseenSocialAdviceCard();
   }
 });
 
