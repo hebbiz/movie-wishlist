@@ -1881,16 +1881,15 @@ input[readonly],
   max-width: 112px;
   gap: 0;
 
-  background: #111;
+  background: rgba(255, 255, 255, 0.04);
   color: #f4f4f4;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   white-space: nowrap;
 }
 
 .recommend-count-button.social-advice-count-button:hover {
-  background: #171717;
+  background: rgba(255, 255, 255, 0.08);
   color: #f4f4f4;
-  border-color: rgba(214, 178, 94, 0.28);
 }
 
 .recommend-count-button.social-advice-count-button .recommend-count-icon {
