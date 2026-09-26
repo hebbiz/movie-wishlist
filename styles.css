@@ -1877,23 +1877,19 @@ input[readonly],
 }
 
 .recommend-count-button.social-advice-count-button {
-  width: auto;
-  max-width: 112px;
-  gap: 0;
-
-  background: rgba(255, 255, 255, 0.04);
-  color: #f4f4f4;
-  border: none;
   white-space: nowrap;
 }
 
-.recommend-count-button.social-advice-count-button:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f4f4f4;
-}
+.recommend-count-button.social-advice-count-button .social-advice-count-icon {
+  background:
+    transparent
+    url("/assets/icons/speech-bubbles-double-active-mw.svg")
+    center / contain no-repeat;
 
-.recommend-count-button.social-advice-count-button .recommend-count-icon {
-  color: #d6b25e;
+  -webkit-mask-image: none;
+  mask-image: none;
+
+  transform: translateY(1px);
   flex: 0 0 auto;
 }
 
