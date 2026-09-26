@@ -3378,9 +3378,16 @@ if (list.length === 0) {
         <h3>${escapeHtml(movie.title)}</h3>
 
         <div class="meta">
-          ${movie.year || "Рік не вказано"}<br>
-          Рекомендовано: ${movie.recommended_medium || "не вказано"}<br>
-          ${isSocialAdviceMovie ? "" : `
+          ${isSocialAdviceMovie ? `
+            <span class="social-advice-meta-year">
+              ${movie.year || "Рік не вказано"}
+            </span>
+            <span class="social-advice-meta-medium">
+              Рекомендовано: ${escapeHtml(movie.recommended_medium || "не вказано")}
+            </span>
+          ` : `
+            ${movie.year || "Рік не вказано"}<br>
+            Рекомендовано: ${movie.recommended_medium || "не вказано"}<br>
             Статус: ${formatStatus(movie.status)}<br>
             Придбано: ${movie.is_owned ? "так" : "ні"}<br>
             ${movie.owned_medium ? "Носій: " + movie.owned_medium + "<br>" : ""}
@@ -3424,6 +3431,11 @@ if (list.length === 0) {
         <div class="movie-social-section">
           ${isSocialAdviceMovie ? `
             <section class="social-advice-feature" aria-label="Вибрана порада">
+              <div class="social-advice-feature-mood">
+                <span>Картотека</span>
+                <strong>${escapeHtml(getSocialAdviceMoodLabel(movie))}</strong>
+              </div>
+
               ${featuredRecommendation ? `
                 <div class="social-advice-feature-quote-row">
                   <span class="social-advice-feature-quote-mark" aria-hidden="true">“</span>
@@ -3437,12 +3449,7 @@ if (list.length === 0) {
                 </div>
               ` : ""}
 
-              <div class="social-advice-feature-footer">
-                <div class="social-advice-feature-mood">
-                  <span>Картотека:</span>
-                  <strong>${escapeHtml(getSocialAdviceMoodLabel(movie))}</strong>
-                </div>
-
+              <div class="social-advice-feature-actions">
                 <div class="recommend-count-wrapper social-advice-context-wrapper">
                   <button
                     type="button"
