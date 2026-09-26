@@ -1887,20 +1887,20 @@ input[readonly],
 }
 
 .social-advice-add-button {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
+  width: auto;
+  min-width: 40px;
+  height: 30px;
   margin: 0;
-  padding: 0;
+  padding: 0 9px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  border: 1px solid #3a3a3a;
-  border-radius: 50%;
-  background: #222;
-  color: #aaa;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #d6b25e;
 }
 
 .social-advice-add-button span {
@@ -1914,9 +1914,8 @@ input[readonly],
 .social-advice-add-button:hover,
 .social-advice-add-button:focus-visible,
 .social-advice-add-button:active {
-  border-color: rgba(214, 178, 94, 0.62);
-  background: rgba(214, 178, 94, 0.08);
-  color: #d6b25e;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f0d98f;
 }
 
 .social-advice-add-button:focus-visible {
