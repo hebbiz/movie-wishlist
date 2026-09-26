@@ -1883,7 +1883,7 @@ input[readonly],
 .recommend-count-button.social-advice-count-button .social-advice-count-icon {
   background:
     transparent
-    url("/assets/icons/speech-bubbles-double-active-mw.svg")
+    url("/assets/icons/speech-bubbles-double-active-mw.svg?v=20260926-2")
     center / contain no-repeat;
 
   -webkit-mask-image: none;
