@@ -70,6 +70,14 @@ const cancelInviteButton = document.getElementById("cancelInviteButton");
 const recommendedGroupsList = document.getElementById("recommendedGroupsList");
 const mainView = document.getElementById("mainView");
 const mykolaView = document.getElementById("mykolaView");
+const socialAdviceGroupDialog = document.getElementById("socialAdviceGroupDialog");
+const socialAdviceGroupForm = document.getElementById("socialAdviceGroupForm");
+const socialAdviceGroupMovieTitle = document.getElementById("socialAdviceGroupMovieTitle");
+const socialAdviceGroupOptions = document.getElementById("socialAdviceGroupOptions");
+const socialAdviceGroupDialogStatus = document.getElementById("socialAdviceGroupDialogStatus");
+const confirmSocialAdviceGroupButton = document.getElementById("confirmSocialAdviceGroupButton");
+const cancelSocialAdviceGroupDialogButton = document.getElementById("cancelSocialAdviceGroupDialogButton");
+const closeSocialAdviceGroupDialogButton = document.getElementById("closeSocialAdviceGroupDialogButton");
 const openMykolaButton = document.getElementById("openMykolaButton");
 const backFromMykolaButton = document.getElementById("backFromMykolaButton");
 const mykolaChat = document.getElementById("mykolaChat");
@@ -94,6 +102,8 @@ let mykolaConversationFinished =
 let mykolaMode = "main";
 let savedMainMykolaChatHtml = null;
 let pendingMykolaAddedMovieId = null;
+let socialAdviceGroupPickerMovie = null;
+let socialAdviceGroupPickerPresence = new Map();
 
 function createMykolaRecommendationSession(groupId = currentGroupId) {
   return {
@@ -3450,6 +3460,15 @@ if (list.length === 0) {
               ` : ""}
 
               <div class="social-advice-feature-actions">
+                <button
+                  type="button"
+                  class="social-advice-add-button"
+                  data-social-advice-add-movie-id="${movie.movie_id}"
+                  aria-label="Додати ${escapeHtml(movie.title)} до списку Хочу переглянути"
+                >
+                  Хочу переглянути →
+                </button>
+
                 <div class="recommend-count-wrapper social-advice-context-wrapper">
                   <button
                     type="button"
@@ -5557,6 +5576,314 @@ moviesGrid.addEventListener("click", async (event) => {
   }
 
   openMykolaRecommendationFlow(movieId, button);
+});
+
+function getWritableSocialAdviceGroups() {
+  return currentUserGroups.filter((membership) => {
+    return (
+      membership.groups?.id &&
+      ["owner", "member"].includes(membership.role)
+    );
+  });
+}
+
+function closeSocialAdviceGroupPicker() {
+  socialAdviceGroupPickerMovie = null;
+  socialAdviceGroupPickerPresence = new Map();
+  socialAdviceGroupDialogStatus.textContent = "";
+  socialAdviceGroupOptions.replaceChildren();
+
+  if (
+    socialAdviceGroupDialog?.open &&
+    typeof socialAdviceGroupDialog.close === "function"
+  ) {
+    socialAdviceGroupDialog.close();
+  } else {
+    socialAdviceGroupDialog?.removeAttribute("open");
+  }
+}
+
+async function loadSocialAdviceGroupPresence(movieId, memberships) {
+  const groupIds = memberships
+    .map((membership) => membership.groups?.id)
+    .filter(Boolean);
+
+  if (!groupIds.length) {
+    return new Map();
+  }
+
+  const { data, error } = await supabaseClient
+    .from("movie_group_lists")
+    .select("group_id, status")
+    .eq("movie_id", movieId)
+    .in("group_id", groupIds);
+
+  if (error) {
+    throw error;
+  }
+
+  return new Map(
+    (data || []).map((item) => [
+      item.group_id,
+      item.status,
+    ])
+  );
+}
+
+function renderSocialAdviceGroupOptions(memberships) {
+  socialAdviceGroupOptions.replaceChildren();
+
+  const firstAvailableGroupId = memberships.find((membership) => {
+    return !socialAdviceGroupPickerPresence.has(membership.groups.id);
+  })?.groups.id;
+  const currentGroupIsAvailable = memberships.some((membership) => {
+    return (
+      membership.groups.id === currentGroupId &&
+      !socialAdviceGroupPickerPresence.has(currentGroupId)
+    );
+  });
+  const preferredGroupId = currentGroupIsAvailable
+    ? currentGroupId
+    : firstAvailableGroupId;
+
+  memberships.forEach((membership) => {
+    const group = membership.groups;
+    const existingStatus = socialAdviceGroupPickerPresence.get(group.id);
+    const option = document.createElement("label");
+    const input = document.createElement("input");
+    const marker = document.createElement("span");
+    const content = document.createElement("span");
+    const name = document.createElement("span");
+    const detail = document.createElement("span");
+
+    option.className = "social-advice-group-option";
+    option.classList.toggle("is-existing", Boolean(existingStatus));
+
+    input.type = "radio";
+    input.name = "socialAdviceTargetGroup";
+    input.value = group.id;
+    input.disabled = Boolean(existingStatus);
+    input.checked = !existingStatus && group.id === preferredGroupId;
+
+    marker.className = "social-advice-group-radio";
+    content.className = "social-advice-group-option-content";
+    name.className = "social-advice-group-option-name";
+    detail.className = "social-advice-group-option-detail";
+
+    name.textContent = `${getGroupTypeNominativeLabel(group.type)} ${group.name}`;
+    detail.textContent = existingStatus
+      ? `Уже у списку «${formatStatus(existingStatus)}»`
+      : group.id === currentGroupId
+        ? "Поточна група"
+        : "Додати у «Хочу переглянути»";
+
+    content.append(name, detail);
+    option.append(input, marker, content);
+    socialAdviceGroupOptions.append(option);
+  });
+
+  confirmSocialAdviceGroupButton.disabled = !socialAdviceGroupOptions.querySelector(
+    'input[name="socialAdviceTargetGroup"]:checked'
+  );
+}
+
+async function openSocialAdviceGroupPicker(movieId) {
+  const movie = socialAdviceMovies.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  if (!movie) {
+    alert("Фільм не знайдено у Порадах.");
+    return;
+  }
+
+  const memberships = getWritableSocialAdviceGroups();
+
+  if (!memberships.length) {
+    alert("У вас немає групи, до якої можна додавати фільми.");
+    return;
+  }
+
+  socialAdviceGroupPickerMovie = movie;
+  socialAdviceGroupMovieTitle.textContent = movie.title;
+  socialAdviceGroupDialogStatus.textContent = "Перевіряю списки…";
+  confirmSocialAdviceGroupButton.disabled = true;
+  socialAdviceGroupOptions.replaceChildren();
+
+  if (typeof socialAdviceGroupDialog.showModal === "function") {
+    socialAdviceGroupDialog.showModal();
+  } else {
+    socialAdviceGroupDialog.setAttribute("open", "");
+  }
+
+  try {
+    socialAdviceGroupPickerPresence = await loadSocialAdviceGroupPresence(
+      movie.movie_id,
+      memberships
+    );
+
+    renderSocialAdviceGroupOptions(memberships);
+
+    const availableCount = memberships.filter((membership) => {
+      return !socialAdviceGroupPickerPresence.has(membership.groups.id);
+    }).length;
+
+    socialAdviceGroupDialogStatus.textContent = availableCount
+      ? ""
+      : "Фільм уже є в усіх доступних вам групах.";
+  } catch (error) {
+    console.error("Social Advice group presence error:", error);
+    socialAdviceGroupDialogStatus.textContent =
+      "Не вдалося перевірити групові списки.";
+  }
+}
+
+async function openAddedSocialAdviceMovie(
+  movieId,
+  targetGroupId,
+  status,
+  shouldHighlight
+) {
+  showAppLoader("Відкриваємо вибрану групу…");
+
+  try {
+    currentGroupId = targetGroupId;
+    saveActiveGroupId(currentGroupId);
+
+    await loadCurrentGroup();
+    await loadCurrentRole();
+    await loadCurrentGroupMembers();
+
+    applyAccessLevel();
+    renderCurrentGroupInfo();
+
+    pendingMykolaAddedMovieId = shouldHighlight
+      ? movieId
+      : null;
+
+    await loadMovies();
+
+    groupSettingsView.classList.remove("active");
+    groupFormView.classList.remove("active");
+    mykolaView.classList.remove("active");
+    mainView.classList.add("active");
+
+    openAddedMykolaMovie(
+      movieId,
+      status || "wishlist",
+      shouldHighlight
+    );
+  } finally {
+    hideAppLoader();
+  }
+}
+
+async function addSocialAdviceMovieToGroup(targetGroupId) {
+  const movie = socialAdviceGroupPickerMovie;
+
+  if (!movie || !targetGroupId) {
+    return;
+  }
+
+  confirmSocialAdviceGroupButton.disabled = true;
+  cancelSocialAdviceGroupDialogButton.disabled = true;
+  closeSocialAdviceGroupDialogButton.disabled = true;
+  socialAdviceGroupDialogStatus.textContent = "Додаю до списку…";
+
+  const { data, error } = await supabaseClient.rpc(
+    "add_social_advice_movie_to_wishlist",
+    {
+      p_target_group_id: targetGroupId,
+      p_movie_id: movie.movie_id,
+    }
+  );
+
+  if (error) {
+    console.error("Add Social Advice movie error:", error);
+    confirmSocialAdviceGroupButton.disabled = false;
+    cancelSocialAdviceGroupDialogButton.disabled = false;
+    closeSocialAdviceGroupDialogButton.disabled = false;
+    socialAdviceGroupDialogStatus.textContent =
+      "Не вдалося додати фільм. Спробуйте ще раз.";
+    return;
+  }
+
+  const result = data?.[0];
+
+  if (!result) {
+    confirmSocialAdviceGroupButton.disabled = false;
+    cancelSocialAdviceGroupDialogButton.disabled = false;
+    closeSocialAdviceGroupDialogButton.disabled = false;
+    socialAdviceGroupDialogStatus.textContent =
+      "Не вдалося підтвердити додавання.";
+    return;
+  }
+
+  const movieId = movie.movie_id;
+  const shouldHighlight = result.inserted === true;
+
+  cancelSocialAdviceGroupDialogButton.disabled = false;
+  closeSocialAdviceGroupDialogButton.disabled = false;
+  closeSocialAdviceGroupPicker();
+
+  await openAddedSocialAdviceMovie(
+    movieId,
+    targetGroupId,
+    result.status || "wishlist",
+    shouldHighlight
+  );
+}
+
+moviesGrid.addEventListener("click", (event) => {
+  const button = event.target.closest(
+    "[data-social-advice-add-movie-id]"
+  );
+
+  if (!button) return;
+
+  event.stopPropagation();
+  openSocialAdviceGroupPicker(
+    button.dataset.socialAdviceAddMovieId
+  );
+});
+
+socialAdviceGroupOptions?.addEventListener("change", () => {
+  confirmSocialAdviceGroupButton.disabled = !socialAdviceGroupOptions.querySelector(
+    'input[name="socialAdviceTargetGroup"]:checked'
+  );
+});
+
+socialAdviceGroupForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const selected = socialAdviceGroupOptions.querySelector(
+    'input[name="socialAdviceTargetGroup"]:checked'
+  );
+
+  if (!selected) return;
+
+  await addSocialAdviceMovieToGroup(selected.value);
+});
+
+cancelSocialAdviceGroupDialogButton?.addEventListener(
+  "click",
+  closeSocialAdviceGroupPicker
+);
+
+closeSocialAdviceGroupDialogButton?.addEventListener(
+  "click",
+  closeSocialAdviceGroupPicker
+);
+
+socialAdviceGroupDialog?.addEventListener("click", (event) => {
+  if (event.target === socialAdviceGroupDialog) {
+    closeSocialAdviceGroupPicker();
+  }
+});
+
+socialAdviceGroupDialog?.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeSocialAdviceGroupPicker();
 });
 
 moviesGrid.addEventListener("click", (event) => {
