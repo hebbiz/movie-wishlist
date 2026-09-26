@@ -3383,7 +3383,7 @@ if (list.length === 0) {
               ${movie.year || "Рік не вказано"}
             </span>
             <span class="social-advice-meta-medium">
-              Рекомендовано: ${escapeHtml(movie.recommended_medium || "не вказано")}
+              ${escapeHtml(movie.recommended_medium || "не вказано")}
             </span>
           ` : `
             ${movie.year || "Рік не вказано"}<br>
