@@ -1872,8 +1872,34 @@ input[readonly],
 
 .social-advice-feature-actions {
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.social-advice-add-button {
+  position: relative;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 3px 0;
+
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #d6b25e;
+
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.social-advice-add-button:hover,
+.social-advice-add-button:focus-visible,
+.social-advice-add-button:active {
+  background: transparent;
+  color: #f0d98f;
 }
 
 .recommend-count-button.social-advice-count-button {
@@ -1899,6 +1925,212 @@ input[readonly],
 
 .social-advice-card .card-content {
   flex: 0 0 auto;
+}
+
+/* ---------- Додавання Поради до вибраної групи ---------- */
+
+.social-advice-group-dialog {
+  width: min(440px, calc(100% - 28px));
+  max-height: min(680px, calc(100% - 28px));
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+
+  border: 1px solid #343434;
+  border-radius: 18px;
+  background: #191919;
+  color: #f4f4f4;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
+}
+
+.social-advice-group-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(3px);
+}
+
+.social-advice-group-form {
+  padding: 20px;
+}
+
+.social-advice-group-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.social-advice-group-dialog-kicker {
+  margin-bottom: 4px;
+  color: #ad9562;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.social-advice-group-dialog h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.social-advice-group-dialog-close {
+  width: 34px;
+  height: 34px;
+  margin: -4px -4px 0 0;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #333;
+  border-radius: 50%;
+  background: #222;
+  color: #aaa;
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.social-advice-group-dialog-close:hover {
+  background: #292929;
+  color: #f4f4f4;
+}
+
+.social-advice-group-movie-title {
+  margin: 13px 0 15px;
+  color: #d4d4d1;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.social-advice-group-options {
+  max-height: min(380px, 48vh);
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.social-advice-group-option {
+  min-height: 56px;
+  padding: 10px 12px;
+
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+
+  border: 1px solid #303030;
+  border-radius: 12px;
+  background: #202020;
+  color: #e7e7e4;
+}
+
+.social-advice-group-option:has(input:checked) {
+  border-color: rgba(214, 178, 94, 0.72);
+  background: rgba(214, 178, 94, 0.1);
+}
+
+.social-advice-group-option.is-existing {
+  opacity: 0.58;
+}
+
+.social-advice-group-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.social-advice-group-radio {
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+
+  border: 1.5px solid #777;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 4px #202020;
+  background: transparent;
+}
+
+.social-advice-group-option:has(input:checked) .social-advice-group-radio {
+  border-color: #d6b25e;
+  background: #d6b25e;
+}
+
+.social-advice-group-option-content,
+.social-advice-group-option-name,
+.social-advice-group-option-detail {
+  display: block;
+  min-width: 0;
+}
+
+.social-advice-group-option-name {
+  overflow: hidden;
+  color: #f4f4f4;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-advice-group-option-detail {
+  margin-top: 3px;
+  color: #8e8e8a;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.social-advice-group-dialog-status {
+  min-height: 18px;
+  margin: 10px 1px 0;
+  color: #a4a4a0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.social-advice-group-dialog-actions {
+  margin-top: 12px;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.social-advice-group-dialog-actions button {
+  margin: 0;
+}
+
+.social-advice-group-cancel-button {
+  border: 1px solid #343434;
+  background: #232323;
+  color: #d0d0cd;
+}
+
+.social-advice-group-cancel-button:hover {
+  background: #2b2b2b;
+}
+
+.social-advice-group-confirm-button:disabled {
+  background: #3a3426;
+  color: #83775b;
+  cursor: default;
+}
+
+@media (max-width: 600px) {
+  .social-advice-group-dialog {
+    width: calc(100% - 20px);
+    max-height: calc(100% - 20px);
+    border-radius: 16px;
+  }
+
+  .social-advice-group-form {
+    padding: 17px;
+  }
 }
 
 .recommend-comment-icon::after {
