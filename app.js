@@ -17,6 +17,7 @@ const sublistPanel = document.getElementById("sublistPanel");
 const sublistOptions = document.getElementById("sublistOptions");
 const sublistActiveLabel = document.getElementById("sublistActiveLabel");
 const sublistToggleIcon = document.getElementById("sublistToggleIcon");
+const sublistToggleBadge = document.getElementById("sublistToggleBadge");
 const submitButton = document.getElementById("submitButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
 const formPanel = document.getElementById("formPanel");
@@ -84,10 +85,13 @@ const mykolaChat = document.getElementById("mykolaChat");
 const DEBUG_ADVICE_ROOM = false;
 const movieActivitySeenTimers = new Map();
 const movieActivityMarking = new Set();
+const socialAdviceSeenTimers = new Map();
+const socialAdviceMarking = new Set();
 
 let movies = [];
 let socialAdviceMovies = [];
 let socialAdviceRecommendationDetails = {};
+let socialAdviceUnreadCount = 0;
 let editingMovieId = null;
 let activeFilter = "all";
 let activeSublist = null;
@@ -238,6 +242,7 @@ let unseenMovieActivityByMovieId = {};
 let globalUnseenMovieActivityCount = 0;
 let unseenMovieActivityCountByGroupId = {};
 let movieActivityObserver = null;
+let socialAdviceObserver = null;
 let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
@@ -1927,6 +1932,8 @@ logoutButton.addEventListener("click", async () => {
   movies = [];
   socialAdviceMovies = [];
   socialAdviceRecommendationDetails = {};
+  socialAdviceUnreadCount = 0;
+  resetSocialAdviceObserver();
 
   resetMykolaChat();
   clearMykolaFinishedState();
@@ -2098,6 +2105,7 @@ function normalizeSocialAdviceRecommendations(items) {
 async function loadSocialAdviceMovies() {
   socialAdviceMovies = [];
   socialAdviceRecommendationDetails = {};
+  socialAdviceUnreadCount = 0;
 
   if (!currentUser) {
     return;
@@ -2149,6 +2157,10 @@ async function loadSocialAdviceMovies() {
       social_advice_order: index,
     };
   });
+
+  socialAdviceUnreadCount = socialAdviceMovies.filter((movie) => {
+    return movie.is_new;
+  }).length;
 }
 
 async function loadMovies() {
@@ -2705,6 +2717,150 @@ function attachMovieActivityObserver() {
 
   activityCards.forEach((card) => {
     movieActivityObserver.observe(card);
+  });
+}
+
+function resetSocialAdviceObserver() {
+  if (socialAdviceObserver) {
+    socialAdviceObserver.disconnect();
+    socialAdviceObserver = null;
+  }
+
+  socialAdviceSeenTimers.forEach((timerId) => {
+    clearTimeout(timerId);
+  });
+
+  socialAdviceSeenTimers.clear();
+}
+
+function animateSocialAdviceSeen(card) {
+  const badge = card.querySelector(".new-activity-badge");
+
+  card.classList.add("activity-seen-settling");
+
+  if (badge) {
+    badge.classList.add("is-being-seen");
+
+    setTimeout(() => {
+      badge.classList.add("is-seen");
+      card.classList.remove("has-unseen-activity");
+    }, 420);
+
+    setTimeout(() => {
+      badge.remove();
+      card.classList.remove("activity-seen-settling");
+    }, 820);
+
+    return;
+  }
+
+  card.classList.remove("has-unseen-activity");
+
+  setTimeout(() => {
+    card.classList.remove("activity-seen-settling");
+  }, 820);
+}
+
+async function markSocialAdviceMovieSeen(card) {
+  const movieId = card.dataset.movieId;
+
+  if (!movieId || socialAdviceMarking.has(movieId)) {
+    return;
+  }
+
+  socialAdviceMarking.add(movieId);
+
+  const { data, error } = await supabaseClient.rpc(
+    "mark_social_advice_movies_seen",
+    {
+      p_movie_ids: [movieId],
+    }
+  );
+
+  if (error) {
+    console.warn("Social advice mark seen error:", error);
+    socialAdviceMarking.delete(movieId);
+    return;
+  }
+
+  const movie = socialAdviceMovies.find((item) => {
+    return item.movie_id === movieId;
+  });
+
+  if (movie) {
+    movie.seen_at = data?.[0]?.marked_at || new Date().toISOString();
+    movie.is_new = false;
+  }
+
+  socialAdviceUnreadCount = socialAdviceMovies.filter((item) => {
+    return item.is_new;
+  }).length;
+
+  updateActiveListUI();
+
+  if (socialAdviceObserver) {
+    socialAdviceObserver.unobserve(card);
+  }
+
+  card.removeAttribute("data-social-advice-unseen");
+  animateSocialAdviceSeen(card);
+  socialAdviceMarking.delete(movieId);
+}
+
+function attachSocialAdviceObserver() {
+  resetSocialAdviceObserver();
+
+  const unseenCards = moviesGrid.querySelectorAll(
+    '.card[data-social-advice-unseen="true"]'
+  );
+
+  if (!unseenCards.length) {
+    return;
+  }
+
+  socialAdviceObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const card = entry.target;
+        const movieId = card.dataset.movieId;
+
+        if (!movieId) {
+          return;
+        }
+
+        const isVisibleEnough =
+          entry.isIntersecting &&
+          entry.intersectionRatio >= 0.7;
+
+        if (isVisibleEnough) {
+          if (socialAdviceSeenTimers.has(movieId)) {
+            return;
+          }
+
+          const timerId = setTimeout(() => {
+            socialAdviceSeenTimers.delete(movieId);
+            markSocialAdviceMovieSeen(card);
+          }, 1600);
+
+          socialAdviceSeenTimers.set(movieId, timerId);
+          return;
+        }
+
+        const existingTimer = socialAdviceSeenTimers.get(movieId);
+
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+          socialAdviceSeenTimers.delete(movieId);
+        }
+      });
+    },
+    {
+      threshold: 0.7,
+    }
+  );
+
+  unseenCards.forEach((card) => {
+    socialAdviceObserver.observe(card);
   });
 }
 
@@ -3290,6 +3446,7 @@ function renderRecommendationContext(movieId) {
 
 function renderMovies(list) {
   resetMovieActivityObserver();
+  resetSocialAdviceObserver();
   
   moviesGrid.innerHTML = "";
   movieCount.textContent = `(${list.length})`;
@@ -3319,6 +3476,8 @@ if (list.length === 0) {
   list.forEach((movie) => {
     const card = document.createElement("article");
     const isSocialAdviceMovie = movie.is_social_advice === true;
+    const isUnseenSocialAdvice =
+      isSocialAdviceMovie && movie.is_new === true;
     const featuredRecommendation = isSocialAdviceMovie
       ? getSocialAdviceFeaturedRecommendation(movie)
       : null;
@@ -3333,6 +3492,11 @@ if (list.length === 0) {
 
     if (isMykolaAddedMovie) {
       card.classList.add("has-mykola-added-highlight");
+    }
+
+    if (isUnseenSocialAdvice) {
+      card.dataset.socialAdviceUnseen = "true";
+      card.classList.add("has-unseen-activity");
     }
 
     const unseenActivityCandidate = isSocialAdviceMovie
@@ -3365,6 +3529,12 @@ if (list.length === 0) {
 
            ${
              unseenActivity
+               ? `<span class="poster-badge new-activity-badge">Нове</span>`
+               : ""
+           }
+
+           ${
+             isUnseenSocialAdvice
                ? `<span class="poster-badge new-activity-badge">Нове</span>`
                : ""
            }
@@ -3558,6 +3728,7 @@ if (list.length === 0) {
   attachCardMenuHandlers();
   attachPurchaseLinkHandlers();
   attachMovieActivityObserver();
+  attachSocialAdviceObserver();
 }
 
 async function recommendMovie(
@@ -8094,8 +8265,10 @@ function renderSublistOptions(options) {
     const button = document.createElement("button");
     const icon = document.createElement("span");
     const label = document.createElement("span");
+    const unreadBadge = document.createElement("span");
     const isActive =
       (activeSublist || "") === item.value;
+    const isSocialAdvice = item.value === "social-advice";
 
     button.type = "button";
     button.className = "sublist-option";
@@ -8106,6 +8279,12 @@ function renderSublistOptions(options) {
       String(isActive)
     );
     button.classList.toggle("active", isActive);
+    button.setAttribute(
+      "aria-label",
+      isSocialAdvice && socialAdviceUnreadCount > 0
+        ? `${item.label}, нових: ${socialAdviceUnreadCount}`
+        : item.label
+    );
 
     icon.className = "sublist-icon";
     icon.setAttribute("aria-hidden", "true");
@@ -8113,7 +8292,13 @@ function renderSublistOptions(options) {
 
     label.textContent = item.label;
 
-    button.append(icon, label);
+    unreadBadge.className = "sublist-option-unread-badge";
+    unreadBadge.textContent = `+${socialAdviceUnreadCount}`;
+    unreadBadge.hidden = !(
+      isSocialAdvice && socialAdviceUnreadCount > 0
+    );
+
+    button.append(icon, label, unreadBadge);
     sublistOptions.append(button);
   });
 }
@@ -8158,9 +8343,15 @@ function updateActiveListUI() {
   );
   sublistToggle.setAttribute(
     "aria-label",
-    `Підсписки: ${activeMeta.label}`
+    mode === "extra" && socialAdviceUnreadCount > 0
+      ? `Підсписки: ${activeMeta.label}. Нових порад: ${socialAdviceUnreadCount}`
+      : `Підсписки: ${activeMeta.label}`
   );
   sublistActiveLabel.textContent = activeMeta.label;
+  sublistToggleBadge.textContent = `+${socialAdviceUnreadCount}`;
+  sublistToggleBadge.hidden = !(
+    mode === "extra" && socialAdviceUnreadCount > 0
+  );
   setSublistIcon(sublistToggleIcon, activeMeta);
 
   renderSublistOptions(options);
@@ -8195,6 +8386,25 @@ function scrollToFirstUnseenActivityCard() {
     moviesGrid.querySelector(
       ".card[data-activity-id]"
     );
+
+  if (!card) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      card.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+  });
+}
+
+function scrollToFirstUnseenSocialAdviceCard() {
+  const card = moviesGrid.querySelector(
+    '.card[data-social-advice-unseen="true"]'
+  );
 
   if (!card) {
     return;
@@ -8320,6 +8530,10 @@ sublistOptions.addEventListener("click", (event) => {
   closeSublistPanel();
   updateActiveListUI();
   applySearchAndFilters();
+
+  if (activeSublist === "social-advice") {
+    scrollToFirstUnseenSocialAdviceCard();
+  }
 });
 
   lookupButton.addEventListener("click", async () => {
