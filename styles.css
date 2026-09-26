@@ -1212,6 +1212,7 @@ input[readonly],
 }
 
 .sublist-toggle {
+  position: relative;
   width: auto;
   max-width: 172px;
   min-height: 40px;
@@ -1293,6 +1294,31 @@ input[readonly],
   transition: transform 180ms ease;
 }
 
+.sublist-toggle-badge,
+.sublist-option-unread-badge {
+  min-width: 19px;
+  height: 18px;
+  padding: 0 5px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  background: #d6b25e;
+  color: #111;
+
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.sublist-toggle-badge[hidden],
+.sublist-option-unread-badge[hidden] {
+  display: none;
+}
+
 .sublist-toggle[aria-expanded="true"] .sublist-arrow {
   transform: rotate(180deg);
 }
@@ -1351,7 +1377,7 @@ input[readonly],
   padding: 8px 10px;
 
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: center;
   column-gap: 8px;
 
@@ -1363,6 +1389,12 @@ input[readonly],
   text-align: left;
   font-size: 13px;
   font-weight: 600;
+}
+
+.sublist-option-unread-badge {
+  justify-self: end;
+  background: rgba(214, 178, 94, 0.16);
+  color: #e1c77f;
 }
 
 .sublist-option .sublist-icon {
@@ -1407,6 +1439,13 @@ input[readonly],
     max-width: 42px;
     padding-inline: 0;
     gap: 0;
+    overflow: visible;
+  }
+
+  .sublist-toggle-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
   }
 
   .sublist-toggle #sublistActiveLabel,
