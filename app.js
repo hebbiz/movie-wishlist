@@ -3417,6 +3417,21 @@ if (list.length === 0) {
             : ""
           }
 
+          ${isSocialAdviceMovie
+            ? `
+              <button
+                type="button"
+                class="social-advice-add-button"
+                data-social-advice-add-movie-id="${movie.movie_id}"
+                aria-label="Додати ${escapeHtml(movie.title)} до списку Хочу переглянути"
+                title="Додати до списку"
+              >
+                <span aria-hidden="true">+</span>
+              </button>
+            `
+            : ""
+          }
+
           ${movie.purchase_url && !isSocialAdviceMovie
             ? `
              <a
@@ -3460,15 +3475,6 @@ if (list.length === 0) {
               ` : ""}
 
               <div class="social-advice-feature-actions">
-                <button
-                  type="button"
-                  class="social-advice-add-button"
-                  data-social-advice-add-movie-id="${movie.movie_id}"
-                  aria-label="Додати ${escapeHtml(movie.title)} до списку Хочу переглянути"
-                >
-                  Хочу переглянути →
-                </button>
-
                 <div class="recommend-count-wrapper social-advice-context-wrapper">
                   <button
                     type="button"
