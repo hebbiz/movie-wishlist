@@ -417,6 +417,64 @@
   </section>
 </div>
 
+<dialog
+  id="socialAdviceGroupDialog"
+  class="social-advice-group-dialog"
+  aria-labelledby="socialAdviceGroupDialogTitle"
+>
+  <form id="socialAdviceGroupForm" class="social-advice-group-form">
+    <div class="social-advice-group-dialog-header">
+      <div>
+        <div class="social-advice-group-dialog-kicker">Поради</div>
+        <h2 id="socialAdviceGroupDialogTitle">Додати до списку</h2>
+      </div>
+
+      <button
+        id="closeSocialAdviceGroupDialogButton"
+        class="social-advice-group-dialog-close"
+        type="button"
+        aria-label="Закрити"
+      >
+        ×
+      </button>
+    </div>
+
+    <p id="socialAdviceGroupMovieTitle" class="social-advice-group-movie-title"></p>
+
+    <div
+      id="socialAdviceGroupOptions"
+      class="social-advice-group-options"
+      role="radiogroup"
+      aria-label="Група для додавання"
+    ></div>
+
+    <p
+      id="socialAdviceGroupDialogStatus"
+      class="social-advice-group-dialog-status"
+      aria-live="polite"
+    ></p>
+
+    <div class="social-advice-group-dialog-actions">
+      <button
+        id="cancelSocialAdviceGroupDialogButton"
+        class="social-advice-group-cancel-button"
+        type="button"
+      >
+        Скасувати
+      </button>
+
+      <button
+        id="confirmSocialAdviceGroupButton"
+        class="social-advice-group-confirm-button"
+        type="submit"
+        disabled
+      >
+        Додати
+      </button>
+    </div>
+  </form>
+</dialog>
+
 <div id="mykolaView" class="view">
   <section class="panel mykola-panel">
 
