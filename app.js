@@ -198,7 +198,7 @@ const UNAVAILABLE_SUBLIST_META = {
 const SOCIAL_ADVICE_SUBLIST_META = {
   value: "social-advice",
   label: "Поради",
-  icon: "assets/icons/speech-bubbles-double-blank-mw.svg",
+  icon: "assets/icons/speech-bubbles-double-blank-mw.svg?v=20260926-2",
   order: 20,
   iconWidth: 22,
 };
