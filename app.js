@@ -5055,9 +5055,9 @@ function wireRatingSlider(row) {
   if (!slider || !block) return;
 
   const labels = block.querySelectorAll(".mykola-rating-labels span");
-  const red = [172, 84, 79];
+  const red = [188, 74, 72];
   const gold = [214, 178, 94];
-  const green = [109, 151, 115];
+  const green = [79, 154, 98];
 
   function updateSliderLight() {
     const min = Number(slider.min);
@@ -5092,9 +5092,9 @@ function wireRatingSlider(row) {
     slider.style.setProperty("--rating-thumb-light", color(current, 0.28));
 
     const labelTints = [
-      [226, 166, 160],
+      [232, 174, 171],
       [235, 210, 154],
-      [190, 220, 192]
+      [154, 216, 162]
     ];
 
     [0, 0.36, 1].forEach((anchor, index) => {
