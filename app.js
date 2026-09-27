@@ -3765,7 +3765,8 @@ async function recommendMovie(
   movieId,
   button,
   comment = null,
-  ratingValue = null
+  ratingValue = null,
+  adviceRoomId = null
 ) {
   if (!currentUser) {
     alert("Потрібно увійти в акаунт.");
@@ -3811,6 +3812,7 @@ button.classList.toggle("has-comment", !!comment);
       context_group_id: currentGroupId,
       comment,
       rating_value: numericRating,
+      advice_room_id: adviceRoomId,
     })
     .select(`
       id,
@@ -5119,7 +5121,13 @@ function showMykolaRecommendationCommentForm(movieId, button) {
 
       const ratingValue = getRatingValue(row);
 
-      const success = await recommendMovie(movieId, button, comment, ratingValue);
+      const success = await recommendMovie(
+        movieId,
+        button,
+        comment,
+        ratingValue,
+        activeAdviceRoom?.result_room_id || null
+      );
 
       if (!success) return;
 
@@ -5148,7 +5156,13 @@ function showMykolaRecommendationCommentForm(movieId, button) {
     .getElementById("mykolaCancelCommentButton")
     .addEventListener("click", async () => {
       const ratingValue = getRatingValue(row);
-      const success = await recommendMovie(movieId, button, null, ratingValue);
+      const success = await recommendMovie(
+        movieId,
+        button,
+        null,
+        ratingValue,
+        activeAdviceRoom?.result_room_id || null
+      );
       
       if (!success) return;
 
