@@ -5026,14 +5026,18 @@ function addMykolaArchiveSummaryBubble(
 function createRatingSliderHtml(value = 10) {
   return `
     <div class="mykola-rating-block">
-      <input
-        type="range"
-        class="mykola-rating-slider"
-        min="1"
-        max="20"
-        step="0.5"
-        value="${value}"
-      >
+      <div class="mykola-rating-stage">
+        <div class="mykola-rating-aperture" aria-hidden="true"></div>
+        <input
+          type="range"
+          class="mykola-rating-slider"
+          min="1"
+          max="20"
+          step="0.5"
+          value="${value}"
+          aria-label="Оцінка фільму"
+        >
+      </div>
 
       <div class="mykola-rating-labels">
         <span>Ну, таке…</span>
@@ -5046,22 +5050,58 @@ function createRatingSliderHtml(value = 10) {
 
 function wireRatingSlider(row) {
   const slider = row.querySelector(".mykola-rating-slider");
+  const block = row.querySelector(".mykola-rating-block");
 
-  if (!slider) return;
+  if (!slider || !block) return;
 
-  function updateSliderProgress() {
+  const labels = block.querySelectorAll(".mykola-rating-labels span");
+  const red = [172, 84, 79];
+  const gold = [214, 178, 94];
+  const green = [109, 151, 115];
+
+  function updateSliderLight() {
     const min = Number(slider.min);
     const max = Number(slider.max);
-    const value = Number(slider.value);
+    const position = Math.min(1, Math.max(0,
+      (Number(slider.value) - min) / (max - min)
+    ));
 
-    const progress = ((value - min) / (max - min)) * 100;
+    const redWeight = Math.max(0, 1 - position / 0.55);
+    const goldWeight = Math.max(0, 1 - Math.abs(position - 0.5) / 0.55);
+    const greenWeight = Math.max(0, (position - 0.4) / 0.6);
+    const percent = (value) => `${Math.min(100, Math.max(0, value * 100))}%`;
+    const color = (rgb, alpha) => `rgba(${rgb.join(", ")}, ${alpha.toFixed(3)})`;
 
-    slider.style.setProperty("--rating-progress", `${progress}%`);
+    // Small offsets and different halo widths suggest glass at different depths.
+    block.style.setProperty("--rating-red-position", percent(position + 0.015));
+    block.style.setProperty("--rating-gold-position", percent(position - 0.025));
+    block.style.setProperty("--rating-green-position", percent(position));
+    block.style.setProperty("--rating-red-halo", color(red, 0.22 * redWeight));
+    block.style.setProperty("--rating-gold-halo", color(gold, 0.20 * goldWeight));
+    block.style.setProperty("--rating-green-halo", color(green, 0.20 * greenWeight));
+    block.style.setProperty("--rating-red-core", color(red, 0.60 * redWeight));
+    block.style.setProperty("--rating-gold-core", color(gold, 0.56 * goldWeight));
+    block.style.setProperty("--rating-green-core", color(green, 0.55 * greenWeight));
+
+    const first = position <= 0.5 ? red : gold;
+    const second = position <= 0.5 ? gold : green;
+    const blend = position <= 0.5 ? position * 2 : (position - 0.5) * 2;
+    const current = first.map((channel, index) =>
+      Math.round(channel + (second[index] - channel) * blend)
+    );
+    slider.style.setProperty("--rating-thumb-light", color(current, 0.28));
+
+    [0, 0.36, 1].forEach((anchor, index) => {
+      const proximity = Math.max(0, 1 - Math.abs(position - anchor) / 0.18);
+      labels[index].style.setProperty(
+        "--rating-label-light",
+        color(current, 0.42 * proximity)
+      );
+    });
   }
 
-  slider.addEventListener("input", updateSliderProgress);
-
-  updateSliderProgress();
+  slider.addEventListener("input", updateSliderLight);
+  updateSliderLight();
 }
 
 function getRatingValue(row) {
