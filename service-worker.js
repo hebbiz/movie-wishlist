@@ -71,6 +71,13 @@ self.addEventListener("push", (event) => {
     );
   }
 
+  if (payload.social_advice) {
+    targetUrl.searchParams.set(
+      "advice",
+      "1"
+    );
+  }
+
   targetUrl.searchParams.set(
     "push",
     "1"
@@ -100,6 +107,9 @@ self.addEventListener("push", (event) => {
 
       to_status:
         payload.to_status || null,
+
+      social_advice:
+        payload.social_advice === true,
     },
   };
 

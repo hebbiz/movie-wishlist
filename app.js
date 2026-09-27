@@ -39,6 +39,10 @@ const userMenuDropdown = document.getElementById("userMenuDropdown");
 const editProfileButton = document.getElementById("editProfileButton");
 const profilePanel = document.getElementById("profilePanel");
 const displayNameInput = document.getElementById("displayNameInput");
+const notificationsEnabledInput = document.getElementById("notificationsEnabledInput");
+const socialAdviceNotificationsEnabledInput = document.getElementById(
+  "socialAdviceNotificationsEnabledInput"
+);
 const saveProfileButton = document.getElementById("saveProfileButton");
 const cancelProfileButton = document.getElementById("cancelProfileButton");
 const groupSelectorButton = document.getElementById("groupSelectorButton");
@@ -479,7 +483,10 @@ function getPushDeepLink() {
   const movieId =
     params.get("movie");
 
-  if (!groupId) {
+  const isSocialAdvice =
+    params.get("advice") === "1";
+
+  if (!groupId && !isSocialAdvice) {
     return null;
   }
 
@@ -488,6 +495,7 @@ function getPushDeepLink() {
     status,
     activityId,
     movieId,
+    isSocialAdvice,
   };
 }
 
@@ -500,6 +508,7 @@ function clearPushDeepLink() {
   url.searchParams.delete("status");
   url.searchParams.delete("activity");
   url.searchParams.delete("movie");
+  url.searchParams.delete("advice");
 
   window.history.replaceState(
     {},
@@ -658,7 +667,12 @@ async function updateAuthUI() {
 
     const { data: profile, error } = await supabaseClient
       .from("profiles")
-      .select("display_name, email, notifications_enabled")
+      .select(`
+        display_name,
+        email,
+        notifications_enabled,
+        social_advice_notifications_enabled
+      `)
       .eq("id", session.user.id)
       .single();
 
@@ -746,6 +760,10 @@ async function loadCurrentUserGroups() {
 function applyPushDeepLinkGroup(
   deepLink
 ) {
+  if (deepLink?.isSocialAdvice) {
+    return true;
+  }
+
   if (!deepLink?.groupId) {
     return false;
   }
@@ -2500,11 +2518,22 @@ async function updateAppIconBadge() {
     "Notification" in window &&
     Notification.permission === "granted";
 
+  const socialAdviceNotificationsEnabled =
+    currentProfile?.social_advice_notifications_enabled === true;
+
+  const badgeCount =
+    globalUnseenMovieActivityCount +
+    (
+      socialAdviceNotificationsEnabled
+        ? socialAdviceUnreadCount
+        : 0
+    );
+
   try {
     if (
       !notificationsEnabled ||
       !permissionGranted ||
-      globalUnseenMovieActivityCount === 0
+      badgeCount === 0
     ) {
       if ("clearAppBadge" in navigator) {
         await navigator.clearAppBadge();
@@ -2514,7 +2543,7 @@ async function updateAppIconBadge() {
     }
 
     await navigator.setAppBadge(
-      globalUnseenMovieActivityCount
+      badgeCount
     );
   } catch (error) {
     console.warn(
@@ -2805,6 +2834,7 @@ async function markSocialAdviceMovieSeen(card) {
   card.removeAttribute("data-social-advice-unseen");
   animateSocialAdviceSeen(card);
   socialAdviceMarking.delete(movieId);
+  await updateAppIconBadge();
 }
 
 function attachSocialAdviceObserver() {
@@ -3735,7 +3765,8 @@ async function recommendMovie(
   movieId,
   button,
   comment = null,
-  ratingValue = null
+  ratingValue = null,
+  adviceRoomId = null
 ) {
   if (!currentUser) {
     alert("Потрібно увійти в акаунт.");
@@ -3781,6 +3812,7 @@ button.classList.toggle("has-comment", !!comment);
       context_group_id: currentGroupId,
       comment,
       rating_value: numericRating,
+      advice_room_id: adviceRoomId,
     })
     .select(`
       id,
@@ -5089,7 +5121,13 @@ function showMykolaRecommendationCommentForm(movieId, button) {
 
       const ratingValue = getRatingValue(row);
 
-      const success = await recommendMovie(movieId, button, comment, ratingValue);
+      const success = await recommendMovie(
+        movieId,
+        button,
+        comment,
+        ratingValue,
+        activeAdviceRoom?.result_room_id || null
+      );
 
       if (!success) return;
 
@@ -5118,7 +5156,13 @@ function showMykolaRecommendationCommentForm(movieId, button) {
     .getElementById("mykolaCancelCommentButton")
     .addEventListener("click", async () => {
       const ratingValue = getRatingValue(row);
-      const success = await recommendMovie(movieId, button, null, ratingValue);
+      const success = await recommendMovie(
+        movieId,
+        button,
+        null,
+        ratingValue,
+        activeAdviceRoom?.result_room_id || null
+      );
       
       if (!success) return;
 
@@ -8434,7 +8478,16 @@ function finishPushDeepLinkNavigation(
     "watched",
   ];
 
+  if (deepLink.isSocialAdvice) {
+    activeFilter = "all";
+    activeSublist = "social-advice";
+    closeSublistPanel();
+    updateActiveListUI();
+    applySearchAndFilters();
+  }
+
   if (
+    !deepLink.isSocialAdvice &&
     deepLink.status &&
     allowedStatuses.includes(
       deepLink.status
@@ -8785,10 +8838,11 @@ userMenuButton.addEventListener("click", () => {
 
 editProfileButton.addEventListener("click", () => {
   displayNameInput.value = currentProfile?.display_name || "";
-  const notificationsEnabledInput =
-    document.getElementById("notificationsEnabledInput");
   notificationsEnabledInput.checked =
     currentProfile?.notifications_enabled === true;
+  socialAdviceNotificationsEnabledInput.checked =
+    currentProfile?.social_advice_notifications_enabled !== false;
+  syncNotificationCategoryUI();
   profilePanel.style.display = "block";
   userMenuDropdown.style.display = "none";
 
@@ -8797,6 +8851,20 @@ editProfileButton.addEventListener("click", () => {
     behavior: "smooth",
   });
 });
+
+function syncNotificationCategoryUI() {
+  const masterEnabled = notificationsEnabledInput.checked;
+
+  socialAdviceNotificationsEnabledInput.disabled = !masterEnabled;
+  socialAdviceNotificationsEnabledInput
+    .closest(".profile-notifications-category")
+    ?.classList.toggle("is-disabled", !masterEnabled);
+}
+
+notificationsEnabledInput.addEventListener(
+  "change",
+  syncNotificationCategoryUI
+);
 
 document.addEventListener("click", (event) => {
   const clickedInsideUserMenu = event.target.closest(".user-menu");
@@ -8905,11 +8973,11 @@ async function resolveNotificationPreference(wantsNotifications) {
 }
 
 saveProfileButton.addEventListener("click", async () => {
-  const notificationsEnabledInput =
-    document.getElementById("notificationsEnabledInput");
-
   const wantsNotifications =
     notificationsEnabledInput.checked;
+
+  const socialAdviceNotificationsEnabled =
+    socialAdviceNotificationsEnabledInput.checked;
 
   /*
    * ВАЖЛИВО:
@@ -8944,7 +9012,9 @@ saveProfileButton.addEventListener("click", async () => {
     .from("profiles")
     .update({
       display_name: displayName,
-      notifications_enabled: notificationsEnabled
+      notifications_enabled: notificationsEnabled,
+      social_advice_notifications_enabled:
+        socialAdviceNotificationsEnabled,
     })
     .eq("id", session.user.id);
 
@@ -8960,6 +9030,8 @@ saveProfileButton.addEventListener("click", async () => {
     ...(currentProfile || {}),
     display_name: displayName,
     notifications_enabled: notificationsEnabled,
+    social_advice_notifications_enabled:
+      socialAdviceNotificationsEnabled,
   };
 
   if (notificationsEnabled) {
