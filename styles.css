@@ -2623,7 +2623,7 @@ body {
 .mykola-rating-aperture {
   position: absolute;
   inset: 50% 0 auto;
-  height: 8px;
+  height: 6px;
   transform: translateY(-50%);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 999px;
@@ -2640,27 +2640,27 @@ body {
 }
 
 .mykola-rating-aperture::before {
-  inset: -5px 0;
+  inset: -7px 0;
   border-radius: inherit;
   background:
-    radial-gradient(ellipse 10% 75% at var(--rating-red-position, 0%) 50%,
+    radial-gradient(ellipse 13% 85% at clamp(9px, var(--rating-red-position, 0%), calc(100% - 9px)) 50%,
       var(--rating-red-halo, transparent), transparent),
-    radial-gradient(ellipse 15% 90% at var(--rating-gold-position, 50%) 50%,
+    radial-gradient(ellipse 17% 100% at clamp(9px, var(--rating-gold-position, 50%), calc(100% - 9px)) 50%,
       var(--rating-gold-halo, transparent), transparent),
-    radial-gradient(ellipse 12% 80% at var(--rating-green-position, 100%) 50%,
+    radial-gradient(ellipse 14% 90% at clamp(9px, var(--rating-green-position, 100%), calc(100% - 9px)) 50%,
       var(--rating-green-halo, transparent), transparent);
-  filter: blur(4px);
+  filter: blur(5px);
 }
 
 .mykola-rating-aperture::after {
-  inset: 1px 2px;
+  inset: 1px 0;
   border-radius: inherit;
   background:
-    radial-gradient(ellipse 7% 110% at var(--rating-red-position, 0%) 50%,
+    radial-gradient(ellipse 9% 120% at clamp(9px, var(--rating-red-position, 0%), calc(100% - 9px)) 50%,
       var(--rating-red-core, transparent), transparent),
-    radial-gradient(ellipse 11% 120% at var(--rating-gold-position, 50%) 50%,
+    radial-gradient(ellipse 12% 130% at clamp(9px, var(--rating-gold-position, 50%), calc(100% - 9px)) 50%,
       var(--rating-gold-core, transparent), transparent),
-    radial-gradient(ellipse 9% 110% at var(--rating-green-position, 100%) 50%,
+    radial-gradient(ellipse 10% 120% at clamp(9px, var(--rating-green-position, 100%), calc(100% - 9px)) 50%,
       var(--rating-green-core, transparent), transparent);
 }
 
@@ -2680,7 +2680,7 @@ body {
 }
 
 .mykola-rating-slider::-webkit-slider-runnable-track {
-  height: 8px;
+  height: 6px;
   background: transparent;
 }
 
@@ -2688,7 +2688,7 @@ body {
   -webkit-appearance: none;
   width: 18px;
   height: 18px;
-  margin-top: -5px;
+  margin-top: -6px;
   border: 1px solid rgba(244, 244, 244, 0.72);
   border-radius: 50%;
   background: #292723;
@@ -2699,7 +2699,7 @@ body {
 
 .mykola-rating-slider::-moz-range-track,
 .mykola-rating-slider::-moz-range-progress {
-  height: 8px;
+  height: 6px;
   background: transparent;
 }
 
@@ -2733,7 +2733,10 @@ body {
 }
 
 .mykola-rating-labels span {
-  text-shadow: 0 0 8px var(--rating-label-light, transparent);
+  color: var(--rating-label-ink, rgba(244, 244, 244, 0.72));
+  text-shadow:
+    0 0 7px var(--rating-label-light, transparent),
+    0 0 14px var(--rating-label-wash, transparent);
 }
 
 .rating-label-ok {

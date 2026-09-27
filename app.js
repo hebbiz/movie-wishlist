@@ -5076,12 +5076,12 @@ function wireRatingSlider(row) {
     block.style.setProperty("--rating-red-position", percent(position + 0.015));
     block.style.setProperty("--rating-gold-position", percent(position - 0.025));
     block.style.setProperty("--rating-green-position", percent(position));
-    block.style.setProperty("--rating-red-halo", color(red, 0.22 * redWeight));
-    block.style.setProperty("--rating-gold-halo", color(gold, 0.20 * goldWeight));
-    block.style.setProperty("--rating-green-halo", color(green, 0.20 * greenWeight));
-    block.style.setProperty("--rating-red-core", color(red, 0.60 * redWeight));
-    block.style.setProperty("--rating-gold-core", color(gold, 0.56 * goldWeight));
-    block.style.setProperty("--rating-green-core", color(green, 0.55 * greenWeight));
+    block.style.setProperty("--rating-red-halo", color(red, 0.32 * redWeight));
+    block.style.setProperty("--rating-gold-halo", color(gold, 0.25 * goldWeight));
+    block.style.setProperty("--rating-green-halo", color(green, 0.26 * greenWeight));
+    block.style.setProperty("--rating-red-core", color(red, 0.72 * redWeight));
+    block.style.setProperty("--rating-gold-core", color(gold, 0.64 * goldWeight));
+    block.style.setProperty("--rating-green-core", color(green, 0.64 * greenWeight));
 
     const first = position <= 0.5 ? red : gold;
     const second = position <= 0.5 ? gold : green;
@@ -5091,12 +5091,22 @@ function wireRatingSlider(row) {
     );
     slider.style.setProperty("--rating-thumb-light", color(current, 0.28));
 
+    const labelTints = [
+      [226, 166, 160],
+      [235, 210, 154],
+      [190, 220, 192]
+    ];
+
     [0, 0.36, 1].forEach((anchor, index) => {
-      const proximity = Math.max(0, 1 - Math.abs(position - anchor) / 0.18);
-      labels[index].style.setProperty(
-        "--rating-label-light",
-        color(current, 0.42 * proximity)
+      const proximity = Math.max(0, 1 - Math.abs(position - anchor) / 0.23);
+      const tint = labelTints[index];
+      const ink = tint.map((channel) =>
+        Math.round(186 + (channel - 186) * 0.75 * proximity)
       );
+
+      labels[index].style.setProperty("--rating-label-ink", `rgb(${ink.join(", ")})`);
+      labels[index].style.setProperty("--rating-label-light", color(tint, 0.55 * proximity));
+      labels[index].style.setProperty("--rating-label-wash", color(tint, 0.23 * proximity));
     });
   }
 
