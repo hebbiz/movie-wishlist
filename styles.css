@@ -2616,83 +2616,108 @@ body {
   margin: 14px 0 16px;
 }
 
+.mykola-rating-stage {
+  position: relative;
+}
+
+.mykola-rating-aperture {
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 6px;
+  transform: translateY(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  background: #0b0b0b;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.mykola-rating-aperture::before,
+.mykola-rating-aperture::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.mykola-rating-aperture::before {
+  inset: -7px 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 13% 85% at clamp(9px, var(--rating-red-position, 0%), calc(100% - 9px)) 50%,
+      var(--rating-red-halo, transparent), transparent),
+    radial-gradient(ellipse 17% 100% at clamp(9px, var(--rating-gold-position, 50%), calc(100% - 9px)) 50%,
+      var(--rating-gold-halo, transparent), transparent),
+    radial-gradient(ellipse 14% 90% at clamp(9px, var(--rating-green-position, 100%), calc(100% - 9px)) 50%,
+      var(--rating-green-halo, transparent), transparent);
+  filter: blur(5px);
+}
+
+.mykola-rating-aperture::after {
+  inset: 1px 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 9% 120% at clamp(9px, var(--rating-red-position, 0%), calc(100% - 9px)) 50%,
+      var(--rating-red-core, transparent), transparent),
+    radial-gradient(ellipse 12% 130% at clamp(9px, var(--rating-gold-position, 50%), calc(100% - 9px)) 50%,
+      var(--rating-gold-core, transparent), transparent),
+    radial-gradient(ellipse 10% 120% at clamp(9px, var(--rating-green-position, 100%), calc(100% - 9px)) 50%,
+      var(--rating-green-core, transparent), transparent);
+}
+
 .mykola-rating-slider {
-  --rating-progress: 47.36%;
-
+  position: relative;
+  z-index: 1;
+  display: block;
   width: 100%;
-  height: 28px;
-
+  height: 32px;
   padding: 0;
   margin: 0;
-
   border: none;
-  border-radius: 999px;
-
   background: transparent;
-
   appearance: none;
   -webkit-appearance: none;
-
   cursor: pointer;
 }
 
-/* Chrome / Safari */
 .mykola-rating-slider::-webkit-slider-runnable-track {
-  height: 3px;
-  border-radius: 999px;
-
-  background: linear-gradient(
-    to right,
-    #d6b25e 0%,
-    #d6b25e var(--rating-progress),
-    rgba(255,255,255,0.18) var(--rating-progress),
-    rgba(255,255,255,0.18) 100%
-  );
+  height: 6px;
+  background: transparent;
 }
 
 .mykola-rating-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-
   width: 18px;
   height: 18px;
-
-  margin-top: -7px;
-
+  margin-top: -6px;
+  border: 1px solid rgba(244, 244, 244, 0.72);
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.28);
-
-  background: #d6b25e;
-
+  background: #292723;
   box-shadow:
-    0 2px 8px rgba(0,0,0,0.45),
-    0 0 0 4px rgba(214,178,94,0.12);
+    0 0 0 3px rgba(17, 17, 17, 0.65),
+    0 0 8px var(--rating-thumb-light, transparent);
 }
 
-/* Firefox */
-.mykola-rating-slider::-moz-range-track {
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
-}
-
+.mykola-rating-slider::-moz-range-track,
 .mykola-rating-slider::-moz-range-progress {
-  height: 3px;
-  border-radius: 999px;
-  background: #d6b25e;
+  height: 6px;
+  background: transparent;
 }
 
 .mykola-rating-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
-
+  border: 1px solid rgba(244, 244, 244, 0.72);
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.28);
-
-  background: #d6b25e;
-
+  background: #292723;
   box-shadow:
-    0 2px 8px rgba(0,0,0,0.35),
-    0 0 0 4px rgba(214,178,94,0.12);
+    0 0 0 3px rgba(17, 17, 17, 0.65),
+    0 0 8px var(--rating-thumb-light, transparent);
+}
+
+.mykola-rating-slider:focus-visible {
+  outline: 2px solid #d6b25e;
+  outline-offset: 3px;
+  border-radius: 999px;
 }
 
 .mykola-rating-labels {
@@ -2707,10 +2732,45 @@ body {
   color: rgba(244,244,244,0.72);
 }
 
+.mykola-rating-labels span {
+  color: var(--rating-label-ink, rgba(244, 244, 244, 0.72));
+  text-shadow:
+    0 0 7px var(--rating-label-light, transparent),
+    0 0 14px var(--rating-label-wash, transparent);
+}
+
 .rating-label-ok {
   position: absolute;
   left: 36%;
   transform: translateX(-50%);
+}
+
+@media (max-width: 600px) {
+  .mykola-rating-labels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 4px;
+  }
+
+  .mykola-rating-labels > span:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .mykola-rating-labels > span:last-child {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .rating-label-ok {
+    position: relative;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    left: 36%;
+    width: max-content;
+    white-space: nowrap;
+  }
 }
 
 .mykola-rating-note {
