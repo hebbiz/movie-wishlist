@@ -5040,7 +5040,10 @@ function createRatingSliderHtml(value = 10) {
       </div>
 
       <div class="mykola-rating-labels">
-        <span>Ну, таке…</span>
+        <span class="rating-label-low">
+          <span class="rating-label-low-full">Ну, таке…</span>
+          <span class="rating-label-low-short" aria-hidden="true">Таке…</span>
+        </span>
         <span class="rating-label-ok">Непогано</span>
         <span>Шедевр</span>
       </div>
@@ -5054,7 +5057,7 @@ function wireRatingSlider(row) {
 
   if (!slider || !block) return;
 
-  const labels = block.querySelectorAll(".mykola-rating-labels span");
+  const labels = block.querySelectorAll(".mykola-rating-labels > span");
   const red = [188, 74, 72];
   const gold = [214, 178, 94];
   const green = [79, 154, 98];
