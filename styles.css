@@ -877,6 +877,10 @@ input[readonly],
   cursor: not-allowed;
 }
 
+select.readonly-field:disabled {
+  opacity: 1;
+}
+
 .checkbox {
   display: flex;
   align-items: center;
