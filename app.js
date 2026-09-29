@@ -802,6 +802,9 @@ function getOwnedGroupTypes() {
 }
 
 function renderGroupTypeOptions() {
+  groupTypeInput.disabled = false;
+  groupTypeInput.classList.remove("readonly-field");
+
   const ownedTypes = getOwnedGroupTypes();
 
   const availableTypes = groupTypes.filter((type) => {
@@ -820,6 +823,21 @@ function renderGroupTypeOptions() {
   });
 
   return availableTypes;
+}
+
+function renderLockedGroupType(groupType) {
+  groupTypeInput.innerHTML = "";
+
+  groupTypes.forEach((type) => {
+    const option = document.createElement("option");
+    option.value = type.value;
+    option.textContent = type.label;
+    groupTypeInput.appendChild(option);
+  });
+
+  groupTypeInput.value = groupType;
+  groupTypeInput.disabled = true;
+  groupTypeInput.classList.add("readonly-field");
 }
 
 async function loadCurrentGroup() {
@@ -901,7 +919,7 @@ function renderGroupSettings() {
 
   groupSettingsName.innerHTML = `
     <span class="group-name-text">
-      ${getGroupTypeNominativeLabel(currentGroup.type)} ${currentGroup.name}
+      ${getGroupTypeNominativeLabel(currentGroup.type)} ${escapeHtml(currentGroup.name)}
     </span>
 
     <span class="group-current-badge">
@@ -1023,6 +1041,37 @@ function openCreateGroupView() {
   });
 }
 
+function openEditGroupView() {
+  if (!currentGroup || !isOwner()) {
+    showAccessDenied(accessMessages.editGroup);
+    return;
+  }
+
+  editingGroupId = currentGroup.id;
+
+  groupFormTitle.textContent = "Редагувати групу";
+  saveGroupButton.textContent = "Зберегти зміни";
+
+  renderLockedGroupType(currentGroup.type);
+  groupNameInput.value = currentGroup.name || "";
+
+  mainView.classList.remove("active");
+  mykolaView.classList.remove("active");
+  groupSettingsView.classList.remove("active");
+  groupFormView.classList.add("active");
+
+  groupSelectorDropdown.style.display = "none";
+  groupInfoMenuDropdown.style.display = "none";
+
+  window.scrollTo({
+    top: groupFormView.offsetTop - 20,
+    behavior: "smooth",
+  });
+
+  groupNameInput.focus();
+  groupNameInput.select();
+}
+
 function updateCreateGroupButtonVisibility() {
   const ownedTypes = getOwnedGroupTypes();
   const hasAvailableTypes = groupTypes.some((type) => {
@@ -1033,6 +1082,7 @@ function updateCreateGroupButtonVisibility() {
 }
 
 function backToGroupSettingsView() {
+  editingGroupId = null;
   groupFormView.classList.remove("active");
   groupSettingsView.classList.add("active");
 
@@ -1060,8 +1110,65 @@ groupForm.addEventListener("submit", async (event) => {
 
   const groupType = groupTypeInput.value;
   const groupName = groupNameInput.value.trim();
+  const isEditingGroup = Boolean(editingGroupId);
 
-  if (!groupType || !groupName) {
+  if (!groupName) {
+    alert(isEditingGroup
+      ? "Вкажіть назву групи."
+      : "Вкажіть тип і назву групи.");
+    return;
+  }
+
+  if (isEditingGroup) {
+    if (!currentGroup || editingGroupId !== currentGroup.id || !isOwner()) {
+      showAccessDenied(accessMessages.editGroup);
+      return;
+    }
+
+    saveGroupButton.disabled = true;
+    saveGroupButton.textContent = "Зберігаю...";
+
+    try {
+      const { data: renamedGroup, error: renameError } =
+        await supabaseClient
+          .rpc("rename_owned_group", {
+            p_group_id: editingGroupId,
+            p_name: groupName,
+          })
+          .single();
+
+      if (renameError) {
+        alert(
+          "Помилка перейменування групи\n\n" +
+          "Message: " + renameError.message
+        );
+        return;
+      }
+
+      currentGroup = renamedGroup;
+
+      await loadCurrentUserGroups();
+
+      renderCurrentGroupInfo();
+      renderGroupSettings();
+      renderOtherGroups();
+
+      groupForm.reset();
+      editingGroupId = null;
+      backToGroupSettingsView();
+
+      alert("Назву групи змінено.");
+    } finally {
+      saveGroupButton.disabled = false;
+      saveGroupButton.textContent = editingGroupId
+        ? "Зберегти зміни"
+        : "Створити групу";
+    }
+
+    return;
+  }
+
+  if (!groupType) {
     alert("Вкажіть тип і назву групи.");
     return;
   }
@@ -1497,7 +1604,7 @@ groupInfoMenuButton.addEventListener("click", (event) => {
 
 editGroupInfoButton.addEventListener("click", () => {
   groupInfoMenuDropdown.style.display = "none";
-  alert("Редагування групи додамо наступним кроком.");
+  openEditGroupView();
 });
 
 groupMembersList.addEventListener("click", async (event) => {
@@ -1867,6 +1974,9 @@ const accessMessages = {
 
   invite:
     "Адміністратор обмежив вашу можливість запрошувати користувачів.",
+
+  editGroup:
+    "Лише власник може редагувати цю групу.",
 };
 
 async function loadCurrentRole() {
