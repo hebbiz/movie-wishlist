@@ -1067,9 +1067,6 @@ function openEditGroupView() {
     top: groupFormView.offsetTop - 20,
     behavior: "smooth",
   });
-
-  groupNameInput.focus();
-  groupNameInput.select();
 }
 
 function updateCreateGroupButtonVisibility() {
