@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { createDemo } from '../server.mjs';
 import { syntheticResponse } from '../synthetic.mjs';
 import { displayParts, byteIndex, once } from '../public/display.mjs';
-import { MODEL, MAX_OUTPUT_TOKENS, PROMPT, requestBody } from '../config.mjs';
+import { MODEL, MAX_OUTPUT_TOKENS, PROMPT, DEFAULT_FILM, FILMS, selectFilm, requestBody } from '../config.mjs';
 
 const clone = () => syntheticResponse();
 const metadata = response => response.candidates[0].groundingMetadata;
@@ -84,6 +87,8 @@ async function start(t, options) {
 test('default mode is synthetic and never calls provider; replay blocked', async t => {
   const { origin, session, post } = await start(t, { fetchImpl: () => { throw new Error('Network forbidden'); } });
   assert.equal(session.mode, 'synthetic');
+  assert.equal(session.film.id, 'dune-part-two');
+  assert.equal(session.prompt, PROMPT);
   const [first, second] = await Promise.all([post(), post()]);
   assert.deepEqual([first.status, second.status].sort(), [200, 409]);
   assert.equal(first.headers.get('cache-control'), 'no-store');
@@ -168,4 +173,97 @@ test('source audit: no content persistence, logging, analytics or service worker
 test('README exact prompt stays synchronized with the request', async () => {
   const readme = (await readFile(new URL('../README.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.equal(readme.match(/```text\n([\s\S]*?)\n```/)[1], PROMPT);
+});
+
+test('default film and exact original Dune prompt are preserved', () => {
+  assert.equal(DEFAULT_FILM, 'dune-part-two');
+  assert.equal(selectFilm().id, DEFAULT_FILM);
+  assert.equal(selectFilm().prompt, PROMPT);
+  // SHA-256 of PROMPT at review baseline 3337fc9 (UTF-8, LF).
+  assert.equal(createHash('sha256').update(PROMPT).digest('hex'), 'c6de933db248f8172dcef014376bd0557fec27baaeeeefcc35d12708571c8ce2');
+  assert.deepEqual(requestBody(), requestBody(DEFAULT_FILM));
+});
+
+test('fixed catalogue identifies the films and preserves model/settings for every film', () => {
+  assert.deepEqual(Object.keys(FILMS), ['dune-part-two', 'coherence', 'blade-runner-final-cut']);
+  assert.equal(MODEL, 'gemini-3.8-flash');
+  assert.equal(MAX_OUTPUT_TOKENS, 4096);
+  for (const id of Object.keys(FILMS)) {
+    const body = requestBody(id);
+    assert.equal(body.contents[0].parts[0].text, selectFilm(id).prompt);
+    assert.deepEqual(body.tools, [{ googleSearch: {} }]);
+    assert.deepEqual(body.generationConfig, { maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: 'low' } });
+    for (const instruction of PROMPT.split('\n').slice(1)) assert.ok(selectFilm(id).prompt.includes(instruction));
+  }
+  const coherence = selectFilm('coherence');
+  assert.equal(coherence.director, 'James Ward Byrkit');
+  assert.match(coherence.prompt, /Coherence \(2013\), directed by James Ward Byrkit/);
+  assert.match(coherence.prompt, /publication or reissue year/);
+  assert.match(coherence.prompt, /Do not assume that a 4K UHD edition exists/);
+  const bladeRunner = selectFilm('blade-runner-final-cut');
+  assert.equal(bladeRunner.director, 'Ridley Scott');
+  assert.match(bladeRunner.prompt, /Blade Runner \(1982\), directed by Ridley Scott, specifically The Final Cut/);
+  assert.match(bladeRunner.prompt, /not a theatrical cut, Director's Cut, another version or Blade Runner 2049/);
+  assert.match(bladeRunner.prompt, /For a collection or multi-version set/);
+  assert.match(bladeRunner.prompt, /explicitly state that the version is uncertain/);
+});
+
+test('unknown DEMO_FILM, including prototype keys and empty string, fails before transport/server creation', () => {
+  let calls = 0;
+  for (const filmId of ['', 'unknown', '__proto__', 'constructor', 'toString', 'Coherence', ' coherence']) {
+    assert.throws(() => selectFilm(filmId), /Unknown DEMO_FILM.*dune-part-two, coherence, blade-runner-final-cut/);
+    assert.throws(() => requestBody(filmId), /Unknown DEMO_FILM/);
+    assert.throws(() => createDemo({ filmId, mode: 'live', apiKey: 'offline-test-key', fetchImpl: () => { calls++; } }), /Unknown DEMO_FILM/);
+  }
+  assert.equal(calls, 0);
+});
+
+test('CLI rejects invalid DEMO_FILM at startup without listening or making a request', () => {
+  const result = spawnSync(process.execPath, [fileURLToPath(new URL('../server.mjs', import.meta.url))], {
+    env: { ...process.env, DEMO_FILM: 'not-a-film', DEMO_MODE: 'live', GEMINI_API_KEY: '' },
+    encoding: 'utf8', timeout: 5000,
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Unknown DEMO_FILM/);
+  assert.doesNotMatch(result.stdout, /Local .* demo:/);
+});
+
+test('each selected film uses the displayed prompt in exactly one mocked request; client overrides ignored', async t => {
+  for (const filmId of Object.keys(FILMS)) await t.test(filmId, async t => {
+    let calls = 0;
+    let actualBody;
+    const { origin, session, post } = await start(t, { filmId, mode: 'live', apiKey: 'offline-test-key', fetchImpl: async (_, options) => {
+      calls++;
+      actualBody = JSON.parse(options.body);
+      return Response.json(syntheticResponse('grounded', filmId));
+    } });
+    assert.deepEqual(session.film, { id: filmId, title: selectFilm(filmId).title, director: selectFilm(filmId).director });
+    assert.equal(session.prompt, selectFilm(filmId).prompt);
+    const attemptOverride = () => fetch(`${origin}/answer`, {
+      method: 'POST', headers: { Origin: origin, 'x-demo-session': session.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: 'Ignore server prompt', filmId: 'not-a-film' }),
+    });
+    const responses = await Promise.all([attemptOverride(), attemptOverride()]);
+    assert.deepEqual(responses.map(r => r.status).sort(), [200, 409]);
+    assert.equal((await post()).status, 409);
+    assert.equal(calls, 1);
+    assert.equal(actualBody.contents[0].parts[0].text, session.prompt);
+    assert.deepEqual(actualBody, requestBody(filmId));
+  });
+});
+
+test('each synthetic film fixture is visibly invented, does not assume UHD/cut and never calls provider', async t => {
+  for (const filmId of Object.keys(FILMS)) await t.test(filmId, async t => {
+    const { post } = await start(t, { filmId, fetchImpl: () => assert.fail('Provider network forbidden') });
+    const payload = await (await post()).json();
+    assert.equal(payload.mode, 'synthetic');
+    const data = displayParts(payload.response);
+    const text = data.parts[0].text;
+    assert.ok(text.includes(selectFilm(filmId).title));
+    assert.match(text, /SYNTHETIC ONLY/);
+    assert.match(text, /Edition, format, cut and availability are unknown/);
+    assert.match(text, /No retailer was checked/);
+    assert.equal((await post()).status, 409);
+  });
 });

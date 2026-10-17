@@ -15,6 +15,8 @@ try {
   const response = await fetch('/session', { cache: 'no-store', signal: lifetime.signal });
   if (!response.ok) throw new Error('Local session unavailable. Reload the page.');
   const session = await response.json();
+  el('film').textContent = `A physical edition of ${session.film.title}`;
+  el('director').textContent = `Director: ${session.film.director} · DEMO_FILM: ${session.film.id}`;
   el('mode').textContent = session.mode === 'synthetic'
     ? 'SYNTHETIC MODE — invented display fixture. No Gemini request or retailer check.'
     : 'LIVE MODE — clicking sends one billable Gemini API request. No automatic retries.';
