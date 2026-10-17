@@ -5,7 +5,7 @@ Local, display-only Discovery experiment; not a Movie Wishlist feature. Based on
 The separate offline harness in [PR #173](https://github.com/hebbiz/movie-wishlist/pull/173)
 is neither changed nor imported. Three server-selected fixed scenarios are
 available; no arbitrary film input or chat UI is added. This iteration makes no
-live API calls and saves no live answers. Owner-reported Dune validation is
+live API calls and saves no live answers. Owner-reported scenario validation is
 recorded separately below, not as general accuracy evidence.
 
 ## Setup and launch
@@ -167,8 +167,9 @@ analytics is installed by this demo.
 Empty/ungrounded, blocked/truncated, non-text or unsupported citation/snippet
 formats produce a visible explanation **instead of a partial answer**. There
 is no uncited fallback, continuation, retry or second call. Real response
-compatibility and actual Google chip appearance are not independently tested
-by this iteration; the two new scenarios have no reported live validation.
+compatibility and actual Google chip appearance have not been independently
+tested by the implementation agent. The limited owner-reported offer checks
+below do not establish general response accuracy or display compatibility.
 If a future snippet requires blocked active content, this demo will refuse it
 and needs review, not relaxed security or a home-made replacement.
 
@@ -209,25 +210,57 @@ unchanged suggestion target/CSS, narrow layout, repeat clicks, empty storage
 and reload. Without `PLAYWRIGHT_MODULE_PATH`, this optional suite is skipped.
 It does not verify retailer pages or Google's live chip rendering.
 
-Iteration checks (October 18, 2026): Node offline suite **33 passed**; headless
+Implementation checks at `61ef317` (October 18, 2026): Node offline suite
+**33 passed**; headless
 installed Edge browser suite **11 passed**, no skips. The existing checks are
 retained, with catalogue/default/invalid-startup tests, exact Dune prompt hash,
 all-film synthetic displays and mocked requests matching the pre-click prompt,
 fixed generation settings and rejection of browser overrides. No live API call
-was made by this iteration. No screenshot or evidence archive was added.
+was made by the implementation agent during that iteration. No screenshot or
+evidence archive was added.
 Synthetic fixture markup is
 invented, not an archived provider response. No public evaluation report or
 accuracy conclusions are produced. Production files and PR #173 stay unchanged.
 
-## Owner validation and next manual checks
+## Owner-reported validation
 
-Owner-reported context for this iteration: the owner performed **two manual
-live Dune requests** and confirmed the core data of the HMV offer. Technical
-specification completeness differed between the answers. This is owner
-validation of one scenario, not an independently repeated test, a record of
-every claimed specification, proof of general accuracy or validation of the
-two new film scenarios. No live answer, screenshot or evidence archive is
-included here.
+The following validation was performed and reported by the owner, **not the
+implementation agent**. These are reports of manual checks, not independently
+repeated tests or an automated evaluation.
+
+| Scenario | Live requests | Owner-confirmed outcome |
+| --- | --- | --- |
+| Dune: Part Two | 2 | Core data of the available HMV offer confirmed by the owner. |
+| Coherence | 1 | Rarewaves Blu-ray edition data and Sold Out status confirmed by the owner. |
+| Blade Runner — Final Cut | 1 | Data of the available Rarewaves 4K + Blu-ray offer confirmed by the owner. |
+
+Limits of this evidence:
+
+- **Three scenarios and four requests**, not an assessment of general accuracy.
+- Negative HMV/Amazon search results for Coherence were not independently
+  confirmed. Failure to find an offer is not proof of unavailability.
+- Dune technical-specification completeness differed between the two answers.
+- Latency, token usage and actual API costs were not measured.
+- Owner confirmation is limited to the outcomes above, not every generated
+  claim, every citation or every disc-specific characteristic.
+
+MW-FUT-01 remains **Discovery**. This documentation-only update makes no API
+calls and includes no live response text, screenshots or evidence archive.
+The earlier offline/browser results above are historical implementation checks,
+not new tests or independent live validation performed for this update.
+
+## Proposed next iteration — not implemented
+
+The following are proposed refinements only. **Prompts and runtime are unchanged**
+by this documentation update; these are not newly implemented guarantees:
+
+- Do not restrict Amazon offers to direct/fulfilled listings only.
+- Do not describe a sold-out item's displayed price as historical without
+  supporting evidence.
+- Distinguish UHD disc characteristics from those of the bundled Blu-ray.
+- Check that citations refer to the exact edition being described.
+
+## Next manual checks
 
 For an explicitly owner-run request, check without exporting/archiving it:
 
