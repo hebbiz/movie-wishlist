@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { MODEL, MAX_OUTPUT_TOKENS, selectScenario, requestBody } from './config.mjs';
 import { syntheticResponse } from './synthetic.mjs';
+import { networkConfig } from './network.mjs';
 
 const assets = new Map([
   ['/', ['public/index.html', 'text/html; charset=utf-8']],
@@ -14,7 +15,8 @@ const assets = new Map([
 const csp = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src https: data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 // Dependency injection is for offline tests; the executable uses only built-in fetch.
-export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, discovery, amazonRegion, apiKey = '', fetchImpl = globalThis.fetch } = {}) {
+export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, discovery, amazonRegion, apiKey = '', fetchImpl = globalThis.fetch, ...networkOptions } = {}) {
+  const network = networkConfig(networkOptions);
   const selection = selectScenario({ filmId, discovery, amazonRegion });
   const { film } = selection; // Resolve once at startup, never from browser input.
   const options = { discovery: selection.discovery, amazonRegion };
@@ -24,7 +26,7 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
   // Tokens contain no content. Never retain prompts/responses in session state.
   const sessions = new Map();
   const server = createServer(async (req, res) => {
-    const origin = `http://127.0.0.1:${server.address().port}`;
+    const origin = `http://${network.bindAddress}:${server.address().port}`;
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Security-Policy', csp);
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -34,7 +36,13 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
       res.end(JSON.stringify(data));
     };
     // Exact Host and Origin checks also reject DNS rebinding and cross-site POSTs.
-    if (req.headers.host !== new URL(origin).host) return send(403, { error: 'Open the printed 127.0.0.1 URL.' });
+    if (req.headers.host !== new URL(origin).host) return send(403, { error: 'Open the exact printed demo URL.' });
+    if (req.headers.origin !== undefined && req.headers.origin !== origin) return send(403, { error: 'Same-origin requests only.' });
+    if (!network.authorized(req.headers.authorization)) {
+      req.resume();
+      res.setHeader('WWW-Authenticate', 'Basic realm="MW-FUT-01 local demo", charset="UTF-8"');
+      return send(401, { error: 'Authentication required.' });
+    }
     try {
       if (req.method === 'GET' && assets.has(req.url)) {
         const [file, type] = assets.get(req.url);
@@ -90,7 +98,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const mode = process.env.DEMO_MODE || 'synthetic';
   const port = Number(process.env.DEMO_PORT || 4317);
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('DEMO_PORT must be 1024–65535.');
-  const server = createDemo({ mode, filmId: process.env.DEMO_FILM, discovery: process.env.DEMO_DISCOVERY, amazonRegion: process.env.DEMO_AMAZON_REGION, scenario: process.env.DEMO_SYNTHETIC_SCENARIO || 'grounded', apiKey: process.env.GEMINI_API_KEY || '' });
+  const networkOptions = { access: process.env.DEMO_ACCESS, bindIPv4: process.env.DEMO_BIND_IPV4, lanPassword: process.env.DEMO_LAN_PASSWORD || '' };
+  const network = networkConfig(networkOptions);
+  const server = createDemo({ mode, filmId: process.env.DEMO_FILM, discovery: process.env.DEMO_DISCOVERY, amazonRegion: process.env.DEMO_AMAZON_REGION, scenario: process.env.DEMO_SYNTHETIC_SCENARIO || 'grounded', apiKey: process.env.GEMINI_API_KEY || '', ...networkOptions });
   server.on('error', () => { console.error('Demo could not listen. Check DEMO_PORT.'); process.exitCode = 1; });
-  server.listen(port, '127.0.0.1', () => console.log(`Local ${mode} demo: http://127.0.0.1:${port} — ${MODEL}, output limit ${MAX_OUTPUT_TOKENS}. No request until button click.`));
+  server.listen(port, network.bindAddress, () => console.log(`Local ${mode} demo: http://${network.bindAddress}:${port} — ${MODEL}, output limit ${MAX_OUTPUT_TOKENS}. No request until button click.`));
 }

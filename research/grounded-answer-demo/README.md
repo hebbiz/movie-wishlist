@@ -13,6 +13,13 @@ or imported. This iteration makes no live API calls.
 
 ## Setup and server switches
 
+For opt-in trusted-home-LAN Safari testing and detached Windows process helpers,
+see the [Windows + iPhone guide](docs/iphone-windows.md). It has separate one-time
+owner setup and daily Termius/Safari steps. The localhost workflow below remains
+the default. Basic Auth over HTTP is not encrypted and is **not** suitable for
+public networks or internet exposure. Real iPhone/SSH-disconnect validation is
+pending; Windows parent-exit survival is a separate, narrower test.
+
 Node.js 24 (tested with 24.19.0), modern desktop browser, no npm install/build
 or new dependencies. Run from the repository root. No `.env` file is loaded.
 
@@ -24,6 +31,9 @@ or new dependencies. Run from the repository root. No `.env` file is loaded.
 | `DEMO_DISCOVERY` | `physical` (default), `digital-ua` |
 | `DEMO_AMAZON_REGION` | Optional, physical only: `us`, `uk`, `de`, `it`; unset for multi-store search |
 | `DEMO_PORT` | Default 4317, range 1024–65535 |
+| `DEMO_ACCESS` | `localhost` (default) or explicit `lan` |
+| `DEMO_BIND_IPV4` | LAN only: specific assigned private IPv4, never 0.0.0.0 |
+| `DEMO_LAN_PASSWORD` | Required server-side LAN Basic Auth password; username `demo`; helpers prompt secretly |
 | `DEMO_SYNTHETIC_SCENARIO` | `grounded` (default), `api-error`, `empty`, `ungrounded`; synthetic error/display tests only |
 
 Unset means absent, not an empty/unknown value. Invalid film/discovery/region
@@ -204,6 +214,10 @@ Google; no Supabase, account data or movie lists. The response is held only in
 active request/browser memory and DOM, with no-store headers. No logs of answers,
 files, browser storage, cache, database, service worker, analytics or archive.
 Provider/browser/OS handling outside the app is not a non-retention promise.
+Windows helpers save only service metadata in ignored `.run/instance.json`,
+not response content, credentials or environment. LAN Auth protects all routes;
+the account password is entered by the owner into Safari's native auth prompt,
+not returned as session data. Use a separate LAN password, never the API key.
 
 The complete visible answer remains in order as plain text (Markdown syntax
 is not executed HTML), with citation markers using validated Part-local UTF-8
@@ -254,3 +268,24 @@ viewing availability, localization, edition or stock**.
 Current test results are reported in the PR/final handoff after execution.
 Historical tests and owner outcomes remain in the separate checkpoint record.
 No live response, screenshot, evaluation report or evidence archive is added.
+
+LAN/auth and optional mobile-viewport tests (loopback/mocks; mobile is not a real
+iPhone check):
+
+```powershell
+node --test research/grounded-answer-demo/test/network.test.mjs
+# With PLAYWRIGHT_MODULE_PATH already set:
+node --test research/grounded-answer-demo/test/mobile.test.mjs
+# Windows-only helper integration, isolated temporary PoC copy:
+.\research\grounded-answer-demo\test\windows.test.ps1
+```
+
+The integration test starts and exits a separate PowerShell parent, checks that
+the demo remains reachable, refuses forged unrelated PID metadata, and verifies
+duplicate-start, restart and safe stop. It does not install/start SSH or change
+firewall/services. Optional `-LanIPv4 <verified-Windows-IP>` tests same-host LAN
+with a public test-only password and a temporary port; no live model calls.
+WebKit is skipped explicitly when its binary is missing; nothing is downloaded.
+Set `DEMO_TEST_LAN_IPV4` to this Windows host's verified assigned private IPv4
+only to opt into the same-host LAN Basic Auth browser test (temporary port,
+public test-only password). Without it that extra mobile subtest is skipped.
