@@ -1,0 +1,53 @@
+[
+  {
+    "id": "dune-part-two",
+    "title": "Dune: Part Two",
+    "year": 2024,
+    "tmdbId": 693134,
+    "imdbId": "tt15239678",
+    "director": "Denis Villeneuve",
+    "cast": ["Timothée Chalamet", "Zendaya"],
+    "plotHint": "Paul and Chani join the Fremen on Arrakis.",
+    "requestedCut": null,
+    "identityEvidence": [
+      {"url": "https://www.themoviedb.org/movie/693134-dune-part-two", "kind": "page_content", "note": "TMDb ID, title, 2024, director and cast observed in retrieved page."},
+      {"url": "https://www.imdb.com/title/tt15239678/", "kind": "search_result", "note": "IMDb search result matches title, 2024 and cast; direct page retrieval failed."}
+    ],
+    "identityCheckedAt": "2026-10-17",
+    "crosswalkApiVerified": false
+  },
+  {
+    "id": "coherence",
+    "title": "Coherence",
+    "year": 2013,
+    "tmdbId": 220289,
+    "imdbId": "tt2866360",
+    "director": "James Ward Byrkit",
+    "cast": ["Emily Baldoni", "Nicholas Brendon"],
+    "plotHint": "Friends at a dinner party experience reality changes during a comet passage.",
+    "requestedCut": null,
+    "identityEvidence": [
+      {"url": "https://www.themoviedb.org/movie/220289-coherence", "kind": "page_content", "note": "TMDb title uses 2013; page also shows a 2014 regional release. Director, cast and plot agree."},
+      {"url": "https://www.imdb.com/title/tt2866360/?bypassRefViewPref=1", "kind": "search_result", "note": "IMDb result includes title, 2013, director and dinner/comet plot."}
+    ],
+    "identityCheckedAt": "2026-10-17",
+    "crosswalkApiVerified": false
+  },
+  {
+    "id": "blade-runner",
+    "title": "Blade Runner",
+    "year": 1982,
+    "tmdbId": 78,
+    "imdbId": "tt0083658",
+    "director": "Ridley Scott",
+    "cast": ["Harrison Ford", "Rutger Hauer"],
+    "plotHint": "Deckard hunts replicants in Los Angeles.",
+    "requestedCut": "The Final Cut",
+    "identityEvidence": [
+      {"url": "https://www.themoviedb.org/movie/78-blade-runner/cast", "kind": "page_content", "note": "TMDb title, 1982, cast and Ridley Scott director observed."},
+      {"url": "https://www.imdb.com/title/tt0083658/", "kind": "search_result", "note": "IMDb title and 1982 result observed; direct page retrieval failed. ID identifies the film, not a cut or disc edition."}
+    ],
+    "identityCheckedAt": "2026-10-17",
+    "crosswalkApiVerified": false
+  }
+]
