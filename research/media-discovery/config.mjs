@@ -19,6 +19,8 @@ export const CORE_FIELDS = ['movie_identity', 'availability', 'format', 'edition
 export const AVAILABILITY = ['available', 'preorder', 'unavailable', 'unknown'];
 export const PROMPT_VERSION = 'media-discovery-v1';
 export const REVIEW_DATE = '2026-10-17';
+// No environment flag can substitute for the pending retrieval decision.
+export const LIVE_RESEARCH_ENABLED = false;
 export const PRICING = {
   source: 'https://ai.google.dev/gemini-api/docs/pricing',
   checkedAt: REVIEW_DATE,

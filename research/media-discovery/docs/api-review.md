@@ -3,6 +3,11 @@
 Reviewed October 17, 2026. These are documentation observations, not a successful
 API capability probe. Live credentials were absent.
 
+Review correction: live transport is now disabled pending the separate
+[retrieval decision](retrieval-decision.md), in addition to credential/rights
+requirements. Documentation compatibility is not evidence of live field-level
+attribution quality.
+
 | Topic | Decision and primary source |
 | --- | --- |
 | Model | Configure `GEMINI_MODEL=gemini-3.8-flash`. The [model guide](https://ai.google.dev/gemini-api/docs/generate-content/whats-new-gemini-3.8) documents this exact ID and `low` thinking. Older 2.5 models have restricted access for new projects. |
@@ -11,6 +16,22 @@ API capability probe. Live credentials were absent.
 | JSON and tools | [Structured output guide](https://ai.google.dev/gemini-api/docs/generate-content/structured-output) documents Search plus structured output for Gemini 3/4 as a preview capability. Use `generationConfig.responseFormat.text` with MIME type and schema. Local validation remains mandatory. |
 | Parameters | `maxOutputTokens=8192`, `thinkingLevel=low`; no temperature, topP, topK or candidateCount. Actual `modelVersion`, parameters and prompt/schema hashes go in the run artifacts. A differently configured model receives no inherited price estimate. |
 | Usage | [API reference](https://ai.google.dev/api/generate-content) describes `usageMetadata`, including prompt, candidate, thought, tool-use and total tokens. Keep original metadata. Query-array length is reported separately from the unknown actual internal/billed search count. |
+
+## Segment attribution contract
+
+The [Segment reference](https://ai.google.dev/api/generate-content#Segment)
+defines `partIndex` in the parent Content, with byte-based inclusive start and
+exclusive end. The implementation uses UTF-8 bytes, validates decoding and exact
+segment text, and retains the original Part index. It never treats API offsets
+as JavaScript UTF-16 string positions.
+
+The original validated JSON is scanned structurally to map ranges to a specific
+listing/assertion/value. Only an exact atomic range is accepted. Missing or
+invalid offsets, broad supports, duplicate keys, split JSON Parts and unrelated
+text remain unattributed. This deliberately limits coverage: the API may return
+only broad segments, and structured output support does not promise precise
+field citations. Accepted placement provides attribution, not source truth;
+`confirmed` still requires independent human review and relevant context.
 
 ## Pricing snapshot
 

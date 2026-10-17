@@ -37,14 +37,29 @@ export function syntheticResponse(movie) {
         claim('listing_year', '2007', urls.rarewaves, 'Edition/cut year differs; film identity agrees.'),
         claim('availability', 'unknown', null)] },
   ];
-  const document = { movieId: movie.id, listings, checkedSources: [] };
+  return groundedDocument({ movieId: movie.id, listings, checkedSources: [] });
+}
+
+// Deliberately precise synthetic attribution, not a claim that real API responses
+// provide this granularity. Independent serialization builds the fixture offsets.
+export function groundedDocument(document) {
   const text = JSON.stringify(document);
-  const sourceUrls = [...new Set(listings.flatMap(l => l.claims.flatMap(c => c.sourceUrls)))];
+  const sourceUrls = [...new Set(document.listings.flatMap(l => l.claims.flatMap(c => Array.isArray(c.sourceUrls) ? c.sourceUrls : [])))];
+  let cursor = 0;
+  const groundingSupports = document.listings.flatMap(listing => listing.claims.map(assertion => {
+    const serialized = JSON.stringify(assertion);
+    const start = text.indexOf(serialized, cursor);
+    if (start < 0) throw new Error('Synthetic serialization mismatch');
+    cursor = start + serialized.length;
+    return { segment: { partIndex: 0, startIndex: Buffer.byteLength(text.slice(0, start), 'utf8'),
+      endIndex: Buffer.byteLength(text.slice(0, cursor), 'utf8'), text: serialized },
+    groundingChunkIndices: (Array.isArray(assertion.sourceUrls) ? assertion.sourceUrls : []).map(url => sourceUrls.indexOf(url)) };
+  })).filter(s => s.groundingChunkIndices.length);
   return {
     synthetic: true, modelVersion: 'synthetic-no-model',
     candidates: [{ finishReason: 'STOP', content: { parts: [{ text }] }, groundingMetadata: {
       groundingChunks: sourceUrls.map(uri => ({ web: { uri, title: 'SYNTHETIC TEST DATA' } })),
-      groundingSupports: sourceUrls.map((_, i) => ({ segment: { text }, groundingChunkIndices: [i] })),
+      groundingSupports,
       webSearchQueries: [],
     } }],
   };

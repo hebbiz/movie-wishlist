@@ -2,7 +2,7 @@ import { readFile, writeFile, appendFile, mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
-import { PROMPT_VERSION, RESPONSE_SCHEMA, STORES } from './config.mjs';
+import { PROMPT_VERSION, RESPONSE_SCHEMA, STORES, LIVE_RESEARCH_ENABLED } from './config.mjs';
 import { normalize } from './evidence.mjs';
 import { costEstimate, groundedSearch, redact, requestBody } from './gemini.mjs';
 import { syntheticResponse } from './fixtures/synthetic.mjs';
@@ -59,7 +59,8 @@ export async function run(options, env = process.env, { search = groundedSearch 
   const persist = (name, value) => writeFile(join(output, name), json(redact(value, secrets)), { flag: 'wx' });
   const gate = options.mode === 'live' ? !env.GEMINI_API_KEY ? 'missing GEMINI_API_KEY' :
     !env.GEMINI_MODEL ? 'missing GEMINI_MODEL' : !env.GEMINI_GROUNDING_PERMISSION_REF ?
-      'missing GEMINI_GROUNDING_PERMISSION_REF: resolve Google Search research/storage/analysis/display rights first' : null : null;
+      'missing GEMINI_GROUNDING_PERMISSION_REF: resolve Google Search research/storage/analysis/display rights first' :
+      !LIVE_RESEARCH_ENABLED && search === groundedSearch ? 'live research disabled pending retrieval decision and approval' : null : null;
   await persist('manifest.json', { mode: options.mode, selected: selected.map(m => m.id), model,
     transport: search === groundedSearch ? 'gemini-rest' : 'injected-test-transport',
     promptVersion: PROMPT_VERSION, promptSha256: digest(promptTemplate), schemaSha256: digest(json(RESPONSE_SCHEMA)),

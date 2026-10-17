@@ -1,4 +1,5 @@
 import { AVAILABILITY, CORE_FIELDS, STORES, safeUrl, storeUrl, validate } from './config.mjs';
+import { assertionAttributions } from './attribution.mjs';
 
 const known = value => typeof value === 'string' && value.trim() && value !== 'unknown';
 const validTime = value => typeof value === 'string' && Number.isFinite(Date.parse(value));
@@ -21,7 +22,7 @@ export function parseResponse(raw, fixture) {
     if (listing.kind !== STORES[listing.store].kind || !storeUrl(listing.store, listing.url)) throw new Error('Listing outside allowlist/kind');
     if (listing.claims.some(c => !/^[a-z0-9_.-]+$/i.test(c.field))) throw new Error('Invalid claim field');
   }
-  return { document, text, grounding: candidate.groundingMetadata || {} };
+  return { document, text, parts, grounding: candidate.groundingMetadata || {} };
 }
 
 function reviewMatches(review, listing, field, reportedValue, now) {
@@ -37,11 +38,12 @@ function reviewMatches(review, listing, field, reportedValue, now) {
 
 export function normalize(raw, fixture, { retrievedAt = new Date().toISOString(), validationAt = retrievedAt, mode = 'live', reviews = [] } = {}) {
   if (!Array.isArray(reviews)) throw new Error('Reviews must be an array');
-  const { document, grounding } = parseResponse(raw, fixture);
-  const chunks = grounding.groundingChunks || [];
-  const supports = grounding.groundingSupports || [];
+  const { document, text, parts, grounding } = parseResponse(raw, fixture);
+  const chunks = Array.isArray(grounding.groundingChunks) ? grounding.groundingChunks : [];
+  const supports = Array.isArray(grounding.groundingSupports) ? grounding.groundingSupports : [];
+  const attributions = assertionAttributions(parts, text, supports, chunks);
   const queries = Array.isArray(grounding.webSearchQueries) ? grounding.webSearchQueries : null;
-  const listings = document.listings.map(listing => {
+  const listings = document.listings.map((listing, listingIndex) => {
     const fields = [...new Set([...CORE_FIELDS, ...listing.claims.map(c => c.field)])];
     const claims = fields.map(field => {
       const assertions = listing.claims.filter(c => c.field === field);
@@ -50,11 +52,20 @@ export function normalize(raw, fixture, { retrievedAt = new Date().toISOString()
       const sourceUrls = [...new Set(assertions.flatMap(c => c.sourceUrls).filter(u => safeUrl(u)))];
       const matchingReviews = reviews.filter(r => reviewMatches(r, listing, field, reportedValue, validationAt));
       const citationRefs = [];
-      for (let i = 0; i < chunks.length; i++) {
-        const uri = chunks[i]?.web?.uri;
-        if (sourceUrls.includes(uri) && supports.some(s => s.groundingChunkIndices?.includes(i) &&
-          known(reportedValue) && s.segment?.text?.includes(reportedValue))) citationRefs.push(i);
-      }
+      const attributionRefs = [];
+      listing.claims.forEach((assertion, assertionIndex) => {
+        if (assertion.field !== field || !known(assertion.value)) return;
+        for (const match of attributions.get(`${listingIndex}/${assertionIndex}`) || []) {
+          for (const chunkIndex of match.chunkIndices) {
+            const uri = chunks[chunkIndex]?.web?.uri;
+            // No verified cross-edition/source join exists in this PoC.
+            if (!safeUrl(uri) || uri !== listing.url || !assertion.sourceUrls.includes(uri)) continue;
+            if (!citationRefs.includes(chunkIndex)) citationRefs.push(chunkIndex);
+            attributionRefs.push({ assertionIndex, supportIndex: match.supportIndex, chunkIndex,
+              partIndex: match.segment.partIndex, startByte: match.segment.startIndex, endByte: match.segment.endIndex });
+          }
+        }
+      });
       const notes = assertions.map(c => c.note).filter(Boolean);
       const soldOutConflict = field === 'availability' && reportedValue === 'available' &&
         /sold\s*out|out\s*of\s*stock|unavailable/i.test([...notes, ...matchingReviews.map(r => r.excerpt)].join(' '));
@@ -65,7 +76,7 @@ export function normalize(raw, fixture, { retrievedAt = new Date().toISOString()
       if (field === 'availability' && !AVAILABILITY.includes(reportedValue)) confidence = 'unknown';
       return {
         field, value: confidence === 'unknown' ? null : reportedValue, reportedValue,
-        reportedValues: values, assertions,
+        reportedValues: values, assertions, attributionRefs,
         confidence, conflict, sourceUrls: [...new Set([...sourceUrls, ...matchingReviews.map(r => r.sourceUrl)])], citationRefs,
         evidenceNote: [...notes, ...(conflict ? ['Conflicting assertions retained; no value selected.'] : []),
           ...(confidence === 'unknown' ? ['Missing or unsuitable field evidence.'] : []),

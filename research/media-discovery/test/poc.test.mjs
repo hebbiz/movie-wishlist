@@ -7,10 +7,11 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { movies, argumentsFor, tmdbIdentity, run } from '../cli.mjs';
-import { syntheticResponse } from '../fixtures/synthetic.mjs';
+import { syntheticResponse, groundedDocument } from '../fixtures/synthetic.mjs';
 import { normalize, parseResponse } from '../evidence.mjs';
 import { groundedSearch, requestBody, redact, costEstimate } from '../gemini.mjs';
 
+globalThis.fetch = async () => { throw new Error('Unmocked network forbidden in offline tests'); };
 const now = '2026-10-17T20:00:00Z';
 const value = (result, listing, field) => result.listings[listing].claims.find(c => c.field === field);
 const norm = (index, reviews = [], mode = 'offline') => normalize(syntheticResponse(movies[index]), movies[index], { mode, reviews, retrievedAt: now });
@@ -18,10 +19,28 @@ function alter(index, callback) {
   const raw = syntheticResponse(movies[index]);
   const doc = JSON.parse(raw.candidates[0].content.parts[0].text);
   callback(doc);
-  const text = JSON.stringify(doc);
-  raw.candidates[0].content.parts[0].text = text;
-  raw.candidates[0].groundingMetadata.groundingSupports.forEach(s => s.segment.text = text);
-  return raw;
+  return groundedDocument(doc);
+}
+function onlySupport(raw, listingIndex, assertionIndex) {
+  const document = JSON.parse(raw.candidates[0].content.parts[0].text);
+  let ordinal = 0;
+  for (let li = 0; li < document.listings.length; li++) {
+    for (let ai = 0; ai < document.listings[li].claims.length; ai++) {
+      if (!document.listings[li].claims[ai].sourceUrls.length) continue;
+      if (li === listingIndex && ai === assertionIndex) {
+        const support = raw.candidates[0].groundingMetadata.groundingSupports[ordinal];
+        raw.candidates[0].groundingMetadata.groundingSupports = [support];
+        return support;
+      }
+      ordinal++;
+    }
+  }
+  throw new Error('Synthetic support not found');
+}
+function segment(raw, start, end, partIndex = 0) {
+  const text = raw.candidates[0].content.parts[partIndex].text;
+  return { partIndex, startIndex: Buffer.byteLength(text.slice(0, start), 'utf8'),
+    endIndex: Buffer.byteLength(text.slice(0, end), 'utf8'), text: text.slice(start, end) };
 }
 const review = (field, v, extras = {}) => ({ listingId: 'synthetic-uk-stream', field, value: v,
   sourceUrl: 'https://tv.apple.com/gb/synthetic/not-a-film', editionUrl: 'https://tv.apple.com/gb/synthetic/not-a-film',
@@ -43,8 +62,174 @@ test('unsupported source cannot become confirmed or likely', () => {
   assert.equal(claim.confidence, 'unknown');
   assert.equal(claim.value, null);
 });
+test('regression: available does not inherit attribution from a different unavailable edition', () => {
+  const raw = syntheticResponse(movies[0]);
+  raw.candidates[0].groundingMetadata.groundingSupports = [{
+    segment: { text: 'This different edition is unavailable' }, groundingChunkIndices: [0],
+  }];
+  const claim = value(normalize(raw, movies[0]), 0, 'availability');
+  assert.equal(claim.confidence, 'unknown');
+  assert.deepEqual(claim.citationRefs, []);
+});
+test('valid attribution to unavailable in another listing does not support available', () => {
+  const raw = alter(0, doc => { doc.listings[1].claims[1].value = 'unavailable'; });
+  onlySupport(raw, 1, 1);
+  const result = normalize(raw, movies[0]);
+  assert.equal(value(result, 0, 'availability').confidence, 'unknown');
+  assert.equal(value(result, 1, 'availability').citationRefs.length, 1);
+});
+test('equal values in two listings do not share attribution', () => {
+  const raw = alter(0, doc => {
+    const other = structuredClone(doc.listings[0]);
+    other.id = 'second-offer-at-same-url';
+    doc.listings = [doc.listings[0], other];
+  });
+  onlySupport(raw, 1, 1); // Both listings say available.
+  const result = normalize(raw, movies[0]);
+  assert.deepEqual(value(result, 0, 'availability').citationRefs, []);
+  assert.equal(value(result, 1, 'availability').confidence, 'likely');
+  assert.equal(value(result, 1, 'availability').attributionRefs[0].assertionIndex, 1);
+});
+test('same value in a different field cannot support availability', () => {
+  const raw = alter(0, doc => { doc.listings[0].claims[2].value = 'available'; });
+  onlySupport(raw, 0, 2);
+  const result = normalize(raw, movies[0]);
+  assert.equal(value(result, 0, 'availability').confidence, 'unknown');
+  assert.equal(value(result, 0, 'format').confidence, 'likely');
+});
+test('another edition at the same retailer with the same source URL cannot support current edition', () => {
+  const raw = alter(0, doc => {
+    const other = structuredClone(doc.listings[0]);
+    other.id = 'other-edition';
+    other.url += '-other-edition';
+    other.claims.forEach(c => { if (c.sourceUrls.length) c.sourceUrls = [other.url]; });
+    doc.listings[0].claims[1].sourceUrls = [other.url];
+    doc.listings.push(other);
+  });
+  onlySupport(raw, 2, 1);
+  const result = normalize(raw, movies[0]);
+  assert.equal(value(result, 0, 'availability').confidence, 'unknown');
+  assert.equal(value(result, 2, 'availability').confidence, 'likely');
+});
+test('an exact current assertion pointing at another listing URL stays unknown', () => {
+  const raw = alter(0, doc => { doc.listings[0].claims[1].sourceUrls = [doc.listings[1].url]; });
+  onlySupport(raw, 0, 1);
+  const claim = value(normalize(raw, movies[0]), 0, 'availability');
+  assert.equal(claim.confidence, 'unknown');
+  assert.deepEqual(claim.citationRefs, []);
+});
+test('broad valid segment spanning all claims attributes none', () => {
+  const raw = syntheticResponse(movies[0]);
+  const text = raw.candidates[0].content.parts[0].text;
+  raw.candidates[0].groundingMetadata.groundingSupports = [{ segment: segment(raw, 0, text.length), groundingChunkIndices: [0] }];
+  assert.equal(normalize(raw, movies[0]).metrics.likelyClaims, 0);
+});
+test('a sourceUrls or note segment is not attribution to the assertion value', () => {
+  for (const property of ['note', 'sourceUrls']) {
+    const raw = alter(0, doc => { doc.listings[0].claims[1].note = 'available'; });
+    const support = onlySupport(raw, 0, 1);
+    const text = raw.candidates[0].content.parts[0].text;
+    const startObject = text.indexOf(support.segment.text);
+    const marker = property === 'note' ? '"note":"available"' : `"sourceUrls":${JSON.stringify(['https://www.amazon.co.uk/synthetic/not-a-product'])}`;
+    const start = text.indexOf(marker, startObject);
+    support.segment = segment(raw, start, start + marker.length);
+    assert.equal(value(normalize(raw, movies[0]), 0, 'availability').confidence, 'unknown');
+  }
+});
+test('positive exact assertion attribution is likely, not independently confirmed', () => {
+  const raw = syntheticResponse(movies[0]);
+  onlySupport(raw, 0, 1);
+  const claim = value(normalize(raw, movies[0]), 0, 'availability');
+  assert.equal(claim.confidence, 'likely');
+  assert.equal(claim.humanVerified, false);
+  assert.equal(claim.attributionRefs.length, 1);
+  assert.equal(claim.provenance[0].independentlyRead, false);
+});
+test('positive exact JSON value token and full encoded value content attribution', () => {
+  for (const quotes of [true, false]) {
+    const raw = syntheticResponse(movies[0]);
+    const support = onlySupport(raw, 0, 1);
+    const text = raw.candidates[0].content.parts[0].text;
+    const start = text.indexOf('"value":"available"', text.indexOf(support.segment.text)) + '"value":'.length;
+    support.segment = segment(raw, start + (quotes ? 0 : 1), start + '"available"'.length - (quotes ? 0 : 1));
+    assert.equal(value(normalize(raw, movies[0]), 0, 'availability').confidence, 'likely');
+  }
+});
+test('Unicode before and inside cited assertion uses UTF-8 bytes, not JS UTF-16 indices', () => {
+  const raw = alter(0, doc => {
+    doc.listings[0].claims[0].note = '🎬 Україна é';
+    doc.listings[0].claims[2].value = 'Видання 🎞️';
+  });
+  const support = onlySupport(raw, 0, 2);
+  const text = raw.candidates[0].content.parts[0].text;
+  const jsStart = text.indexOf(support.segment.text);
+  assert.ok(support.segment.startIndex > jsStart);
+  assert.equal(value(normalize(raw, movies[0]), 0, 'format').confidence, 'likely');
+  support.segment.startIndex = jsStart;
+  support.segment.endIndex = jsStart + support.segment.text.length;
+  assert.equal(value(normalize(raw, movies[0]), 0, 'format').confidence, 'unknown');
+});
+test('escaped strings and whitespace do not require canonical JSON serialization', () => {
+  const raw = alter(0, doc => { doc.listings[0].claims[2].value = 'Steelbook "Collector" \\ UK'; });
+  const document = JSON.parse(raw.candidates[0].content.parts[0].text);
+  const text = JSON.stringify(document, null, 2);
+  raw.candidates[0].content.parts[0].text = text;
+  const token = JSON.stringify(document.listings[0].claims[2].value);
+  const start = text.indexOf(token);
+  raw.candidates[0].groundingMetadata.groundingSupports = [{ segment: segment(raw, start, start + token.length), groundingChunkIndices: [0] }];
+  assert.equal(value(normalize(raw, movies[0]), 0, 'format').confidence, 'likely');
+});
+test('missing, noninteger, out-of-range, mismatched and partial offsets stay unknown', () => {
+  const patches = [
+    { startIndex: undefined }, { endIndex: undefined }, { partIndex: undefined }, { partIndex: 99 },
+    { startIndex: -1 }, { startIndex: 1.5 }, { startIndex: '0' }, { endIndex: 1e9 },
+    { endIndex: 0 }, { text: 'available' },
+  ];
+  for (const patch of patches) {
+    const raw = syntheticResponse(movies[0]);
+    Object.assign(onlySupport(raw, 0, 1).segment, patch);
+    assert.equal(value(normalize(raw, movies[0]), 0, 'availability').confidence, 'unknown');
+  }
+});
+test('a byte range cutting inside Unicode is rejected without falling back to text search', () => {
+  const raw = alter(0, doc => { doc.listings[0].claims[2].value = '🎬 available'; });
+  const support = onlySupport(raw, 0, 2);
+  const text = raw.candidates[0].content.parts[0].text;
+  const start = text.indexOf('🎬');
+  support.segment = segment(raw, start, start + '🎬'.length);
+  support.segment.startIndex++;
+  assert.equal(value(normalize(raw, movies[0]), 0, 'format').confidence, 'unknown');
+});
+test('thought Parts retain parent indices; wrong Part and split-text JSON are not attributed', () => {
+  const raw = syntheticResponse(movies[0]);
+  const support = onlySupport(raw, 0, 1);
+  raw.candidates[0].content.parts.unshift({ thought: true, text: 'Unrelated available thought' });
+  support.segment.partIndex = 1;
+  assert.equal(value(normalize(raw, movies[0]), 0, 'availability').confidence, 'likely');
+  support.segment.partIndex = 0;
+  assert.equal(value(normalize(raw, movies[0]), 0, 'availability').confidence, 'unknown');
+  const text = raw.candidates[0].content.parts[1].text;
+  raw.candidates[0].content.parts = [{ text: text.slice(0, 100) }, { text: text.slice(100) }];
+  assert.equal(normalize(raw, movies[0]).metrics.likelyClaims, 0);
+});
+test('invalid grounding chunk index cannot attribute a field', () => {
+  const raw = syntheticResponse(movies[0]);
+  onlySupport(raw, 0, 1).groundingChunkIndices = [999];
+  assert.equal(value(normalize(raw, movies[0]), 0, 'availability').confidence, 'unknown');
+});
+test('duplicate JSON keys leave attribution ambiguous even with matching byte ranges', () => {
+  const raw = syntheticResponse(movies[0]);
+  const support = onlySupport(raw, 0, 1);
+  const oldText = raw.candidates[0].content.parts[0].text;
+  const duplicate = support.segment.text.replace('"value":"available"', '"value":"available","value":"available"');
+  const start = oldText.indexOf(support.segment.text);
+  raw.candidates[0].content.parts[0].text = oldText.slice(0, start) + duplicate + oldText.slice(start + support.segment.text.length);
+  support.segment = segment(raw, start, start + duplicate.length);
+  assert.equal(value(normalize(raw, movies[0]), 0, 'availability').confidence, 'unknown');
+});
 test('URL absent from grounding is not a usable source just because model cites it', () => {
   const raw = alter(0, doc => { doc.listings[0].claims[1].sourceUrls = ['https://www.amazon.co.uk/another-product']; });
+  raw.candidates[0].groundingMetadata.groundingChunks = syntheticResponse(movies[0]).candidates[0].groundingMetadata.groundingChunks;
   const result = normalize(raw, movies[0]);
   assert.equal(value(result, 0, 'availability').confidence, 'unknown');
 });
@@ -221,6 +406,15 @@ test('invalid pilot stops batch before later film calls (injected test transport
   assert.equal(calls, 1);
   assert.equal(result.failed, true);
   assert.deepEqual(result.records.map(r => r.status), ['error', 'not_run_after_failed_pilot', 'not_run_after_failed_pilot']);
+});
+test('real live transport stays blocked pending retrieval decision even when credentials are supplied', async () => {
+  const result = await run({ mode: 'live', movie: 'dune-part-two' }, {
+    GEMINI_API_KEY: 'FAKE-TEST-KEY', GEMINI_MODEL: 'gemini-3.8-flash', GEMINI_GROUNDING_PERMISSION_REF: 'TEST-REFERENCE',
+  });
+  assert.equal(result.blocked, true);
+  assert.match(result.records[0].status, /pending retrieval decision/);
+  assert.equal(result.records[0].applicationCalls, 0);
+  assert.equal(result.records[0].httpAttempts, 0);
 });
 test('local review CLI preserves source time and makes no new calls; synthetic transport fixture only', async () => {
   const root = fileURLToPath(new URL('../runs/', import.meta.url));

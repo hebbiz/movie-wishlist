@@ -1,6 +1,6 @@
 # MW-FUT-01: isolated Media Discovery PoC
 
-Status: **Discovery — offline pipeline evaluated; live research pending**.
+Status: **Discovery — attribution corrected; retrieval decision pending**.
 Source baseline: `e92392856038e40e6d98c6c8744eed04c4e8dff9` (v1.3.1).
 `origin/develop` matched this baseline when work began; the working tree was clean.
 
@@ -8,6 +8,8 @@ This Node CLI investigates grounded media discovery for three fixed films. It
 does not integrate with Mykola or any production component. All code, fixtures,
 tests and documentation live here, with no dependencies or root manifest edits.
 See the [experiment report](report.md) and [official API review](docs/api-review.md).
+The [retrieval decision](docs/retrieval-decision.md) compares Gemini original
+display with separate retrieval/structuring, including rights and pricing gaps.
 
 ## Setup and offline reproduction
 
@@ -39,13 +41,17 @@ Environment only; no dotenv loader and no secrets in fixtures or CLI flags:
 | `GEMINI_GROUNDING_PERMISSION_REF` | Required reference to a genuine permission/contract covering research analysis, raw storage and modified/normalized use; see [terms review](docs/api-review.md). This is not a checkbox granting rights. |
 | `TMDB_API_KEY` | Optional v3 API key, only read by the identity verifier when `--verify-tmdb` is requested. Absence is explicitly logged and does not block Gemini. |
 
-Once credentials and a suitable contractual basis exist, start with one film:
+Live transport is currently disabled by `LIVE_RESEARCH_ENABLED=false`, even if
+credential and permission-reference variables exist. Owner approval of a
+retrieval approach and its rights/budget must precede a separate change enabling
+it. No environment flag bypasses this decision gate. The retained Gemini command
+below documents the pipeline shape and currently returns blocked:
 
 ```text
 node research/media-discovery/cli.mjs --mode live --movie dune-part-two
 ```
 
-Inspect raw response, normalized evidence and metrics before testing another
+For any later authorized pilot, inspect raw response, normalized evidence and metrics before testing another
 film. For a fresh three-film batch, `--mode live --movie all` runs Dune first,
 then the other two sequentially only after the pilot response passes parsing,
 schema checks and returns grounding. It stops on the first failure. Do not run
@@ -87,7 +93,7 @@ usable only when available, its film identity and required cut are human
 confirmed, and a physical offer's format is confirmed.
 
 Each claim has `field`, `value`, `reportedValue`, `reportedValues`, original
-`assertions`, `confidence`, `conflict`, `sourceUrls`, `citationRefs`,
+`assertions`, `confidence`, `conflict`, `sourceUrls`, `citationRefs`, `attributionRefs`,
 `evidenceNote`, `retrievedAt`, `territory`, `provenance` and `humanVerified`.
 `value` is null when evidence is unknown; reported alternatives remain visible.
 Confidence is `confirmed`, `likely` or `unknown`. Availability is `available`,
@@ -102,10 +108,25 @@ populate these fields. Film original language is not used to infer a track.
 
 ## Evidence and human review
 
-- A source must be linked to that field through actual API grounding chunks and
-  support text to reach `likely`. A model-written URL without this chain is
-  insufficient. Redirect citations that cannot be matched to a direct listing
-  remain unknown; the PoC does not resolve them by guessing a destination.
+- A source can reach `likely` only through an unambiguous attribution to the
+  specific assertion at `listings[i].claims[j]` in the original JSON response.
+  The API's explicit `partIndex` and inclusive-start/exclusive-end **byte**
+  offsets are checked against the exact UTF-8 bytes and `segment.text`.
+  JavaScript UTF-16 indices are not used as API offsets. A matching range must
+  be exactly one assertion object, its JSON value token, or its full encoded
+  value content. JSON paths are parsed from the original text, not located by
+  substring search or reserialization. Each source URL must also match that
+  assertion's grounding chunk and exact listing URL; this PoC has no verified
+  cross-edition/source join. `attributionRefs` records assertion/support/chunk
+  indices and original byte ranges for audit.
+- Broad multi-claim segments, notes/other fields, missing/invalid offsets,
+  duplicate JSON keys, mismatched text and split-text JSON have no accepted
+  attribution. Claims stay unknown unless separate valid human evidence exists.
+  The conservative supported shape is one non-thought JSON text Part, using
+  its original parent index. Real Search + structured-output responses may not
+  provide this granularity: the positive cases are synthetic, not a live proof.
+  Redirect citations without a verified match remain unknown; no destination
+  is guessed.
 - API grounding is labelled `search_result`; the app has not read the retailer
   page. Even a valid citation is not proof that the assertion is correct.
 - The model cannot return an effective `confirmed` flag. Human review must

@@ -1,9 +1,10 @@
 # MW-FUT-01 experiment report
 
-Date: October 17, 2026. Status: **Discovery; offline work complete, live evaluation
-not performed**. Recommendation: continue a narrower evidence-first experiment
-after resolving API access and grounded-result usage rights. Do not expand to
-15 films yet and do not approve a production feature on this evidence.
+Date: October 17, 2026. Status: **Discovery; review correction validated offline,
+live evaluation not performed**. Recommend separate retrieval and structuring,
+with Brave as a conditional contractual candidate; see the
+[retrieval decision](docs/retrieval-decision.md). The owner/provider decision is
+pending. Do not expand to 15 films yet.
 
 ## Source and isolation
 
@@ -39,8 +40,15 @@ offers. No retailer claim was checked by a human in this experiment.
 ## Executed checks
 
 Reproduction commands are in the [PoC README](README.md). Node v24.19.0 was used.
-All 28 offline tests passed, including local review CLI integration and stopping
-the batch after an invalid pilot. The suite covers unsupported assertions, unmatched URLs/citations, UK
+The original 28 tests at reviewed commit `e80431a` passed but missed a citation
+attribution defect. A new regression test first failed against that code:
+`available` inherited `likely` from `This different edition is unavailable`.
+The initial confidence results were not a reliable attribution validation.
+
+All **46** tests now pass. The original guarantees remain covered, plus different
+listings/fields/editions with equal values, wide/missing/invalid offsets, exact
+positive ranges, escaped JSON, Unicode, thought/multiple Parts and duplicate keys.
+The suite covers unsupported assertions, unmatched URLs/citations, UK
 streaming, locale-only Ukraine claims, sold-out/price contradictions, language
 conflicts, wrong cuts, different identifiers, edition-year differences,
 malformed API responses and bounded retries. It also checks that synthetic
@@ -50,14 +58,38 @@ Dry-run prepared all three prompts and exact request bodies with no network.
 Single-film and three-film offline CLI runs succeeded. Test transports are
 synthetic, including human-review test records; they provide no Gemini quality
 or real retailer evidence. A missing-key live-mode check records all three films
-as blocked and makes zero Gemini/TMDb requests.
+as blocked and makes zero Gemini/TMDb requests. Another test supplies fake
+credentials and a permission-reference string and proves real transport remains
+blocked by `LIVE_RESEARCH_ENABLED=false`. Unmocked fetch is disabled in tests.
+
+## Citation correction and remaining limitation
+
+The matcher no longer searches `segment.text` for a reported value. It maps exact
+validated byte ranges in the original JSON Part to `listings[i].claims[j]` and
+checks the source reference for that assertion and its exact listing URL. No
+cross-edition or cross-site identity is inferred. The
+[API contract](docs/api-review.md#segment-attribution-contract) uses byte offsets;
+Unicode tests demonstrate why JavaScript string indices are not interchangeable.
+
+Only a whole assertion object/value token/full encoded value content can be
+accepted. Broad or ambiguous support remains unknown; there is no word-boundary
+or negation-list fallback. Attribution placement is not source truth. Independent
+human confirmation, the UA territory gate and edition/disc boundaries remain.
+
+Positive attribution here is synthetic. Actual grounded structured JSON may not
+provide atomic supports, in which case the corresponding fields stay unknown.
+This limitation supports separating retrieval from structuring rather than
+claiming field-level accuracy from schema compatibility.
 
 ## Offline results (manufactured fixtures only)
 
-Representative three-film run: `2026-10-17T19-00-24-851Z-e4fefab4-offline`.
+Post-correction three-film run: `2026-10-17T19-35-39-408Z-032b51cb-offline`.
 Raw synthetic envelopes, normalized JSON, metrics.jsonl, summary.json and the
 run report remain in the local ignored runs directory. These artifact names
 identify a local execution, not a published dataset.
+Synthetic supports now contain explicit Part indices and per-assertion UTF-8
+byte ranges. These replace the initial fixture's broad all-claims segments;
+they are intentionally precise examples, not observed API behavior.
 
 | Film | Synthetic cited listings | Usable offers | Likely claims | Unknown fields | Conflicts | Unsupported claims | Human-confirmed claims |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -76,11 +108,11 @@ identify a local execution, not a published dataset.
 
 | Film | Synthetic fixture/read ms | Normalize/write ms | Per-film total ms |
 | --- | --- | --- | --- |
-| Dune: Part Two | 2.36 | 9.62 | 14.17 |
-| Coherence | 1.43 | 2.03 | 5.16 |
-| Blade Runner | 1.47 | 25.74 | 28.77 |
+| Dune: Part Two | 2.65 | 10.39 | 15.29 |
+| Coherence | 2.06 | 5.28 | 8.75 |
+| Blade Runner | 1.28 | 4.17 | 12.40 |
 
-Overall local run elapsed: 63.03 ms. These are one-run local processing timings,
+Overall local run elapsed: 47.67 ms. These are one-run local processing timings,
 not API latency or a benchmark; filesystem scheduling dominates some values.
 Later verification runs may differ. Gemini application calls: 0; Gemini HTTP
 attempts: 0; TMDb API calls: 0. Model execution, token usage, actual internal
@@ -110,26 +142,24 @@ general accuracy even if the live experiment had completed.
 
 The [official API review](docs/api-review.md) records current model support,
 Search/structured-output compatibility, citations, usage, pricing and terms.
-Two blockers remain: missing `GEMINI_API_KEY`, and unresolved permission for the
-planned archival/normalization/evaluation of Google Search grounded results.
+Credentials are still absent (`GEMINI_API_KEY`, optional `TMDB_API_KEY` checked
+by presence only). Retrieval decision/approval and applicable rights for the
+planned archival/normalization/evaluation also remain unresolved.
 There is no live quality, latency, grounding coverage or cost result to assess.
 
-Recommended next steps:
+The [decision document](docs/retrieval-decision.md) records confirmed permissions,
+explicit restrictions and unresolved interpretations for Gemini original display,
+Brave, Tavily and Exa. Storage-plan marketing alone is insufficient; report
+publication and external-LLM/derived-field rights also matter. No new provider
+adapter or framework was added. A paid plan does not itself clear the blockers.
 
-1. Establish a contractual basis for the evidence workflow or change provider/
-   retrieval approach. Do not treat Search output as a freely reusable dataset.
-2. Run one authorized Dune pilot. Check schema acceptance, returned model ID,
-   actual source/claim alignment, Search Suggestions and complete usage fields.
-   Stop on failure instead of adding model calls to repair malformed output.
-3. Inspect evidence directly for a few claims, with timestamps and the exact
-   listing/edition identity. Use the local review pass to record confirmations
-   without additional model calls. If titles are discoverable but UA rights are
-   not provable, narrow streaming output to candidate links/unknown availability.
-4. Only after the pilot passes, run Coherence and Blade Runner once. Examine
-   cut/edition and language-specific errors separately from search recall.
-5. Consider 15 films only after recording observed precision gaps, manual review
-   effort and per-film cost/latency. Include ambiguous names, regional dates,
-   out-of-stock editions, multi-cut bundles and sparse Ukraine catalogues.
+After approval and rights resolution, the recommended next experiment is a
+physical-first Dune pilot with separately identified retrieval evidence and one
+structuring pass. Retain the two-total-attempt budget, count any retry, and inspect
+the actual edition/claims manually before the other two films. Keep UA streaming
+availability unknown without entitlement evidence. Option A would instead be a
+separately scoped original-response display demo with citations/suggestions, not
+this research archive. Reconsider 15 films only after measured pilot evidence.
 
 The current implementation is a testable research harness. It supports a
 decision about what to measure next; it does not validate broad accuracy or
