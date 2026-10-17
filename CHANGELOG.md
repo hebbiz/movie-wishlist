@@ -4,7 +4,7 @@ This file records user-visible and operational changes to Movie Wishlist. The
 v1.3.1 section is derived from the repository diff between `v1.3.0` and the
 reviewed production baseline.
 
-## [1.3.1] - Unreleased
+## [1.3.1] - 2026-10-17
 
 ### Added
 

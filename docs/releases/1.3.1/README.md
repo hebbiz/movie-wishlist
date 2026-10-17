@@ -1,5 +1,7 @@
 # Movie Wishlist v1.3.1
 
+**Release date:** October 17, 2026
+
 Movie Wishlist v1.3.1 is a stabilization release that records the production
 improvements made after v1.3.0. It does not introduce a new product milestone or
 change the Social Advice ownership model established in v1.3.0.
@@ -67,11 +69,9 @@ version consistency, whitespace and final diff review.
 - `MW-FUT-01` and `MW-FUT-02` remain Discovery work and are not included in
   v1.3.1.
 
-## Release completion
+## Release record
 
-After approval, merge the preparation through `develop` to `main`, validate the
-production deploy, create tag `v1.3.1` on the final release commit, publish these
-notes as the GitHub Release description, and synchronize `develop` with `main`.
-
-The final release commit and tag are intentionally not recorded in this
-candidate document before those operations occur.
+The [GitHub Release](https://github.com/hebbiz/movie-wishlist/releases/tag/v1.3.1)
+records the final release commit, annotated tag and production deployment
+evidence. The [baseline record](../../baselines/v1.3.1.md) preserves the source
+state and validation evidence used during preparation.
