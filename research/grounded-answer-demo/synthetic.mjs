@@ -1,11 +1,11 @@
-import { selectFilm } from './config.mjs';
+import { selectScenario } from './config.mjs';
 
 // Invented display data, never a live answer or an availability assertion.
-export function syntheticResponse(scenario = 'grounded', filmId) {
-  const film = selectFilm(filmId);
+export function syntheticResponse(scenario = 'grounded', filmId, options = {}) {
+  const { film, discovery, amazonRegion } = selectScenario({ ...options, filmId });
   if (scenario === 'empty') return { candidates: [] };
   const segment = `Invented display example for ${film.title}. Edition, format, cut and availability are unknown.`;
-  const text = `SYNTHETIC ONLY — not a shopping result.\n${segment}\nNo retailer was checked. This fixture does not establish that any UHD edition or requested cut exists.`;
+  const text = `SYNTHETIC ONLY — not a shopping result.\nMode: ${discovery}; Amazon region: ${amazonRegion ?? 'unset'}.\n${segment}\nUkrainian viewing availability, Ukrainian audio and Ukrainian subtitles are unknown. No retailer was checked. No platform was checked. This fixture does not establish that any UHD edition or requested cut exists.`;
   const startIndex = Buffer.byteLength(text.slice(0, text.indexOf(segment)), 'utf8');
   const candidate = {
     finishReason: 'STOP',
