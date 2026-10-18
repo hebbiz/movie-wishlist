@@ -162,6 +162,9 @@ For PR #175, use `codex/mw-fut-01-digital-ua-amazon`, not main/develop or PR #17
 For the separate stacked URL-only experiment, use
 `codex/mw-fut-01-url-context` and the [URL Context guide](url-context-poc.md)
 instead; it depends on PR #175 and has its own exact checkout/switch commands.
+For the subsequent Kinobaza source experiment, use
+`codex/mw-fut-01-kinobaza-url-context` (stacked on #176), with the
+[standalone commands below](#kinobaza-url-context-one-line-owner-commands).
 If tracked/local changes overlap or a running helper owns this copy, stop and
 resolve/preserve those changes. Do not reset, clean, stash automatically or pull
 over unknown work. With the correct branch selected and no conflicting changes:
@@ -237,7 +240,9 @@ Starting/status/reloading makes **no Gemini call**; only clicking sends one.
 Model/settings/prompts remain unchanged by the LAN iteration. The URL-only PoC
 adds `DEMO_RETRIEVAL` to the helper's server-environment allowlist, not a browser
 URL input. Set it to `search` when returning to the original scenarios; stop and
-restart to change it. Review digital
+restart to change it, and remove `DEMO_URL_SOURCE`. The new source switch is
+forwarded only in the child's allowed environment; it never goes on the command
+line or into service metadata. Review digital
 rights/localization with a Ukrainian account without VPN as in the main README.
 Do not archive live output or conclude accuracy from a handful of requests.
 
@@ -290,3 +295,76 @@ See the owner record for results and limits. Other environments, auth-cache edge
 cases and the Amazon-region live scenarios remain unvalidated. The
 [next-experiment proposal](regional-card-proposal.md) preserves this workflow;
 it does not authorize new automatic calls or change the current prompts.
+
+## Kinobaza URL Context: one-line owner commands
+
+New source is **live-unvalidated**. Read the [bounded test plan](url-context-poc.md#owner-comparison-not-run-by-the-implementation-agent)
+and [terms/feasibility](regional-card-proposal.md#kinobaza-url-context-decision)
+first. No destination-page checks or offer verification in this experiment.
+The commands below intentionally stop/restart **only this checkout's verified
+demo**, when the owner chooses; the implementation agent does not run them
+against the active owner copy. No system/SSH/firewall changes.
+
+If SSH opens **cmd.exe**, first enter PowerShell (separate command):
+
+```text
+powershell.exe -NoProfile
+```
+
+An installed `pwsh.exe -NoProfile` is an alternative; existing script policy
+must permit reviewed helpers. Do not bypass/change policy. Confirm the shell
+with `$PSVersionTable.PSVersion`. Then inspect status and update the correct
+copy without overwriting changes. After stopping that copy at the owner's
+choice and only with no conflicting changes:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; git status --short --branch; git fetch --prune origin
+```
+
+Select `codex/mw-fut-01-kinobaza-url-context`; if not local, use
+`git switch --track origin/codex/mw-fut-01-kinobaza-url-context`. If already local,
+use `git switch codex/mw-fut-01-kinobaza-url-context`, then
+`git merge --ff-only origin/codex/mw-fut-01-kinobaza-url-context` and inspect HEAD.
+Stop on conflicts/divergence; no reset/clean/force. Preserve untracked files.
+
+Each following code block is **one PowerShell line** with explicit `;`, resets
+all scenario switches, asks for this Windows host's actual LAN IPv4 again and
+passes port/access explicitly. No variables need to survive a prior SSH session.
+Hidden prompts collect a separate LAN password and, only in live mode, API key.
+No secrets in commands/history/files; inherited secret values are cleared from
+the launching shell rather than reused. Enter the API key only when prompted.
+
+First, synthetic Coherence (no API call):
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'synthetic'; $env:DEMO_RETRIEVAL = 'url-context'; $env:DEMO_URL_SOURCE = 'kinobaza'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Safari: **`http://<actual-Windows-IPv4>:4317`**, substitute the verified IP just
+entered; username **`demo`**, password from the hidden LAN prompt. The helper
+prints the exact URL; no guessed IP, localhost, credentials in URL or tunnel.
+Reload Safari, check `DEMO_URL_SOURCE: kinobaza`, Coherence and the exact source
+URL/full prompt, then click once. Explicitly disconnect SSH and repeat a
+synthetic check after reload if validating survival; record that separately.
+HTTP Basic is unencrypted: trusted home LAN only, not guest/public Wi-Fi.
+
+Only after synthetic and the owner's rights review, live Coherence:
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'url-context'; $env:DEMO_URL_SOURCE = 'kinobaza'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Reload, verify configuration and click once. Start/status/reload alone never
+calls Gemini. Then separately, live Dune (a standalone fresh-session command):
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'url-context'; $env:DEMO_URL_SOURCE = 'kinobaza'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'dune-part-two'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Reload Safari and inspect the changed film/source before one click. An error
+consumes the session; do not automatically retry or increase output limits.
+Keep the same LAN password if desired; Safari may cache Basic Auth. Stop with
+`.\research\grounded-answer-demo\windows\Stop-Demo.ps1` when finished. To return
+to Apple use `DEMO_URL_SOURCE=apple-tv`; to return to Search remove the source
+variable and set `DEMO_RETRIEVAL=search`, then explicitly configure/restart/reload.
+Do not infer any provider offer/audio/price from a returned candidate link.

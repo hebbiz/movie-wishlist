@@ -18,10 +18,10 @@ try {
   if (!response.ok) throw new Error('Local session unavailable. Reload the page.');
   const session = await response.json();
   const urlOnly = session.retrieval === 'url-context';
-  el('film').textContent = `${session.discovery === 'physical' ? 'A physical edition of' : 'Digital viewing in Ukraine:'} ${session.film.title}`;
+  el('film').textContent = `${session.urlSource === 'kinobaza' ? 'Kinobaza candidate links:' : session.discovery === 'physical' ? 'A physical edition of' : 'Digital viewing in Ukraine:'} ${session.film.title}`;
   el('director').textContent = `Director: ${session.film.director} · DEMO_FILM: ${session.film.id}`;
   el('discovery').textContent = `DEMO_DISCOVERY: ${session.discovery} · DEMO_AMAZON_REGION: ${session.amazonRegion ?? (session.discovery === 'physical' ? 'unset — HMV, Rarewaves, equal Amazon US/UK/DE/IT' : 'not applicable')}`;
-  el('retrieval-mode').textContent = `DEMO_RETRIEVAL: ${session.retrieval}`;
+  el('retrieval-mode').textContent = `DEMO_RETRIEVAL: ${session.retrieval}${urlOnly ? ` · DEMO_URL_SOURCE: ${session.urlSource}` : ''}`;
   el('source-url').hidden = !urlOnly;
   el('source-url').textContent = urlOnly ? `Fixed public card URL: ${session.sourceURL}` : '';
   if (urlOnly) {

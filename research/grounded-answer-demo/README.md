@@ -25,8 +25,11 @@ including Coherence on Prime Video in Ukraine with Ukrainian audio. These
 provider-specific observations are separate from the URL Context tests. The
 [candidate integration feasibility review](docs/regional-card-proposal.md#candidate-integration-feasibility)
 compares TMDb discovery, a supported Kinobaza interface if available, and manual
-Kinobaza assistance. It recommends a bounded owner-curated candidate-link
-preview as the next design-only step, not an approved automatic integration.
+Kinobaza assistance. Its earlier candidate-link-preview proposal is not being
+built. The owner selected a narrower new experiment instead: opt-in
+`DEMO_URL_SOURCE=kinobaza` reads one of two fixed Kinobaza cards with URL Context
+and asks for provider/link/territory candidates, not offer verification. It is
+offline-tested but **live-unvalidated**; [scope and owner test plan](docs/url-context-poc.md#kinobaza-candidate-link-experiment).
 The [Windows launch diagnosis](docs/windows-launch-diagnosis.md) resolves the
 earlier detached-launch failure: multiple Node PATH matches were passed as one
 executable string. The helper now selects one executable, without changing
@@ -59,7 +62,8 @@ or new dependencies. Run from the repository root. No `.env` file is loaded.
 | `GEMINI_API_KEY` | Required only for live mode; server environment/header only, never in browser/source/URL |
 | `DEMO_FILM` | `dune-part-two` (default), `coherence`, `blade-runner-final-cut` |
 | `DEMO_DISCOVERY` | `physical` (default), `digital-ua` |
-| `DEMO_RETRIEVAL` | `search` (default), `url-context` (only two Apple cards with `digital-ua`) |
+| `DEMO_RETRIEVAL` | `search` (default), `url-context` (fixed sources with `digital-ua`) |
+| `DEMO_URL_SOURCE` | URL Context only: `apple-tv` (default when unset) or opt-in `kinobaza`; both support Dune/Coherence only; unset for Search |
 | `DEMO_AMAZON_REGION` | Optional, physical only: `us`, `uk`, `de`, `it`; unset for multi-store search |
 | `DEMO_PORT` | Default 4317, range 1024–65535 |
 | `DEMO_ACCESS` | `localhost` (default) or explicit `lan` |
@@ -71,8 +75,12 @@ URL Context additionally supports synthetic `retrieval-error`, `retrieval-paywal
 and `retrieval-unsafe`. `grounded` simulates success, never an actual page read;
 `ungrounded` simulates missing retrieval metadata. See the PoC guide for commands,
 retrieval statuses, current capability/terms review and manual comparison plan.
-Set `DEMO_RETRIEVAL=search` (or unset it) when returning to the Search commands
-below; URL-only requires `digital-ua`, no Amazon region, and Dune or Coherence.
+Set `DEMO_RETRIEVAL=search` (or unset it) and remove `DEMO_URL_SOURCE` when
+returning to the Search commands below; URL-only requires `digital-ua`, no
+Amazon region, and Dune or Coherence. Unknown/empty source values and any
+explicit source with Search fail at startup. No browser source override.
+Kinobaza commands reset every relevant switch per SSH session in the
+[iPhone instructions](docs/iphone-windows.md#kinobaza-url-context-one-line-owner-commands).
 
 Unset means absent, not an empty/unknown value. Invalid film/discovery/region
 or **any Amazon region with digital-ua** causes a clear startup error before
@@ -319,7 +327,8 @@ viewing availability, localization, edition or stock**.
 
 Implementation test results are reported in the PR at their execution baseline.
 Code-iteration offline/browser checks are reported at their execution baselines;
-the current evaluation checkpoint is Markdown-only and does not rerun them.
+the historical evaluation checkpoint was Markdown-only. The subsequent
+Kinobaza implementation checks are recorded in the existing URL Context guide.
 Historical physical outcomes remain in the PR #174 checkpoint; subsequent owner
 observations are in the linked digital-UA record. No live response, screenshot,
 public evaluation report or evidence archive is added.
@@ -349,9 +358,11 @@ URL-only checks (mocks, no real Gemini):
 
 ```powershell
 node --test research/grounded-answer-demo/test/url-context.test.mjs
+node --test research/grounded-answer-demo/test/kinobaza.test.mjs
 # With the same external Playwright/installed browser configuration above:
 node --test research/grounded-answer-demo/test/url-browser.test.mjs
 .\research\grounded-answer-demo\test\windows.test.ps1 -UrlContext
+.\research\grounded-answer-demo\test\windows.test.ps1 -UrlContext -Kinobaza
 # Same Windows PowerShell 7 runner for paired archived baselines and safe diagnostics:
 .\research\grounded-answer-demo\test\launch-matrix.ps1
 .\research\grounded-answer-demo\test\launch-diagnostics.test.ps1

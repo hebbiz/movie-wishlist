@@ -1,15 +1,15 @@
 # Proposed next experiment: regional card first
 
-Design only, updated October 18, 2026 after owner-run URL Context tests and
-completion of manual Kinobaza candidate experiment A.
-MW-FUT-01 remains **Discovery**. No prompt,
-runtime, model/settings, provider, output limit or integration is changed here.
+Architecture/feasibility record, updated October 18, 2026 after manual candidate
+experiment A and the owner's choice of a narrow Kinobaza URL Context experiment.
+MW-FUT-01 remains **Discovery**. The conceptual pipeline is not implemented;
+only the isolated fixed-source demo extension below is implemented/offline-tested.
+Existing Search/Apple prompts and all model/generation settings stay unchanged.
 The [owner observations](digital-ua-owner-validation.md) motivate narrower
 questions, not an accuracy claim or a production recommendation. The current
-proposal below supersedes the earlier prompt-clarification preference and the
-now-completed manual candidate-discovery experiment. The
-implemented fixed-card URL-only experiment is documented separately in the
-existing PoC guide; no implementation handoff is prepared here.
+record distinguishes completed manual research, public-document feasibility and
+the newly selected URL-only hypothesis. The existing PoC guide contains runtime
+scope and owner tests; no general discovery pipeline or product handoff.
 
 ## Proposed sequence and evidence boundaries
 
@@ -59,8 +59,9 @@ retention remain **open questions**, not approved capabilities or rights. No
 automatic integration, scraping or discovery-to-fetch pipeline is added. This
 conceptual flow does not authorize collecting grounded links into a fetch queue.
 MW-FUT-01 remains Discovery. The current [URL-only PoC](url-context-poc.md) keeps
-its fixed, verified server-side cards; Кінобаза does not populate that catalogue
-or supply runtime input.
+its fixed server-side catalogue. The opt-in Kinobaza extension reads only two
+explicitly configured source cards; no discovered destination populates the
+catalogue or triggers a follow-up request.
 
 ## Next experiment: current Ukrainian availability
 
@@ -80,7 +81,8 @@ This is evidence for candidate-source utility in two cases, not completeness,
 general accuracy or automatic-integration feasibility. The next question is
 how to obtain candidate links responsibly without confusing an aggregator
 signal with a current Ukrainian offer. The comparison below replaces the old
-A-first recommendation; no new implementation is authorized.
+A-first recommendation. The later owner-selected URL-only scope is recorded
+below; it does not authorize an automatic end-to-end pipeline.
 
 ## Candidate integration feasibility
 
@@ -193,69 +195,85 @@ Unknown usage/cost is not a blocker and is not zero. No integration is chosen
 from the absence of documentation. The conceptual multi-source architecture
 above is retained, not implemented or expanded on assumptions.
 
-## Recommendation (design only, no implementation handoff)
+## Kinobaza URL Context decision
 
-Choose **C next**: propose a tiny isolated, owner-curated **candidate-link
-preview**, followed by manual Safari offer verification. Its new technical
-question is whether link navigation and provenance can be kept separate from
-identity, availability and offer characteristics across providers. This is not
-another test of whether Kinobaza is useful: manual experiment A already
-established usefulness in the reported cases.
+### Selected scope versus the previous recommendation
 
-Minimum proposed change in a separately approved iteration: a bounded preview
-of the two films' explicitly owner-supplied public URLs and source labels, with
-no automatic source retrieval, LLM call, response normalization, raw content
-storage or arbitrary browser URL input. No runtime catalogue changes now.
-Do not repurpose Google-grounded links as a fetch queue. Owner observations
-may be discussed separately; they must not become prefilled provider facts.
+At checkpoint `714a176`, C (manual auxiliary discovery) was recommended, with a
+possible owner-curated candidate preview. **That preview is not being built.**
+The owner instead selected a smaller, different hypothesis: can the existing
+Gemini URL Context tool expose provider hrefs from one exact Kinobaza card,
+without reading destinations? The A/B/C review above remains about future
+integration and its unresolved gates, not proof that this PoC is impossible
+without a Kinobaza API.
 
-### Acceptance criteria for that proposed experiment
+The [implemented opt-in mode](url-context-poc.md#kinobaza-candidate-link-experiment)
+uses fixed Coherence/Dune source URLs, original natural-language display and
+separate retrieval metadata. It is offline-tested and **live-unvalidated**.
+No TMDb data/API, new provider, Search, scraper, destination follow-up,
+normalization, response archive or Mykola integration. No model/settings change.
+Existing Search and Apple request bodies stay unchanged. This does not
+retroactively validate the completed manual experiment as automated retrieval.
 
-- Only Coherence and Dune, explicit exact URLs and known provenance; absent
-  destinations stay unconfigured. The Coherence Prime URL is available from
-  the owner record. Obtain missing Dune URLs from the owner rather than infer
-  them. Dune Prime origin remains unreported, not Kinobaza.
-- Candidate discovery never auto-confirms identity, availability or properties.
-  Keep those four evidence stages visibly distinct; no aggregator localization
-  transfer between providers, no original-language-to-track inference.
-- Opening a link makes no Gemini/TMDb/Kinobaza backend request. No source-page
-  scraping, credentials/cookies to the demo, persistence or live content archive.
-  Current Search/URL-only modes, auth and one-shot behavior stay unchanged.
-- Manual comparison can reconcile at least one exact provider candidate with an
-  offer-specific UA observation, or records the unresolved result without
-  claiming experiment success. Playback controls, new transactions and
-  metadata remain separate; unknown is acceptable, not unavailable.
-- No general accuracy/completeness claim, purchase/subscription requirement,
-  legal assurance or new integration. Rights questions must be revisited before
-  any automatic A/B experiment or forwarding of data to Mykola.
+### Current first-party review: October 18, 2026
 
-### Manual test plan: Termius → iPhone/Safari
+- **Technical capability:** [URL Context documentation](https://ai.google.dev/gemini-api/docs/generate-content/url-context)
+  explicitly supports `gemini-3.8-flash`, public HTML and URL-only requests. It
+  says only supplied URLs are retrieved, not nested links; retrieval can use
+  an index cache before live fetching. This supports the one-source experiment,
+  not freshness or an exact HTML/href-access guarantee.
+- **Href visibility is a separate unknown:** the guide describes content
+  extraction, not preservation of every anchor, tracking href, country heading
+  or dynamic section. The provider's full retrieved content is unavailable.
+  SUCCESS can coexist with missing URLs/territory. We cannot distinguish source
+  omission, provider transformation and model omission from that status alone.
+- **Google applicability:** [Gemini Additional Terms](https://ai.google.dev/gemini-api/terms)
+  (effective March 23, 2026) cover developer use, generated content and paid/
+  unpaid processing; Google retention differs from this app's no-storage.
+  Its Search-specific subsection governs Google Search results, not
+  automatically this URL-only mode. The URL guide prescribes no Search
+  Suggestions for URL-only; keep returned attribution/text/metadata unchanged.
+- **Concrete content restrictions, not a blanket grant:**
+  [Google APIs Terms §5(a), §5(e), §6(b)](https://developers.google.com/terms#section_5_content)
+  reserve third-party rights, restrict scraping/permanent copies, content
+  redistribution/modification absent permission/law, and require applicable
+  attribution. This PoC adds none of those archives/public redistribution/
+  scraping mechanisms; whether the particular link-reading use has the
+  necessary source rights is not settled by tool support. Do not strip source
+  notices, normalize/reuse results in a dataset or forward them to another LLM.
+- **Source terms:** [Kinobaza Terms](https://kinobaza.com.ua/terms) §1 applies
+  to all users; §3 places responsibility for information use and third-party
+  claims on the user. [Privacy](https://kinobaza.com.ua/privacy) does not license
+  catalogue extraction via its public-discussion API mention. No express rule
+  specifically approving or forbidding this exact third-party URL-only,
+  transient owner display was identified in the reviewed pages. **Unresolved
+  interpretation, not permission or a legal guarantee:** automated page access
+  by the provider, source-content use, attribution and any future retention.
+  Owner must resolve applicable rights before live use; stop if a restriction
+  applies. No CAPTCHA/login/technical restriction bypass.
+- **Public source identity only:** [Coherence](https://kinobaza.com.ua/titles/coherence)
+  and [Dune: Part Two](https://kinobaza.com.ua/titles/dune-part-two) were opened
+  read-only to check titles/directors and normal public card accessibility.
+  This is not a Gemini retrieval probe, destination check, new owner-offer
+  validation or proof of stable link coverage. No page contents archived.
+- **TMDb stays separate:** no TMDb calls or data are needed. The older indexed
+  TMDb legal text above is not a freshly verified effective agreement and
+  neither authorizes nor blocks this independent source experiment.
 
-1. In Termius inspect the correct checkout/HEAD and use the existing
-   `Status-Demo.ps1` only if inspecting a running demo. **Do not stop or
-   reconfigure the owner's active process for this documentation checkpoint.**
-   Preserve the [iPhone guide](iphone-windows.md), trusted-LAN Basic Auth and
-   existing synthetic-first/reload rules for any later approved preview test.
-2. In Safari, using the owner's Ukrainian context without VPN, manually open
-   the known Coherence Prime candidate and Apple control. For Dune obtain
-   exact destinations first through normal owner navigation; missing URLs
-   terminate that case as unconfigured. Do not press the demo's live button.
-3. Verify film identity, territorial offer/access separately, then Ukrainian
-   audio and subtitles, each video property, access type/price only if visible.
-   Do not require a purchase, successful playback or access to hidden metadata.
-   Record a concise owner observation in discussion, not live page/model text,
-   account details, screenshots, raw metadata or an evidence archive.
-4. For a later separately approved link-preview prototype, compare each
-   displayed destination/provenance with the manually opened card; test that
-   unknown fields remain unknown and opening a candidate cannot invoke a
-   model/API. This checkpoint does not implement or claim to test that UI.
-5. **Stop criteria:** two films completed, no exact URL/identity, ambiguous
-   territory/account access, blocked/login-only automation, payment required
-   to investigate, or unclear permission for the proposed technical step.
-   Stop as unresolved; do not bypass, buy, add a provider/scraper or fall back
-   to automatic discovery. Revisit A/B only after their documented gates.
+### Acceptance and stop boundary
 
-This recommendation preserves the current fixed Apple catalogue and iPhone
-workflow. All runtime/prompts/model/settings remain unchanged. No API calls,
-dependencies, system changes, deployment or implementation handoff accompany
-this documentation checkpoint. MW-FUT-01 remains **Discovery**.
+Success for the narrow hypothesis means the owner can reconcile returned
+provider/link/territory with the exact source card, preserving redirect hrefs
+without model-reconstructed destinations. Missing href/territory stays unknown;
+a general Ukrainian film-localization badge is not provider localization.
+A candidate link is not availability, access type, price or entitlement.
+Incorrect identity, invented hrefs, foreign-section leakage, retrieval failure
+or inaccessible source are recorded as failures/unresolved, not silently fixed.
+
+The [owner comparison plan](url-context-poc.md#owner-comparison-not-run-by-the-implementation-agent)
+and [standalone Termius commands](iphone-windows.md#kinobaza-url-context-one-line-owner-commands)
+cover synthetic first and then one manual live request per film, without
+automatically visiting returned links. Stop after two cases, an applicable
+restriction, blocked source or identity ambiguity. No output archive, raw
+metadata/screenshots or accuracy score. Usage/cost is unknown rather than zero
+and is not a blocker. No integration is selected from this experiment alone.

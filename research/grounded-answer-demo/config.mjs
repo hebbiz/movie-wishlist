@@ -58,7 +58,10 @@ export function selectScenario({ filmId, discovery = 'physical', amazonRegion } 
 export const PROMPT = selectScenario().prompt;
 
 export function selectRequest({ retrieval = 'search', ...options } = {}) {
-  if (retrieval === 'search') return { ...selectScenario(options), retrieval, sourceURL: null };
+  if (retrieval === 'search') {
+    if (options.urlSource !== undefined) throw new Error('DEMO_URL_SOURCE requires DEMO_RETRIEVAL=url-context; unset it for Search.');
+    return { ...selectScenario(options), retrieval, sourceURL: null };
+  }
   if (retrieval === 'url-context') return urlScenario(selectFilm(options.filmId), options);
   throw new Error('Unknown DEMO_RETRIEVAL. Choose: search, url-context.');
 }

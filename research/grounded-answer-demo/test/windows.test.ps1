@@ -1,7 +1,8 @@
 # Explicit Windows integration test. No ssh/firewall/services/real credentials/API.
-param([string]$LanIPv4, [switch]$UrlContext)
+param([string]$LanIPv4, [switch]$UrlContext, [switch]$Kinobaza)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if ($Kinobaza -and -not $UrlContext) { throw '-Kinobaza requires -UrlContext.' }
 $source = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $copy = Join-Path $tempBase ('mw-grounded-test-' + [Guid]::NewGuid().ToString('D'))
@@ -22,6 +23,7 @@ try {
     $launch.RedirectStandardOutput = $true; $launch.RedirectStandardError = $true
     $launch.Arguments = '-NoProfile -File "{0}" -DemoRoot "{1}" -Port {2}' -f (Join-Path $PSScriptRoot 'start-helper.fixture.ps1'), $copy, $port
     if ($UrlContext) { $launch.Arguments += ' -UrlContext' }
+    if ($Kinobaza) { $launch.Arguments += ' -Kinobaza' }
     if ($LanIPv4) {
         $parsed = $null
         Assert ([Net.IPAddress]::TryParse($LanIPv4, [ref]$parsed) -and $parsed.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork -and $parsed.ToString() -ceq $LanIPv4) 'Invalid test LAN IPv4.'
@@ -45,11 +47,15 @@ try {
     Assert ($response.discovery -eq 'digital-ua' -and $response.film.id -eq 'coherence') 'Server switches not inherited.'
     $expectedRetrieval = if ($UrlContext) { 'url-context' } else { 'search' }
     Assert ($response.retrieval -eq $expectedRetrieval) 'Retrieval switch not inherited.'
-    if ($UrlContext) { Assert ($response.prompt.Contains($response.sourceURL) -and $response.sourceURL.StartsWith('https://tv.apple.com/ua/')) 'URL catalogue/prompt mismatch.' }
+    if ($UrlContext) {
+        $expectedSource = if ($Kinobaza) { 'kinobaza' } else { 'apple-tv' }
+        $expectedURL = if ($Kinobaza) { 'https://kinobaza.com.ua/titles/coherence' } else { 'https://tv.apple.com/ua/movie/coherence/umc.cmc.hdoayzcx3u9ofxfawjrt3hgc' }
+        Assert ($response.urlSource -ceq $expectedSource -and $response.sourceURL -ceq $expectedURL -and $response.prompt.Contains($expectedURL)) 'URL source/catalogue/prompt mismatch.'
+    }
     & (Join-Path $copy 'windows/Start-Demo.ps1') -Port $port
     Assert ((Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json).pid -eq $before) 'Duplicate process created.'
     # A harmless unrelated Node must survive a forged/stale PID record and stop.
-    $info = [Diagnostics.ProcessStartInfo]::new((Get-Command node.exe).Source)
+    $info = [Diagnostics.ProcessStartInfo]::new((Get-Command node.exe -CommandType Application | Select-Object -First 1).Source)
     $info.UseShellExecute = $false; $info.CreateNoWindow = $true
     $info.Arguments = '-e "setInterval(()=>{},1000)"'
     $sentinel = [Diagnostics.Process]::Start($info)
@@ -64,11 +70,21 @@ try {
     & (Join-Path $copy 'windows/Stop-Demo.ps1')
     Assert (-not (Test-Path -LiteralPath $statePath)) 'Stop retained active PID metadata.'
     Assert (-not $sentinel.HasExited) 'Safe stop killed unrelated Node.'
+    # Restart in the same synthetic scenario, independently of the test caller's env.
+    $env:DEMO_MODE = 'synthetic'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'
+    $env:DEMO_RETRIEVAL = $expectedRetrieval
+    Remove-Item Env:DEMO_AMAZON_REGION -ErrorAction SilentlyContinue
+    if ($Kinobaza) { $env:DEMO_URL_SOURCE = 'kinobaza' } else { Remove-Item Env:DEMO_URL_SOURCE -ErrorAction SilentlyContinue }
     if ($LanIPv4) {
         & (Join-Path $copy 'windows/Start-Demo.ps1') -Port $port -Access lan -BindIPv4 $LanIPv4 -LanPassword (ConvertTo-SecureString 'offline-integration-password' -AsPlainText -Force)
     } else { & (Join-Path $copy 'windows/Start-Demo.ps1') -Port $port }
     $restarted = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
     Assert ($restarted.instance -ne $state.instance) 'Restart did not create fresh instance.'
+    $handler = [Net.Http.HttpClientHandler]::new(); $handler.UseProxy = $false
+    $client = [Net.Http.HttpClient]::new($handler)
+    if ($LanIPv4) { $client.DefaultRequestHeaders.Authorization = [Net.Http.Headers.AuthenticationHeaderValue]::new('Basic', [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('demo:offline-integration-password'))) }
+    try { $afterRestart = $client.GetStringAsync($restarted.url + '/session').GetAwaiter().GetResult() | ConvertFrom-Json } finally { $client.Dispose(); $handler.Dispose() }
+    Assert ($afterRestart.retrieval -ceq $response.retrieval -and $afterRestart.prompt -ceq $response.prompt) 'Restart changed scenario/prompt.'
     Assert (-not ($saved -match 'offline-integration-password|PASSWORD|GEMINI_API_KEY|Authorization|SYNTHETIC ONLY')) 'Metadata contains content/secret fields.'
     & (Join-Path $copy 'windows/Stop-Demo.ps1')
     Write-Output 'PASS: parent-exit survival, scenario inheritance, duplicate start, identity refusal, safe stop and restart. SSH disconnect not tested.'
