@@ -469,13 +469,17 @@ their previous switches.
 
 ## Movie of the Night API owner workflow
 
-New **live-unvalidated**, non-LLM UA probe; [scope/terms](regional-card-proposal.md#approved-non-llm-api-probe)
+Non-LLM UA probe; [two owner runs are now complete](digital-ua-owner-validation.md#movie-of-the-night--two-completed-owner-run-results).
+Commands below are retained reproduction steps, **not a request to rerun**.
+The year-only identity correction is offline-tested, not live-revalidated.
+See [scope/terms](regional-card-proposal.md#approved-non-llm-api-probe)
 and [fixed IDs/result contract](../README.md#movie-of-the-night-api-probe). Previous
 LAN auth and detached-process safeguards apply unchanged. No systems changes.
 The helper adds only credential routing for this provider; synthetic/mock Windows
 tests cover it. No compulsory repeat SSH-disconnect or already confirmed card
-checks. An optional synthetic display smoke is below; live plan is only **two
-requests**, one per film. Do not run these commands on behalf of the owner.
+checks. The original plan of **two requests**, one per film, is complete. The
+optional synthetic smoke and live commands below are reproduction instructions
+only. Do not run them on behalf of the owner or request another round now.
 
 ### Get a direct API key (owner action, no paid plan required)
 
@@ -557,6 +561,6 @@ card check **only** for a new or materially conflicting observation, not all
 platforms. Do not archive output/screenshots/HAR. Stop after the two requests;
 errors/quota/identity mismatch are findings, not instructions to retry or scrape.
 No data may be sent to an LLM or used for AI training/evaluation/improvement.
-Live API and real-device behavior for this new mode remain owner-validation
-pending. If a genuine disconnect problem appears, report status without secrets;
+The current checkpoint does not request another live/synthetic/SSH-disconnect
+test or card recheck. If a genuine disconnect problem appears, report status without secrets;
 do not relax auth/Host/Origin or introduce a session-bound fallback.

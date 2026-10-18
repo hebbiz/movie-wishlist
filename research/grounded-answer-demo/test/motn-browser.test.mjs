@@ -12,7 +12,7 @@ test('Movie of the Night compact mobile display (offline, not real iPhone)', { s
   t.after(() => browser.close());
   const cases = [
     ...['coherence', 'dune-part-two'].flatMap(filmId => ['synthetic', 'live'].map(mode => ({ filmId, mode, kind: 'normal' }))),
-    ...['empty-ua', 'missing-key', 'auth-error', 'quota', 'invalid', 'identity', 'hostile'].map(kind => ({ filmId: 'coherence', mode: 'live', kind })),
+    ...['empty-ua', 'missing-key', 'auth-error', 'quota', 'invalid', 'identity', 'year-variance', 'missing-identity', 'provenance', 'hostile'].map(kind => ({ filmId: 'coherence', mode: 'live', kind })),
   ];
   for (const { filmId, mode, kind } of cases) await t.test(`${filmId}/${mode}/${kind}`, async t => {
     let calls = 0; const key = 'offline-browser-key-sentinel';
@@ -26,6 +26,13 @@ test('Movie of the Night compact mobile display (offline, not real iPhone)', { s
         const data = syntheticMotn(filmId);
         if (kind === 'empty-ua') data.streamingOptions.ua = [];
         if (kind === 'identity') data.imdbId = 'tt0000000';
+        if (kind === 'missing-identity') delete data.imdbId;
+        if (kind === 'year-variance') data.releaseYear = 2014;
+        if (kind === 'provenance') {
+          data.streamingOptions.ua[0].price = { amount: '6.54', currency: 'USD' };
+          data.streamingOptions.ua[0].quality = 'hd'; data.streamingOptions.ua[0].audios = []; data.streamingOptions.ua[0].subtitles = [];
+          data.streamingOptions.ua[1].price = { amount: '8.76', currency: 'UAH' }; delete data.streamingOptions.ua[1].quality;
+        }
         if (kind === 'hostile') {
           data.streamingOptions.ua[0].service.name = '<img src="https://example.com/never-load" onerror="alert(1)">';
           data.streamingOptions.ua[0].link = 'javascript:alert(1)';
@@ -56,14 +63,18 @@ test('Movie of the Night compact mobile display (offline, not real iPhone)', { s
     assert.match(shown, /Streaming Availability API by Movie of the Night/);
     assert.match(shown, /UHD is not HDR10\/Dolby Vision/);
     assert.doesNotMatch(shown, /PRIVATE_PROVIDER_CONTENT|Foreign must not display|offline-browser-key-sentinel/);
-    if (['normal', 'hostile'].includes(kind)) {
+    if (['normal', 'hostile', 'year-variance', 'provenance'].includes(kind)) {
       assert.match(shown, /UA option 1/); assert.match(shown, /UA option 2/);
-      assert.match(shown, /Ukrainian audio: Reported: ukr/);
+      if (kind !== 'provenance') assert.match(shown, /Ukrainian audio: Reported: ukr/);
       assert.match(shown, /Not listed; completeness unknown/); assert.match(shown, /Not reported in response/);
-      assert.match(shown, /Video quality: uhd/); assert.match(shown, /1.23 XXX/);
+      if (kind === 'provenance') { assert.match(shown, /6.54 USD/); assert.match(shown, /8.76 UAH/); assert.match(shown, /Video quality: hd/); assert.match(shown, /Video quality: Not reported in response/); assert.match(shown, /Returned: \(empty list\)/); }
+      else { assert.match(shown, /Video quality: uhd/); assert.match(shown, /1.23 XXX/); }
+      if (kind === 'year-variance') { assert.match(shown, /Identity: matched/); assert.match(shown, /year differs/); assert.match(shown, /2014/); }
       if (mode === 'synthetic') assert.match(shown, /SYNTHETIC ONLY/);
       if (kind === 'hostile') { assert.match(shown, /<img src=/); assert.doesNotMatch(shown, /javascript:alert/); }
-    } else assert.match(shown, /no-ua-options|missing-key-no-request|api-auth-error|quota-or-rate-limit|invalid-or-network-response-no-retry|identity-unresolved/);
+    } else assert.match(shown, /no-ua-options|missing-key-no-request|api-auth-error|quota-or-rate-limit|invalid-or-network-response-no-retry|identity-mismatch|identity-unresolved/);
+    if (['identity', 'missing-identity'].includes(kind)) { assert.match(shown, /withheld by identity gate/); assert.doesNotMatch(shown, /No UA options established|UA option 1/); }
+    if (kind === 'empty-ua') { assert.match(shown, /reported-empty/); assert.doesNotMatch(shown, /withheld by identity gate/); }
     assert.equal(await page.locator('#answer img,#answer script,#answer iframe').count(), 0);
     assert.equal(await page.locator('#answer a').count(), 1); // Static attribution only, not a provider link.
     assert.equal(await page.locator('#answer a').getAttribute('href'), 'https://www.movieofthenight.com/about/api');

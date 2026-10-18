@@ -62,11 +62,64 @@ test('Apple service name alone does not imply subscription; addon is separate; o
   }
 });
 
-test('identity mismatches fail closed, never returning another title options', () => {
-  for (const change of [d => d.imdbId = 'tt0000000', d => delete d.imdbId, d => d.showType = 'series',
-    d => d.originalTitle = 'Another movie', d => d.releaseYear = 2020, d => d.tmdbId = 'movie/1', d => d.directors = ['Someone Else']]) {
+test('exact stable-ID match survives a different release year, without rewriting it or losing UA options', () => {
+  for (const withTmdb of [true, false]) {
+    const data = fixture(); data.releaseYear = 2014; if (!withTmdb) delete data.tmdbId;
+    const result = parse(data);
+    assert.equal(result.identity.status, 'matched');
+    assert.equal(result.identity.year.value, 2014);
+    assert.equal(result.options.length, 2);
+    assert.equal(result.optionsState, 'reported');
+    assert.ok(result.identity.warnings.some(w => /year/i.test(w)));
+  }
+});
+
+test('stable-ID conflict is mismatch; missing/invalid stable identity is unresolved, not empty UA', () => {
+  for (const change of [d => d.imdbId = 'tt0000000', d => d.tmdbId = 'movie/1', d => d.tmdbId = 'tv/220289']) {
+    const data = fixture(); data.releaseYear = 2014; change(data); const result = parse(data);
+    assert.equal(result.identity.status, 'mismatch'); assert.equal(result.status, 'identity-mismatch');
+    assert.equal(result.optionsState, 'withheld-identity'); assert.deepEqual(result.options, []);
+    assert.equal(result.uaField, undefined);
+  }
+  for (const change of [d => delete d.imdbId, d => d.imdbId = 'invalid', d => d.tmdbId = {}, d => delete d.showType]) {
     const data = fixture(); change(data); const result = parse(data);
-    assert.equal(result.status, 'identity-unresolved'); assert.deepEqual(result.options, []);
+    assert.equal(result.identity.status, 'unresolved'); assert.equal(result.optionsState, 'withheld-identity');
+    assert.equal(result.uaField, undefined);
+  }
+});
+
+test('currency/amount/quality are response fields, never country inference or owner-control substitutions', () => {
+  for (const currency of ['USD', 'UAH', 'EUR', undefined, null]) {
+    const data = fixture(); const option = data.streamingOptions.ua[0];
+    option.price = { amount: '6.54', currency, formatted: '9.87 SYNTHETIC-IGNORED' }; option.quality = 'hd';
+    const row = parse(data).options[0];
+    assert.equal(row.price.amount.value, '6.54'); assert.equal(row.quality.value, 'hd');
+    if (currency) assert.equal(row.price.currency.value, currency);
+    else { assert.equal(row.price.currency.state, 'not-reported'); assert.equal(row.price.currency.value, undefined); }
+    delete option.quality; assert.equal(parse(data).options[0].quality.state, 'not-reported');
+    option.quality = null; assert.equal(parse(data).options[0].quality.state, 'not-reported');
+  }
+});
+
+test('missing/null language lists stay not-reported; empty list is retained without absence inference', () => {
+  for (const name of ['audios', 'subtitles']) for (const input of ['missing', null, []]) {
+    const data = fixture(); const option = data.streamingOptions.ua[0];
+    if (input === 'missing') delete option[name]; else option[name] = input;
+    const output = parse(data).options[0][name === 'audios' ? 'ukrainianAudio' : 'ukrainianSubtitles'];
+    assert.equal(output.completeness, 'not-established');
+    assert.equal(output.state, Array.isArray(input) ? 'not-listed-completeness-unknown' : 'not-reported');
+    if (Array.isArray(input)) assert.deepEqual(output.returnedLocales, []);
+  }
+});
+
+test('non-year identity conflicts fail closed; metadata ambiguity is distinct from stable-ID mismatch', () => {
+  for (const [expectedStatus, change] of [
+    ['mismatch', d => d.imdbId = 'tt0000000'], ['unresolved', d => delete d.imdbId], ['mismatch', d => d.showType = 'series'],
+    ['unresolved', d => d.originalTitle = 'Another movie'], ['unresolved', d => d.releaseYear = 'invalid'],
+    ['mismatch', d => d.tmdbId = 'movie/1'], ['unresolved', d => d.directors = ['Someone Else']]]) {
+    const data = fixture(); change(data); const result = parse(data);
+    assert.equal(result.status, `identity-${expectedStatus}`); assert.deepEqual(result.options, []);
+    assert.equal(result.optionsState, 'withheld-identity');
   }
   const translated = fixture(); translated.title = 'Зв’язок';
   assert.equal(parse(translated).identity.status, 'matched'); // originalTitle still matches.
@@ -77,6 +130,7 @@ test('empty/missing UA is not unavailability; malformed responses do not look su
     const data = fixture(); if (value) data.streamingOptions.ua = value; else delete data.streamingOptions.ua;
     const result = parse(data); assert.equal(result.status, 'no-ua-options'); assert.deepEqual(result.options, []);
     assert.equal(result.uaField, value ? 'reported' : 'not-reported');
+    assert.equal(result.optionsState, value ? 'reported-empty' : 'not-reported');
   }
   for (const data of [null, [], 'not JSON object', { ...fixture(), streamingOptions: null },
     { ...fixture(), streamingOptions: { ua: {} } }]) assert.equal(parse(data).status, 'invalid-response');

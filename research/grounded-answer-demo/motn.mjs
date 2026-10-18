@@ -67,16 +67,26 @@ export function normalizeMotn(data, filmId, receivedAt = new Date().toISOString(
   const base = { source: MOTN_SOURCE, receivedAt, country: 'ua', options: [], issues: [] };
   if (!record(data)) return { ...base, status: 'invalid-response' };
   const title = data.originalTitle ?? data.title;
-  const tmdb = data.tmdbId === undefined ? undefined : String(data.tmdbId);
-  const identityOK = data.imdbId === expected.imdbId && data.showType === 'movie' &&
+  const imdbValid = typeof data.imdbId === 'string' && /^tt\d+$/.test(data.imdbId);
+  const hasTmdb = data.tmdbId !== undefined && data.tmdbId !== null && data.tmdbId !== '';
+  const tmdbValid = (typeof data.tmdbId === 'string' && /^(?:(?:movie|tv)\/)?[1-9]\d*$/.test(data.tmdbId)) ||
+    (Number.isSafeInteger(data.tmdbId) && data.tmdbId > 0);
+  const tmdb = tmdbValid ? String(data.tmdbId) : undefined;
+  const stableConflict = (imdbValid && data.imdbId !== expected.imdbId) ||
+    (hasTmdb && tmdbValid && ![expected.tmdbId, `movie/${expected.tmdbId}`].includes(tmdb));
+  const identityOK = !stableConflict && data.imdbId === expected.imdbId && data.showType === 'movie' &&
+    (!hasTmdb || tmdbValid) &&
     (title === undefined || title === expected.title) &&
-    (data.releaseYear === undefined || data.releaseYear === expected.year) &&
-    (tmdb === undefined || [expected.tmdbId, `movie/${expected.tmdbId}`].includes(tmdb)) &&
+    (data.releaseYear === undefined || Number.isInteger(data.releaseYear)) &&
     (data.directors === undefined || (Array.isArray(data.directors) && data.directors.includes(expected.director)));
-  const identity = { status: identityOK ? 'matched' : 'unresolved', imdbId: stringField(data.imdbId, 30),
+  const identityStatus = stableConflict || data.showType === 'series' ? 'mismatch' : identityOK ? 'matched' : 'unresolved';
+  const identity = { status: identityStatus, imdbId: stringField(data.imdbId, 30),
+    tmdbId: hasTmdb ? tmdbValid ? field(tmdb) : invalid() : field(),
     title: stringField(title), year: Number.isInteger(data.releaseYear) ? field(data.releaseYear) : field(),
-    basis: 'IMDb must match; any supplied title/year/TMDb/director must agree. Not a cut or entitlement check.' };
-  if (!identityOK) return { ...base, status: 'identity-unresolved', identity };
+    warnings: identityOK && data.releaseYear !== undefined && data.releaseYear !== expected.year
+      ? ['Reported release year differs from the catalogue; exact IMDb matches and no supplied stable ID conflicts. The reason for the year difference is not established.'] : [],
+    basis: 'Exact IMDb required; supplied stable-ID conflicts block options. Year alone cannot reject that match. Other ambiguous identity stays unresolved; not a cut or entitlement check.' };
+  if (!identityOK) return { ...base, status: `identity-${identityStatus}`, identity, optionsState: 'withheld-identity' };
   if (!record(data.streamingOptions)) return { ...base, status: 'invalid-response', identity };
   const supplied = Object.hasOwn(data.streamingOptions, 'ua');
   const ua = supplied ? data.streamingOptions.ua : [];
@@ -99,7 +109,7 @@ export function normalizeMotn(data, filmId, receivedAt = new Date().toISOString(
       row.price, row.price.amount, row.price.currency].some(f => f?.state === 'invalid')) issues.push(`UA option ${index + 1}: invalid field withheld.`);
   }
   return { ...base, status: issues.length ? 'partial' : options.length ? 'ok' : 'no-ua-options', identity,
-    uaField: supplied ? 'reported' : 'not-reported', options, issues };
+    uaField: supplied ? 'reported' : 'not-reported', optionsState: !supplied ? 'not-reported' : ua.length ? 'reported' : 'reported-empty', options, issues };
 }
 
 export async function fetchMotn(selection, apiKey, fetchImpl = globalThis.fetch, { timeoutMs = MOTN_TIMEOUT_MS, maxBytes = MOTN_LIMIT_BYTES } = {}) {

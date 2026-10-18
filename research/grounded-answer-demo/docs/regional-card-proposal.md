@@ -152,6 +152,12 @@ cookies, scraping or bypass. Public access and robots.txt are not permission.
   remains separate; Google Search reuse rules are not automatically applied to
   every URL-only route, nor treated as permission to harvest grounded links.
 
+The later **bounded non-LLM** implementation proposal, current documentation
+recheck and precise remaining agreement gate are in the
+[TMDb data-probe handoff](tmdb-probe-handoff.md#technical-constraints-and-current-terms).
+The older indexed AI wording is not a blanket decision on that new scope or
+inference, nor a freshly verified current agreement.
+
 ### Kinobaza: what was and was not found
 
 - [About](https://kinobaza.com.ua/about) describes a Ukrainian film catalogue
@@ -640,8 +646,10 @@ choice, implementation handoff or additional test was executed at that checkpoin
 Subsequent owner authorization, October 18, 2026: implement a minimal direct
 Movie of the Night probe for **Coherence and Dune, country UA**, not a new
 six-platform integration or evaluation of an AI system. Current implementation
-uses `DEMO_RETRIEVAL=motn-api`; live results remain **unvalidated** until owner
-execution. Existing Search/URL Context/HTML modes and prompts are not changed.
+uses `DEMO_RETRIEVAL=motn-api`; at implementation it was **live-unvalidated**.
+The [later two owner runs and closeout](#motn-closeout-identity-and-field-provenance)
+are now complete, not independent validation or a post-fix retest. Existing
+Search/URL Context/HTML modes and prompts are not changed.
 
 ### Current contract and rules recheck
 
@@ -677,7 +685,7 @@ execution. Existing Search/URL Context/HTML modes and prompts are not changed.
   non-LLM manual capability probe was identified; this is not a legal guarantee
   or permission for a future pipeline. Stop on a concrete applicable conflict.
 
-### Implemented boundary and pending owner run
+### Implemented boundary and original owner plan
 
 Minimal built-in-fetch adapter, no SDK/dependency. One title GET per token,
 20-second/2-MiB bounds, no redirects/retries/continuations/cookies/destinations.
@@ -688,7 +696,7 @@ Missing language versus an array without Ukrainian are distinguished, but list
 completeness is not established: neither becomes confirmed absence. Provider
 metadata is not account entitlement. Live output is neither logged nor archived.
 
-The owner runs **one request per film**, not an automatic batch or new check of
+The original plan was **one request per film**, now completed, not an automatic batch or new check of
 every streaming card. Historical dated manual observations are controls, not
 current guaranteed truth. Ask for a concise useful/missing-field summary; only
 new or materially conflicting results merit another exact-card check. No full
@@ -705,3 +713,70 @@ does not guarantee API fields/catalogue completeness. Kinobaza's JustWatch
 redirects are not a direct Partner API integration. Authorized workers remain
 a separate conditional research direction; no credentials/accounts/worker or
 new downstream adapter is provisioned. MW-FUT-01 remains Discovery.
+
+## MOTN closeout: identity and field provenance
+
+Audit October 18, 2026 against actual PR #179 HEAD `d3e32b0`, base #178
+`30c3160`. Tracked tree was clean; no changes from the deliberately interrupted
+turn were present. Owner's [two completed runs](digital-ua-owner-validation.md#movie-of-the-night--two-completed-owner-run-results)
+are not independently repeated. No provider/model/destination request or full
+response archive. Public documentation reads are not live data validation.
+
+### Proven adapter defects and minimal correction
+
+`normalizeMotn()` required `releaseYear === expected.year` even with exact
+IMDb and agreeing supplied TMDb ID. A new authored fixture with Coherence's
+reference identity and a differing integer year failed before the fix; currency/
+language provenance checks passed unchanged. Thus the gate could reject a
+stable-ID match solely over 2013/2014. **Corrected:** year variance is retained
+as a visible warning, not an identity veto or a guessed explanation of the year.
+The fixed catalogue/IDs, request URL/country, transport and field values stay
+unchanged.
+
+Explicit valid stable-ID conflict (including movie/TV namespace), or returned
+series type, is now `mismatch`; missing/invalid required identity or other
+ambiguous metadata stays `unresolved`. Both withhold options with
+`optionsState=withheld-identity` and do not evaluate UA. Matched identity with
+an actually empty array is `reported-empty`; missing UA is `not-reported`.
+The display distinguishes these, not an invented negative availability result.
+The correction does **not** reveal what Coherence's live API options contained;
+no post-fix live run is requested. No confidence score or general matching engine.
+
+### Field trace: source, adapter, display
+
+Paths below start at `response.streamingOptions.ua[i]`. The official
+[MOTN OpenAPI](https://github.com/movieofthenight/streaming-availability-api/blob/main/openapi.yaml)
+documents price strings/currency, optional quality, audio locales and subtitle
+locale/CC objects. Code paths are [motn.mjs](../motn.mjs), the unchanged MOTN
+branch of [server.mjs](../server.mjs), and [display](../public/motn-display.mjs).
+
+| Source | Adapter → display | Finding / limits |
+| --- | --- | --- |
+| `price.amount`, `price.currency` | `priceField()` → each `stringField()` → `Price/currency` joins those values. | No country-based UAH default, conversion, price inference or lookup. Missing/null currency remains not reported. `price.formatted` is **not used** to recover/change either field. Applies identically to Apple and Prime, separately per offer. |
+| `quality` | Validate returned sd/hd/qhd/uhd → display value. | No HD default or UHD/HDR inference; missing/null is not reported, unsupported code withheld. |
+| `audios` | `languageField()` checks each returned locale → Ukrainian matches / returned locales. | `ukr`/explicit `uk`, not original language or country. Missing and null both become not reported; raw missing-vs-null is not retained. Empty array remains `[]`, not listed with completeness unknown. |
+| `subtitles` | Same, using each `locale` and optional `closedCaptions`. | Independent of audio; identical missing/null/empty distinctions. No subtitle/audio substitution or proven completeness. |
+
+**No field-mapping defect demonstrated** in these paths at the inspected HEAD.
+Authored regressions preserve USD, UAH and EUR in the same UA context, omit
+currency/quality without defaults, and distinguish empty lists from not reported.
+Browser mocks verify literal amount/currency/HD and withheld-vs-empty messages.
+The synthetic values are authored examples, not reconstructions of live data.
+
+### Source discrepancies versus unknown causes
+
+Owner-reported Apple HD/empty lists and UAH prices differ from the owner's dated
+4K/DV, Ukrainian-audio and USD observations; Prime prices raise the same currency
+question. In the inspected code, these displayed fields can only come from the
+corresponding response fields. However no full live response/running-commit
+trace exists to independently prove those original values, compare `formatted`,
+or diagnose upstream currency/catalogue/region/age/metadata processing. **The
+exact cause remains unestablished**, not a proven upstream bug or agent retest.
+No USD, UHD, Ukrainian audio or negative availability is substituted from controls.
+
+Close this manual stage: useful candidate links/access types in these cases;
+language, video, prices/currency and coverage not established as complete or
+reliable. Two films do not support a general accuracy conclusion. No new owner
+test. Proceed to the [TMDb design-only handoff](tmdb-probe-handoff.md); implementation
+and any live run require their own approved follow-up. Other demo modes, native
+Windows/auth controls, Kinobaza parser and production are unchanged.

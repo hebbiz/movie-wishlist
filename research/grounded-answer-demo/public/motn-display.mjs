@@ -13,8 +13,10 @@ export function renderMotnResult(document, host, result, synthetic) {
   link.href = 'https://www.movieofthenight.com/about/api'; attribution.append(link);
   add('p', `Identity: ${result.identity?.status ?? 'not established'}. ${result.httpStatus ? `HTTP ${result.httpStatus}.` : ''}`);
   if (result.identity) add('p', `${value(result.identity.title)} · ${value(result.identity.year)} · ${value(result.identity.imdbId)}`);
+  if (result.identity?.warnings?.length) add('p', result.identity.warnings.join(' '));
   add('p', 'UHD is not HDR10/Dolby Vision. Audio locale is not codec/channel layout. List completeness is not established; a missing Ukrainian locale is not confirmed absence.');
-  if (!result.options?.length) add('p', `No UA options established (${result.uaField ?? 'response not available'}). This does not mean the film is unavailable in Ukraine.`);
+  if (result.optionsState === 'withheld-identity') add('p', 'UA options withheld by identity gate; the UA list was not evaluated. This is not an empty UA result or evidence of unavailability.');
+  else if (!result.options?.length) add('p', `No UA options established (${result.optionsState ?? result.uaField ?? 'response not available'}). This does not mean the film is unavailable in Ukraine.`);
   for (const [i, option] of (result.options ?? []).entries()) {
     add('h3', `UA option ${i + 1}: ${value(option.service.name)} [${value(option.service.id)}]`);
     const access = ({ rent: 'rental', buy: 'purchase', subscription: 'subscription', free: 'free', addon: 'addon subscription' })[option.access.value] ?? value(option.access);

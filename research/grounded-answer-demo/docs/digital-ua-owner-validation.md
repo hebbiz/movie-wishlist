@@ -298,8 +298,62 @@ not establish direct JustWatch Partner API access or rights.
 
 Agreed sequence: Movie of the Night non-LLM probe → comparison with Kinobaza/
 JustWatch → MEGOGO adapter feasibility → shared offer model. Authorized workers
-are a separate conditional direction, not current implementation. No Movie of
-the Night live result is recorded yet. The dated earlier manual observations
+are a separate conditional direction, not current implementation. At that
+authorization checkpoint no Movie of the Night live result was recorded. The dated earlier manual observations
 remain controls, not guaranteed current prices/entitlements. Only new/materially
 conflicting observations need another exact-card check; no request to repeat
 the completed streaming-card/HTML tests. No full responses or screenshots added.
+
+## Movie of the Night — two completed owner-run results
+
+Recorded October 18, 2026 following implementation checkpoint
+`d3e32b004067351406124dade89d0a911b058aeb` in PR #179. **Owner-reported**, not
+independently repeated by the implementation agent. Exact execution timestamps
+and running commit were not captured. This includes clarification of earlier
+manual controls: they were the **owner's** Apple/Prime observations, not an
+independent agent verification. No full API responses were retained or added.
+
+### Coherence
+
+- Owner reported HTTP 200, title Coherence, year **2014**, IMDb **tt2866360**.
+  Demo showed `identity-unresolved`; UA options were not established/displayed.
+- The owner separately checked the MOTN website: it also showed 2014 and no
+  Ukrainian offers. This is a website observation, **not proof that the API
+  returned an empty `streamingOptions.ua`**. The demo's identity gate could
+  withhold existing options before inspecting that field.
+- Earlier owner validation established Coherence on Prime Video in Ukraine with
+  Ukrainian audio, in that manual context. It is a dated control, not guaranteed
+  current catalogue coverage. Why MOTN reports 2014 is not established; no
+  regional-release/reissue explanation is inferred.
+
+### Dune: Part Two
+
+Owner reported HTTP 200, identity matched, year 2024, IMDb **tt15239678**.
+The Apple URL/card identity matched the already known card; no new URL is guessed.
+
+| Offer / field | Reported demo/API observation | Earlier owner control (separate, dated) |
+| --- | --- | --- |
+| Prime rental / purchase | UHD; Ukrainian audio/subtitles not noted; prices **2.99 / 3.99 UAH**. | Owner previously reported no Ukrainian audio on the checked Prime offer; not an independent agent or universal absence finding. |
+| Apple rental / purchase | Correct known card; HD; empty audio/subtitle lists; **3.99 / 7.99 UAH**. | Rental **3.99 USD**, purchase **7.99 USD**; 4K Dolby Vision; Ukrainian Dolby 5.1 / AAC. USD is explicit in this owner clarification, not inferred from a dollar symbol. |
+
+The matching Apple amounts with a different currency are a **material anomaly**,
+not a reason to relabel UAH as USD. Prime currency also needs the same provenance
+distinction. Neither the control nor the aggregator is assumed current for all
+accounts/times. Empty lists are not proof of missing Ukrainian tracks; a quality
+code is not proof of HDR/DV, and missing subtitle evidence remains unknown.
+
+### What is established at this checkpoint
+
+MOTN looks useful for **candidate links and access types** in these cases, but
+the two tests did not establish completeness/reliability of language lists,
+quality, currency/prices or catalogue coverage. This is not a general accuracy
+assessment. Coherence's gated result must not count as an API-negative UA result.
+
+The [independent code/provenance audit](regional-card-proposal.md#motn-closeout-identity-and-field-provenance)
+proved a year-only identity rejection defect and correct direct mapping of the
+audited fields in the reviewed code. It did not independently inspect the live
+responses or establish the upstream cause of the anomalies. Only the proven
+identity/status defect is corrected; no USD/UHD/audio substitutions are made.
+The correction is offline-tested, not revalidated live. **No repeat owner run or
+streaming-card check requested.** The next step is the design-only
+[TMDb data-probe handoff](tmdb-probe-handoff.md). MW-FUT-01 remains Discovery.

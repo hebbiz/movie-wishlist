@@ -46,7 +46,10 @@ exact film card. [Parser diagnosis](docs/regional-card-proposal.md#html-checkpoi
 and [Movie of the Night feasibility](docs/regional-card-proposal.md#movie-of-the-night-bounded-feasibility-only)
 were documentation-only at checkpoint `30c3160`. The subsequent owner-approved
 `DEMO_RETRIEVAL=motn-api` adds a separate non-LLM, two-film UA capability probe,
-**offline-tested / live-unvalidated**, not a Kinobaza parser fix. See
+initially offline-tested / live-unvalidated. The [two owner-run results](docs/digital-ua-owner-validation.md#movie-of-the-night--two-completed-owner-run-results)
+now close that manual stage: useful links/access types, with catalogue/metadata/
+currency limitations. The year-only identity fix is offline-tested, not rerun
+live; no repeat owner test requested. This is not a Kinobaza parser fix. See
 [API setup/result contract](#movie-of-the-night-api-probe) and the
 [current scope/terms decision](docs/regional-card-proposal.md#approved-non-llm-api-probe).
 The [bounded approval/rules record](docs/regional-card-proposal.md#owner-approved-html-extraction-poc)
@@ -167,8 +170,14 @@ Identifier provenance: the already verified
 checked October 17, 2026. TMDb page-content identity evidence and IMDb search
 results were recorded there; IMDb direct retrieval failed and API crosswalk
 verification was **not** performed. No IDs inferred from model memory and no
-runtime dependency on PR #173. Incoming IMDb must match; any supplied original
-title/year/TMDb/director must agree, otherwise no offers are displayed.
+runtime dependency on PR #173. Exact IMDb is required; a valid conflicting IMDb
+or TMDb (including a TV namespace), or an explicit series type, is `mismatch`.
+Missing/malformed stable identity or ambiguous title/director/type is
+`unresolved`. **Year alone cannot reject the stable-ID match**: preserve the
+reported year with a warning, without inventing a regional-release explanation.
+Both failure states explicitly mark `optionsState=withheld-identity`: the UA
+list was not evaluated. That differs from matched identity with an actually
+reported empty UA array (`reported-empty`) or a missing UA field (`not-reported`).
 
 Before clicking, UI shows the film, IMDb, UA, operation and exact GET URL:
 `https://api.movieofthenight.com/v4/shows/<fixed-imdb-id>?country=ua`.
@@ -189,6 +198,11 @@ provided language array without Ukrainian is **not listed / completeness
 unknown**, including an empty array. The reviewed docs do not establish list
 completeness, so no automatic confirmed-absence state is emitted. ISO 639-2
 `ukr` (or explicitly returned `uk`) counts, not `UKR` region/original language.
+Missing and null language fields both map to `not-reported`; their original
+missing-vs-null distinction is not retained. Empty arrays retain `[]` and mean
+not listed / completeness unknown, never confirmed absence. Quality has no
+default; price amount/currency come only from their response fields, never UA.
+See the [field trace and findings](docs/regional-card-proposal.md#motn-closeout-identity-and-field-provenance).
 No UA options/404 does not mean unavailable in Ukraine.
 
 Apple service ID `apple` alone does not mean subscription: retain `rent`, `buy`,
@@ -199,10 +213,10 @@ guarantee of freshness. Attribution/link to Movie of the Night stays visible.
 Synthetic options/prices/services are invented, not an archived API response.
 
 [Exact key/Free-plan setup and standalone owner commands](docs/iphone-windows.md#movie-of-the-night-api-owner-workflow).
-Live remains **unvalidated**: owner plan is one request per film, concise
-observations of useful/missing fields, and only new/substantially conflicting
-offer findings need another card check. No full JSON/metadata requested unless
-diagnosing an error, and no secret-bearing dumps. No LLM, training or AI
+The two owner-run tests are **complete**, not independently reproduced. Existing
+commands are reproduction instructions, not a request to rerun either film or
+its streaming cards. No full JSON/metadata or secret-bearing dumps requested.
+The corrected identity behavior remains live-unvalidated. No LLM, training or AI
 evaluation/improvement; inference permission is outside this probe, not inferred.
 
 Approved research sequence (not implemented as a pipeline): Movie of the Night
@@ -210,8 +224,11 @@ probe → comparison with Kinobaza/JustWatch → MEGOGO adapter feasibility → 
 offer model. Direct JustWatch Partner API access is **not** the current Kinobaza
 tracking-link path; owner-reported platform coverage is not an API guarantee.
 Authorized workers remain a separate conditional direction, not this scope.
+Next implementation is specified in the [TMDb data-probe handoff](docs/tmdb-probe-handoff.md),
+**design only in this task**, with current terms uncertainty separated from
+technical capability and no provider-localization inference from film metadata.
 
-Independent implementation checks (Node 24.22.0, October 18, 2026): **135**
+Historical implementation checks at `d3e32b0` (Node 24.22.0, October 18, 2026): **135**
 offline/HTTP tests passed, including the 22-body Gemini golden regression.
 Sequential Edge desktop/narrow-viewport suites: **72 passed / 5 skipped**
 (four absent WebKit checks and optional explicit-IP LAN); the final exact-URL
@@ -220,6 +237,13 @@ PowerShell 7 temporary-copy lifecycle passed for all five retrieval modes,
 including mock-only child API-key inheritance, parent exit, replay, duplicate
 start, forged-PID refusal, safe stop and restart. No owner process stopped.
 PowerShell 5.1 / new-mode real iPhone/live API not independently validated.
+
+Closeout/fix checks: **139 offline/HTTP tests passed**, including the unchanged
+22-body Gemini golden regression; **75 browser checks passed / 5 skipped**
+(four absent WebKit binaries, optional explicit-IP LAN). MOTN PowerShell 7
+temp-copy lifecycle/mock key-routing regression passed. The new year/status
+cases and field provenance use authored fixtures, not retained live responses.
+No new owner/live/API/card test. See the audit for proven vs unresolved findings.
 
 Offline probe commands (no live API):
 
