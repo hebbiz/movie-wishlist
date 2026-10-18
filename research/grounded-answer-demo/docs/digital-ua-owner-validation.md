@@ -146,3 +146,66 @@ Latency, token usage and actual cost are not established here; usage/cost is not
 a blocker and zero cost is not asserted. Amazon-region live checks remain
 pending. The next step is **design only**, in the existing
 [regional-card proposal](regional-card-proposal.md#next-experiment-current-ukrainian-availability).
+
+## Kinobaza candidate discovery — manual experiment A completed
+
+Recorded October 18, 2026 after checkpoint
+`8e629b3979239514703a898ea98dc2eee75a904d`. The owner manually followed
+Кінобаза links and checked offers in a Ukrainian context. **Owner-reported,
+not independently repeated by the implementation agent.** Exact execution
+times and account settings were not supplied; the record date is not a test
+timestamp. This is a manual experiment, not another Gemini/API run.
+
+### Reported observations: Coherence candidates
+
+- Кінобаза → Apple TV led to the correct card, ID
+  `umc.cmc.hdoayzcx3u9ofxfawjrt3hgc`, matching the existing
+  [fixed Apple card](url-context-poc.md#verified-catalogue-not-expected-answers).
+  The displayed year is **2020**; its meaning remains unestablished.
+- Кінобаза also supplied this [Prime Video candidate](https://www.primevideo.com/detail/0IIIN33QO51PY805B0ZI7HT6RY/).
+  The owner confirmed Coherence availability in Ukraine and **Ukrainian audio
+  on this Prime Video offer**. No access type, price, subtitles, video format
+  or actual playback was reported for this check.
+- This differs from the earlier Apple TV offer: its available-audio list
+  contained Russian Dolby 5.1/AAC. Original Audio: English was a separate
+  metadata field, not proof of an offered English track. Earlier Apple TV
+  purchase/rental and HD observations remain in the initial Search section;
+  they are not newly established by this candidate-discovery check.
+
+### Reported observations: Dune: Part Two candidates
+
+- The owner confirmed correct Кінобаза transitions to **Apple TV, MEGOGO,
+  HBO Max and Rakuten TV**. Exact new destination URLs were not supplied;
+  none are reconstructed here. The existing fixed Apple URL is documented
+  separately, not substituted for an unreported redirect trace.
+- Ukrainian audio was confirmed by the owner for the **HBO Max** and
+  **Rakuten TV** offers. No further availability/access-type, price,
+  subtitle/video specifications or playback claim is added for these offers.
+- Separately, the owner's **Prime Video** check found no Ukrainian audio.
+  Its URL and discovery provenance were not supplied: **do not attribute this
+  Prime Video link to Кінобаза**, or infer that the film itself was unavailable.
+- Preserve the earlier Apple TV / MEGOGO observations above as their own
+  historical checks, not a fresh confirmation of their prices or metadata.
+
+### Evidence separation and interpretation
+
+| Evidence stage | What this owner report establishes |
+| --- | --- |
+| Link found | Кінобаза supplied the reported Apple/Prime candidates for Coherence and four provider transitions for Dune. Dune Prime provenance is unreported. |
+| Identity checked | The owner reported the correct Coherence Apple card/Prime offer and correct Dune destinations; no independent agent recheck is claimed. |
+| Availability checked | Coherence Prime Video availability in Ukraine was explicitly confirmed by the owner. Other newly reported transitions/audio checks are not expanded into entitlement or transaction claims. Earlier Apple/MEGOGO checks retain their own scope. |
+| Offer characteristics checked | Coherence Prime Ukrainian audio; Dune HBO Max/Rakuten Ukrainian audio and the separately checked Dune Prime lack of Ukrainian audio, all owner-reported and provider-specific. |
+
+The previous proposal's **manual experiment A is completed for these two films**.
+Кінобаза helped locate correct cards and an additional useful Coherence offer
+with Ukrainian audio. This supports its usefulness as a candidate source in
+these cases, not general accuracy, completeness, API feasibility or integration
+reliability. Кінобаза alone is not final evidence of availability or
+offer-specific localization. No new prices, subtitles/video, access types,
+account settings, timestamps or playback results are inferred.
+
+The separate [integration feasibility review and next-step proposal](regional-card-proposal.md#candidate-integration-feasibility)
+uses public documentation, not these observations as evidence of API rights.
+No full Gemini responses, raw metadata, screenshots or evidence archive are
+stored. Usage/cost remains unmeasured, not zero; Amazon-region live checks
+remain pending. MW-FUT-01 remains Discovery.

@@ -19,6 +19,14 @@ not change the existing Search prompts or their default selection. Two
 through iPhone/Safari supplied useful identity/audio metadata but left offer
 availability and several transaction/video fields unknown. These are not
 independently repeated tests, general accuracy or proof of method superiority.
+The subsequent [manual Kinobaza experiment A](docs/digital-ua-owner-validation.md#kinobaza-candidate-discovery--manual-experiment-a-completed)
+is completed for these two films: the owner confirmed useful provider candidates,
+including Coherence on Prime Video in Ukraine with Ukrainian audio. These
+provider-specific observations are separate from the URL Context tests. The
+[candidate integration feasibility review](docs/regional-card-proposal.md#candidate-integration-feasibility)
+compares TMDb discovery, a supported Kinobaza interface if available, and manual
+Kinobaza assistance. It recommends a bounded owner-curated candidate-link
+preview as the next design-only step, not an approved automatic integration.
 The [Windows launch diagnosis](docs/windows-launch-diagnosis.md) resolves the
 earlier detached-launch failure: multiple Node PATH matches were passed as one
 executable string. The helper now selects one executable, without changing

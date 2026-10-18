@@ -1,11 +1,13 @@
 # Proposed next experiment: regional card first
 
-Design only, updated October 18, 2026 after two owner-run URL Context tests.
+Design only, updated October 18, 2026 after owner-run URL Context tests and
+completion of manual Kinobaza candidate experiment A.
 MW-FUT-01 remains **Discovery**. No prompt,
 runtime, model/settings, provider, output limit or integration is changed here.
 The [owner observations](digital-ua-owner-validation.md) motivate narrower
 questions, not an accuracy claim or a production recommendation. The current
-proposal below supersedes the earlier prompt-clarification preference. The
+proposal below supersedes the earlier prompt-clarification preference and the
+now-completed manual candidate-discovery experiment. The
 implemented fixed-card URL-only experiment is documented separately in the
 existing PoC guide; no implementation handoff is prepared here.
 
@@ -63,144 +65,197 @@ or supply runtime input.
 ## Next experiment: current Ukrainian availability
 
 The [two reported URL-only tests](digital-ua-owner-validation.md#url-context-evaluation-checkpoint--two-owner-run-live-tests)
-provided useful identity/audio metadata, but left availability and transaction
-fields unknown. The full provider-retrieved content is unavailable; the cause of
-omissions is unresolved. The next question is **whether a current digital offer
-can be established in Ukraine**, not whether a longer prompt fills every field.
+provided identity/audio metadata but left availability and transaction fields
+unknown. The provider's full retrieved content is unavailable; the cause of
+omissions remains unresolved. Retrieval SUCCESS is not truth or entitlement.
 
-### A. Candidate links from TMDb / Кінобаза, then manual offer verification
+The previous **manual experiment A is now completed for Coherence and Dune**:
+see the [owner candidate-discovery record](digital-ua-owner-validation.md#kinobaza-candidate-discovery--manual-experiment-a-completed).
+Kinobaza led to useful cards, including owner-confirmed Coherence availability
+and Ukrainian audio on Prime Video. Dune audio observations remain tied to
+HBO Max, Rakuten TV and separately checked Prime Video; no missing URL/provenance
+or access type is invented. Earlier Apple/MEGOGO checks remain historical.
 
-- **Hypothesis / new information:** Ukrainian titles and candidate links can
-  lead the owner to a concrete provider offer whose current access type can be
-  checked directly. This adds a time/account-scoped availability observation,
-  not just identity/audio metadata or another aggregator availability assertion.
-- **Minimum change:** no code, prompt, dependency or model change. One manual
-  session, the same two films, at most one provider-card candidate per film.
-  Use TMDb/Кінобаза through their ordinary UI only if accessible; a source may
-  provide no usable link. Existing fixed Apple cards can be controls, but using
-  a seed URL is not counted as successful new candidate discovery. No Gemini
-  call is needed to answer this manual research question.
-- **Dependencies / access limits:** owner access to source/provider UI, Ukraine
-  without VPN and a Ukrainian account when needed. Neither an API nor relevant
-  TMDb/Кінобаза fields/links are assumed to exist. Source rights/access,
-  attribution and retention remain unresolved; no automatic access is approved.
-  Shared JustWatch-origin data is not independent corroboration.
-- **Acceptance:** establish exact film/cut/card identity first. For each case,
-  distinguish current subscription access, a new rental and a new purchase
-  using visible offer-specific controls, or explicitly retain unknown. A Play
-  button shows an account-scoped playback control, not successful playback, a
-  new transaction or another account's entitlement. Price is a dated observation,
-  not a persistent promise. Supporting the hypothesis requires at least one
-  actual current offer observation beyond the URL-only unknown; merely marking
-  both cases unknown is a documented unresolved outcome, not successful proof.
-- **Stop criteria:** stop at two cases or when identity/territory/access cannot
-  be established normally. No usable link means unknown, not unavailable. Do not
-  buy, subscribe, bypass geo/login restrictions, expand platforms/films or infer
-  missing fields to complete the exercise. No automated extraction or archive.
-- **Termius → iPhone/Safari order:** inspect the correct checkout and, if the
-  demo is already running, use status only; leave the owner process/configuration
-  intact. Move to Safari, manually locate a title/link in the source UI, then
-  open the exact regional provider card and verify identity. Check current
-  access controls in the owner's Ukrainian context; keep localization/video
-  observations separate and unknown where absent. Discuss concise observations
-  and uncertainty without saving live model text, raw metadata or screenshots.
-  No demo/model click is required; follow the existing trusted-LAN guide if
-  using the demo as context, not as an entitlement oracle.
+This is evidence for candidate-source utility in two cases, not completeness,
+general accuracy or automatic-integration feasibility. The next question is
+how to obtain candidate links responsibly without confusing an aggregator
+signal with a current Ukrainian offer. The comparison below replaces the old
+A-first recommendation; no new implementation is authorized.
 
-### B. Additional exact-card check, gated by demonstrated access to missing data
+## Candidate integration feasibility
 
-- **Hypothesis / new information:** a permitted technical view of the **same**
-  card might expose current transaction/availability information omitted from
-  URL Context. This must first be demonstrated; another retrieval SUCCESS or
-  the same identity/audio list would add no evidence for the availability gap.
-- **Minimum change:** begin with a manual feasibility check of normal rendered
-  Safari/provider UI. If offered through normal navigation, the official Apple
-  TV app may be checked as a separate account-bound view, not silently equated
-  with the public page. No implementation or new transport is proposed now.
-  A future technical read would require a separately approved method and proof
-  that it can expose the needed fields; no API/endpoint or field availability
-  is assumed. Repeating URL Context is not itself a new method.
-- **Dependencies / access limits:** exact card/version mapping, demonstrated
-  extra fields and applicable permission. An official documented interface, if
-  one exists, needs its own capability/terms/attribution/retention review before
-  any request. A rendered-page observation does not grant scraping/DOM
-  automation rights; app-only/account data is not automatically available to a
-  backend. No cookies, credentials, internal endpoints, account automation or
-  access-control circumvention. The existing terms review below is context,
-  not clearance for a new route.
-- **Acceptance:** in one chosen case, identify at least one additional
-  offer-specific availability/access field absent from the URL-only answer,
-  with known card and territorial/account scope. Before selecting a technical
-  route, demonstrate authorized access to that field, not just HTML retrieval
-  or a generic badge. Report which conclusions remain account-only/unknown;
-  do not claim that this reveals what Gemini actually received.
-- **Stop criteria:** no new availability field, uncertain card mapping, no
-  documented permitted method, blocked/login-only automated access or dependence
-  on invented/private endpoints ends this option as infeasible/unresolved for
-  now. Do not add a scraper/provider, replay model calls or relax constraints.
-- **Termius → iPhone/Safari order:** inspect status without restarting/stopping
-  the owner demo; open the chosen configured card in Safari normally. Check
-  rendered availability controls; optionally follow the provider's ordinary
-  official-app navigation only if exact identity can be maintained. Compare
-  this observation to the existing owner summary, not an archived model answer.
-  If only the account view adds information, label it account-scoped. Return to
-  discussion with the feasibility result; make no technical/API call or code
-  change until a separate decision. Keep the iPhone safety workflow unchanged.
+Public documentation checked **October 18, 2026**. This review used read-only
+public pages and official documentation, including the downloadable OpenAPI
+document, **not Gemini/TMDb API calls**. No private endpoints, account automation,
+cookies, scraping or bypass. Public access and robots.txt are not permission.
 
-### Official capabilities and terms checked October 18, 2026
+### TMDb: documented capability versus Ukraine coverage
 
-- **Documented capability, not a permission grant:** the
-  [GenerateContent URL Context guide](https://ai.google.dev/gemini-api/docs/generate-content/url-context)
-  lists `gemini-3.8-flash`, supports supplied public URLs and combination with
-  Google Search, and exposes retrieval URLs/status. Retrieval may use an index
-  cache before a live-fetch fallback; success alone does not prove freshness.
-  Login/paywall content is unsuitable. This is not the owner's authenticated
-  Ukrainian Safari session; no regional entitlement guarantee is documented.
-- **Explicit restrictions / narrow display use:** the
-  [Gemini Search terms](https://ai.google.dev/gemini-api/terms#grounding-with-google-search)
-  require results with associated Suggestions for the initiating user in an
-  owner-operated app. They restrict analysis/reuse/storage, with specific narrow
-  exceptions, and prohibit extracting links for crawling/scraping. They constrain
-  modification and link navigation. Those exceptions are not a blanket license
-  for this experiment's normalization, evidence archive or evaluation dataset.
-  Preserve original display and direct navigation; the
-  [Client Application Guidelines](https://support.google.com/adsense/answer/10926790)
-  also apply. Google-side retention is separate from local no-storage.
-- **Third-party rights remain separate:** the
-  [Google APIs terms, section 5](https://developers.google.com/terms#section_5_content)
-  do not grant all rights to accessed third-party content. Source-site terms
-  and applicable rights must be reviewed for any proposed automated access,
-  extraction or retention. No Apple TV/MEGOGO scraping permission was established
-  by this documentation review.
-- **Unresolved:** technical support for Search + URL Context does not settle
-  whether a particular discovery-to-URL follow-up or performance-analysis use is
-  permitted under the applicable agreement. Clarify that scope with the owner
-  and, where needed, the provider before an automated stage or broader evaluation.
-  Do not harvest grounded links into a fetch queue, forward responses to another
-  LLM, normalize/store them, bypass login/CAPTCHA, or assume silence is permission.
+- [Movie Watch Providers](https://developer.themoviedb.org/reference/movie-watch-providers)
+  documents country-keyed, per-film provider availability supplied through
+  JustWatch. It explicitly does **not** return full provider deep links: the
+  country `link` is a **TMDb watch-page link**, not the exact provider offer.
+  JustWatch attribution is explicitly required.
+- The [official OpenAPI document](https://developer.themoviedb.org/openapi/tmdb-api.json)
+  shows country examples with access buckets `flatrate`, `rent`, `buy` and
+  `ads` when present. Provider entries describe
+  `provider_id`, `provider_name`, `logo_path` and `display_priority`.
+  These are aggregator/provider signals, not account entitlement. This response
+  does not document offer prices, offered audio/subtitles or video formats.
+- [Movie Providers](https://developer.themoviedb.org/reference/watch-providers-movie-list)
+  allows country filtering with `watch_region`;
+  [Available Regions](https://developer.themoviedb.org/reference/watch-providers-available-regions)
+  documents the method for discovering countries with provider data. The
+  [Discover Movie reference](https://developer.themoviedb.org/reference/discover-movie)
+  and its OpenAPI parameters separate territory from monetization filters
+  (`flatrate/free/ads/rent/buy`); language is not an offered-audio filter.
+- **Ukraine is not verified by this review.** The inspected static OpenAPI
+  movie example, its country-specific example schema and available-regions
+  example do not contain `UA`. Examples are not a current exhaustive coverage
+  guarantee or proof of non-support. Do not promise Ukrainian provider results
+  for either film, invent a provider list or translate absent data into
+  unavailable. A future separately approved API probe would first establish
+  current region support and then inspect each film's `results.UA`, if present.
+  No such probe was run here.
 
-The guide documents a possible tool, not authorization to deploy it. No new
-integration, scraper or provider is recommended automatically; no API migration
-is implied by the docs labelling GenerateContent legacy.
+### TMDb: permission, attribution, retention and cost
+
+- **Documented general terms, not AI clearance:** the
+  [developer FAQ](https://developer.themoviedb.org/docs/faq) describes
+  non-commercial API use as free with attribution, commercial licensing through
+  sales (no price established here), and no SLA. It requires an approved TMDb
+  logo and prominent non-endorsement notice in About/Credits. Watch-provider
+  data additionally requires the JustWatch attribution above. Neither billing
+  category nor the applicable agreement for this project is settled here.
+- **Explicit restriction signal; current legal text needs verification:** an
+  indexed first-party version of the
+  [API Terms of Use](https://www.themoviedb.org/api-terms-of-use?language=en-CA)
+  (labelled October 20, 2023; search index crawled over a year before this review)
+  prohibits API/content use in connection with AI/ML applications, not only
+  training. It also restricts derivatives, caching beyond six months and
+  requires purging content on termination. Direct reading of the current legal
+  page was blocked by robots; these are **indexed terms, not a fresh verification
+  of the effective agreement**. They are a reason to hold, not a license for
+  six-month storage or an assertion about a newly checked contract.
+- **Unresolved:** applicable current agreement and any exception for candidate
+  discovery in an AI-connected product, downstream transfer to another model,
+  normalization/derived fields and retention. Do not pass TMDb data/links to
+  Mykola or another LLM based on the FAQ's general free-use statement. Resolve
+  this scope before an automatic experiment; this review neither contacts the
+  provider nor changes existing production TMDb use.
+- Provider API rights would not automatically grant rights to the destination
+  sites' content. The existing [tool/source-rights review](url-context-poc.md#official-capabilities-display-and-terms-review)
+  remains separate; Google Search reuse rules are not automatically applied to
+  every URL-only route, nor treated as permission to harvest grounded links.
+
+### Kinobaza: what was and was not found
+
+- [About](https://kinobaza.com.ua/about) describes a Ukrainian film catalogue
+  with ordinary title search. The
+  [Dune: Part Two public title page](https://kinobaza.com.ua/titles/dune-part-two)
+  visibly contains Ukrainian title/provider links and country sections.
+  Its watch section credits JustWatch; some links target
+  `click.justwatch.com`. This checks public source/provenance presentation,
+  **not** the owner's provider availability/audio observations.
+- TMDb explicitly credits JustWatch and Kinobaza visibly uses it in this block.
+  Thus overlapping provider signals may share upstream data and are not
+  independent corroboration. This does not establish that every Kinobaza
+  title/localization field comes from JustWatch or is copied from TMDb.
+- **Not found:** a public documented movie/provider-link API or another
+  explicitly supported automated export/interface, with authentication,
+  fields, coverage and usage contract. Review scope: public About, Terms,
+  Privacy, the title page and site-scoped searches for API/developer
+  documentation. This is **not a finding that no API exists**; no undocumented
+  endpoints were tested.
+- [Privacy](https://kinobaza.com.ua/privacy) mentions RSS/API distribution of
+  public discussion/user contributions. That is not a documented catalogue/
+  provider-link interface or permission for our automated access.
+- [Terms](https://kinobaza.com.ua/terms) apply to registered and unregistered
+  users and place responsibility for use/third-party rights on the user.
+  The reviewed pages do **not establish** automated access, redistribution to
+  another model, extraction/normalization, attribution rules for an integration
+  or retention/cache rights for movie/provider data. These remain unresolved;
+  silence and public accessibility are not grants. No supported plan, API
+  tariff, limits or SLA were found; costs are **unknown**, not zero.
+- Manual discovery is owner-agreed research, not authorization for scraping or
+  future public redistribution. Provider-specific prices, localization and
+  entitlement still require their own offer/context checks.
+
+## Options for the next technical step (design only)
+
+| Option | Value and coverage limits | Complexity and dependencies | Known costs and unresolved questions |
+| --- | --- | --- | --- |
+| **A. TMDb provider discovery + manual exact URLs** | Structured country/provider/access-type leads; exact destinations still manual. Current UA/two-film coverage unverified; no offer audio/video/price or entitlement guarantee. | Small isolated server-side API step plus manual link entry, only after permission and UA capability checks. Needs owner credential, attribution and error/unknown handling; no direct-URL resolver inferred. | FAQ's free non-commercial category is conditional, commercial quote unknown; not a zero-cost project estimate. Current AI-use/transfer/cache agreement unresolved. No API call approved here. |
+| **B. TMDb + documented supported Kinobaza interface** | Could add Ukrainian titles/exact-link candidates if the interface actually exposes them; shared JustWatch signals are not independent. Coverage/fields unknown. | Cannot size or select transport: supported public interface was **not found**. Depends on authoritative documentation/permission, fields, access limits, attribution and retention, plus A's gates. | No established plan/tariff; cost and maintenance unknown. Not feasible to implement on current evidence; do not substitute internal endpoints or scraping. |
+| **C. Kinobaza as a manual auxiliary source** | Already useful for these two films; owner chooses exact regional cards and checks offers. Human coverage is bounded, not complete or automatically current. | Lowest complexity: no provider adapter. A proposed owner-curated link-only preview could exercise navigation/provenance separation without source-site fetching or model calls. Depends on ordinary owner access and manual identity checks. | Owner time/device/network and any provider/account charges are not measured; no automatic-integration tariff established. Redistribution/retention/AI forwarding of source data remains unapproved. |
+
+Unknown usage/cost is not a blocker and is not zero. No integration is chosen
+from the absence of documentation. The conceptual multi-source architecture
+above is retained, not implemented or expanded on assumptions.
 
 ## Recommendation (design only, no implementation handoff)
 
-Choose **A first**: one bounded owner session with Coherence and Dune: Part Two,
-candidate links if obtainable normally, then direct manual current-offer checks.
-It targets the availability gap without another model call, speculative API or
-new integration. Its benefit is a scoped current observation and a clearer
-boundary between discovery, public metadata and account access, not proof of a
-generally reliable method. If neither offer can be established, retain that
-unresolved result; do not switch to B automatically.
+Choose **C next**: propose a tiny isolated, owner-curated **candidate-link
+preview**, followed by manual Safari offer verification. Its new technical
+question is whether link navigation and provenance can be kept separate from
+identity, availability and offer characteristics across providers. This is not
+another test of whether Kinobaza is useful: manual experiment A already
+established usefulness in the reported cases.
 
-B is a subsequent feasibility question only if it can demonstrate new,
-permitted access to missing availability information. Do not choose a technical
-integration merely because URL Context omitted fields. Current prompts/model/
-settings and the fixed catalogue remain unchanged; nothing is sent to Mykola.
+Minimum proposed change in a separately approved iteration: a bounded preview
+of the two films' explicitly owner-supplied public URLs and source labels, with
+no automatic source retrieval, LLM call, response normalization, raw content
+storage or arbitrary browser URL input. No runtime catalogue changes now.
+Do not repurpose Google-grounded links as a fetch queue. Owner observations
+may be discussed separately; they must not become prefilled provider facts.
 
-Both options preserve the [iPhone workflow](iphone-windows.md), no response
-archive, independent unknowns and no payments/geo bypass. Owner observations
-must remain distinct from model statements and implementation-agent tests.
-Usage/cost is not a blocker, unmeasured cost is not zero, and two cases cannot
-establish general accuracy or superiority. No API calls, automation, system
-changes or implementation handoff accompany this documentation proposal.
+### Acceptance criteria for that proposed experiment
+
+- Only Coherence and Dune, explicit exact URLs and known provenance; absent
+  destinations stay unconfigured. The Coherence Prime URL is available from
+  the owner record. Obtain missing Dune URLs from the owner rather than infer
+  them. Dune Prime origin remains unreported, not Kinobaza.
+- Candidate discovery never auto-confirms identity, availability or properties.
+  Keep those four evidence stages visibly distinct; no aggregator localization
+  transfer between providers, no original-language-to-track inference.
+- Opening a link makes no Gemini/TMDb/Kinobaza backend request. No source-page
+  scraping, credentials/cookies to the demo, persistence or live content archive.
+  Current Search/URL-only modes, auth and one-shot behavior stay unchanged.
+- Manual comparison can reconcile at least one exact provider candidate with an
+  offer-specific UA observation, or records the unresolved result without
+  claiming experiment success. Playback controls, new transactions and
+  metadata remain separate; unknown is acceptable, not unavailable.
+- No general accuracy/completeness claim, purchase/subscription requirement,
+  legal assurance or new integration. Rights questions must be revisited before
+  any automatic A/B experiment or forwarding of data to Mykola.
+
+### Manual test plan: Termius → iPhone/Safari
+
+1. In Termius inspect the correct checkout/HEAD and use the existing
+   `Status-Demo.ps1` only if inspecting a running demo. **Do not stop or
+   reconfigure the owner's active process for this documentation checkpoint.**
+   Preserve the [iPhone guide](iphone-windows.md), trusted-LAN Basic Auth and
+   existing synthetic-first/reload rules for any later approved preview test.
+2. In Safari, using the owner's Ukrainian context without VPN, manually open
+   the known Coherence Prime candidate and Apple control. For Dune obtain
+   exact destinations first through normal owner navigation; missing URLs
+   terminate that case as unconfigured. Do not press the demo's live button.
+3. Verify film identity, territorial offer/access separately, then Ukrainian
+   audio and subtitles, each video property, access type/price only if visible.
+   Do not require a purchase, successful playback or access to hidden metadata.
+   Record a concise owner observation in discussion, not live page/model text,
+   account details, screenshots, raw metadata or an evidence archive.
+4. For a later separately approved link-preview prototype, compare each
+   displayed destination/provenance with the manually opened card; test that
+   unknown fields remain unknown and opening a candidate cannot invoke a
+   model/API. This checkpoint does not implement or claim to test that UI.
+5. **Stop criteria:** two films completed, no exact URL/identity, ambiguous
+   territory/account access, blocked/login-only automation, payment required
+   to investigate, or unclear permission for the proposed technical step.
+   Stop as unresolved; do not bypass, buy, add a provider/scraper or fall back
+   to automatic discovery. Revisit A/B only after their documented gates.
+
+This recommendation preserves the current fixed Apple catalogue and iPhone
+workflow. All runtime/prompts/model/settings remain unchanged. No API calls,
+dependencies, system changes, deployment or implementation handoff accompany
+this documentation checkpoint. MW-FUT-01 remains **Discovery**.

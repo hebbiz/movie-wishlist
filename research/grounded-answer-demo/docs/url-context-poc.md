@@ -35,6 +35,9 @@ Blade Runner is not a URL-mode case; unsupported combinations fail before listen
 The [agreed auxiliary discovery-source role](regional-card-proposal.md#agreed-auxiliary-discovery-source)
 for Кінобаза belongs to the proposed future flow, not this fixed-card experiment.
 It adds no automatic discovery, access or catalogue changes here.
+The later [manual candidate-discovery checkpoint](digital-ua-owner-validation.md#kinobaza-candidate-discovery--manual-experiment-a-completed)
+and [TMDb/Kinobaza feasibility review](regional-card-proposal.md#candidate-integration-feasibility)
+do not add Prime Video or any discovered URL to this two-card catalogue.
 
 ## Official capabilities, display and terms review
 
