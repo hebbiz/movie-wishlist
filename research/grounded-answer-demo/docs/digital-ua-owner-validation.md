@@ -359,14 +359,15 @@ streaming-card check requested.** The next step was the
 [TMDb data-probe handoff](tmdb-probe-handoff.md), subsequently approved for
 isolated implementation. MW-FUT-01 remains Discovery.
 
-## TMDb data probe — owner validation pending
+## TMDb data probe — completed owner checkpoint
 
 October 18, 2026 implementation checkpoint, initially **not owner-run evidence**:
 `tmdb-data` now supports the same fixed two films, A identity/catalogue metadata
 separate from B actual `results.UA`, max two serial HTTP requests per film.
 Only authored synthetic/mocks were executed by the implementation agent. The
 subsequent Coherence observation below is **owner-reported**, not an independent
-agent repeat. Dune is still pending. The applicable current terms/readiness
+agent repeat. Dune subsequently completed the stage after the fix, as below.
+The applicable current terms/readiness
 condition remains in the [implementation/terms record](tmdb-probe-handoff.md#implementation-record).
 
 ### Coherence — first owner-run result
@@ -397,31 +398,45 @@ body. It is compatible with the reported symptoms; their complete live mechanism
 cannot be confirmed without retained response shape. Fix is offline-tested,
 not live-revalidated. B transport/projection is unchanged.
 
-### Minimal remaining owner plan — Dune first
+### Dune after the fix — owner reports stage complete
 
-After updating the same branch and deliberately restarting this copy using the
-[existing command](iphone-windows.md#tmdb-data-owner-workflow), select
-**dune-part-two**, which has **not yet been run**, reload Safari, click once.
-Maximum two API HTTP requests; no retries/additional endpoints. Note A resource
-states/fields separately from B actual UA buckets using the four questions below.
-Do not request a default repeat of Coherence: only if Dune leaves a concrete
-unresolved question that specifically requires Coherence. No new streaming-card,
-synthetic or SSH-disconnect test cycle; no full JSON/screenshots/live archive.
+Recorded October 18, 2026 after correction checkpoint `dcbd3c5`; exact execution
+timestamp/running SHA, HTTP status codes and raw response shapes were not supplied
+in this completion summary. **Owner-reported, not independently repeated.**
+Dune passed A and B, and all five appended resources were read. This confirms
+practical post-fix compatibility in this scenario, not the exact original
+Coherence response shape. Coherence was **not rerun** and need not be rerun now.
 
-For the remaining scenario, concise summary only (no full JSON/live output/screenshots):
+The owner reports explicit Ukrainian catalogue **title, overview and tagline**
+metadata in this completed probe; the demo projects overview/tagline presence,
+not full prose. This does not establish Ukrainian audio/subtitles on any provider.
+Language was empty in the displayed UA release events; an empty release-language
+field supplies no track evidence. Do not retroactively claim that Coherence's
+previously invalid translation append was independently read or revalidated.
+No literal translation text, event dates or provider IDs are invented here.
 
-1. Which returned stable IDs, titles/aliases, dates/directors help cross-source
-   matching? Note missing/conflicting fields without guessing year meaning.
-2. What exact `results.UA` state and provider/access buckets were returned?
-   Distinguish not-requested/error/missing/null/empty from a reported signal.
-3. Did explicit `uk` translation metadata establish Ukrainian catalogue text?
-   Requested locale, UA alias/date and original/spoken language do not establish
-   dubbing/subtitles for a provider. No numeric confidence or audio inference.
-4. What useful **additional** information did these blocks provide over the
-   existing dated MOTN/Kinobaza observations, and what remained unknown?
+### Cross-source complementarity — observations, not independent entitlement
 
-No repeated synthetic/SSH-disconnect test or previously checked card visit
-required for the unchanged workflow. Only a concrete new material discrepancy
-justifies a targeted check; errors/terms conflict are stop criteria, no retries.
-Two films cannot establish general accuracy. Historical observations above are
-unchanged and not guaranteed current. MW-FUT-01 remains Discovery.
+| Film | TMDb / JustWatch | MOTN | Kinobaza HTML |
+| --- | --- | --- | --- |
+| Coherence | Apple TV Store: rent / buy in UA. | API options not established because of the initial identity gate; owner's separate website check showed no UA results. Not a proven empty API list. | Apple candidate URL in UA section. |
+| Dune: Part Two | HBO Max: subscription; Rakuten: rent / buy in UA. | Apple and Prime: rent / buy; characteristic/currency limitations remain in the earlier record. | HBO Max / Rakuten candidate URLs in UA; Apple / MEGOGO outside territory sections, territory unknown. |
+
+These bounded source observations demonstrate useful **complementarity**, not
+general accuracy, complete coverage, independent corroboration or account
+entitlement. TMDb and the corresponding Kinobaza sections share **JustWatch**
+lineage. Kinobaza's unscoped MEGOGO link does not acquire UA territory from an
+earlier separate owner MEGOGO observation. Prices and localization stay bound
+to the original provider/context; no current offer has been rechecked here.
+
+Resulting roles: **TMDb** for identity, names/catalogue text and additional UA
+provider/access signals; **MOTN** for additional offers/direct links with cautious
+characteristics; **Kinobaza** for additional provider URLs, including MEGOGO.
+Original/spoken language, country release events and catalogue localization are
+not provider track metadata. Historical owner checks above remain dated controls.
+
+**Manual stage complete: no further owner tests requested.** The next work is
+the [shared observation model](regional-card-proposal.md#shared-offer-observation-model--design-only)
+and [narrow MEGOGO proposal](regional-card-proposal.md#megogo-one-card-adapter-proposal--not-implemented),
+not a new integration or testing round. MW-FUT-01 remains Discovery. No full live
+answers, API bodies, metadata or screenshots are archived.

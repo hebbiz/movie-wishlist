@@ -66,8 +66,10 @@ as opt-in `tmdb-data`, stacked on #179 at `9e4bf4f`. Identity/catalogue metadata
 and actual `results.UA` are separate blocks; maximum two serial HTTP requests
 per film. The [first owner-run Coherence result](docs/digital-ua-owner-validation.md#coherence--first-owner-run-result)
 established a reported UA Apple TV Store rent/buy signal but exposed over-strict
-appended-resource validation. That correction is offline-tested, not live-rerun;
-**Dune remains pending**, with current-terms readiness still conditional.
+appended-resource validation. The owner subsequently confirmed Dune passed both
+blocks/all five appends after the correction. [Manual stage complete](docs/digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint),
+not independently repeated; no Coherence rerun or further owner test required.
+Current-terms readiness remains conditional for any separately approved future use.
 No new MOTN/card/SSH-disconnect test asked.
 
 No production integration, production TMDb calls, chat/input, LLM-output
@@ -294,9 +296,13 @@ selection; browser input/body cannot override it.
    (`ads`) stay separate; future buckets are labelled unknown, not remapped.
    `link` is the **TMDb country watch page**, not a provider deep link.
 
-Transient display shows source/receipt time/status, original/requested titles,
-dates, IDs, country-tagged aliases, `job=Director` credits, film-level language
-codes and translations. Translation overview/tagline have presence states only,
+Compact display shows source/receipt time/status, IDs, original/requested titles,
+directors, film-level language codes, **UA** aliases/release events, **uk**
+translation entries and UA providers/access buckets by default. All other/unknown
+territory release events are retained in collapsed details, not dropped or relabelled
+UA. Other aliases/translations, person IDs and provider technical fields also
+remain in details; opening them makes no requests. Errors/unknowns stay visible.
+Translation overview/tagline have presence states only,
 not full prose. Explicit `uk` + nonempty translation title establishes Ukrainian
 **catalogue text**. Requested `uk-UA` alone can fall back; UA aliases/dates,
 original/spoken languages do **not** establish provider dubbing/subtitles.
@@ -320,16 +326,20 @@ Credits/About. Current complete Terms remain inaccessible to this agent;
 terms for this bounded non-LLM scope**. No email is required merely for that
 access limitation. No paid plan or zero-total-cost assertion is made.
 
-Implementation/synthetic checks are separate from [owner evidence and remaining plan](docs/digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).
-No agent live API/card test was performed. Coherence owner data does not expose
-the original appended shapes; the correction is not live-revalidated. The four research questions concern useful
-cross-source identity fields, returned UA buckets, explicit catalogue-language
-evidence versus offer-track inference, and additional information over MOTN/
-Kinobaza. Next run **Dune only first**, one click/max two HTTP requests; do not
-default to repeating Coherence or the original four-request plan. These two
-films are not a general accuracy test. No repeated SSH-disconnect
-or synthetic owner test required; streaming cards only for a concrete new
-material discrepancy. Do not send full JSON/screenshots.
+Implementation/synthetic checks are separate from the [completed owner checkpoint](docs/digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint).
+No agent live API/card test was performed. Coherence's original appended shape
+remains unknown; Dune's post-fix A/B success is owner-reported. Sources contributed
+different UA/provider/link signals, not independent entitlement evidence.
+TMDb Ukrainian title/overview/tagline are catalogue metadata, not offer tracks;
+displayed UA release-event language was empty. No general accuracy conclusion
+or additional manual test requested. No full JSON/screenshots retained.
+
+The [shared offer-observation model](docs/regional-card-proposal.md#shared-offer-observation-model--design-only)
+and [MEGOGO one-card adapter proposal](docs/regional-card-proposal.md#megogo-one-card-adapter-proposal--not-implemented)
+are **design only**, not a new runtime schema/adapter or source-data forwarding
+permission. Only TMDb display was shortened; requests, budget, auth, other modes
+and production remain unchanged. iPhone workflow/commands are preserved as
+reproduction steps, not instructions to repeat the completed pilot.
 
 ```powershell
 node --test research/grounded-answer-demo/test/tmdb.test.mjs

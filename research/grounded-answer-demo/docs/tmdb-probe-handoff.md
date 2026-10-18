@@ -6,7 +6,9 @@ The design requirements below retain their preparation context; current runtime,
 validation and remaining live-readiness conditions are in the
 [implementation record](#implementation-record). **No agent live TMDb test performed.**
 The first Coherence owner-run result and subsequent offline-only correction are
-separate [below](#appended-resource-validation-correction); Dune remains pending.
+separate [below](#appended-resource-validation-correction). The owner subsequently
+completed Dune successfully; the [manual checkpoint is closed](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint),
+without a Coherence rerun. No further owner tests are requested.
 
 ## Context
 
@@ -304,10 +306,9 @@ artifact, not live evidence. No live API, raw archive, system/deployment change
 or terms acceptance by agent.
 
 Follow the [single-session owner workflow](iphone-windows.md#tmdb-data-owner-workflow)
-only after the scoped terms readiness condition. The updated remaining plan is
-Dune first, max two HTTP requests; Coherence repeat only for a specific unresolved
-question, no default card/SSH/synthetic round. Record the concise summary in the
-[existing owner record](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).
+only for a separately justified reproduction after scoped terms readiness, not
+as another test request. The [existing owner record](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint)
+now closes the manual stage. No Coherence/card/SSH/synthetic round is needed.
 
 ### Appended-resource validation correction
 
@@ -367,10 +368,11 @@ API-error objects and valid objects with absent fields. Person/crew IDs are not
 mistaken for movie IDs. These are schema-oriented authored compatibility cases,
 not copied live bodies or a claim that mocks establish the actual live format.
 
-The fix remains **offline-tested / live-unvalidated**; owner B success is
-preserved, not reinterpreted. Next owner action is **Dune first**, one click,
-max two HTTP requests with the existing helper command. Coherence repeat only
-for a concrete remaining question after that, not a new default cycle. No
+At correction delivery the fix was **offline-tested / live-unvalidated**; owner
+Coherence B success was preserved. The subsequent owner Dune run passed both
+blocks and all five appends. This establishes practical post-fix compatibility
+in that case, not the exact omitted-ID shape of the original Coherence response.
+The manual stage is now complete, with no Coherence repeat or new test cycle. No
 streaming-card rechecks, extra endpoints, API calls by agent, raw-response archive,
 terms change or owner-demo stop. [Updated minimal plan](iphone-windows.md#tmdb-data-owner-workflow).
 
@@ -379,3 +381,29 @@ browser checks passed / 1 absent-WebKit skip**, narrow viewport not real iPhone.
 TMDb Windows temp-copy lifecycle/mock token routing/two-call/one-shot regression
 passed; owner process untouched. Local links/anchors, scope diff and whitespace
 checked. These tests establish code compatibility, not the live response shape.
+
+### Completed probe and compact display checkpoint
+
+The [owner completion record](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint)
+separates practical source complementarity from entitlement and shared JustWatch
+lineage. Explicit Ukrainian title/overview/tagline metadata support catalogue
+search/matching, not offered audio/subtitles; displayed UA release-event language
+was empty. Dune A/B and five append resources succeeded; Coherence is not rerun.
+No additional manual verification requested, no raw responses/screenshots added.
+
+Display-only follow-up keeps UA aliases/release events, uk translations, identity
+and UA provider/access rows visible. All non-UA or unknown-territory release
+events remain in **collapsed details**; other aliases/translations/person IDs and
+provider technical fields also move to details. Issues, field states and unknowns
+are retained; empty values display as reported-empty, never implied absence.
+Opening details causes no requests. Transport, projection, budget, session/auth,
+Windows helpers and other modes are unchanged. The [shared model and MEGOGO
+proposal](regional-card-proposal.md#shared-offer-observation-model--design-only)
+are documentation only, not runtime integration or new owner testing.
+
+Display checkpoint checks: **188 offline/HTTP passed**, **19 TMDb Edge browser
+checks passed / 1 absent-WebKit skip**. Authored foreign/unknown-country events,
+aliases and translations stay collapsed and become visible on explicit expansion
+without more requests. Mobile viewport is not real iPhone; no manual round asked.
+Windows/helper/server/transport/adapter code did not change, so the previous
+Windows lifecycle evidence is preserved rather than misreported as a new run.

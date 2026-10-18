@@ -12,7 +12,7 @@ test('TMDb separate metadata / UA blocks on mobile viewport (mocks, not real iPh
   t.after(() => browser.close());
   const cases = [
     ...['coherence', 'dune-part-two'].flatMap(filmId => ['synthetic', 'live'].map(mode => ({ filmId, mode, kind: 'normal' }))),
-    ...['missing-token', 'auth-error', 'quota-B', 'identity', 'missing-crosswalk', 'missing-UA', 'empty-UA', 'partial-A', 'invalid-resource', 'empty-resource', 'supplied-id-conflict', 'fallback-title', 'hostile'].map(kind => ({ filmId: 'coherence', mode: 'live', kind })),
+    ...['missing-token', 'auth-error', 'quota-B', 'identity', 'missing-crosswalk', 'missing-UA', 'empty-UA', 'partial-A', 'invalid-resource', 'empty-resource', 'supplied-id-conflict', 'fallback-title', 'compact', 'hostile'].map(kind => ({ filmId: 'coherence', mode: 'live', kind })),
   ];
   for (const { filmId, mode, kind } of cases) await t.test(`${filmId}/${mode}/${kind}`, async t => {
     const calls = [], key = 'offline-tmdb-browser-token';
@@ -30,6 +30,14 @@ test('TMDb separate metadata / UA blocks on mobile viewport (mocks, not real iPh
         if (kind === 'empty-resource') d.details.translations = {};
         if (kind === 'supplied-id-conflict') d.details.translations.id = 1;
         if (kind === 'fallback-title') d.details.translations.translations[0].data.title = '';
+        if (kind === 'compact') {
+          d.details.release_dates.results.push(
+            { iso_3166_1: 'GB', release_dates: [{ release_date: '2099-01-02T00:00:00Z', type: 4, iso_639_1: 'en' }] },
+            { iso_3166_1: 'US', release_dates: [{ release_date: '2099-03-04T00:00:00Z', type: 4, iso_639_1: 'en' }] },
+            { release_dates: [{ release_date: '2099-05-06T00:00:00Z', type: 4 }] });
+          d.details.alternative_titles.titles.push({ iso_3166_1: 'GB', title: 'SYNTHETIC foreign alias' });
+          d.details.translations.translations.push({ iso_639_1: 'en', iso_3166_1: 'US', data: { title: 'SYNTHETIC foreign translation' } });
+        }
         if (kind === 'hostile') { d.details.title = '<img src="https://example.com/evil" onerror="alert(1)">'; d.providers.results.UA.link = 'javascript:alert(1)'; }
         return Response.json(url.endsWith('/watch/providers') ? d.providers : d.details);
       } });
@@ -77,6 +85,19 @@ test('TMDb separate metadata / UA blocks on mobile viewport (mocks, not real iPh
     for (const selector of ['#source-url', '#prompt', '#run', '#answer', '#tmdb-credits']) { await page.locator(selector).scrollIntoViewIfNeeded(); assert.equal(await page.locator(selector).isVisible(), true); }
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.equal(await page.locator('#run').isDisabled(), true);
+    if (kind === 'compact') {
+      assert.equal(await page.getByText('2000-02-01T00:00:00Z', { exact: false }).isVisible(), true);
+      const foreign = page.locator('details[data-tmdb-details="release-dates"]');
+      assert.equal(await foreign.getAttribute('open'), null);
+      for (const date of ['2099-01-02', '2099-03-04', '2099-05-06']) assert.equal(await foreign.getByText(date, { exact: false }).isVisible(), false);
+      const extra = page.locator('details[data-tmdb-details="metadata"]');
+      assert.equal(await extra.getByText('SYNTHETIC foreign alias', { exact: false }).isVisible(), false);
+      assert.equal(await extra.getByText('SYNTHETIC foreign translation', { exact: false }).isVisible(), false);
+      await foreign.locator('summary').click();
+      for (const date of ['2099-01-02', '2099-03-04', '2099-05-06']) assert.equal(await foreign.getByText(date, { exact: false }).isVisible(), true);
+      await extra.locator('summary').click(); assert.equal(await extra.getByText('SYNTHETIC foreign alias', { exact: false }).isVisible(), true);
+      assert.equal(calls.length, 2); assert.equal(posts, 1); assert.deepEqual(external, []);
+    }
     await page.reload(); await page.waitForFunction(() => !document.querySelector('#run').disabled); assert.equal(await page.locator('#answer').textContent(), ''); assert.equal(posts, 1); assert.equal(calls.length, expectedCalls);
   });
   await t.test('TMDb WebKit viewport', { skip: !existsSync(webkit.executablePath()) && 'WebKit binary absent; no download.' }, async t => {

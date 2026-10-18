@@ -802,11 +802,143 @@ Initial implementation + synthetic/offline checks did not answer which real
 fields/UA providers are returned. The [first owner Coherence run](digital-ua-owner-validation.md#coherence--first-owner-run-result)
 subsequently reported Apple TV Store rent/buy in UA and invalid appended objects.
 The [separate validator diagnosis/fix](tmdb-probe-handoff.md#appended-resource-validation-correction)
-does not independently establish the original live shape; Dune remains pending.
+does not independently establish the original live shape. The owner subsequently
+confirmed Dune A/B and all five appends passed; the manual stage is complete.
 In particular film-level TMDb language/UA aliases do
 not fill MOTN's provider-track/quality/currency gaps. Explicit `uk` catalogue
 translation and JustWatch aggregate buckets are different evidence classes;
-shared JustWatch lineage is not independent corroboration. Remaining owner plan:
-**Dune first**, one click/max two HTTP requests. Coherence only if a concrete
-unresolved question remains after Dune, not an automatic repeat. No obligatory
-card/synthetic/SSH-disconnect tests. [Owner record and remaining plan](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).
+shared JustWatch lineage is not independent corroboration. No additional owner
+tests or Coherence/card/synthetic/SSH-disconnect repeat requested.
+[Completed owner checkpoint](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint).
+
+## Shared offer observation model — design only
+
+Motivated by the [completed two-film source comparison](digital-ua-owner-validation.md#cross-source-complementarity--observations-not-independent-entitlement).
+This is a **proposed logical contract**, not implemented types, normalization,
+runtime aggregation, storage, LLM forwarding or a production feature. Start with
+digital offers; physical disc/cut models and automated Mykola recommendations
+remain separate work. No arbitrary confidence score or global verified badge.
+
+Keep **film catalogue metadata**, **candidate links**, **source offer claims**
+and **account-specific observations** distinct. A candidate can exist without
+an offer; a source availability signal can exist without a provider deep link.
+One provider can have multiple rental/purchase/subscription/package offers.
+
+| Component | Minimal proposed fields and meaning |
+| --- | --- |
+| Subject | Expected/observed TMDb, IMDb and provider-native IDs with namespaces; identity matched/mismatch/unresolved + basis; title/year/director; cut/version unknown unless established. Dates alone cannot veto exact agreed stable IDs. Catalogue original/localized title, description/tagline **presence** and film languages live here, not in provider tracks. |
+| Candidate | Exact observed href, source card, provider name/namespace ID, link kind (exact card / tracking-redirect / search / relative / unknown), explicit territory + basis or unknown. Never reconstruct/resolve a destination automatically. A search URL is not an exact card; a TMDb country watch page is not a provider link. |
+| Offer scope | Subject + provider + country/basis + access type/source bucket + package/offer/version ID if supplied. Unknown access/package/cut remains unknown. Country from a section/API key is a source context, not proof of account entitlement. |
+| Field observation | Field path, value, state (reported / explicit-negative / unknown / invalid), source/URL or endpoint, evidence method, receipt time and observation time separately; review provenance (not reviewed / owner-reported check / independent check), context and short evidence note. Missing/null/empty distinctions preserved where supplied. No invented timestamps or account settings. |
+| Availability / entitlement | Availability value available / preorder / unavailable / unknown, always scoped to the reporting source/context. Separate listing/link found, aggregator claim, direct public-page claim, account Play-button observation and new rental/purchase terms. A Play button is not a new purchase price; reported availability is not independently verified playback. No search miss or missing UA becomes unavailable. |
+| Characteristics | Separate audio locales, subtitle locales/types, video resolution, HDR10, Dolby Vision, price amount/currency, access type and package. Audio codec/channels attach to a specific locale only with evidence. Track-list completeness defaults unknown; original_language and Ukrainian catalogue text never fill offered tracks. UHD is not HDR/DV. |
+| Provenance / limitations | Source and upstream lineage (e.g. JustWatch), retrieval status, identity/territory context, field conflicts, missingness/completeness, attribution and allowed-use/retention status. Unknown rights are unresolved, not permission. A retrieval SUCCESS/HTTP 200 is not claim truth or freshness. |
+
+**Combining policy, proposed not implemented:** group observations only after
+identity/provider/country/access/package/version compatibility is established.
+Provider IDs are namespaced per source; Apple TV Store must not be conflated
+with an Apple subscription/channel merely because the brand name matches.
+Unknown scopes can be displayed alongside, not silently merged. Preserve each
+source assertion with its own provenance; do not choose a universal winner or
+count TMDb + JustWatch-derived Kinobaza as two independent confirmations.
+Conflicting claims stay separate with a conflict flag; observation time does not
+automatically establish freshness/priority. Do not overwrite MOTN UAH/HD/empty
+lists with owner USD/4K/Ukrainian audio, nor transfer a Kinobaza unscoped MEGOGO
+link into UA just because a separate owner observation was Ukrainian.
+
+### Proposed source mapping and acceptance
+
+| Existing source | Contribution | Must not imply |
+| --- | --- | --- |
+| TMDb Details/translations | Stable identity, names/aliases/directors/dates, explicit Ukrainian catalogue text evidence. | Offered audio/subtitles from spoken/original language, title/overview/tagline or an empty UA release-language field. |
+| TMDb / JustWatch results.UA | Country provider/access-bucket observations; TMDb watch-page link separately. | Exact provider URL, account entitlement, current offer characteristics or independence from Kinobaza's JustWatch sections. |
+| MOTN | Additional provider URLs and access types; literal per-offer metadata with provenance. | Complete language lists, reliable price currency/quality or absence from empty/missing data; no automatic correction or AI forwarding permission. |
+| Kinobaza HTML | Additional exact/tracking href candidates and explicit section territories; otherwise unknown. Includes MEGOGO candidate. | Availability, localization, entitlement, resolved tracking destinations or UA territory from a loose page location. |
+| Owner observations | Field/context-specific manual controls with owner attribution; no account credentials. | Agent validation, universal truth, current guaranteed price or whole-platform verification. |
+
+Future acceptance tests (authored data only): same provider rent/buy stay separate;
+unknown territory/package/cut never auto-merges; search/relative/tracking remain
+distinct; conflicting currency/quality retains both assertions; empty languages
+never become absence; film localization never becomes provider audio; shared
+JustWatch lineage never raises an independent-confirmation count. No persistence
+or real-source-derived archive is authorized by this design. Implement the model
+only in a separately scoped task after source-specific usage/attribution/transfer
+conditions are established; do not retrofit current adapters now.
+
+## MEGOGO one-card adapter proposal — not implemented
+
+**Hypothesis:** one correctly identified MEGOGO regional card might provide
+offer-local language/access metadata missing from aggregators. Earlier owner
+Dune/MEGOGO observations are dated controls, not current expected facts or a
+reason to repeat manual checks. Recommend **Dune only**, fixed exact card, one
+explicit action, and only a separately approved supported access method. No
+Coherence discovery, catalogue crawler, login/cookies, playback/DRM, purchase,
+LLM, provider integration or shared-model runtime in this checkpoint.
+
+### Public interface / terms review
+
+Read-only official sources checked **October 18, 2026**; no streaming-card or API
+request. [Partnership](https://megogo.net/ua/partnership) and
+[contacts](https://megogo.net/ua/contacts) describe cooperation, not a public
+metadata API contract. Public supported API endpoints/auth/fields/quota/pricing
+were **not found** in the inspected official pages/search, not proven nonexistent.
+No private endpoints inferred from apps or third-party libraries.
+
+The retrieved [rules page](https://megogo.net/ua/rules), despite `/ua/`, identified
+MEGOGO.PL/Poland (§1.1/1.7); its applicable Ukrainian contract is **not established**.
+Its §2.4 forbids protection/territory bypass; §9 protects service/content rights,
+not a metadata-extraction licence. No explicit general metadata-scraping permission
+was found, and no precise blanket metadata-GET prohibition is asserted from
+those clauses. Public access/robots are not licences. API/HTML extraction,
+transient field normalization, attribution, retention and future redistribution/
+LLM use remain unresolved, not authorized. No contact, signup or payment made;
+email is not mandatory merely because docs are absent. Unknown costs are not zero.
+
+### Narrow approach and decision gates
+
+1. **Supported documented metadata interface if established:** use only its
+   documented film/UA fields, auth, request limits and applicable terms. Do not
+   invent an endpoint or assume public webpage metadata is returned by an API.
+   Currently unconfigured: no such interface/contract found.
+2. **Conditional initial-HTML adapter:** if a bounded public-card read/extraction
+   is explicitly approved for its applicable terms/scope, one fixed Dune source
+   GET, 20-second/2-MiB cap, no retries/redirect following, cookies, scripts/assets
+   or follow-up endpoints. This is a proposed fallback to assess, not an approved
+   scraper or a claim that needed fields are in initial HTML. Read public
+   structured/visible fields only as untrusted text; missing fields stay unknown.
+3. **No supported/scoped route:** stop at feasibility/unconfigured, not hidden
+   fetch or account automation. A conditional blocker is not proof MEGOGO is
+   impossible to integrate. No general crawler/framework is needed.
+
+The exact approved direct source URL/native ID must be selected from retained
+owner/candidate context and identity-checked before implementation. No direct
+URL or ID is invented here; the Kinobaza candidate's territory is still unknown.
+An unscoped/tracking candidate is not auto-resolved or passed through as verified
+UA. Fetcher egress region must be labelled known/unknown, independently of the
+URL language; a server response may differ from owner Safari in Ukraine.
+
+### Acceptance, stop criteria and future test plan
+
+After separate approval only: show fixed source, method and territory basis
+before click; one request max, no automatic discovery/resolve/fallback. Identity
+mismatch or unsupported markup yields unresolved; explicit UA basis is required
+for a UA offer claim. Report each actually supplied access/package, audio,
+subtitles and video field separately, with public-page/API evidence and receipt
+time. Country URL/original language alone establishes none of those. No public
+card can be required to establish account-only entitlement; expose that limit.
+No price unless literal amount **and currency** are supplied. Do not seed the
+prompt/fixtures with old owner metadata or promise specific metadata fields.
+
+Mocks first: identity/country unknown, missing/contradictory tracks and access,
+empty/partial lists, unsafe text/links, malformed input, redirect/403/429/CAPTCHA,
+timeout/oversize; one-shot/LAN auth/no logging/storage/destinations. Stop on
+applicable prohibition, access block, region mismatch, JS/login-only data or
+insufficient identity; never bypass, infer entitlement or add private requests.
+
+**No owner testing now.** If the next task approves a supported transport, reuse
+Termius Start/Status/Stop and Safari on the same trusted LAN; synthetic checks
+are implementation-agent work, not a repeated owner burden. At most one new
+Dune MEGOGO read for genuinely new fields after offline gates; report a concise
+new/missing/conflicting summary, not full HTML/JSON/screenshots. Reopen an already
+checked card only for a concrete material discrepancy, not to reconfirm prior
+controls. This proposal is not an implementation handoff or permission to run it.

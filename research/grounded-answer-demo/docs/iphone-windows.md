@@ -571,8 +571,10 @@ Isolated non-LLM probe, fixed Coherence/Dune IDs, separate metadata A / UA
 providers B. [Result contract](../README.md#tmdb-data-probe),
 [scoped terms/readiness record](tmdb-probe-handoff.md#implementation-record).
 The [first Coherence owner run](digital-ua-owner-validation.md#coherence--first-owner-run-result)
-is recorded; Dune remains pending. The appended-ID correction is offline-tested,
-not live-rerun. No compulsory repeat synthetic or
+is recorded; the owner subsequently reported Dune passed both blocks and all
+five appends after the fix. [TMDb manual stage is complete](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint).
+Commands below are reproduction only, **not another owner test request**.
+No compulsory repeat synthetic or
 SSH-disconnect owner test: the existing detached/LAN workflow is unchanged;
 only provider token routing was added and checked with a mock-only temp child.
 Do not repeat MOTN or known streaming-card checks without a specific new issue.
@@ -626,8 +628,8 @@ stop on divergence/conflict, no reset/clean/stash/force. This branch is stacked
 on #179, not a reason to merge its parents. No npm install for TMDb mode.
 
 **One standalone PowerShell restart line**, after the terms readiness condition.
-It resets every relevant switch/key after SSH reconnect. Enter `coherence` for
-the first film, `dune-part-two` for the second; enter THIS Windows host's actual
+It resets every relevant switch/key after SSH reconnect. Select the film for an
+explicitly needed reproduction, not a fresh two-film round; enter THIS Windows host's actual
 private IPv4, not another device/project's IP. Start prompts for LAN password and
 TMDb token hidden. Secrets are not arguments/state/logs; no response archive.
 
@@ -641,7 +643,7 @@ Status/stop remain the existing helpers. Each live start asks for the token
 again; no reliance on prior SSH environment. Detached process keeps the token
 only in memory until stopped; no storage or service/task configuration.
 
-### Remaining Safari check — Dune first
+### Completed Safari pilot — reproduction only
 
 Open **http://<actual-Windows-IPv4>:4317**, exactly Start's printed URL, Basic
 username **demo**, separate LAN password. Trusted private home Wi-Fi only; HTTP
@@ -651,21 +653,21 @@ URLs and max-two cap before clicking **once**. The existing Termius → Safari
 workflow works independently of an active SSH session; there is no requirement
 to repeat the earlier disconnect demonstration for this iteration.
 
-The initial two-film plan has now partially completed: Coherence owner run
-returned useful B data and exposed the appended validator issue. **Next choose
-`dune-part-two`** in the unchanged restart command, reload Safari and click once,
-at most two serial title-level HTTP requests. Do not default to rerunning
-Coherence; repeat it only if Dune leaves a concrete unresolved question that
-specifically needs that film. No new streaming-card/SSH-disconnect/synthetic
-round. B is not requested if A fails primary identity. Missing append
+The two-film manual stage is now complete: Coherence supplied B data and exposed
+the validator issue; owner-run Dune passed both blocks/all five appends after
+the correction. **Do not rerun Coherence/Dune or streaming cards for this checkpoint.**
+For a separately justified future reproduction only, the same command/reload/one
+click contract allows at most two serial title-level HTTP requests. No new
+SSH-disconnect/synthetic round. B is not requested if A fails primary identity. Missing append
 stays partial, errors/quota/identity conflicts are findings: stop, no retry or
 follow-up round. Start/status/reload alone makes no TMDb request.
 
-Report the remaining scenario's four concise points in the
-[pending owner record](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending):
-useful cross-source identity fields; actual UA providers/access buckets/states;
-explicit Ukrainian catalogue text vs indirect language clues; useful new data
-over dated MOTN/Kinobaza observations. Requested locale/UA alias/original audio
+The [completed owner record](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint)
+already distinguishes identity, actual UA providers/access buckets and explicit
+Ukrainian catalogue metadata from provider tracks. Compact UI now shows UA/uk
+and relevant fields by default; expand details for other/unknown territory dates,
+other metadata or provider technical fields. Opening details makes no requests.
+No extra manual display check required. Requested locale/UA alias/original audio
 is not provider dubbing/subtitles. TMDb watch-page link is not a provider deep
 link; JustWatch overlap is not independent confirmation or account entitlement.
 No general accuracy, full JSON, screenshots or output archive. Reopen a known
