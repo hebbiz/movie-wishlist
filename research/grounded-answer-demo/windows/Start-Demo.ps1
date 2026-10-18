@@ -32,7 +32,9 @@ try {
         $plainKey = [Net.NetworkCredential]::new('', $ApiKey).Password
         if (-not $plainKey.Trim()) { throw 'Live mode requires a key.' }
     }
-    $node = (Get-Command node.exe -CommandType Application).Source
+    # -CommandType can return multiple PATH matches; CreateProcessW requires
+    # one executable, never PowerShell's space-joined string conversion of an array.
+    $node = (Get-Command node.exe -CommandType Application | Select-Object -First 1).Source
     $instance = [Guid]::NewGuid().ToString('D')
     $command = '"{0}" "{1}" --demo-instance={2}' -f $node, $script:ServerPath, $instance
     $child = [Collections.Generic.SortedDictionary[string,string]]::new([StringComparer]::OrdinalIgnoreCase)

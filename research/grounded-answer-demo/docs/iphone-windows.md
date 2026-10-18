@@ -261,6 +261,10 @@ Windows sign-out/reboot are different events.
   an SSH tunnel. Token 409: reload after restart/one attempt; don't add retries.
 - If detached start fails, inspect config/port/job policy. Do not silently fall
   back to a session-bound process. No security-policy changes are automated.
+  Native launch failures now include safe `Stage`, `NativeErrorCode` and
+  `ExceptionType`, never command/environment/credential/provider content. See
+  the [paired Windows diagnosis](windows-launch-diagnosis.md): the reproduced
+  error 123 was a multiple-Node-path bug, not evidence that breakaway was denied.
 - Execution policy blocking scripts: inspect the local policy and review scripts
   with the owner/admin. This guide does not set machine policy or recommend
   disabling security controls. Helpers need CIM/process/network inspection rights.

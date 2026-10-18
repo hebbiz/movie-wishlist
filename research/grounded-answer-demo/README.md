@@ -16,6 +16,11 @@ The separate opt-in [URL Context PoC](docs/url-context-poc.md) now tests two
 fixed Apple TV Ukraine cards without Search. It is stacked on PR #175; it does
 not change the existing Search prompts or their default selection. All URL
 Context results remain **live-unvalidated**; only mocks/synthetic checks were run.
+The [Windows launch diagnosis](docs/windows-launch-diagnosis.md) resolves the
+earlier detached-launch failure: multiple Node PATH matches were passed as one
+executable string. The helper now selects one executable, without changing
+breakaway/auth/security controls. Safe native diagnostics and paired baseline/
+HEAD tests are documented there; actual new-mode SSH/iPhone checks remain pending.
 
 No production integration, new provider, TMDb, chat/input, structured output,
 normalization, scoring, response archive or analytics. PR #173 is not changed
@@ -334,4 +339,7 @@ node --test research/grounded-answer-demo/test/url-context.test.mjs
 # With the same external Playwright/installed browser configuration above:
 node --test research/grounded-answer-demo/test/url-browser.test.mjs
 .\research\grounded-answer-demo\test\windows.test.ps1 -UrlContext
+# Same Windows PowerShell 7 runner for paired archived baselines and safe diagnostics:
+.\research\grounded-answer-demo\test\launch-matrix.ps1
+.\research\grounded-answer-demo\test\launch-diagnostics.test.ps1
 ```

@@ -176,14 +176,17 @@ truth, current metadata, regional availability or rights clearance.
   This is not a real iPhone/Safari validation of the new mode.
 - All **18 Search request bodies** were independently compared against the
   PR #175 checkpoint: byte-equivalent prompts/tools/generation settings.
-- Windows PowerShell 7 helper integration was attempted with `-UrlContext` and
+- At initial commit `6f280b9`, Windows PowerShell 7 helper integration was attempted with `-UrlContext` and
   as a Search control. **Both failed at native detached launch** before readiness
   (`Detached launch failed; no session-bound fallback was started`). The cause
   in the current runner is not established; it is not a passing helper test or
   proof of a URL-specific defect. No fallback/security relaxation was introduced.
-  New-mode helper inheritance, parent-exit/SSH-disconnect survival and real
-  iPhone use therefore remain **owner-validation pending**. Earlier owner
-  workflow validation is preserved, not claimed as a rerun of this mode.
+  The subsequent [paired launch diagnosis](windows-launch-diagnosis.md) identifies
+  a shared multi-executable-selection defect, not a runner breakaway denial.
+  After the single-executable fix, Search and URL Context helper integration,
+  including parent-exit survival, passes. Actual new-mode SSH-disconnect/Safari
+  use remains **owner-validation pending**. Earlier owner workflow validation
+  is preserved, not claimed as a rerun of this mode.
 - No live API, account automation, production/system changes, live output,
   screenshot or response archive. Temporary helper test copies were cleaned by
   the test; the existing owner's server was not stopped/replaced.
