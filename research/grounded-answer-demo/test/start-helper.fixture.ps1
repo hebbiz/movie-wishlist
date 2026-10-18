@@ -1,7 +1,8 @@
-param([string]$DemoRoot, [int]$Port, [string]$LanIPv4)
+param([string]$DemoRoot, [int]$Port, [string]$LanIPv4, [switch]$UrlContext)
 $env:DEMO_MODE = 'synthetic'
 $env:DEMO_DISCOVERY = 'digital-ua'
 $env:DEMO_FILM = 'coherence'
+$env:DEMO_RETRIEVAL = if ($UrlContext) { 'url-context' } else { 'search' }
 Remove-Item Env:DEMO_AMAZON_REGION -ErrorAction SilentlyContinue
 if ($LanIPv4) {
     # Deliberately public offline-test fixture, never an owner's credential.

@@ -159,6 +159,9 @@ git fetch --prune origin
 ```
 
 For PR #175, use `codex/mw-fut-01-digital-ua-amazon`, not main/develop or PR #173.
+For the separate stacked URL-only experiment, use
+`codex/mw-fut-01-url-context` and the [URL Context guide](url-context-poc.md)
+instead; it depends on PR #175 and has its own exact checkout/switch commands.
 If tracked/local changes overlap or a running helper owns this copy, stop and
 resolve/preserve those changes. Do not reset, clean, stash automatically or pull
 over unknown work. With the correct branch selected and no conflicting changes:
@@ -231,7 +234,10 @@ Hidden prompts request the LAN password and `GEMINI_API_KEY`. They go only into
 the child's environment, not command line, PID metadata, task definitions or
 logs. The helper ignores any inherited API key and asks explicitly in live mode.
 Starting/status/reloading makes **no Gemini call**; only clicking sends one.
-Model/settings/prompts remain unchanged by this LAN iteration. Review digital
+Model/settings/prompts remain unchanged by the LAN iteration. The URL-only PoC
+adds `DEMO_RETRIEVAL` to the helper's server-environment allowlist, not a browser
+URL input. Set it to `search` when returning to the original scenarios; stop and
+restart to change it. Review digital
 rights/localization with a Ukrainian account without VPN as in the main README.
 Do not archive live output or conclude accuracy from a handful of requests.
 

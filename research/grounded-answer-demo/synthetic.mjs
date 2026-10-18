@@ -1,9 +1,17 @@
-import { selectScenario } from './config.mjs';
+import { selectRequest } from './config.mjs';
 
 // Invented display data, never a live answer or an availability assertion.
 export function syntheticResponse(scenario = 'grounded', filmId, options = {}) {
-  const { film, discovery, amazonRegion } = selectScenario({ ...options, filmId });
+  const { film, discovery, amazonRegion, retrieval, sourceURL } = selectRequest({ ...options, filmId });
   if (scenario === 'empty') return { candidates: [] };
+  if (retrieval === 'url-context') {
+    const status = { 'retrieval-error': 'ERROR', 'retrieval-paywall': 'PAYWALL', 'retrieval-unsafe': 'UNSAFE' }[scenario] ?? 'SUCCESS';
+    return { candidates: [{
+      finishReason: 'STOP',
+      content: { role: 'model', parts: [{ text: `SYNTHETIC ONLY — invented URL Context display for ${film.title}. No page was retrieved or read. All availability, audio, subtitles, video, access types and prices are unknown. Any retrieval status below is simulated, not real evidence.` }] },
+      ...(scenario === 'ungrounded' ? {} : { urlContextMetadata: { urlMetadata: [{ retrievedUrl: sourceURL, urlRetrievalStatus: `URL_RETRIEVAL_STATUS_${status}` }] } }),
+    }] };
+  }
   const segment = `Invented display example for ${film.title}. Edition, format, cut and availability are unknown.`;
   const text = `SYNTHETIC ONLY — not a shopping result.\nMode: ${discovery}; Amazon region: ${amazonRegion ?? 'unset'}.\n${segment}\nUkrainian viewing availability, Ukrainian audio and Ukrainian subtitles are unknown. No retailer was checked. No platform was checked. This fixture does not establish that any UHD edition or requested cut exists.`;
   const startIndex = Buffer.byteLength(text.slice(0, text.indexOf(segment)), 'utf8');

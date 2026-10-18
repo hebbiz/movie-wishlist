@@ -1,3 +1,5 @@
+import { urlScenario } from './url-context.mjs';
+
 export const MODEL = 'gemini-3.8-flash';
 export const MAX_OUTPUT_TOKENS = 4096;
 export const DEFAULT_FILM = 'dune-part-two';
@@ -55,11 +57,17 @@ export function selectScenario({ filmId, discovery = 'physical', amazonRegion } 
 
 export const PROMPT = selectScenario().prompt;
 
+export function selectRequest({ retrieval = 'search', ...options } = {}) {
+  if (retrieval === 'search') return { ...selectScenario(options), retrieval, sourceURL: null };
+  if (retrieval === 'url-context') return urlScenario(selectFilm(options.filmId), options);
+  throw new Error('Unknown DEMO_RETRIEVAL. Choose: search, url-context.');
+}
+
 export function requestBody(filmId = DEFAULT_FILM, options = {}) {
-  const { prompt } = selectScenario({ ...options, filmId });
+  const { prompt, retrieval } = selectRequest({ ...options, filmId });
   return {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    tools: [{ googleSearch: {} }],
+    tools: retrieval === 'url-context' ? [{ urlContext: {} }] : [{ googleSearch: {} }],
     generationConfig: {
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       thinkingConfig: { thinkingLevel: 'low' },

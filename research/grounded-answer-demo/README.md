@@ -12,6 +12,11 @@ Amazon-region scenarios remain **live-unvalidated**. The
 [next-experiment proposal](docs/regional-card-proposal.md) is design only;
 it changes no prompt or integration.
 
+The separate opt-in [URL Context PoC](docs/url-context-poc.md) now tests two
+fixed Apple TV Ukraine cards without Search. It is stacked on PR #175; it does
+not change the existing Search prompts or their default selection. All URL
+Context results remain **live-unvalidated**; only mocks/synthetic checks were run.
+
 No production integration, new provider, TMDb, chat/input, structured output,
 normalization, scoring, response archive or analytics. PR #173 is not changed
 or imported. The implementation agent makes no live API calls; the owner-run
@@ -37,12 +42,20 @@ or new dependencies. Run from the repository root. No `.env` file is loaded.
 | `GEMINI_API_KEY` | Required only for live mode; server environment/header only, never in browser/source/URL |
 | `DEMO_FILM` | `dune-part-two` (default), `coherence`, `blade-runner-final-cut` |
 | `DEMO_DISCOVERY` | `physical` (default), `digital-ua` |
+| `DEMO_RETRIEVAL` | `search` (default), `url-context` (only two Apple cards with `digital-ua`) |
 | `DEMO_AMAZON_REGION` | Optional, physical only: `us`, `uk`, `de`, `it`; unset for multi-store search |
 | `DEMO_PORT` | Default 4317, range 1024–65535 |
 | `DEMO_ACCESS` | `localhost` (default) or explicit `lan` |
 | `DEMO_BIND_IPV4` | LAN only: specific assigned private IPv4, never 0.0.0.0 |
 | `DEMO_LAN_PASSWORD` | Required server-side LAN Basic Auth password; username `demo`; helpers prompt secretly |
 | `DEMO_SYNTHETIC_SCENARIO` | `grounded` (default), `api-error`, `empty`, `ungrounded`; synthetic error/display tests only |
+
+URL Context additionally supports synthetic `retrieval-error`, `retrieval-paywall`
+and `retrieval-unsafe`. `grounded` simulates success, never an actual page read;
+`ungrounded` simulates missing retrieval metadata. See the PoC guide for commands,
+retrieval statuses, current capability/terms review and manual comparison plan.
+Set `DEMO_RETRIEVAL=search` (or unset it) when returning to the Search commands
+below; URL-only requires `digital-ua`, no Amazon region, and Dune or Coherence.
 
 Unset means absent, not an empty/unknown value. Invalid film/discovery/region
 or **any Amazon region with digital-ua** causes a clear startup error before
@@ -138,7 +151,8 @@ The exact prompt comes from the validated catalogue/builder in
 the API request use the same server configuration. No arbitrary browser prompt.
 
 Model remains **`gemini-3.8-flash`**, `maxOutputTokens=4096`,
-`thinkingLevel=low`, `googleSearch: {}`. No automatic output-limit increase.
+`thinkingLevel=low`, `googleSearch: {}` for Search; URL-only uses `urlContext: {}`
+instead, never both. No automatic output-limit increase.
 One non-streaming GenerateContent REST call using built-in fetch; no new SDK.
 The previously reviewed [Search guide](https://ai.google.dev/gemini-api/docs/generate-content/google-search)
 and [model parameters](https://ai.google.dev/gemini-api/docs/generate-content/whats-new-gemini-3.8)
@@ -237,6 +251,14 @@ alongside the answer in Shadow DOM, not an iframe. Empty/ungrounded/truncated
 or unsupported attribution/active snippets fail visibly rather than display
 an incomplete or uncited answer. No retailer fetching/crawling code is added.
 
+That citation/Suggestions contract describes **Search**, unchanged. URL-only
+shows original visible text plus the provider's `urlContextMetadata` and any
+`citationMetadata` separately, without inventing Search Suggestions or citations.
+Retrieval errors/missing/mismatched metadata remain explicit; success proves no
+truth, freshness or entitlement. URL-only does not require Search metadata.
+Its distinct terms/display assessment is in the PoC guide; Search-specific
+restrictions are not automatically treated as URL-only requirements.
+
 The [Gemini terms](https://ai.google.dev/gemini-api/terms#grounding-with-google-search)
 and [Client Application Guidelines](https://support.google.com/adsense/answer/10926790)
 remain relevant (original review October 17, 2026). Associated Search Suggestions
@@ -276,8 +298,10 @@ one-shot behavior. Without the external module path, browser tests are skipped
 and must be reported as such. Synthetic fixtures explicitly establish **no real
 viewing availability, localization, edition or stock**.
 
-Implementation test results are reported in the PR at their execution baseline;
-they are not rerun or presented as new results for this documentation-only update.
+Implementation test results are reported in the PR at their execution baseline.
+The previous documentation checkpoint did not rerun tests; this URL Context code
+iteration adds offline/browser tests and reruns regression checks as reported
+in its separate PR.
 Historical physical outcomes remain in the PR #174 checkpoint; subsequent owner
 observations are in the linked digital-UA record. No live response, screenshot,
 public evaluation report or evidence archive is added.
@@ -302,3 +326,12 @@ WebKit is skipped explicitly when its binary is missing; nothing is downloaded.
 Set `DEMO_TEST_LAN_IPV4` to this Windows host's verified assigned private IPv4
 only to opt into the same-host LAN Basic Auth browser test (temporary port,
 public test-only password). Without it that extra mobile subtest is skipped.
+
+URL-only checks (mocks, no real Gemini):
+
+```powershell
+node --test research/grounded-answer-demo/test/url-context.test.mjs
+# With the same external Playwright/installed browser configuration above:
+node --test research/grounded-answer-demo/test/url-browser.test.mjs
+.\research\grounded-answer-demo\test\windows.test.ps1 -UrlContext
+```

@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { MODEL, MAX_OUTPUT_TOKENS, selectScenario, requestBody } from './config.mjs';
+import { MODEL, MAX_OUTPUT_TOKENS, selectRequest, requestBody } from './config.mjs';
 import { syntheticResponse } from './synthetic.mjs';
 import { networkConfig } from './network.mjs';
 
@@ -10,19 +10,21 @@ const assets = new Map([
   ['/', ['public/index.html', 'text/html; charset=utf-8']],
   ['/client.mjs', ['public/client.mjs', 'text/javascript; charset=utf-8']],
   ['/display.mjs', ['public/display.mjs', 'text/javascript; charset=utf-8']],
+  ['/url-display.mjs', ['public/url-display.mjs', 'text/javascript; charset=utf-8']],
   ['/style.css', ['public/style.css', 'text/css; charset=utf-8']],
 ]);
 const csp = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src https: data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 // Dependency injection is for offline tests; the executable uses only built-in fetch.
-export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, discovery, amazonRegion, apiKey = '', fetchImpl = globalThis.fetch, ...networkOptions } = {}) {
+export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, discovery, amazonRegion, retrieval, apiKey = '', fetchImpl = globalThis.fetch, ...networkOptions } = {}) {
   const network = networkConfig(networkOptions);
-  const selection = selectScenario({ filmId, discovery, amazonRegion });
+  const selection = selectRequest({ filmId, discovery, amazonRegion, retrieval });
   const { film } = selection; // Resolve once at startup, never from browser input.
-  const options = { discovery: selection.discovery, amazonRegion };
+  const options = { discovery: selection.discovery, amazonRegion, retrieval: selection.retrieval };
   const body = requestBody(film.id, options);
   if (!['synthetic', 'live'].includes(mode)) throw new Error('DEMO_MODE must be synthetic or live.');
-  if (!['grounded', 'empty', 'ungrounded', 'api-error'].includes(scenario)) throw new Error('Unknown synthetic scenario.');
+  const syntheticCases = ['grounded', 'empty', 'ungrounded', 'api-error', ...(selection.retrieval === 'url-context' ? ['retrieval-error', 'retrieval-paywall', 'retrieval-unsafe'] : [])];
+  if (!syntheticCases.includes(scenario)) throw new Error('Unknown synthetic scenario.');
   // Tokens contain no content. Never retain prompts/responses in session state.
   const sessions = new Map();
   const server = createServer(async (req, res) => {
@@ -57,7 +59,7 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
         if (sessions.size >= 100) return send(429, { error: 'Too many open pages. Restart the demo.' });
         const token = randomBytes(32).toString('hex');
         sessions.set(token, now + 30 * 60 * 1000);
-        return send(200, { token, mode, model: MODEL, maxOutputTokens: MAX_OUTPUT_TOKENS, film, discovery: selection.discovery, amazonRegion: selection.amazonRegion, prompt: selection.prompt });
+        return send(200, { token, mode, model: MODEL, maxOutputTokens: MAX_OUTPUT_TOKENS, film, discovery: selection.discovery, amazonRegion: selection.amazonRegion, retrieval: selection.retrieval, sourceURL: selection.sourceURL, prompt: selection.prompt });
       }
       if (req.method === 'POST' && req.url === '/answer') {
         req.resume(); // Request bodies are not used; clients cannot change the fixed prompt.
@@ -100,7 +102,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('DEMO_PORT must be 1024–65535.');
   const networkOptions = { access: process.env.DEMO_ACCESS, bindIPv4: process.env.DEMO_BIND_IPV4, lanPassword: process.env.DEMO_LAN_PASSWORD || '' };
   const network = networkConfig(networkOptions);
-  const server = createDemo({ mode, filmId: process.env.DEMO_FILM, discovery: process.env.DEMO_DISCOVERY, amazonRegion: process.env.DEMO_AMAZON_REGION, scenario: process.env.DEMO_SYNTHETIC_SCENARIO || 'grounded', apiKey: process.env.GEMINI_API_KEY || '', ...networkOptions });
+  const server = createDemo({ mode, filmId: process.env.DEMO_FILM, discovery: process.env.DEMO_DISCOVERY, amazonRegion: process.env.DEMO_AMAZON_REGION, retrieval: process.env.DEMO_RETRIEVAL, scenario: process.env.DEMO_SYNTHETIC_SCENARIO || 'grounded', apiKey: process.env.GEMINI_API_KEY || '', ...networkOptions });
   server.on('error', () => { console.error('Demo could not listen. Check DEMO_PORT.'); process.exitCode = 1; });
   server.listen(port, network.bindAddress, () => console.log(`Local ${mode} demo: http://${network.bindAddress}:${port} — ${MODEL}, output limit ${MAX_OUTPUT_TOKENS}. No request until button click.`));
 }

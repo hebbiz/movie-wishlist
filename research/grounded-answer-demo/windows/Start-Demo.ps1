@@ -40,7 +40,7 @@ try {
         $value = [Environment]::GetEnvironmentVariable($name)
         if ($null -ne $value) { $child[$name] = $value }
     }
-    foreach ($name in @('DEMO_FILM', 'DEMO_DISCOVERY', 'DEMO_AMAZON_REGION', 'DEMO_SYNTHETIC_SCENARIO')) {
+    foreach ($name in @('DEMO_FILM', 'DEMO_DISCOVERY', 'DEMO_AMAZON_REGION', 'DEMO_SYNTHETIC_SCENARIO', 'DEMO_RETRIEVAL')) {
         $value = [Environment]::GetEnvironmentVariable($name)
         if ($null -ne $value) { $child[$name] = $value }
     }

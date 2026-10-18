@@ -1,5 +1,5 @@
 # Explicit Windows integration test. No ssh/firewall/services/real credentials/API.
-param([string]$LanIPv4)
+param([string]$LanIPv4, [switch]$UrlContext)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $source = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -13,7 +13,7 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
-    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
+    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     $port = Free-Port
     $shell = (Get-Process -Id $PID).Path
@@ -21,6 +21,7 @@ try {
     $launch.UseShellExecute = $false; $launch.CreateNoWindow = $true
     $launch.RedirectStandardOutput = $true; $launch.RedirectStandardError = $true
     $launch.Arguments = '-NoProfile -File "{0}" -DemoRoot "{1}" -Port {2}' -f (Join-Path $PSScriptRoot 'start-helper.fixture.ps1'), $copy, $port
+    if ($UrlContext) { $launch.Arguments += ' -UrlContext' }
     if ($LanIPv4) {
         $parsed = $null
         Assert ([Net.IPAddress]::TryParse($LanIPv4, [ref]$parsed) -and $parsed.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork -and $parsed.ToString() -ceq $LanIPv4) 'Invalid test LAN IPv4.'
@@ -30,7 +31,7 @@ try {
     $output = $parent.StandardOutput.ReadToEnd(); $errors = $parent.StandardError.ReadToEnd()
     Assert ($parent.WaitForExit(15000) -and $parent.ExitCode -eq 0) "Launching parent failed: $errors"
     $parent.Dispose()
-    Assert ($output -match 'Started PID') 'Detached start did not report ready.'
+    Assert ($output -match 'Started PID') "Detached start did not report ready. Synthetic-test parent output: $output; errors: $errors"
     $statePath = Join-Path $copy '.run/instance.json'
     $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
     $before = $state.pid
@@ -42,6 +43,9 @@ try {
     if ($LanIPv4) { $client.DefaultRequestHeaders.Authorization = [Net.Http.Headers.AuthenticationHeaderValue]::new('Basic', [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('demo:offline-integration-password'))) }
     try { $response = $client.GetStringAsync($state.url + '/session').GetAwaiter().GetResult() | ConvertFrom-Json } finally { $client.Dispose(); $handler.Dispose() }
     Assert ($response.discovery -eq 'digital-ua' -and $response.film.id -eq 'coherence') 'Server switches not inherited.'
+    $expectedRetrieval = if ($UrlContext) { 'url-context' } else { 'search' }
+    Assert ($response.retrieval -eq $expectedRetrieval) 'Retrieval switch not inherited.'
+    if ($UrlContext) { Assert ($response.prompt.Contains($response.sourceURL) -and $response.sourceURL.StartsWith('https://tv.apple.com/ua/')) 'URL catalogue/prompt mismatch.' }
     & (Join-Path $copy 'windows/Start-Demo.ps1') -Port $port
     Assert ((Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json).pid -eq $before) 'Duplicate process created.'
     # A harmless unrelated Node must survive a forged/stale PID record and stop.
