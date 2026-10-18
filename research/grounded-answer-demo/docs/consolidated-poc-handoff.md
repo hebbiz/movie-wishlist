@@ -1,13 +1,16 @@
-# Proposed handoff: bounded UA discovery and local draft
+# Approved research handoff: bounded UA discovery and local draft
 
-**Proposed / not authorized for implementation. MW-FUT-01 remains Discovery.**
+**Approved for isolated research implementation only. MW-FUT-01 remains Discovery.**
+Authorization follows checkpoint `e978e72389ec5fae7e2be141062b5606fd862f75`;
+no production integration, persistence or merge approval. Optional Kinobaza is
+enabled for the planned owner control session; its failure is nonblocking.
 October 18, 2026. The [canonical architecture](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
 owns decisions, source/field boundaries, rights gates and PR review. This is the
-reviewable task boundary for D1, not approval, commands or a second architecture.
+reviewable task boundary for D1, not production approval or a second architecture.
 
 ## 1. Context
 
-Verified baseline: #181 `77b44b32a8570d55a567d952173d258a251bce88`, stacked on
+Verified implementation baseline: #181 `e978e72389ec5fae7e2be141062b5606fd862f75`, stacked on
 #180 `b9f3c65342f9b558bf021f81aee26bb2f22029a8`. #175–#181 open/mergeable at
 review; develop `a5d4f42`, production agreed v1.3.1 `e923928` unchanged. Recheck
 instructions/stack/local changes before implementation. The
@@ -23,12 +26,14 @@ accuracy, playback or six-platform recall.
 
 ## 3. Current implementation
 
-Isolated Node demo: server-selected modes/films, `/session`, one-shot `/answer`,
+At the approved handoff baseline: isolated Node demo with server-selected modes/films, `/session`, one-shot `/answer`,
 original Gemini output and separate non-LLM projections. TMDb A identity/catalogue
 and B UA signals use max two requests; MOTN one IMDb UA request; Kinobaza one fixed
 HTML card. Source-specific parser; no arbitrary card discovery or exact/search
 link classification. MEGOGO opt-in/unresolved, not a dependency. No composed mode,
 cross-source projection, film picker, selection/confirmation or draft transfer yet.
+That baseline description is historical; the implementation record below now
+documents the completed research subset, not production integration.
 
 ## 4. Scope
 
@@ -57,9 +62,11 @@ archive. No paid subscription/system changes. PR #173 and unrelated files untouc
 - One click consumes token before await, no implicit retry/reload/batch calls.
   Draft actions perform no network requests. New token only via explicit reset
   or normal reload; never after failure automatically.
-- Existing TMDb A+B first, then MOTN/optional Kinobaza independently bounded.
-  Root identity failure blocks downstream; B/source failure preserves safe partials.
-  Each source retains its own identity gate. Missing key is visible partial failure.
+- TMDb A+B and MOTN/optional Kinobaza independently bounded. TMDb transport/
+  availability failure does not block MOTN with fixed verified IMDb ID. Each source
+  has its own identity gate. Returned stable-ID conflict withholds that source,
+  blocks cross-source combination and remains explicit; never invent common
+  identity. Missing key is visible partial failure.
 - Follow [canonical identity/field rules](regional-card-proposal.md#identity-provider-mapping-and-field-conflict-rules):
   namespaced IDs/labels, source methods/lineage/times/missingness; movie languages
   never populate provider tracks. Stable IDs conflict → mismatch, not fuzzy match.
@@ -68,9 +75,13 @@ archive. No paid subscription/system changes. PR #173 and unrelated files untouc
 - Preserve exact hrefs; classify known search/tracking/relative/unsafe/unknown
   without resolving/fetching. Apple Store not Apple TV+ by brand name. Unknown
   source aliases/IDs stay unmapped, not guessed.
+  Without permitted exact/tracking candidate, purchase_url stays empty. Search,
+  relative, unsafe and TMDb watch URLs cannot substitute. Tracking transfer needs
+  explicit acknowledgement, preserved type/provenance, no resolve/rewrite.
 - Compact UA rows in availability → UA audio → subtitles → video → price order;
   unknown/conflicting bands, separate territory-unknown candidates, collapsed
   foreign/technical details. No numeric score, inferred absence or source-value fix.
+  No best-option claim with key fields unknown; show choice basis and missing data.
 - Source availability/candidate/account entitlement/dated owner controls labelled
   separately. Literal MOTN UAH/HD/empty lists never replaced with USD/4K/UA audio.
 - Select → explicit confirmation of included/excluded fields → editable local
@@ -195,7 +206,45 @@ No raw archive/screenshots/public evaluation or production release-note feature.
 Re-read instructions/fetch/inspect then-current stack/tree; do not assume #181
 stays open. If open, new stacked feature branch/PR at current #181 HEAD with only
 new diff; if merged, current develop after intervening-change review. Product
-approval of this handoff required first. Preserve research/media-discovery and
+approval above is limited to research. Preserve research/media-discovery and
 other local/untracked files. Feature commits, test/link/diff/whitespace/isolation
 checks, explicit readiness/skips/owner plan; stop review-ready. No force/history
 rewrite/retarget/merge/tag/release/deployment/live agent calls/system changes.
+
+## Implementation record
+
+Implemented from open #181 `e978e72389ec5fae7e2be141062b5606fd862f75` on a separate
+stacked branch `codex/mw-fut-01-consolidated-discovery`. New mode `ua-discovery`,
+server-only `DEMO_KINOBAZA=on|off`, one-process fixed film picker, independent
+bounded sources and explicit local draft flow are now present. This closes only
+the isolated research implementation authorization, not owner live acceptance,
+production writes/persistence or merge. #175 launcher caveat remains: fix is #176.
+
+Clarifications A/B/C above were reconciled with canonical proposal before code.
+Actual transports remain the existing TMDb A+B/MOTN/Kinobaza functions; only the
+new bounded composition calls them. One additive TMDb B error-identity diagnostic
+preserves prior status/withholding, surfacing a returned stable-ID conflict even
+when A matched. No source transport/parser/model/settings change.
+Existing request-body golden regressions retained. Independent sources start
+concurrently, TMDb A+B stay serial/gated; missing/failed TMDb does not block MOTN.
+Returned stable conflicts withhold that source and block a common identity/merge.
+
+`discovery.mjs` projects source-scoped rows without cross-source coalescing;
+explicit provider aliases/IDs, unknown link kinds and field conflicts retained.
+`public/discovery-client.mjs` mounts only in the new mode, shows compact rows/
+details and review→confirm→edit/cancel page-memory draft. No suitable candidate
+means empty purchase_url; opaque tracking opt-in preserves exact URL/provenance.
+`server.mjs` binds allowed picker choice to token, ignores POST overrides, consumes
+before awaits. New Windows helper parameters `TmdbToken` and `MotnKey` are secure
+strings; default live prompts hidden/separate from LAN password, no CLI secrets.
+
+Source-use review and checks are recorded once in the
+[canonical implementation checkpoint](regional-card-proposal.md#consolidated-implementation-and-source-use-checkpoint).
+**261 offline/HTTP passed; full Edge 119 passed / 8 skips** (7 WebKit absent, optional
+same-host LAN unset), all eight temp-copy Windows mode lifecycle regressions and
+native diagnostics passed. Separate same-host assigned-LAN Basic/multi-key lifecycle
+also passed in a temp copy/free port, not iPhone reachability. No real iPhone/SSH/live source assertion. Additional
+owner synthetic/disconnect repeat is not required by these covered changes.
+Live readiness remains conditional on applicable source agreements/credentials;
+no directly identified MOTN/Kinobaza conflict with this bounded non-LLM scope,
+not blanket permission. [One-session owner commands](iphone-windows.md#consolidated-discovery-owner-workflow).

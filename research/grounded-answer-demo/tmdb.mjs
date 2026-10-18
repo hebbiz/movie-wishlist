@@ -102,7 +102,9 @@ export function projectTmdbProviders(data, filmId, receivedAt = new Date().toISO
   const expected = Object.hasOwn(TMDB_FILMS, filmId) ? TMDB_FILMS[filmId] : undefined;
   if (!expected) throw new Error('Fixed TMDb film required.');
   const base = { source: 'TMDB / JustWatch', receivedAt, country: 'UA', buckets: [] };
-  if (!object(data) || data.id !== expected.tmdbId) return { ...base, status: 'invalid-response-or-id' };
+  if (!object(data) || data.id !== expected.tmdbId) return { ...base, status: 'invalid-response-or-id',
+    identity: { status: object(data) && Number.isSafeInteger(data.id) && data.id > 0 ? 'mismatch' : 'unresolved',
+      tmdbId: id(data?.id), expectedTmdbId: expected.tmdbId } };
   if (!object(data.results)) return { ...base, status: 'invalid-results' };
   const ua = data.results.UA;
   if (ua === undefined || ua === null) return { ...base, status: 'ok', uaState: ua === null ? 'null' : 'missing' };

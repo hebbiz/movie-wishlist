@@ -6,17 +6,64 @@ The [canonical proposal](docs/regional-card-proposal.md#current-decision-checkpo
 now consolidates source evidence, field boundaries, the #175–#181 stack review
 and proposed roadmap. Recommended next slice: automatic TMDb+MOTN UA discovery,
 optional fixed-card Kinobaza candidates, explicit selection into a local MW-shaped
-draft, **without an LLM or production writes**. This is not implemented/approved.
-The [13-section handoff](docs/consolidated-poc-handoff.md) is **Proposed / not
-authorized for implementation**. Existing modes/commands remain unchanged.
+draft, **without an LLM or production writes**. Now approved/implemented only as
+isolated research, offline/mock tested; consolidated live utility remains pending.
+The [13-section handoff](docs/consolidated-poc-handoff.md) records the bounded
+approval and the later implementation record. Existing modes remain unchanged.
 MEGOGO stays unresolved/frozen; no new owner/live/parser-debugging cycle.
 
 Historical per-source implementation/owner checkpoints follow; they are not
 general accuracy, current entitlement or full six-platform coverage. This
-documentation task makes no live request and requires no owner test/restart.
+implementation agent makes no live request. Only the new consolidated scenario
+has the single short owner plan below; no repeat source/card/parser test cycle.
+
+## Consolidated UA discovery and local draft
+
+Opt in with `DEMO_RETRIEVAL=ua-discovery`, `DEMO_DISCOVERY=digital-ua`;
+`DEMO_FILM=coherence|dune-part-two` selects the initial picker value, not a server
+restart requirement. Both films are selectable in one process. `DEMO_KINOBAZA=on`
+is the default and the agreed owner-control configuration; `off` omits that
+optional source. Invalid switches/combinations fail before listening. Synthetic
+is default and performs zero external requests; its providers/URLs/metadata are
+authored examples, not live facts. Existing retrievals require DEMO_KINOBAZA unset.
+
+One explicit action consumes a film-bound token: independent TMDb (A+B max2),
+MOTN (max1) and optional Kinobaza (max1), **max4/film**, no retries or destination
+requests. TMDb failure does not suppress fixed-ID MOTN. Each source gates its
+own identity; a stable-ID conflict withholds that source and explicitly prevents
+a common matched identity. Source claims are never merged solely by platform.
+Partial stages survive. Total cancellation65s; existing source bounds retained.
+
+UI: short UA rows, separate territory-unknown candidates, source/receipt/access/
+link kind, separate audio/subtitles/video/price states; details collapse catalogue
+dates/technical evidence. Criteria are UA availability → UA audio → subtitles →
+video → price; price remains informational given source anomalies. No best-option
+claim, numeric confidence, missing→negative or source-currency correction.
+
+Select → review included/excluded fields → explicit confirm → editable **local
+draft**, not production MW. Draft is page-memory only; film change/clear/reload/navigation
+discards it, no autosave/storage/submit. Search/relative/unsafe/unknown/TMDb watch
+URLs never populate purchase_url. Exact-card shape is still unverified. Opaque
+tracking requires an additional acknowledgement; exact href/type/provenance stay
+unchanged. Without an allowed link, purchase_url stays blank. Status defaults to
+wishlist, never acquired from a rent/buy/subscription claim. Cancel selection
+preserves an existing draft; Cancel edits restores the confirmed local values.
+
+Server-only `TMDB_READ_ACCESS_TOKEN` and `MOTN_API_KEY`; helper prompts separately
+and hidden, with the LAN password. No Gemini key. Attribution visible with data.
+Full current TMDb agreement remains unverified; live readiness is conditional on
+scoped owner agreement review, not cleared by previous runs. MOTN current public
+terms were re-read for this non-LLM local app/draft; no direct scoped conflict
+identified, not a licence for a standalone data service or LLM forwarding.
+Kinobaza's narrow owner-approved fixed-card scope/rights uncertainty remains.
+See [source-use record](docs/regional-card-proposal.md#consolidated-implementation-and-source-use-checkpoint)
+and [standalone Termius/Safari command + one session](docs/iphone-windows.md#consolidated-discovery-owner-workflow).
+No new sources/dependencies, production integration, persistence, merge or deployment.
+Known launcher caveat: **#175 alone has a defect fixed by #176**; this child
+includes that fix. Merge-sequence preparation never authorizes merge.
 
 Local, owner-operated, display-only **Discovery** experiment, not a production
-feature. This iteration starts from develop checkpoint
+feature. The original demo started from develop checkpoint
 `a5d4f42149c616d4dc3cdac35c6086240b3fdacf`. The physical-only owner pilot and
 historical implementation checks are preserved separately in the
 [PR #174 checkpoint record](docs/checkpoint-174.md). They do not validate the
@@ -25,7 +72,8 @@ new digital or Amazon-region prompts. Subsequent
 cover three digital scenarios, not general accuracy or every platform.
 Amazon-region scenarios remain **live-unvalidated**. The
 [next-experiment record](docs/regional-card-proposal.md) distinguishes historical
-proposals from approved isolated probes; the shared offer model is design only.
+proposals from approved isolated probes; the general production offer model is
+design-only, while the consolidated research subset is now implemented.
 
 The separate opt-in [URL Context PoC](docs/url-context-poc.md) now tests two
 fixed Apple TV Ukraine cards without Search. It is stacked on PR #175; it does
@@ -97,7 +145,7 @@ owner GET in this correction. It does not change any
 previous request body, prompt, model, parser or owner observation. MW-FUT-01
 remains Discovery, not a regular/commercial integration.
 
-No production integration, production TMDb calls, chat/input, LLM-output
+No production integration, production TMDb calls, arbitrary chat/movie input, LLM-output
 normalization, scoring, response archive or analytics. HTML-only returns a small
 deterministic candidate result, not a normalized Gemini answer. PR #173 is not changed
 or imported as code; two previously verified scalar film IDs are reused with
@@ -116,18 +164,19 @@ owner validation on that configuration, not an independent agent device test
 or a guarantee for other Windows/SSH environments.
 
 Node.js 24, modern desktop browser. Gemini, Movie of the Night and TMDb modes need no npm install or
-build. HTML-only needs the pinned isolated parser below, not production
+build. HTML and consolidated-with-Kinobaza need the pinned isolated parser below, not production
 dependencies. Run from the repository root. No `.env` file is loaded.
 
 | Environment | Values / purpose |
 | --- | --- |
 | `DEMO_MODE` | `synthetic` by default; explicitly `live` only for an owner-run request |
 | `GEMINI_API_KEY` | Required only for live Gemini modes; HTML/Movie of the Night modes never need/forward it |
-| `MOTN_API_KEY` | Direct Movie of the Night developer-portal key; live `motn-api` only, server-side header; Windows helper prompts hidden instead of reading inherited key env |
-| `TMDB_READ_ACCESS_TOKEN` | Live `tmdb-data` only, server-side Bearer token; Windows helper prompts hidden, never inherits a production key or unrelated provider credential |
+| `MOTN_API_KEY` | Direct developer-portal key; live `motn-api` or `ua-discovery`, server-side header; hidden helper prompt, not inherited key env |
+| `TMDB_READ_ACCESS_TOKEN` | Live `tmdb-data` or `ua-discovery`, server-side Bearer token; hidden helper prompt, no inherited production/unrelated key |
 | `DEMO_FILM` | `dune-part-two` (default), `coherence`, `blade-runner-final-cut` |
 | `DEMO_DISCOVERY` | `physical` (default), `digital-ua` |
-| `DEMO_RETRIEVAL` | `search` (default), `url-context`, opt-in `kinobaza-html`, `motn-api`, `tmdb-data` or `megogo-html` |
+| `DEMO_RETRIEVAL` | `search` default; `url-context`, `kinobaza-html`, `motn-api`, `tmdb-data`, `megogo-html`, `ua-discovery` opt-ins |
+| `DEMO_KINOBAZA` | `ua-discovery` only: `on` default/control session, `off` optional; unset in other modes |
 | `DEMO_URL_SOURCE` | URL Context: `apple-tv` default or `kinobaza`; Kinobaza HTML: unset or `kinobaza`; unset for Search, `motn-api`, `tmdb-data`, `megogo-html` |
 | `DEMO_AMAZON_REGION` | Optional, physical only: `us`, `uk`, `de`, `it`; unset for multi-store search |
 | `DEMO_PORT` | Default 4317, range 1024–65535 |
@@ -360,7 +409,8 @@ displayed UA release-event language was empty. No general accuracy conclusion
 or additional manual test requested. No full JSON/screenshots retained.
 
 The [shared offer-observation model](docs/regional-card-proposal.md#shared-offer-observation-model--design-only)
-is **design only**, not a new runtime schema or source-data forwarding
+remains a **production design**, with only its isolated in-memory discovery subset
+implemented; it is not a production schema or source-data forwarding
 permission. The [MEGOGO record](docs/regional-card-proposal.md#megogo-one-card-html-poc)
 now describes the separately approved bounded HTML experiment below. At the
 TMDb checkpoint only its display was shortened; requests, budget, auth, other modes

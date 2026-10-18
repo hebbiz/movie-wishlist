@@ -1,14 +1,84 @@
 # Windows + iPhone manual test guide (trusted home LAN only)
 
 Current [consolidated proposal](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
-and [handoff](consolidated-poc-handoff.md) are design-only, not a runnable new mode.
-**No test, restart or SSH-disconnect repeat is requested for this documentation
-checkpoint. MEGOGO remains unresolved/frozen.** Existing commands below retain
+and [handoff](consolidated-poc-handoff.md) now have bounded research implementation
+approval. The [consolidated workflow](#consolidated-discovery-owner-workflow) is
+the only new owner session; prior documentation alone required no test/restart.
+**MEGOGO remains unresolved/frozen.** Existing commands below retain
 their individual historical scope/readiness labels; do not start a new test cycle
-just because the stack is reviewed. After separately approved implementation,
+just because the stack is reviewed. For the approved implemented research mode,
 the [single short acceptance plan](regional-card-proposal.md#acceptance-and-one-short-owner-session)
-limits owner work to the new end-to-end flow/material discrepancies. Exact new
-commands will be documented after implementation, not invented now.
+limits owner work to the new end-to-end flow/material discrepancies. No source
+probe/card tour/parser-debugging cycle is restarted.
+
+## Consolidated discovery owner workflow
+
+Implemented isolated research; consolidated live utility is **pending**. One
+server, UI picker Coherence/Dune, optional Kinobaza **on** for the control session.
+No Gemini key/LLM, response storage or production writes. Source conditions:
+[current combined-use record](regional-card-proposal.md#consolidated-implementation-and-source-use-checkpoint).
+Review current applicable TMDb agreement in normal token setup before live; it
+remained unreadable to the agent. No automatic permission/ban/email requirement.
+MOTN key comes from the existing direct developer portal, not RapidAPI; existing
+TMDb Read Access Token setup below applies. No new subscription selected.
+
+If SSH opens cmd, enter `powershell -NoProfile` (or your already approved installed
+`pwsh -NoProfile`) first. Do not bypass/change execution policy. From the correct
+copy inspect before updating; preserve all local/untracked files:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'
+git status --short --branch
+git fetch --prune origin
+git switch codex/mw-fut-01-consolidated-discovery
+git merge --ff-only origin/codex/mw-fut-01-consolidated-discovery
+git rev-parse HEAD
+```
+
+Stop on conflicts/divergence; no reset/clean/force or blind stash. The agreed
+stack includes #176's launcher fix; **#175 alone is not a corrected checkpoint**.
+For the optional HTML parser, if not already installed in this copy:
+`npm ci --prefix research/grounded-answer-demo --ignore-scripts`. Research
+dependencies only; no live source request. No system/firewall/SSH changes.
+
+One **standalone restart line** in PowerShell from that repo; all switches reset
+after reconnect. This is for the owner to run, never run by the agent on owner
+demo. It stops only this copy's verified process, refusing stale/unrelated PID.
+Enter THIS Windows machine's assigned private IPv4, then separate hidden LAN,
+TMDb and MOTN credentials at helper prompts; never paste secrets into arguments.
+
+```powershell
+$ErrorActionPreference='Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; $demoIPv4=Read-Host 'Verified private IPv4 of THIS Windows machine'; $env:DEMO_MODE='live'; $env:DEMO_RETRIEVAL='ua-discovery'; $env:DEMO_DISCOVERY='digital-ua'; $env:DEMO_FILM='coherence'; $env:DEMO_KINOBAZA='on'; $env:DEMO_SYNTHETIC_SCENARIO='grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:DEMO_URL_SOURCE,Env:DEMO_PORT,Env:DEMO_ACCESS,Env:DEMO_BIND_IPV4,Env:GEMINI_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $demoIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Safari: exact printed **`http://<entered-Windows-IPv4>:4317`**, username **demo**,
+separate LAN password. No guessed IP from another home project. Trusted private
+home HTTP only: Basic is not encryption; no internet exposure. To deliberately
+use synthetic instead, change only DEMO_MODE to synthetic in the standalone line;
+no API-key prompts/network. Optional Kinobaza off means max3 requests/film.
+
+**One short owner session, max8 HTTP requests total:**
+
+1. Confirm Coherence/UA/Kinobaza on/budget4 before click; run once, summarize useful,
+   missing/conflicting leads. Missing data is not unavailable; no best-option claim.
+2. Pick Dune in the same page/server; no restart. Run once. No batch/retries.
+3. On one result Select and review included/excluded fields; if transferring an
+   opaque tracking candidate, explicitly acknowledge its unchanged URL/type/
+   provenance. Otherwise purchase_url is empty without permitted exact candidate.
+   Confirm into **local draft only**, edit, Cancel edits, or Cancel selection to
+   verify existing draft unchanged. No MW submit/ownership update/autosave.
+4. Send a short useful/missing/conflicting/draft summary, not JSON/HTML/screenshots.
+   Do not tour the old streaming apps/cards. Existing observations are dated
+   controls; only a new material discrepancy justifies a targeted check.
+
+Each film is disabled after its one click on that page; reselecting does not
+rerun. Reload clears local results/draft but is not an instruction to retry.
+Source failures retain safe independent results. Stop on stable-ID conflict,
+credential leak, terms conflict, 403/429/CAPTCHA or unexpected calls/storage; no
+new source/second owner round by default. No repeated synthetic/SSH-disconnect
+owner check required: agent tests cover the changed key routing/lifecycle, not a
+new real-iPhone assertion. Existing sleep/IP/firewall/Wi-Fi/stale-page guidance below
+still applies. Keep existing Stop/Status commands; no merge/deployment authorization.
 
 MW-FUT-01 remains Discovery. Three digital scenarios now have limited
 [owner-reported observations](digital-ua-owner-validation.md), not a general

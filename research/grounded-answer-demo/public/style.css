@@ -13,4 +13,10 @@ a { color: #204fc6; }
 #status { min-height: 1.5em; }
 #answer { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; margin-bottom: 16px; }
 #suggestions { display: block; width: 100%; }
+.discovery-ui { white-space: normal; overflow-wrap: anywhere; }
+.discovery-ui label { display: block; margin: 12px 0; }
+.discovery-ui input:not([type="checkbox"]), .discovery-ui select { display: block; box-sizing: border-box; max-width: 100%; width: 100%; font: inherit; padding: 10px; }
+.discovery-ui button { margin: 8px 8px 8px 0; }
+.discovery-card { border: 1px solid #dbe1e9; border-radius: 8px; padding: 12px; margin: 12px 0; white-space: normal; }
+.discovery-card h4 { margin: 0; }
 @media (max-width: 600px) { main { margin: 20px auto; padding: 0 12px 24px; } header, #result { padding: 18px; } }
