@@ -165,5 +165,8 @@ real page read. Reconnect and stop **only** the test copy:
 SSH login restore them to the exact test-copy directory/IP/port (retain the
 nonsecret path/port before disconnecting). Do not run Stop from the original
 owner checkout or copy its PID file. Do not weaken auth/flags, forward ports,
-change firewall/service settings or launch live to troubleshoot. Real owner
-SSH-disconnect/Safari validation of this new-mode fix remains pending.
+change firewall/service settings or launch live to troubleshoot. Explicit owner
+SSH-disconnect validation of this new-mode fix remains pending. Two later
+[URL-only live answers through Safari](digital-ua-owner-validation.md#url-context-evaluation-checkpoint--two-owner-run-live-tests)
+are owner-reported, not an independent device test or proof of SSH-disconnect
+survival after this fix.

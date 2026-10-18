@@ -283,6 +283,9 @@ Subsequently, the owner confirmed real iPhone/Safari LAN HTTP + Basic Auth,
 a synthetic request after explicit SSH disconnection, and three digital-UA live
 scenarios through iPhone. This establishes that tested home-network path, not
 all firewall/client-isolation configurations or universal SSH-job behavior.
+Two later URL Context live answers through Safari are recorded separately in
+the same owner record. They do not establish a new-mode SSH-disconnect test
+after the launcher fix or independent implementation-agent device validation.
 See the owner record for results and limits. Other environments, auth-cache edge
 cases and the Amazon-region live scenarios remain unvalidated. The
 [next-experiment proposal](regional-card-proposal.md) preserves this workflow;

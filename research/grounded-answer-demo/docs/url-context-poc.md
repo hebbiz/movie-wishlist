@@ -14,15 +14,17 @@ Implement a minimal explicit `DEMO_RETRIEVAL=url-context`, with
 owner-clicked GenerateContent call, `urlContext` only, no Google Search, fallback,
 automatic discovery/fetch, retry, continuation, second LLM, scraper, account
 automation, credentials/cookies, arbitrary URL input, normalization or archive.
-No live Gemini call was made by the implementation agent. New-mode usefulness
-and actual retrieval remain **live-unvalidated**, not inferred from mocks.
+No live Gemini call was made by the implementation agent. Two subsequent
+[owner-run URL Context observations](digital-ua-owner-validation.md#url-context-evaluation-checkpoint--two-owner-run-live-tests)
+now cover the fixed cards through iPhone/Safari; this is not independent
+validation, general accuracy or complete offer/entitlement verification.
 
 ### Verified catalogue, not expected answers
 
 | Fixed film | Official public Ukrainian card / identity check |
 | --- | --- |
 | Dune: Part Two (2024), Denis Villeneuve | [Owner-supplied card](https://tv.apple.com/ua/movie/dune-part-two/umc.cmc.363aycnv6vy9qgekvew6fveb9), independently opened: title, 2024 and director match. |
-| Coherence (2013), James Ward Byrkit | [Independently located card](https://tv.apple.com/ua/movie/coherence/umc.cmc.hdoayzcx3u9ofxfawjrt3hgc), independently opened: director, Emily Baldoni/Nicholas Brendon/Maury Sterling and dinner/comet synopsis match. Apple shows regional release 2020; that is not treated as the original film year or grounds for rejection. |
+| Coherence (2013), James Ward Byrkit | [Independently located card](https://tv.apple.com/ua/movie/coherence/umc.cmc.hdoayzcx3u9ofxfawjrt3hgc), independently opened: director, Emily Baldoni/Nicholas Brendon/Maury Sterling and dinner/comet synopsis match. Apple displays 2020; its meaning is unverified, not established as a regional release/addition/reissue or the original film year. |
 
 Only identity was established here, not a new account/transaction check. A `/ua/`
 URL does not prove entitlement. No page body is archived. The server catalogue
@@ -84,7 +86,9 @@ extraction/storage or authenticated content is approved.
 Keep the [trusted-LAN setup and safety guide](iphone-windows.md): no internet
 exposure, HTTP Basic is unencrypted, no automated SSH/firewall/profile changes.
 The owner's prior Safari + explicit SSH-disconnect synthetic validation applies
-to the earlier workflow; **this new mode is not yet owner live-validated**.
+to the earlier workflow. Two new-mode live answers through Safari are now
+owner-reported in the linked record; explicit new-mode SSH-disconnect validation
+after the launcher fix remains pending. Do not conflate these evidence scopes.
 
 In Termius PowerShell, inspect the correct copy and preserve all local/untracked
 changes. Only with no conflicting changes, select/update this stacked branch:
@@ -145,13 +149,14 @@ on error; no automatic retry. To return to Search, stop, set
 `$env:DEMO_RETRIEVAL = 'search'`, select original switches, restart/reload. Helpers
 retain their per-copy safe-stop/duplicate guard and no-secret-file behavior.
 
-## Manual comparison / acceptance (owner only; not executed here)
+## Manual comparison / acceptance (owner only; not executed by the agent)
 
 1. Use Ukrainian account/territory without VPN for the separate manual Safari
    check; do not send account/cookies to Gemini or purchase access for research.
 2. Check the configured URL and exact film independently, including Coherence's
-   regional year difference. Inspect retrieval metadata before treating any
-   statement as page-supported. Failure/missing status is not unavailability.
+   displayed-year difference without inventing its meaning. Inspect retrieval
+   metadata, but do not equate SUCCESS with a supported/correct claim.
+   Failure/missing status is not unavailability.
 3. Compare separately against the earlier owner observations, without putting
    expected facts in the prompt: Coherence transactions, HD, shown audio and
    previously unchecked subtitles; Dune exact card, transactions, Ukrainian audio,
@@ -188,9 +193,14 @@ truth, current metadata, regional availability or rights clearance.
   The subsequent [paired launch diagnosis](windows-launch-diagnosis.md) identifies
   a shared multi-executable-selection defect, not a runner breakaway denial.
   After the single-executable fix, Search and URL Context helper integration,
-  including parent-exit survival, passes. Actual new-mode SSH-disconnect/Safari
-  use remains **owner-validation pending**. Earlier owner workflow validation
-  is preserved, not claimed as a rerun of this mode.
+  including parent-exit survival, passes. Actual new-mode SSH-disconnect use
+  remains **owner-validation pending**; two later Safari live answers are
+  owner-reported separately, not independently reproduced by the agent.
 - No live API, account automation, production/system changes, live output,
   screenshot or response archive. Temporary helper test copies were cleaned by
   the test; the existing owner's server was not stopped/replaced.
+
+The implementation-check results above retain their original execution scope;
+no runtime tests were rerun for the evaluation documentation checkpoint. The
+[next availability experiment](regional-card-proposal.md#next-experiment-current-ukrainian-availability)
+is a proposal, not an implementation handoff or change to the fixed-card mode.

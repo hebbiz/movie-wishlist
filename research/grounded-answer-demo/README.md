@@ -14,13 +14,17 @@ it changes no prompt or integration.
 
 The separate opt-in [URL Context PoC](docs/url-context-poc.md) now tests two
 fixed Apple TV Ukraine cards without Search. It is stacked on PR #175; it does
-not change the existing Search prompts or their default selection. All URL
-Context results remain **live-unvalidated**; only mocks/synthetic checks were run.
+not change the existing Search prompts or their default selection. Two
+[owner-run URL Context live tests](docs/digital-ua-owner-validation.md#url-context-evaluation-checkpoint--two-owner-run-live-tests)
+through iPhone/Safari supplied useful identity/audio metadata but left offer
+availability and several transaction/video fields unknown. These are not
+independently repeated tests, general accuracy or proof of method superiority.
 The [Windows launch diagnosis](docs/windows-launch-diagnosis.md) resolves the
 earlier detached-launch failure: multiple Node PATH matches were passed as one
 executable string. The helper now selects one executable, without changing
 breakaway/auth/security controls. Safe native diagnostics and paired baseline/
-HEAD tests are documented there; actual new-mode SSH/iPhone checks remain pending.
+HEAD tests are documented there; explicit new-mode SSH-disconnect validation
+after the fix remains pending, separate from the reported Safari live answers.
 
 No production integration, new provider, TMDb, chat/input, structured output,
 normalization, scoring, response archive or analytics. PR #173 is not changed
@@ -272,8 +276,10 @@ Google-supplied image resources can load as the snippet renders, and source/chip
 clicks navigate directly under destination terms. No tracking/interstitials are
 added by this app. The limited owner-observed digital results include missed
 offers, metadata omissions and citation/context mismatches; see the validation
-record. No general accuracy, exhaustive platform coverage or legal-permission
-claim is made. Amazon-region live validation remains pending.
+record. The provider's complete retrieved content is unavailable; the cause of
+URL Context omissions is not established. No general accuracy, exhaustive
+platform coverage or legal-permission claim is made. Amazon-region live
+validation remains pending.
 
 ## Offline validation
 
@@ -304,9 +310,8 @@ and must be reported as such. Synthetic fixtures explicitly establish **no real
 viewing availability, localization, edition or stock**.
 
 Implementation test results are reported in the PR at their execution baseline.
-The previous documentation checkpoint did not rerun tests; this URL Context code
-iteration adds offline/browser tests and reruns regression checks as reported
-in its separate PR.
+Code-iteration offline/browser checks are reported at their execution baselines;
+the current evaluation checkpoint is Markdown-only and does not rerun them.
 Historical physical outcomes remain in the PR #174 checkpoint; subsequent owner
 observations are in the linked digital-UA record. No live response, screenshot,
 public evaluation report or evidence archive is added.

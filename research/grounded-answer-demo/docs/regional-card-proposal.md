@@ -1,9 +1,13 @@
 # Proposed next experiment: regional card first
 
-Design only, October 18, 2026. MW-FUT-01 remains **Discovery**. No prompt,
+Design only, updated October 18, 2026 after two owner-run URL Context tests.
+MW-FUT-01 remains **Discovery**. No prompt,
 runtime, model/settings, provider, output limit or integration is changed here.
 The [owner observations](digital-ua-owner-validation.md) motivate narrower
-questions, not an accuracy claim or a production recommendation.
+questions, not an accuracy claim or a production recommendation. The current
+proposal below supersedes the earlier prompt-clarification preference. The
+implemented fixed-card URL-only experiment is documented separately in the
+existing PoC guide; no implementation handoff is prepared here.
 
 ## Proposed sequence and evidence boundaries
 
@@ -37,12 +41,14 @@ integration or a final authority on an offer.
 
 Proposed future flow (not the current runtime):
 
-TMDb / Кінобаза / web search → concrete regional card → film/cut identity and
+TMDb / Кінобаза / web search → candidate regional cards → film/cut identity and
 offer-characteristic checks → Mykola recommendation.
 
-Кінобаза does not conclusively establish viewing entitlement, current prices or
-localization of a specific edition. Its data may originate from JustWatch and
-may not be independent of TMDb. Shared upstream information is not independent
+Кінобаза is not final evidence of offer availability/entitlement, current prices,
+audio or video format of a particular provider offer/edition. General film
+localization does not establish localization at a provider. Its data may
+originate from JustWatch and may not be independent of TMDb. Shared upstream
+information is not independent
 corroboration; titles/links are leads to verify against the exact regional card,
 not grounds for transferring characteristics between offers or editions.
 
@@ -54,12 +60,92 @@ MW-FUT-01 remains Discovery. The current [URL-only PoC](url-context-poc.md) keep
 its fixed, verified server-side cards; Кінобаза does not populate that catalogue
 or supply runtime input.
 
-## Two options, no integration selected
+## Next experiment: current Ukrainian availability
 
-| Option | What a future approved iteration could change | Limit / decision gate |
-| --- | --- | --- |
-| A. Minimal prompt clarification + manual card check | Make card identity, account-playback versus new transaction, and separate field-level unknowns more explicit in the fixed prompt. Keep one original grounded answer and manual Safari checks. | Existing prompts already contain many safeguards; repetition may not fix retrieval omissions or unreliable citations. No guaranteed access to page content or account rights. |
-| B. Separate check of one specific URL | Manual Safari reading is available now. A future API URL-reading stage is a candidate only after the checks below; it is not implemented or selected. | A URL retrieval success cannot establish Ukrainian account entitlement or claim correctness. Extra retrieval cannot be assumed permitted, current, regional or equivalent to logged-in Safari. |
+The [two reported URL-only tests](digital-ua-owner-validation.md#url-context-evaluation-checkpoint--two-owner-run-live-tests)
+provided useful identity/audio metadata, but left availability and transaction
+fields unknown. The full provider-retrieved content is unavailable; the cause of
+omissions is unresolved. The next question is **whether a current digital offer
+can be established in Ukraine**, not whether a longer prompt fills every field.
+
+### A. Candidate links from TMDb / Кінобаза, then manual offer verification
+
+- **Hypothesis / new information:** Ukrainian titles and candidate links can
+  lead the owner to a concrete provider offer whose current access type can be
+  checked directly. This adds a time/account-scoped availability observation,
+  not just identity/audio metadata or another aggregator availability assertion.
+- **Minimum change:** no code, prompt, dependency or model change. One manual
+  session, the same two films, at most one provider-card candidate per film.
+  Use TMDb/Кінобаза through their ordinary UI only if accessible; a source may
+  provide no usable link. Existing fixed Apple cards can be controls, but using
+  a seed URL is not counted as successful new candidate discovery. No Gemini
+  call is needed to answer this manual research question.
+- **Dependencies / access limits:** owner access to source/provider UI, Ukraine
+  without VPN and a Ukrainian account when needed. Neither an API nor relevant
+  TMDb/Кінобаза fields/links are assumed to exist. Source rights/access,
+  attribution and retention remain unresolved; no automatic access is approved.
+  Shared JustWatch-origin data is not independent corroboration.
+- **Acceptance:** establish exact film/cut/card identity first. For each case,
+  distinguish current subscription access, a new rental and a new purchase
+  using visible offer-specific controls, or explicitly retain unknown. A Play
+  button shows an account-scoped playback control, not successful playback, a
+  new transaction or another account's entitlement. Price is a dated observation,
+  not a persistent promise. Supporting the hypothesis requires at least one
+  actual current offer observation beyond the URL-only unknown; merely marking
+  both cases unknown is a documented unresolved outcome, not successful proof.
+- **Stop criteria:** stop at two cases or when identity/territory/access cannot
+  be established normally. No usable link means unknown, not unavailable. Do not
+  buy, subscribe, bypass geo/login restrictions, expand platforms/films or infer
+  missing fields to complete the exercise. No automated extraction or archive.
+- **Termius → iPhone/Safari order:** inspect the correct checkout and, if the
+  demo is already running, use status only; leave the owner process/configuration
+  intact. Move to Safari, manually locate a title/link in the source UI, then
+  open the exact regional provider card and verify identity. Check current
+  access controls in the owner's Ukrainian context; keep localization/video
+  observations separate and unknown where absent. Discuss concise observations
+  and uncertainty without saving live model text, raw metadata or screenshots.
+  No demo/model click is required; follow the existing trusted-LAN guide if
+  using the demo as context, not as an entitlement oracle.
+
+### B. Additional exact-card check, gated by demonstrated access to missing data
+
+- **Hypothesis / new information:** a permitted technical view of the **same**
+  card might expose current transaction/availability information omitted from
+  URL Context. This must first be demonstrated; another retrieval SUCCESS or
+  the same identity/audio list would add no evidence for the availability gap.
+- **Minimum change:** begin with a manual feasibility check of normal rendered
+  Safari/provider UI. If offered through normal navigation, the official Apple
+  TV app may be checked as a separate account-bound view, not silently equated
+  with the public page. No implementation or new transport is proposed now.
+  A future technical read would require a separately approved method and proof
+  that it can expose the needed fields; no API/endpoint or field availability
+  is assumed. Repeating URL Context is not itself a new method.
+- **Dependencies / access limits:** exact card/version mapping, demonstrated
+  extra fields and applicable permission. An official documented interface, if
+  one exists, needs its own capability/terms/attribution/retention review before
+  any request. A rendered-page observation does not grant scraping/DOM
+  automation rights; app-only/account data is not automatically available to a
+  backend. No cookies, credentials, internal endpoints, account automation or
+  access-control circumvention. The existing terms review below is context,
+  not clearance for a new route.
+- **Acceptance:** in one chosen case, identify at least one additional
+  offer-specific availability/access field absent from the URL-only answer,
+  with known card and territorial/account scope. Before selecting a technical
+  route, demonstrate authorized access to that field, not just HTML retrieval
+  or a generic badge. Report which conclusions remain account-only/unknown;
+  do not claim that this reveals what Gemini actually received.
+- **Stop criteria:** no new availability field, uncertain card mapping, no
+  documented permitted method, blocked/login-only automated access or dependence
+  on invented/private endpoints ends this option as infeasible/unresolved for
+  now. Do not add a scraper/provider, replay model calls or relax constraints.
+- **Termius → iPhone/Safari order:** inspect status without restarting/stopping
+  the owner demo; open the chosen configured card in Safari normally. Check
+  rendered availability controls; optionally follow the provider's ordinary
+  official-app navigation only if exact identity can be maintained. Compare
+  this observation to the existing owner summary, not an archived model answer.
+  If only the account view adds information, label it account-scoped. Return to
+  discussion with the feasibility result; make no technical/API call or code
+  change until a separate decision. Keep the iPhone safety workflow unchanged.
 
 ### Official capabilities and terms checked October 18, 2026
 
@@ -97,60 +183,24 @@ The guide documents a possible tool, not authorization to deploy it. No new
 integration, scraper or provider is recommended automatically; no API migration
 is implied by the docs labelling GenerateContent legacy.
 
-## Recommended narrow PoC (proposed, not executed)
+## Recommendation (design only, no implementation handoff)
 
-Prefer **A with an owner-operated exact-card check**, not an automated URL stage.
-First resolve the permitted scope of this manual experiment under the terms
-above; no broad quality-analysis permission is asserted. Then seek approval for
-a small fixed-prompt clarification in a separate change. Retain current model,
-settings, one-click/one-request behavior, original citations/Suggestions,
-non-persistence and [iPhone workflow](iphone-windows.md). No arbitrary URL/input
-UI, second model call, automatic fetch or new integration.
+Choose **A first**: one bounded owner session with Coherence and Dune: Part Two,
+candidate links if obtainable normally, then direct manual current-offer checks.
+It targets the availability gap without another model call, speculative API or
+new integration. Its benefit is a scoped current observation and a clearer
+boundary between discovery, public metadata and account access, not proof of a
+generally reliable method. If neither offer can be established, retain that
+unresolved result; do not switch to B automatically.
 
-Limit the next owner session to Coherence / Apple TV and Dune / Apple TV, with
-Blade Runner / Final Cut as an account-playback-versus-transaction boundary case.
-At most one explicitly initiated request per case, no retries/batch. The owner
-finds cards independently using the platform UI, not an automated grounded-link
-collection. Inspect links manually without exporting output. If option A still
-misses metadata, report unresolved fields; do not silently add option B.
+B is a subsequent feasibility question only if it can demonstrate new,
+permitted access to missing availability information. Do not choose a technical
+integration merely because URL Context omitted fields. Current prompts/model/
+settings and the fixed catalogue remain unchanged; nothing is sent to Mykola.
 
-### Acceptance criteria for that future iteration
-
-- Correct regional card and film/cut are established or explicitly unresolved;
-  neither country URL nor the presence of a citation alone passes the check.
-- Availability, Ukrainian audio, Ukrainian subtitles, separate video properties
-  and access type each have an offer-specific basis or remain unknown. Original
-  language, a generic badge and typical HD distribution are not evidence.
-- Account playback does not imply a new transaction/price. A list omission or
-  failed URL does not become a definitive negative. Metadata and entitlement
-  disagreements remain explicit, with regional/account context acknowledged.
-- iPhone synthetic smoke test still works after explicit SSH disconnect; live
-  execution is owner-only. Display remains intact, no answer archive/screenshot,
-  scoring, normalized dataset, browser storage or response logging is added.
-- Failure to meet a factual criterion is reported as a failure/unknown, not
-  repaired by inference. Three cases do not establish general accuracy.
-
-### Manual test plan (after separate approval, no calls in this update)
-
-1. Use the same trusted home network and Ukrainian platform account from Ukraine,
-   without VPN. Do not provide platform credentials/cookies to the demo or buy
-   access solely for research. If territory is uncertain, stop that conclusion.
-2. Follow the Windows/iPhone guide: inspect the correct checkout, start synthetic
-   with hidden secrets, verify the printed IP URL and Basic username `demo`,
-   disconnect SSH explicitly, reload Safari, and perform one synthetic attempt.
-3. Independently open the regional card in the platform UI. Check Coherence's
-   transaction buttons, HD, audio and previously unchecked subtitles; Dune's
-   exact Apple card/ID, transactions, Ukrainian tracks and 4K/DV; Blade Runner's
-   cut description, Play versus transaction controls, English/UA lists and 4K/DV.
-   Do not assume the earlier prices or metadata remain current.
-4. Only after approving the future prompt change and live use, stop/restart for
-   each fixed film in `digital-ua`, unset `DEMO_AMAZON_REGION`, reload and inspect
-   the full prompt before one click. Keep complete original answer/citations and
-   Suggestions visible. Read the specific cited card manually; distinguish
-   reproduced facts, non-reproduced claims and unknowns. Do not weaken auth or
-   modify output to make a result look correct.
-5. Discuss owner observations and gaps without copying live text/images or
-   making an evidence archive. Optional latency timing is manual; usage/costs
-   remain unknown unless measured, not zero. Stop the demo after the session.
-   Do not expand to more platforms/films or automated URL retrieval without a
-   separate decision. Amazon-region live checks remain a separate pending task.
+Both options preserve the [iPhone workflow](iphone-windows.md), no response
+archive, independent unknowns and no payments/geo bypass. Owner observations
+must remain distinct from model statements and implementation-agent tests.
+Usage/cost is not a blocker, unmeasured cost is not zero, and two cases cannot
+establish general accuracy or superiority. No API calls, automation, system
+changes or implementation handoff accompany this documentation proposal.
