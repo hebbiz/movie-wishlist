@@ -138,14 +138,38 @@ function offerProjection(offer, index, issues) {
   return { status: 'public-metadata', fields };
 }
 
+function rejectionDiagnostics(doc, counts, total) {
+  // Only fixed parser enums, counts and parsed-tree shape. Never attach parser
+  // errors/locations, tag attributes, text, JSON values or exception messages.
+  const diagnostics = { stage: 'html-parse-policy', policy: 'reject-all-except-missing-doctype', identityEvaluation: 'not-run',
+    parseErrors: { total, byCode: [...counts].map(([code, count]) => ({ code, count, blocking: code !== 'missing-doctype' })) },
+    structure: { state: 'unavailable-structure-limit' } };
+  try {
+    const nodes = walk(doc);
+    diagnostics.structure = { state: 'parsed-tree-counts-not-identity-evidence',
+      documentMode: ['no-quirks', 'limited-quirks', 'quirks'].includes(doc.mode) ? doc.mode : 'unknown',
+      mainElements: nodes.filter(n => n.tagName === 'main').length,
+      h1Elements: nodes.filter(n => n.tagName === 'h1').length,
+      canonicalLinks: nodes.filter(n => n.tagName === 'link' && attr(n, 'rel') === 'canonical').length,
+      jsonLdBlocks: nodes.filter(n => n.tagName === 'script' && attr(n, 'type')?.toLowerCase() === 'application/ld+json').length };
+  } catch { /* Preserve the parse-policy reason even when structure exceeds limits. */ }
+  return diagnostics;
+}
+
 export async function extractMegogo(html) {
   const result = base();
   if (typeof html !== 'string' || Buffer.byteLength(html) > MEGOGO_LIMIT_BYTES) return { ...result, status: 'unsupported-markup', issues: ['html-size-or-type-limit'] };
-  let parse; try { ({ parse } = await import('parse5')); } catch { return { ...result, status: 'parser-unavailable', issues: ['Install isolated parse5 dependency.'] }; }
+  let parse, ErrorCodes; try { ({ parse, ErrorCodes } = await import('parse5')); } catch { return { ...result, status: 'parser-unavailable', issues: ['Install isolated parse5 dependency.'] }; }
   try {
-    const parseErrors = [];
-    const doc = parse(html, { onParseError: e => { if (parseErrors.length < 20) parseErrors.push(e.code); } });
-    if (parseErrors.some(e => e !== 'missing-doctype')) return { ...result, status: 'unsupported-markup', issues: ['ambiguous-html-tokenization'] };
+    const knownCodes = new Set(Object.values(ErrorCodes)), counts = new Map(); let total = 0, rejected = false;
+    const doc = parse(html, { onParseError: e => {
+      const code = knownCodes.has(e.code) ? e.code : 'unrecognized-parser-error';
+      counts.set(code, (counts.get(code) ?? 0) + 1); total++;
+      if (code !== 'missing-doctype') rejected = true;
+    } });
+    // Preserve the existing conservative gate, not an expanded tolerance list.
+    // A parse error is not automatically an ambiguous/foreign film response.
+    if (rejected) return { ...result, status: 'unsupported-markup', issues: ['html-parse-policy-rejection'], diagnostics: rejectionDiagnostics(doc, counts, total) };
     const all = walk(doc), visible = all.filter(n => !inert(n));
     const visibleText = clean(visible.filter(n => n.nodeName === '#text').map(n => n.value).join(' '));
     if (/verify (?:that )?you are human|підтвердіть,? що ви людина|captcha challenge/iu.test(visibleText)) return { ...result, status: 'captcha-no-retry', issues: ['Visible challenge; no bypass.'] };

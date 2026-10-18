@@ -119,6 +119,67 @@ test('MEGOGO visible CAPTCHA is not bypassed', async () => {
   const r = await extractMegogo(syntheticMegogo({ body: '<p>Verify you are human</p>' }));
   assert.equal(r.status, 'captcha-no-retry'); assert.equal(r.identity.status, 'unknown');
 });
+test('MEGOGO parser rejection is a policy decision, not proof of ambiguous tokenization', async () => {
+  const cases = [
+    ['legacy doctype', syntheticMegogo().replace('<!doctype html>', '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">'), 'non-conforming-doctype'],
+    ['recoverable text entity', syntheticMegogo({ body: '<p>Example &copy label</p>' }), 'missing-semicolon-after-character-reference'],
+    ['conflicting duplicate attribute', syntheticMegogo().replace('<link rel="canonical"', '<link rel="canonical" rel="alternate"'), 'duplicate-attribute'],
+    ['truncated comment', syntheticMegogo() + '<!-- incomplete', 'eof-in-comment'],
+  ];
+  for (const [name, html, expected] of cases) {
+    const r = await extractMegogo(html);
+    assert.equal(r.status, 'unsupported-markup', name); assert.equal(r.identity.status, 'unknown', name);
+    assert.deepEqual(r.issues, ['html-parse-policy-rejection'], name);
+    assert.equal(r.diagnostics.stage, 'html-parse-policy', name);
+    assert.equal(r.diagnostics.identityEvaluation, 'not-run', name);
+    assert.deepEqual(r.diagnostics.parseErrors, { total: 1, byCode: [{ code: expected, count: 1, blocking: true }] }, name);
+    assert.equal(r.diagnostics.structure.mainElements, 1, name); assert.equal(r.diagnostics.structure.h1Elements, 1, name);
+    assert.equal(r.diagnostics.structure.canonicalLinks, 1, name); assert.equal(r.diagnostics.structure.jsonLdBlocks, 1, name);
+    for (const f of Object.values(r.cardFields)) assert.equal(f.state, 'unknown', name);
+  }
+});
+test('MEGOGO diagnostic counts include errors after the old 20-event cap; no content/URL/attribute/position leaks', async () => {
+  const privateMarker = 'PRIVATE_DIAGNOSTIC_TEXT_DO_NOT_RETURN';
+  const r = await extractMegogo(syntheticMegogo({ body: `<p data-private="${privateMarker}" data-private="other">${privateMarker} ${'&copy text '.repeat(25)}</p>` }) + '<!-- truncated');
+  assert.equal(r.status, 'unsupported-markup'); assert.equal(r.identity.status, 'unknown');
+  const codes = r.diagnostics.parseErrors.byCode;
+  assert.equal(codes.find(e => e.code === 'missing-semicolon-after-character-reference').count, 25);
+  assert.equal(codes.find(e => e.code === 'eof-in-comment').count, 1); assert.equal(r.diagnostics.parseErrors.total, 27);
+  assert.doesNotMatch(JSON.stringify(r.diagnostics), /PRIVATE|data-private|other|https?:|Dune|22027436|startOffset|startLine|snippet/);
+});
+test('MEGOGO error-free HTML / optional end tags and existing missing-doctype allowance still pass identity', async () => {
+  for (const html of [syntheticMegogo(), syntheticMegogo().replace('<!doctype html>', ''), syntheticMegogo().replaceAll('</dt>', '').replaceAll('</dd>', '')]) {
+    const r = await extractMegogo(html); assert.equal(r.identity.status, 'matched'); assert.equal(r.status, 'ok');
+  }
+});
+test('MEGOGO diagnostic preserves strict policy under mixed errors and bounded structure inspection', async () => {
+  const mixed = await extractMegogo(syntheticMegogo({ body: '<p data-test=x data-test=y>Example</p>' }).replace('<!doctype html>', ''));
+  assert.deepEqual(mixed.diagnostics.parseErrors.byCode, [
+    { code: 'missing-doctype', count: 1, blocking: false }, { code: 'duplicate-attribute', count: 1, blocking: true },
+  ]);
+  assert.equal(mixed.identity.status, 'unknown');
+  const deep = await extractMegogo(syntheticMegogo({ body: '<div data-test=x data-test=y>' + '<div>'.repeat(270) + '</div>'.repeat(271) }));
+  assert.equal(deep.status, 'unsupported-markup'); assert.deepEqual(deep.issues, ['html-parse-policy-rejection']);
+  assert.deepEqual(deep.diagnostics.structure, { state: 'unavailable-structure-limit' });
+  assert.equal(deep.diagnostics.parseErrors.byCode[0].code, 'duplicate-attribute'); assert.equal(deep.identity.status, 'unknown');
+});
+test('MEGOGO rejected HTML through mock HTTP yields structural diagnostics once, no raw content or second fetch', async t => {
+  const marker = 'PRIVATE_MOCK_RESPONSE_DO_NOT_RETURN'; let calls = 0;
+  const server = createDemo({ mode: 'live', retrieval: 'megogo-html', discovery: 'digital-ua', fetchImpl: async () => {
+    calls++; return response(syntheticMegogo({ body: `<p data-private="${marker}" data-private="other">${marker}</p>` }));
+  } });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => new Promise(r => server.close(r)));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const session = await (await fetch(`${origin}/session`)).json(); assert.equal(calls, 0);
+  const headers = { origin, 'x-demo-session': session.token };
+  const res = await fetch(`${origin}/answer`, { method: 'POST', headers });
+  assert.equal(res.status, 200); assert.equal(res.headers.get('cache-control'), 'no-store');
+  const text = await res.text(), r = JSON.parse(text).result;
+  assert.equal(r.httpStatus, 200); assert.equal(r.status, 'unsupported-markup'); assert.equal(r.identity.status, 'unknown');
+  assert.equal(r.diagnostics.parseErrors.byCode[0].code, 'duplicate-attribute'); assert.doesNotMatch(text, new RegExp(marker));
+  assert.doesNotMatch(text, /data-private|<script|<main/); assert.equal(calls, 1);
+  assert.equal((await fetch(`${origin}/answer`, { method: 'POST', headers })).status, 409); assert.equal(calls, 1);
+});
 test('MEGOGO exact one bounded GET, no credentials, assets, destinations or key headers', async () => {
   let calls = 0;
   const r = await fetchMegogo(selection, async (url, init) => {

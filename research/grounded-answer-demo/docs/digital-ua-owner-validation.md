@@ -440,3 +440,26 @@ the [shared observation model](regional-card-proposal.md#shared-offer-observatio
 and [narrow MEGOGO proposal](regional-card-proposal.md#megogo-one-card-adapter-proposal--not-implemented),
 not a new integration or testing round. MW-FUT-01 remains Discovery. No full live
 answers, API bodies, metadata or screenshots are archived.
+
+## MEGOGO initial HTML — owner-run parse-policy rejection
+
+Recorded October 18, 2026 from the owner's summary, **not independently repeated**.
+Exact execution timestamp/running SHA and original response bytes were not
+supplied or retained. The owner reports **HTTP 200**, `unsupported-markup`,
+issue `ambiguous-html-tokenization`; identity and all fields were unknown.
+No offer characteristics, actual initial-HTML layout or entitlement were
+established by this run. HTTP 200 alone does not identify the returned page.
+
+The [code diagnosis](regional-card-proposal.md#megogo-owner-failure--parse-policy-diagnosis)
+locates that issue before identity evaluation: any of the first 20 parser errors
+other than `missing-doctype` caused the early return. Thus unknown identity is
+**not evaluated**, not evidence of a film mismatch or missing identity fields.
+The old output did not retain error codes; it cannot establish whether the live
+document had harmless recoverable syntax, meaningful structural problems or a
+different/blocked page. No precise live cause is claimed from authored fixtures.
+
+The correction supplies content-free structural/error-code diagnostics and a
+truthful policy-rejection label; it does **not** relax parsing/identity gates or
+claim to repair the unknown live layout. No new owner GET, card/app tour, raw
+HTML/metadata/screenshots, API call or owner-demo restart requested. Extraction
+usefulness remains unvalidated. MW-FUT-01 remains Discovery.

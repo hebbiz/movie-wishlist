@@ -19,4 +19,9 @@ export function renderMegogoResult(document, host, result, synthetic) {
   for (const [i, offer] of result.offers.entries()) { add('h3', `Separate source offer ${i + 1}: ${offer.status}`); fields(offer.fields); }
   add('p', 'Missing is unknown, not absent. HD does not exclude 4K; UHD is not HDR10/Dolby Vision. Locale is not codec/channels; list completeness is unknown. Regional statements are source claims, not egress geolocation or account entitlement.');
   if (result.issues.length) add('pre', result.issues.join('\n'));
+  if (result.diagnostics) {
+    add('h3', 'Structural diagnostics — no page content');
+    add('p', 'HTML rejected by the conservative parse policy before identity evaluation. These counts are not proof of card identity or tokenization ambiguity. No body, attributes, text or parser positions included.');
+    add('pre', JSON.stringify(result.diagnostics, null, 2));
+  }
 }

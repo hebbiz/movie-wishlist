@@ -73,8 +73,11 @@ Current-terms readiness remains conditional for any separately approved future u
 No new MOTN/card/SSH-disconnect test asked.
 
 The owner separately approved a [one-card MEGOGO HTML PoC](#megogo-initial-html-probe),
-stacked on #180 checkpoint `b9f3c65`. It is implemented / offline-tested but
-**live-pending**: no agent extraction of the fixed card. It does not change any
+stacked on #180 checkpoint `b9f3c65`. It is implemented / offline-tested; the
+[owner's first run](docs/digital-ua-owner-validation.md#megogo-initial-html--owner-run-parse-policy-rejection)
+reported HTTP 200 but was rejected by the parse policy before identity evaluation.
+Offer-field usefulness remains **unvalidated**; no agent extraction or repeat
+owner GET. It does not change any
 previous request body, prompt, model, parser or owner observation. MW-FUT-01
 remains Discovery, not a regular/commercial integration.
 
@@ -400,11 +403,18 @@ distinguishes the actual Ukrainian edition from a Polish response at the same
 URL; robots is not a licence, and residual IP/extraction rights uncertainty
 remains. The owner's approval is bounded, not regular/commercial approval.
 
-[Standalone Termius/Safari restart](docs/iphone-windows.md#megogo-initial-html-owner-workflow).
-After offline gates, owner plan is **at most one live GET for Dune**. No mandatory
-repeat synthetic/SSH-disconnect or streaming-app tour. Send only new/missing/
-conflicting fields and statuses, not HTML/JSON/screenshots. Earlier observations
-are controls, never seeded facts or current guaranteed truth. Live status pending.
+[Standalone Termius/Safari restart](docs/iphone-windows.md#megogo-initial-html-owner-workflow)
+is retained for separately approved reproduction, **not a repeat owner test now**.
+The first owner GET returned `ambiguous-html-tokenization`; the [diagnosis](docs/regional-card-proposal.md#megogo-owner-failure--parse-policy-diagnosis)
+shows a pre-identity parse-policy early exit, not proven ambiguity/wrong film.
+That misleading issue is now `html-parse-policy-rejection`, with parser-code
+counts and small parsed-tree counts under `diagnostics`; no page text, attributes,
+URLs, parser positions, body or content logs. The conservative gate and one-GET
+contract remain unchanged. Exact original parser code/layout is unrecoverable
+from the old summary; no safe tolerance expansion is demonstrated for that run.
+No new owner/synthetic/SSH-disconnect or streaming-app round. Earlier observations
+are controls, never seeded facts or current guaranteed truth. Offer fields remain
+unvalidated; only authored fixtures/mock HTTP were independently checked.
 
 ```powershell
 node --test research/grounded-answer-demo/test/megogo.test.mjs

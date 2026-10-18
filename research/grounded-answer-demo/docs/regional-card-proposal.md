@@ -869,7 +869,8 @@ conditions are established; do not retrofit current adapters now.
 
 ## MEGOGO one-card HTML PoC
 
-**Status: implemented / offline-tested / live-pending.** This section replaces
+**Status: implemented / offline-tested; first owner run rejected before identity,
+offer characteristics unvalidated.** This section replaces
 the earlier proposal in place; the legacy anchor preserves historical links.
 Starting from #180 `b9f3c65`, the owner approved the same bounded experiment
 model as Kinobaza HTML: one fixed public card, explicit manual action, transient
@@ -972,13 +973,13 @@ Windows lifecycle uses temporary copies and mock-only transport, not owner demo.
 Parser absence is explicit before a live fetch. Do not equate mocks/public-rules
 reads with live extraction validation or promise needed fields will be found.
 
-**Owner plan: at most one new live GET Dune**, after offline gates, using the
+**Original owner plan (now attempted): at most one live GET Dune**, using the
 [standalone Termius/Safari workflow](iphone-windows.md#megogo-initial-html-owner-workflow).
 No compulsory synthetic/SSH-disconnect repeat or streaming-app tour: those
-mechanics are unchanged. Request only concise statuses and new/missing/conflicting
-fields, no full HTML/JSON/screenshots. Stop on blocks/identity ambiguity/unsupported
-or JS/login-only fields; do not retry or expand endpoints. Live validation remains
-pending; useful/unknown metadata, not general accuracy, is the experiment outcome.
+mechanics are unchanged. The owner reported parse-policy rejection, documented
+below; **no repeat GET or owner test now**. Stop on blocks/identity ambiguity/
+unsupported or JS/login-only fields; do not retry or expand endpoints. Offer
+characteristics remain unvalidated; no general accuracy conclusion.
 
 ### Implementation checks — October 18, 2026
 
@@ -1002,3 +1003,78 @@ pending; useful/unknown metadata, not general accuracy, is the experiment outcom
 - No live MEGOGO extraction, API call, destination request, system change,
   merge/tag/release or deployment. Public rules/robots and schema documentation
   reads only; these are not extraction validation. MW-FUT-01 remains Discovery.
+
+### MEGOGO owner failure — parse-policy diagnosis
+
+Review baseline #181 `abc2bba`, base #180 `b9f3c65`, rechecked open/unchanged
+October 18, 2026. [Owner-reported result](digital-ua-owner-validation.md#megogo-initial-html--owner-run-parse-policy-rejection):
+HTTP 200 / unsupported-markup / ambiguous-html-tokenization, all unknown.
+No independently retained/read body, exact parser code or executed commit trace.
+No live GET, repeat owner request, raw archive or provider/endpoint probe.
+
+**Exact branch:** `extractMegogo()` called parse5's `onParseError`, retained only
+the first 20 codes, and returned `unsupported-markup` if **any** differed from
+`missing-doctype`. That return preceded all canonical/title/ID/JSON-LD checks.
+Thus unknown identity meant **not evaluated**, not a demonstrated mismatch;
+unknown fields did not prove their absence. The string claimed tokenization
+ambiguity without knowing the error kind, scope or resulting card identity.
+
+**What is proven:** the diagnostic conflated different failures and discarded
+the information needed to distinguish them. Authored offline fixtures reproduce
+the same old symptom with (a) a legacy HTML 4 DOCTYPE (`non-conforming-doctype`),
+(b) a missing entity semicolon in unrelated text, (c) a duplicate canonical-link
+attribute, and (d) an unclosed comment. Clean HTML, permitted omitted `dt/dd`
+end tags, and the already allowed missing doctype pass the existing gate.
+These are controlled examples, **not reconstructions of MEGOGO's live response**.
+Legacy/recoverable syntax is not declared modern-conforming HTML, and a browser's
+ability to parse a page is not enough evidence to safely accept it here.
+
+First-party references checked October 18, 2026:
+[parse5 ParserOptions](https://parse5.js.org/interfaces/parse5.ParserOptions.html)
+describes `onParseError` as an error callback, not an ambiguity/identity verdict;
+[ParserError](https://parse5.js.org/interfaces/parse5.ParserError.html) exposes a
+code plus locations. The [HTML parsing standard](https://html.spec.whatwg.org/multipage/parsing.html#parse-errors)
+defines deterministic recovery for syntax errors. Error existence does not
+alone prove multiple possible parses; this does not require this PoC to accept
+all recoverable errors. The installed pinned parse5 8.0.1 implementation was
+also inspected: legacy doctype errors arise in tree construction, so the old
+generic **tokenization** label was additionally misleading.
+
+**Minimal proven fix, not a parser-tolerance expansion:** label the issue
+`html-parse-policy-rejection` and return `diagnostics` with policy/stage,
+`identityEvaluation: not-run`, total error count and counts per fixed parse5
+enum (unrecognized code gets a fixed fallback). Aggregate all events rather than
+losing those after 20; storage is bounded by the fixed code vocabulary, not body
+size/content. Only on rejection add bounded parsed-tree counts for main/H1,
+canonical links and JSON-LD blocks plus an allowlisted document-mode enum.
+Tree-limit failure is a fixed structural-unavailable status, not an exception
+dump. No text, JSON values, attribute values/names, URLs, source excerpts,
+positions or environment/credentials enter diagnostics. Display is text-only,
+transient/no-store, with no logging/storage/background or additional requests.
+
+**Unchanged safety:** reject every parser error except the pre-existing
+`missing-doctype` allowance; no new code bypass. Identity/stable-ID conflicts,
+CAPTCHA/geo/size/depth controls, extraction grammar, fixed URL, one-shot auth,
+20s/2MiB/one-GET budget and all other adapters remain unchanged. A diagnostic
+structural count is not identity evidence. No existing live claim is filled in.
+
+**Uncertainty boundary / shortest next test plan:** the exact original parse
+error, whether the returned document was the expected card, and whether any
+particular error is safe to tolerate remain **unestablished**. Old codes cannot
+be recovered without a retained body (none requested/stored). No new owner run
+is requested. Offline fixtures/mock HTTP and mobile display verify the corrected
+diagnostic and unchanged rejection/one-shot/security behavior. For a future
+**separately authorized** continuation, the minimum needed evidence is only
+the structural diagnostic summary (stage, code counts, structure), not HTML,
+raw JSON, personal/account data or streaming-app retests. Decide any narrowly
+justified parser change only after that; do not assume this commit fixes the
+unobserved live layout. MW-FUT-01 remains Discovery.
+
+Targeted regressions failed before the diagnostic correction (two failures:
+wrong generic reason and absent diagnostic; the clean/optional-end-tag control
+already passed). Final **220 offline/HTTP tests passed**, including **32 MEGOGO**;
+targeted Edge/mobile suite **9 passed / 1 absent-WebKit skip**, no failures.
+Mock HTTP proves rejection yields one GET and blocks replay, with no body/marker
+leak; browser checks text-only diagnostics, no external requests/storage/logging.
+No Windows lifecycle rerun: helpers/native transport/session/network behavior
+unchanged. No real iPhone, live request, owner process stop or system change.
