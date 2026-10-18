@@ -3,7 +3,9 @@
 Architecture/feasibility record, updated October 18, 2026 after manual candidate
 experiment A and the owner's choice of a narrow Kinobaza URL Context experiment.
 MW-FUT-01 remains **Discovery**. The conceptual pipeline is not implemented;
-only the isolated fixed-source demo extension below is implemented/offline-tested.
+the isolated fixed-source demo extensions below are implemented/offline-tested,
+with subsequent owner-run results recorded separately. The HTML pilot is now
+complete for two films; its limits and Movie of the Night feasibility are below.
 Existing Search/Apple prompts and all model/generation settings stay unchanged.
 The [owner observations](digital-ua-owner-validation.md) motivate narrower
 questions, not an accuracy claim or a production recommendation. The current
@@ -464,15 +466,19 @@ provider discovery API. Partial results are not absence evidence.
 
 ### Evidence and boundaries for the new mode
 
-Implemented plus synthetic/mock-tested, **live-unvalidated**. Existing Gemini
-results and earlier independent initial-HTML checks remain historical, separate
-evidence. Neither author-written fixtures nor rules retrieval establish current
-card compatibility, complete provider coverage, link validity or entitlement.
+At implementation checkpoint `8e36937`, the mode was synthetic/mock-tested and
+live-unvalidated. The subsequent [two-film owner-run HTML checkpoint](digital-ua-owner-validation.md#kinobaza-html--completed-owner-run-checkpoint)
+completes manual testing of this stage, not independent agent validation or
+proof of complete coverage. Existing Gemini results and earlier initial-HTML
+checks remain historical, separate evidence. Neither author-written fixtures
+nor rules retrieval establish card compatibility, link validity or entitlement.
 No new candidate-preview product, production/Mykola integration, cache, database,
 response archive or regular/commercial extraction is approved.
 
 The [HTML owner workflow](iphone-windows.md#kinobaza-html-owner-workflow) specifies
-synthetic first, then exactly one owner-run live GET per film, without API key.
+synthetic first, then one owner-run live GET per film, without API key. Those
+manual source tests are now complete; the commands are reproduction instructions,
+**not a request to rerun** them for this documentation checkpoint.
 Verify identity, explicit UA/foreign/unknown groups and exact/raw href spelling
 against the source card, without resolving destinations. Record unresolved and
 blocked results as such; no raw HTML/screenshots/output archive in Git. Recheck
@@ -506,5 +512,124 @@ changes accompany this experiment.
   No `/answer` call in live Windows mode; owner process untouched. Actual
   Termius disconnect and PowerShell 5.1 remain unverified for this new mode.
 
-No agent live extraction, model API or production call. Dependency installation
-and public-rules retrieval are setup/research, not evidence of live extraction.
+No agent live extraction, model API or production call at that implementation
+checkpoint. Dependency installation and public-rules retrieval are setup/research,
+not evidence of live extraction. The checks above remain historical results,
+not rerun test claims for the Markdown-only checkpoint below.
+
+## HTML checkpoint diagnosis: no parser expansion
+
+Checked October 18, 2026 against `8e36937`, using [html-source.mjs](../html-source.mjs),
+[the authored fixture](../synthetic.mjs), existing tests and the retained
+[initial-HTML inspection](#initial-html-inspection-after-the-owner-tests).
+**No new Kinobaza/provider request, owner test or destination resolution.**
+
+**Coherence → Prime:** the earlier independent inspection established an Apple
+anchor in `collapseUA`, not a title-specific Prime anchor. It did not establish
+whether such an anchor existed elsewhere/dynamically or in the owner's response.
+The live HTML was deliberately not archived, and this owner report has no DOM
+location/attributes for the omitted link. Thus a specific source-vs-parser root
+cause **cannot be established** from the available evidence.
+
+The adapter has no Prime-specific denylist: `providerName()` accepts any exact
+`Дивитись / Купити на …` title (with matching image alt), including Prime Video.
+It additionally recognizes a short explicit badge vocabulary, including
+`prime video`, **not** `prime`. Only supported country panels and pre-accordion
+film badges are searched; bare provider text, differently labelled anchors and
+anchors outside these ranges may be omitted without an issue. These are concrete
+coverage limits, not proof that one caused the observed omission. Generic Prime
+navigation must not be promoted to an offer to fill the gap.
+
+Four in-memory, no-network authored-fixture probes confirmed: a properly labelled
+Prime UA anchor is accepted; a bare Prime link and unsupported short `prime`
+badge are not; a labelled YouTube `/results?search_query=…` URL is accepted as
+an absolute candidate. The fixture's separate relative-link issue remains
+unrelated to those UA checks. These are code-behavior probes, not live evidence.
+
+**Search URLs:** `candidate()` checks HTTP(S), syntax, unsafe values and JustWatch
+attribution, but `hrefKind` distinguishes only absolute/relative/missing. Neither
+it nor the display establishes a destination type or film identity at that URL.
+This explains why a provider-labelled YouTube search transition can survive
+without an issue. It is not an exact regional-card/offer result. A tracking URL
+may conceal the destination type; without resolving it the type stays unknown,
+not guessed from a provider logo. No search URL is followed or reconstructed.
+
+**Decision:** freeze the completed narrow PoC; no parser broadening or new owner
+tests in this checkpoint. A later separately reviewed change could distinguish
+observed search-transition / exact-card-unverified / redirect-unknown types,
+with small authored fixtures and preserved exact hrefs. It must justify each
+source marker, retain unknowns and avoid destination GETs. It would not by itself
+recover Prime or validate offers. No automatic discovery pipeline is approved.
+
+## Movie of the Night: bounded feasibility only
+
+Official public materials checked **October 18, 2026**; no account creation,
+subscription, credential use, API call or adapter. This is separate from Kinobaza
+owner results and Google tool terms. Sources describe a capability, not measured
+coverage or accuracy for our two films.
+
+### Ukraine coverage and fields
+
+The [Countries & Services guide, Ukraine](https://docs.movieofthenight.com/guide/countries-and-services#ukraine)
+lists `netflix`, `prime`, `apple` (plus Mubi, Curiosity Stream, Crunchyroll).
+For our six-platform allowlist:
+
+| Platform | Published UA API coverage |
+| --- | --- |
+| Netflix / Prime Video / Apple TV | Listed; actual two-film offers/field completeness not tested. |
+| Rakuten TV / MEGOGO / HBO Max | Not listed for UA; do not substitute global/foreign coverage or infer service unavailability. |
+
+The official [OpenAPI 4.1.0 schema](https://github.com/movieofthenight/streaming-availability-api/blob/main/openapi.yaml)
+defines country-keyed `streamingOptions`, `link` (web offer page), optional
+`videoLink`, `type` (free/subscription/rent/buy/addon), price amount/currency,
+audio locales and subtitle locales/closed captions. `quality` is optional
+sd/hd/qhd/uhd. No HDR10/Dolby Vision, audio codec/channel layout or cut field is
+documented in these models. Missing/empty data stays unknown, not confirmed
+absence. Schema presence does not establish Ukrainian audio completeness or
+account entitlement; `availableSince` is detection time, not a fresh playback
+check. Title/director/year/IMDb/TMDb fields support identity checks, not cut proof.
+
+### Access plan and applicable terms
+
+The [official pricing page](https://www.movieofthenight.com/about/api/pricing)
+lists all endpoints/catalogues on Free: **$0/month, 1,000 requests/month**, no
+payment details; Starter **$49/25,000**, Growth **$99/100,000**, Scale
+**$299/1,000,000**, USD/month. Free would suffice for a tiny non-AI capability
+probe if separately approved; no paid plan is needed merely to unlock fields.
+Account/API key required. Quota is a hard stop without overage, not permission
+to retry. Recheck at signup; these prices are not an experiment cost estimate.
+
+The current [portal Terms](https://developers.movieofthenight.com/terms-and-conditions)
+were read from its publicly referenced
+[terms module](https://developers.movieofthenight.com/assets/terms-and-conditions-By-pMztN.js)
+without executing it: portal HTML is a JS shell; this session had no browser
+surface. The official schema/README link to these portal terms. The older GitHub
+`TERMS.md` differs and is **not substituted as the current agreement**.
+
+- §3 permits app/end-user display, including commercial products, subject to
+  restrictions on standalone redistribution/data services and competing products.
+- §4 requires visible attribution/link to the API for display and written
+  publications; §5 reserves third-party content rights, with notice/takedown
+  duties. Attribution is not a third-party licence.
+- §6 permits functional caching/storage and post-subscription retention subject
+  to the other terms; this research still adds no archive. §2 disclaims data
+  completeness/accuracy. §§7/9 cover quotas and subscription billing.
+- **§10 explicitly prohibits using the data to train, fine-tune, evaluate or
+  improve ML models/AI systems.** Do not use it as Gemini evaluation ground truth.
+  Sending data to Mykola/another LLM for inference is not explicitly resolved by
+  these provisions; no permission is inferred. Clarification would be needed
+  before such a proposal, not a new adapter now.
+
+### Recommendation and limits
+
+Treat this as a **partial non-LLM API candidate**, not a six-platform replacement
+or approved Mykola integration. First decide whether coverage of three of six
+platforms and absent HDR/audio-format fields is useful. If so, separately approve
+a tiny owner-operated, display-only UA capability probe under the current terms:
+country/service check plus the two already identified films, with attribution,
+no LLM, no destination fetching or public dataset. Success would mean country/
+identity-scoped API-reported links and explicit available/missing fields, not
+account availability or model accuracy. Stop on access/terms conflict, quota,
+identity mismatch or need for unsupported providers/fields; no fallback scraping.
+Do not ask the owner to repeat the completed streaming-card checks. No integration
+choice, implementation handoff or additional test is executed in this checkpoint.

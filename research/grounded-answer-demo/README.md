@@ -38,8 +38,14 @@ found relevant hrefs already present without JavaScript; the Gemini omission
 cause and automation rights remain unresolved. No repeat live runs recommended.
 The subsequent owner-approved **HTML-only PoC** is a separate opt-in
 `DEMO_RETRIEVAL=kinobaza-html`: one manual source GET, deterministic initial-HTML
-parsing, no Gemini or destination requests. It is offline-tested and
-**live-unvalidated**. The [bounded approval/rules record](docs/regional-card-proposal.md#owner-approved-html-extraction-poc)
+parsing, no Gemini or destination requests. The owner has now completed the
+[two-film HTML pilot](docs/digital-ua-owner-validation.md#kinobaza-html--completed-owner-run-checkpoint):
+candidate links were obtained, not offer availability or characteristics.
+Coherence Prime was missed; a foreign Dune YouTube search transition is not an
+exact film card. [Parser diagnosis](docs/regional-card-proposal.md#html-checkpoint-diagnosis-no-parser-expansion)
+and [Movie of the Night feasibility](docs/regional-card-proposal.md#movie-of-the-night-bounded-feasibility-only)
+are documentation only, with no new adapter or owner retest requested.
+The [bounded approval/rules record](docs/regional-card-proposal.md#owner-approved-html-extraction-poc)
 does not approve regular/commercial integration. See [HTML owner commands](docs/iphone-windows.md#kinobaza-html-owner-workflow).
 The [Windows launch diagnosis](docs/windows-launch-diagnosis.md) resolves the
 earlier detached-launch failure: multiple Node PATH matches were passed as one

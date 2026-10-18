@@ -251,3 +251,36 @@ screenshots or raw metadata are included. Requesting another live run is not
 the next step. Existing iPhone instructions remain available as historical
 reproduction steps, not a recommendation to rerun this failed hypothesis.
 MW-FUT-01 remains Discovery.
+
+## Kinobaza HTML — completed owner-run checkpoint
+
+Recorded October 18, 2026 after implementation checkpoint
+`8e369374f99f34c66ee399a1eba298d325616ede` in PR #178. **Owner-reported only**:
+the owner says the narrow HTML PoC worked for both films and manual testing of
+this stage is complete. The implementation agent did not repeat source/provider
+requests or independently inspect the live results. Exact run timestamps and
+runtime commit were not supplied; the reference commit is the implementation
+checkpoint, not a claimed execution trace.
+
+| Reported result | Coherence | Dune: Part Two |
+| --- | --- | --- |
+| Narrow candidate extraction | Completed successfully according to the owner; the full candidate list, HTTP/identity status and issues were not supplied in this report. | HTTP 200, identity `matched`, no issues. |
+| Explicit Ukraine section | Not itemized in this report. | Rakuten TV, HBO Max. |
+| Outside country sections | Not itemized in this report. | iTunes, Rakuten, MEGOGO; retain **territory unknown**, not inferred Ukraine. |
+| Foreign sections | Not itemized in this report. | Separated from Ukraine; one YouTube search URL is a search transition, **not an exact film card**. |
+| Known gap | Prime Video candidate was missed, compared with the owner's earlier manual discovery. | Search-transition versus exact-card distinction is not implemented. |
+
+This establishes owner-observed retrieval of candidate links **without Gemini**
+for these two cases. Availability, entitlement, audio/subtitles, video format,
+prices and access type were **not tested by this HTML experiment**. Earlier
+provider observations remain separate; no missing URL, status or characteristic
+is filled in from them. No general accuracy, complete coverage or production
+readiness follows. A parser `candidate`/`ok` status is not semantic verification
+of an exact offer. No full results, HTML, screenshots or evidence archive added.
+
+The missing Prime link does not negate the earlier owner-confirmed Prime offer;
+its omission mechanism is not established from the retained evidence. The
+[code/fixture diagnosis and separate API feasibility](regional-card-proposal.md#html-checkpoint-diagnosis-no-parser-expansion)
+do not require another owner run. The report does not separately confirm a new
+HTML-mode SSH-disconnect survival test; earlier workflow validation retains its
+own scope. Usage/latency/cost were not measured here. MW-FUT-01 remains Discovery.

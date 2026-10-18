@@ -375,7 +375,10 @@ Do not infer any provider offer/audio/price from a returned candidate link.
 
 ## Kinobaza HTML owner workflow
 
-Separate owner-approved, **live-unvalidated** experiment, not another Gemini run.
+Separate owner-approved HTML experiment, not another Gemini run. The
+[two-film owner-run checkpoint](digital-ua-owner-validation.md#kinobaza-html--completed-owner-run-checkpoint)
+is complete for candidate extraction, not offer verification. Commands below
+are retained reproduction instructions, **not a request for another owner test**.
 Read the [public-rules and scope decision](regional-card-proposal.md#owner-approved-html-extraction-poc).
 No email precondition for this bounded PoC; no approval for regular/commercial
 integration. Existing trusted-home-LAN/Basic Auth/SSH safeguards above apply.
@@ -458,6 +461,8 @@ versus source spelling `rawHref`, unchanged percent/query encoding and relative
 values visibly marked as relative. Missing fields remain unresolved; links do
 not prove availability/localization/prices/entitlement. Do not archive live HTML,
 results, screenshots, account details or HAR; report concise owner observations.
-Stop after these two films. Actual HTML extraction and this mode's iPhone/SSH
-disconnect behavior remain owner-validation pending. Stop via this copy's helper
-when finished; old Gemini modes remain available under their previous switches.
+Stop after these two films. HTML extraction is now owner-reported complete;
+this mode's explicit SSH-disconnect behavior was not separately reported in that
+checkpoint. No additional test is required for the documentation update. Stop
+via this copy's helper when finished; old Gemini modes remain available under
+their previous switches.
