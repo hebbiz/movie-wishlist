@@ -1,6 +1,8 @@
 # Windows + iPhone manual test guide (trusted home LAN only)
 
-MW-FUT-01 remains Discovery. New digital/Amazon prompts remain live-unvalidated.
+MW-FUT-01 remains Discovery. Three digital scenarios now have limited
+[owner-reported observations](digital-ua-owner-validation.md), not a general
+accuracy assessment. Amazon-region scenarios remain live-unvalidated.
 No SSH, firewall, network profile, service or router setting is changed by the
 demo/helpers. Commands below are for the owner to review and run manually.
 
@@ -193,7 +195,10 @@ Prompt, button, complete synthetic answer, citation and Search Suggestions
 should be reachable by scrolling. Fixture links are invented, not stock or UA
 availability evidence. To verify survival, explicitly disconnect SSH in Termius,
 then reload Safari and repeat a synthetic attempt. Reconnect SSH and run status.
-Record this as owner validation; it has not been independently performed here.
+The owner reports that iPhone/Safari LAN HTTP + Basic Auth works and that a
+synthetic request succeeded after explicitly disconnecting SSH. This is not an
+independent implementation-agent test. Repeat the smoke test after environment
+changes; the result does not prove survival of Windows sign-out/reboot or sleep.
 
 ### 3. Status, stop, change scenario, then explicitly choose live
 
@@ -257,9 +262,18 @@ Windows sign-out/reboot are different events.
 Independently checked here: loopback auth/mocks, desktop suites, narrow Edge
 viewport, Windows helper duplicate/restart/safe-stop, a child remaining available
 after its launching PowerShell exits, and same-host synthetic LAN Basic Auth.
-**Not checked:** real iPhone Safari, Termius switching, actual SSH disconnect
-survival, home firewall/client isolation reachability. OpenSSH Server was absent
-in the available Windows environment. WebKit binary was absent (no download);
-the mobile test is not a real-iPhone test. Windows PowerShell 5.1 execution was
-blocked by existing script policy; only PowerShell 7 helper integration completed.
-These remaining environment/device checks are **owner-validation pending**.
+At the implementation baseline, real iPhone/Safari and actual SSH disconnect
+were not independently tested: OpenSSH Server and the WebKit binary were absent
+in that test environment (no download). The mobile test is not a real-iPhone
+test. Windows PowerShell 5.1 execution was blocked by existing script policy;
+only PowerShell 7 helper integration completed. That independent 5.1 check
+remains incomplete; do not infer the owner's shell/version from a working flow.
+
+Subsequently, the owner confirmed real iPhone/Safari LAN HTTP + Basic Auth,
+a synthetic request after explicit SSH disconnection, and three digital-UA live
+scenarios through iPhone. This establishes that tested home-network path, not
+all firewall/client-isolation configurations or universal SSH-job behavior.
+See the owner record for results and limits. Other environments, auth-cache edge
+cases and the Amazon-region live scenarios remain unvalidated. The
+[next-experiment proposal](regional-card-proposal.md) preserves this workflow;
+it does not authorize new automatic calls or change the current prompts.

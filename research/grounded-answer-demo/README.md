@@ -5,11 +5,17 @@ feature. This iteration starts from develop checkpoint
 `a5d4f42149c616d4dc3cdac35c6086240b3fdacf`. The physical-only owner pilot and
 historical implementation checks are preserved separately in the
 [PR #174 checkpoint record](docs/checkpoint-174.md). They do not validate the
-new digital or Amazon-region prompts. All revised scenarios are **live-unvalidated**.
+new digital or Amazon-region prompts. Subsequent
+[owner-reported iPhone and digital-UA observations](docs/digital-ua-owner-validation.md)
+cover three digital scenarios, not general accuracy or every platform.
+Amazon-region scenarios remain **live-unvalidated**. The
+[next-experiment proposal](docs/regional-card-proposal.md) is design only;
+it changes no prompt or integration.
 
 No production integration, new provider, TMDb, chat/input, structured output,
 normalization, scoring, response archive or analytics. PR #173 is not changed
-or imported. This iteration makes no live API calls.
+or imported. The implementation agent makes no live API calls; the owner-run
+requests below are reported separately, not independently reproduced.
 
 ## Setup and server switches
 
@@ -17,8 +23,10 @@ For opt-in trusted-home-LAN Safari testing and detached Windows process helpers,
 see the [Windows + iPhone guide](docs/iphone-windows.md). It has separate one-time
 owner setup and daily Termius/Safari steps. The localhost workflow below remains
 the default. Basic Auth over HTTP is not encrypted and is **not** suitable for
-public networks or internet exposure. Real iPhone/SSH-disconnect validation is
-pending; Windows parent-exit survival is a separate, narrower test.
+public networks or internet exposure. The owner confirms iPhone/Safari LAN HTTP
+with Basic Auth and a synthetic request after explicit SSH disconnection. This is
+owner validation on that configuration, not an independent agent device test
+or a guarantee for other Windows/SSH environments.
 
 Node.js 24 (tested with 24.19.0), modern desktop browser, no npm install/build
 or new dependencies. Run from the repository root. No `.env` file is loaded.
@@ -156,7 +164,8 @@ Delivery stays entirely outside scope.
 Digital-ua searches Apple TV, Rakuten TV, Netflix, Prime Video, MEGOGO and
 **HBO Max (formerly Max)**. The [official HBO Max brand changelog](https://brand.hbomax.com/changelog)
 was checked October 18, 2026 for the current name; a brand name is **not evidence
-of availability in Ukraine**. No live title/service availability claim is made.
+of availability in Ukraine**. Owner-observed title availability is scoped in the
+validation record, not established by the platform list or prompt itself.
 
 Digital search and presentation order:
 
@@ -234,8 +243,10 @@ remain relevant (original review October 17, 2026). Associated Search Suggestion
 are kept; Google's processing/retention is separate from local non-persistence.
 Google-supplied image resources can load as the snippet renders, and source/chip
 clicks navigate directly under destination terms. No tracking/interstitials are
-added by this app. Actual new prompt usefulness/UA rights/localization remains
-live-unvalidated; no general accuracy or legal-permission claim is made.
+added by this app. The limited owner-observed digital results include missed
+offers, metadata omissions and citation/context mismatches; see the validation
+record. No general accuracy, exhaustive platform coverage or legal-permission
+claim is made. Amazon-region live validation remains pending.
 
 ## Offline validation
 
@@ -265,9 +276,11 @@ one-shot behavior. Without the external module path, browser tests are skipped
 and must be reported as such. Synthetic fixtures explicitly establish **no real
 viewing availability, localization, edition or stock**.
 
-Current test results are reported in the PR/final handoff after execution.
-Historical tests and owner outcomes remain in the separate checkpoint record.
-No live response, screenshot, evaluation report or evidence archive is added.
+Implementation test results are reported in the PR at their execution baseline;
+they are not rerun or presented as new results for this documentation-only update.
+Historical physical outcomes remain in the PR #174 checkpoint; subsequent owner
+observations are in the linked digital-UA record. No live response, screenshot,
+public evaluation report or evidence archive is added.
 
 LAN/auth and optional mobile-viewport tests (loopback/mocks; mobile is not a real
 iPhone check):
