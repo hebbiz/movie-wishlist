@@ -1,5 +1,15 @@
 # Windows + iPhone manual test guide (trusted home LAN only)
 
+Current [consolidated proposal](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
+and [handoff](consolidated-poc-handoff.md) are design-only, not a runnable new mode.
+**No test, restart or SSH-disconnect repeat is requested for this documentation
+checkpoint. MEGOGO remains unresolved/frozen.** Existing commands below retain
+their individual historical scope/readiness labels; do not start a new test cycle
+just because the stack is reviewed. After separately approved implementation,
+the [single short acceptance plan](regional-card-proposal.md#acceptance-and-one-short-owner-session)
+limits owner work to the new end-to-end flow/material discrepancies. Exact new
+commands will be documented after implementation, not invented now.
+
 MW-FUT-01 remains Discovery. Three digital scenarios now have limited
 [owner-reported observations](digital-ua-owner-validation.md), not a general
 accuracy assessment. Amazon-region scenarios remain live-unvalidated.

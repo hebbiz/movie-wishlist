@@ -1,4 +1,333 @@
-# Proposed next experiment: regional card first
+# MW-FUT-01 consolidated architecture proposal
+
+## Current decision checkpoint — proposed, not implementation approval
+
+Reviewed October 18, 2026 at **#181 `77b44b32a8570d55a567d952173d258a251bce88`**,
+base #180 `b9f3c65342f9b558bf021f81aee26bb2f22029a8`. Remote refs and all seven
+actual PR bases/HEADs were checked; the reported checkpoint is current.
+Production agreed baseline remains v1.3.1 `e92392856038e40e6d98c6c8744eed04c4e8dff9`,
+not a newly inspected deployment. `develop` remains #174 checkpoint
+`a5d4f42149c616d4dc3cdac35c6086240b3fdacf`.
+
+**Discovery only. Recommend one isolated, non-LLM, two-film UA discovery →
+selection → explicit draft-transfer PoC.** Required capabilities: TMDb identity/
+UA signals and MOTN direct links/access types. Optional bounded Kinobaza HTML
+adds candidate links from its two already fixed cards. MEGOGO extraction,
+Gemini, arbitrary Kinobaza discovery, workers and production writes are deferred.
+Successful MEGOGO extraction or six-platform coverage is not required.
+
+This is the current decision view. Earlier experiments below are historical
+evidence/terms records, **not competing next-step recommendations**. The
+[shared observation contract](#shared-offer-observation-model--design-only)
+remains the single conceptual field model. The separate
+[handoff](consolidated-poc-handoff.md) is **Proposed / not authorized for
+implementation**, not a second architecture. No established ADR practice was
+found; significant proposed decisions are recorded in place, not a new framework.
+
+### Evidence ledger and limits
+
+| Evidence class / source | Established within its scope | Not established |
+| --- | --- | --- |
+| Implementation tests | Fresh cumulative **234 offline/HTTP passed** at the source checkpoint, including 46 MEGOGO and 22 unchanged Gemini request-body goldens. Authored mocks cover request bounds, identity, partial results, auth/one-shot, no destinations/persistence. Initial sandbox spawn EPERM was an execution restriction; unchanged suite passed with approved execution. | Not live source facts, entitlement, general accuracy or terms approval. |
+| Owner: TMDb | Coherence identity/UA Apple Store rent/buy; first appends rejected. Dune after fix passed both blocks/five appends, UA HBO Max subscription/Rakuten rent/buy. Ukrainian title/overview/tagline useful; shown UA event language empty. | Coherence appends not revalidated. Catalogue localization is not provider audio/subtitles. |
+| Owner: MOTN | Dune Apple/Prime links and rent/buy. Coherence options withheld by original identity/year defect, not a proven empty API list; separate website check had no UA offers. | Complete coverage/tracks/quality/currency. Apple HD/empty lists/UAH conflict with dated owner 4K/DV/UA-audio/USD. Field mapping audited; original response absent, upstream cause unknown. Year-only rejection fixed offline, not live-retested. |
+| Owner: Kinobaza HTML | Two manual cases extracted hrefs: Coherence Apple in UA; Dune HBO Max/Rakuten in UA, Apple/MEGOGO outside country sections. | Prime omission cause unresolved; foreign Dune YouTube search link accepted. Existing adapter distinguishes absolute/relative, not exact/search. Candidate links are not offers. |
+| Independent checks | Earlier read-only HTML inspection found relevant hrefs before JavaScript. Code audits established MOTN year gate, TMDb appended-ID assumption and MEGOGO policy defects. Current scope/isolation/stack audit. | Sampled HTML is not hidden Gemini payload or fresh destination/entitlement validation. No live source/API calls in this checkpoint. |
+| Owner: Gemini URL Context | Apple tests supplied some identity/audio metadata. Both Kinobaza cases returned platform names but no hrefs; territory partial for Coherence, present for Dune. | SUCCESS/citation is not truth/completeness/freshness. Dune `m.vkino.com.ua` citation anomaly proves neither external fetch nor exclusive Kinobaza provenance. Href omission cause unknown. |
+| Owner: MEGOGO; offline correction | First attempt HTTP 200/policy refusal; later DOM/canonical/JSON-LD/two H1s/30 duplicates, still pre-identity refusal. Attribute-aware v2 fixes authored defects. | Actual duplicate roles/locations, live identity/fields and post-fix compatibility unknown. **Unresolved/frozen; no new parser/live test cycle.** |
+| Hypothesis | Complementary observations can yield a useful short list and selected draft without an LLM. | End-to-end utility/mapping/transfer unimplemented; not six-platform recall or accuracy. |
+
+All owner findings are owner-reported, not agent reproduction. Recording dates
+in the [owner ledger](digital-ua-owner-validation.md) are not invented execution
+timestamps. Prior app prices/settings are dated controls, not current truth.
+TMDb and JustWatch-derived Kinobaza sections share lineage, not two independent
+confirmations. No full answers, raw metadata, HTML or account data archived.
+
+### Recommended PoC and product boundary
+
+User chooses **Coherence or Dune** from a fixed server catalogue → one explicit
+discovery → compact UA source observations/candidate links → selects/checks a row
+→ explicitly confirms transfer to a **local, in-memory Movie Wishlist-shaped
+draft form**. Edit/cancel allowed; no submit-to-MW, Supabase call, production
+session or write. Row selection/link opening never implicitly transfers data.
+
+This is automatic discovery of returned links/signals, **not a manually populated
+provider-URL preview**. New utility: complementary leads with actionable access/
+link information, uncertainty and selected draft, without copying raw debug panels
+or an LLM. Fixed Kinobaza source cards are still inputs: arbitrary-film Kinobaza
+card discovery is **not solved**. No general movie search or coverage guarantee.
+
+Allowlist: **Apple TV Store, Rakuten TV, HBO Max, Netflix, Prime Video, MEGOGO**.
+Unknown/out-of-scope IDs stay in a compact diagnostic count, never silently
+rebranded. No observation means “no result from selected sources”, not unavailable.
+
+Default UI: chosen film/UA/request ceiling before click; source stage status;
+short rows with provider/access, exact link kind, territory/basis, availability
+claim level, separate UA audio/subtitles, video, literal amount/currency and
+source/receipt time. Unscoped candidates have a separate territory-unknown group.
+Foreign dates, aliases, IDs and field/conflict evidence are collapsed details;
+warnings/unknowns/errors/attribution remain visible. No JSON dump by default.
+
+Priority: **UA availability → Ukrainian audio → Ukrainian subtitles → video →
+price/other details**, within comparable evidence/scope. UA aggregator buckets
+remain source claims, not playback confirmation. Among comparable offers, explicit
+UA audio/HD precedes explicit no-UA-audio/4K; UA subtitles precede unlocalized
+video. Unknown tracks remain an unresolved band, not a negative or a hidden row.
+Conflicts have no automatic winning rank. No numeric confidence, currency
+conversion/cheapest inference or LLM re-ranking.
+
+### Logical components and bounded flow
+
+```text
+Fixed film choice + one-shot session (no arbitrary URL/prompt)
+  → TMDb A identity/catalogue → stable-ID gate → TMDb B UA signals
+  → MOTN UA options + optional fixed Kinobaza HTML (independent stages)
+  → lossless observations + explicit provider mapping/link-kind check
+  → compact source-labelled list / partial failures / unknowns
+  → owner selection → confirmation → local draft (no production write)
+```
+
+Reuse appropriate transport/projection functions, not raw payloads. Missing B
+does not discard matched A or block other sources. Root stable-ID mismatch or
+unresolved A stops downstream; no fuzzy replacement/search. MOTN/Kinobaza each
+retain their own identity gate, never borrowing A's matched label.
+
+| Stage | Max HTTP requests/film | Conditions |
+| --- | --- | --- |
+| TMDb A Details + existing five appends | 1 | Fixed TMDb/IMDb, uk-UA; no standalone append fallback. Root/supplied ID conflict stops downstream. Partial metadata need not invalidate a passing identity gate. |
+| TMDb B Watch Providers | 1 | Only after A passes; actual results.UA. TMDb watch-page link is not a provider deep link. Missing/empty/error is not unavailable. |
+| MOTN fixed IMDb title, country=ua | 1 | Required capability/key, no country enumeration/search/enrichment. Error/missing key is explicit partial state, not success. |
+| Kinobaza fixed initial HTML | 0 or 1 | Optional and visible before click, only two existing cards under scoped access review. No card search, Prime recovery/parser expansion or destinations. |
+| Other sources/destinations/LLMs | 0 | No MEGOGO/Apple GET, Search, URL Context, tracking resolve/retries/polling. Explicit owner navigation is separate. |
+
+Ceiling **4/film, 8 for the two-film session; 3/film with Kinobaza off**. One film
+per action, no batch or reload calls. Reuse A+B serial flow, then MOTN/optional
+Kinobaza as independent bounded tasks with isolated failures. Existing limits:
+TMDb/MOTN 20s / 2 MiB per request, Kinobaza 15s / 2 MiB. Proposed total cancellation
+deadline 65s bounds composition (up to 60s transport deadlines plus processing
+margin), **not measured latency**. Preserve valid completed stages on expiry;
+no retries/token replenishment. Record elapsed stages/call counts/errors in
+session memory only, no content logs. Costs/usage unmeasured; no zero-cost claim,
+new paid plan, token-budget change or automatic billing action.
+
+### Identity, provider mapping and field conflict rules
+
+Apply the [shared contract](#shared-offer-observation-model--design-only), not a
+platform-keyed merged offer. IDs are namespaced (TMDb movie, IMDb, provider-native).
+Exact agreed stable match survives a year difference with warning; stable conflict
+is mismatch, missing required identity unresolved. Titles/aliases/directors cannot
+override conflicting IDs. Version/cut is separate; no Final Cut case in this
+two-film slice, unreported version stays unknown.
+
+Use a small **reviewed explicit map** from observed source IDs/labels to the six
+display providers, retaining original names/IDs. `tmdb:provider:2` is observed
+Apple TV Store, not a global Apple identifier. MOTN service/addon IDs retain
+their namespace; Kinobaza iTunes may map to Apple Store *candidate*, not Apple TV+
+subscription. No missing ID invented or brand-substring mapping. Ambiguous
+subscription/channel/addon stays unmapped. Provider grouping is presentation,
+not offer equivalence; aliases require authored tests.
+
+Rent/buy/subscription/free/ads/addon/package, territory/basis, film/cut/edition
+and offer ID remain separate. Unknown scope identifiers do not compare equal.
+The first PoC **does not merge offers across sources**. Possibly same listing
+is only a tentative label; exact same-stage duplicates collapse only on all
+scope/value/provenance keys, not platform. Each field retains source endpoint/
+card, method, upstream, receipt time, reported time if supplied, context and state.
+Preserve missing/null/empty where provided; MOTN already coalesces missing/null,
+so do not invent lost precision. Empty language lists are not absence without
+established completeness. Comparable contradictions retain both assertions and
+a conflict; unestablished offer identity means possible conflict, not certainty.
+Controls never overwrite source currency/quality/tracks/territory; MOTN UAH
+anomaly remains literal, not changed to USD. Price needs its explicit currency.
+
+Link kind: exact-card-unverified / tracking-redirect / search / relative / unknown.
+Classify only conservative known shapes without requests; preserve exact href/
+query/encoding. Unknown is not exact card. Search/relative/unsafe links are not
+exact-offer transfer targets; tracking remains an opaque candidate, never decoded
+into a guessed destination. TMDb watch-page link stays separate. Downstream
+classification does not require changing Kinobaza extraction.
+
+Draft copies only selected row's explicit title/identity and link the owner
+confirms; access/context stay in a research evidence sidecar, not invented native
+form fields. No foreign-row or catalogue-language enrichment.
+A candidate-only row transfers as a lead with availability/territory unknown.
+Suspect prices and unknown/conflicting fields are excluded from default transfer.
+Confirmation shows included/excluded fields/provenance; cancel leaves form unchanged.
+
+The inspected [MW form](../../../app.html) / [form projection](../../../app.js)
+supports this proposed local subset, with no native price/audio/video fields:
+
+| Draft field | Mapping only after explicit confirmation |
+| --- | --- |
+| `imdb_url` | Canonical IMDb URL from agreed matched ID; identity formatting, not reconstruction of a provider URL. |
+| `title`, `year` | Explicit catalogue values with source/year variance labelled; no reason for a year difference invented. |
+| `recommended_medium` | Explicit MW label map: Apple Store → `Apple TV / iTunes`, MEGOGO → `Megogo`; other allowed platform labels already exist. Unknown stays blank. |
+| `purchase_url` | Exact safe absolute selected href; tracking retained with candidate warning. No TMDb watch/search/relative link disguised as exact offer. |
+| `status` | Explicit `wishlist` draft default; rent/buy/subscription never sets owned/ordered/watched. |
+
+Access/provenance/unknowns/conflicts remain a read-only **research sidecar**, not
+new schema fields. Do not populate owned_medium/is_owned, group/user/added_by,
+notes, ratings or account state. Actual app IMDb lookup/read-only-title behavior
+is not changed or invoked by the local mock form.
+
+### Source rights, persistence and privacy boundary
+
+| Source | Scoped basis / remaining gate | PoC handling; production boundary |
+| --- | --- | --- |
+| TMDb | [FAQ](https://developer.themoviedb.org/docs/faq) and [Watch Providers](https://developer.themoviedb.org/reference/movie-watch-providers) re-read October 18, 2026: conditional non-commercial attribution category, logo/notice, JustWatch credit, no full deep links. [Current agreement](https://www.themoviedb.org/api-terms-of-use) still robots-denied. | Existing notice/logo/JustWatch credit retained. Review applicable combined non-LLM projection/draft scope during normal setup before live; past probe use is not clearance. No persistent derived cache, LLM forwarding or commercial permission inferred. |
+| MOTN | Existing [contract review](#current-contract-and-rules-recheck) and [portal terms](https://developers.movieofthenight.com/terms-and-conditions): app display/functional retention subject to restrictions, attribution; AI training/evaluation/improvement prohibited. Portal is a shell this turn; prior module unavailable. | Visible API attribution, no AI/data-service/archive. Recheck effective agreement for combined non-LLM projection/draft; inference remains separately unresolved, not an automatic reading of AI prohibition. Prior functional retention wording is not a chosen cache policy. |
+| Kinobaza | [Terms](https://kinobaza.com.ua/terms) re-read October 18, 2026; responsibility/third-party rights remain with user, no regular-collection approval. Earlier [bounded review](#public-rules-checked-before-implementation--october-18-2026) found no direct scoped conflict. Robots not readable by this tool today. | Optional fixed-card transient extraction only after scope reaffirmation/rules check. Preserve Kinobaza/JustWatch/tracking provenance; no broader licence. Automation/normalization/attribution/retention rights unresolved for regular/commercial use. Email not required merely because permission is not explicit. |
+| Gemini Search | [Additional Terms](https://ai.google.dev/gemini-api/terms) and [display guide](https://ai.google.dev/gemini-api/docs/google-search) checked October 18, 2026; Search-specific reuse/display restrictions apply to that path. | Existing original answer/citations/Suggestions only; excluded from model/draft. A general Data Merge Engine does not license normalization/cache of grounded output. No source data to LLM without established terms. |
+| URL Context / MEGOGO | Existing [URL-specific review](url-context-poc.md#official-capabilities-display-and-terms-review) and [MEGOGO rules](#public-interface--terms-review); no new full clearance. | Retained isolated experiments, not composition dependencies. Tool capability/HTTP200 does not grant rights. MEGOGO unresolved; no new run. |
+| Owner observations | Private context-bound controls, not universal source truth. | No account credentials/cookies/location history, scraping or worker. No publication of private content. |
+
+Provider API rights do not license all destination content. Fresh pricing read
+failed; prior MOTN free-tier checkpoint is not a current price guarantee or zero
+total cost. Recheck normal account quota at activation; unknown cost is not a
+new-source or paid-plan blocker for this design.
+
+In particular, Google's Search subsection restricts component/link collection for
+other purposes, caching/analysis and modification/interspersing of grounded output,
+with specific limited exceptions. None licenses this proposed normalized offer
+projection or a destination-fetch queue. Keep that output in its existing display
+path; do not route it through the non-LLM observation layer to evade restrictions.
+
+**No persistent cache**, including normalized results/draft: active operation/page
+memory only, discard on reload/restart. No browser storage, analytics, raw logs or
+response/evidence archive. Arbitrary TTL is not a legal right. Future product
+storage, if approved, fits **Supabase PostgreSQL** relational identity/provider/
+offer keys plus constrained `jsonb` observations/provenance/allowed-use/expiry and
+user RLS. This is no migration or retention permission. No MongoDB/Redis/queue/new
+hosting justified. Research Node/helpers are not production topology; assess
+existing Netlify Functions/server constraints before product integration.
+
+Keep secrets server-side with separately hidden prompts and minimal child env
+for selected sources. Simultaneous TMDb+MOTN routing requires explicit helper/mock
+tests. No arguments/files/logs/secrets in session payload. Preserve assigned-IP
+LAN Basic/Host/Origin, trusted-home HTTP warning, no-store/CSP, one-shot before
+await and text-only output. No arbitrary fetch/SSRF, scripts, assets, cookies,
+redirects. User-opened links require action, safe protocol, separate context,
+no-referrer/noopener; search/relative links remain text diagnostics.
+
+### Proposed decisions, roadmap and open approvals
+
+| Decision | Choice and reason | Status |
+| --- | --- | --- |
+| D1: useful vertical slice | Two fixed films, required TMDb+MOTN, optional fixed Kinobaza; automatic source-labelled list/local draft. Not manual URL preview or blocked by MEGOGO/full coverage. | Proposed; product approval required. |
+| D2: evidence | No cross-source offer merge/global verified badge; field provenance, conflicts, candidate/offer/entitlement distinct. | Proposed logical contract, not runtime. |
+| D3: writes/retention | Explicit local draft only; future persistence in existing Supabase subject to rights/RLS/mapping review. | Proposed; no schema/write/cache now. |
+| D4: LLM | Optional later explanation/research path, not truth source or AI-training/evaluation pipeline. | Deferred; no restricted-source forwarding. |
+
+Roadmap: source probes/owner observations **completed with limits**; MEGOGO
+**unresolved/frozen**; consolidated design/handoff **proposed**; composition/draft
+implementation **not authorized**; one acceptance session **pending approval/
+source readiness**; arbitrary film/card discovery, physical expansion and product
+integration **deferred**. JustWatch Partner API is deferred: suitable MW access/
+commercial terms not established, not nonexistent. Personal authenticated workers
+are a separate future discovery track: user-triggered, each user's own session,
+private results, not one central owner's account. Not implemented now.
+
+Product choices actually needed: approve/adjust D1's limited scope/local draft;
+decide whether optional fixed Kinobaza belongs in first slice under scoped rights
+uncertainty. Unknown fields are an accepted limit, not a promise to fill all gaps.
+Current source-terms/key setup is an operational live gate, not a demand for paid
+plans or blanket legal declaration. General search/LLM/cache/production writes
+need later separate approval, not decisions required to complete this design.
+
+### Acceptance and one short owner session
+
+Agent gates: authored mapping/link-kind/conflict/draft tests; zero synthetic/max4
+mocked live calls; old request-body goldens; auth/Host/Origin/one-shot/bounds/no
+destinations/storage; compact mobile view; temp-copy Windows multi-secret routing/
+lifecycle/safe-stop regression, preserving owner demo. New helper/mode work is
+agent-tested, not delegated to owner. Mocks are not live facts.
+
+After separate approval: one Termius → Safari session, hidden keys/password in
+reviewed copy/config, film/UA/budget visible, one discovery per film, one selection/
+confirm/edit/cancel draft flow. No six-platform tour or repeat old probes. Dated
+controls guide interpretation; only new material discrepancy justifies one
+targeted card check. Synthetic/SSH-disconnect repeat only if corresponding workflow
+changes, not documentation. Exact commands come after implementation; existing
+[iPhone guide](iphone-windows.md) preserved, no invented runnable mode now.
+
+Short summary only: stage failures, useful new links/access, unknown/conflicting
+fields, draft outcome; no JSON/HTML/screenshots. Acceptance: partial source-labelled
+results for both films; at least one automatically obtained usable candidate/offer
+lead selectable into accurate draft; uncertainty survives; **zero production
+writes**. Failure of utility on both films is a finding, not another run's approval.
+Stop on identity conflict, unexpected requests/storage/credential leak, 403/429/
+CAPTCHA/terms conflict or exceeded budget; preserve safe partials, no retries/new
+source/second owner round by default. **No live run or owner test in this task.**
+
+### PR stack review and merge sequencing
+
+Snapshot October 18, 2026 before this docs commit: all seven PRs **open, non-draft,
+mergeable=true**. API returned no submitted reviews/review threads. Every parent
+HEAD is ancestor of child; incremental diffs/whitespace checked, paths research-
+demo only, no production entry point/migration/PR173 change. Mergeable means
+Git conflict status, **not approval**. Required branch-policy API returned 403:
+required-check/approval rules unverified. Abbreviated base SHAs in the table
+identify the prior row's full HEAD (develop's full SHA appears above).
+
+| PR | HEAD / base branch (base SHA) | Incremental scope | Remote checks; historical evidence unless marked fresh | Research review/merge assessment; limits |
+| --- | --- | --- | --- | --- |
+| [#175](https://github.com/hebbiz/movie-wishlist/pull/175) | `01db2331da3c169ce7c7b267fe69adadefe6952a` / `develop` (`a5d4f42`) | 23 files; digital/Amazon, LAN/detached helpers, docs. | Netlify Preview success; 3 completed neutral checks; no Actions. Historical 88 passed / 1 skip, Windows; owner LAN/SSH synthetic. | Reviewable first with known multi-PATH launcher defect fixed in #176; not a corrected standalone integration endpoint. Home HTTP, PS5.1/WebKit limits; Amazon live-unvalidated. |
+| [#176](https://github.com/hebbiz/movie-wishlist/pull/176) | `714a1766d8c8224ab8f62399a0b89cecc43d14ec` / `codex/mw-fut-01-digital-ua-amazon` (`01db233`) | 23 files; Apple URL Context, launcher diagnostics/PATH fix, records. | Empty statuses/check-runs/Actions; historical 78 offline, 43 browser passed / 3 skips; paired Windows diagnosis. | Reviewable after parent; Apple partial metadata, source-rights/live gates. Not every SSH configuration validated. |
+| [#177](https://github.com/hebbiz/movie-wishlist/pull/177) | `a4dbbab2b8a4b0030e1e9063d0f957fc1f72931b` / `codex/mw-fut-01-url-context` (`714a176`) | 16 files; fixed Kinobaza URL Context/HTML feasibility. | Empty statuses/check-runs/Actions; historical 87 offline, 49 browser passed / 3 skips; isolated Windows. | Reviewable as unsuccessful research hypothesis; both owner runs no hrefs. Not an automatic link generator, cause unresolved. |
+| [#178](https://github.com/hebbiz/movie-wishlist/pull/178) | `30c3160efcf4ad2e1c489159db815445e61fa539` / `codex/mw-fut-01-kinobaza-url-context` (`a4dbbab`) | 21 files; bounded HTML/isolated parse5+lockfile. | Empty statuses/check-runs/Actions; historical 107 offline, 60 browser passed / 4 skips; Windows; two owner cases. | Reviewable after parent. Prime/search-link limits; broader automation rights unresolved, not entitlement evidence. |
+| [#179](https://github.com/hebbiz/movie-wishlist/pull/179) | `9e4bf4f90ab3d0cc4d8e203f5b47470511be0b4c` / `codex/mw-fut-01-kinobaza-html` (`30c3160`) | 16 files; MOTN, year-gate fix/provenance, TMDb handoff. | Empty statuses/check-runs/Actions; historical latest 139 offline / 75 browser passed / 5 skips; fresh cumulative covers fix. | Reviewable after parent; no invented currency correction. Coherence fix not live-retested; source fields/coverage/terms limits. |
+| [#180](https://github.com/hebbiz/movie-wishlist/pull/180) | `b9f3c65342f9b558bf021f81aee26bb2f22029a8` / `codex/mw-fut-01-motn-api` (`9e4bf4f`) | 17 files; TMDb two calls/append fix/compact display/shared model. | Empty statuses/check-runs/Actions; historical 188 offline; latest TMDb Edge 19 passed / 1 skip; Windows; Dune owner success. | Reviewable after parent. Current full terms/branding gate; catalogue/UA buckets not tracks/entitlement. |
+| [#181](https://github.com/hebbiz/movie-wishlist/pull/181) | `77b44b32a8570d55a567d952173d258a251bce88` / `codex/mw-fut-01-tmdb-data` (`b9f3c65`) | 16 files at reviewed HEAD; MEGOGO/diagnostics/policy/docs. | Empty statuses/check-runs/Actions; fresh cumulative 234 offline; prior targeted Edge 12 passed / 1 skip, Windows historical. | Reviewable after parent with MEGOGO unresolved/frozen. No demonstrated opt-in isolation/honest-failure blocker; not full security/live validation. This docs commit advances this row only. |
+
+Check-runs and statuses inspected separately: **empty is not all-green**. No
+Actions workflow in repository. Fresh 234 ran at child tree, not each parent HEAD;
+historical metrics retain baselines, no fresh browser/Windows claim for Markdown.
+
+Blocker classes: research merge needs normal owner review and applicable repo
+checks/permissions; successful MEGOGO is not required. No new functional research
+merge blocker identified in scoped code/isolation/failure audit plus offline suite;
+required policy inaccessible. Live use needs keys/current applicable terms/exact
+scope and honest source statuses. Production blocked by absent authorization,
+rights/retention/hosting/write/RLS design, arbitrary-film coverage and unresolved
+field reliability. Home-LAN HTTP is not production transport.
+
+Known #175 launcher defect with multiple Node PATH matches is fixed by #176;
+do not pause integration/use at #175 as if that fix were already present. For an
+environment requiring that fix, include/review #176 before running the demo.
+
+MEGOGO isolation checked: validated opt-in configuration; synthetic default; only
+explicit mode's `/answer` takes this path; fixed source; independent/overall
+identity separate, unresolved withholds fields; explicit errors, no follow-ups/
+JS/persistence; old request-body/auth/one-shot regressions pass. Thus unresolved
+utility is not itself a research merge blocker. Research files' exclusion from
+Netlify static publishing **not established**: live publish/branch mapping is
+not in Git; verify separately before production promotion, no deployment now.
+
+After authorization, oldest-first **#175 → #176 → #177 → #178 → #179 → #180 →
+#181**, preserving history. Keep parent branch until child's retarget/review.
+After parent merge, inspect actual merge; retarget only next child to develop;
+recheck ancestry/diff-only-remaining-work/conflicts/paths/review freshness/checks.
+If squash/rebase lost ancestry, **do not auto-retarget duplicated diff/force-push**:
+stop for reviewed non-rewriting reconciliation (e.g. merge develop into child),
+then re-diff/test. Prefer history-preserving merges if allowed; repo merge-method
+policy not assumed. No merge/retarget/history rewrite performed here.
+
+After base-only change with no effective code change: scope/whitespace/links,
+remote/required checks and cumulative offline integration suite. Conflict/helper/
+adapter/UI changes additionally require targeted browser/Windows/security tests
+in temp copies, never owner demo. Preview is not research testing. No new live
+owner tests merely for documentation/retarget. Final develop diff research-only;
+stop before main/tag/release.
+
+Documentation validation for this checkpoint: five Markdown files only; **197
+local links / 133 anchors** checked across nine research Markdown documents,
+13 ordered handoff sections, scope/final diff/whitespace checked. Runtime,
+prompts, model/settings, dependencies and previous request bodies unchanged.
+Fresh offline checks above are supplementary review evidence; browser/Windows
+were not rerun for Markdown-only changes. Owner demo and existing untracked
+research/media-discovery preserved; no live/API/system/deployment operations.
+
+## Historical experiments and feasibility records
 
 Architecture/feasibility record, updated October 18, 2026 after manual candidate
 experiment A and the owner's choice of a narrow Kinobaza URL Context experiment.

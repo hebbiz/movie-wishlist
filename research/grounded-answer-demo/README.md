@@ -1,5 +1,20 @@
 # MW-FUT-01: isolated grounded-answer demo
 
+## Consolidated architecture checkpoint
+
+The [canonical proposal](docs/regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
+now consolidates source evidence, field boundaries, the #175–#181 stack review
+and proposed roadmap. Recommended next slice: automatic TMDb+MOTN UA discovery,
+optional fixed-card Kinobaza candidates, explicit selection into a local MW-shaped
+draft, **without an LLM or production writes**. This is not implemented/approved.
+The [13-section handoff](docs/consolidated-poc-handoff.md) is **Proposed / not
+authorized for implementation**. Existing modes/commands remain unchanged.
+MEGOGO stays unresolved/frozen; no new owner/live/parser-debugging cycle.
+
+Historical per-source implementation/owner checkpoints follow; they are not
+general accuracy, current entitlement or full six-platform coverage. This
+documentation task makes no live request and requires no owner test/restart.
+
 Local, owner-operated, display-only **Discovery** experiment, not a production
 feature. This iteration starts from develop checkpoint
 `a5d4f42149c616d4dc3cdac35c6086240b3fdacf`. The physical-only owner pilot and

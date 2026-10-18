@@ -1,5 +1,13 @@
 # Digital-UA and iPhone owner observations
 
+The [consolidated architecture evidence ledger](regional-card-proposal.md#evidence-ledger-and-limits)
+summarizes the reports below separately from independent code/tests and hypotheses.
+No new owner observations are added at this architecture checkpoint. Existing
+recording dates are not invented execution timestamps; no general accuracy,
+current entitlement or complete platform coverage is inferred. MEGOGO remains
+unresolved; no new manual cycle. The [proposed handoff](consolidated-poc-handoff.md)
+does not authorize implementation or live requests.
+
 Initial Search observations recorded October 18, 2026 for PR #175, following
 implementation commit `80c6f2a32f3305458de81e6e62c92e47efe6e498`.
 MW-FUT-01 remains **Discovery**. These are owner observations, not checks
