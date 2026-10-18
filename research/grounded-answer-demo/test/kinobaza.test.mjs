@@ -11,7 +11,7 @@ import { urlDisplayParts } from '../public/url-display.mjs';
 
 const options = { retrieval: 'url-context', discovery: 'digital-ua', urlSource: 'kinobaza' };
 
-test('20 existing Search/Apple request bodies remain byte-equivalent to checkpoint 714a176', () => {
+test('22 existing Search/Apple/Kinobaza Gemini bodies remain byte-equivalent to checkpoint a4dbbab', () => {
   const bodies = [];
   for (const id of Object.keys(FILMS)) for (const config of [
     { discovery: 'physical' }, { discovery: 'digital-ua' },
@@ -22,8 +22,9 @@ test('20 existing Search/Apple request bodies remain byte-equivalent to checkpoi
     bodies.push(requestBody(id, config));
     assert.deepEqual(requestBody(id, config), requestBody(id, { ...config, urlSource: 'apple-tv' }));
   }
+  for (const id of ['dune-part-two', 'coherence']) bodies.push(requestBody(id, { retrieval: 'url-context', discovery: 'digital-ua', urlSource: 'kinobaza' }));
   assert.equal(createHash('sha256').update(JSON.stringify(bodies)).digest('hex'),
-    '04de869ab3466b86c0ef7f9b00a6970beab3ee2bb41940fef07fddf9dbf7a4b1');
+    '3b3d76eb5bfaeec3c9921b780a302ab9a91a5dcb383c72e312c35eadee1a7d91');
 });
 
 test('fixed Kinobaza source/prompt contract, no expected provider URLs or owner facts', () => {

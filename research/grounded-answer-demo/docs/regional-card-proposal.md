@@ -387,9 +387,124 @@ stable coverage, supported access, source/JustWatch rights, attribution and
 retention are not established. No scraper, parser module, new endpoint,
 integration, model/prompt change or implementation handoff is produced here.
 
-The next useful gate is authoritative clarification of a supported access route
-and permissible candidate-link use. Only after that and separate owner approval
-would a bounded non-LLM feasibility prototype be considered; do not silently
-replace URL Context with scraping. Until then Kinobaza remains a manual
-auxiliary source. Preserve the existing iPhone workflow, no archive, no
-availability-from-link inference and no general accuracy/cost claim.
+At that checkpoint, supported access and permissible candidate-link use needed
+clarification before a prototype. The subsequent owner request approves only
+the bounded experiment below after a fresh public-rules check, **without an
+email prerequisite**. It does not approve regular/commercial integration or
+silently replace URL Context. Preserve no archive, no availability-from-link
+inference and no general accuracy/cost claim.
+
+## Owner-approved HTML extraction PoC
+
+### Public rules checked before implementation — October 18, 2026
+
+- [Terms](https://kinobaza.com.ua/terms) §1 applies to public/registered users;
+  §2 lists prohibited site-user conduct, not an automated-access authorization;
+  §3 leaves information-use and third-party-rights responsibility with the user;
+  §4 allows the terms to change. No direct provision prohibiting this specific
+  two-card, manually initiated, transient link-reading experiment was found.
+  **Absence of a found ban is not an established license** for regular fetching,
+  commercial reuse, redistribution, attribution practice or retention.
+- [robots.txt](https://kinobaza.com.ua/robots.txt), read directly as text (HTTP
+  200), has generic-group exclusions for movie/series query pages, comments,
+  search and certain person subpages; none matches the two exact `/titles/...`
+  source paths. Commented-out title rules are not active. The separate
+  `meta-externalagent` group denies all paths; our descriptively identified
+  `MovieWishlistResearchPoC/0.1` client is not that agent. **Robots is not a
+  license**, and no user-agent disguise or technical bypass is approved.
+- [About](https://kinobaza.com.ua/about) says this is film information, not
+  hosting online films. [Privacy](https://kinobaza.com.ua/privacy) distinguishes
+  external sites and public-discussion RSS/API, not a catalogue-reuse agreement.
+  The earlier public HTML inspection found JustWatch attribution/sponsored
+  redirect notices: keep source/label provenance; no partner feed/private API
+  access or claim of independently confirmed offers follows from those links.
+
+**Decision:** no direct applicable conflict or technical block was identified
+in this public-rule review. Proceed within the owner's narrow approval; email
+is not a precondition merely because broader rights remain unestablished.
+Redirect/403/429/CAPTCHA or changed rules are stop conditions, not retry/bypass
+instructions. No current live card extraction was performed by the agent for
+this iteration. The rules read is not live validation. TMDb/Google content terms
+do not govern this non-LLM transport by automatic inheritance.
+
+### Implemented experiment and parser choice
+
+`DEMO_RETRIEVAL=kinobaza-html` reuses validated fixed sources, LAN auth,
+Host/Origin and one-shot `/answer` gating. No arbitrary URL or crawler. One
+manual click → one GET; no cookies, redirects, retries, scripts/assets, model
+or destination/tracking requests. A 15-second whole-read deadline and 2 MiB
+body limit bound input. Error bodies, HTML and credentials are never logged,
+stored or sent to the browser. The result is session-page memory only.
+
+[parse5](https://parse5.js.org/) **8.0.1** is pinned in the demo's private
+`package.json`/lockfile, with locked `entities` transitive dependency; root
+production manifests are untouched. It provides HTML tree parsing and source
+attribute locations without a browser/script engine. This avoids a home-grown
+whole-page-regex parser or resource-loading browser DOM. It is lazy-loaded, so
+existing Gemini modes need no parser installation. Missing parser is reported
+before a live source GET. Use `npm ci --prefix research/grounded-answer-demo
+--ignore-scripts --no-audit --no-fund`; no install scripts or new service.
+
+The source-specific adapter requires unambiguous observed heading/original
+title/year/director, then explicit country heading → target → matching panel
+relationships. It currently recognizes UA, PL, CZ and DE labels from the
+inspected layout; unsupported/duplicate/mismatched markup yields a visible
+unsupported result, not a different territory guess. Only recognized provider
+markers count; navigation/trailers/ads and JustWatch attribution are excluded.
+Recognized pre-accordion film badges are shown separately with territory null.
+No global localization transfer or availability/price/audio inference.
+
+`href` retains the parsed attribute value; `rawHref` retains source spelling,
+so entity decoding is visible while percent/query/tracking encoding is never
+reconstructed or resolved. Relative hrefs stay relative. Unsafe schemes,
+credentialled absolute URLs and invalid values are withheld/unresolved. Missing
+hrefs retain an unresolved provider entry. Ambiguous film identity stops the
+candidate list. This intentionally fails closed and is not a complete generic
+provider discovery API. Partial results are not absence evidence.
+
+### Evidence and boundaries for the new mode
+
+Implemented plus synthetic/mock-tested, **live-unvalidated**. Existing Gemini
+results and earlier independent initial-HTML checks remain historical, separate
+evidence. Neither author-written fixtures nor rules retrieval establish current
+card compatibility, complete provider coverage, link validity or entitlement.
+No new candidate-preview product, production/Mykola integration, cache, database,
+response archive or regular/commercial extraction is approved.
+
+The [HTML owner workflow](iphone-windows.md#kinobaza-html-owner-workflow) specifies
+synthetic first, then exactly one owner-run live GET per film, without API key.
+Verify identity, explicit UA/foreign/unknown groups and exact/raw href spelling
+against the source card, without resolving destinations. Record unresolved and
+blocked results as such; no raw HTML/screenshots/output archive in Git. Recheck
+rules before a later run if they change. Real iPhone/SSH-disconnect survival for
+this new mode remains owner-validation pending. No merge/deployment or system
+changes accompany this experiment.
+
+### Independent checks for this iteration (not live validation)
+
+- Node 24.22.0 offline/HTTP suites: **107 passed, no failures/skips**. Authored
+  synthetic HTML covers UA/foreign/unscoped links, attribute/entity/percent
+  encoding and relative URLs, exclusions, missing/unsafe hrefs, identity and
+  markup ambiguity, status errors, timeout/body limits and one-shot/auth gates.
+- All **22 Gemini request bodies** were independently compared with Git
+  checkpoint `a4dbbab` and pinned in a golden-hash regression: unchanged Search,
+  Apple and Kinobaza URL Context prompts/tools/generation settings.
+- Final bounded sequential installed-Edge/browser suites: **60 passed,
+  4 skipped, no failures**. Skips: three missing WebKit checks and optional
+  same-host LAN without a supplied test IP. Narrow Edge is not real Safari.
+  Synthetic/mock display verifies no raw-HTML insertion, destination requests,
+  browser storage, response logs or automatic second click/request.
+- The initial parallel browser run stalled in a test worker; terminating only
+  its verified headless test browser produced closed-browser failures. That run
+  is **not counted as passed**; its stall cause is unresolved. Standalone HTML
+  and two bounded sequential full reruns passed without relaxing assertions or
+  application security. Prefer the documented sequential/time-limited command.
+- Windows PowerShell 7: separate temporary copies/free ports passed HTML,
+  Search, Apple and Kinobaza Gemini helper start/status/duplicate/safe-stop/
+  restart tests. HTML also parsed synthetic markup in the detached child, then
+  restarted in live **readiness only** without a key prompt or source GET.
+  No `/answer` call in live Windows mode; owner process untouched. Actual
+  Termius disconnect and PowerShell 5.1 remain unverified for this new mode.
+
+No agent live extraction, model API or production call. Dependency installation
+and public-rules retrieval are setup/research, not evidence of live extraction.

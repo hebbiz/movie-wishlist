@@ -36,6 +36,11 @@ an external citation-source anomaly, not proof of a destination fetch or of
 exclusive source provenance. A separate [initial-HTML feasibility check](docs/regional-card-proposal.md#initial-html-inspection-after-the-owner-tests)
 found relevant hrefs already present without JavaScript; the Gemini omission
 cause and automation rights remain unresolved. No repeat live runs recommended.
+The subsequent owner-approved **HTML-only PoC** is a separate opt-in
+`DEMO_RETRIEVAL=kinobaza-html`: one manual source GET, deterministic initial-HTML
+parsing, no Gemini or destination requests. It is offline-tested and
+**live-unvalidated**. The [bounded approval/rules record](docs/regional-card-proposal.md#owner-approved-html-extraction-poc)
+does not approve regular/commercial integration. See [HTML owner commands](docs/iphone-windows.md#kinobaza-html-owner-workflow).
 The [Windows launch diagnosis](docs/windows-launch-diagnosis.md) resolves the
 earlier detached-launch failure: multiple Node PATH matches were passed as one
 executable string. The helper now selects one executable, without changing
@@ -43,8 +48,9 @@ breakaway/auth/security controls. Safe native diagnostics and paired baseline/
 HEAD tests are documented there; explicit new-mode SSH-disconnect validation
 after the fix remains pending, separate from the reported Safari live answers.
 
-No production integration, new provider, TMDb, chat/input, structured output,
-normalization, scoring, response archive or analytics. PR #173 is not changed
+No production integration, new provider, TMDb, chat/input, LLM-output
+normalization, scoring, response archive or analytics. HTML-only returns a small
+deterministic candidate result, not a normalized Gemini answer. PR #173 is not changed
 or imported. The implementation agent makes no live API calls; the owner-run
 requests below are reported separately, not independently reproduced.
 
@@ -59,17 +65,18 @@ with Basic Auth and a synthetic request after explicit SSH disconnection. This i
 owner validation on that configuration, not an independent agent device test
 or a guarantee for other Windows/SSH environments.
 
-Node.js 24 (tested with 24.19.0), modern desktop browser, no npm install/build
-or new dependencies. Run from the repository root. No `.env` file is loaded.
+Node.js 24, modern desktop browser. Existing Gemini modes need no npm install or
+build. HTML-only needs the pinned isolated parser below, not production
+dependencies. Run from the repository root. No `.env` file is loaded.
 
 | Environment | Values / purpose |
 | --- | --- |
 | `DEMO_MODE` | `synthetic` by default; explicitly `live` only for an owner-run request |
-| `GEMINI_API_KEY` | Required only for live mode; server environment/header only, never in browser/source/URL |
+| `GEMINI_API_KEY` | Required only for live Gemini modes; HTML-only never needs/forwards it; server-side only |
 | `DEMO_FILM` | `dune-part-two` (default), `coherence`, `blade-runner-final-cut` |
 | `DEMO_DISCOVERY` | `physical` (default), `digital-ua` |
-| `DEMO_RETRIEVAL` | `search` (default), `url-context` (fixed sources with `digital-ua`) |
-| `DEMO_URL_SOURCE` | URL Context only: `apple-tv` (default when unset) or opt-in `kinobaza`; both support Dune/Coherence only; unset for Search |
+| `DEMO_RETRIEVAL` | `search` (default), `url-context`, opt-in `kinobaza-html` |
+| `DEMO_URL_SOURCE` | URL Context: `apple-tv` default or `kinobaza`; HTML-only: unset or `kinobaza`; unset for Search |
 | `DEMO_AMAZON_REGION` | Optional, physical only: `us`, `uk`, `de`, `it`; unset for multi-store search |
 | `DEMO_PORT` | Default 4317, range 1024–65535 |
 | `DEMO_ACCESS` | `localhost` (default) or explicit `lan` |
@@ -92,6 +99,43 @@ Unset means absent, not an empty/unknown value. Invalid film/discovery/region
 or **any Amazon region with digital-ua** causes a clear startup error before
 listening or making a provider request. All choices are resolved once at startup.
 The browser cannot override film, discovery, region or prompt.
+
+### HTML-only setup and result contract
+
+Install only the research dependency, with its lockfile and no install scripts:
+
+```powershell
+npm ci --prefix research/grounded-answer-demo --ignore-scripts --no-audit --no-fund
+```
+
+`DEMO_RETRIEVAL=kinobaza-html` requires `DEMO_DISCOVERY=digital-ua`, Dune or
+Coherence, no Amazon region, and URL source unset or `kinobaza`. Only synthetic
+scenario `grounded` is accepted. Source URL, operation, timeout and byte limit
+are visible before clicking. Defaults and all Gemini prompts/settings/request
+bodies are unchanged. Parser absence is explicit before a live source GET.
+
+One click consumes the existing token, including failure. Live: one GET of the
+fixed Kinobaza source, 15-second deadline, 2 MiB maximum decoded response body,
+UTF-8 HTML only. Redirects/403/429/timeouts/oversize are separate statuses, never
+retried. No cookies, source scripts/assets, destination resolution, follow-up,
+LLM or raw-HTML browser payload. Start/status/reload alone makes no source GET.
+
+The transient result separates observed title/year/director identity,
+`status`/`issues` and candidates: `provider`, explicit `territory` or null,
+`href`, `rawHref`, `hrefKind`, candidate/unresolved status. `href` is the HTML
+attribute value (entities such as `&amp;` decoded by the parser); `rawHref`
+preserves its source spelling. Neither percent encoding/query order nor redirect
+destinations are rewritten. Relative values stay relative, never reconstructed
+as absolute URLs. Unsafe values are withheld, with an issue. Display uses only
+text nodes, no clickable candidate/resource elements or raw HTML insertion.
+
+Only supported country-heading/panel relationships establish territory;
+recognized badges outside those panels are **territory unknown**. Identity or
+markup ambiguity yields unresolved/unsupported, not guessed candidates. A link
+does not establish availability, localization, prices or entitlement. This is a
+source-specific, deliberately incomplete parser; changed markup requires review.
+Synthetic markup/providers are authored and invented, not archived live results.
+See the existing feasibility record for parser choice, public rules and limits.
 
 ### 1. Physical default (safe synthetic display)
 
@@ -365,10 +409,13 @@ URL-only checks (mocks, no real Gemini):
 ```powershell
 node --test research/grounded-answer-demo/test/url-context.test.mjs
 node --test research/grounded-answer-demo/test/kinobaza.test.mjs
+node --test research/grounded-answer-demo/test/html-source.test.mjs
 # With the same external Playwright/installed browser configuration above:
 node --test research/grounded-answer-demo/test/url-browser.test.mjs
+node --test --test-concurrency=1 --test-timeout=120000 research/grounded-answer-demo/test/html-browser.test.mjs
 .\research\grounded-answer-demo\test\windows.test.ps1 -UrlContext
 .\research\grounded-answer-demo\test\windows.test.ps1 -UrlContext -Kinobaza
+.\research\grounded-answer-demo\test\windows.test.ps1 -Html
 # Same Windows PowerShell 7 runner for paired archived baselines and safe diagnostics:
 .\research\grounded-answer-demo\test\launch-matrix.ps1
 .\research\grounded-answer-demo\test\launch-diagnostics.test.ps1

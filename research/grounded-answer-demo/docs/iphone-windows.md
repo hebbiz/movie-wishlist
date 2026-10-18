@@ -372,3 +372,92 @@ Keep the same LAN password if desired; Safari may cache Basic Auth. Stop with
 to Apple use `DEMO_URL_SOURCE=apple-tv`; to return to Search remove the source
 variable and set `DEMO_RETRIEVAL=search`, then explicitly configure/restart/reload.
 Do not infer any provider offer/audio/price from a returned candidate link.
+
+## Kinobaza HTML owner workflow
+
+Separate owner-approved, **live-unvalidated** experiment, not another Gemini run.
+Read the [public-rules and scope decision](regional-card-proposal.md#owner-approved-html-extraction-poc).
+No email precondition for this bounded PoC; no approval for regular/commercial
+integration. Existing trusted-home-LAN/Basic Auth/SSH safeguards above apply.
+The implementation agent never runs these restart commands on the owner demo.
+
+If Termius SSH opens cmd.exe, first enter PowerShell:
+
+```text
+powershell.exe -NoProfile
+```
+
+An installed `pwsh.exe -NoProfile` is an alternative; do not bypass execution
+policy. In the correct checkout inspect first:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; git status --short --branch; git fetch --prune origin
+```
+
+Preserve all tracked/untracked work. Only when ready to replace this copy's
+running configuration, stop it with its verified `Stop-Demo.ps1`. With no
+conflicting changes, select `codex/mw-fut-01-kinobaza-html`: if not local,
+`git switch --track origin/codex/mw-fut-01-kinobaza-html`; if already local,
+`git switch codex/mw-fut-01-kinobaza-html`, then
+`git merge --ff-only origin/codex/mw-fut-01-kinobaza-html`. Inspect HEAD; stop on
+divergence/conflicts, no reset/clean/force or automatic stash. This branch is
+stacked on #177, not a second copy of the whole develop diff.
+
+Install the isolated pinned parser once, or after a lockfile change:
+
+```powershell
+npm ci --prefix research/grounded-answer-demo --ignore-scripts --no-audit --no-fund
+```
+
+Each following block is **one standalone PowerShell line** with `;`. It sets
+all scenario switches afresh, prompts again for this Windows host's actual
+private LAN IPv4, and passes port/access explicitly. No environment retention
+between SSH sessions. **No API key is required or prompted for in HTML mode**;
+only the separate hidden LAN password prompt. Inherited key/password variables
+are cleared from the launching shell, never printed or written to files.
+
+First synthetic Coherence — no source GET:
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'synthetic'; $env:DEMO_RETRIEVAL = 'kinobaza-html'; $env:DEMO_URL_SOURCE = 'kinobaza'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Open the **exact URL printed by Start**, `http://<actual-Windows-IPv4>:4317`;
+Safari username **demo**, password from the hidden LAN prompt. Use the actual
+verified IP, not another project's address, localhost, a tunnel or internet
+URL. HTTP Basic is not encryption: trusted home Wi-Fi only. Reload Safari and
+check `kinobaza-html`, film, fixed source and operation before clicking once.
+The synthetic result must say invented/no page fetched and show Example-only
+providers in explicit UA/foreign/unknown groups, never real offer validation.
+
+Explicitly disconnect SSH, then reload Safari and parse synthetic once to test
+survival. Reconnect and inspect status. Record this owner check separately;
+parent-process-exit tests are not actual Termius/Safari validation.
+
+Then live Coherence — **one manual source GET after the click**, no model:
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'kinobaza-html'; $env:DEMO_URL_SOURCE = 'kinobaza'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Reload/verify/click once. Then separately live Dune, also self-contained:
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'kinobaza-html'; $env:DEMO_URL_SOURCE = 'kinobaza'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'dune-part-two'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Start/status/reload never fetches a Kinobaza card. The click consumes the token,
+including failure; no retries. Do not use an error as a reason to bypass access
+controls or immediately rerun. Stop on redirect/403/429/CAPTCHA, identity or
+unsupported-markup results, or changed applicable rules. No destination links
+are automatically opened; do not resolve redirects as part of this test.
+
+Compare the extracted identity and provider labels with the source card. Verify
+explicit UA versus foreign sections, territory-unknown badges, attribute `href`
+versus source spelling `rawHref`, unchanged percent/query encoding and relative
+values visibly marked as relative. Missing fields remain unresolved; links do
+not prove availability/localization/prices/entitlement. Do not archive live HTML,
+results, screenshots, account details or HAR; report concise owner observations.
+Stop after these two films. Actual HTML extraction and this mode's iPhone/SSH
+disconnect behavior remain owner-validation pending. Stop via this copy's helper
+when finished; old Gemini modes remain available under their previous switches.
