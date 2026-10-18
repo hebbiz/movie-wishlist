@@ -30,6 +30,10 @@ contains URLs only; the prompt includes target film identity and questions, not
 expected audio/video/prices from the [owner report](digital-ua-owner-validation.md).
 Blade Runner is not a URL-mode case; unsupported combinations fail before listen.
 
+The [agreed auxiliary discovery-source role](regional-card-proposal.md#agreed-auxiliary-discovery-source)
+for Кінобаза belongs to the proposed future flow, not this fixed-card experiment.
+It adds no automatic discovery, access or catalogue changes here.
+
 ## Official capabilities, display and terms review
 
 - **Technical support:** [URL Context guide](https://ai.google.dev/gemini-api/docs/generate-content/url-context)

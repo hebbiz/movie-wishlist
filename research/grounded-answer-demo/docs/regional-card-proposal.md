@@ -29,6 +29,31 @@ These are manual review questions, not a normalized schema, confidence engine,
 automatic ranking or extraction pipeline. Keep audio before subtitles, then
 video; preserve the existing Ukrainian-localization priorities.
 
+## Agreed auxiliary discovery source
+
+Owner-agreed documentation checkpoint, October 18, 2026: **Кінобаза (Kinobaza)**
+is an additional source of Ukrainian film titles and candidate URLs, not a new
+integration or a final authority on an offer.
+
+Proposed future flow (not the current runtime):
+
+TMDb / Кінобаза / web search → concrete regional card → film/cut identity and
+offer-characteristic checks → Mykola recommendation.
+
+Кінобаза does not conclusively establish viewing entitlement, current prices or
+localization of a specific edition. Its data may originate from JustWatch and
+may not be independent of TMDb. Shared upstream information is not independent
+corroboration; titles/links are leads to verify against the exact regional card,
+not grounds for transferring characteristics between offers or editions.
+
+API availability, automated-access permission, attribution requirements and
+retention remain **open questions**, not approved capabilities or rights. No
+automatic integration, scraping or discovery-to-fetch pipeline is added. This
+conceptual flow does not authorize collecting grounded links into a fetch queue.
+MW-FUT-01 remains Discovery. The current [URL-only PoC](url-context-poc.md) keeps
+its fixed, verified server-side cards; Кінобаза does not populate that catalogue
+or supply runtime input.
+
 ## Two options, no integration selected
 
 | Option | What a future approved iteration could change | Limit / decision gate |
