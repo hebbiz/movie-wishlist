@@ -622,7 +622,8 @@ surface. The official schema/README link to these portal terms. The older GitHub
 
 ### Recommendation and limits
 
-Treat this as a **partial non-LLM API candidate**, not a six-platform replacement
+At documentation checkpoint `30c3160`, the recommendation was to treat this as
+a **partial non-LLM API candidate**, not a six-platform replacement
 or approved Mykola integration. First decide whether coverage of three of six
 platforms and absent HDR/audio-format fields is useful. If so, separately approve
 a tiny owner-operated, display-only UA capability probe under the current terms:
@@ -632,4 +633,75 @@ identity-scoped API-reported links and explicit available/missing fields, not
 account availability or model accuracy. Stop on access/terms conflict, quota,
 identity mismatch or need for unsupported providers/fields; no fallback scraping.
 Do not ask the owner to repeat the completed streaming-card checks. No integration
-choice, implementation handoff or additional test is executed in this checkpoint.
+choice, implementation handoff or additional test was executed at that checkpoint.
+
+## Approved non-LLM API probe
+
+Subsequent owner authorization, October 18, 2026: implement a minimal direct
+Movie of the Night probe for **Coherence and Dune, country UA**, not a new
+six-platform integration or evaluation of an AI system. Current implementation
+uses `DEMO_RETRIEVAL=motn-api`; live results remain **unvalidated** until owner
+execution. Existing Search/URL Context/HTML modes and prompts are not changed.
+
+### Current contract and rules recheck
+
+- The current official [OpenAPI](https://github.com/movieofthenight/streaming-availability-api/blob/main/openapi.yaml)
+  is 4.1.0 on the `/v4` transport. `GET /shows/{id}` accepts the documented IMDb
+  `tt…` form; `country=ua` asks for only Ukraine. Key from the direct
+  [developer portal](https://developers.movieofthenight.com/) uses `X-API-Key`,
+  not a RapidAPI key. No `/countries` or search request is added. Exact fixed
+  IDs and prior evidence limits are in the [README](../README.md#movie-of-the-night-api-probe).
+- [Published UA service coverage](https://docs.movieofthenight.com/guide/countries-and-services#ukraine)
+  remains Netflix/Prime/Apple among our scope; this is not measured offer-level
+  completeness. In the schema, `apple.rent`/`apple.buy` and subscription/addon
+  types are distinct: the service ID/name is not an Apple TV subscription claim.
+  No hidden subscription-only filter. Source `link`, access/addon, locales,
+  optional quality and price are kept separate; no HDR/DV/codecs inferred.
+- [Direct pricing](https://www.movieofthenight.com/about/api/pricing) rechecked:
+  **Free $0 / 1,000 requests/month**, all endpoints/catalogues, no payment details.
+  Optional Starter $49/25,000, Growth $99/100,000, Scale $299/1,000,000 USD/month.
+  Free is sufficient for the two manually initiated title requests; no paid
+  subscription chosen. Quota hard stop/no overage; signup/billing must still be
+  checked by owner. A free advertised plan is not a zero total-cost claim.
+- [Current Terms](https://developers.movieofthenight.com/terms-and-conditions)
+  and their public route module linked above were re-read (not the older GitHub
+  agreement). **§3** permits app/end-user use subject to standalone-data-product,
+  redistribution and competing-service restrictions; this local owner-only UI
+  does not offer a public dataset/API. **§4** attribution is visible before and
+  after the request. **§5** third-party rights remain separate, so no logos,
+  posters/descriptions or redistribution are introduced. **§6** permits functional
+  retention subject to other terms, but the probe keeps none. **§10** AI training,
+  evaluation/improvement prohibition is respected: no LLM receives any result,
+  and data is not AI ground truth. It is not read as an automatic decision about
+  inference rights, which are outside scope. No direct conflict with this narrow
+  non-LLM manual capability probe was identified; this is not a legal guarantee
+  or permission for a future pipeline. Stop on a concrete applicable conflict.
+
+### Implemented boundary and pending owner run
+
+Minimal built-in-fetch adapter, no SDK/dependency. One title GET per token,
+20-second/2-MiB bounds, no redirects/retries/continuations/cookies/destinations.
+Server-side secret header; safe content-free errors. Only UA fields projected;
+foreign catalogue, descriptions/images and raw body never reach the page.
+Identity mismatch stops offer display. Missing/empty UA is not unavailable.
+Missing language versus an array without Ukrainian are distinguished, but list
+completeness is not established: neither becomes confirmed absence. Provider
+metadata is not account entitlement. Live output is neither logged nor archived.
+
+The owner runs **one request per film**, not an automatic batch or new check of
+every streaming card. Historical dated manual observations are controls, not
+current guaranteed truth. Ask for a concise useful/missing-field summary; only
+new or materially conflicting results merit another exact-card check. No full
+JSON/metadata request unless an error actually requires diagnosis; never secrets.
+[Termius/Safari commands](iphone-windows.md#movie-of-the-night-api-owner-workflow)
+retain existing safeguards. No repeat SSH-disconnect test is mandated: detached
+launch/auth mechanics are unchanged; the new key routing is tested in an isolated
+mock-only Windows child, not inferred from Start-Process alone.
+
+Agreed next sequence, **not an implemented pipeline**: Movie of the Night probe
+→ compare with Kinobaza/JustWatch → MEGOGO direct-adapter feasibility → common
+offer model. The [owner-reported platform coverage](digital-ua-owner-validation.md#owner-reported-platform-coverage-and-next-sequence)
+does not guarantee API fields/catalogue completeness. Kinobaza's JustWatch
+redirects are not a direct Partner API integration. Authorized workers remain
+a separate conditional research direction; no credentials/accounts/worker or
+new downstream adapter is provisioned. MW-FUT-01 remains Discovery.

@@ -265,7 +265,7 @@ checkpoint, not a claimed execution trace.
 | Reported result | Coherence | Dune: Part Two |
 | --- | --- | --- |
 | Narrow candidate extraction | Completed successfully according to the owner; the full candidate list, HTTP/identity status and issues were not supplied in this report. | HTTP 200, identity `matched`, no issues. |
-| Explicit Ukraine section | Not itemized in this report. | Rakuten TV, HBO Max. |
+| Explicit Ukraine section | Apple TV, clarified by the owner's subsequent API-probe context; not independently repeated. | Rakuten TV, HBO Max. |
 | Outside country sections | Not itemized in this report. | iTunes, Rakuten, MEGOGO; retain **territory unknown**, not inferred Ukraine. |
 | Foreign sections | Not itemized in this report. | Separated from Ukraine; one YouTube search URL is a search transition, **not an exact film card**. |
 | Known gap | Prime Video candidate was missed, compared with the owner's earlier manual discovery. | Search-transition versus exact-card distinction is not implemented. |
@@ -284,3 +284,22 @@ its omission mechanism is not established from the retained evidence. The
 do not require another owner run. The report does not separately confirm a new
 HTML-mode SSH-disconnect survival test; earlier workflow validation retains its
 own scope. Usage/latency/cost were not measured here. MW-FUT-01 remains Discovery.
+
+## Owner-reported platform coverage and next sequence
+
+Recorded October 18, 2026 with the API-probe authorization. The owner reports
+Movie of the Night coverage for **Apple TV, Prime Video, Netflix** and JustWatch
+coverage for **Apple TV, Netflix, Rakuten TV, HBO Max**. These are platform-level
+owner observations, **not** guarantees of API access, complete film catalogues,
+locale/video fields or offer accuracy. No independent new offer check by the
+implementation agent is implied. MEGOGO is a future direct-adapter candidate,
+not implemented here. Obtaining JustWatch tracking links through Kinobaza does
+not establish direct JustWatch Partner API access or rights.
+
+Agreed sequence: Movie of the Night non-LLM probe → comparison with Kinobaza/
+JustWatch → MEGOGO adapter feasibility → shared offer model. Authorized workers
+are a separate conditional direction, not current implementation. No Movie of
+the Night live result is recorded yet. The dated earlier manual observations
+remain controls, not guaranteed current prices/entitlements. Only new/materially
+conflicting observations need another exact-card check; no request to repeat
+the completed streaming-card/HTML tests. No full responses or screenshots added.

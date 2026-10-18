@@ -27,9 +27,11 @@ try {
         if (-not $plainPassword.Trim()) { throw 'LAN password is required.' }
     } elseif ($BindIPv4) { throw 'Do not set -BindIPv4 in localhost mode.' }
     $mode = if ($env:DEMO_MODE) { $env:DEMO_MODE } else { 'synthetic' }
-    $needsGemini = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -ne 'kinobaza-html'
-    if ($needsGemini) {
-        if (-not $ApiKey) { $ApiKey = Read-Host 'GEMINI_API_KEY (server memory only)' -AsSecureString }
+    $needsMotn = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -eq 'motn-api'
+    $needsGemini = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -notin @('kinobaza-html', 'motn-api')
+    if ($needsGemini -or $needsMotn) {
+        $keyName = if ($needsMotn) { 'MOTN_API_KEY' } else { 'GEMINI_API_KEY' }
+        if (-not $ApiKey) { $ApiKey = Read-Host "$keyName (server memory only)" -AsSecureString }
         $plainKey = [Net.NetworkCredential]::new('', $ApiKey).Password
         if (-not $plainKey.Trim()) { throw 'Live mode requires a key.' }
     }
@@ -52,6 +54,7 @@ try {
     $child['DEMO_ACCESS'] = $Access
     if ($Access -eq 'lan') { $child['DEMO_BIND_IPV4'] = $BindIPv4; $child['DEMO_LAN_PASSWORD'] = $plainPassword }
     if ($needsGemini) { $child['GEMINI_API_KEY'] = $plainKey }
+    if ($needsMotn) { $child['MOTN_API_KEY'] = $plainKey }
     if (-not ('DemoDetachedProcess' -as [type])) { Add-Type -Path (Join-Path $PSScriptRoot 'DetachedProcess.cs') }
     $environment = @($child.GetEnumerator() | ForEach-Object { $_.Key + '=' + $_.Value })
     $process = [DemoDetachedProcess]::Start($node, $command, $script:DemoRoot, $environment)

@@ -466,3 +466,97 @@ this mode's explicit SSH-disconnect behavior was not separately reported in that
 checkpoint. No additional test is required for the documentation update. Stop
 via this copy's helper when finished; old Gemini modes remain available under
 their previous switches.
+
+## Movie of the Night API owner workflow
+
+New **live-unvalidated**, non-LLM UA probe; [scope/terms](regional-card-proposal.md#approved-non-llm-api-probe)
+and [fixed IDs/result contract](../README.md#movie-of-the-night-api-probe). Previous
+LAN auth and detached-process safeguards apply unchanged. No systems changes.
+The helper adds only credential routing for this provider; synthetic/mock Windows
+tests cover it. No compulsory repeat SSH-disconnect or already confirmed card
+checks. An optional synthetic display smoke is below; live plan is only **two
+requests**, one per film. Do not run these commands on behalf of the owner.
+
+### Get a direct API key (owner action, no paid plan required)
+
+1. Open the official [developer portal](https://developers.movieofthenight.com/),
+   sign in/create a developer account using its normal flow, and review its
+   [current Terms](https://developers.movieofthenight.com/terms-and-conditions).
+2. Choose/activate **Free** if the console requires a plan choice. The
+   [direct pricing page](https://www.movieofthenight.com/about/api/pricing), checked
+   October 18, 2026, lists **1,000 requests/month**, all endpoints/catalogues,
+   $0/month and no payment details. No paid upgrade is needed for these two
+   requests. Stop if signup shows different requirements; do not authorize a
+   payment/paid subscription automatically. Quota is a hard limit, not retries.
+3. Obtain/copy the API key from the developer console as described in the
+   [official getting-started docs](https://docs.movieofthenight.com/). Use the
+   **direct portal** key, not a RapidAPI subscription/key. This transport is
+   `https://api.movieofthenight.com/v4` with the `X-API-Key` header.
+4. Do not paste the key into source, chat, a PowerShell command, file, task,
+   transcript or screenshot. Each live helper start asks for **MOTN_API_KEY**
+   through `Read-Host -AsSecureString`; paste only into that hidden prompt.
+   `-ApiKey` accepts SecureString for programmatic callers, not a plaintext CLI
+   argument. Gemini key is not used. Synthetic does not need an API key.
+
+### Correct checkout, restart and Safari
+
+If SSH initially opens cmd.exe, enter `powershell.exe -NoProfile` (or installed
+`pwsh.exe -NoProfile`). Do not bypass execution policy. Inspect the right copy:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; git status --short --branch; git fetch --prune origin
+```
+
+Preserve tracked/untracked files. When ready, stop only this copy's verified demo
+before switching files. Select **codex/mw-fut-01-motn-api**: if not local,
+`git switch --track origin/codex/mw-fut-01-motn-api`; otherwise
+`git switch codex/mw-fut-01-motn-api`, then
+`git merge --ff-only origin/codex/mw-fut-01-motn-api`. Inspect HEAD; stop on
+conflict/divergence, no reset/clean/force/stash. This PR is stacked on #178.
+No npm install is needed for this API mode.
+
+Each block below is **one standalone PowerShell line**, redefines all relevant
+switches after any SSH reconnect, clears stale key/source/region variables,
+and asks for the actual private IPv4 of this Windows machine. Start asks for the
+LAN password hidden; live also asks for the direct API key hidden. Secrets go
+only into the detached child's environment, not arguments/state/logs. Do not
+infer keys from an inherited SSH environment. Current owner demo is stopped only
+when the owner deliberately runs these restart lines.
+
+Optional synthetic Coherence (no API/network):
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'synthetic'; $env:DEMO_RETRIEVAL = 'motn-api'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Live Coherence — one title GET after the click:
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'motn-api'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Live Dune — one separate title GET:
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'motn-api'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'dune-part-two'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Safari: **http://<actual-Windows-IPv4>:4317**, exact URL printed by Start,
+username **demo**, separate LAN password. Trusted private home Wi-Fi only;
+HTTP Basic is not encrypted. Reload after restart, verify film/IMDb, `motn-api`,
+UA and fixed API URL **before** one click. Start/status/reload do not call the
+provider. Waiting/finished/error consumes one token; do not automatically retry.
+No Search/model call, country request or destination navigation follows.
+
+Check compact per-offer fields and unknowns, without transferring audio/price
+between offers or treating Apple service name as subscription. Record only a
+short useful/missing/new-or-conflicting summary for each film; no full JSON or
+metadata unless an error requires narrow diagnosis (never keys/account data).
+Earlier dated card checks are not guaranteed current truth: repeat a specific
+card check **only** for a new or materially conflicting observation, not all
+platforms. Do not archive output/screenshots/HAR. Stop after the two requests;
+errors/quota/identity mismatch are findings, not instructions to retry or scrape.
+No data may be sent to an LLM or used for AI training/evaluation/improvement.
+Live API and real-device behavior for this new mode remain owner-validation
+pending. If a genuine disconnect problem appears, report status without secrets;
+do not relax auth/Host/Origin or introduce a session-bound fallback.

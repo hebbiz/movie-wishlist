@@ -44,7 +44,11 @@ candidate links were obtained, not offer availability or characteristics.
 Coherence Prime was missed; a foreign Dune YouTube search transition is not an
 exact film card. [Parser diagnosis](docs/regional-card-proposal.md#html-checkpoint-diagnosis-no-parser-expansion)
 and [Movie of the Night feasibility](docs/regional-card-proposal.md#movie-of-the-night-bounded-feasibility-only)
-are documentation only, with no new adapter or owner retest requested.
+were documentation-only at checkpoint `30c3160`. The subsequent owner-approved
+`DEMO_RETRIEVAL=motn-api` adds a separate non-LLM, two-film UA capability probe,
+**offline-tested / live-unvalidated**, not a Kinobaza parser fix. See
+[API setup/result contract](#movie-of-the-night-api-probe) and the
+[current scope/terms decision](docs/regional-card-proposal.md#approved-non-llm-api-probe).
 The [bounded approval/rules record](docs/regional-card-proposal.md#owner-approved-html-extraction-poc)
 does not approve regular/commercial integration. See [HTML owner commands](docs/iphone-windows.md#kinobaza-html-owner-workflow).
 The [Windows launch diagnosis](docs/windows-launch-diagnosis.md) resolves the
@@ -54,10 +58,11 @@ breakaway/auth/security controls. Safe native diagnostics and paired baseline/
 HEAD tests are documented there; explicit new-mode SSH-disconnect validation
 after the fix remains pending, separate from the reported Safari live answers.
 
-No production integration, new provider, TMDb, chat/input, LLM-output
+No production integration, TMDb calls, chat/input, LLM-output
 normalization, scoring, response archive or analytics. HTML-only returns a small
 deterministic candidate result, not a normalized Gemini answer. PR #173 is not changed
-or imported. The implementation agent makes no live API calls; the owner-run
+or imported as code; two previously verified scalar film IDs are reused with
+provenance below. The implementation agent makes no live API calls; the owner-run
 requests below are reported separately, not independently reproduced.
 
 ## Setup and server switches
@@ -71,18 +76,19 @@ with Basic Auth and a synthetic request after explicit SSH disconnection. This i
 owner validation on that configuration, not an independent agent device test
 or a guarantee for other Windows/SSH environments.
 
-Node.js 24, modern desktop browser. Existing Gemini modes need no npm install or
+Node.js 24, modern desktop browser. Gemini and Movie of the Night modes need no npm install or
 build. HTML-only needs the pinned isolated parser below, not production
 dependencies. Run from the repository root. No `.env` file is loaded.
 
 | Environment | Values / purpose |
 | --- | --- |
 | `DEMO_MODE` | `synthetic` by default; explicitly `live` only for an owner-run request |
-| `GEMINI_API_KEY` | Required only for live Gemini modes; HTML-only never needs/forwards it; server-side only |
+| `GEMINI_API_KEY` | Required only for live Gemini modes; HTML/Movie of the Night modes never need/forward it |
+| `MOTN_API_KEY` | Direct Movie of the Night developer-portal key; live `motn-api` only, server-side header; Windows helper prompts hidden instead of reading inherited key env |
 | `DEMO_FILM` | `dune-part-two` (default), `coherence`, `blade-runner-final-cut` |
 | `DEMO_DISCOVERY` | `physical` (default), `digital-ua` |
-| `DEMO_RETRIEVAL` | `search` (default), `url-context`, opt-in `kinobaza-html` |
-| `DEMO_URL_SOURCE` | URL Context: `apple-tv` default or `kinobaza`; HTML-only: unset or `kinobaza`; unset for Search |
+| `DEMO_RETRIEVAL` | `search` (default), `url-context`, opt-in `kinobaza-html` or `motn-api` |
+| `DEMO_URL_SOURCE` | URL Context: `apple-tv` default or `kinobaza`; HTML-only: unset or `kinobaza`; unset for Search and `motn-api` |
 | `DEMO_AMAZON_REGION` | Optional, physical only: `us`, `uk`, `de`, `it`; unset for multi-store search |
 | `DEMO_PORT` | Default 4317, range 1024–65535 |
 | `DEMO_ACCESS` | `localhost` (default) or explicit `lan` |
@@ -142,6 +148,87 @@ does not establish availability, localization, prices or entitlement. This is a
 source-specific, deliberately incomplete parser; changed markup requires review.
 Synthetic markup/providers are authored and invented, not archived live results.
 See the existing feasibility record for parser choice, public rules and limits.
+
+### Movie of the Night API probe
+
+Opt-in `DEMO_RETRIEVAL=motn-api`, `DEMO_DISCOVERY=digital-ua`, film `coherence`
+or `dune-part-two`; unset `DEMO_URL_SOURCE` and `DEMO_AMAZON_REGION`. Country is
+fixed **UA** in code, not browser input/environment. Only synthetic scenario
+`grounded` is supported. No SDK/new dependency. Existing modes, Gemini bodies
+and Kinobaza parser are unchanged.
+
+| Fixed film | IMDb used in request | TMDb identity cross-check |
+| --- | --- | --- |
+| Coherence (2013), James Ward Byrkit | `tt2866360` | `220289` |
+| Dune: Part Two (2024), Denis Villeneuve | `tt15239678` | `693134` |
+
+Identifier provenance: the already verified
+[repository fixture at 9b5fda6](https://github.com/hebbiz/movie-wishlist/blob/9b5fda67379007156cd25297d3df62aef76daecd/research/media-discovery/fixtures/movies.json),
+checked October 17, 2026. TMDb page-content identity evidence and IMDb search
+results were recorded there; IMDb direct retrieval failed and API crosswalk
+verification was **not** performed. No IDs inferred from model memory and no
+runtime dependency on PR #173. Incoming IMDb must match; any supplied original
+title/year/TMDb/director must agree, otherwise no offers are displayed.
+
+Before clicking, UI shows the film, IMDb, UA, operation and exact GET URL:
+`https://api.movieofthenight.com/v4/shows/<fixed-imdb-id>?country=ua`.
+One click → one title request; **no** extra `/countries`, model, retry, redirect,
+cookie, destination request or automatic continuation. Server-side
+`X-API-Key` authentication. Missing/invalid key, auth/access/quota errors,
+404, invalid JSON/type/identity, timeout and oversized response are explicit.
+20-second whole-read deadline and 2 MiB decoded-body limit. Error bodies and
+raw/global catalogue are not returned/logged/stored. No key reaches the browser,
+including an unexpected upstream echo. One-shot token consumed on failure too.
+
+The small transient projection contains source/UTC receipt time/status/identity
+and **only** `streamingOptions.ua`: separate service/access/addon/link, Ukrainian
+audio/subtitles, optional quality and price/currency for each option. Exact safe
+HTTP(S) links are shown as text, never opened/resolved. No foreign offer fields
+are copied. Each field distinguishes reported, not reported or invalid; a
+provided language array without Ukrainian is **not listed / completeness
+unknown**, including an empty array. The reviewed docs do not establish list
+completeness, so no automatic confirmed-absence state is emitted. ISO 639-2
+`ukr` (or explicitly returned `uk`) counts, not `UKR` region/original language.
+No UA options/404 does not mean unavailable in Ukraine.
+
+Apple service ID `apple` alone does not mean subscription: retain `rent`, `buy`,
+`subscription`, `addon`, `free` or an explicit unknown/other type, without
+combining offers. UHD does **not** establish HDR10/DV; locales do not establish
+AAC/Dolby/channels. Aggregator data is not account-specific entitlement or a
+guarantee of freshness. Attribution/link to Movie of the Night stays visible.
+Synthetic options/prices/services are invented, not an archived API response.
+
+[Exact key/Free-plan setup and standalone owner commands](docs/iphone-windows.md#movie-of-the-night-api-owner-workflow).
+Live remains **unvalidated**: owner plan is one request per film, concise
+observations of useful/missing fields, and only new/substantially conflicting
+offer findings need another card check. No full JSON/metadata requested unless
+diagnosing an error, and no secret-bearing dumps. No LLM, training or AI
+evaluation/improvement; inference permission is outside this probe, not inferred.
+
+Approved research sequence (not implemented as a pipeline): Movie of the Night
+probe → comparison with Kinobaza/JustWatch → MEGOGO adapter feasibility → shared
+offer model. Direct JustWatch Partner API access is **not** the current Kinobaza
+tracking-link path; owner-reported platform coverage is not an API guarantee.
+Authorized workers remain a separate conditional direction, not this scope.
+
+Independent implementation checks (Node 24.22.0, October 18, 2026): **135**
+offline/HTTP tests passed, including the 22-body Gemini golden regression.
+Sequential Edge desktop/narrow-viewport suites: **72 passed / 5 skipped**
+(four absent WebKit checks and optional explicit-IP LAN); the final exact-URL
+probe suite rerun passed **12 / 1 WebKit skip**. Narrow Edge is not real Safari.
+PowerShell 7 temporary-copy lifecycle passed for all five retrieval modes,
+including mock-only child API-key inheritance, parent exit, replay, duplicate
+start, forged-PID refusal, safe stop and restart. No owner process stopped.
+PowerShell 5.1 / new-mode real iPhone/live API not independently validated.
+
+Offline probe commands (no live API):
+
+```powershell
+node --test research/grounded-answer-demo/test/motn.test.mjs
+# With an already installed Playwright/browser configured as below:
+node --test --test-concurrency=1 --test-timeout=120000 research/grounded-answer-demo/test/motn-browser.test.mjs
+.\research\grounded-answer-demo\test\windows.test.ps1 -Motn
+```
 
 ### 1. Physical default (safe synthetic display)
 
