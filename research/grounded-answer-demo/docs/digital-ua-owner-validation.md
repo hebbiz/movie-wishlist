@@ -466,6 +466,23 @@ requested. Extraction usefulness remains unvalidated. MW-FUT-01 remains Discover
 
 The subsequent owner-approved [HTML acceptance policy](regional-card-proposal.md#megogo-html-acceptance-policy--scoped-recovery-v1)
 supersedes the blanket parse gate, not this historical observation. It is
-offline/mock-tested only; no new live outcome is recorded. It prepares **one
-final owner GET** returning useful fields and structural diagnostics together,
-not a separate manual diagnostic cycle. No agent GET or owner-demo change.
+offline/mock-tested at checkpoint `06c69ef` and prepared one final owner GET
+returning useful fields and structural diagnostics together. The subsequent
+owner result is recorded below, not an independent agent check.
+
+### Second owner attempt — 30 duplicate attributes, identity not evaluated
+
+Owner reports HTML retrieved/tree built, **30 `duplicate-attribute` events**,
+canonical link, JSON-LD and **two H1s**. Policy classified damage as identity
+scope and stopped before evaluating identity. Exact event attributes/values/
+locations, H1 texts/positions, execution timestamp/running SHA and a new HTTP
+status code were not provided in this summary. None inferred or fetched.
+
+These counts prove neither conflicting identity nor absent offer metadata.
+They do not establish that the H1s were in the selected main/usable scope or
+that the duplicates were class, href, content or native ID. The
+[offline correction](regional-card-proposal.md#megogo-duplicate-attribute-scope--offline-correction-v2)
+proves/fixes over-broad tag/count vetoes with authored examples, not their
+application to the original live page. MEGOGO remains **unresolved**, with no
+new owner/agent GET, raw body/archive or diagnostic request. Other completed
+source experiments need not wait for it to support an architecture conclusion.

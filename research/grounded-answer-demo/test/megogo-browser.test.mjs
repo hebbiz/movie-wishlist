@@ -22,6 +22,8 @@ test('MEGOGO mobile browser (mock only, not real iPhone)', { skip: !process.env.
       if (kind === 'parse-policy') html += '<p data-private="PRIVATE_DIAGNOSTIC_BROWSER" data-private="other">PRIVATE_DIAGNOSTIC_BROWSER &copy text</p>';
       if (kind === 'field-refusal') html = html.replace('English — PCM 1.0', '<span data-lang=en data-lang=uk>English PCM</span>');
       if (kind === 'page-refusal') html = html.replace('<link rel="canonical"', '<link rel="canonical" rel="alternate"');
+      if (kind === 'decorative-duplicates') html = html.replace('<link rel="canonical"', '<link class=desktop class=mobile rel="canonical"')
+        .replace('type="application/ld+json"', 'class=one class=two type="application/ld+json"').replace('<h1>Dune: Part Two</h1>', '<h1>Dune: Part Two</h1><h1>Дюна. Частина друга</h1>');
       return new Response(html, { headers: { 'content-type': 'text/html' } });
     } });
     await new Promise(r => server.listen(0, '127.0.0.1', r)); t.after(() => new Promise(r => server.close(r)));
@@ -60,9 +62,10 @@ test('MEGOGO mobile browser (mock only, not real iPhone)', { skip: !process.env.
       assert.doesNotMatch(text, /PCM/);
     }
     if (kind === 'page-refusal') {
-      assert.match(text, /Identity: unknown/); assert.match(text, /identity-or-boundary-attribute-ambiguity/);
-      assert.match(text, /not-run/); assert.doesNotMatch(text, /SYNTHETIC Example Package/);
+      assert.match(text, /Identity: unknown/); assert.match(text, /significant-duplicate-attribute/);
+      assert.match(text, /Independent unambiguous identity signals: matched/); assert.doesNotMatch(text, /SYNTHETIC Example Package/);
     }
+    if (kind === 'decorative-duplicates') { assert.match(text, /Identity: matched/); assert.match(text, /decorative-class/); assert.match(text, /SYNTHETIC Example Package/); }
     assert.equal(await page.locator('#answer a,#answer img,#answer script,#answer iframe').count(), 0);
     assert.equal(await page.locator('#retrieval-result').textContent(), ''); assert.equal(await page.locator('#suggestions').textContent(), '');
     assert.deepEqual(external, []); assert.ok(!logs.some(s => /Example Package|DO_NOT_SHOW_BODY/.test(s)));
@@ -72,7 +75,7 @@ test('MEGOGO mobile browser (mock only, not real iPhone)', { skip: !process.env.
     await page.reload(); await page.waitForFunction(() => !document.querySelector('#run').disabled); assert.equal(await page.locator('#answer').textContent(), '');
     assert.equal(calls, mode === 'live' ? 1 : 0);
   };
-  for (const [mode, kind] of [['synthetic', 'normal'], ...['normal', 'geo', 'blocked', 'redirect', 'mismatch', 'unknown', 'parse-policy', 'field-refusal', 'page-refusal'].map(k => ['live', k])]) await t.test(`${mode}/${kind}`, t => run(browser, mode, kind, t));
+  for (const [mode, kind] of [['synthetic', 'normal'], ...['normal', 'geo', 'blocked', 'redirect', 'mismatch', 'unknown', 'parse-policy', 'field-refusal', 'page-refusal', 'decorative-duplicates'].map(k => ['live', k])]) await t.test(`${mode}/${kind}`, t => run(browser, mode, kind, t));
   await t.test('WebKit', { skip: !existsSync(webkit.executablePath()) && 'WebKit binary absent; no download.' }, async t => {
     const engine = await webkit.launch({ headless: true }); t.after(() => engine.close()); await run(engine, 'synthetic', 'normal', t);
   });

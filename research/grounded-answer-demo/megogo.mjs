@@ -169,19 +169,29 @@ function declarativeJson(raw) {
   }
   return value;
 }
-function htmlAcceptance(doc, nodes, counts, events, total, overflow) {
+function duplicateAttributeName(node, offset, html) {
+  // parse5 reports duplicate-attribute when leaving the duplicate name. Match
+  // that suffix only to names already tokenized on this very start tag; never
+  // parse/reconstruct the discarded value. Unknown/foreign names stay refused.
+  const span = node.sourceCodeLocation?.startTag;
+  if (!span || node.namespaceURI !== 'http://www.w3.org/1999/xhtml') return null;
+  const names = (node.attrs ?? []).map(a => a.name).filter(name => /^[a-z][a-z0-9:_-]{0,127}$/.test(name) &&
+    offset - name.length > span.startOffset && html.slice(offset - name.length, offset).toLowerCase() === name && /[\t\n\f\r /]/.test(html[offset - name.length - 1]));
+  return names.length === 1 ? names[0] : null;
+}
+function htmlAcceptance(doc, nodes, counts, events, total, overflow, html) {
   // Offsets are compared only within parse5's own location system, in memory.
   // Never return raw errors/positions, attributes, text or JSON/source excerpts.
-  const diagnostics = { stage: 'html-acceptance', policy: 'scoped-recovery-v1', decision: 'evaluate-identity', identityEvaluation: 'not-run',
+  const diagnostics = { stage: 'html-acceptance', policy: 'scoped-recovery-v2', decision: 'evaluate-identity', identityEvaluation: 'not-run',
     parseErrors: { total, byCode: [...counts].map(([code, count]) => ({ code, count,
       action: RECOVERY_WARNINGS.has(code) ? 'warning' : SCOPED_RECOVERY.has(code) ? 'scope-check' : 'page-refusal' })) },
-    pageRefusals: [], refusedFields: [], ignoredJsonLdBlocks: 0,
+    pageRefusals: [], identityRefusals: [], duplicateAttributes: {}, refusedFields: [], ignoredJsonLdBlocks: 0,
     structure: { state: 'parsed-tree-counts-not-identity-evidence',
       documentMode: ['no-quirks', 'limited-quirks', 'quirks'].includes(doc.mode) ? doc.mode : 'unknown',
       mainElements: nodes.filter(n => n.tagName === 'main').length, h1Elements: nodes.filter(n => n.tagName === 'h1').length,
       canonicalLinks: nodes.filter(n => n.tagName === 'link' && attr(n, 'rel') === 'canonical').length,
       jsonLdBlocks: nodes.filter(n => n.tagName === 'script' && attr(n, 'type')?.toLowerCase() === 'application/ld+json').length } };
-  const tainted = new Set();
+  const tainted = new Set(), identityTainted = new Set();
   if (overflow) diagnostics.pageRefusals.push('recovery-location-limit');
   if ([...counts.keys()].some(code => !RECOVERY_WARNINGS.has(code) && !SCOPED_RECOVERY.has(code))) diagnostics.pageRefusals.push('unsupported-parse-recovery');
   for (const e of events) {
@@ -190,13 +200,24 @@ function htmlAcceptance(doc, nodes, counts, events, total, overflow) {
       return span && Number.isInteger(e.offset) && span.startOffset <= e.offset && e.offset < span.endOffset;
     });
     if (targets.length !== 1) { diagnostics.pageRefusals.push('unlocated-recovery-scope'); continue; }
-    const target = targets[0]; tainted.add(target);
-    // A discarded duplicate can hide href/rel/type/visibility or identity scope.
-    // Do not reconstruct its value or accept parse5's first attribute as truth.
-    if (e.code === 'duplicate-attribute' && ['html', 'head', 'body', 'main', 'h1', 'link', 'script'].includes(target.tagName)) diagnostics.pageRefusals.push('identity-or-boundary-attribute-ambiguity');
+    const target = targets[0];
+    if (e.code === 'eof-in-comment') { tainted.add(target); identityTainted.add(target); continue; }
+    const name = duplicateAttributeName(target, e.offset, html);
+    const decorative = name === 'class' && ['link', 'script', 'meta'].includes(target.tagName);
+    const role = decorative ? 'decorative-class' : name === 'class' ? 'visibility-class' : ['href', 'rel'].includes(name) ? 'identity-url' :
+      name === 'content' ? 'identity-content' : /^data-(?:(?:movie|film|video)-)?id$/.test(name ?? '') ? 'identity-native-id' : name === null ? 'unclassified-attribute' : 'unreviewed-attribute';
+    diagnostics.duplicateAttributes[role] = (diagnostics.duplicateAttributes[role] ?? 0) + 1;
+    // class is not an input to canonical/JSON-LD/meta interpretation. Elsewhere
+    // it controls this adapter's visibility filter, so dependent evidence is held.
+    if (decorative) continue;
+    tainted.add(target);
+    if (name === 'class') continue;
+    identityTainted.add(target);
+    if (name === null || role === 'identity-native-id' || name === 'content' && target.tagName === 'meta' ||
+      ['html', 'head', 'body', 'main', 'h1', 'link', 'script'].includes(target.tagName)) diagnostics.identityRefusals.push('significant-duplicate-attribute');
   }
   diagnostics.pageRefusals = [...new Set(diagnostics.pageRefusals)];
-  return { diagnostics, tainted };
+  return { diagnostics, tainted, identityTainted };
 }
 
 export async function extractMegogo(html) {
@@ -210,12 +231,14 @@ export async function extractMegogo(html) {
       counts.set(code, (counts.get(code) ?? 0) + 1); total++;
       if (SCOPED_RECOVERY.has(code)) { if (events.length < 256) events.push({ code, offset: e.startOffset }); else overflow = true; }
     } });
-    const all = walk(doc), { diagnostics, tainted } = htmlAcceptance(doc, all, counts, events, total, overflow);
+    const all = walk(doc), { diagnostics, tainted, identityTainted } = htmlAcceptance(doc, all, counts, events, total, overflow, html);
     result.diagnostics = diagnostics;
     if (diagnostics.pageRefusals.length) { diagnostics.decision = 'page-refused'; return { ...result, status: 'unsupported-markup', issues: ['unsupported-html-recovery-scope'] }; }
     const visible = all.filter(n => !inert(n));
     const visibleText = clean(visible.filter(n => n.nodeName === '#text').map(n => n.value).join(' '));
-    if (/verify (?:that )?you are human|підтвердіть,? що ви людина|captcha challenge/iu.test(visibleText)) {
+    const challenge = value => /verify (?:that )?you are human|підтвердіть,? що ви людина|captcha challenge/iu.test(value);
+    const taintedRoots = [...tainted].filter(n => ![...tainted].some(parent => parent !== n && ancestor(parent, n)));
+    if (challenge(visibleText) || taintedRoots.some(n => challenge(potentialLabel(n)))) {
       diagnostics.decision = 'page-refused'; diagnostics.pageRefusals.push('visible-access-challenge');
       return { ...result, status: 'captcha-no-retry', issues: ['Visible challenge; no bypass.'] };
     }
@@ -223,7 +246,7 @@ export async function extractMegogo(html) {
     const geo = /(?:not available in your (?:region|country)|недоступн[а-яіїєґ]* (?:у|в) ваш(?:ому|ій) (?:регіоні|країні))/iu.exec(unambiguousText)?.[0];
     if (geo) add(result.cardFields, 'region', geo, { kind: 'visible-message', locator: 'page' });
     const movies = [];
-    for (const [i, script] of all.filter(n => n.tagName === 'script' && attr(n, 'type')?.toLowerCase() === 'application/ld+json' && !['nav', 'aside', 'footer'].some(t => { for (let p = n.parentNode; p; p = p.parentNode) if (p.tagName === t) return true; return false; })).entries()) {
+    for (const [i, script] of all.filter(n => n.tagName === 'script' && !touches(identityTainted, n) && attr(n, 'type')?.toLowerCase() === 'application/ld+json' && !['nav', 'aside', 'footer'].some(t => { for (let p = n.parentNode; p; p = p.parentNode) if (p.tagName === t) return true; return false; })).entries()) {
       try {
         const json = declarativeJson((script.childNodes ?? []).filter(c => c.nodeName === '#text').map(c => c.value).join(''));
         const roots = values(json); if (roots.length > 100) throw new Error('json-count');
@@ -240,24 +263,29 @@ export async function extractMegogo(html) {
       }
     }
     if (diagnostics.pageRefusals.length) { diagnostics.decision = 'page-refused'; return { ...result, status: 'unsupported-markup', issues: [...result.issues, 'ambiguous-embedded-json-keys'] }; }
-    const canonical = all.filter(n => n.tagName === 'link' && attr(n, 'rel') === 'canonical').map(n => nativeId(attr(n, 'href'))).filter(Boolean);
-    const main = visible.filter(n => n.tagName === 'main');
+    const canonical = all.filter(n => n.tagName === 'link' && !touches(identityTainted, n) && attr(n, 'rel') === 'canonical').map(n => nativeId(attr(n, 'href'))).filter(Boolean);
+    const main = all.filter(n => n.tagName === 'main');
     const fullScope = main.length === 1 ? walk(main[0]) : [];
     const scope = fullScope.filter(n => !inert(n));
-    const h1 = scope.filter(n => n.tagName === 'h1');
+    const h1 = scope.filter(n => n.tagName === 'h1' && !touches(tainted, n));
     const records = labelRecords(scope);
+    const usableYears = records.filter(([k, value, label]) => /^(?:рік|year|год)$/iu.test(labelKey(k)) && !touches(tainted, value) && !touches(tainted, label));
     const riskyRecords = labelRecords(fullScope, potentialLabel).filter(([, value, label]) => touches(tainted, value) || touches(tainted, label));
     const identityNodes = [...all.filter(n => n.tagName === 'link' || n.tagName === 'script'), ...fullScope.filter(n => n.tagName === 'h1'),
       ...[...records, ...riskyRecords].filter(([k]) => /^(?:рік|year|год)$/iu.test(labelKey(k))).flatMap(([, value, label]) => [value, label])];
-    if (main.length > 1 || h1.length > 1 || identityNodes.some(n => touches(tainted, n))) {
-      diagnostics.decision = 'page-refused'; diagnostics.pageRefusals.push('identity-scope-ambiguity');
-      return { ...result, status: 'unsupported-markup-or-identity', issues: ['identity-markup-ambiguity'] };
-    }
+    if (main.length > 1 || identityNodes.some(n => touches(identityTainted, n))) diagnostics.identityRefusals.push('identity-scope-ambiguity');
+    // Quarantined visibility is not affirmative evidence. It also must not hide
+    // a potentially contradictory heading/year while another source matches.
+    if (fullScope.filter(n => n.tagName === 'h1' && touches(tainted, n)).some(n => !titles.has(titleKey(potentialLabel(n)))) ||
+      riskyRecords.some(([k, value]) => /^(?:рік|year|год)$/iu.test(labelKey(k)) && potentialLabel(value) !== '2024')) diagnostics.identityRefusals.push('withheld-identity-signal-may-conflict');
+    diagnostics.identityRefusals = [...new Set(diagnostics.identityRefusals)];
+    diagnostics.identityScope = { usableCanonicalIds: canonical.length, usableJsonMovies: movies.length, usableH1: h1.length,
+      quarantinedH1: fullScope.filter(n => n.tagName === 'h1' && touches(tainted, n)).length, usableYearFields: usableYears.length };
     const candidate = movies.length === 1 ? movies[0] : undefined;
-    const observedTitles = [...(candidate ? values(candidate.name).filter(v => safe(v)) : []), ...(h1.length === 1 ? [text(h1[0])] : [])];
+    const observedTitles = [...(candidate ? values(candidate.name).filter(v => safe(v)) : []), ...h1.map(text)];
     const years = [...(candidate && safe(candidate.datePublished) ? [/^\d{4}/.exec(candidate.datePublished)?.[0]].filter(Boolean) : []),
-      ...records.filter(([k]) => /^(?:рік|year|год)$/iu.test(labelKey(k))).map(([, n]) => text(n)),
-      ...(h1.length === 1 ? [/\((\d{4})\)\s*$/.exec(text(h1[0]))?.[1]].filter(Boolean) : [])];
+      ...usableYears.map(([, n]) => text(n)),
+      ...h1.map(n => /\((\d{4})\)\s*$/.exec(text(n))?.[1]).filter(Boolean)];
     const native = [...canonical, ...(candidate ? [...values(candidate.url), ...values(candidate['@id'])].map(nativeId).filter(Boolean) : [])];
     const stable = candidate ? values(candidate.sameAs).filter(v => typeof v === 'string') : [];
     const imdb = stable.flatMap(v => { try { const u = new URL(v); return ['www.imdb.com', 'imdb.com'].includes(u.hostname) ? [/^\/title\/(tt\d+)(?:\/|$)/.exec(u.pathname)?.[1]].filter(Boolean) : []; } catch { return []; } });
@@ -265,22 +293,23 @@ export async function extractMegogo(html) {
     const conflict = native.some(v => v !== MEGOGO_IDS.nativeId) || imdb.some(v => v !== MEGOGO_IDS.imdbId) || tmdb.some(v => v !== String(MEGOGO_IDS.tmdbId)) || (movies.length <= 1 && observedTitles.some(t => !titles.has(titleKey(t))));
     const nameOK = observedTitles.length > 0 && observedTitles.every(t => titles.has(titleKey(t)));
     const yearOK = years.length > 0 && years.every(y => y === '2024');
-    const matched = !conflict && movies.length <= 1 && native.includes(MEGOGO_IDS.nativeId) && nameOK && (yearOK || imdb.includes(MEGOGO_IDS.imdbId));
-    result.identity = { status: conflict ? 'mismatch' : matched ? 'matched' : 'unknown',
+    const independentMatch = !conflict && movies.length <= 1 && native.includes(MEGOGO_IDS.nativeId) && nameOK && (yearOK || imdb.includes(MEGOGO_IDS.imdbId));
+    const matched = independentMatch && diagnostics.identityRefusals.length === 0;
+    result.identity = { status: conflict ? 'mismatch' : matched ? 'matched' : 'unknown', independentStatus: conflict ? 'mismatch' : independentMatch ? 'matched' : 'unknown',
       observed: { titles: observedTitles.filter(t => safe(t)), years: years.filter(y => safe(y, 10)), nativeIds: [...new Set(native)], imdbIds: imdb, tmdbIds: tmdb },
       basis: 'Observed card native ID + title + year (or exact supplied IMDb). Supplied conflicting IDs block fields; configured IDs are not observations.' };
     diagnostics.identityEvaluation = result.identity.status; diagnostics.decision = matched ? 'fields-evaluated' : 'identity-refused';
     if (!matched) return { ...result, status: conflict ? 'identity-mismatch' : 'unsupported-markup-or-identity', issues: [...result.issues, 'Offer characteristics not attributed to unresolved film.'] };
     properties(result.cardFields, candidate?.additionalProperty, 'Movie', result.issues);
     let recognized = Object.values(result.cardFields).some(f => f.observations.length > 0);
-    // Visible labels are read only in a unique main containing the matching H1,
+    // Visible labels need one main and unanimously matching usable headings,
     // not arbitrary footer/navigation/recommendation text.
     const refused = new Set();
     for (const [label] of riskyRecords) {
       const key = labels.get(labelKey(label));
       if (key) { refused.add(key); if (key === 'resolution') { refused.add('hdr10'); refused.add('dolbyVision'); } }
     }
-    if (h1.length === 1 && titles.has(titleKey(text(h1[0])))) for (const [label, n, labelNode] of records) {
+    if (h1.length > 0 && h1.every(n => titles.has(titleKey(text(n))))) for (const [label, n, labelNode] of records) {
       if (touches(tainted, n) || touches(tainted, labelNode)) continue;
       const items = walk(n).filter(c => c.tagName === 'li' && !inert(c));
       const parts = items.length ? items.map(text) : text(n).split(/\s*;\s*/);
@@ -296,7 +325,7 @@ export async function extractMegogo(html) {
     result.status = geo ? 'geo-restricted-public-metadata' : result.issues.length ? 'partial' : recognized || offers.length ? 'ok' : 'unsupported-characteristic-markup';
     return result;
   } catch { return { ...base(), status: 'unsupported-markup', issues: ['Parser/structure limits; no guessed data.'], diagnostics: {
-    stage: 'html-acceptance', policy: 'scoped-recovery-v1', decision: 'page-refused', identityEvaluation: 'not-completed', pageRefusals: ['parser-or-structure-limit'] } }; }
+    stage: 'html-acceptance', policy: 'scoped-recovery-v2', decision: 'page-refused', identityEvaluation: 'not-completed', pageRefusals: ['parser-or-structure-limit'] } }; }
 }
 
 export async function fetchMegogo(selection, fetchImpl = globalThis.fetch, { timeoutMs = MEGOGO_TIMEOUT_MS, maxBytes = MEGOGO_LIMIT_BYTES } = {}) {

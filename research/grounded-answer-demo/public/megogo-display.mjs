@@ -7,6 +7,7 @@ export function renderMegogoResult(document, host, result, synthetic) {
   add('p', `Fixed source: ${result.sourceURL}`);
   add('p', `Fetcher geography: ${result.fetcherGeography.state}. ${result.fetcherGeography.basis}`);
   add('p', `Identity: ${result.identity.status}; observed native IDs: ${(result.identity.observed.nativeIds ?? []).join(', ') || 'unknown'}`);
+  if (result.identity.independentStatus) add('p', `Independent unambiguous identity signals: ${result.identity.independentStatus}. Inputs within this document, not independent validation. This does not override the overall identity status or establish entitlement.`);
   if (result.identity.observed.titles?.length) add('p', `Observed title/year: ${result.identity.observed.titles.join('; ')} / ${result.identity.observed.years.join('; ') || 'unknown'}`);
   add('p', `Account entitlement: ${result.accountEntitlement.state}. ${result.accountEntitlement.note} Public-card characteristics below are not hidden for lack of login, but are not guaranteed UA/account offers. /ua/ and UI language do not establish that.`);
   const fields = (entries, parent = host) => {

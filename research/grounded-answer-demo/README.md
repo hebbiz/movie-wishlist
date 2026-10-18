@@ -76,8 +76,9 @@ The owner separately approved a [one-card MEGOGO HTML PoC](#megogo-initial-html-
 stacked on #180 checkpoint `b9f3c65`. It is implemented / offline-tested; the
 [owner's first run](docs/digital-ua-owner-validation.md#megogo-initial-html--owner-run-parse-policy-rejection)
 reported HTTP 200 but was rejected by the parse policy before identity evaluation.
-Offer-field usefulness remains **unvalidated**; no agent extraction or repeat
-owner GET. It does not change any
+The subsequent owner attempt reported 30 duplicate attributes and another
+pre-identity refusal. MEGOGO remains **unresolved**; no agent extraction or new
+owner GET in this correction. It does not change any
 previous request body, prompt, model, parser or owner observation. MW-FUT-01
 remains Discovery, not a regular/commercial integration.
 
@@ -404,17 +405,26 @@ URL; robots is not a licence, and residual IP/extraction rights uncertainty
 remains. The owner's approval is bounded, not regular/commercial approval.
 
 [Standalone Termius/Safari restart](docs/iphone-windows.md#megogo-initial-html-owner-workflow)
-now prepares **one final owner GET**, with useful fields and diagnostics together;
-no separate diagnostic round, required synthetic/SSH-disconnect or app-card tour.
+is retained for separately approved future use, **not another owner test now**.
+The previously prepared final GET has been attempted; the owner reports 30
+duplicate attributes, canonical/JSON-LD and two H1s, but identity not evaluated.
 The first owner GET returned `ambiguous-html-tokenization`; the [diagnosis](docs/regional-card-proposal.md#megogo-owner-failure--parse-policy-diagnosis)
 shows a pre-identity parse-policy early exit, not proven ambiguity/wrong film.
 The diagnostic-only checkpoint `03a472e` preserved that blanket gate; it is now
-superseded by [scoped recovery v1](docs/regional-card-proposal.md#megogo-html-acceptance-policy--scoped-recovery-v1).
+superseded by scoped recovery v1 and the current
+[attribute-aware v2 correction](docs/regional-card-proposal.md#megogo-duplicate-attribute-scope--offline-correction-v2).
 parse5 builds the standards-based DOM once. Missing/legacy DOCTYPE and entity
 without `;` are warnings, not identity evidence. Unclosed comments are not read
 as data: completed fields may survive, but an interrupted field stays unknown.
-Duplicate attributes affecting a field quarantine that field; identity/card
-boundary ambiguity refuses the page rather than choosing the first attribute.
+Duplicate attributes affecting a field quarantine that field. Class on canonical,
+JSON-LD or meta nodes is not used by their data readers, so it is not a veto.
+Elsewhere class affects the visibility filter: dependent visible evidence stays
+withheld, while clean JSON-LD/canonical signals can be checked independently.
+Significant href/rel/type/content/native-ID-like ambiguity keeps overall identity
+unknown, not guessed from the surviving first attribute; independentStatus can
+still describe the clean signals. No general duplicate-attribute permission.
+Every usable H1 is compared; repeated agreeing headings do not by count alone
+invalidate identity, while conflicting headings cannot be silently selected away.
 Unmapped/unreviewed recovery and exceeded scope bounds refuse explicitly; this
 is not automatic acceptance of every malformed document or a claim that every
 refused document is unsafe. Identity is evaluated separately on unambiguous
@@ -430,12 +440,17 @@ still do not fill missing tracks/HDR/entitlement.
 
 Every parsed result includes fields **and** `diagnostics`: fixed error-code
 counts/actions, parsed-tree counts, identity-evaluation status, field/page refusal
-reasons and ignored-block count. No text/attributes/URLs/source positions/body
+reasons, fixed duplicate-attribute role counts, usable-source counts and ignored-block count. No text/attribute values/URLs/source positions/body
 are included in diagnostics; location matching stays in memory using parse5's
 own offsets. One-GET/20s/2MiB, auth and no persistence remain unchanged. Exact
 original owner-run code/layout remains unknown and no agent live read occurred.
-Earlier observations are dated controls, not fixture defaults or current truth;
-offer-field usefulness remains unvalidated until the final owner run.
+The correction fixes authored over-blocking cases, **not proven live compatibility**:
+the 30 live duplicates' names/locations and the H1 texts/scopes remain unknown.
+Earlier observations are dated controls, not fixture defaults or current truth.
+MEGOGO remains unresolved; no further GET, diagnostic cycle, synthetic/disconnect
+repeat or streaming-app tour is requested. Other completed source PoCs suffice
+to continue the design-only architecture conclusion without a successful MEGOGO
+adapter; no new integration/runtime model is implied.
 
 ```powershell
 node --test research/grounded-answer-demo/test/megogo.test.mjs

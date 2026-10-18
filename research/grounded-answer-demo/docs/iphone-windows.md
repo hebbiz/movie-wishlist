@@ -679,9 +679,10 @@ Stop only this copy via its Stop helper when finished.
 Separate approved non-LLM `megogo-html` PoC, stacked on #180. The
 [first owner attempt](digital-ua-owner-validation.md#megogo-initial-html--owner-run-parse-policy-rejection)
 returned HTTP 200 but failed the pre-identity parse policy; characteristics are
-**unvalidated**. The owner has now approved the scoped acceptance-policy iteration:
-commands below prepare **one final owner GET with fields and diagnostics together**,
-not a separate diagnostic cycle. The agent does not restart the owner's demo.
+**unvalidated/unresolved**. The owner has completed the subsequent attempt and
+reported 30 duplicate attributes with identity still not evaluated. Commands
+below are retained only for separately approved future reproduction, **not a
+new owner run/restart now**. The agent does not restart the owner's demo.
 Only fixed Dune: Part Two (2024):
 <https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html>.
 [Scope/rules and residual uncertainty](regional-card-proposal.md#megogo-one-card-html-poc).
@@ -742,17 +743,18 @@ use the existing helpers; launch survives the launching shell's exit. Actual
 Termius→Safari/SSH-disconnect behavior was owner-validated earlier, not freshly
 repeated for this new mode. Start/status alone makes no card request.
 
-### Safari — one final GET with fields and diagnostics together
+### Safari — retained workflow, no new owner GET
 
 Open **http://<actual-Windows-IPv4>:4317**, exactly the URL printed by Start/Status;
 Basic Auth username **demo**, hidden password supplied above. Reload stale pages
 after restart. Before clicking check `megogo-html`, Dune, exact source/native ID,
-20s / 2 MiB, no model and fetcher geography unknown. Click **Fetch fixed MEGOGO
-card once** for this final approved test. No automatic retry; don't reload and
-click again after an error. No separate diagnostic-only request or synthetic/
-SSH-disconnect round is needed.
+20s / 2 MiB, no model and fetcher geography unknown. **Do not click/run another
+test for this checkpoint.** The offline v2 correction is not a new live-readiness
+or success claim. Any future approved use retains one click/max one GET and
+combined fields/diagnostics; no automatic retry, diagnostic-only cycle or
+compulsory synthetic/SSH-disconnect round.
 
-Send only a short result: HTTP/retrieval/identity status and **new, missing or
+For a future separately approved use only, the result summary is HTTP/retrieval/identity status and **new, missing or
 conflicting fields** (access/package, languages/associated audio format, subtitles/
 types, resolution, HDR10/DV, price+currency, regional statement). No full HTML,
 JSON, responses or screenshots. No repeated streaming-app tour. Unknown/unsupported
@@ -765,13 +767,15 @@ Ukrainian viewing rights. Compare old observations only as dated controls, never
 fill missing fields from memory. The PoC does not establish general accuracy.
 Stop this copy with its Stop helper when done; no service/firewall/network changes.
 
-The [scoped acceptance policy](regional-card-proposal.md#megogo-html-acceptance-policy--scoped-recovery-v1)
+The [attribute-aware scoped acceptance policy](regional-card-proposal.md#megogo-duplicate-attribute-scope--offline-correction-v2)
 returns a text-only **Structural diagnostics** block alongside useful fields,
 not only on rejection. Read decision, identity evaluation, parser code counts/
 actions and field/page refusal reasons. Legacy DOCTYPE/entity warnings alone do
 not block identity; damaged fields stay unknown, ambiguous identity stays blocked.
 No raw body/text/attributes/URLs/positions/logs in diagnostics. The original run's
 codes remain unrecoverable; current mocks are not a reconstruction of that body.
-Send a short **single-result** summary of fields and diagnostic reasons, not full
-JSON/HTML/screenshots. Keep unknowns unknown; a block/unsupported outcome ends
-this run, not a reason for an additional diagnostic test or streaming-app tour.
+The existing 30-event owner summary is recorded; do not obtain more diagnostics
+now. In future approved results, distinguish overall identity from the clean
+independent-signal status: the latter cannot override withheld significant
+attributes. Keep unknowns unknown; no new JSON/HTML/screenshots, diagnostic test
+or streaming-app tour is requested. MEGOGO remains unresolved.

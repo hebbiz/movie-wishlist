@@ -869,9 +869,9 @@ conditions are established; do not retrofit current adapters now.
 
 ## MEGOGO one-card HTML PoC
 
-**Status: implemented / offline-tested; scoped acceptance policy prepares one
-final owner GET with fields and diagnostics together. First owner run rejected
-before identity; offer characteristics remain unvalidated.** This section replaces
+**Status: implemented / offline-tested; two owner attempts rejected before
+identity. MEGOGO remains unresolved. Attribute-aware v2 fixes authored policy
+defects only; no new owner GET is requested.** This section replaces
 the earlier proposal in place; the legacy anchor preserves historical links.
 Starting from #180 `b9f3c65`, the owner approved the same bounded experiment
 model as Kinobaza HTML: one fixed public card, explicit manual action, transient
@@ -979,7 +979,8 @@ reads with live extraction validation or promise needed fields will be found.
 No compulsory synthetic/SSH-disconnect repeat or streaming-app tour: those
 mechanics are unchanged. The owner reported parse-policy rejection, documented
 below; the subsequent approved [acceptance-policy iteration](#megogo-html-acceptance-policy--scoped-recovery-v1)
-now prepares **one final GET**, not a separate diagnostic cycle. Stop on blocks/identity ambiguity/
+prepared one final GET, subsequently attempted. The [v2 correction](#megogo-duplicate-attribute-scope--offline-correction-v2)
+does not start another manual cycle. Stop on blocks/identity ambiguity/
 unsupported or JS/login-only fields; do not retry or expand endpoints. Offer
 characteristics remain unvalidated; no general accuracy conclusion.
 
@@ -1087,6 +1088,11 @@ unchanged. No real iPhone, live request, owner process stop or system change.
 
 ### MEGOGO HTML acceptance policy — scoped recovery v1
 
+**Historical checkpoint `06c69ef`.** The owner has now reported its second
+attempt. Attribute/tag/count rules below are superseded where noted by the
+[offline v2 correction](#megogo-duplicate-attribute-scope--offline-correction-v2);
+the final owner plan below is completed, not a new test instruction.
+
 Approved follow-up on #181 `03a472e`, base still #180 `b9f3c65`. A blanket
 conformance gate is **not treated as an intrinsic security requirement**. The
 parser's deterministic DOM is the read model; warnings neither establish nor
@@ -1163,3 +1169,85 @@ DOM execution, persistence or destination requests. Existing 22 Gemini-body
 goldens and other adapter regressions pass. No Windows lifecycle rerun: helpers/
 native launch/auth/transport are unchanged, no new module imports for temp copies.
 No real iPhone or live extraction validation; owner demo remains untouched.
+
+### MEGOGO duplicate-attribute scope — offline correction v2
+
+Review baseline #181 `06c69ef`, open on #180 `b9f3c65`, rechecked October 18,
+2026. [Latest owner summary](digital-ua-owner-validation.md#second-owner-attempt--30-duplicate-attributes-identity-not-evaluated)
+reports 30 duplicate-attribute events, canonical/JSON-LD/two H1s and a pre-identity
+refusal. No body, attribute names/values/locations or heading contexts retained;
+no live read, owner repeat, hidden request or reconstruction performed.
+
+**Exact old identity scope:** the v1 immediate veto included any duplicate on
+`html`, `head`, `body`, `main`, `h1`, `link`, `script`, without examining the
+attribute's role. A second gate included every link/script and main-subtree H1,
+plus labelled year evidence and their touched ancestors/descendants; >1 main
+or >1 usable H1 also vetoed before identity evaluation. Thus a decorative class
+on a canonical link/script or two agreeing desktop/mobile-style headings were
+enough to stop the page. Scope membership was not evidence of a real conflict.
+
+**Proven policy defects fixed:** four new authored regression cases failed on
+v1 before changes (decorative link/script class, agreeing H1s, visibility-held
+evidence with independent JSON identity, and missing significant-attribute
+classification). They pass with v2. Fixtures are authored, **not a reconstruction
+of the 30 live events**. The previous diagnostics cannot establish which
+attributes actually occurred or whether the live H1 texts agree. Therefore:
+the over-broad policy defect is proven/fixed, while actual MEGOGO compatibility,
+identity and offer usefulness remain **unresolved**. No new owner test is started.
+
+| Attribute/evidence context | v2 action and reason |
+| --- | --- |
+| Duplicate class on link/script/meta | Not an input to canonical/JSON-LD/meta interpretation in this adapter; record a fixed decorative-class count, do not veto identity. No claim about visual appearance/CSS, and no permission for other duplicate attributes. |
+| Class elsewhere | It affects this adapter's inert/visibility filter. Quarantine dependent H1/year/fields and regional claims, not blindly accept either class value. Clean canonical/JSON-LD can still be evaluated. A possibly contradictory quarantined H1/year keeps overall identity unknown. |
+| href/rel/type or another non-class duplicate on document/card/identity boundaries | Withhold the affected node and dependent identity evidence. Check other unambiguous signals, but significant ambiguity keeps overall identity unknown; never pick the first attribute or let an agreeing JSON block erase the unresolved source. |
+| Meta content or native-ID-like duplicate (`data-id`, `data-movie-id`, `data-film-id`, `data-video-id`) | Not classified decorative. Overall identity unknown, independent evidence still inspected. These names are conservative role hints, not newly implemented positive meta/native-ID extraction or proof which identity a value describes. |
+| Duplicate confined to another supported field | Only that card field stays unknown; no competing representation chosen. Independent identity and unrelated fields/offers remain separate. |
+| Several usable H1s | Compare **all**, never choose the expected one. All agreeing expected names can support identity/one main's field context. An explicit unambiguous title/ID conflict remains mismatch; unresolved multi-main/movie scope still withholds overall identity. Count alone is not conflict. |
+| Unknown/foreign attribute-name mapping, unsupported recovery/location limits | No general acceptance. Quarantine unknown attribute scope or retain explicit page refusal when even scope cannot be bound. Existing 256-event/depth/node/byte bounds preserved. |
+
+Attribute classification uses the installed parse5 tokenizer's duplicate-name
+error position and the **same start tag's already tokenized attribute names**.
+Only a bounded ASCII-name suffix match is used, case-insensitively; the discarded
+value is not parsed, reconstructed, compared or returned. Unmatched names are
+not assumed harmless. Quoted/unquoted/boolean attrs, mixed case, Unicode before
+the tag and misleading attribute-like text inside values are covered. No raw
+name/value/offset is exported: diagnostics add fixed role counts and usable/
+quarantined-source counts only. No new parser dependency or source acquisition.
+
+`identity.independentStatus` describes clean observed signals; `identity.status`
+remains the overall gate. A significant ambiguity can yield independent matched
+**and overall unknown**; it never releases offer fields or proves availability.
+All clean stable-ID/title conflicts still defeat matching; no ID is supplied
+from configuration when ambiguous canonical evidence is withheld. Both statuses
+are labelled separately in text-only display. Malformed/duplicate-key JSON,
+CAPTCHA (including quarantined visibility text), no-store/auth/one-shot/bounds,
+no persistence/execution/follow-up requests and other adapter behavior remain
+protected. No owner process, Windows helper or production changes.
+
+Checks: **234 offline/HTTP passed**, including **46 MEGOGO**; targeted Edge/mobile
+**12 passed / 1 absent-WebKit skip**, zero failures. Four failures reproduced
+before correction, then authored case and security regressions passed. The suite
+also confirms significant href/content/native-ID ambiguities stay withheld,
+independent evidence cannot override conflict/missing IDs, decorative class is
+not a global class exemption, H1 disagreement is not selected away, one-shot
+and no destination/storage/content logging remain. No Windows lifecycle rerun
+(helpers/config/transport unchanged), real iPhone or live extraction check.
+
+**Stop/manual plan:** no GET, owner restart, synthetic/disconnect cycle,
+diagnostic request, app-card tour or body/screenshots required now. Preserve
+the owner's report as unresolved evidence. Any future live step requires a
+separate decision; this commit is not an automatic testing loop.
+
+### Architecture conclusion boundary — no new integration
+
+The [completed source comparison](digital-ua-owner-validation.md#cross-source-complementarity--observations-not-independent-entitlement)
+already supports drafting the architecture conclusion without resolving MEGOGO:
+TMDb contributes identity/catalogue text and country access signals; MOTN adds
+candidate URLs/access types with known characteristic/currency limits; Kinobaza
+adds URLs with explicit/unknown territory and shared JustWatch lineage. These
+are complementary observations, not entitlement truth or independent corroboration.
+MEGOGO remains an optional unresolved direct-characteristics research source,
+not a prerequisite to define source/field provenance, unknowns/conflicts and
+manual account evidence in the [design-only shared model](#shared-offer-observation-model--design-only).
+No automatic adapter, aggregation/runtime model, discovery→fetch pipeline or
+implementation handoff is authorized by that conclusion. MW-FUT-01 remains Discovery.
