@@ -61,7 +61,13 @@ breakaway/auth/security controls. Safe native diagnostics and paired baseline/
 HEAD tests are documented there; explicit new-mode SSH-disconnect validation
 after the fix remains pending, separate from the reported Safari live answers.
 
-No production integration, TMDb calls, chat/input, LLM-output
+The approved [TMDb data probe](#tmdb-data-probe) is now implemented separately
+as opt-in `tmdb-data`, stacked on #179 at `9e4bf4f`. Identity/catalogue metadata
+and actual `results.UA` are separate blocks; maximum two serial HTTP requests
+per film. **Offline-tested, live-unvalidated; live readiness conditional on
+review of applicable current terms.** No new MOTN/card/SSH-disconnect test asked.
+
+No production integration, production TMDb calls, chat/input, LLM-output
 normalization, scoring, response archive or analytics. HTML-only returns a small
 deterministic candidate result, not a normalized Gemini answer. PR #173 is not changed
 or imported as code; two previously verified scalar film IDs are reused with
@@ -79,7 +85,7 @@ with Basic Auth and a synthetic request after explicit SSH disconnection. This i
 owner validation on that configuration, not an independent agent device test
 or a guarantee for other Windows/SSH environments.
 
-Node.js 24, modern desktop browser. Gemini and Movie of the Night modes need no npm install or
+Node.js 24, modern desktop browser. Gemini, Movie of the Night and TMDb modes need no npm install or
 build. HTML-only needs the pinned isolated parser below, not production
 dependencies. Run from the repository root. No `.env` file is loaded.
 
@@ -88,10 +94,11 @@ dependencies. Run from the repository root. No `.env` file is loaded.
 | `DEMO_MODE` | `synthetic` by default; explicitly `live` only for an owner-run request |
 | `GEMINI_API_KEY` | Required only for live Gemini modes; HTML/Movie of the Night modes never need/forward it |
 | `MOTN_API_KEY` | Direct Movie of the Night developer-portal key; live `motn-api` only, server-side header; Windows helper prompts hidden instead of reading inherited key env |
+| `TMDB_READ_ACCESS_TOKEN` | Live `tmdb-data` only, server-side Bearer token; Windows helper prompts hidden, never inherits a production key or unrelated provider credential |
 | `DEMO_FILM` | `dune-part-two` (default), `coherence`, `blade-runner-final-cut` |
 | `DEMO_DISCOVERY` | `physical` (default), `digital-ua` |
-| `DEMO_RETRIEVAL` | `search` (default), `url-context`, opt-in `kinobaza-html` or `motn-api` |
-| `DEMO_URL_SOURCE` | URL Context: `apple-tv` default or `kinobaza`; HTML-only: unset or `kinobaza`; unset for Search and `motn-api` |
+| `DEMO_RETRIEVAL` | `search` (default), `url-context`, opt-in `kinobaza-html`, `motn-api` or `tmdb-data` |
+| `DEMO_URL_SOURCE` | URL Context: `apple-tv` default or `kinobaza`; HTML-only: unset or `kinobaza`; unset for Search, `motn-api`, `tmdb-data` |
 | `DEMO_AMAZON_REGION` | Optional, physical only: `us`, `uk`, `de`, `it`; unset for multi-store search |
 | `DEMO_PORT` | Default 4317, range 1024–65535 |
 | `DEMO_ACCESS` | `localhost` (default) or explicit `lan` |
@@ -224,9 +231,9 @@ probe → comparison with Kinobaza/JustWatch → MEGOGO adapter feasibility → 
 offer model. Direct JustWatch Partner API access is **not** the current Kinobaza
 tracking-link path; owner-reported platform coverage is not an API guarantee.
 Authorized workers remain a separate conditional direction, not this scope.
-Next implementation is specified in the [TMDb data-probe handoff](docs/tmdb-probe-handoff.md),
-**design only in this task**, with current terms uncertainty separated from
-technical capability and no provider-localization inference from film metadata.
+The approved follow-up [TMDb data-probe handoff](docs/tmdb-probe-handoff.md) is
+implemented below, with current terms uncertainty separated from technical
+capability and no provider-localization inference from film metadata.
 
 Historical implementation checks at `d3e32b0` (Node 24.22.0, October 18, 2026): **135**
 offline/HTTP tests passed, including the 22-body Gemini golden regression.
@@ -252,6 +259,73 @@ node --test research/grounded-answer-demo/test/motn.test.mjs
 # With an already installed Playwright/browser configured as below:
 node --test --test-concurrency=1 --test-timeout=120000 research/grounded-answer-demo/test/motn-browser.test.mjs
 .\research\grounded-answer-demo\test\windows.test.ps1 -Motn
+```
+
+### TMDb data probe
+
+Opt-in `DEMO_RETRIEVAL=tmdb-data`, `DEMO_DISCOVERY=digital-ua`, film `coherence`
+or `dune-part-two`; unset URL source and Amazon region. Fixed IDs above are
+reused as scalar catalogue data; no MOTN/PR #173 import or runtime request.
+Only synthetic scenario `grounded` is supported. No new dependency.
+
+Before clicking: film/director, both IDs, UA, `uk-UA`, exact A/B URLs, operation,
+two-request cap, 20-second/2-MiB **per-request** bounds and conditional terms
+readiness. No model prompt exists. `/session` and transport use the same startup
+selection; browser input/body cannot override it.
+
+1. **A:** Details with `language=uk-UA` and appended `external_ids`,
+   `alternative_titles`, `credits`, `release_dates`, `translations`.
+   Exact primary TMDb ID is required; conflicting supplied TMDb/IMDb IDs block
+   B. Missing IMDb is an explicitly unknown crosswalk, not a mismatch. Dates or
+   localized title variation alone do not override stable IDs. Missing/invalid
+   appended data stays partial/unknown, with no decomposition/fallback calls.
+2. **B:** separate Watch Providers request; project only uppercase `results.UA`.
+   If A fails identity, B is **not requested**, not an empty UA result. Actual
+   absent/null/empty UA and missing/null/empty/invalid buckets are distinguished.
+   Subscription (`flatrate`), rental (`rent`), purchase (`buy`), ad-supported
+   (`ads`) stay separate; future buckets are labelled unknown, not remapped.
+   `link` is the **TMDb country watch page**, not a provider deep link.
+
+Transient display shows source/receipt time/status, original/requested titles,
+dates, IDs, country-tagged aliases, `job=Director` credits, film-level language
+codes and translations. Translation overview/tagline have presence states only,
+not full prose. Explicit `uk` + nonempty translation title establishes Ukrainian
+**catalogue text**. Requested `uk-UA` alone can fall back; UA aliases/dates,
+original/spoken languages do **not** establish provider dubbing/subtitles.
+Provider names/IDs, separate access buckets, `logo_path` (text only) and source
+`display_priority` add aggregate country signals, not audio, prices, quality,
+entitlement or a confidence score. Shared JustWatch lineage is not independent
+confirmation of Kinobaza. No external image/provider/watch-page fetch occurs.
+
+Bearer `TMDB_READ_ACCESS_TOKEN` stays server-side, never URL/arguments/HTML/state.
+No default production key, LLM, retry/redirect, search/country enumeration,
+destination fetch, raw response logging/archive or browser storage. A failed A
+uses one request; successful identity allows at most one B. Errors are findings,
+not instructions to reload/retry. Synthetic uses authored invented metadata and
+services with **zero actual requests**, not expected live facts.
+
+[Official docs/terms assessment and implementation record](docs/tmdb-probe-handoff.md#implementation-record)
+and [token setup / one-line iPhone restart](docs/iphone-windows.md#tmdb-data-owner-workflow).
+TMDb/JustWatch attribution and the official documentation logo are visible in
+Credits/About. Current complete Terms remain inaccessible to this agent;
+**live readiness is conditional on normal owner review of applicable current
+terms for this bounded non-LLM scope**. No email is required merely for that
+access limitation. No paid plan or zero-total-cost assertion is made.
+
+Implementation/synthetic checks are separate from [pending owner evidence](docs/digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).
+No live API/card test was performed. The four research questions concern useful
+cross-source identity fields, returned UA buckets, explicit catalogue-language
+evidence versus offer-track inference, and additional information over MOTN/
+Kinobaza. Actual answers await **one short owner session**, one click per film
+(max four HTTP requests), not a general accuracy test. No repeated SSH-disconnect
+or synthetic owner test required; streaming cards only for a concrete new
+material discrepancy. Do not send full JSON/screenshots.
+
+```powershell
+node --test research/grounded-answer-demo/test/tmdb.test.mjs
+# With the same external Playwright configuration described below:
+node --test --test-concurrency=1 research/grounded-answer-demo/test/tmdb-browser.test.mjs
+.\research\grounded-answer-demo\test\windows.test.ps1 -Tmdb
 ```
 
 ### 1. Physical default (safe synthetic display)

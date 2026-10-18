@@ -777,6 +777,31 @@ No USD, UHD, Ukrainian audio or negative availability is substituted from contro
 Close this manual stage: useful candidate links/access types in these cases;
 language, video, prices/currency and coverage not established as complete or
 reliable. Two films do not support a general accuracy conclusion. No new owner
-test. Proceed to the [TMDb design-only handoff](tmdb-probe-handoff.md); implementation
-and any live run require their own approved follow-up. Other demo modes, native
+test. The [TMDb handoff](tmdb-probe-handoff.md) was subsequently approved and
+implemented as an isolated follow-up; its live run remains conditional. Other demo modes, native
 Windows/auth controls, Kinobaza parser and production are unchanged.
+
+## Approved TMDb data probe — implementation, not live findings
+
+The owner approved the bounded two-film handoff after #179 `9e4bf4f`. Separate
+`tmdb-data` mode now implements A identity/catalogue metadata and B actual
+`results.UA`, maximum two serial HTTP requests per film, with fixed IDs and no
+search/fallback/LLM/destination requests. This is not a shared offer model or
+new availability truth source. MOTN and Kinobaza modes/parsers are unchanged.
+
+Canonical endpoint/schema/terms assessment, localization hypothesis and actual
+implementation limits remain in the [existing handoff/record](tmdb-probe-handoff.md#implementation-record),
+not duplicated here. The official TMDb FAQ/Watch Providers docs were rechecked
+October 18, 2026. Full current API Terms remain robots-inaccessible, so
+**live readiness is conditional on owner review of the applicable agreement**,
+not a permission/ban inferred from an old index or a compulsory email. No paid
+plan selected. The official documentation SVG/notice and JustWatch attribution
+are local display assets, not response evidence or branding certification.
+
+Implemented + synthetic/offline-tested does not answer which real fields/UA
+providers are returned. In particular film-level TMDb language/UA aliases do
+not fill MOTN's provider-track/quality/currency gaps. Explicit `uk` catalogue
+translation and JustWatch aggregate buckets are different evidence classes;
+shared JustWatch lineage is not independent corroboration. Owner plan is one
+short session, one click per film, max four HTTP requests. No obligatory repeat
+card/synthetic/SSH-disconnect tests. [Results remain pending](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).

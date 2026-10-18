@@ -564,3 +564,104 @@ No data may be sent to an LLM or used for AI training/evaluation/improvement.
 The current checkpoint does not request another live/synthetic/SSH-disconnect
 test or card recheck. If a genuine disconnect problem appears, report status without secrets;
 do not relax auth/Host/Origin or introduce a session-bound fallback.
+
+## TMDb data owner workflow
+
+Isolated non-LLM probe, fixed Coherence/Dune IDs, separate metadata A / UA
+providers B. [Result contract](../README.md#tmdb-data-probe),
+[scoped terms/readiness record](tmdb-probe-handoff.md#implementation-record).
+New results are **live-unvalidated**. No compulsory repeat synthetic or
+SSH-disconnect owner test: the existing detached/LAN workflow is unchanged;
+only provider token routing was added and checked with a mock-only temp child.
+Do not repeat MOTN or known streaming-card checks without a specific new issue.
+
+### Token and readiness (once, owner only)
+
+1. Sign in to your own [TMDb account/API settings](https://www.themoviedb.org/settings/api).
+   If API access is not set up, follow the normal developer application flow
+   linked there. Describe this actual personal, non-commercial research scope;
+   do not invent a production URL or submit information on the owner's behalf.
+2. Review the applicable current API/account agreement and attribution for this
+   bounded non-LLM, transient-display use. Agent reads of the
+   [complete Terms](https://www.themoviedb.org/api-terms-of-use) were robots-denied,
+   including October 18, 2026. The current [FAQ](https://developer.themoviedb.org/docs/faq)
+   describes conditional non-commercial use without an API fee, not zero total
+   costs or full legal clearance. Commercial licensing is a separate question;
+   no paid plan is selected or purchased here. If normal setup presents new
+   requirements, stop rather than automatically accepting a paid upgrade.
+   If direct conflict applies, stop. If text remains unavailable/ambiguous,
+   retain synthetic only and keep live readiness conditional. No email is
+   demanded just because the text was inaccessible. The local logo comes from
+   official docs; include current approved-logo/attribution requirements in
+   this review. Do not accept terms automatically via this demo.
+3. In API settings copy **API Read Access Token**, not the v3 `api_key` value.
+   [Official application authentication](https://developer.themoviedb.org/docs/authentication-application)
+   documents `Authorization: Bearer` for v3/v4. No account/user token OAuth flow
+   or TMDb/provider account password is needed by the demo.
+4. Start prompts for `TMDB_READ_ACCESS_TOKEN` with `Read-Host -AsSecureString`
+   (`-ApiKey` parameter is SecureString for tests/programmatic callers). Paste
+   only in the hidden prompt, never commands/chat/files/transcripts/screenshots.
+   Helper passes only this credential in the child's environment; no Gemini,
+   MOTN or inherited production key. Separate hidden LAN password, username demo.
+
+### Checkout and a single restart command
+
+If Termius SSH opens cmd.exe, first run `powershell.exe -NoProfile` (or installed
+`pwsh.exe -NoProfile`). Do not bypass execution policy. Inspect your actual copy:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; git status --short --branch; git fetch --prune origin
+```
+
+Preserve all tracked/untracked files. Before switching/updating running demo
+files, the **owner**, not the agent/test, deliberately stops only this copy with
+`.\research\grounded-answer-demo\windows\Stop-Demo.ps1`. Then select
+`codex/mw-fut-01-tmdb-data` (if absent locally:
+`git switch --track origin/codex/mw-fut-01-tmdb-data`; otherwise
+`git switch codex/mw-fut-01-tmdb-data`), then
+`git merge --ff-only origin/codex/mw-fut-01-tmdb-data`. Inspect HEAD and scope;
+stop on divergence/conflict, no reset/clean/stash/force. This branch is stacked
+on #179, not a reason to merge its parents. No npm install for TMDb mode.
+
+**One standalone PowerShell restart line**, after the terms readiness condition.
+It resets every relevant switch/key after SSH reconnect. Enter `coherence` for
+the first film, `dune-part-two` for the second; enter THIS Windows host's actual
+private IPv4, not another device/project's IP. Start prompts for LAN password and
+TMDb token hidden. Secrets are not arguments/state/logs; no response archive.
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; $tmdbFilm = Read-Host 'Film: coherence or dune-part-two'; if ($tmdbFilm -notin @('coherence','dune-part-two')) { throw 'Unsupported fixed film' }; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'tmdb-data'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = $tmdbFilm; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+For optional synthetic use only (not an additional required owner test), change
+that line's `DEMO_MODE` to `synthetic`; no API token prompt or network request.
+Status/stop remain the existing helpers. Each live start asks for the token
+again; no reliance on prior SSH environment. Detached process keeps the token
+only in memory until stopped; no storage or service/task configuration.
+
+### One short Safari session, two clicks total
+
+Open **http://<actual-Windows-IPv4>:4317**, exactly Start's printed URL, Basic
+username **demo**, separate LAN password. Trusted private home Wi-Fi only; HTTP
+Basic credentials are not encrypted. No firewall/SSH/network/service changes.
+Reload after each restart, check film/IDs, `tmdb-data`, UA, uk-UA, both planned
+URLs and max-two cap before clicking **once**. The existing Termius → Safari
+workflow works independently of an active SSH session; there is no requirement
+to repeat the earlier disconnect demonstration for this iteration.
+
+First Coherence, then restart with the same command choosing Dune and reload
+Safari. **One click per film**, at most two serial title-level HTTP requests
+each (four total). B is not requested if A fails primary identity. Missing append
+stays partial, errors/quota/identity conflicts are findings: stop, no retry or
+follow-up round. Start/status/reload alone makes no TMDb request.
+
+Report four concise points per film in the
+[pending owner record](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending):
+useful cross-source identity fields; actual UA providers/access buckets/states;
+explicit Ukrainian catalogue text vs indirect language clues; useful new data
+over dated MOTN/Kinobaza observations. Requested locale/UA alias/original audio
+is not provider dubbing/subtitles. TMDb watch-page link is not a provider deep
+link; JustWatch overlap is not independent confirmation or account entitlement.
+No general accuracy, full JSON, screenshots or output archive. Reopen a known
+streaming card only for a **concrete new material discrepancy**, not by default.
+Stop only this copy via its Stop helper when finished.

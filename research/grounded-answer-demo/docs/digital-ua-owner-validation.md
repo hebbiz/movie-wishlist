@@ -355,5 +355,35 @@ audited fields in the reviewed code. It did not independently inspect the live
 responses or establish the upstream cause of the anomalies. Only the proven
 identity/status defect is corrected; no USD/UHD/audio substitutions are made.
 The correction is offline-tested, not revalidated live. **No repeat owner run or
-streaming-card check requested.** The next step is the design-only
-[TMDb data-probe handoff](tmdb-probe-handoff.md). MW-FUT-01 remains Discovery.
+streaming-card check requested.** The next step was the
+[TMDb data-probe handoff](tmdb-probe-handoff.md), subsequently approved for
+isolated implementation. MW-FUT-01 remains Discovery.
+
+## TMDb data probe — owner validation pending
+
+October 18, 2026 implementation checkpoint, **not owner-run evidence**:
+`tmdb-data` now supports the same fixed two films, A identity/catalogue metadata
+separate from B actual `results.UA`, max two serial HTTP requests per film.
+Only authored synthetic/mocks were executed by the implementation agent. No
+real UA providers, translations, catalogue completeness or additional value over
+MOTN/Kinobaza is established yet. Live readiness is conditional on normal owner
+review of applicable current terms; see the [implementation/terms record](tmdb-probe-handoff.md#implementation-record).
+
+One short owner session after that condition, one click per film, with a concise
+summary (no full JSON/live output/screenshots):
+
+1. Which returned stable IDs, titles/aliases, dates/directors help cross-source
+   matching? Note missing/conflicting fields without guessing year meaning.
+2. What exact `results.UA` state and provider/access buckets were returned?
+   Distinguish not-requested/error/missing/null/empty from a reported signal.
+3. Did explicit `uk` translation metadata establish Ukrainian catalogue text?
+   Requested locale, UA alias/date and original/spoken language do not establish
+   dubbing/subtitles for a provider. No numeric confidence or audio inference.
+4. What useful **additional** information did these blocks provide over the
+   existing dated MOTN/Kinobaza observations, and what remained unknown?
+
+No repeated synthetic/SSH-disconnect test or previously checked card visit
+required for the unchanged workflow. Only a concrete new material discrepancy
+justifies a targeted check; errors/terms conflict are stop criteria, no retries.
+Two films cannot establish general accuracy. Historical observations above are
+unchanged and not guaranteed current. MW-FUT-01 remains Discovery.

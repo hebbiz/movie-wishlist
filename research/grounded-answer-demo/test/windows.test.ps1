@@ -1,10 +1,11 @@
 # Explicit Windows integration test. No ssh/firewall/services/real credentials/API.
-param([string]$LanIPv4, [switch]$UrlContext, [switch]$Kinobaza, [switch]$Html, [switch]$Motn)
+param([string]$LanIPv4, [switch]$UrlContext, [switch]$Kinobaza, [switch]$Html, [switch]$Motn, [switch]$Tmdb)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if ($Kinobaza -and -not $UrlContext) { throw '-Kinobaza requires -UrlContext.' }
 if ($Html -and ($UrlContext -or $Kinobaza)) { throw '-Html is separate from Gemini URL Context.' }
 if ($Motn -and ($Html -or $UrlContext -or $Kinobaza)) { throw '-Motn is a separate non-LLM probe.' }
+if ($Tmdb -and ($Motn -or $Html -or $UrlContext -or $Kinobaza)) { throw '-Tmdb is a separate non-LLM probe.' }
 $source = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $copy = Join-Path $tempBase ('mw-grounded-test-' + [Guid]::NewGuid().ToString('D'))
@@ -16,7 +17,7 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
-    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','motn.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
+    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','motn.mjs','tmdb.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html) {
         $null = New-Item -ItemType Directory -Path (Join-Path $copy 'node_modules')
@@ -32,6 +33,7 @@ try {
     if ($Kinobaza) { $launch.Arguments += ' -Kinobaza' }
     if ($Html) { $launch.Arguments += ' -Html' }
     if ($Motn) { $launch.Arguments += ' -Motn' }
+    if ($Tmdb) { $launch.Arguments += ' -Tmdb' }
     if ($LanIPv4) {
         $parsed = $null
         Assert ([Net.IPAddress]::TryParse($LanIPv4, [ref]$parsed) -and $parsed.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork -and $parsed.ToString() -ceq $LanIPv4) 'Invalid test LAN IPv4.'
@@ -54,7 +56,7 @@ try {
     try { $response = $client.GetStringAsync($state.url + '/session').GetAwaiter().GetResult() | ConvertFrom-Json } finally { $client.Dispose(); $handler.Dispose() }
     Assert ($response.discovery -eq 'digital-ua' -and $response.film.id -eq 'coherence') 'Server switches not inherited.'
     Assert ($response.mode -ceq 'synthetic') 'Fixture must remain synthetic before any /answer test.'
-    $expectedRetrieval = if ($Motn) { 'motn-api' } elseif ($Html) { 'kinobaza-html' } elseif ($UrlContext) { 'url-context' } else { 'search' }
+    $expectedRetrieval = if ($Tmdb) { 'tmdb-data' } elseif ($Motn) { 'motn-api' } elseif ($Html) { 'kinobaza-html' } elseif ($UrlContext) { 'url-context' } else { 'search' }
     Assert ($response.retrieval -eq $expectedRetrieval) 'Retrieval switch not inherited.'
     if ($UrlContext -or $Html) {
         $expectedSource = if ($Kinobaza -or $Html) { 'kinobaza' } else { 'apple-tv' }
@@ -66,7 +68,10 @@ try {
     if ($Motn) {
         Assert ($response.country -ceq 'ua' -and $response.imdbId -ceq 'tt2866360' -and $response.sourceURL -ceq 'https://api.movieofthenight.com/v4/shows/tt2866360?country=ua' -and $null -eq $response.model) 'Movie of the Night configuration not inherited.'
     }
-    if ($Html -or $Motn) {
+    if ($Tmdb) {
+        Assert ($response.country -ceq 'UA' -and $response.tmdbId -eq 220289 -and $response.imdbId -ceq 'tt2866360' -and $response.requestBudget -eq 2 -and $null -eq $response.model) 'TMDb switches not inherited.'
+    }
+    if ($Html -or $Motn -or $Tmdb) {
         $handler = [Net.Http.HttpClientHandler]::new(); $handler.UseProxy = $false
         $client = [Net.Http.HttpClient]::new($handler)
         if ($LanIPv4) { $client.DefaultRequestHeaders.Authorization = [Net.Http.Headers.AuthenticationHeaderValue]::new('Basic', [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('demo:offline-integration-password'))) }
@@ -75,7 +80,8 @@ try {
         try {
             $answer = $client.PostAsync($state.url + '/answer', [Net.Http.StringContent]::new('{}')).GetAwaiter().GetResult()
             $payload = $answer.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json
-            Assert ([int]$answer.StatusCode -eq 200 -and $payload.mode -ceq 'synthetic' -and $payload.result.identity.status -ceq 'matched') 'Synthetic parser/projection in detached child failed.'
+            $identityStatus = if ($Tmdb) { $payload.result.identity.identity.status } else { $payload.result.identity.status }
+            Assert ([int]$answer.StatusCode -eq 200 -and $payload.mode -ceq 'synthetic' -and $identityStatus -ceq 'matched') 'Synthetic parser/projection in detached child failed.'
             $answer.Dispose()
         } finally { $client.Dispose(); $handler.Dispose() }
     }
@@ -113,6 +119,11 @@ try {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'motn-launch.fixture.mjs') -Destination (Join-Path $copy 'server.mjs')
         $env:DEMO_MODE = 'live'; $restartArgs.ApiKey = ConvertTo-SecureString 'offline-motn-key-sentinel' -AsPlainText -Force
     }
+    if ($Tmdb) {
+        Copy-Item -LiteralPath (Join-Path $copy 'server.mjs') -Destination (Join-Path $copy 'server-core.mjs')
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'tmdb-launch.fixture.mjs') -Destination (Join-Path $copy 'server.mjs')
+        $env:DEMO_MODE = 'live'; $restartArgs.ApiKey = ConvertTo-SecureString 'offline-tmdb-token-sentinel' -AsPlainText -Force
+    }
     if ($LanIPv4) { $restartArgs.Access = 'lan'; $restartArgs.BindIPv4 = $LanIPv4; $restartArgs.LanPassword = ConvertTo-SecureString 'offline-integration-password' -AsPlainText -Force }
     & (Join-Path $copy 'windows/Start-Demo.ps1') @restartArgs
     $restarted = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
@@ -140,7 +151,24 @@ try {
             Assert ([int]$again.StatusCode -eq 409) 'Detached child one-shot replay failed.'; $again.Dispose()
         } finally { $client.Dispose(); $handler.Dispose() }
     }
-    Assert (-not ($saved -match 'offline-integration-password|PASSWORD|GEMINI_API_KEY|MOTN_API_KEY|Authorization|SYNTHETIC ONLY')) 'Metadata contains content/secret fields.'
+    if ($Tmdb) {
+        Assert ($afterRestart.mode -ceq 'live' -and $afterRestart.country -ceq 'UA' -and $afterRestart.providersURL -ceq $response.providersURL) 'TMDb readiness/config mismatch.'
+        $metadata = Get-Content -LiteralPath $statePath -Raw
+        Assert (-not (($afterRestart | ConvertTo-Json -Depth 10) + $metadata -match 'offline-tmdb-token-sentinel|TMDB_READ_ACCESS_TOKEN')) 'Token reached state/session.'
+        $handler = [Net.Http.HttpClientHandler]::new(); $handler.UseProxy = $false
+        $client = [Net.Http.HttpClient]::new($handler)
+        if ($LanIPv4) { $client.DefaultRequestHeaders.Authorization = [Net.Http.Headers.AuthenticationHeaderValue]::new('Basic', [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('demo:offline-integration-password'))) }
+        $client.DefaultRequestHeaders.Add('Origin', $restarted.url); $client.DefaultRequestHeaders.Add('x-demo-session', $afterRestart.token)
+        try {
+            $answer = $client.PostAsync($restarted.url + '/answer', [Net.Http.StringContent]::new('{}')).GetAwaiter().GetResult()
+            $payload = $answer.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json
+            Assert ($payload.result.identity.status -ceq 'ok' -and $payload.result.providers.status -ceq 'ok' -and $payload.result.requestsMade -eq 2) 'Token did not reach the two-request mock-only child.'
+            $answer.Dispose()
+            $again = $client.PostAsync($restarted.url + '/answer', [Net.Http.StringContent]::new('{}')).GetAwaiter().GetResult()
+            Assert ([int]$again.StatusCode -eq 409) 'TMDb detached child replay failed.'; $again.Dispose()
+        } finally { $client.Dispose(); $handler.Dispose() }
+    }
+    Assert (-not ($saved -match 'offline-integration-password|PASSWORD|GEMINI_API_KEY|MOTN_API_KEY|TMDB_READ_ACCESS_TOKEN|Authorization|SYNTHETIC ONLY')) 'Metadata contains content/secret fields.'
     & (Join-Path $copy 'windows/Stop-Demo.ps1')
     Write-Output 'PASS: parent-exit survival, scenario inheritance, duplicate start, identity refusal, safe stop and restart. SSH disconnect not tested.'
 } finally {
