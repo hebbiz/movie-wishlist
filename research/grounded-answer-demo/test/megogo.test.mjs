@@ -119,29 +119,28 @@ test('MEGOGO visible CAPTCHA is not bypassed', async () => {
   const r = await extractMegogo(syntheticMegogo({ body: '<p>Verify you are human</p>' }));
   assert.equal(r.status, 'captcha-no-retry'); assert.equal(r.identity.status, 'unknown');
 });
-test('MEGOGO parser rejection is a policy decision, not proof of ambiguous tokenization', async () => {
+test('MEGOGO recoverable warnings use the standard DOM, identity evaluated independently', async () => {
   const cases = [
     ['legacy doctype', syntheticMegogo().replace('<!doctype html>', '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">'), 'non-conforming-doctype'],
     ['recoverable text entity', syntheticMegogo({ body: '<p>Example &copy label</p>' }), 'missing-semicolon-after-character-reference'],
-    ['conflicting duplicate attribute', syntheticMegogo().replace('<link rel="canonical"', '<link rel="canonical" rel="alternate"'), 'duplicate-attribute'],
     ['truncated comment', syntheticMegogo() + '<!-- incomplete', 'eof-in-comment'],
   ];
   for (const [name, html, expected] of cases) {
     const r = await extractMegogo(html);
-    assert.equal(r.status, 'unsupported-markup', name); assert.equal(r.identity.status, 'unknown', name);
-    assert.deepEqual(r.issues, ['html-parse-policy-rejection'], name);
-    assert.equal(r.diagnostics.stage, 'html-parse-policy', name);
-    assert.equal(r.diagnostics.identityEvaluation, 'not-run', name);
-    assert.deepEqual(r.diagnostics.parseErrors, { total: 1, byCode: [{ code: expected, count: 1, blocking: true }] }, name);
+    assert.equal(r.status, 'ok', name); assert.equal(r.identity.status, 'matched', name);
+    assert.deepEqual(r.issues, [], name);
+    assert.equal(r.diagnostics.stage, 'html-acceptance', name);
+    assert.equal(r.diagnostics.identityEvaluation, 'matched', name);
+    assert.deepEqual(r.diagnostics.parseErrors, { total: 1, byCode: [{ code: expected, count: 1, action: expected === 'eof-in-comment' ? 'scope-check' : 'warning' }] }, name);
     assert.equal(r.diagnostics.structure.mainElements, 1, name); assert.equal(r.diagnostics.structure.h1Elements, 1, name);
     assert.equal(r.diagnostics.structure.canonicalLinks, 1, name); assert.equal(r.diagnostics.structure.jsonLdBlocks, 1, name);
-    for (const f of Object.values(r.cardFields)) assert.equal(f.state, 'unknown', name);
+    assert.equal(r.cardFields.audio.state, 'reported', name); assert.equal(r.accountEntitlement.state, 'unknown', name);
   }
 });
 test('MEGOGO diagnostic counts include errors after the old 20-event cap; no content/URL/attribute/position leaks', async () => {
   const privateMarker = 'PRIVATE_DIAGNOSTIC_TEXT_DO_NOT_RETURN';
   const r = await extractMegogo(syntheticMegogo({ body: `<p data-private="${privateMarker}" data-private="other">${privateMarker} ${'&copy text '.repeat(25)}</p>` }) + '<!-- truncated');
-  assert.equal(r.status, 'unsupported-markup'); assert.equal(r.identity.status, 'unknown');
+  assert.equal(r.status, 'ok'); assert.equal(r.identity.status, 'matched');
   const codes = r.diagnostics.parseErrors.byCode;
   assert.equal(codes.find(e => e.code === 'missing-semicolon-after-character-reference').count, 25);
   assert.equal(codes.find(e => e.code === 'eof-in-comment').count, 1); assert.equal(r.diagnostics.parseErrors.total, 27);
@@ -152,18 +151,17 @@ test('MEGOGO error-free HTML / optional end tags and existing missing-doctype al
     const r = await extractMegogo(html); assert.equal(r.identity.status, 'matched'); assert.equal(r.status, 'ok');
   }
 });
-test('MEGOGO diagnostic preserves strict policy under mixed errors and bounded structure inspection', async () => {
+test('MEGOGO mixed recoverable errors keep scope; structure bounds still refuse the page', async () => {
   const mixed = await extractMegogo(syntheticMegogo({ body: '<p data-test=x data-test=y>Example</p>' }).replace('<!doctype html>', ''));
   assert.deepEqual(mixed.diagnostics.parseErrors.byCode, [
-    { code: 'missing-doctype', count: 1, blocking: false }, { code: 'duplicate-attribute', count: 1, blocking: true },
+    { code: 'missing-doctype', count: 1, action: 'warning' }, { code: 'duplicate-attribute', count: 1, action: 'scope-check' },
   ]);
-  assert.equal(mixed.identity.status, 'unknown');
+  assert.equal(mixed.identity.status, 'matched');
   const deep = await extractMegogo(syntheticMegogo({ body: '<div data-test=x data-test=y>' + '<div>'.repeat(270) + '</div>'.repeat(271) }));
-  assert.equal(deep.status, 'unsupported-markup'); assert.deepEqual(deep.issues, ['html-parse-policy-rejection']);
-  assert.deepEqual(deep.diagnostics.structure, { state: 'unavailable-structure-limit' });
-  assert.equal(deep.diagnostics.parseErrors.byCode[0].code, 'duplicate-attribute'); assert.equal(deep.identity.status, 'unknown');
+  assert.equal(deep.status, 'unsupported-markup'); assert.deepEqual(deep.diagnostics.pageRefusals, ['parser-or-structure-limit']);
+  assert.equal(deep.identity.status, 'unknown');
 });
-test('MEGOGO rejected HTML through mock HTTP yields structural diagnostics once, no raw content or second fetch', async t => {
+test('MEGOGO mock HTTP returns useful fields and diagnostics together once, no raw content or second fetch', async t => {
   const marker = 'PRIVATE_MOCK_RESPONSE_DO_NOT_RETURN'; let calls = 0;
   const server = createDemo({ mode: 'live', retrieval: 'megogo-html', discovery: 'digital-ua', fetchImpl: async () => {
     calls++; return response(syntheticMegogo({ body: `<p data-private="${marker}" data-private="other">${marker}</p>` }));
@@ -175,10 +173,79 @@ test('MEGOGO rejected HTML through mock HTTP yields structural diagnostics once,
   const res = await fetch(`${origin}/answer`, { method: 'POST', headers });
   assert.equal(res.status, 200); assert.equal(res.headers.get('cache-control'), 'no-store');
   const text = await res.text(), r = JSON.parse(text).result;
-  assert.equal(r.httpStatus, 200); assert.equal(r.status, 'unsupported-markup'); assert.equal(r.identity.status, 'unknown');
+  assert.equal(r.httpStatus, 200); assert.equal(r.status, 'ok'); assert.equal(r.identity.status, 'matched');
+  assert.equal(r.cardFields.audio.state, 'reported'); assert.equal(r.diagnostics.identityEvaluation, 'matched');
   assert.equal(r.diagnostics.parseErrors.byCode[0].code, 'duplicate-attribute'); assert.doesNotMatch(text, new RegExp(marker));
   assert.doesNotMatch(text, /data-private|<script|<main/); assert.equal(calls, 1);
   assert.equal((await fetch(`${origin}/answer`, { method: 'POST', headers })).status, 409); assert.equal(calls, 1);
+});
+test('MEGOGO duplicate attributes on identity/boundaries refuse instead of trusting the first value', async () => {
+  for (const html of [
+    syntheticMegogo().replace('<link rel="canonical"', '<link rel="canonical" rel="alternate"'),
+    syntheticMegogo().replace(`href="${MEGOGO_URL}"`, `href="${MEGOGO_URL}" href="https://megogo.net/ua/view/999-other.html"`),
+    syntheticMegogo().replace('<main>', '<main class="a" class="b">'),
+    syntheticMegogo().replace('<h1>', '<h1 hidden hidden="false">'),
+    syntheticMegogo().replace('type="application/ld+json"', 'type="application/ld+json" type="text/javascript"'),
+    syntheticMegogo().replace('<h1>Dune: Part Two</h1>', '<h1><span class=a class=b>Dune: Part Two</span></h1>'),
+  ]) {
+    const r = await extractMegogo(html); assert.equal(r.identity.status, 'unknown'); assert.equal(r.diagnostics.decision, 'page-refused');
+    assert.equal(r.diagnostics.identityEvaluation, 'not-run'); assert.equal(r.cardFields.audio.state, 'unknown');
+  }
+});
+test('MEGOGO duplicate attributes in a field make only that field unknown, not a selected first value', async () => {
+  const r = await extractMegogo(partial(field('Audio', '<span data-locale=en data-locale=uk>English AAC</span>') + field('Quality', 'SD') + field('Package', 'Example safe package'), {
+    additionalProperty: [{ '@type': 'PropertyValue', name: 'Audio', value: 'Spanish PCM' }],
+  }).replace('<main>', '<main>🎬 Unicode before scoped recovery'));
+  assert.equal(r.identity.status, 'matched'); assert.equal(r.status, 'partial'); assert.equal(r.cardFields.audio.state, 'unknown');
+  assert.deepEqual(r.cardFields.audio.observations, []); assert.equal(r.cardFields.package.state, 'reported');
+  assert.deepEqual(r.diagnostics.refusedFields, ['audio']); assert.equal(r.cardFields.resolution.state, 'reported');
+});
+test('MEGOGO unclosed comment is not data: complete earlier fields survive, interrupted field withheld', async () => {
+  const r = await extractMegogo(partial(field('Package', 'Earlier package') + '<dt>Audio</dt><dd>English AAC<!-- incomplete'));
+  assert.equal(r.identity.status, 'matched'); assert.equal(r.cardFields.package.state, 'reported');
+  assert.equal(r.cardFields.audio.state, 'unknown'); assert.deepEqual(r.diagnostics.refusedFields, ['audio']);
+  const identity = await extractMegogo(syntheticMegogo().replace('Dune: Part Two</h1>', 'Dune: Part Two<!-- incomplete'));
+  assert.equal(identity.identity.status, 'unknown'); assert.ok(identity.diagnostics.pageRefusals.includes('identity-scope-ambiguity'));
+});
+test('MEGOGO warnings never establish identity or override explicit conflicts', async () => {
+  const r = await extractMegogo(syntheticMegogo({ body: '<p>&copy text</p>', movie: { '@id': 'https://megogo.net/ua/view/999-other.html' } }));
+  assert.equal(r.identity.status, 'mismatch'); assert.equal(r.cardFields.audio.state, 'unknown');
+  const empty = await extractMegogo('<!DOCTYPE html PUBLIC "legacy"><main>Unknown &copy text</main>');
+  assert.equal(empty.identity.status, 'unknown'); assert.equal(empty.cardFields.audio.state, 'unknown');
+});
+test('MEGOGO unsupported recovery is a justified page refusal, not automatic acceptance of every parse error', async () => {
+  for (const html of [syntheticMegogo() + '<div class="unfinished', syntheticMegogo({ body: '<p>Bad\u0000text</p>' })]) {
+    const r = await extractMegogo(html); assert.equal(r.identity.status, 'unknown');
+    assert.ok(r.diagnostics.pageRefusals.includes('unsupported-parse-recovery')); assert.equal(r.cardFields.audio.state, 'unknown');
+  }
+});
+test('MEGOGO location-event bounds refuse, and ambiguous regional text is not selected by first attributes', async () => {
+  const overflow = await extractMegogo(syntheticMegogo({ body: '<p class=a class=b>Example</p>'.repeat(257) }));
+  assert.equal(overflow.identity.status, 'unknown'); assert.ok(overflow.diagnostics.pageRefusals.includes('recovery-location-limit'));
+  const region = await extractMegogo(syntheticMegogo({ body: '<p class=normal class=ad>Not available in your country</p>' }));
+  assert.equal(region.identity.status, 'matched'); assert.equal(region.cardFields.region.state, 'unknown');
+});
+test('MEGOGO duplicate visibility attributes cannot hide a conflicting field or identity signal', async () => {
+  for (const body of [
+    '<dt hidden hidden="false">Audio</dt><dd>English AAC</dd>',
+    '<div hidden hidden="false"><dt>Audio</dt><dd>English AAC</dd></div>',
+  ]) {
+    const r = await extractMegogo(partial(body, { additionalProperty: [{ '@type': 'PropertyValue', name: 'Audio', value: 'Spanish PCM' }] }));
+    assert.equal(r.identity.status, 'matched'); assert.equal(r.cardFields.audio.state, 'unknown'); assert.ok(r.diagnostics.refusedFields.includes('audio'));
+  }
+  const r = await extractMegogo(syntheticMegogo({ body: '<div hidden hidden="false"><dl><dt>Year</dt><dd>2099</dd></dl></div>' }));
+  assert.equal(r.identity.status, 'unknown'); assert.ok(r.diagnostics.pageRefusals.includes('identity-scope-ambiguity'));
+});
+test('MEGOGO malformed JSON block is not repaired; duplicate keys cannot hide identity conflicts', async () => {
+  const broken = await extractMegogo(syntheticMegogo({ noJson: true, head: '<script type="application/ld+json">{"@type":"Movie", broken</script>' }));
+  assert.equal(broken.identity.status, 'matched'); assert.equal(broken.status, 'partial');
+  assert.equal(broken.diagnostics.ignoredJsonLdBlocks, 1); assert.equal(broken.cardFields.audio.state, 'reported');
+  for (const json of ['{"@context":"https://schema.org","@type":"Movie","name":"Wrong film","name":"Dune: Part Two"}', '{"@context":"https://schema.org","@type":"Movie","name":"Wrong","na\\u006de":"Dune: Part Two"}']) {
+    const html = syntheticMegogo({ noJson: true, head: `<script type="application/ld+json">${json}</script>` });
+    const r = await extractMegogo(html); assert.equal(r.identity.status, 'unknown'); assert.equal(r.status, 'unsupported-markup');
+    assert.equal(r.diagnostics.ignoredJsonLdBlocks, 1); assert.equal(r.cardFields.audio.state, 'unknown');
+    assert.ok(r.diagnostics.pageRefusals.includes('ambiguous-embedded-json-keys'));
+  }
 });
 test('MEGOGO exact one bounded GET, no credentials, assets, destinations or key headers', async () => {
   let calls = 0;

@@ -20,6 +20,8 @@ test('MEGOGO mobile browser (mock only, not real iPhone)', { skip: !process.env.
       if (kind === 'geo') html = html.replace('</main>', '<p>Not available in your country</p></main>');
       if (kind === 'unknown') html = '<!doctype html><main>Unknown markup</main>';
       if (kind === 'parse-policy') html += '<p data-private="PRIVATE_DIAGNOSTIC_BROWSER" data-private="other">PRIVATE_DIAGNOSTIC_BROWSER &copy text</p>';
+      if (kind === 'field-refusal') html = html.replace('English — PCM 1.0', '<span data-lang=en data-lang=uk>English PCM</span>');
+      if (kind === 'page-refusal') html = html.replace('<link rel="canonical"', '<link rel="canonical" rel="alternate"');
       return new Response(html, { headers: { 'content-type': 'text/html' } });
     } });
     await new Promise(r => server.listen(0, '127.0.0.1', r)); t.after(() => new Promise(r => server.close(r)));
@@ -47,10 +49,19 @@ test('MEGOGO mobile browser (mock only, not real iPhone)', { skip: !process.env.
     if (kind === 'unknown') assert.match(text, /unsupported-markup/);
     if (kind === 'redirect') assert.match(text, /redirect-not-followed/);
     if (kind === 'parse-policy') {
-      assert.match(text, /html-parse-policy-rejection/); assert.match(text, /Structural diagnostics/);
+      assert.match(text, /Identity: matched/); assert.match(text, /Structural diagnostics/);
       assert.match(text, /duplicate-attribute/); assert.match(text, /missing-semicolon-after-character-reference/);
-      assert.match(text, /not-run/); assert.doesNotMatch(text, /PRIVATE_DIAGNOSTIC_BROWSER|data-private|startOffset/);
-      assert.doesNotMatch(text, /SYNTHETIC Example Package|<img src=x/);
+      assert.match(text, /fields-evaluated/); assert.doesNotMatch(text, /PRIVATE_DIAGNOSTIC_BROWSER|data-private|startOffset/);
+      assert.match(text, /SYNTHETIC Example Package/);
+    }
+    if (kind === 'field-refusal') {
+      assert.match(text, /Identity: matched/); assert.match(text, /audio: unknown/);
+      assert.match(text, /partial-fields/); assert.match(text, /SYNTHETIC Example Package/);
+      assert.doesNotMatch(text, /PCM/);
+    }
+    if (kind === 'page-refusal') {
+      assert.match(text, /Identity: unknown/); assert.match(text, /identity-or-boundary-attribute-ambiguity/);
+      assert.match(text, /not-run/); assert.doesNotMatch(text, /SYNTHETIC Example Package/);
     }
     assert.equal(await page.locator('#answer a,#answer img,#answer script,#answer iframe').count(), 0);
     assert.equal(await page.locator('#retrieval-result').textContent(), ''); assert.equal(await page.locator('#suggestions').textContent(), '');
@@ -61,7 +72,7 @@ test('MEGOGO mobile browser (mock only, not real iPhone)', { skip: !process.env.
     await page.reload(); await page.waitForFunction(() => !document.querySelector('#run').disabled); assert.equal(await page.locator('#answer').textContent(), '');
     assert.equal(calls, mode === 'live' ? 1 : 0);
   };
-  for (const [mode, kind] of [['synthetic', 'normal'], ...['normal', 'geo', 'blocked', 'redirect', 'mismatch', 'unknown', 'parse-policy'].map(k => ['live', k])]) await t.test(`${mode}/${kind}`, t => run(browser, mode, kind, t));
+  for (const [mode, kind] of [['synthetic', 'normal'], ...['normal', 'geo', 'blocked', 'redirect', 'mismatch', 'unknown', 'parse-policy', 'field-refusal', 'page-refusal'].map(k => ['live', k])]) await t.test(`${mode}/${kind}`, t => run(browser, mode, kind, t));
   await t.test('WebKit', { skip: !existsSync(webkit.executablePath()) && 'WebKit binary absent; no download.' }, async t => {
     const engine = await webkit.launch({ headless: true }); t.after(() => engine.close()); await run(engine, 'synthetic', 'normal', t);
   });

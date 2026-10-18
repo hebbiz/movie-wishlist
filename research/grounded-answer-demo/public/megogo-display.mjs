@@ -21,7 +21,7 @@ export function renderMegogoResult(document, host, result, synthetic) {
   if (result.issues.length) add('pre', result.issues.join('\n'));
   if (result.diagnostics) {
     add('h3', 'Structural diagnostics — no page content');
-    add('p', 'HTML rejected by the conservative parse policy before identity evaluation. These counts are not proof of card identity or tokenization ambiguity. No body, attributes, text or parser positions included.');
+    add('p', 'Fields and structural diagnostics come from the same single retrieval. Parse warnings are not identity evidence. Scoped refusals remain unknown; page refusals are explicit. No body, attributes, text or parser positions included in diagnostics.');
     add('pre', JSON.stringify(result.diagnostics, null, 2));
   }
 }

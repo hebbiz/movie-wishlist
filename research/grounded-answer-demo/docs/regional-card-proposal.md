@@ -869,8 +869,9 @@ conditions are established; do not retrofit current adapters now.
 
 ## MEGOGO one-card HTML PoC
 
-**Status: implemented / offline-tested; first owner run rejected before identity,
-offer characteristics unvalidated.** This section replaces
+**Status: implemented / offline-tested; scoped acceptance policy prepares one
+final owner GET with fields and diagnostics together. First owner run rejected
+before identity; offer characteristics remain unvalidated.** This section replaces
 the earlier proposal in place; the legacy anchor preserves historical links.
 Starting from #180 `b9f3c65`, the owner approved the same bounded experiment
 model as Kinobaza HTML: one fixed public card, explicit manual action, transient
@@ -977,7 +978,8 @@ reads with live extraction validation or promise needed fields will be found.
 [standalone Termius/Safari workflow](iphone-windows.md#megogo-initial-html-owner-workflow).
 No compulsory synthetic/SSH-disconnect repeat or streaming-app tour: those
 mechanics are unchanged. The owner reported parse-policy rejection, documented
-below; **no repeat GET or owner test now**. Stop on blocks/identity ambiguity/
+below; the subsequent approved [acceptance-policy iteration](#megogo-html-acceptance-policy--scoped-recovery-v1)
+now prepares **one final GET**, not a separate diagnostic cycle. Stop on blocks/identity ambiguity/
 unsupported or JS/login-only fields; do not retry or expand endpoints. Offer
 characteristics remain unvalidated; no general accuracy conclusion.
 
@@ -1005,6 +1007,10 @@ characteristics remain unvalidated; no general accuracy conclusion.
   reads only; these are not extraction validation. MW-FUT-01 remains Discovery.
 
 ### MEGOGO owner failure — parse-policy diagnosis
+
+**Historical diagnostic-only checkpoint `03a472e`.** The no-tolerance-expansion
+decision below describes that commit, not the current policy. Superseded by the
+separately approved [scoped acceptance policy](#megogo-html-acceptance-policy--scoped-recovery-v1).
 
 Review baseline #181 `abc2bba`, base #180 `b9f3c65`, rechecked open/unchanged
 October 18, 2026. [Owner-reported result](digital-ua-owner-validation.md#megogo-initial-html--owner-run-parse-policy-rejection):
@@ -1078,3 +1084,82 @@ Mock HTTP proves rejection yields one GET and blocks replay, with no body/marker
 leak; browser checks text-only diagnostics, no external requests/storage/logging.
 No Windows lifecycle rerun: helpers/native transport/session/network behavior
 unchanged. No real iPhone, live request, owner process stop or system change.
+
+### MEGOGO HTML acceptance policy — scoped recovery v1
+
+Approved follow-up on #181 `03a472e`, base still #180 `b9f3c65`. A blanket
+conformance gate is **not treated as an intrinsic security requirement**. The
+parser's deterministic DOM is the read model; warnings neither establish nor
+refute identity. No attempt to infer the original owner-run error from mocks.
+This implementation is live-unvalidated and prepares one final owner GET, not
+an intermediate diagnostic request or a general crawler/production parser.
+
+The [HTML parsing standard](https://html.spec.whatwg.org/multipage/parsing.html#parse-errors)
+and [parse5 options/locations](https://parse5.js.org/interfaces/parse5.ParserOptions.html)
+were rechecked October 18, 2026 against pinned 8.0.1 behavior. parse5 handles
+recovery; no string repair/reparse, JS, assets, endpoints or network discovery.
+Source locations are internal only: match parser errors to parser-produced
+start-tag/comment spans, using the same offset system (Unicode fixture covered).
+No byte-offset/JavaScript-index conversion, source snippets or positions returned.
+
+| Condition | Minimal action / rationale |
+| --- | --- |
+| Missing or non-conforming legacy DOCTYPE | Warning. Parsing mode recorded, not treated as film evidence. No layout/CSS/browser script is executed, and explicit identity checks still apply. |
+| Missing semicolon after character reference | Warning; use parser-decoded DOM text/attributes, never guess the author's intended spelling. Validated field grammar and text-only display remain mandatory. |
+| EOF in comment | Comment is never data. Completed independent fields can survive; a field/H1/year node containing or affected by the unfinished comment is refused. Text swallowed into the comment is not reconstructed. Trailing comment outside used nodes does not veto identity. |
+| Duplicate HTML attributes in a supported field/value/label subtree | Unknown for that entire card field, including competing card-level representations; no first/last/equality guess. A tainted quality field also withholds HDR10/DV derived from that label. Other independent fields/offers survive. |
+| Duplicate attributes on html/head/body/main, H1, link or script, or recovery touching identity ancestors/year evidence | Page-level refusal/identity unknown: the discarded attribute could alter card visibility/scope or hide rel/href/type/identity. Do not reconstruct discarded values or use another identity source to wave away that ambiguity. |
+| Duplicate attributes outside all used fields/identity | That subtree is not evidence. No regional claim from its ambiguous text; independent card fields can still be reported. Warning/scope-check remains visible. |
+| Malformed JSON-LD | Ignore that block, record issue/count; no repair or eval. Independent visible evidence can establish identity/fields. Unsupported/missing block content is not negative availability evidence. |
+| Duplicate JSON object keys, including escaped equivalent names | Page refusal: JSON.parse otherwise silently selects a value and could hide a stable-ID/title conflict. No key-level scope guarantee, so do not guess which discarded value mattered. Object scopes are independent; identical key names in separate objects are allowed. |
+| Truncated tag, null replacement, or any other unreviewed parse recovery | Explicit unsupported recovery/page refusal. These can discard attributes/elements, change text or boundaries; this small adapter has no reviewed field-scope mapping for them. Not a claim that every such document is malicious or that all standards recovery must be refused. No automatic accept-all list. |
+| Unlocated scoped error, >256 location events, depth/node/byte limits | Explicit page refusal: bounded analysis cannot reliably bind damage to evidence. No guessing or limit increase. |
+| Conflicting explicit native/IMDb/TMDb IDs, title, multiple card scopes | Identity mismatch or unresolved as appropriate; no fields attributed. Check both supplied Movie URL and @id, not a preferred one. Parse warnings do not override the gate. |
+
+The unchanged native-ID/title/year-or-exact-IMDb matching criteria run **after**
+the scope policy, independently of warning count. Multiple mains/H1s or tainted
+identity evidence stay unresolved rather than selecting a convenient node.
+Observed IDs, not configured constants, provide evidence. Dates alone do not
+explain away stable-ID conflicts. No confidence score or new identity discovery.
+
+Duplicate visibility attributes cannot hide a competing label from quarantine:
+the bounded raw tree is consulted **only to find potential fields to withhold**,
+never to turn hidden/untrusted text into positive evidence. A possibly hidden
+year/H1 stays an identity-scope refusal. No regional claim is taken from a
+tainted subtree. These checks do not broaden supported field selectors.
+
+`diagnostics` now accompanies every successfully parsed result, **including
+useful fields**: `scoped-recovery-v1`, decision, evaluated identity status,
+fixed parser-code counts/actions, parsed-tree counts/mode, field/page refusals,
+ignored malformed-block count. A parse/structure-limit outcome has fixed refusal
+diagnostics. No body/text/attributes/URLs/positions/exception dump/credentials in
+diagnostics. Error counters have a fixed vocabulary; private scope events are
+bounded to 256. JSON key/depth checking uses validated JSON tokens in memory,
+no new dependency; no repair or evaluation. Display remains text-only/transient.
+
+Unchanged: fixed source, one action → max one GET, 20s / 2 MiB, no redirects,
+retries, login/cookies, follow-ups, scripts/assets, persistence, response logs,
+LLM/TMDb/MOTN or production integration. LAN auth/Host/Origin/session controls
+and Windows helpers are unchanged. No owner process stopped; no system changes.
+Malformed metadata/unsupported layout may still yield unknowns: no promise this
+policy will expose fields absent from MEGOGO's initial HTML or prove entitlement.
+
+**Final owner plan:** use the existing [standalone restart](iphone-windows.md#megogo-initial-html-owner-workflow)
+on the correct updated branch, hidden LAN password/no API key, Safari username
+`demo`. At most **one live GET Dune**. Read useful/new/missing/conflicting fields
+and the structural decision/code counts/refused fields **in that same result**.
+No separate diagnostic-only run, automatic retries, compulsory synthetic/SSH
+disconnect repeat or streaming-app tour. Request only the short summary, not
+HTML/raw JSON/screenshots. A page refusal/unknown is a final finding for this
+run, not a reason to request another immediately. Agent makes no live GET.
+
+Acceptance-policy checks: **228 offline/HTTP passed**, including **40 MEGOGO**;
+targeted Edge/mobile **11 passed / 1 absent-WebKit skip**, zero failures. Tests
+cover recoverable warnings with useful fields, field-only/page refusals,
+duplicate visibility attributes, Unicode scope binding, identity URL/@id and
+stable-ID conflicts, malformed/duplicate-key JSON, >256 event bounds, combined
+one-request HTTP result and replay rejection. No content in diagnostics/logs,
+DOM execution, persistence or destination requests. Existing 22 Gemini-body
+goldens and other adapter regressions pass. No Windows lifecycle rerun: helpers/
+native launch/auth/transport are unchanged, no new module imports for temp copies.
+No real iPhone or live extraction validation; owner demo remains untouched.

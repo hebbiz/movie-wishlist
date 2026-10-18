@@ -404,17 +404,38 @@ URL; robots is not a licence, and residual IP/extraction rights uncertainty
 remains. The owner's approval is bounded, not regular/commercial approval.
 
 [Standalone Termius/Safari restart](docs/iphone-windows.md#megogo-initial-html-owner-workflow)
-is retained for separately approved reproduction, **not a repeat owner test now**.
+now prepares **one final owner GET**, with useful fields and diagnostics together;
+no separate diagnostic round, required synthetic/SSH-disconnect or app-card tour.
 The first owner GET returned `ambiguous-html-tokenization`; the [diagnosis](docs/regional-card-proposal.md#megogo-owner-failure--parse-policy-diagnosis)
 shows a pre-identity parse-policy early exit, not proven ambiguity/wrong film.
-That misleading issue is now `html-parse-policy-rejection`, with parser-code
-counts and small parsed-tree counts under `diagnostics`; no page text, attributes,
-URLs, parser positions, body or content logs. The conservative gate and one-GET
-contract remain unchanged. Exact original parser code/layout is unrecoverable
-from the old summary; no safe tolerance expansion is demonstrated for that run.
-No new owner/synthetic/SSH-disconnect or streaming-app round. Earlier observations
-are controls, never seeded facts or current guaranteed truth. Offer fields remain
-unvalidated; only authored fixtures/mock HTTP were independently checked.
+The diagnostic-only checkpoint `03a472e` preserved that blanket gate; it is now
+superseded by [scoped recovery v1](docs/regional-card-proposal.md#megogo-html-acceptance-policy--scoped-recovery-v1).
+parse5 builds the standards-based DOM once. Missing/legacy DOCTYPE and entity
+without `;` are warnings, not identity evidence. Unclosed comments are not read
+as data: completed fields may survive, but an interrupted field stays unknown.
+Duplicate attributes affecting a field quarantine that field; identity/card
+boundary ambiguity refuses the page rather than choosing the first attribute.
+Unmapped/unreviewed recovery and exceeded scope bounds refuse explicitly; this
+is not automatic acceptance of every malformed document or a claim that every
+refused document is unsafe. Identity is evaluated separately on unambiguous
+observed evidence. Both Movie URL and supplied `@id` are checked for conflicts.
+
+Malformed JSON-LD is ignored without repair/evaluation; visible independent
+evidence can still work. Duplicate JSON object keys (including escaped equivalent
+names) refuse the page because a discarded value could hide an identity conflict.
+No script/endpoints are executed or fetched. Ambiguous card fields are unknown
+even when another card-level representation supplies a value; offers remain
+separate, never copied across scopes. Original language, UHD or country URL
+still do not fill missing tracks/HDR/entitlement.
+
+Every parsed result includes fields **and** `diagnostics`: fixed error-code
+counts/actions, parsed-tree counts, identity-evaluation status, field/page refusal
+reasons and ignored-block count. No text/attributes/URLs/source positions/body
+are included in diagnostics; location matching stays in memory using parse5's
+own offsets. One-GET/20s/2MiB, auth and no persistence remain unchanged. Exact
+original owner-run code/layout remains unknown and no agent live read occurred.
+Earlier observations are dated controls, not fixture defaults or current truth;
+offer-field usefulness remains unvalidated until the final owner run.
 
 ```powershell
 node --test research/grounded-answer-demo/test/megogo.test.mjs

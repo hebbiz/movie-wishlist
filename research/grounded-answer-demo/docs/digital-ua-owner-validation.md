@@ -458,8 +458,14 @@ The old output did not retain error codes; it cannot establish whether the live
 document had harmless recoverable syntax, meaningful structural problems or a
 different/blocked page. No precise live cause is claimed from authored fixtures.
 
-The correction supplies content-free structural/error-code diagnostics and a
-truthful policy-rejection label; it does **not** relax parsing/identity gates or
-claim to repair the unknown live layout. No new owner GET, card/app tour, raw
-HTML/metadata/screenshots, API call or owner-demo restart requested. Extraction
-usefulness remains unvalidated. MW-FUT-01 remains Discovery.
+The diagnostic-only correction at `03a472e` supplied content-free structural/
+error-code diagnostics and a truthful policy-rejection label; it did **not** relax parsing/identity gates or
+claim to repair the unknown live layout. At that checkpoint no new owner GET,
+card/app tour, raw HTML/metadata/screenshots, API call or owner-demo restart was
+requested. Extraction usefulness remains unvalidated. MW-FUT-01 remains Discovery.
+
+The subsequent owner-approved [HTML acceptance policy](regional-card-proposal.md#megogo-html-acceptance-policy--scoped-recovery-v1)
+supersedes the blanket parse gate, not this historical observation. It is
+offline/mock-tested only; no new live outcome is recorded. It prepares **one
+final owner GET** returning useful fields and structural diagnostics together,
+not a separate manual diagnostic cycle. No agent GET or owner-demo change.

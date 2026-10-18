@@ -679,8 +679,9 @@ Stop only this copy via its Stop helper when finished.
 Separate approved non-LLM `megogo-html` PoC, stacked on #180. The
 [first owner attempt](digital-ua-owner-validation.md#megogo-initial-html--owner-run-parse-policy-rejection)
 returned HTTP 200 but failed the pre-identity parse policy; characteristics are
-**unvalidated**. Commands below are preserved for separately approved reproduction,
-not a request to rerun or restart the owner's current demo for this diagnosis.
+**unvalidated**. The owner has now approved the scoped acceptance-policy iteration:
+commands below prepare **one final owner GET with fields and diagnostics together**,
+not a separate diagnostic cycle. The agent does not restart the owner's demo.
 Only fixed Dune: Part Two (2024):
 <https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html>.
 [Scope/rules and residual uncertainty](regional-card-proposal.md#megogo-one-card-html-poc).
@@ -741,14 +742,15 @@ use the existing helpers; launch survives the launching shell's exit. Actual
 Termius→Safari/SSH-disconnect behavior was owner-validated earlier, not freshly
 repeated for this new mode. Start/status alone makes no card request.
 
-### Safari — retained one-GET reproduction, no repeat test now
+### Safari — one final GET with fields and diagnostics together
 
 Open **http://<actual-Windows-IPv4>:4317**, exactly the URL printed by Start/Status;
 Basic Auth username **demo**, hidden password supplied above. Reload stale pages
 after restart. Before clicking check `megogo-html`, Dune, exact source/native ID,
-20s / 2 MiB, no model and fetcher geography unknown. Only if separately approved,
-click **Fetch fixed MEGOGO card once**. No automatic retry; don't reload and click
-again after an error. **No new owner request for the current diagnosis.**
+20s / 2 MiB, no model and fetcher geography unknown. Click **Fetch fixed MEGOGO
+card once** for this final approved test. No automatic retry; don't reload and
+click again after an error. No separate diagnostic-only request or synthetic/
+SSH-disconnect round is needed.
 
 Send only a short result: HTTP/retrieval/identity status and **new, missing or
 conflicting fields** (access/package, languages/associated audio format, subtitles/
@@ -763,11 +765,13 @@ Ukrainian viewing rights. Compare old observations only as dated controls, never
 fill missing fields from memory. The PoC does not establish general accuracy.
 Stop this copy with its Stop helper when done; no service/firewall/network changes.
 
-The [parse-policy correction](regional-card-proposal.md#megogo-owner-failure--parse-policy-diagnosis)
-adds a text-only **Structural diagnostics** block on rejection: fixed parser
-codes/counts, parsed-tree main/H1/canonical/JSON-LD counts, document mode and
-`identityEvaluation: not-run`. Counts are not film identity or proof of a valid
-card. No raw body/text/attributes/URLs/positions/logs. The original run's codes
-cannot be recovered retrospectively. If a future run is separately authorized,
-only that small diagnostic summary is needed, not HTML/JSON/screenshots or a new
-streaming-app check. Keep unknown fields unknown and do not bypass the gate.
+The [scoped acceptance policy](regional-card-proposal.md#megogo-html-acceptance-policy--scoped-recovery-v1)
+returns a text-only **Structural diagnostics** block alongside useful fields,
+not only on rejection. Read decision, identity evaluation, parser code counts/
+actions and field/page refusal reasons. Legacy DOCTYPE/entity warnings alone do
+not block identity; damaged fields stay unknown, ambiguous identity stays blocked.
+No raw body/text/attributes/URLs/positions/logs in diagnostics. The original run's
+codes remain unrecoverable; current mocks are not a reconstruction of that body.
+Send a short **single-result** summary of fields and diagnostic reasons, not full
+JSON/HTML/screenshots. Keep unknowns unknown; a block/unsupported outcome ends
+this run, not a reason for an additional diagnostic test or streaming-app tour.
