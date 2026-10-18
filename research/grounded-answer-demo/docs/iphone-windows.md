@@ -673,3 +673,87 @@ link; JustWatch overlap is not independent confirmation or account entitlement.
 No general accuracy, full JSON, screenshots or output archive. Reopen a known
 streaming card only for a **concrete new material discrepancy**, not by default.
 Stop only this copy via its Stop helper when finished.
+
+## MEGOGO initial-HTML owner workflow
+
+Separate approved non-LLM `megogo-html` PoC, stacked on #180, **live-pending**.
+Only fixed Dune: Part Two (2024):
+<https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html>.
+[Scope/rules and residual uncertainty](regional-card-proposal.md#megogo-one-card-html-poc).
+No API key, login/cookies, assets/scripts, redirects, retry or follow-up endpoints.
+One click permits at most one GET, 20s / 2 MiB. Other modes remain unchanged.
+LAN Basic Auth still uses **demo** and a separate hidden password. HTTP is
+unencrypted: trusted private home LAN only, no internet exposure/system changes.
+
+### Update the correct copy safely
+
+If SSH opens `cmd`, first enter `powershell -NoProfile` (or `pwsh -NoProfile`
+if installed). Run the lines below **inside PowerShell**, not in cmd. Use THIS
+Windows machine's actual private IPv4; never another device/project's address.
+Do not depend on environment surviving SSH reconnect.
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'
+git fetch --prune origin
+git status --short --branch
+git branch --show-current
+```
+
+If tracked edits overlap the demo or branches diverged, stop and preserve them;
+no reset/clean/force or overwrite of untracked files. Stop this copy only when
+**you** choose to switch it for the approved test. The implementation agent did
+not stop the owner's running demo. If clean/compatible:
+
+```powershell
+.\research\grounded-answer-demo\windows\Stop-Demo.ps1
+# Existing local branch:
+git switch codex/mw-fut-01-megogo-html
+# If not yet local, use instead:
+# git switch --track origin/codex/mw-fut-01-megogo-html
+git pull --ff-only origin codex/mw-fut-01-megogo-html
+npm ci --prefix research/grounded-answer-demo --ignore-scripts --no-audit --no-fund
+```
+
+The install is only the existing isolated `parse5` lockfile; no production
+dependencies or executable install scripts. No need to reinstall when the
+research dependencies already match. Native detached-launch/auth/session
+mechanics are unchanged; synthetic/Windows/mobile mock checks are agent work.
+No compulsory repeat synthetic or SSH-disconnect owner test for this iteration.
+
+### One standalone restart command — no API key
+
+Paste the **entire one line** in PowerShell after every SSH reconnect; explicit
+`;` separators, all switches assigned/reset. It intentionally stops only this
+copy via verified process metadata. Enter actual Windows IPv4, then the LAN
+password hidden when Start prompts. No API credential is needed or forwarded.
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'megogo-html'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'dune-part-two'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Optional synthetic only: change that line's `DEMO_MODE` to `synthetic`; invented
+fixtures, no network. This is not an additional required owner test. Status/stop
+use the existing helpers; launch survives the launching shell's exit. Actual
+Termius→Safari/SSH-disconnect behavior was owner-validated earlier, not freshly
+repeated for this new mode. Start/status alone makes no card request.
+
+### Safari — at most one live GET
+
+Open **http://<actual-Windows-IPv4>:4317**, exactly the URL printed by Start/Status;
+Basic Auth username **demo**, hidden password supplied above. Reload stale pages
+after restart. Before clicking check `megogo-html`, Dune, exact source/native ID,
+20s / 2 MiB, no model and fetcher geography unknown. Click **Fetch fixed MEGOGO
+card once**. No automatic retry; don't reload and click again after an error.
+
+Send only a short result: HTTP/retrieval/identity status and **new, missing or
+conflicting fields** (access/package, languages/associated audio format, subtitles/
+types, resolution, HDR10/DV, price+currency, regional statement). No full HTML,
+JSON, responses or screenshots. No repeated streaming-app tour. Unknown/unsupported
+markup or JS/login-only fields are findings, not an instruction to log in, enable
+scraping or try private endpoints. Blocks/CAPTCHA/redirect/429 terminate this path.
+
+Reported public-card metadata need not prove account entitlement, which remains
+unknown; `/ua/`, UI language or private LAN IP do not prove fetch geography or
+Ukrainian viewing rights. Compare old observations only as dated controls, never
+fill missing fields from memory. The PoC does not establish general accuracy.
+Stop this copy with its Stop helper when done; no service/firewall/network changes.

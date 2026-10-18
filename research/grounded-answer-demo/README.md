@@ -9,8 +9,8 @@ new digital or Amazon-region prompts. Subsequent
 [owner-reported iPhone and digital-UA observations](docs/digital-ua-owner-validation.md)
 cover three digital scenarios, not general accuracy or every platform.
 Amazon-region scenarios remain **live-unvalidated**. The
-[next-experiment proposal](docs/regional-card-proposal.md) is design only;
-it changes no prompt or integration.
+[next-experiment record](docs/regional-card-proposal.md) distinguishes historical
+proposals from approved isolated probes; the shared offer model is design only.
 
 The separate opt-in [URL Context PoC](docs/url-context-poc.md) now tests two
 fixed Apple TV Ukraine cards without Search. It is stacked on PR #175; it does
@@ -72,6 +72,12 @@ not independently repeated; no Coherence rerun or further owner test required.
 Current-terms readiness remains conditional for any separately approved future use.
 No new MOTN/card/SSH-disconnect test asked.
 
+The owner separately approved a [one-card MEGOGO HTML PoC](#megogo-initial-html-probe),
+stacked on #180 checkpoint `b9f3c65`. It is implemented / offline-tested but
+**live-pending**: no agent extraction of the fixed card. It does not change any
+previous request body, prompt, model, parser or owner observation. MW-FUT-01
+remains Discovery, not a regular/commercial integration.
+
 No production integration, production TMDb calls, chat/input, LLM-output
 normalization, scoring, response archive or analytics. HTML-only returns a small
 deterministic candidate result, not a normalized Gemini answer. PR #173 is not changed
@@ -102,8 +108,8 @@ dependencies. Run from the repository root. No `.env` file is loaded.
 | `TMDB_READ_ACCESS_TOKEN` | Live `tmdb-data` only, server-side Bearer token; Windows helper prompts hidden, never inherits a production key or unrelated provider credential |
 | `DEMO_FILM` | `dune-part-two` (default), `coherence`, `blade-runner-final-cut` |
 | `DEMO_DISCOVERY` | `physical` (default), `digital-ua` |
-| `DEMO_RETRIEVAL` | `search` (default), `url-context`, opt-in `kinobaza-html`, `motn-api` or `tmdb-data` |
-| `DEMO_URL_SOURCE` | URL Context: `apple-tv` default or `kinobaza`; HTML-only: unset or `kinobaza`; unset for Search, `motn-api`, `tmdb-data` |
+| `DEMO_RETRIEVAL` | `search` (default), `url-context`, opt-in `kinobaza-html`, `motn-api`, `tmdb-data` or `megogo-html` |
+| `DEMO_URL_SOURCE` | URL Context: `apple-tv` default or `kinobaza`; Kinobaza HTML: unset or `kinobaza`; unset for Search, `motn-api`, `tmdb-data`, `megogo-html` |
 | `DEMO_AMAZON_REGION` | Optional, physical only: `us`, `uk`, `de`, `it`; unset for multi-store search |
 | `DEMO_PORT` | Default 4317, range 1024–65535 |
 | `DEMO_ACCESS` | `localhost` (default) or explicit `lan` |
@@ -335,11 +341,77 @@ displayed UA release-event language was empty. No general accuracy conclusion
 or additional manual test requested. No full JSON/screenshots retained.
 
 The [shared offer-observation model](docs/regional-card-proposal.md#shared-offer-observation-model--design-only)
-and [MEGOGO one-card adapter proposal](docs/regional-card-proposal.md#megogo-one-card-adapter-proposal--not-implemented)
-are **design only**, not a new runtime schema/adapter or source-data forwarding
-permission. Only TMDb display was shortened; requests, budget, auth, other modes
+is **design only**, not a new runtime schema or source-data forwarding
+permission. The [MEGOGO record](docs/regional-card-proposal.md#megogo-one-card-html-poc)
+now describes the separately approved bounded HTML experiment below. At the
+TMDb checkpoint only its display was shortened; requests, budget, auth, other modes
 and production remain unchanged. iPhone workflow/commands are preserved as
 reproduction steps, not instructions to repeat the completed pilot.
+
+### MEGOGO initial-HTML probe
+
+Opt-in `DEMO_RETRIEVAL=megogo-html`, `DEMO_DISCOVERY=digital-ua`,
+`DEMO_FILM=dune-part-two`; unset `DEMO_URL_SOURCE` and `DEMO_AMAZON_REGION`.
+Synthetic default, only synthetic scenario `grounded`; unsupported combinations
+fail before listening. No API key. Install the existing pinned research `parse5`
+dependency using the [HTML setup](#html-only-setup-and-result-contract), not a
+production dependency. Reused parser avoids regex HTML parsing or JS execution.
+
+Fixed source: <https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html>.
+Expected native ID `22027436`, TMDb `693134`, IMDb `tt15239678`; the last two are
+the existing [catalogue's verified IDs](#movie-of-the-night-api-probe), not new
+API results. UI shows source, operation, film/IDs, limits and unknown fetcher
+geography before click. One click consumes the token and permits **one GET max**,
+20-second total network/body timeout, 2 MiB decoded-body cap, UTF-8 HTML only.
+No credentials upstream, redirect following, retries, scripts/assets, destination
+requests, private endpoints, login/cookies or LLM. No archive, response logs or
+browser storage. Start/status/reload alone does not fetch the card.
+
+The source-specific parser in `megogo.mjs` reads declarative Schema.org
+Movie/Offer JSON-LD, optional `PropertyValue` labels, and explicit `dt/dd` or
+two-cell table labels in a unique main with matching H1. This **supported grammar
+is not proof of MEGOGO's current markup or field presence**: no live card read
+by the agent. Unknown layouts stay partial/unsupported; executable JSON/JS is
+not evaluated and no mentioned endpoints are called. Identity uses observed
+canonical/Movie native ID + title + year (or exact IMDb); supplied native/TMDb/
+IMDb conflicts withhold characteristics. Configured IDs are not observations.
+
+Result separates receipt/source/HTTP/retrieval/identity status, card claims and
+each explicit JSON-LD offer. Fields have `reported`, `unknown`, `conflicting`
+or bounded `partial` state and evidence kind/locator. No cross-offer copying.
+Audio codec/channels and subtitle standard/forced/CC/SDH types attach only to
+an explicit single-language clause; unknown association remains unknown.
+Original film language is not an offered track. Resolution, HDR10 and Dolby
+Vision are separate; HD does not exclude 4K and UHD does not establish HDR.
+Price requires explicit amount **and** ISO currency; no country-based default
+or fallback to historical prices. Supported explicit negatives are source
+claims, not universal absence; missing metadata/lists never establish absence.
+
+**Public-card characteristics are not account entitlement.** Report supported
+characteristics without demanding login proof, while leaving account entitlement
+unknown. Regional messages/Offer regions are source claims with a basis, not
+proof of Ukrainian rights or fetcher country. `/ua/`, UI language and RFC1918 IP
+establish neither. Fetcher geography remains unknown (no geolocation request).
+Redirect/403/429/451/CAPTCHA/timeout/oversize/unsupported markup/login-or-JS-only
+data are explicit outcomes, not routes to bypass or infer missing facts.
+
+[Current public-rules assessment](docs/regional-card-proposal.md#megogo-one-card-html-poc)
+distinguishes the actual Ukrainian edition from a Polish response at the same
+URL; robots is not a licence, and residual IP/extraction rights uncertainty
+remains. The owner's approval is bounded, not regular/commercial approval.
+
+[Standalone Termius/Safari restart](docs/iphone-windows.md#megogo-initial-html-owner-workflow).
+After offline gates, owner plan is **at most one live GET for Dune**. No mandatory
+repeat synthetic/SSH-disconnect or streaming-app tour. Send only new/missing/
+conflicting fields and statuses, not HTML/JSON/screenshots. Earlier observations
+are controls, never seeded facts or current guaranteed truth. Live status pending.
+
+```powershell
+node --test research/grounded-answer-demo/test/megogo.test.mjs
+# External Playwright configuration as documented below; all fetches mocked:
+node --test research/grounded-answer-demo/test/megogo-browser.test.mjs
+.\research\grounded-answer-demo\test\windows.test.ps1 -Megogo
+```
 
 ```powershell
 node --test research/grounded-answer-demo/test/tmdb.test.mjs

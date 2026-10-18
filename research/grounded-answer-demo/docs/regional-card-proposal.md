@@ -865,15 +865,19 @@ or real-source-derived archive is authorized by this design. Implement the model
 only in a separately scoped task after source-specific usage/attribution/transfer
 conditions are established; do not retrofit current adapters now.
 
-## MEGOGO one-card adapter proposal — not implemented
+<a id="megogo-one-card-adapter-proposal--not-implemented"></a>
 
-**Hypothesis:** one correctly identified MEGOGO regional card might provide
-offer-local language/access metadata missing from aggregators. Earlier owner
-Dune/MEGOGO observations are dated controls, not current expected facts or a
-reason to repeat manual checks. Recommend **Dune only**, fixed exact card, one
-explicit action, and only a separately approved supported access method. No
-Coherence discovery, catalogue crawler, login/cookies, playback/DRM, purchase,
-LLM, provider integration or shared-model runtime in this checkpoint.
+## MEGOGO one-card HTML PoC
+
+**Status: implemented / offline-tested / live-pending.** This section replaces
+the earlier proposal in place; the legacy anchor preserves historical links.
+Starting from #180 `b9f3c65`, the owner approved the same bounded experiment
+model as Kinobaza HTML: one fixed public card, explicit manual action, transient
+display. This is not approval of regular/commercial integration. The shared
+offer model above remains design-only; other adapters and prior observations
+are unchanged. Hypothesis: the initial HTML might provide useful offer-local
+metadata missing from aggregators. Earlier owner Dune/MEGOGO observations are
+dated controls, not seeded fixtures, current expected facts or a retest request.
 
 ### Public interface / terms review
 
@@ -884,61 +888,117 @@ metadata API contract. Public supported API endpoints/auth/fields/quota/pricing
 were **not found** in the inspected official pages/search, not proven nonexistent.
 No private endpoints inferred from apps or third-party libraries.
 
-The retrieved [rules page](https://megogo.net/ua/rules), despite `/ua/`, identified
-MEGOGO.PL/Poland (§1.1/1.7); its applicable Ukrainian contract is **not established**.
-Its §2.4 forbids protection/territory bypass; §9 protects service/content rights,
-not a metadata-extraction licence. No explicit general metadata-scraping permission
-was found, and no precise blanket metadata-GET prohibition is asserted from
-those clauses. Public access/robots are not licences. API/HTML extraction,
-transient field normalization, attribution, retention and future redistribution/
-LLM use remain unresolved, not authorized. No contact, signup or payment made;
-email is not mandatory merely because docs are absent. Unknown costs are not zero.
+**Current bounded-scope recheck, October 18, 2026:** the web reader again returned
+a Polish MEGOGO.PL agreement from [the exact rules URL](https://megogo.net/ua/rules).
+An ordinary direct HTTP read of that same URL, without cookies, login, proxy,
+region pinning or redirect following, returned the **Ukrainian agreement**, naming
+ТОВ «МЕГОГО», EDRPOU 38347009 (§1.1), service territory Ukraine (§1.8), edition
+**June 4, 2026**. Do not substitute the Polish edition or infer fetcher geography
+from either representation. No film-card GET was performed by the agent.
+
+- **Applicable prohibitions preserved:** §2.4/§9.3 prohibit technical/protection/
+  territorial circumvention and disruptive conduct. No such path is implemented;
+  redirect, access block, CAPTCHA or rate limit terminates the request.
+- **Rights not established:** §1.6 defines content broadly; §9.1–9.2 reserve
+  service/content intellectual-property and reproduction/display rights. They
+  are not an extraction/normalization licence. No precise, expressly applicable
+  prohibition of this single non-commercial factual-metadata GET/transient
+  display was established in the inspected text; this is **absence of a found
+  direct conflict, not affirmative permission or a legal guarantee**. Applicability
+  of reserved rights to particular metadata/outputs remains unresolved. No
+  general attribution/retention licence or redistribution/LLM rights inferred.
+- [robots.txt](https://megogo.net/robots.txt), HTTP 200 on the same date, has a
+  `User-agent: *` group disallowing, among other paths, search/account/service
+  paths and `/*?`. The exact fixed `/ua/view/22027436-dyuna-chastina-druga.html`
+  path **without query** was not disallowed. It is not a licence; no query,
+  alternate endpoint or user-agent evasion is added to bypass restrictions.
+- **Decision:** no direct applicable conflict or rules-read technical block was
+  established, so proceed only within the owner's explicit bounded approval.
+  An extraction-time block is a result, never bypassed. Unavailable public API
+  docs/affirmative licence do not alone require an email; no email, signup,
+  purchase or legal-clearance claim. Future recurring/commercial use requires a
+  separate review; costs are unmeasured, not asserted zero.
 
 ### Narrow approach and decision gates
 
-1. **Supported documented metadata interface if established:** use only its
-   documented film/UA fields, auth, request limits and applicable terms. Do not
-   invent an endpoint or assume public webpage metadata is returned by an API.
-   Currently unconfigured: no such interface/contract found.
-2. **Conditional initial-HTML adapter:** if a bounded public-card read/extraction
-   is explicitly approved for its applicable terms/scope, one fixed Dune source
-   GET, 20-second/2-MiB cap, no retries/redirect following, cookies, scripts/assets
-   or follow-up endpoints. This is a proposed fallback to assess, not an approved
-   scraper or a claim that needed fields are in initial HTML. Read public
-   structured/visible fields only as untrusted text; missing fields stay unknown.
-3. **No supported/scoped route:** stop at feasibility/unconfigured, not hidden
-   fetch or account automation. A conditional blocker is not proof MEGOGO is
-   impossible to integrate. No general crawler/framework is needed.
+Implemented opt-in `megogo-html`: only Dune, `digital-ua`, URL source/Amazon
+region unset; default remains synthetic. One owner click consumes one session
+token before any await and permits at most one GET. **20-second total network/
+body timeout, 2 MiB decoded-response cap**, manual redirects, UTF-8 HTML only,
+no retry, cookies, scripts/assets, destinations, endpoints, credentials upstream
+or model. API key not required. Existing parser dependency `parse5` is reused
+without a new dependency or general crawler/framework. Fixed source is
+<https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html>, expected native
+ID `22027436`; existing catalogue TMDb `693134`, IMDb `tt15239678`. No TMDb call.
 
-The exact approved direct source URL/native ID must be selected from retained
-owner/candidate context and identity-checked before implementation. No direct
-URL or ID is invented here; the Kinobaza candidate's territory is still unknown.
-An unscoped/tracking candidate is not auto-resolved or passed through as verified
-UA. Fetcher egress region must be labelled known/unknown, independently of the
-URL language; a server response may differ from owner Safari in Ukraine.
+The source-specific parser supports declarative [Schema.org Movie](https://schema.org/Movie)
+and [Offer](https://schema.org/Offer) JSON-LD (including optional labelled
+PropertyValues), and labelled `dt/dd` / two-cell table fields in a unique main
+with matching H1. These standards document the grammar, **not what MEGOGO's
+current HTML actually contains**. No live page/markup inspection or validation
+was performed. Unknown layouts, multiple film objects, malformed embedded JSON
+or missing fields stay unresolved/partial/unsupported; there is no JS evaluation,
+endpoint probing or account fallback. Source-native ID/title/year or exact
+IMDb establish identity; supplied native/TMDb/IMDb conflicts block attribution.
+Configured IDs alone do not constitute retrieved identity evidence.
 
 ### Acceptance, stop criteria and future test plan
 
-After separate approval only: show fixed source, method and territory basis
-before click; one request max, no automatic discovery/resolve/fallback. Identity
-mismatch or unsupported markup yields unresolved; explicit UA basis is required
-for a UA offer claim. Report each actually supplied access/package, audio,
-subtitles and video field separately, with public-page/API evidence and receipt
-time. Country URL/original language alone establishes none of those. No public
-card can be required to establish account-only entitlement; expose that limit.
-No price unless literal amount **and currency** are supplied. Do not seed the
-prompt/fixtures with old owner metadata or promise specific metadata fields.
+UI shows fixed source/film/mode/operation, limits and fetcher geography **unknown**
+before click. Projection/display is text-only, no raw HTML or executable/linked
+content. Source/receipt time/retrieval/identity statuses and field evidence
+kind/locator accompany reported, unknown and conflicting values. Literal
+public-card claims and individual JSON-LD offers remain separate, with no
+cross-offer track/format propagation. Language clauses must bind codec/channels
+or subtitle types explicitly; list completeness remains unknown. HD does not
+exclude 4K, UHD does not imply HDR10/DV, and locale is not codec. Price requires
+explicit amount and ISO currency. No historical owner facts are substituted.
 
-Mocks first: identity/country unknown, missing/contradictory tracks and access,
-empty/partial lists, unsafe text/links, malformed input, redirect/403/429/CAPTCHA,
-timeout/oversize; one-shot/LAN auth/no logging/storage/destinations. Stop on
-applicable prohibition, access block, region mismatch, JS/login-only data or
-insufficient identity; never bypass, infer entitlement or add private requests.
+**Public characteristics are separate from account entitlement:** expose
+supported page fields even without login proof; account entitlement stays unknown.
+Regional messages and explicit eligible/ineligible regions are source claims
+with evidence, not a geolocation/entitlement verdict. `/ua/`, interface language
+and LAN RFC1918 IP establish neither UA viewing rights nor egress region. No
+geolocation request is made; server HTML may differ from owner Safari in Ukraine.
+Missing fields do not prove absence, and public access is not verified playback.
 
-**No owner testing now.** If the next task approves a supported transport, reuse
-Termius Start/Status/Stop and Safari on the same trusted LAN; synthetic checks
-are implementation-agent work, not a repeated owner burden. At most one new
-Dune MEGOGO read for genuinely new fields after offline gates; report a concise
-new/missing/conflicting summary, not full HTML/JSON/screenshots. Reopen an already
-checked card only for a concrete material discrepancy, not to reconfirm prior
-controls. This proposal is not an implementation handoff or permission to run it.
+Authored synthetic tests cover identity matched/mismatch/unknown and stable-ID
+conflicts; partial/missing/conflicting fields, per-language formats, subtitle
+types, separate access/package/price offers, explicit regions, unsafe text,
+malformed JSON, redirect/403/429/451/CAPTCHA, timeout (headers and body), size
+limits and unsupported content/UTF-8; one-shot/auth/Host/Origin and no follow-ups.
+Browser checks use mock responses at 390×844, not real iPhone validation;
+Windows lifecycle uses temporary copies and mock-only transport, not owner demo.
+Parser absence is explicit before a live fetch. Do not equate mocks/public-rules
+reads with live extraction validation or promise needed fields will be found.
+
+**Owner plan: at most one new live GET Dune**, after offline gates, using the
+[standalone Termius/Safari workflow](iphone-windows.md#megogo-initial-html-owner-workflow).
+No compulsory synthetic/SSH-disconnect repeat or streaming-app tour: those
+mechanics are unchanged. Request only concise statuses and new/missing/conflicting
+fields, no full HTML/JSON/screenshots. Stop on blocks/identity ambiguity/unsupported
+or JS/login-only fields; do not retry or expand endpoints. Live validation remains
+pending; useful/unknown metadata, not general accuracy, is the experiment outcome.
+
+### Implementation checks — October 18, 2026
+
+- **215 offline/HTTP tests passed**, zero failures/skips, including 27 MEGOGO
+  cases and the existing 22 Gemini-body golden regressions. Existing adapters,
+  prompts/model/settings/dependencies and production were not changed.
+- Full sequential Edge/mobile regression: **102 passed / 7 skipped** (six absent
+  WebKit engines, optional explicit-IP LAN not configured), zero failures. A
+  final standalone MEGOGO rerun: 8 passed / 1 absent-WebKit skip. Initial parallel
+  browser invocation stalled and was interrupted, not counted as success;
+  cause not isolated. Sequential/standalone runs passed without weakened checks.
+- PowerShell 7 temporary-copy lifecycle passed for MEGOGO and all six previous
+  configurations: parent-exit survival, fixed switch inheritance, duplicate
+  start, forged/unrelated PID refusal, safe stop/restart. MEGOGO mock-live restart
+  needed no API key, made one mock GET, and rejected replay. Owner demo untouched.
+  Actual SSH disconnect, real iPhone/WebKit and PowerShell 5.1 were not rerun;
+  earlier owner workflow validation is separate evidence.
+- 135 local links / 102 anchors valid across eight Markdown files; scope/diff/
+  whitespace checked. Only isolated demo files changed; existing untracked
+  `research/media-discovery/` preserved. No full source/body/credentials archive.
+- No live MEGOGO extraction, API call, destination request, system change,
+  merge/tag/release or deployment. Public rules/robots and schema documentation
+  reads only; these are not extraction validation. MW-FUT-01 remains Discovery.

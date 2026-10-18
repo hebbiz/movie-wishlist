@@ -8,6 +8,8 @@ import { extractHtml, fetchHtmlCandidates, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS } f
 import { networkConfig } from './network.mjs';
 import { fetchMotn, normalizeMotn, syntheticMotn, MOTN_FILMS, MOTN_TIMEOUT_MS, MOTN_LIMIT_BYTES } from './motn.mjs';
 import { fetchTmdb, projectSyntheticTmdb, TMDB_TIMEOUT_MS, TMDB_LIMIT_BYTES } from './tmdb.mjs';
+import { extractMegogo, fetchMegogo, MEGOGO_IDS, MEGOGO_TIMEOUT_MS, MEGOGO_LIMIT_BYTES } from './megogo.mjs';
+import { syntheticMegogo } from './megogo-synthetic.mjs';
 
 const assets = new Map([
   ['/', ['public/index.html', 'text/html; charset=utf-8']],
@@ -17,6 +19,7 @@ const assets = new Map([
   ['/html-display.mjs', ['public/html-display.mjs', 'text/javascript; charset=utf-8']],
   ['/motn-display.mjs', ['public/motn-display.mjs', 'text/javascript; charset=utf-8']],
   ['/tmdb-display.mjs', ['public/tmdb-display.mjs', 'text/javascript; charset=utf-8']],
+  ['/megogo-display.mjs', ['public/megogo-display.mjs', 'text/javascript; charset=utf-8']],
   ['/tmdb-logo.svg', ['public/tmdb-logo.svg', 'image/svg+xml']],
   ['/style.css', ['public/style.css', 'text/css; charset=utf-8']],
 ]);
@@ -31,7 +34,8 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
   const htmlOnly = selection.retrieval === 'kinobaza-html';
   const motnOnly = selection.retrieval === 'motn-api';
   const tmdbOnly = selection.retrieval === 'tmdb-data';
-  const nonGemini = htmlOnly || motnOnly || tmdbOnly;
+  const megogoOnly = selection.retrieval === 'megogo-html';
+  const nonGemini = htmlOnly || motnOnly || tmdbOnly || megogoOnly;
   const body = nonGemini ? null : requestBody(film.id, options);
   if (!['synthetic', 'live'].includes(mode)) throw new Error('DEMO_MODE must be synthetic or live.');
   const syntheticCases = nonGemini ? ['grounded'] : ['grounded', 'empty', 'ungrounded', 'api-error', ...(selection.retrieval === 'url-context' ? ['retrieval-error', 'retrieval-paywall', 'retrieval-unsafe'] : [])];
@@ -72,6 +76,7 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
         sessions.set(token, now + 30 * 60 * 1000);
         return send(200, { token, mode, model: nonGemini ? null : MODEL, maxOutputTokens: nonGemini ? null : MAX_OUTPUT_TOKENS, film, discovery: selection.discovery, amazonRegion: selection.amazonRegion, retrieval: selection.retrieval, urlSource: selection.urlSource ?? null, sourceURL: selection.sourceURL, prompt: selection.prompt,
           ...(htmlOnly ? { operation: selection.operation, htmlLimitBytes: HTML_LIMIT_BYTES, htmlTimeoutMs: HTML_TIMEOUT_MS } : {}),
+          ...(megogoOnly ? { operation: selection.operation, expectedIds: MEGOGO_IDS, requestBudget: 1, htmlLimitBytes: MEGOGO_LIMIT_BYTES, htmlTimeoutMs: MEGOGO_TIMEOUT_MS, fetcherGeography: 'unknown' } : {}),
           ...(motnOnly ? { country: 'ua', imdbId: MOTN_FILMS[film.id].imdbId, operation: selection.operation, apiTimeoutMs: MOTN_TIMEOUT_MS, apiLimitBytes: MOTN_LIMIT_BYTES } : {}),
           ...(tmdbOnly ? { country: 'UA', locale: selection.locale, tmdbId: selection.tmdbId, imdbId: selection.imdbId, providersURL: selection.providersURL, requestBudget: 2, operation: selection.operation, apiTimeoutMs: TMDB_TIMEOUT_MS, apiLimitBytes: TMDB_LIMIT_BYTES } : {}) });
       }
@@ -82,6 +87,10 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
         const expires = sessions.get(token);
         sessions.delete(token); // Consume synchronously, before any await, even on failure.
         if (!expires || expires < Date.now()) return send(409, { error: 'Request already used or session expired. Reload the page.' });
+        if (megogoOnly) {
+          const result = mode === 'synthetic' ? await extractMegogo(syntheticMegogo()) : await fetchMegogo(selection, fetchImpl);
+          return send(200, { mode, result }); // Projection only; never raw HTML.
+        }
         if (tmdbOnly) {
           const result = mode === 'synthetic' ? projectSyntheticTmdb(film.id) : await fetchTmdb(selection, tmdbToken, fetchImpl);
           return send(200, { mode, result }); // Metadata / UA projection only, no raw body.
@@ -128,8 +137,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('DEMO_PORT must be 1024–65535.');
   const networkOptions = { access: process.env.DEMO_ACCESS, bindIPv4: process.env.DEMO_BIND_IPV4, lanPassword: process.env.DEMO_LAN_PASSWORD || '' };
   const network = networkConfig(networkOptions);
-  const nonGemini = ['kinobaza-html', 'motn-api', 'tmdb-data'].includes(process.env.DEMO_RETRIEVAL);
+  const nonGemini = ['kinobaza-html', 'motn-api', 'tmdb-data', 'megogo-html'].includes(process.env.DEMO_RETRIEVAL);
   const server = createDemo({ mode, filmId: process.env.DEMO_FILM, discovery: process.env.DEMO_DISCOVERY, amazonRegion: process.env.DEMO_AMAZON_REGION, retrieval: process.env.DEMO_RETRIEVAL, urlSource: process.env.DEMO_URL_SOURCE, scenario: process.env.DEMO_SYNTHETIC_SCENARIO || 'grounded', apiKey: nonGemini ? '' : process.env.GEMINI_API_KEY || '', motnKey: process.env.DEMO_RETRIEVAL === 'motn-api' ? process.env.MOTN_API_KEY || '' : '', tmdbToken: process.env.DEMO_RETRIEVAL === 'tmdb-data' ? process.env.TMDB_READ_ACCESS_TOKEN || '' : '', ...networkOptions });
   server.on('error', () => { console.error('Demo could not listen. Check DEMO_PORT.'); process.exitCode = 1; });
-  server.listen(port, network.bindAddress, () => console.log(`Local ${mode} demo: http://${network.bindAddress}:${port} — ${process.env.DEMO_RETRIEVAL === 'kinobaza-html' ? 'HTML only, no API key' : process.env.DEMO_RETRIEVAL === 'motn-api' ? 'Movie of the Night v4, UA, no LLM' : process.env.DEMO_RETRIEVAL === 'tmdb-data' ? 'TMDB metadata / UA, max two requests, no LLM' : `${MODEL}, output limit ${MAX_OUTPUT_TOKENS}`}. No request until button click.`));
+  server.listen(port, network.bindAddress, () => console.log(`Local ${mode} demo: http://${network.bindAddress}:${port} — ${['kinobaza-html', 'megogo-html'].includes(process.env.DEMO_RETRIEVAL) ? 'HTML only, no API key' : process.env.DEMO_RETRIEVAL === 'motn-api' ? 'Movie of the Night v4, UA, no LLM' : process.env.DEMO_RETRIEVAL === 'tmdb-data' ? 'TMDB metadata / UA, max two requests, no LLM' : `${MODEL}, output limit ${MAX_OUTPUT_TOKENS}`}. No request until button click.`));
 }

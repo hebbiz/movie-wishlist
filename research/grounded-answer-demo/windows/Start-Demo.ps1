@@ -29,7 +29,7 @@ try {
     $mode = if ($env:DEMO_MODE) { $env:DEMO_MODE } else { 'synthetic' }
     $needsMotn = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -eq 'motn-api'
     $needsTmdb = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -eq 'tmdb-data'
-    $needsGemini = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -notin @('kinobaza-html', 'motn-api', 'tmdb-data')
+    $needsGemini = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -notin @('kinobaza-html', 'motn-api', 'tmdb-data', 'megogo-html')
     if ($needsGemini -or $needsMotn -or $needsTmdb) {
         $keyName = if ($needsTmdb) { 'TMDB_READ_ACCESS_TOKEN' } elseif ($needsMotn) { 'MOTN_API_KEY' } else { 'GEMINI_API_KEY' }
         if (-not $ApiKey) { $ApiKey = Read-Host "$keyName (server memory only)" -AsSecureString }

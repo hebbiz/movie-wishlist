@@ -2,6 +2,7 @@ import { urlScenario } from './url-context.mjs';
 import { htmlScenario } from './html-source.mjs';
 import { motnScenario } from './motn.mjs';
 import { tmdbScenario } from './tmdb.mjs';
+import { megogoScenario } from './megogo.mjs';
 
 export const MODEL = 'gemini-3.8-flash';
 export const MAX_OUTPUT_TOKENS = 4096;
@@ -69,7 +70,8 @@ export function selectRequest({ retrieval = 'search', ...options } = {}) {
   if (retrieval === 'kinobaza-html') return htmlScenario(selectFilm(options.filmId), options);
   if (retrieval === 'motn-api') return motnScenario(selectFilm(options.filmId), options);
   if (retrieval === 'tmdb-data') return tmdbScenario(selectFilm(options.filmId), options);
-  throw new Error('Unknown DEMO_RETRIEVAL. Choose: search, url-context, kinobaza-html, motn-api, tmdb-data.');
+  if (retrieval === 'megogo-html') return megogoScenario(selectFilm(options.filmId), options);
+  throw new Error('Unknown DEMO_RETRIEVAL. Choose: search, url-context, kinobaza-html, motn-api, tmdb-data, megogo-html.');
 }
 
 export function requestBody(filmId = DEFAULT_FILM, options = {}) {
@@ -77,6 +79,7 @@ export function requestBody(filmId = DEFAULT_FILM, options = {}) {
   if (retrieval === 'kinobaza-html') throw new Error('HTML mode has no Gemini request body.');
   if (retrieval === 'motn-api') throw new Error('Movie of the Night mode has no Gemini request body.');
   if (retrieval === 'tmdb-data') throw new Error('TMDb mode has no Gemini request body.');
+  if (retrieval === 'megogo-html') throw new Error('MEGOGO HTML mode has no Gemini request body.');
   return {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     tools: retrieval === 'url-context' ? [{ urlContext: {} }] : [{ googleSearch: {} }],

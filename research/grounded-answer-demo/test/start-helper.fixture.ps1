@@ -1,8 +1,8 @@
-param([string]$DemoRoot, [int]$Port, [string]$LanIPv4, [switch]$UrlContext, [switch]$Kinobaza, [switch]$Html, [switch]$Motn, [switch]$Tmdb)
+param([string]$DemoRoot, [int]$Port, [string]$LanIPv4, [switch]$UrlContext, [switch]$Kinobaza, [switch]$Html, [switch]$Motn, [switch]$Tmdb, [switch]$Megogo)
 $env:DEMO_MODE = 'synthetic'
 $env:DEMO_DISCOVERY = 'digital-ua'
-$env:DEMO_FILM = 'coherence'
-$env:DEMO_RETRIEVAL = if ($Tmdb) { 'tmdb-data' } elseif ($Motn) { 'motn-api' } elseif ($Html) { 'kinobaza-html' } elseif ($UrlContext) { 'url-context' } else { 'search' }
+$env:DEMO_FILM = if ($Megogo) { 'dune-part-two' } else { 'coherence' }
+$env:DEMO_RETRIEVAL = if ($Megogo) { 'megogo-html' } elseif ($Tmdb) { 'tmdb-data' } elseif ($Motn) { 'motn-api' } elseif ($Html) { 'kinobaza-html' } elseif ($UrlContext) { 'url-context' } else { 'search' }
 if ($Kinobaza -or $Html) { $env:DEMO_URL_SOURCE = 'kinobaza' } else { Remove-Item Env:DEMO_URL_SOURCE -ErrorAction SilentlyContinue }
 $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'
 Remove-Item Env:DEMO_AMAZON_REGION -ErrorAction SilentlyContinue
