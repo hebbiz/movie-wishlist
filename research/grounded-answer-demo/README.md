@@ -28,8 +28,14 @@ compares TMDb discovery, a supported Kinobaza interface if available, and manual
 Kinobaza assistance. Its earlier candidate-link-preview proposal is not being
 built. The owner selected a narrower new experiment instead: opt-in
 `DEMO_URL_SOURCE=kinobaza` reads one of two fixed Kinobaza cards with URL Context
-and asks for provider/link/territory candidates, not offer verification. It is
-offline-tested but **live-unvalidated**; [scope and owner test plan](docs/url-context-poc.md#kinobaza-candidate-link-experiment).
+and asks for provider/link/territory candidates, not offer verification.
+[Two completed owner-run tests](docs/digital-ua-owner-validation.md#kinobaza-url-context--two-completed-owner-run-tests)
+returned identity/platform names but **no provider URLs**; the current scenario
+is not suitable as an automatic link generator on this evidence. Dune also had
+an external citation-source anomaly, not proof of a destination fetch or of
+exclusive source provenance. A separate [initial-HTML feasibility check](docs/regional-card-proposal.md#initial-html-inspection-after-the-owner-tests)
+found relevant hrefs already present without JavaScript; the Gemini omission
+cause and automation rights remain unresolved. No repeat live runs recommended.
 The [Windows launch diagnosis](docs/windows-launch-diagnosis.md) resolves the
 earlier detached-launch failure: multiple Node PATH matches were passed as one
 executable string. The helper now selects one executable, without changing

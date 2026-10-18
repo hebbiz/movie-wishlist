@@ -209,3 +209,45 @@ uses public documentation, not these observations as evidence of API rights.
 No full Gemini responses, raw metadata, screenshots or evidence archive are
 stored. Usage/cost remains unmeasured, not zero; Amazon-region live checks
 remain pending. MW-FUT-01 remains Discovery.
+
+## Kinobaza URL Context — two completed owner-run tests
+
+Recorded October 18, 2026 following implementation checkpoint
+`54d1a9fe13591faa4620cb51155137c95a2642d2` in PR #177. **Owner-reported only**;
+the implementation agent did not repeat the Gemini requests. Exact execution
+timestamps, runtime commit, request count and retrieval-status values were not
+supplied in this checkpoint. This is separate from the earlier manual source/
+provider checks and Apple URL Context tests.
+
+| Reported result | Coherence | Dune: Part Two |
+| --- | --- | --- |
+| Film identity | Correct | Correct |
+| Platform names | Obtained | Obtained |
+| Territory separation | Partial | Obtained |
+| Exact provider URLs | Not obtained | Not obtained |
+
+The platform names/territory result are recorded at the granularity supplied
+by the owner, not an independent verification of every name or territory.
+Neither answer returned a provider URL. **The current URL Context scenario is
+not suitable as an automatic candidate-link generator on this evidence.** This
+does not establish general accuracy, universal inability to read hrefs or
+impossibility of a different Kinobaza integration. The cause of the missing
+hrefs remains undetermined.
+
+### Separate provenance anomaly: Dune external citation source
+
+The owner reported a `citationSources` entry with host **`m.vkino.com.ua`** in
+the Dune answer. The exact URI, attributed passage/offsets and complete metadata
+were not provided or archived. This is **not proof that Gemini navigated to or
+retrieved that site**, and also does not confirm exclusive Kinobaza provenance
+for the entire answer. Do not silently treat the entry as a Kinobaza source,
+proof of a Search fallback, a verified additional source or an established
+explanation for missing hrefs.
+
+The [independent initial-HTML inspection and terms assessment](regional-card-proposal.md#initial-html-inspection-after-the-owner-tests)
+is separate evidence: a later public HTTP response is not a reconstruction of
+what Gemini saw during these tests. No repeated Gemini calls, full answers,
+screenshots or raw metadata are included. Requesting another live run is not
+the next step. Existing iPhone instructions remain available as historical
+reproduction steps, not a recommendation to rerun this failed hypothesis.
+MW-FUT-01 remains Discovery.

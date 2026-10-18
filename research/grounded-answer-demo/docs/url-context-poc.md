@@ -216,8 +216,11 @@ is a proposal, not an implementation handoff or change to the fixed-card mode.
 Owner-selected iteration after checkpoint `714a176`, stacked on the still-open
 PR #176 (which depends on #175). Branch:
 `codex/mw-fut-01-kinobaza-url-context`, PR base:
-`codex/mw-fut-01-url-context`. This is **implemented and offline-tested, but
-live-unvalidated**. It does not implement the earlier candidate-preview proposal.
+`codex/mw-fut-01-url-context`. Implemented/offline-tested at `54d1a9f`; two later
+[owner-run live tests](digital-ua-owner-validation.md#kinobaza-url-context--two-completed-owner-run-tests)
+returned no provider URLs. The narrow link-generation hypothesis is not
+supported in the current scenario; this is not general accuracy or proof of
+impossible integration. It does not implement the earlier preview proposal.
 
 Set `DEMO_RETRIEVAL=url-context`, `DEMO_DISCOVERY=digital-ua` and
 `DEMO_URL_SOURCE=kinobaza`. Keep `DEMO_AMAZON_REGION` unset. Source cards:
@@ -265,6 +268,13 @@ stop on an applicable restriction or blocked access. TMDb is not used here.
 
 ### Owner comparison (not run by the implementation agent)
 
+**Historical reproduction plan, now completed by the owner for both films.**
+No repeat Gemini calls are recommended. See the owner record for outcomes and
+the separate Dune `m.vkino.com.ua` citation-source anomaly, and the
+[initial-HTML/terms assessment](regional-card-proposal.md#initial-html-inspection-after-the-owner-tests)
+for the next feasibility conclusion. A citation source is not a retrieval log;
+do not claim exclusive Kinobaza origin for the complete answer.
+
 Use the [one-line Termius/PowerShell commands](iphone-windows.md#kinobaza-url-context-one-line-owner-commands):
 synthetic first, then **one live request per film**, no automatic rerun. Reload
 Safari after each owner-controlled restart and check source URL/prompt before
@@ -309,8 +319,8 @@ clicking. No environment state is assumed across SSH sessions.
   A test-only Node-path selection was made scalar as in the existing helper;
   restart now explicitly selects the same synthetic scenario and checks it.
 - Sandbox initially denied Node child spawning (EPERM); tests passed with the
-  permitted external runner. No test/security logic was weakened. Actual
-  Termius disconnect and real iPhone use of this new source remain pending;
+  permitted external runner. No test/security logic was weakened. Explicit
+  Termius disconnect and independent real-iPhone validation remain pending;
   PowerShell 5.1 is not newly validated. No live Gemini calls were made.
 - Existing native/managed safe-launch diagnostics regression passed. Three
   changed PowerShell files and all three one-line owner commands parsed without

@@ -298,7 +298,11 @@ it does not authorize new automatic calls or change the current prompts.
 
 ## Kinobaza URL Context: one-line owner commands
 
-New source is **live-unvalidated**. Read the [bounded test plan](url-context-poc.md#owner-comparison-not-run-by-the-implementation-agent)
+**Historical reproduction commands:** the owner completed both Kinobaza live
+tests; neither returned provider URLs. See the [owner checkpoint](digital-ua-owner-validation.md#kinobaza-url-context--two-completed-owner-run-tests).
+No repeat live calls are recommended now. Exact new-test device/runtime details
+and a new-source SSH-disconnect check are not established by this report.
+For context, read the [bounded test plan](url-context-poc.md#owner-comparison-not-run-by-the-implementation-agent)
 and [terms/feasibility](regional-card-proposal.md#kinobaza-url-context-decision)
 first. No destination-page checks or offer verification in this experiment.
 The commands below intentionally stop/restart **only this checkout's verified

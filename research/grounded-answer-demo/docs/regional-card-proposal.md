@@ -209,7 +209,10 @@ without a Kinobaza API.
 
 The [implemented opt-in mode](url-context-poc.md#kinobaza-candidate-link-experiment)
 uses fixed Coherence/Dune source URLs, original natural-language display and
-separate retrieval metadata. It is offline-tested and **live-unvalidated**.
+separate retrieval metadata. It is offline-tested; two later
+[owner-run tests](digital-ua-owner-validation.md#kinobaza-url-context--two-completed-owner-run-tests)
+returned no provider URLs. The current scenario is not a suitable automatic
+link generator on this evidence; the omission cause remains unresolved.
 No TMDb data/API, new provider, Search, scraper, destination follow-up,
 normalization, response archive or Mykola integration. No model/settings change.
 Existing Search and Apple request bodies stay unchanged. This does not
@@ -277,3 +280,116 @@ automatically visiting returned links. Stop after two cases, an applicable
 restriction, blocked source or identity ambiguity. No output archive, raw
 metadata/screenshots or accuracy score. Usage/cost is unknown rather than zero
 and is not a blocker. No integration is selected from this experiment alone.
+
+## Initial HTML inspection after the owner tests
+
+### Method and independently observed source facts
+
+Checked **October 18, 2026**, after the owner's report. This was a bounded manual
+inspection of ordinary public HTML, **not another Gemini test or an implemented
+scraper**. Two direct GETs per fixed source card used PowerShell
+`Invoke-WebRequest -UseBasicParsing`, no login/account cookies or browser session,
+no JavaScript/asset execution, no automatic redirects and no destination URLs
+opened/resolved. Both passes returned HTTP 200 and `text/html; charset=UTF-8`.
+Only in-memory source inspection was used; no HTML, extraction script, candidate
+dataset or response archive was added to the repository.
+
+| Source card | Observed in the initial HTTP response, before JavaScript |
+| --- | --- |
+| [Coherence](https://kinobaza.com.ua/titles/coherence) | The `availabilityAccordion` / `collapseUA` markup under the explicit Ukraine heading contained one ordinary anchor labelled Apple TV Store, with an actual `href` to `click.justwatch.com`. |
+| [Dune: Part Two](https://kinobaza.com.ua/titles/dune-part-two) | The explicit `collapseUA` block contained two ordinary anchors, Rakuten TV and HBO Max, with actual `click.justwatch.com` hrefs. Additional iTunes/Apple and MEGOGO hrefs were present before that accordion; their position alone is not an explicit UA territory label. |
+
+These were actual `<a href="…">` attributes, not merely provider names,
+JavaScript-only URL placeholders or strings awaiting a destination lookup.
+The JustWatch hrefs contain long encoded tracking/redirect query parameters;
+they were neither decoded into guessed final URLs nor followed. Bootstrap
+collapse markup can control visibility, but does not need to create these
+already-present anchors. Dune also has later foreign-country blocks: a
+page-wide provider match would conflate territories.
+
+This establishes **at least these links in the inspected initial responses**,
+not a complete permanent inventory. The inspected Coherence UA block did not
+establish the owner's earlier Prime Video candidate. A generic Prime navigation
+link elsewhere on a page is not a title-specific offer. Do not erase the earlier
+owner observation, infer unavailability, or claim that all users/times receive
+the same card content. No current entitlement, audio, prices or final provider
+destinations were checked by this inspection.
+
+### What this resolves, and what it does not
+
+For the observed anchors, **JavaScript is not a prerequisite for href presence**.
+The broad explanation "the source HTML contains no provider hrefs" is not
+supported by these responses. A technical read of initial HTML could encounter
+candidate hrefs; that is a capability observation, not approval to build it.
+No post-JavaScript browser comparison was necessary for this positive finding
+or performed; additional/different dynamic links remain unassessed.
+
+These are later unauthenticated responses, not the provider's hidden payload
+or its response at the owner's execution time. Source variants/cache age,
+provider content processing/href omission and model selection/response behavior
+remain possible but **unestablished** explanations. The
+[URL Context guide](https://ai.google.dev/gemini-api/docs/generate-content/url-context)
+documents cached/live retrieval and metadata, not preservation of every href.
+The current failure therefore does not isolate a specific Gemini defect or
+prove that another integration is impossible. No repeated model request was
+made to choose a cause.
+
+### External citation anomaly: keep attribution distinct from retrieval
+
+The Dune `m.vkino.com.ua` entry is an **owner-reported anomaly**, documented in
+the owner record, not an independently examined response. Google's
+[Candidate / CitationMetadata reference](https://ai.google.dev/api/generate-content#CitationMetadata)
+describes source attribution; the Candidate field can include recitation
+information. It is distinct from
+[`UrlContextMetadata`](https://ai.google.dev/api/generate-content#UrlContextMetadata),
+which describes tool retrieval. This distinction explains why a citation entry
+is not a network trace; it does **not** establish recitation as this anomaly's
+cause. No attributed passage/offsets or exact external URI were supplied.
+
+The literal `m.vkino.com.ua` string was not present in either sampled initial
+HTML response. That narrow negative finding neither proves an external fetch
+nor proves the answer was derived only from Kinobaza, and does not audit all
+scripts, nested resources, earlier page versions or Google's index. The
+external host was not contacted. One configured source URL/tool is not proof
+of exclusive provenance for all generated text. Do not treat this as evidence
+of an actual Search fallback or make an unsupported security diagnosis.
+
+### Access terms: separate from HTML feasibility
+
+Rechecked public first-party pages October 18, 2026:
+
+- [Kinobaza Terms](https://kinobaza.com.ua/terms), §1/§3, apply to public users
+  and place responsibility for information use/third-party rights on the user.
+  No clause expressly granting or expressly prohibiting this exact bounded
+  initial-HTML inspection was identified. This is an **unresolved permission
+  question**, not a legal conclusion or a general automated-access license.
+- [Kinobaza Privacy](https://kinobaza.com.ua/privacy) mentions public discussion
+  RSS/API distribution, not a catalogue/provider-link extraction contract.
+  No documented permission for repeated harvesting, transfer to an LLM,
+  redistribution, source-data retention or an attribution scheme for a future
+  HTML integration was established. Public accessibility, HTTP 200 and
+  robots.txt are not grants. Existing JustWatch labels/sponsored redirect
+  links do not license us to reuse the partner's feed or private interfaces.
+- [Google APIs Terms §5(a/e), §6(b)](https://developers.google.com/terms#section_5_content)
+  constrain content copying/scraping/attribution; the earlier Google review
+  remains applicable to Google-delivered content, not a source-site license.
+  Search-specific restrictions are not automatically applied to this URL-only
+  path or to ordinary HTML inspection. No source/Google rights guarantee is
+  inferred, and no TMDb data/API is needed for this feasibility finding.
+
+### Feasibility conclusion / next decision
+
+**Do not promote the current URL Context scenario into an automatic URL
+generator or repeat the two live requests now.** Relevant hrefs exist without
+client JavaScript in these source responses, so an eventual permission-reviewed
+initial-HTML approach is technically plausible for these anchors. Reliability,
+stable coverage, supported access, source/JustWatch rights, attribution and
+retention are not established. No scraper, parser module, new endpoint,
+integration, model/prompt change or implementation handoff is produced here.
+
+The next useful gate is authoritative clarification of a supported access route
+and permissible candidate-link use. Only after that and separate owner approval
+would a bounded non-LLM feasibility prototype be considered; do not silently
+replace URL Context with scraping. Until then Kinobaza remains a manual
+auxiliary source. Preserve the existing iPhone workflow, no archive, no
+availability-from-link inference and no general accuracy/cost claim.
