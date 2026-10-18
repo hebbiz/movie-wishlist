@@ -18,6 +18,7 @@ export function renderTmdbResult(document, parent, result, synthetic) {
   add('h3', 'A — Identity / catalogue metadata (not offer tracks)');
   add('p', `Status: ${a.status} · Identity: ${a.identity?.status ?? 'not-evaluated'} · HTTP: ${a.httpStatus ?? 'not-requested'} · Received: ${a.receivedAt ?? 'not-requested'}`);
   if (a.identity) add('pre', `TMDb ID: ${value(a.identity.tmdbId)}\nDetails IMDb: ${value(a.identity.detailsImdb)}\nExternal IMDb: ${value(a.identity.externalImdb)}\nIMDb crosswalk: ${a.identity.crosswalk ?? 'unknown'}\n${a.identity.basis ?? ''}`);
+  for (const [name, resource] of Object.entries(a.resources ?? {})) add('p', `Appended resource ${name}: ${state(resource)} (resource state, not field completeness).`);
   if (a.metadata) {
     const m = a.metadata;
     add('pre', `original_title: ${value(m.originalTitle)}\ntitle (requested uk-UA; may fall back): ${value(m.requestedTitle)}\nrelease_date: ${value(m.releaseDate)}\noriginal_language (film-level): ${value(m.originalLanguage)}\nspoken_languages (film-level): ${state(m.spokenLanguages)} ${(m.spokenLanguages.items ?? []).map(l => value(l.language)).join(', ')}\nexternal_ids resource: ${state(m.externalIds)}`);

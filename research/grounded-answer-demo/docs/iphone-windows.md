@@ -570,7 +570,9 @@ do not relax auth/Host/Origin or introduce a session-bound fallback.
 Isolated non-LLM probe, fixed Coherence/Dune IDs, separate metadata A / UA
 providers B. [Result contract](../README.md#tmdb-data-probe),
 [scoped terms/readiness record](tmdb-probe-handoff.md#implementation-record).
-New results are **live-unvalidated**. No compulsory repeat synthetic or
+The [first Coherence owner run](digital-ua-owner-validation.md#coherence--first-owner-run-result)
+is recorded; Dune remains pending. The appended-ID correction is offline-tested,
+not live-rerun. No compulsory repeat synthetic or
 SSH-disconnect owner test: the existing detached/LAN workflow is unchanged;
 only provider token routing was added and checked with a mock-only temp child.
 Do not repeat MOTN or known streaming-card checks without a specific new issue.
@@ -639,7 +641,7 @@ Status/stop remain the existing helpers. Each live start asks for the token
 again; no reliance on prior SSH environment. Detached process keeps the token
 only in memory until stopped; no storage or service/task configuration.
 
-### One short Safari session, two clicks total
+### Remaining Safari check — Dune first
 
 Open **http://<actual-Windows-IPv4>:4317**, exactly Start's printed URL, Basic
 username **demo**, separate LAN password. Trusted private home Wi-Fi only; HTTP
@@ -649,13 +651,17 @@ URLs and max-two cap before clicking **once**. The existing Termius → Safari
 workflow works independently of an active SSH session; there is no requirement
 to repeat the earlier disconnect demonstration for this iteration.
 
-First Coherence, then restart with the same command choosing Dune and reload
-Safari. **One click per film**, at most two serial title-level HTTP requests
-each (four total). B is not requested if A fails primary identity. Missing append
+The initial two-film plan has now partially completed: Coherence owner run
+returned useful B data and exposed the appended validator issue. **Next choose
+`dune-part-two`** in the unchanged restart command, reload Safari and click once,
+at most two serial title-level HTTP requests. Do not default to rerunning
+Coherence; repeat it only if Dune leaves a concrete unresolved question that
+specifically needs that film. No new streaming-card/SSH-disconnect/synthetic
+round. B is not requested if A fails primary identity. Missing append
 stays partial, errors/quota/identity conflicts are findings: stop, no retry or
 follow-up round. Start/status/reload alone makes no TMDb request.
 
-Report four concise points per film in the
+Report the remaining scenario's four concise points in the
 [pending owner record](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending):
 useful cross-source identity fields; actual UA providers/access buckets/states;
 explicit Ukrainian catalogue text vs indirect language clues; useful new data

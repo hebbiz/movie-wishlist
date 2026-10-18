@@ -33,6 +33,58 @@ test('identity exact primary ID; translated titles/year variance do not reject; 
   assert.equal(a(d).identity.detailsImdb.state, 'missing'); assert.equal(a(d).identity.externalImdb.state, 'null');
 });
 
+const appendedNames = ['external_ids', 'alternative_titles', 'credits', 'release_dates', 'translations'];
+test('appended objects need no repeated movie ID; all five retain projected fields and the two-call budget', async () => {
+  const data = fixture();
+  for (const name of appendedNames) delete data.details[name].id;
+  const calls = []; const r = await fetchTmdb(selection(), token, mock(data, calls));
+  assert.equal(r.identity.status, 'ok'); assert.equal(r.identity.identity.status, 'matched');
+  assert.equal(r.identity.identity.externalImdb.value, TMDB_FILMS.coherence.imdbId);
+  assert.equal(r.identity.metadata.alternativeTitles.items.length, 1);
+  assert.equal(r.identity.metadata.directors.items.length, 1);
+  assert.equal(r.identity.metadata.releaseDates.items.length, 1);
+  assert.equal(r.identity.metadata.translations.items.length, 1);
+  assert.equal(r.providers.status, 'ok'); assert.equal(r.requestsMade, 2); assert.equal(calls.length, 2);
+});
+
+test('missing resource vs malformed resource vs valid object with missing fields are separate', () => {
+  for (const name of appendedNames) {
+    for (const [value, expected] of [[undefined, 'missing'], [null, 'null'], [[], 'invalid'], ['bad', 'invalid'], [false, 'invalid'],
+      [{ id: null }, 'invalid'], [{ id: '220289' }, 'invalid'], [{ success: false, status_code: 34 }, 'invalid'], [{}, 'reported']]) {
+      const data = fixture().details;
+      if (value === undefined) delete data[name]; else data[name] = value;
+      const result = a(data);
+      assert.equal(result.resources[name].state, expected, `${name} / ${JSON.stringify(value)}`);
+      if (value && !Array.isArray(value) && Object.keys(value).length === 0) {
+        const projected = ({ external_ids: 'externalIds', alternative_titles: 'alternativeTitles', credits: 'directors', release_dates: 'releaseDates', translations: 'translations' })[name];
+        assert.equal(result.metadata[projected].state, name === 'external_ids' ? 'reported' : 'missing');
+        if (name === 'external_ids') assert.equal(result.identity.externalImdb.state, 'missing');
+      }
+    }
+  }
+});
+
+test('optional appended IDs accepted only when matching; every supplied movie/IMDb conflict still withholds B', async () => {
+  for (const name of appendedNames) {
+    const data = fixture(); data.details[name].id = 220289;
+    assert.equal(a(data.details).identity.status, 'matched'); assert.equal(a(data.details).status, 'ok');
+    data.details[name].id = 1; const calls = [];
+    const r = await fetchTmdb(selection(), token, mock(data, calls));
+    assert.equal(r.identity.identity.status, 'mismatch'); assert.equal(r.providers.status, 'not-requested'); assert.equal(calls.length, 1);
+  }
+  const data = fixture(); delete data.details.external_ids.id; data.details.external_ids.imdb_id = 'tt0000001';
+  assert.equal(a(data.details).identity.status, 'mismatch');
+});
+
+test('malformed resource fields are distinct from a valid resource with absent fields', () => {
+  for (const [name, field, projected] of [['alternative_titles', 'titles', 'alternativeTitles'], ['credits', 'crew', 'directors'],
+    ['release_dates', 'results', 'releaseDates'], ['translations', 'translations', 'translations']]) {
+    const data = fixture().details; data[name] = { [field]: 'not-an-array' };
+    const r = a(data); assert.equal(r.resources[name].state, 'reported'); assert.equal(r.metadata[projected].state, 'invalid');
+    assert.equal(r.status, 'partial');
+  }
+});
+
 test('stable IDs conflict or malformed primary/crosswalk are never ignored; B is not requested', async () => {
   for (const [status, change] of [['mismatch', d => d.id = 1], ['mismatch', d => d.imdb_id = 'tt0000001'],
     ['mismatch', d => d.external_ids.imdb_id = 'tt0000001'], ['mismatch', d => d.credits.id = 1],

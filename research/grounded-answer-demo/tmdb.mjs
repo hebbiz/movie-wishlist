@@ -39,7 +39,11 @@ function presence(v) {
 function appended(data, name, expectedId, issues) {
   const v = data[name];
   if (v === undefined || v === null) { issues.push(`${name}: ${v === null ? 'null' : 'missing'}; no fallback request.`); return { state: v === null ? 'null' : 'missing' }; }
-  if (!object(v) || v.id !== expectedId) { issues.push(`${name}: invalid shape or ID; fields not evaluated.`); return invalid(); }
+  // Appended objects inherit the validated parent movie context. The standalone
+  // endpoint's id is not a required repeated field; validate it when supplied.
+  if (!object(v) || (Object.hasOwn(v, 'id') && v.id !== expectedId) || v.success === false || Object.hasOwn(v, 'status_code')) {
+    issues.push(`${name}: invalid object, supplied ID or API error; fields not evaluated.`); return invalid();
+  }
   return { state: 'reported', data: v };
 }
 export function projectTmdbIdentity(data, filmId, receivedAt = new Date().toISOString()) {
@@ -90,7 +94,8 @@ export function projectTmdbIdentity(data, filmId, receivedAt = new Date().toISOS
     titles: ukTitles.map(t => ({ title: t.title.value, country: t.country })),
     limits: 'Explicit uk translation labels catalogue text only. Requested locale/title can fall back; UA alias is a country tag. Original/spoken languages and release events do not prove provider dubbing/subtitles. No provider audio/video/price fields supplied by these endpoints.' };
   if (JSON.stringify(metadata).includes('"state":"invalid"')) issues.push('One or more metadata fields are invalid; not inferred or retried.');
-  return { ...base, status: status !== 'matched' ? `identity-${status}` : issues.length ? 'partial' : 'ok', identity, metadata, localization, issues };
+  const resources = Object.fromEntries(APPEND.split(',').map(name => [name, { state: sub[name].state }]));
+  return { ...base, status: status !== 'matched' ? `identity-${status}` : issues.length ? 'partial' : 'ok', identity, resources, metadata, localization, issues };
 }
 
 export function projectTmdbProviders(data, filmId, receivedAt = new Date().toISOString()) {
@@ -168,11 +173,11 @@ export async function fetchTmdb(selection, token, fetchImpl = globalThis.fetch, 
 export function syntheticTmdb(filmId) {
   const f = Object.hasOwn(TMDB_FILMS, filmId) ? TMDB_FILMS[filmId] : undefined; if (!f) throw new Error('Fixed TMDb film required.');
   return { details: { id: f.tmdbId, imdb_id: f.imdbId, title: 'SYNTHETIC requested title', original_title: 'SYNTHETIC original title', release_date: '2000-01-01', original_language: 'en', spoken_languages: [{ iso_639_1: 'en' }],
-    external_ids: { id: f.tmdbId, imdb_id: f.imdbId },
-    alternative_titles: { id: f.tmdbId, titles: [{ iso_3166_1: 'UA', title: 'SYNTHETIC country alias', type: '' }] },
-    credits: { id: f.tmdbId, crew: [{ id: 999999, job: 'Director', name: 'SYNTHETIC director', original_name: 'SYNTHETIC director' }] },
-    release_dates: { id: f.tmdbId, results: [{ iso_3166_1: 'UA', release_dates: [{ release_date: '2000-02-01T00:00:00Z', type: 4, iso_639_1: '' }] }] },
-    translations: { id: f.tmdbId, translations: [{ iso_639_1: 'uk', iso_3166_1: 'UA', data: { title: 'ВИГАДАНА назва', overview: 'SYNTHETIC prose not displayed', tagline: '' } }] } },
+    external_ids: { imdb_id: f.imdbId },
+    alternative_titles: { titles: [{ iso_3166_1: 'UA', title: 'SYNTHETIC country alias', type: '' }] },
+    credits: { crew: [{ id: 999999, job: 'Director', name: 'SYNTHETIC director', original_name: 'SYNTHETIC director' }] },
+    release_dates: { results: [{ iso_3166_1: 'UA', release_dates: [{ release_date: '2000-02-01T00:00:00Z', type: 4, iso_639_1: '' }] }] },
+    translations: { translations: [{ iso_639_1: 'uk', iso_3166_1: 'UA', data: { title: 'ВИГАДАНА назва', overview: 'SYNTHETIC prose not displayed', tagline: '' } }] } },
     providers: { id: f.tmdbId, results: { UA: { flatrate: [{ provider_id: 999999, provider_name: 'SYNTHETIC service', logo_path: '/not-fetched.png', display_priority: 10 }], rent: [], buy: [{ provider_id: 999999, provider_name: 'SYNTHETIC service' }] }, GB: { rent: [{ provider_name: 'SYNTHETIC foreign must not display' }] } } } };
 }
 export function projectSyntheticTmdb(filmId) {

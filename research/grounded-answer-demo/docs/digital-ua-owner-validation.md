@@ -361,16 +361,54 @@ isolated implementation. MW-FUT-01 remains Discovery.
 
 ## TMDb data probe — owner validation pending
 
-October 18, 2026 implementation checkpoint, **not owner-run evidence**:
+October 18, 2026 implementation checkpoint, initially **not owner-run evidence**:
 `tmdb-data` now supports the same fixed two films, A identity/catalogue metadata
 separate from B actual `results.UA`, max two serial HTTP requests per film.
-Only authored synthetic/mocks were executed by the implementation agent. No
-real UA providers, translations, catalogue completeness or additional value over
-MOTN/Kinobaza is established yet. Live readiness is conditional on normal owner
-review of applicable current terms; see the [implementation/terms record](tmdb-probe-handoff.md#implementation-record).
+Only authored synthetic/mocks were executed by the implementation agent. The
+subsequent Coherence observation below is **owner-reported**, not an independent
+agent repeat. Dune is still pending. The applicable current terms/readiness
+condition remains in the [implementation/terms record](tmdb-probe-handoff.md#implementation-record).
 
-One short owner session after that condition, one click per film, with a concise
-summary (no full JSON/live output/screenshots):
+### Coherence — first owner-run result
+
+Recorded October 18, 2026 after implementation `0fcb1d2` in #180; exact execution
+timestamp/running commit not captured. No live response body archived or inspected
+by the agent. Owner reported:
+
+- Two HTTP requests, both **200**; identity matched, TMDb **220289**, Details
+  IMDb **tt2866360**.
+- `title` **Зв’язок**, `original_title` **Coherence**, `release_date`
+  **2014-04-06**; original/spoken language **en**. The meaning of the different
+  film/release year is not inferred. Requested Ukrainian title by itself does
+  not independently establish an explicit `uk` translation entry or provider tracks.
+- All five appended resources (`external_ids`, `alternative_titles`, `credits`,
+  `release_dates`, `translations`) were displayed as **invalid**. Their original
+  shapes/IDs/field values are not known from this summary; this is not proof
+  that the API omitted the resources or their nested IDs.
+- **B succeeded:** actual `results.UA` showed **Apple TV Store [2]** in **rent**
+  and **buy**, with **flatrate/ads missing**. Preserve this useful UA access-type
+  signal; the A validation issue does not negate it. Missing buckets are not
+  evidence of no subscription elsewhere or no UA availability. No provider
+  deep link, price, quality, audio/subtitles or account entitlement is established.
+
+The [separate code/schema diagnosis](tmdb-probe-handoff.md#appended-resource-validation-correction)
+proves an over-strict repeated-ID validator defect, not the exact original live
+body. It is compatible with the reported symptoms; their complete live mechanism
+cannot be confirmed without retained response shape. Fix is offline-tested,
+not live-revalidated. B transport/projection is unchanged.
+
+### Minimal remaining owner plan — Dune first
+
+After updating the same branch and deliberately restarting this copy using the
+[existing command](iphone-windows.md#tmdb-data-owner-workflow), select
+**dune-part-two**, which has **not yet been run**, reload Safari, click once.
+Maximum two API HTTP requests; no retries/additional endpoints. Note A resource
+states/fields separately from B actual UA buckets using the four questions below.
+Do not request a default repeat of Coherence: only if Dune leaves a concrete
+unresolved question that specifically requires Coherence. No new streaming-card,
+synthetic or SSH-disconnect test cycle; no full JSON/screenshots/live archive.
+
+For the remaining scenario, concise summary only (no full JSON/live output/screenshots):
 
 1. Which returned stable IDs, titles/aliases, dates/directors help cross-source
    matching? Note missing/conflicting fields without guessing year meaning.

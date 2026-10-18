@@ -798,10 +798,15 @@ not a permission/ban inferred from an old index or a compulsory email. No paid
 plan selected. The official documentation SVG/notice and JustWatch attribution
 are local display assets, not response evidence or branding certification.
 
-Implemented + synthetic/offline-tested does not answer which real fields/UA
-providers are returned. In particular film-level TMDb language/UA aliases do
+Initial implementation + synthetic/offline checks did not answer which real
+fields/UA providers are returned. The [first owner Coherence run](digital-ua-owner-validation.md#coherence--first-owner-run-result)
+subsequently reported Apple TV Store rent/buy in UA and invalid appended objects.
+The [separate validator diagnosis/fix](tmdb-probe-handoff.md#appended-resource-validation-correction)
+does not independently establish the original live shape; Dune remains pending.
+In particular film-level TMDb language/UA aliases do
 not fill MOTN's provider-track/quality/currency gaps. Explicit `uk` catalogue
 translation and JustWatch aggregate buckets are different evidence classes;
-shared JustWatch lineage is not independent corroboration. Owner plan is one
-short session, one click per film, max four HTTP requests. No obligatory repeat
-card/synthetic/SSH-disconnect tests. [Results remain pending](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).
+shared JustWatch lineage is not independent corroboration. Remaining owner plan:
+**Dune first**, one click/max two HTTP requests. Coherence only if a concrete
+unresolved question remains after Dune, not an automatic repeat. No obligatory
+card/synthetic/SSH-disconnect tests. [Owner record and remaining plan](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).

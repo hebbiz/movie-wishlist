@@ -4,7 +4,9 @@ The owner approved this handoff after #179 closeout `9e4bf4f`. It is now
 implemented in isolated `tmdb-data`, on a separate branch stacked on open #179.
 The design requirements below retain their preparation context; current runtime,
 validation and remaining live-readiness conditions are in the
-[implementation record](#implementation-record). **No live TMDb test performed.**
+[implementation record](#implementation-record). **No agent live TMDb test performed.**
+The first Coherence owner-run result and subsequent offline-only correction are
+separate [below](#appended-resource-validation-correction); Dune remains pending.
 
 ## Context
 
@@ -233,7 +235,8 @@ Model/generation settings and all existing Gemini request bodies are unchanged.
 Public official docs and OpenAPI rechecked **October 18, 2026**, read-only;
 not authenticated title calls. The seven endpoint schemas match the table above;
 Details supports five appended resources (under its 20 limit), Watch Providers
-has no country query parameter. Exact combined request remains live-unvalidated.
+has no country query parameter. At initial implementation the combined request
+was live-unvalidated; the subsequent owner Coherence run is recorded separately.
 Missing/invalid append is a displayed limitation, never additional requests.
 `TMDB_READ_ACCESS_TOKEN` / Bearer transport and hidden helper prompt are now
 implemented, not merely proposed. The child receives only its selected provider
@@ -301,7 +304,78 @@ artifact, not live evidence. No live API, raw archive, system/deployment change
 or terms acceptance by agent.
 
 Follow the [single-session owner workflow](iphone-windows.md#tmdb-data-owner-workflow)
-only after the scoped terms readiness condition. One click per film, max two
-HTTP requests each, no repeat card/SSH/synthetic round unless a specific new
-issue actually needs it. Record only the four-question concise summary in the
+only after the scoped terms readiness condition. The updated remaining plan is
+Dune first, max two HTTP requests; Coherence repeat only for a specific unresolved
+question, no default card/SSH/synthetic round. Record the concise summary in the
 [existing owner record](digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).
+
+### Appended-resource validation correction
+
+Reviewed October 18, 2026 at #180 HEAD `0fcb1d27beaa3c00e26d94330152a21363ae2df8`,
+base #179 `9e4bf4f`. [First owner-run Coherence result](digital-ua-owner-validation.md#coherence--first-owner-run-result)
+is reported separately: both requests 200, primary identity matched, all five
+appended resources displayed invalid, B returned UA Apple TV Store rent/buy.
+No independent live repeat or retained live response is available.
+
+**Request audit:** the exact fixed Details URL contains `language=uk-UA` and
+`append_to_response=external_ids,alternative_titles,credits,release_dates,translations`.
+The [current official append guide](https://developer.themoviedb.org/docs/append-to-response)
+documents comma-separated movie subresources as nested JSON objects; the
+[Details reference](https://developer.themoviedb.org/reference/movie-details)
+allows 20, so five is within budget. No request construction defect demonstrated.
+The URL, headers, serial two-call cap and Watch Providers request/projection are
+unchanged; no separate-resource fallback or retries added.
+
+**Schema evidence and its limits:** the public
+[OpenAPI](https://developer.themoviedb.org/openapi/tmdb-api.json) re-read on this
+date lists standalone resource properties as `id,imdb_id,…` (external IDs),
+`id,titles` (alternative titles), `id,cast,crew` (credits), `id,results` (release
+dates), `id,translations` (translations). None of these five response schemas
+has a `required` list making `id` mandatory. The Details schema does not model
+the combined appended variants, and the append guide does **not** promise a
+repeated `id` inside each object. This is not a published exact five-resource
+combined example or proof of the owner's original live shape. Do not claim
+that the original objects definitely omitted IDs, that the API changed, or that
+all appended objects always lack IDs. The standalone examples are not a basis
+for imposing an extra mandatory-ID contract on every appended object.
+
+**Proven code defect:** `appended()` rejected an otherwise valid object whenever
+`v.id !== expectedId`, including an absent `id`. A new authored regression
+removed only the repeated IDs from all five otherwise-valid objects: all
+became invalid/partial before the fix. A separate resource-state regression also
+failed; supplied stable-ID conflict checks already passed. This proves the
+validator's unsupported repeated-ID assumption and a deterministic mechanism
+consistent with the symptoms, **not the exact live root cause**. Since the live
+body/IDs are unknown, other shape problems cannot be excluded or fabricated.
+
+**Minimal fix:** accept a nested object in its validated parent movie context
+without a repeated movie ID. If an `id` is present, still validate it strictly;
+all actually supplied valid conflicting movie/IMDb IDs retain the existing
+identity mismatch gate and B-not-requested behavior. Root ID remains required.
+Nonobjects, supplied malformed IDs and explicit API-error objects are invalid,
+not missing. A missing resource is missing; null stays null; a valid `{}` is
+reported with missing fields. The UI now exposes resource state separately from
+field state, avoiding the old conflation. No provider/localization inference or
+confidence score is added.
+
+**Fixture correction:** original authored data repeated `id` in every appended
+object, mirroring standalone endpoint examples and masking the assumption.
+Default synthetic now omits those repeated movie IDs and keeps resource-specific
+documented keys (`imdb_id`, `titles`, `crew`, `results`, `translations`). Separate
+tests add matching IDs, conflicting IDs, missing/null/malformed resources,
+API-error objects and valid objects with absent fields. Person/crew IDs are not
+mistaken for movie IDs. These are schema-oriented authored compatibility cases,
+not copied live bodies or a claim that mocks establish the actual live format.
+
+The fix remains **offline-tested / live-unvalidated**; owner B success is
+preserved, not reinterpreted. Next owner action is **Dune first**, one click,
+max two HTTP requests with the existing helper command. Coherence repeat only
+for a concrete remaining question after that, not a new default cycle. No
+streaming-card rechecks, extra endpoints, API calls by agent, raw-response archive,
+terms change or owner-demo stop. [Updated minimal plan](iphone-windows.md#tmdb-data-owner-workflow).
+
+Correction checks: **188 offline/HTTP passed** (49 TMDb); **18 TMDb Edge
+browser checks passed / 1 absent-WebKit skip**, narrow viewport not real iPhone.
+TMDb Windows temp-copy lifecycle/mock token routing/two-call/one-shot regression
+passed; owner process untouched. Local links/anchors, scope diff and whitespace
+checked. These tests establish code compatibility, not the live response shape.

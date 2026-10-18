@@ -64,8 +64,11 @@ after the fix remains pending, separate from the reported Safari live answers.
 The approved [TMDb data probe](#tmdb-data-probe) is now implemented separately
 as opt-in `tmdb-data`, stacked on #179 at `9e4bf4f`. Identity/catalogue metadata
 and actual `results.UA` are separate blocks; maximum two serial HTTP requests
-per film. **Offline-tested, live-unvalidated; live readiness conditional on
-review of applicable current terms.** No new MOTN/card/SSH-disconnect test asked.
+per film. The [first owner-run Coherence result](docs/digital-ua-owner-validation.md#coherence--first-owner-run-result)
+established a reported UA Apple TV Store rent/buy signal but exposed over-strict
+appended-resource validation. That correction is offline-tested, not live-rerun;
+**Dune remains pending**, with current-terms readiness still conditional.
+No new MOTN/card/SSH-disconnect test asked.
 
 No production integration, production TMDb calls, chat/input, LLM-output
 normalization, scoring, response archive or analytics. HTML-only returns a small
@@ -279,6 +282,11 @@ selection; browser input/body cannot override it.
    B. Missing IMDb is an explicitly unknown crosswalk, not a mismatch. Dates or
    localized title variation alone do not override stable IDs. Missing/invalid
    appended data stays partial/unknown, with no decomposition/fallback calls.
+   An appended object need not repeat the parent movie `id`; if supplied it must
+   match. Resource missing/null/invalid/reported states are separate from its
+   field states, so a valid object with missing fields is not an invalid resource.
+   Nonobjects, malformed/conflicting supplied IDs and API-error objects are
+   withheld. See [schema evidence and limits](docs/tmdb-probe-handoff.md#appended-resource-validation-correction).
 2. **B:** separate Watch Providers request; project only uppercase `results.UA`.
    If A fails identity, B is **not requested**, not an empty UA result. Actual
    absent/null/empty UA and missing/null/empty/invalid buckets are distinguished.
@@ -312,12 +320,14 @@ Credits/About. Current complete Terms remain inaccessible to this agent;
 terms for this bounded non-LLM scope**. No email is required merely for that
 access limitation. No paid plan or zero-total-cost assertion is made.
 
-Implementation/synthetic checks are separate from [pending owner evidence](docs/digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).
-No live API/card test was performed. The four research questions concern useful
+Implementation/synthetic checks are separate from [owner evidence and remaining plan](docs/digital-ua-owner-validation.md#tmdb-data-probe--owner-validation-pending).
+No agent live API/card test was performed. Coherence owner data does not expose
+the original appended shapes; the correction is not live-revalidated. The four research questions concern useful
 cross-source identity fields, returned UA buckets, explicit catalogue-language
 evidence versus offer-track inference, and additional information over MOTN/
-Kinobaza. Actual answers await **one short owner session**, one click per film
-(max four HTTP requests), not a general accuracy test. No repeated SSH-disconnect
+Kinobaza. Next run **Dune only first**, one click/max two HTTP requests; do not
+default to repeating Coherence or the original four-request plan. These two
+films are not a general accuracy test. No repeated SSH-disconnect
 or synthetic owner test required; streaming cards only for a concrete new
 material discrepancy. Do not send full JSON/screenshots.
 

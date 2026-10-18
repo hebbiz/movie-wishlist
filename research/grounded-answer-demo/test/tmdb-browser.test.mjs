@@ -12,7 +12,7 @@ test('TMDb separate metadata / UA blocks on mobile viewport (mocks, not real iPh
   t.after(() => browser.close());
   const cases = [
     ...['coherence', 'dune-part-two'].flatMap(filmId => ['synthetic', 'live'].map(mode => ({ filmId, mode, kind: 'normal' }))),
-    ...['missing-token', 'auth-error', 'quota-B', 'identity', 'missing-crosswalk', 'missing-UA', 'empty-UA', 'partial-A', 'fallback-title', 'hostile'].map(kind => ({ filmId: 'coherence', mode: 'live', kind })),
+    ...['missing-token', 'auth-error', 'quota-B', 'identity', 'missing-crosswalk', 'missing-UA', 'empty-UA', 'partial-A', 'invalid-resource', 'empty-resource', 'supplied-id-conflict', 'fallback-title', 'hostile'].map(kind => ({ filmId: 'coherence', mode: 'live', kind })),
   ];
   for (const { filmId, mode, kind } of cases) await t.test(`${filmId}/${mode}/${kind}`, async t => {
     const calls = [], key = 'offline-tmdb-browser-token';
@@ -26,6 +26,9 @@ test('TMDb separate metadata / UA blocks on mobile viewport (mocks, not real iPh
         if (kind === 'missing-UA') delete d.providers.results.UA;
         if (kind === 'empty-UA') d.providers.results.UA = {};
         if (kind === 'partial-A') delete d.details.translations;
+        if (kind === 'invalid-resource') d.details.translations = [];
+        if (kind === 'empty-resource') d.details.translations = {};
+        if (kind === 'supplied-id-conflict') d.details.translations.id = 1;
         if (kind === 'fallback-title') d.details.translations.translations[0].data.title = '';
         if (kind === 'hostile') { d.details.title = '<img src="https://example.com/evil" onerror="alert(1)">'; d.providers.results.UA.link = 'javascript:alert(1)'; }
         return Response.json(url.endsWith('/watch/providers') ? d.providers : d.details);
@@ -49,17 +52,20 @@ test('TMDb separate metadata / UA blocks on mobile viewport (mocks, not real iPh
     assert.equal(await page.locator('input,textarea,select').count(), 0); assert.ok(!(await page.content()).includes(key));
     await page.locator('#run').evaluate(button => { button.click(); button.click(); }); await page.locator('#result').waitFor({ state: 'visible' });
     assert.equal(posts, 1);
-    const expectedCalls = mode === 'synthetic' || kind === 'missing-token' ? 0 : ['identity', 'auth-error'].includes(kind) ? 1 : 2;
+    const expectedCalls = mode === 'synthetic' || kind === 'missing-token' ? 0 : ['identity', 'supplied-id-conflict', 'auth-error'].includes(kind) ? 1 : 2;
     assert.equal(calls.length, expectedCalls); if (calls.length) assert.equal(calls[0], session.sourceURL); if (calls.length === 2) assert.equal(calls[1], session.providersURL);
     const shown = await page.locator('#answer').textContent();
     assert.match(shown, /A — Identity.*B — Watch Providers/s); assert.match(shown, /not offer tracks/);
     assert.doesNotMatch(shown, /PRIVATE_CONTENT|offline-tmdb-browser|foreign must not display|javascript:alert|SYNTHETIC prose/);
-    if (kind === 'identity') assert.match(shown, /identity-mismatch.*B not requested/s);
+    if (['identity', 'supplied-id-conflict'].includes(kind)) assert.match(shown, /identity-mismatch.*B not requested/s);
     if (kind === 'missing-token') assert.match(shown, /missing-token-no-request.*B not requested/s);
     if (kind === 'quota-B') assert.match(shown, /quota-or-rate-limit/);
     if (kind === 'auth-error') assert.match(shown, /api-auth-error/);
     if (kind === 'missing-crosswalk') assert.match(shown, /IMDb crosswalk: unknown/);
     if (kind === 'partial-A') assert.match(shown, /translations: missing; no fallback request/);
+    if (kind === 'invalid-resource') assert.match(shown, /Appended resource translations: invalid.*Translations — explicit catalogue text, not dubbing: invalid/s);
+    if (kind === 'empty-resource') assert.match(shown, /Appended resource translations: reported.*Translations — explicit catalogue text, not dubbing: missing/s);
+    if (kind === 'normal') assert.match(shown, /Appended resource translations: reported.*Ukrainian catalogue title evidence: explicit-uk-title-reported/s);
     if (kind === 'fallback-title') assert.match(shown, /Ukrainian catalogue title evidence: not-established/);
     if (kind === 'missing-UA') assert.match(shown, /UA field: missing/);
     if (kind === 'empty-UA') assert.match(shown, /UA field: reported-empty/);
