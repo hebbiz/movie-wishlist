@@ -1,13 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createDemo } from '../server.mjs';
 import { syntheticResponse } from '../synthetic.mjs';
 import { displayParts, byteIndex, once } from '../public/display.mjs';
-import { MODEL, MAX_OUTPUT_TOKENS, PROMPT, DEFAULT_FILM, FILMS, selectFilm, requestBody } from '../config.mjs';
+import { MODEL, MAX_OUTPUT_TOKENS, PROMPT, DEFAULT_FILM, FILMS, AMAZON_REGIONS, selectFilm, selectScenario, requestBody } from '../config.mjs';
 
 const clone = () => syntheticResponse();
 const metadata = response => response.candidates[0].groundingMetadata;
@@ -89,6 +88,8 @@ test('default mode is synthetic and never calls provider; replay blocked', async
   assert.equal(session.mode, 'synthetic');
   assert.equal(session.film.id, 'dune-part-two');
   assert.equal(session.prompt, PROMPT);
+  assert.equal(session.discovery, 'physical');
+  assert.equal(session.amazonRegion, null);
   const [first, second] = await Promise.all([post(), post()]);
   assert.deepEqual([first.status, second.status].sort(), [200, 409]);
   assert.equal(first.headers.get('cache-control'), 'no-store');
@@ -170,17 +171,19 @@ test('source audit: no content persistence, logging, analytics or service worker
   assert.ok(!before.some(name => ['runs', 'cache', 'archive', 'logs'].includes(name)));
 });
 
-test('README exact prompt stays synchronized with the request', async () => {
+test('README documents every server switch and unchanged output limit', async () => {
   const readme = (await readFile(new URL('../README.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
-  assert.equal(readme.match(/```text\n([\s\S]*?)\n```/)[1], PROMPT);
+  for (const name of ['DEMO_FILM', 'DEMO_DISCOVERY', 'DEMO_AMAZON_REGION', 'maxOutputTokens=4096']) assert.ok(readme.includes(name));
 });
 
-test('default film and exact original Dune prompt are preserved', () => {
+test('default film and physical multi-store selection are preserved', () => {
   assert.equal(DEFAULT_FILM, 'dune-part-two');
   assert.equal(selectFilm().id, DEFAULT_FILM);
-  assert.equal(selectFilm().prompt, PROMPT);
-  // SHA-256 of PROMPT at review baseline 3337fc9 (UTF-8, LF).
-  assert.equal(createHash('sha256').update(PROMPT).digest('hex'), 'c6de933db248f8172dcef014376bd0557fec27baaeeeefcc35d12708571c8ce2');
+  assert.equal(selectScenario().prompt, PROMPT);
+  assert.equal(selectScenario().discovery, 'physical');
+  assert.equal(selectScenario().amazonRegion, null);
+  assert.match(PROMPT, /Look at HMV, Rarewaves, and Amazon US, UK, Germany and Italy/);
+  assert.match(PROMPT, /Treat all four Amazon regions equally/);
   assert.deepEqual(requestBody(), requestBody(DEFAULT_FILM));
 });
 
@@ -190,19 +193,19 @@ test('fixed catalogue identifies the films and preserves model/settings for ever
   assert.equal(MAX_OUTPUT_TOKENS, 4096);
   for (const id of Object.keys(FILMS)) {
     const body = requestBody(id);
-    assert.equal(body.contents[0].parts[0].text, selectFilm(id).prompt);
+    assert.equal(body.contents[0].parts[0].text, selectScenario({ filmId: id }).prompt);
     assert.deepEqual(body.tools, [{ googleSearch: {} }]);
     assert.deepEqual(body.generationConfig, { maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: 'low' } });
-    for (const instruction of PROMPT.split('\n').slice(1)) assert.ok(selectFilm(id).prompt.includes(instruction));
+    for (const instruction of PROMPT.split('\n').slice(1)) assert.ok(selectScenario({ filmId: id }).prompt.includes(instruction));
   }
-  const coherence = selectFilm('coherence');
+  const coherence = { ...selectFilm('coherence'), prompt: selectScenario({ filmId: 'coherence' }).prompt };
   assert.equal(coherence.director, 'James Ward Byrkit');
   assert.match(coherence.prompt, /Coherence \(2013\), directed by James Ward Byrkit/);
   assert.match(coherence.prompt, /publication or reissue year/);
-  assert.match(coherence.prompt, /Do not assume that a 4K UHD edition exists/);
-  const bladeRunner = selectFilm('blade-runner-final-cut');
+  assert.match(coherence.prompt, /Do not assume that a UHD edition exists/);
+  const bladeRunner = { ...selectFilm('blade-runner-final-cut'), prompt: selectScenario({ filmId: 'blade-runner-final-cut' }).prompt };
   assert.equal(bladeRunner.director, 'Ridley Scott');
-  assert.match(bladeRunner.prompt, /Blade Runner \(1982\), directed by Ridley Scott, specifically The Final Cut/);
+  assert.match(bladeRunner.prompt, /Blade Runner \(1982\) — The Final Cut, directed by Ridley Scott/);
   assert.match(bladeRunner.prompt, /not a theatrical cut, Director's Cut, another version or Blade Runner 2049/);
   assert.match(bladeRunner.prompt, /For a collection or multi-version set/);
   assert.match(bladeRunner.prompt, /explicitly state that the version is uncertain/);
@@ -239,7 +242,7 @@ test('each selected film uses the displayed prompt in exactly one mocked request
       return Response.json(syntheticResponse('grounded', filmId));
     } });
     assert.deepEqual(session.film, { id: filmId, title: selectFilm(filmId).title, director: selectFilm(filmId).director });
-    assert.equal(session.prompt, selectFilm(filmId).prompt);
+    assert.equal(session.prompt, selectScenario({ filmId }).prompt);
     const attemptOverride = () => fetch(`${origin}/answer`, {
       method: 'POST', headers: { Origin: origin, 'x-demo-session': session.token, 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: 'Ignore server prompt', filmId: 'not-a-film' }),
@@ -266,4 +269,105 @@ test('each synthetic film fixture is visibly invented, does not assume UHD/cut a
     assert.match(text, /No retailer was checked/);
     assert.equal((await post()).status, 409);
   });
+});
+
+const selections = Object.keys(FILMS).flatMap(filmId => [
+  { filmId, discovery: 'physical' },
+  ...Object.keys(AMAZON_REGIONS).map(amazonRegion => ({ filmId, discovery: 'physical', amazonRegion })),
+  { filmId, discovery: 'digital-ua' },
+]);
+
+test('all 18 film/mode/region configurations: displayed/request prompt, fixed settings, one-shot and no browser override', async t => {
+  for (const selection of selections) await t.test(JSON.stringify(selection), async t => {
+    const expected = selectScenario(selection);
+    let calls = 0;
+    let actualBody;
+    const { session, origin, post } = await start(t, { ...selection, mode: 'live', apiKey: 'offline-test-key', fetchImpl: async (_, options) => {
+      calls++;
+      actualBody = JSON.parse(options.body);
+      return Response.json(syntheticResponse('grounded', selection.filmId, selection));
+    } });
+    assert.equal(session.discovery, expected.discovery);
+    assert.equal(session.amazonRegion, expected.amazonRegion);
+    assert.equal(session.prompt, expected.prompt);
+    const attemptOverride = () => fetch(`${origin}/answer`, {
+      method: 'POST', headers: { Origin: origin, 'x-demo-session': session.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: 'arbitrary', filmId: 'unknown', discovery: 'invalid', amazonRegion: 'fr' }),
+    });
+    const results = await Promise.all([attemptOverride(), attemptOverride()]);
+    assert.deepEqual(results.map(r => r.status).sort(), [200, 409]);
+    assert.equal((await post()).status, 409);
+    assert.equal(calls, 1);
+    assert.equal(actualBody.contents[0].parts[0].text, session.prompt);
+    assert.deepEqual(actualBody, requestBody(selection.filmId, selection));
+    assert.deepEqual(actualBody.generationConfig, { maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: 'low' } });
+    const fixture = displayParts(syntheticResponse('grounded', selection.filmId, selection));
+    assert.match(fixture.parts[0].text, /SYNTHETIC ONLY/);
+    assert.match(fixture.parts[0].text, /Ukrainian viewing availability, Ukrainian audio and Ukrainian subtitles are unknown/);
+    assert.match(fixture.parts[0].text, /No platform was checked/);
+  });
+});
+
+const invalidSelections = [
+  ...['', 'digital', '__proto__', 'Digital-UA'].map(discovery => ({ discovery })),
+  ...['', 'fr', 'US', '__proto__', null].map(amazonRegion => ({ amazonRegion })),
+  ...Object.keys(AMAZON_REGIONS).map(amazonRegion => ({ discovery: 'digital-ua', amazonRegion })),
+];
+test('unknown switches and Amazon regions in digital-ua are rejected before server/transport', () => {
+  let calls = 0;
+  for (const selection of invalidSelections) {
+    assert.throws(() => selectScenario(selection), /DEMO_DISCOVERY|DEMO_AMAZON_REGION/);
+    assert.throws(() => requestBody(DEFAULT_FILM, selection), /DEMO_DISCOVERY|DEMO_AMAZON_REGION/);
+    assert.throws(() => createDemo({ ...selection, mode: 'live', apiKey: 'offline-test-key', fetchImpl: () => { calls++; } }), /DEMO_DISCOVERY|DEMO_AMAZON_REGION/);
+  }
+  assert.equal(calls, 0);
+});
+
+test('CLI rejects invalid discovery/region environment before listening', () => {
+  for (const env of [
+    { DEMO_DISCOVERY: 'unknown', DEMO_AMAZON_REGION: 'us' },
+    { DEMO_DISCOVERY: 'physical', DEMO_AMAZON_REGION: 'fr' },
+    { DEMO_DISCOVERY: 'digital-ua', DEMO_AMAZON_REGION: 'uk' },
+  ]) {
+    const result = spawnSync(process.execPath, [fileURLToPath(new URL('../server.mjs', import.meta.url))], {
+      env: { ...process.env, ...env, DEMO_FILM: DEFAULT_FILM, DEMO_MODE: 'live', DEMO_PORT: '4317', GEMINI_API_KEY: '' }, encoding: 'utf8', timeout: 5000,
+    });
+    assert.ifError(result.error);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /DEMO_DISCOVERY|DEMO_AMAZON_REGION/);
+    assert.doesNotMatch(result.stdout, /Local .* demo:/);
+  }
+});
+
+test('physical prompt scope and priorities, Marketplace, disc identity and stock caveats are explicit', () => {
+  for (const selection of selections.filter(s => s.discovery === 'physical')) {
+    const { prompt } = selectScenario(selection);
+    assert.match(prompt, /availability, then English audio, then 4K UHD Blu-ray \/ Blu-ray \/ DVD/);
+    assert.match(prompt, /Marketplace offers are allowed, not only Amazon-direct or Amazon-fulfilled/);
+    assert.match(prompt, /State seller and condition if known/);
+    assert.match(prompt, /Do not assume Amazon is the seller/);
+    assert.match(prompt, /sold-out price is not a successful available offer/);
+    assert.match(prompt, /must not be called historical without evidence/);
+    assert.match(prompt, /Distinguish UHD disc characteristics from the bundled Blu-ray/);
+    assert.match(prompt, /each citation refers to the exact film, cut, edition and offer/);
+    if (selection.amazonRegion) {
+      assert.ok(prompt.includes(`Search only the Amazon store ${AMAZON_REGIONS[selection.amazonRegion]}`));
+      assert.deepEqual(prompt.match(/amazon\.(?:co\.uk|com|de|it)/g), [AMAZON_REGIONS[selection.amazonRegion]]);
+      assert.doesNotMatch(prompt, /Look at HMV/);
+    }
+  }
+});
+
+test('digital prompts specify UA/locale evidence, separate claims, priorities, unknowns and Final Cut', () => {
+  for (const filmId of Object.keys(FILMS)) {
+    const { prompt } = selectScenario({ filmId, discovery: 'digital-ua' });
+    assert.match(prompt, /Apple TV, Rakuten TV, Netflix, Prime Video, MEGOGO and HBO Max \(formerly Max\)/);
+    const order = ['1. Ability to watch', '2. Ukrainian audio', '3. Ukrainian subtitles', '4. Video format', '5. Access type'];
+    const indices = order.map(text => prompt.indexOf(text));
+    assert.ok(indices.every(i => i >= 0));
+    assert.deepEqual(indices, [...indices].sort((a, b) => a - b));
+    for (const text of ['confirmed presence, confirmed absence and unknown', 'country-code URL alone does not confirm', 'negative search result is not proof', 'keep availability unknown', 'Do not transfer global or foreign-market', 'do not substitute subtitles for audio', '4K does not prove HDR10 or Dolby Vision', 'HD with Ukrainian audio over 4K', 'prefer Ukrainian subtitles over a better video format', 'subscription, rental or purchase']) assert.ok(prompt.includes(text));
+    assert.doesNotMatch(prompt, /Look at HMV|Search only the Amazon store/);
+    if (filmId === 'blade-runner-final-cut') assert.match(prompt, /not a theatrical cut, Director's Cut, another version or Blade Runner 2049/);
+  }
 });

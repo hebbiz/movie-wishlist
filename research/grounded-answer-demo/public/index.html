@@ -7,21 +7,25 @@
 <main>
   <header>
     <p class="eyebrow">Movie Wishlist · MW-FUT-01 · Discovery</p>
-    <h1 id="film">Physical edition demo</h1>
+    <h1 id="film">Media discovery demo</h1>
     <p id="director"></p>
+    <p id="discovery"></p>
+    <p id="retrieval-mode"></p>
+    <pre id="source-url" hidden></pre>
     <p>Local, owner-operated display-only demo. Not a production feature.</p>
     <p id="mode" class="notice">Loading local session…</p>
     <p id="settings"></p>
-    <details open><summary>Exact fixed prompt sent to Gemini</summary><pre id="prompt"></pre></details>
-    <p>Live mode sends this prompt and API configuration to Google. Google applies its own data processing and retention terms. Citations are attribution, not verified availability. No delivery research.</p>
-    <p><a href="https://ai.google.dev/gemini-api/terms">Google API terms</a> · <a href="https://ai.google.dev/gemini-api/docs/generate-content/google-search">Grounding documentation</a></p>
+    <details open><summary id="operation-label">Exact fixed prompt sent to Gemini</summary><pre id="prompt"></pre></details>
+    <p id="service-notice">Live mode sends this prompt and API configuration to Google. Google applies its own data processing and retention terms. Citations are attribution, not verified availability. No delivery research.</p>
+    <p><a id="service-terms" href="https://ai.google.dev/gemini-api/terms">Google API terms</a> · <a id="provider-docs" href="https://ai.google.dev/gemini-api/docs/generate-content/google-search">Grounding documentation</a></p>
     <button id="run" disabled>Run once</button>
     <p id="status" role="status" aria-live="polite"></p>
   </header>
   <section id="result" hidden aria-label="Original Gemini response and associated Search Suggestions">
-    <h2>Gemini response</h2>
+    <h2 id="result-heading">Gemini response</h2>
     <div id="answer"></div>
     <div id="suggestions"></div>
+    <div id="retrieval-result"></div>
   </section>
 </main>
 <script type="module" src="/client.mjs"></script>

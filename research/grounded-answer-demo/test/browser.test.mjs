@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { createDemo } from '../server.mjs';
 import { syntheticResponse } from '../synthetic.mjs';
-import { FILMS, selectFilm } from '../config.mjs';
+import { FILMS, AMAZON_REGIONS, selectFilm, selectScenario } from '../config.mjs';
 
 // Optional external test tooling; no dependency is installed into production.
 const modulePath = process.env.PLAYWRIGHT_MODULE_PATH;
@@ -14,21 +14,24 @@ test('offline browser display, interactions and persistence', { skip: !modulePat
   const cases = [
     ...Object.keys(FILMS).map(filmId => ({ scenario: 'grounded', filmId })),
     ...Object.keys(FILMS).map(filmId => ({ scenario: 'grounded', filmId, mockedLive: true })),
+    ...Object.keys(FILMS).flatMap(filmId => [false, true].map(mockedLive => ({ scenario: 'grounded', filmId, discovery: 'digital-ua', mockedLive }))),
+    ...Object.keys(AMAZON_REGIONS).flatMap(amazonRegion => [false, true].map(mockedLive => ({ scenario: 'grounded', filmId: 'dune-part-two', discovery: 'physical', amazonRegion, mockedLive }))),
     ...['api-error', 'empty', 'ungrounded', 'missing-key'].map(scenario => ({ scenario, filmId: 'dune-part-two' })),
   ];
-  for (const { scenario, filmId, mockedLive } of cases) await t.test(`${filmId} / ${scenario}${mockedLive ? ' / mocked API' : ''}`, async t => {
+  for (const { scenario, filmId, discovery = 'physical', amazonRegion, mockedLive } of cases) await t.test(`${filmId} / ${discovery} / ${amazonRegion ?? 'unset'} / ${scenario}${mockedLive ? ' / mocked API' : ''}`, async t => {
     let providerCalls = 0;
     let sentPrompt;
     const film = selectFilm(filmId);
+    const options = { discovery, amazonRegion };
     const server = createDemo({
-      filmId, mode: mockedLive || scenario === 'missing-key' ? 'live' : 'synthetic',
+      filmId, ...options, mode: mockedLive || scenario === 'missing-key' ? 'live' : 'synthetic',
       scenario: scenario === 'missing-key' ? 'grounded' : scenario,
       apiKey: mockedLive ? 'offline-test-key' : '',
-      fetchImpl: async (_, options) => {
+      fetchImpl: async (_, requestOptions) => {
         if (!mockedLive) assert.fail('Provider network forbidden');
         providerCalls++;
-        sentPrompt = JSON.parse(options.body).contents[0].parts[0].text;
-        return Response.json(syntheticResponse('grounded', filmId));
+        sentPrompt = JSON.parse(requestOptions.body).contents[0].parts[0].text;
+        return Response.json(syntheticResponse('grounded', filmId, options));
       },
     });
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -50,7 +53,11 @@ test('offline browser display, interactions and persistence', { skip: !modulePat
     assert.ok((await page.locator('#director').textContent()).includes(film.director));
     assert.equal(await page.locator('#prompt').isVisible(), true);
     const displayedPrompt = await page.locator('#prompt').textContent();
-    assert.equal(displayedPrompt, film.prompt);
+    assert.equal(displayedPrompt, selectScenario({ filmId, ...options }).prompt);
+    const displayedSwitches = await page.locator('#discovery').textContent();
+    assert.ok(displayedSwitches.includes(`DEMO_DISCOVERY: ${discovery}`));
+    assert.ok(displayedSwitches.includes(`DEMO_AMAZON_REGION: ${amazonRegion ?? (discovery === 'physical' ? 'unset' : 'not applicable')}`));
+    assert.equal(await page.locator('input,textarea,select').count(), 0);
     await page.locator('#run').evaluate(button => { button.click(); button.click(); });
     await page.waitForFunction(() => !document.querySelector('#status').textContent.startsWith('Waiting'));
     assert.equal(posts, 1);
@@ -60,7 +67,7 @@ test('offline browser display, interactions and persistence', { skip: !modulePat
     if (scenario === 'grounded') {
       assert.equal(await page.locator('#result').isVisible(), true);
       const originalText = await page.locator('#answer').evaluate(answer => [...answer.childNodes].filter(n => n.nodeType === Node.TEXT_NODE).map(n => n.textContent).join(''));
-      assert.equal(originalText, syntheticResponse('grounded', filmId).candidates[0].content.parts[0].text);
+      assert.equal(originalText, syntheticResponse('grounded', filmId, options).candidates[0].content.parts[0].text);
       assert.equal(await page.locator('#answer a').getAttribute('href'), 'https://example.com/synthetic-edition');
       assert.equal(await page.locator('#suggestions a').getAttribute('href'), `https://www.google.com/search?q=${encodeURIComponent(film.title)}`);
       assert.equal(await page.locator('#suggestions a').getAttribute('target'), null);
