@@ -13,6 +13,12 @@ Production agreed baseline remains v1.3.1 `e92392856038e40e6d98c6c8744eed04c4e8d
 not a newly inspected deployment. `develop` remains #174 checkpoint
 `a5d4f42149c616d4dc3cdac35c6086240b3fdacf`.
 
+Current #182 checkpoint rechecked at `3cd175af47db6af31fe83e9eafae5336cad6eb36`,
+open/mergeable on the same #181 base `e978e72389ec5fae7e2be141062b5606fd862f75`.
+The two-film owner functional session is complete, with limits below; no new
+live/owner cycle or merge is authorized. Earlier stack tables remain their dated
+review snapshots, not fresh checks or approval of every parent.
+
 **Discovery only. Owner approved one isolated, non-LLM, two-film UA discovery →
 selection → explicit draft-transfer PoC.** Required capabilities: TMDb identity/
 UA signals and MOTN direct links/access types. Optional bounded Kinobaza HTML
@@ -46,7 +52,8 @@ found; significant proposed decisions are recorded in place, not a new framework
 | Independent checks | Earlier read-only HTML inspection found relevant hrefs before JavaScript. Code audits established MOTN year gate, TMDb appended-ID assumption and MEGOGO policy defects. Current scope/isolation/stack audit. | Sampled HTML is not hidden Gemini payload or fresh destination/entitlement validation. No live source/API calls in this checkpoint. |
 | Owner: Gemini URL Context | Apple tests supplied some identity/audio metadata. Both Kinobaza cases returned platform names but no hrefs; territory partial for Coherence, present for Dune. | SUCCESS/citation is not truth/completeness/freshness. Dune `m.vkino.com.ua` citation anomaly proves neither external fetch nor exclusive Kinobaza provenance. Href omission cause unknown. |
 | Owner: MEGOGO; offline correction | First attempt HTTP 200/policy refusal; later DOM/canonical/JSON-LD/two H1s/30 duplicates, still pre-identity refusal. Attribute-aware v2 fixes authored defects. | Actual duplicate roles/locations, live identity/fields and post-fix compatibility unknown. **Unresolved/frozen; no new parser/live test cycle.** |
-| Hypothesis | Complementary observations can yield a useful short list and selected draft without an LLM. | End-to-end utility/mapping/transfer unimplemented; not six-platform recall or accuracy. |
+| Owner: consolidated PoC | Two discoveries, 4/4 calls each (Coherence490ms, Dune482ms), complementary source-labelled access/links; owner confirmed select/review/confirm/edit/cancel local draft. | Not independently reproduced, benchmark, general accuracy, entitlement or production readiness. Exact draft values/exclusions not separately reported. Both Kinobaza redirects and Coherence A partial remain unexplained. |
+| Hypothesis | Complementary observations yielded useful leads and a local draft flow in these two owner scenarios without an LLM. | Broader utility/coverage remains unestablished; not six-platform recall or accuracy. |
 
 All owner findings are owner-reported, not agent reproduction. Recording dates
 in the [owner ledger](digital-ua-owner-validation.md) are not invented execution
@@ -73,10 +80,11 @@ Unknown/out-of-scope IDs stay in a compact diagnostic count, never silently
 rebranded. No observation means “no result from selected sources”, not unavailable.
 
 Default UI: chosen film/UA/request ceiling before click; source stage status;
-short rows with provider/access, exact link kind, territory/basis, availability
-claim level, separate UA audio/subtitles, video, literal amount/currency and
-source/receipt time. Unscoped candidates have a separate territory-unknown group.
-Foreign dates, aliases, IDs and field/conflict evidence are collapsed details;
+short rows with provider, display-normalized access, known key fields, unknown/
+conflict markers and permitted link. One shared source-claim/unknown explanation;
+unscoped candidates have a separate territory-unknown group. Raw access/link kind,
+territory/basis, source/receipt time, missing fields, foreign dates/aliases/IDs and
+field/conflict evidence are collapsed details;
 warnings/unknowns/errors/attribution remain visible. No JSON dump by default.
 
 Priority: **UA availability → Ukrainian audio → Ukrainian subtitles → video →
@@ -229,15 +237,16 @@ no-referrer/noopener; search/relative links remain text diagnostics.
 
 | Decision | Choice and reason | Status |
 | --- | --- | --- |
-| D1: useful vertical slice | Two fixed films, required TMDb+MOTN, optional fixed Kinobaza; automatic source-labelled list/local draft. Kinobaza on for control session. | Owner-approved isolated implementation; live utility pending. |
+| D1: useful vertical slice | Two fixed films, required TMDb+MOTN, optional fixed Kinobaza; automatic source-labelled list/local draft. Kinobaza on for control session. | Implemented; two-film owner functional validation complete with partials, not general accuracy or production approval. |
 | D2: evidence | No cross-source offer merge/global verified badge; field provenance, conflicts, candidate/offer/entitlement distinct. | Implemented in-memory research subset, not production model. |
 | D3: writes/retention | Explicit local draft only; future persistence in existing Supabase subject to rights/RLS/mapping review. | Research draft implemented; no schema/write/cache authorization. |
 | D4: LLM | Optional later explanation/research path, not truth source or AI-training/evaluation pipeline. | Deferred; no restricted-source forwarding. |
 
 Roadmap: source probes/owner observations **completed with limits**; MEGOGO
 **unresolved/frozen**; consolidated design/handoff **approved for research**;
-composition/draft **implemented/offline-tested, live-unvalidated**; one acceptance
-session **pending source readiness/owner run**; arbitrary film/card discovery, physical expansion and product
+composition/draft **implemented/offline-tested, owner functionally validated**;
+compact-UI/cancel correction **offline/browser-tested, not live-revalidated**;
+owner session **complete, no repeat requested**; arbitrary film/card discovery, physical expansion and product
 integration **deferred**. JustWatch Partner API is deferred: suitable MW access/
 commercial terms not established, not nonexistent. Personal authenticated workers
 are a separate future discovery track: user-triggered, each user's own session,
@@ -251,6 +260,10 @@ plans or blanket legal declaration. General search/LLM/cache/production writes
 need later separate approval, not decisions required to complete this design.
 
 ### Acceptance and one short owner session
+
+The following bounded plan was completed by the owner at #182 `3cd175a`;
+[results and evidence limits](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint).
+It is retained as the acceptance contract, **not a request for another session**.
 
 Agent gates: authored mapping/link-kind/conflict/draft tests; zero synthetic/max4
 mocked live calls; old request-body goldens; auth/Host/Origin/one-shot/bounds/no
@@ -437,6 +450,58 @@ calls/replay/no key metadata. Additional new-mode **same-host assigned-LAN** Bas
 Auth/multi-key/lifecycle passed separately on a free port; not iPhone reachability.
 Native safe-launch diagnostics passed. Owner process
 untouched; no live API, real SSH disconnect or system/deployment operation.
+
+#### Owner checkpoint and narrow offline correction
+
+The [owner ledger](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint)
+records the completed session without full output: Coherence TMDb A partial/B ok,
+matched, Apple rental/purchase without provider URL; MOTN matched/no-ua-options.
+Dune TMDb A/B ok/matched, HBO Max subscription/Rakuten rent+buy; MOTN matched,
+Apple/Prime rent+buy/direct URLs, literal quality/currency. Both Kinobaza stages
+stopped at redirect-not-followed/identity unresolved. The owner confirmed the
+local draft flow; no exact values/exclusions inferred. 490/482ms are two elapsed
+observations, not a benchmark; four attempts do not mean four HTTP200 responses.
+
+**Established offline:** fixed Kinobaza URLs match the catalogue; GET/manual
+redirect handling stops before parsing, no SSRF/allowlist/budget defect found.
+Original status/Location absent: redirect cause/destination unknown, no canonical
+URL guessed or general following enabled. TMDb A's partial classification is
+independent of stable identity/B: absent/null/invalid resources or invalid projected
+metadata can trigger it; missing optional fields alone do not. The live partial's
+specific cause is unknown without its unsaved states/issues. No speculative
+adapter fix or reconstruction; source requests/validators unchanged.
+
+**Minimal new-mode diagnostics:** call HTTP status and Location-header presence
+only (never its value/body), plus TMDb resource states and missing/null/invalid/
+empty metadata paths, first32 and omitted count, without content values. Displayed
+only in collapsed session-memory details; no logs/storage/destination requests.
+These help a future authorized run but do not initiate a diagnostic owner cycle.
+
+**Proven contract correction:** Cancel edits previously reset manual edits to
+confirmed values. Remove that destructive reset; Cancel selection only closes
+review, preserving the current confirmed/edited form. Explicit confirm/clear or
+film change/reload retain their separate semantics. Draft default exclusions and
+exact/acknowledged-tracking href handling were already correct, unchanged: no
+price/currency/audio/subtitle/video/ownership import or UAH→USD/HD→UHD inference.
+
+Rows now use Rental/Purchase/Subscription display aliases only, retaining raw
+access in provenance, never coalescing offers. Known fields and compact unknown/
+conflict markers remain visible; missing details/source labels/caveats collapsed.
+Shared warning, material errors/tracking notice and source attribution retained.
+No “best” badge or unproven tracks. This incremental UI/diagnostic correction is
+offline/browser evidence, not new live accuracy or source validation. No lifecycle/
+key-routing change, Windows/SSH owner rerun or MEGOGO work needed.
+
+Incremental verification: **264 offline/HTTP passed**, including three new authored
+diagnostic/display cases and unchanged source/security/request-body goldens.
+Full sequential installed-Edge suites: **120 passed / 8 skips**, no failures
+(seven absent-WebKit cases, optional same-host LAN unset). Final targeted suite
+after stronger compact-row/all-draft-field cancel assertions: **14 passed / 1
+WebKit skip**. Mobile viewport is not real iPhone. Local links/anchors across all
+nine Markdown documents and 13 handoff sections checked; scope/whitespace clean.
+Windows lifecycle not rerun: helpers/key routing unchanged; prior results above
+remain historical evidence only. No owner process, live request, system change,
+merge/retarget/tag/release/deployment or production mutation.
 
 ## Historical experiments and feasibility records
 

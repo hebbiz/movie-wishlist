@@ -1,6 +1,22 @@
 // Page memory only. Never stores, submits, resolves URLs or rewrites source data.
 const value = f => f?.state === 'reported' ? String(f.value) : `[${f?.state ?? 'unknown'}]`;
-const audio = f => f?.ukrainian?.length ? 'Ukrainian listed (source claim)' : 'Unknown; missing/empty/incomplete list is not absence';
+export function accessLabel(field) {
+  const raw = field?.state === 'reported' ? field.value : undefined;
+  const labels = { rent: 'Rental', rental: 'Rental', buy: 'Purchase', purchase: 'Purchase', flatrate: 'Subscription', subscription: 'Subscription', 'ad-supported': 'Ad-supported' };
+  return Object.hasOwn(labels, raw) ? labels[raw] : 'Access unknown';
+}
+export function compactFields(row) {
+  const known = [], unknown = [];
+  for (const [key, label] of [['audio', 'UA audio'], ['subtitles', 'UA subtitles']]) {
+    if (row[key]?.ukrainian?.length) known.push(`${label} listed`); else unknown.push(label);
+  }
+  for (const [key, label] of [['quality', 'Video'], ['hdr10', 'HDR10'], ['dolbyVision', 'DV']]) {
+    if (row[key]?.state === 'reported') known.push(`${label}: ${value(row[key])}`); else unknown.push(label);
+  }
+  if (row.price?.amount?.state === 'reported' && row.price?.currency?.state === 'reported') known.push(`${value(row.price.amount)} ${value(row.price.currency)} (source; unverified)`);
+  else unknown.push('price');
+  return { known, unknown };
+}
 
 export function prepareDraft(result, row, trackingAcknowledged = false) {
   if (!result.rows.includes(row) || row.identityStatus !== 'matched') throw new Error('Select an independently identity-gated row.');
@@ -21,7 +37,7 @@ export function prepareDraft(result, row, trackingAcknowledged = false) {
 
 export async function mountDiscovery(document, initial, { signal, fetchImpl = fetch } = {}) {
   const el = id => document.getElementById(id), button = el('run');
-  let session = initial, result = null, confirmed = null, reviewRow = null, loading = false;
+  let session = initial, result = null, reviewRow = null, loading = false;
   const used = new Set();
   const add = (host, tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; host.append(n); return n; };
   el('film').textContent = 'UA discovery — two fixed films';
@@ -32,7 +48,8 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   el('mode').textContent = session.mode === 'synthetic' ? 'SYNTHETIC ONLY — invented source responses, links and fields. No external requests or real offers.' : 'LIVE — manually initiated fixed source requests. Source claims are not entitlement. Current source-use readiness remains conditional.';
   el('operation-label').textContent = 'Bounded source operations (no model prompt)';
   el('prompt').textContent = session.operation;
-  el('service-notice').textContent = 'Partial results are retained. No best-option claim when key fields are unknown. TMDb failure does not block fixed-ID MOTN. No source value is corrected from historical controls. Local draft only; nothing is saved or sent to production MW.';
+  el('service-notice').textContent = 'Source claims/candidate links are not account entitlement or full coverage. Unknown is not absent; empty language lists prove no absence. Source prices/formats are unverified, never corrected from owner controls. No best-option claim. Local draft only; no production writes or storage.';
+  el('prompt').parentElement.open = false;
   el('service-terms').href = 'https://www.themoviedb.org/api-terms-of-use'; el('service-terms').textContent = 'TMDb applicable terms review';
   el('provider-docs').href = 'https://developers.movieofthenight.com/terms-and-conditions'; el('provider-docs').textContent = 'MOTN terms';
   el('result-heading').textContent = 'Source-labelled viewing leads — not verified entitlement';
@@ -49,7 +66,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   const draft = add(panes, 'section'); draft.id = 'local-draft'; draft.hidden = true;
   const hideReview = () => { review.replaceChildren(); review.hidden = true; reviewRow = null; };
   const showDraft = prepared => {
-    confirmed = prepared; draft.replaceChildren(); draft.hidden = false;
+    draft.replaceChildren(); draft.hidden = false;
     add(draft, 'h3', 'Editable local draft — NOT production MW; page memory only');
     const form = add(draft, 'form'); form.addEventListener('submit', e => e.preventDefault());
     for (const [name, text] of Object.entries(prepared.fields)) {
@@ -57,22 +74,21 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
       if (name === 'status') input.readOnly = true;
     }
     const details = add(draft, 'details'); add(details, 'summary', 'Research evidence sidecar / excluded fields (not MW schema)'); add(details, 'pre', JSON.stringify(prepared.sidecar, null, 2));
-    const cancel = add(draft, 'button', 'Cancel edits — restore confirmed draft'); cancel.type = 'button'; cancel.id = 'draft-cancel-edits';
-    cancel.addEventListener('click', () => showDraft(confirmed));
     const clear = add(draft, 'button', 'Clear local draft'); clear.type = 'button'; clear.id = 'draft-clear';
-    clear.addEventListener('click', () => { confirmed = null; draft.replaceChildren(); draft.hidden = true; });
+    clear.addEventListener('click', () => { draft.replaceChildren(); draft.hidden = true; });
   };
   const select = row => {
     hideReview(); reviewRow = row; review.hidden = false;
     add(review, 'h3', `Review included fields — ${row.provider.name}`);
     add(review, 'p', 'Review then explicitly confirm. Existing draft is unchanged until confirmation. This is not a verified offer or production MW write.');
     const included = add(review, 'pre'); included.id = 'draft-included';
+    const evidence = add(review, 'details'); add(evidence, 'summary', 'Excluded fields and provenance'); const sidecar = add(evidence, 'pre');
     let tracking;
     if (row.link.kind === 'tracking-redirect') {
       const label = add(review, 'label'); tracking = add(label, 'input'); tracking.type = 'checkbox'; tracking.id = 'draft-tracking-ack';
       label.append(document.createTextNode(' I explicitly accept this opaque tracking candidate with its original URL/type/provenance; destination and entitlement unverified.'));
     }
-    const refresh = () => { const prepared = prepareDraft(result, row, tracking?.checked ?? false); included.textContent = JSON.stringify(prepared, null, 2); };
+    const refresh = () => { const prepared = prepareDraft(result, row, tracking?.checked ?? false); included.textContent = JSON.stringify(prepared.fields, null, 2); sidecar.textContent = JSON.stringify(prepared.sidecar, null, 2); };
     tracking?.addEventListener('change', refresh); refresh();
     if (!row.link.transferable) add(review, 'p', 'No permitted exact/tracking candidate: purchase_url stays empty. Watch/search/relative/unsafe/unknown URLs are not substituted.');
     const confirm = add(review, 'button', 'Confirm to local draft'); confirm.id = 'draft-confirm'; confirm.type = 'button';
@@ -82,29 +98,28 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   const render = data => {
     const host = el('answer'); host.replaceChildren();
     if (data.synthetic) add(host, 'p', 'SYNTHETIC ONLY — invented data; not live validation or real source offers.');
-    add(host, 'p', data.limits);
-    add(host, 'p', `Identity: ${data.identity.status}. ${data.identity.conflicts.length ? `Conflicting stable IDs: ${data.identity.conflicts.join(', ')}. Results remain independent; no common identity.` : data.identity.note}`);
+    if (data.identity.conflicts.length) add(host, 'p', `Identity: ${data.identity.status}. Conflicting stable IDs: ${data.identity.conflicts.join(', ')}. Affected source withheld; no common identity.`);
     add(host, 'p', `HTTP calls: ${data.metrics.requestsMade}/${data.metrics.requestBudget} · elapsed ${data.metrics.elapsedMs}ms (not a cost estimate)`);
-    for (const source of data.sources) add(host, 'p', `${source.source}: ${source.status} · identity ${source.identity} · ${source.elapsedMs}ms`);
+    const sourceSummary = add(host, 'p'); sourceSummary.id = 'discovery-source-status';
+    sourceSummary.textContent = data.sources.map(s => `${s.source}: ${s.status} · identity ${s.identity}`).join(' | ');
     if (!data.rows.length) add(host, 'p', 'No usable rows from selected sources. This is not proof of unavailability.');
     for (const [label, rows] of [['UA source context', data.rows.filter(r => r.country === 'UA')], ['Territory unknown — not a UA offer claim', data.rows.filter(r => r.country !== 'UA')]]) {
       add(host, 'h3', label);
       for (const row of rows) {
         const card = add(host, 'article'); card.className = 'discovery-card'; card.dataset.rowId = row.id;
-        add(card, 'h4', `${row.provider.name} · ${value(row.access)} · ${row.kind}`);
-        add(card, 'p', `Availability: ${row.availability.state} — ${row.availability.note} · account entitlement unknown`);
-        add(card, 'p', `UA audio: ${audio(row.audio)} · UA subtitles: ${audio(row.subtitles)}`);
-        add(card, 'p', `Video: ${value(row.quality)} · HDR10 ${value(row.hdr10)} · Dolby Vision ${value(row.dolbyVision)}`);
-        add(card, 'p', `Price: ${value(row.price?.amount)} ${value(row.price?.currency)} (literal source; currency/quality anomalies are not corrected)`);
-        add(card, 'p', `Source: ${row.provenance.source} · ${row.provenance.receivedAt ?? 'receipt time unknown'} · ${row.territoryBasis}`);
-        add(card, 'p', `Choice basis: ${row.choiceBasis.join('; ')} Missing key facts prevent a best-option claim.`);
-        add(card, 'p', `Link: ${row.link.kind} · ${row.link.href ?? 'not reported'}${row.conflicts.length ? ' · CONFLICT / possible conflict — inspect details' : ''}`);
+        add(card, 'h4', `${row.provider.name} · ${accessLabel(row.access)}`);
+        add(card, 'p', row.kind === 'candidate-link' ? 'Candidate link · availability unknown' : 'UA source availability claim');
+        const fields = compactFields(row);
+        if (fields.known.length) add(card, 'p', fields.known.join(' · '));
+        add(card, 'p', `Unknown: ${fields.unknown.join(', ') || 'no missing summary fields'}${row.conflicts.length ? ' · CONFLICT — inspect details' : ''}`);
+        if (!row.link.transferable) add(card, 'p', 'No permitted provider link');
+        if (row.link.kind === 'tracking-redirect') add(card, 'p', 'Tracking candidate — destination unverified; transfer needs acknowledgement');
         if (row.link.transferable) { const link = add(card, 'a', 'Open candidate explicitly (not verified)'); link.href = row.link.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.referrerPolicy = 'no-referrer'; }
         const details = add(card, 'details'); add(details, 'summary', 'Field provenance, unknowns and conflicts'); add(details, 'pre', JSON.stringify(row, null, 2));
         const button = add(card, 'button', 'Select and review'); button.type = 'button'; button.addEventListener('click', () => select(row));
       }
     }
-    const details = add(host, 'details'); add(details, 'summary', `Source details / unmapped (${data.unmapped.length}) / catalogue (not provider tracks)`); add(details, 'pre', JSON.stringify({ stages: data.stages, unmapped: data.unmapped }, null, 2));
+    const details = add(host, 'details'); details.id = 'discovery-source-details'; add(details, 'summary', `Source diagnostics / unmapped (${data.unmapped.length}) / catalogue (not provider tracks)`); add(details, 'pre', JSON.stringify({ diagnostics: data.sources.map(s => ({ source: s.source, diagnostics: s.diagnostics })), calls: data.metrics.calls, stages: data.stages, unmapped: data.unmapped, limits: data.limits }, null, 2));
   };
   const credits = add(panes, 'section'); credits.id = 'discovery-credits';
   const { renderTmdbCredits } = await import('./tmdb-display.mjs'); renderTmdbCredits(document, credits);
@@ -117,7 +132,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     try {
       const response = await fetchImpl(`/session?film=${encodeURIComponent(picker.value)}`, { cache: 'no-store', signal });
       if (!response.ok) throw new Error('Fixed-film session unavailable.');
-      session = await response.json(); result = null; confirmed = null; hideReview(); draft.replaceChildren(); draft.hidden = true;
+      session = await response.json(); result = null; hideReview(); draft.replaceChildren(); draft.hidden = true;
       el('answer').replaceChildren(); el('result').hidden = true;
     } catch { el('status').textContent = 'Film session failed. Reload; no source request was made.'; button.disabled = true; return; }
     finally { loading = false; picker.disabled = false; }
@@ -136,6 +151,6 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     } catch { if (!signal?.aborted) el('status').textContent = 'Discovery failed/invalid response. No automatic retry.'; }
     finally { loading = false; picker.disabled = false; syncChoice(); }
   });
-  document.defaultView.addEventListener('pagehide', () => { result = null; confirmed = null; reviewRow = null; panes.replaceChildren(); pickerHost.remove(); }, { once: true });
+  document.defaultView.addEventListener('pagehide', () => { result = null; reviewRow = null; panes.replaceChildren(); pickerHost.remove(); }, { once: true });
   syncChoice();
 }

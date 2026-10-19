@@ -27,6 +27,20 @@ const aliases = new Map([
 ]);
 const val = f => f?.state === 'reported' ? f.value : undefined;
 const unknown = note => ({ state: 'unknown', note });
+// Projected shape only: no response values, redirect destinations or body archive.
+export function tmdbShapeDiagnostics(details) {
+  const fields = []; let omitted = 0;
+  const visit = (node, path) => {
+    if (!node || typeof node !== 'object') return;
+    if (['missing', 'null', 'invalid', 'reported-empty'].includes(node.state)) {
+      if (fields.length < 32) fields.push({ path, state: node.state }); else omitted++;
+    }
+    for (const [key, child] of Object.entries(node)) if (child && typeof child === 'object') visit(child, `${path}.${key}`);
+  };
+  visit(details?.metadata, 'metadata');
+  return { status: details?.status ?? 'unresolved', resources: details?.resources ?? {}, fields, omitted,
+    note: 'Resource states and field states differ. Missing optional fields alone do not make A partial; missing/null/invalid resources or invalid metadata do. These paths describe this run only.' };
+}
 export function mapProvider(source, id, name, access) {
   let key = typeof name === 'string' ? aliases.get(name.trim().toLowerCase()) : undefined;
   // The exact Apple TV label is ambiguous on its own; only the known store ID
@@ -80,7 +94,7 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
   const tmdb = stages.tmdb.result, motn = stages.motn.result, kino = stages.kinobaza.result;
   const tmdbIdentity = tmdb?.providers?.identity?.status === 'mismatch' ? 'mismatch' : tmdb?.identity?.identity?.status;
   const sources = [
-    { source: 'tmdb', status: stages.tmdb.status, identity: tmdbIdentity ?? 'unresolved', evidence: { details: tmdb?.identity?.identity ?? null, providers: tmdb?.providers?.identity ?? null }, elapsedMs: stages.tmdb.elapsedMs },
+    { source: 'tmdb', status: stages.tmdb.status, identity: tmdbIdentity ?? 'unresolved', evidence: { details: tmdb?.identity?.identity ?? null, providers: tmdb?.providers?.identity ?? null }, diagnostics: tmdbShapeDiagnostics(tmdb?.identity), elapsedMs: stages.tmdb.elapsedMs },
     { source: 'motn', status: stages.motn.status, identity: motn?.identity?.status ?? 'unresolved', evidence: motn?.identity ?? null, elapsedMs: stages.motn.elapsedMs },
     { source: 'kinobaza', status: stages.kinobaza.status, identity: kino?.identity?.status ?? 'unresolved', evidence: kino?.identity ?? null, elapsedMs: stages.kinobaza.elapsedMs },
   ];
@@ -172,11 +186,16 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
   const seen = new Set();
   const boundedFetch = async (url, init) => {
     if (controller.signal.aborted || !allowed.has(url) || seen.has(url) || seen.size >= selection.requestBudget) throw new Error('Budget/allowlist/deadline');
-    seen.add(url); metrics.requestsMade++; metrics.calls.push({ stage: url.includes('themoviedb') ? 'tmdb' : url.includes('movieofthenight') ? 'motn' : 'kinobaza', method: 'GET' });
+    seen.add(url); metrics.requestsMade++;
+    const call = { stage: url.includes('themoviedb') ? 'tmdb' : url.includes('movieofthenight') ? 'motn' : 'kinobaza', method: 'GET' };
+    metrics.calls.push(call);
     const signal = AbortSignal.any([controller.signal, init.signal]);
     // Propagate total cancellation through transport and body; never race away
     // from live work without aborting its request signal.
-    return fetchImpl(url, { ...init, signal });
+    const response = await fetchImpl(url, { ...init, signal });
+    call.httpStatus = response.status;
+    if (response.status >= 300 && response.status < 400) call.redirectLocation = response.headers.has('location') ? 'present-not-retained' : 'missing';
+    return response;
   };
   const stage = async (name, work) => {
     const at = performance.now();

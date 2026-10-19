@@ -164,7 +164,8 @@ search/relative/tracking do not become verified exact offers. Automatically foun
 usable lead can be explicitly selected/confirmed to accurate local draft; cancel/
 no-write proven. Attribution present, secrets/private content absent. No storage/
 LLM/destination requests. Existing modes/goldens unchanged. Live utility pending
-owner session, not accuracy/account entitlement/full coverage.
+owner session at handoff approval; the implementation checkpoint below now records
+its completion, not accuracy/account entitlement/full coverage.
 
 ## 11. Test plan
 
@@ -219,6 +220,15 @@ server-only `DEMO_KINOBAZA=on|off`, one-process fixed film picker, independent
 bounded sources and explicit local draft flow are now present. This closes only
 the isolated research implementation authorization, not owner live acceptance,
 production writes/persistence or merge. #175 launcher caveat remains: fix is #176.
+
+Subsequent [owner functional checkpoint at #182 `3cd175a`](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint)
+completed the two-film/draft session with partial results. No new owner test is
+requested. Narrow follow-up keeps the same requests/security/budget: compact rows,
+display-only access aliases, collapsed provenance/shape diagnostics and removal
+of the destructive Cancel-edits reset. Cancel selection preserves edited draft.
+Existing field exclusions/exact href handling stay unchanged. Redirect cause and
+Coherence A partial cause remain unknown; authored fixtures do not recreate live
+responses. New UI/diagnostics are offline/browser-tested, not live-revalidated.
 
 Clarifications A/B/C above were reconciled with canonical proposal before code.
 Actual transports remain the existing TMDb A+B/MOTN/Kinobaza functions; only the

@@ -3,7 +3,8 @@
 Current [consolidated proposal](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
 and [handoff](consolidated-poc-handoff.md) now have bounded research implementation
 approval. The [consolidated workflow](#consolidated-discovery-owner-workflow) is
-the only new owner session; prior documentation alone required no test/restart.
+now has a completed owner functional session; this checkpoint requests no restart
+or further owner/live tests. Prior documentation alone required no test/restart.
 **MEGOGO remains unresolved/frozen.** Existing commands below retain
 their individual historical scope/readiness labels; do not start a new test cycle
 just because the stack is reviewed. For the approved implemented research mode,
@@ -13,7 +14,9 @@ probe/card tour/parser-debugging cycle is restarted.
 
 ## Consolidated discovery owner workflow
 
-Implemented isolated research; consolidated live utility is **pending**. One
+Implemented isolated research; the [two-film owner functional session is complete](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint),
+not general accuracy/entitlement/production readiness. **No new owner run is requested.**
+Commands below remain reference for a later explicitly authorized session. One
 server, UI picker Coherence/Dune, optional Kinobaza **on** for the control session.
 No Gemini key/LLM, response storage or production writes. Source conditions:
 [current combined-use record](regional-card-proposal.md#consolidated-implementation-and-source-use-checkpoint).
@@ -57,7 +60,7 @@ home HTTP only: Basic is not encryption; no internet exposure. To deliberately
 use synthetic instead, change only DEMO_MODE to synthetic in the standalone line;
 no API-key prompts/network. Optional Kinobaza off means max3 requests/film.
 
-**One short owner session, max8 HTTP requests total:**
+**Completed session plan (reference only, not a request to repeat; max8 HTTP requests):**
 
 1. Confirm Coherence/UA/Kinobaza on/budget4 before click; run once, summarize useful,
    missing/conflicting leads. Missing data is not unavailable; no best-option claim.
@@ -65,8 +68,9 @@ no API-key prompts/network. Optional Kinobaza off means max3 requests/film.
 3. On one result Select and review included/excluded fields; if transferring an
    opaque tracking candidate, explicitly acknowledge its unchanged URL/type/
    provenance. Otherwise purchase_url is empty without permitted exact candidate.
-   Confirm into **local draft only**, edit, Cancel edits, or Cancel selection to
-   verify existing draft unchanged. No MW submit/ownership update/autosave.
+   Confirm into **local draft only**, edit; Cancel selection leaves the confirmed/
+   edited draft unchanged. The destructive Cancel-edits reset is removed. Clear,
+   film change or reload discards it. No MW submit/ownership update/autosave.
 4. Send a short useful/missing/conflicting/draft summary, not JSON/HTML/screenshots.
    Do not tour the old streaming apps/cards. Existing observations are dated
    controls; only a new material discrepancy justifies a targeted check.
@@ -79,6 +83,14 @@ new source/second owner round by default. No repeated synthetic/SSH-disconnect
 owner check required: agent tests cover the changed key routing/lifecycle, not a
 new real-iPhone assertion. Existing sleep/IP/firewall/Wi-Fi/stale-page guidance below
 still applies. Keep existing Stop/Status commands; no merge/deployment authorization.
+
+Rows now show concise display-only access labels, known fields and short unknown/
+conflict markers. Expand a row for raw access/provenance/missing details, or
+Source diagnostics for HTTP status/Location presence (no value) and TMDb A
+resource/field states. Redirect is not followed; neither its destination nor the
+previous Coherence partial cause is known. No separate diagnostic cycle now.
+Default draft exclusions/exact href handling remain unchanged. Agent-covered UI
+changes do not require repeating synthetic/SSH-disconnect or the old platform tour.
 
 MW-FUT-01 remains Discovery. Three digital scenarios now have limited
 [owner-reported observations](digital-ua-owner-validation.md), not a general

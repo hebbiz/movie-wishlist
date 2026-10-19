@@ -5,7 +5,7 @@ import { request as httpRequest } from 'node:http';
 import { createDemo } from '../server.mjs';
 import { selectRequest, requestBody, FILMS } from '../config.mjs';
 import { runDiscovery, authoredDiscoveryData, composeDiscovery, mapProvider, classifyLink } from '../discovery.mjs';
-import { prepareDraft } from '../public/discovery-client.mjs';
+import { prepareDraft, accessLabel, compactFields } from '../public/discovery-client.mjs';
 
 const opts = { retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence' };
 const chosen = changes => selectRequest({ ...opts, ...changes });
@@ -54,6 +54,57 @@ test('Kinobaza off: exactly three requests; malformed optional HTML nonblocking'
   assert.equal(calls.length, 3); assert.equal(r.stages.kinobaza.status, 'disabled-no-request');
   const partial = await live(chosen(), { fetchImpl: mockDiscovery({ fail: url => url.includes('kinobaza') ? html('<h1>unsupported</h1>') : null }) });
   assert.ok(partial.rows.some(r => r.id.startsWith('motn:'))); assert.equal(partial.rows.some(r => r.id.startsWith('kinobaza:')), false);
+});
+
+test('Kinobaza manual redirect: exact fixed GET, content-free diagnostics, no Location/body retention or following', async () => {
+  for (const status of [301, 302, 307, 308]) {
+    const calls = [];
+    const r = await live(chosen(), { fetchImpl: mockDiscovery({ calls, fail: url => url.includes('kinobaza') ? new Response('PRIVATE_REDIRECT_BODY', { status, headers: { Location: 'https://private.example/?secret=PRIVATE_LOCATION' } }) : null }) });
+    assert.equal(calls.length, 4);
+    assert.equal(calls.filter(c => c.url.includes('kinobaza')).length, 1);
+    assert.ok(calls.some(c => c.url === 'https://kinobaza.com.ua/titles/coherence'));
+    assert.equal(r.stages.kinobaza.result.status, 'redirect-not-followed');
+    assert.equal(r.sources[2].identity, 'unresolved');
+    assert.deepEqual(r.metrics.calls.find(c => c.stage === 'kinobaza'), { stage: 'kinobaza', method: 'GET', httpStatus: status, redirectLocation: 'present-not-retained' });
+    assert.doesNotMatch(JSON.stringify(r), /PRIVATE_|private.example/);
+    assert.ok(r.rows.some(row => row.id.startsWith('motn:')));
+  }
+  const r = await live(chosen(), { fetchImpl: mockDiscovery({ fail: url => url.includes('kinobaza') ? new Response(null, { status: 302 }) : null }) });
+  assert.equal(r.metrics.calls.find(c => c.stage === 'kinobaza').redirectLocation, 'missing');
+});
+
+test('A diagnostic distinguishes missing/invalid resources from valid resources with missing optional fields', async () => {
+  const cases = [
+    ['missing', d => delete d.tmdb.details.translations, 'partial', 'missing'],
+    ['invalid resource', d => { d.tmdb.details.translations = []; }, 'partial', 'invalid'],
+    ['missing optional', d => { d.tmdb.details.translations = {}; }, 'ok', 'reported'],
+    ['invalid field', d => { d.tmdb.details.translations = { translations: 'INVALID_PRIVATE_VALUE' }; }, 'partial', 'reported'],
+  ];
+  for (const [label, mutate, status, resourceState] of cases) {
+    const calls = []; const r = await live(chosen(), { fetchImpl: mockDiscovery({ calls, mutate }) });
+    const diagnostic = r.sources[0].diagnostics;
+    assert.equal(diagnostic.status, status, label); assert.equal(diagnostic.resources.translations.state, resourceState, label);
+    assert.equal(r.sources[0].identity, 'matched'); assert.match(r.sources[0].status, new RegExp(`A: ${status}; B: ok`));
+    assert.ok(r.rows.some(row => row.id.startsWith('tmdb:'))); assert.equal(calls.length, 4);
+    assert.ok(diagnostic.fields.some(f => f.path === 'metadata.translations' && f.state === (label === 'missing optional' ? 'missing' : label === 'invalid field' ? 'invalid' : resourceState)));
+    assert.doesNotMatch(JSON.stringify(diagnostic), /INVALID_PRIVATE_VALUE|SYNTHETIC|ВИГАДАНА/);
+  }
+});
+
+test('display-only access aliases and compact fields preserve raw observations and honest unknowns', async () => {
+  for (const [a, b, expected] of [['rent', 'rental', 'Rental'], ['buy', 'purchase', 'Purchase'], ['flatrate', 'subscription', 'Subscription']]) {
+    for (const v of [a, b]) { const f = { state: 'reported', value: v }; assert.equal(accessLabel(f), expected); assert.equal(f.value, v); }
+  }
+  for (const v of ['unknown', '__proto__', 'constructor']) assert.equal(accessLabel({ state: 'reported', value: v }), 'Access unknown');
+  const r = await live(chosen(), { fetchImpl: mockDiscovery({ mutate: d => { const o = d.motn.streamingOptions.ua[0]; o.price = { amount: '3.99', currency: 'UAH' }; o.quality = 'hd'; o.audios = []; o.subtitles = []; } }) });
+  const row = r.rows.find(r => r.id.startsWith('motn:') && r.access.value === 'rent');
+  const before = JSON.stringify(row), fields = compactFields(row);
+  assert.ok(fields.known.includes('Video: hd')); assert.ok(fields.known.includes('3.99 UAH (source; unverified)'));
+  assert.ok(fields.unknown.includes('UA audio')); assert.ok(fields.unknown.includes('UA subtitles')); assert.ok(fields.unknown.includes('DV'));
+  assert.equal(JSON.stringify(row), before);
+  const draft = prepareDraft(r, row);
+  assert.deepEqual(Object.keys(draft.fields), ['imdb_url', 'title', 'year', 'recommended_medium', 'purchase_url', 'status']);
+  assert.doesNotMatch(JSON.stringify(draft.fields), /3.99|UAH|USD|Dolby|audio|price|quality/);
 });
 for (const code of [401, 403, 429, 500]) test(`TMDb HTTP ${code} leaves independent fixed-ID MOTN useful`, async () => {
   const calls = []; const r = await live(chosen(), { fetchImpl: mockDiscovery({ calls, fail: url => url.includes('themoviedb') ? new Response('PRIVATE_BODY', { status: code }) : null }) });

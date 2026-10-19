@@ -10,7 +10,7 @@ const modulePath = process.env.PLAYWRIGHT_MODULE_PATH;
 test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { skip: !modulePath }, async t => {
   const { chromium, webkit } = await import(pathToFileURL(modulePath).href);
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) }); t.after(() => browser.close());
-  for (const kind of ['synthetic', 'normal', 'tmdb-down', 'identity-conflict', 'providers-conflict', 'no-key', 'kino-fail', 'unknown-link', 'tracking', 'hostile', 'empty-UA', 'fields-conflict']) await t.test(kind, async t => {
+  for (const kind of ['synthetic', 'normal', 'partial-redirect', 'tmdb-down', 'identity-conflict', 'providers-conflict', 'no-key', 'kino-fail', 'unknown-link', 'tracking', 'hostile', 'empty-UA', 'fields-conflict']) await t.test(kind, async t => {
     const calls = [], logs = [], external = [], errors = []; let posts = 0;
     const server = createDemo({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence',
       mode: kind === 'synthetic' ? 'synthetic' : 'live', tmdbToken: kind === 'no-key' ? '' : 'offline-browser-tmdb', motnKey: 'offline-browser-motn',
@@ -19,6 +19,7 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
         if (kind === 'synthetic') assert.fail('No synthetic external call');
         const film = /220289|tt2866360|\/coherence$/.test(url) ? FILMS.coherence : FILMS['dune-part-two'];
         const data = authoredDiscoveryData(film);
+        if (kind === 'partial-redirect') { delete data.tmdb.details.translations; if (url.includes('kinobaza')) return new Response('PRIVATE_ERROR', { status: 302, headers: { Location: 'https://private.example/PRIVATE_LOCATION' } }); }
         if (kind === 'identity-conflict') data.tmdb.details.imdb_id = 'tt0000001';
         if (kind === 'providers-conflict') data.tmdb.providers.id = 1;
         if (kind === 'hostile') data.tmdb.details.title = '<img src=https://example.com/SECRET onerror=alert(1)>';
@@ -46,19 +47,35 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
     if (['identity-conflict', 'providers-conflict'].includes(kind)) assert.match(shown, /conflict-no-common-identity/);
     if (kind === 'tmdb-down' || kind === 'no-key') assert.ok(await page.locator('article[data-row-id^="motn:"]').count());
     if (kind === 'fields-conflict') assert.match(shown, /CONFLICT/);
+    assert.equal(await page.locator('#discovery-source-details').evaluate(n => n.open), false);
+    assert.equal(await page.locator('#answer article details[open]').count(), 0);
+    assert.equal(await page.locator('#answer article').evaluateAll(nodes => nodes.every(n => n.querySelectorAll(':scope > p').length <= 4)), true);
+    assert.equal(await page.locator('#answer article h4').evaluateAll(nodes => nodes.every(n => !/ · (rent|buy|rental|purchase|flatrate|subscription)\b/.test(n.textContent))), true);
+    assert.ok(await page.locator('#discovery-credits').getByText('Movie of the Night', { exact: false }).count());
+    if (kind === 'partial-redirect') {
+      assert.match(await page.locator('#discovery-source-status').textContent(), /A: partial; B: ok.*redirect-not-followed/);
+      assert.doesNotMatch(shown, /PRIVATE_LOCATION|private.example/);
+      await page.locator('#discovery-source-details summary').click();
+      assert.match(await page.locator('#discovery-source-details').textContent(), /present-not-retained|"httpStatus": 302/);
+      await page.locator('#discovery-source-details summary').click();
+    }
     if (kind === 'hostile') { assert.equal(await page.locator('#answer img,#answer script,#answer iframe').count(), 0); assert.match(shown, /<img src=/); }
     if (kind === 'synthetic') assert.match(shown, /SYNTHETIC ONLY/);
     const exactRow = page.locator('article[data-row-id^="motn:"]').first();
     if (await exactRow.count()) {
       await exactRow.getByRole('button', { name: 'Select and review' }).click();
       assert.equal(await page.locator('#local-draft').isVisible(), false);
-      assert.match(await page.locator('#draft-included').textContent(), /wishlist.*sidecar/s);
+      assert.match(await page.locator('#draft-included').textContent(), /wishlist/);
+      assert.doesNotMatch(await page.locator('#draft-included').textContent(), /sidecar|audio|subtitles|price|quality|currency/);
       await page.locator('#draft-confirm').click();
       const input = page.locator('#local-draft input[name="purchase_url"]');
       assert.equal(await input.inputValue(), kind === 'unknown-link' ? '' : 'https://tv.apple.com/ua/movie/synthetic/umc.cmc.syntheticonly');
       await page.locator('#local-draft input[name="title"]').fill('Edited in page only');
-      await page.locator('#draft-cancel-edits').click(); assert.notEqual(await page.locator('#local-draft input[name="title"]').inputValue(), 'Edited in page only');
+      const draftValues = () => page.locator('#local-draft input').evaluateAll(nodes => nodes.map(n => [n.name, n.value]));
+      const edited = await draftValues(), requestsBeforeDraftCancel = calls.length;
+      assert.equal(await page.locator('#draft-cancel-edits').count(), 0); // No destructive reset disguised as Cancel.
       await exactRow.getByRole('button', { name: 'Select and review' }).click(); await page.locator('#draft-review-cancel').click(); assert.equal(await page.locator('#local-draft').isVisible(), true);
+      assert.deepEqual(await draftValues(), edited); assert.equal(calls.length, requestsBeforeDraftCancel);
       const before = await input.inputValue();
       const tracking = page.locator('article[data-row-id^="kinobaza:"]');
       if (await tracking.count()) {

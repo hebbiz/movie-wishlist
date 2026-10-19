@@ -2,12 +2,60 @@
 
 The [consolidated architecture evidence ledger](regional-card-proposal.md#evidence-ledger-and-limits)
 summarizes the reports below separately from independent code/tests and hypotheses.
-No new owner observations are added at this architecture checkpoint. Existing
-recording dates are not invented execution timestamps; no general accuracy,
+The consolidated owner checkpoint below supersedes the earlier live-pending
+label. Recording dates are not invented execution timestamps; no general accuracy,
 current entitlement or complete platform coverage is inferred. MEGOGO remains
 unresolved; no new MEGOGO cycle. The [approved research handoff](consolidated-poc-handoff.md)
-now records separately approved research implementation; its consolidated live
-utility remains pending. This adds no owner results or production authorization.
+now records separately approved research implementation, not production authorization.
+
+## Consolidated discovery — owner-run functional checkpoint
+
+Reported against #182 implementation `3cd175af47db6af31fe83e9eafae5336cad6eb36`.
+These are **owner-reported observations**, not independent agent reproduction.
+No precise execution timestamps, account settings or unreported draft values are
+inferred. No full responses, HTML, screenshots or owner-output archive retained.
+
+| Film | Owner-observed source results | Request/elapsed observation |
+| --- | --- | --- |
+| Coherence | TMDb A partial, B ok, identity matched; Apple TV Store rental/purchase, no provider URL. MOTN matched, no-ua-options. Kinobaza redirect-not-followed, identity unresolved. | 4/4 HTTP requests; 490 ms. |
+| Dune: Part Two | TMDb A/B ok, identity matched; HBO Max subscription, Rakuten rent/buy. MOTN matched; Prime and Apple rent/buy with direct URLs. Returned quality/currency shown literally, without correction. Kinobaza redirect-not-followed, identity unresolved. | 4/4 HTTP requests; 482 ms. |
+
+The owner confirmed select → review → confirm → edit → cancel of the local draft
+after the two discoveries. Exact transferred values or excluded fields were not
+separately reported; their rules are established by implementation tests, not
+invented owner evidence. Prior MOTN/Apple quality/currency observations below
+remain separate dated controls, not substitutions for these returned values.
+
+This is bounded functional validation of two scenarios, **not general accuracy,
+account entitlement, full coverage or production readiness**. Two elapsed values
+are not a latency benchmark; request counts do not assert four successful 200s.
+
+### Offline diagnosis and correction after the checkpoint
+
+- Kinobaza: configured URLs match the fixed catalogue; one GET, manual redirects.
+  A redirect stops before body parsing, so unresolved identity is expected, not
+  evidence of a wrong card. The report lacks the specific HTTP code/Location;
+  destination/canonical URL and cause remain **unknown**. No redirect-following
+  fix or new live request. New-mode diagnostics expose actual HTTP status and
+  Location-header presence only, never its value/body, on any future authorized run.
+- Coherence A: `partial` is separate from identity matched and B ok. Code can mark
+  A partial for missing/null/invalid appended resources or invalid metadata fields;
+  a valid resource with missing optional fields alone is not partial. Without the
+  original projected issues/resource states, the particular cause is **unknown**.
+  New-mode details summarize resource states and missing/invalid/empty field paths
+  (no values, first32 plus omitted count). No reconstruction of the live response.
+- Proven UI contract defect: the old **Cancel edits — restore confirmed draft**
+  reset discarded manual edits. That reset is removed. Cancel selection closes
+  only the review and preserves the confirmed/edited form; explicit confirm can
+  replace it, explicit Clear/film change/reload can discard it. Authored browser
+  regressions establish this correction, not a newly reported owner failure.
+- Default draft exclusions already omitted price/currency, audio/subtitles/video,
+  ownership and unsupported fields; no adapter/source-value correction warranted.
+  Exact allowed hrefs and explicit tracking acknowledgement remain unchanged.
+
+Compact rows/access labels/details are offline/browser-tested changes, **not
+live-revalidated UI**. No additional owner/live/synthetic/SSH-disconnect cycle is
+requested. MEGOGO remains unresolved/frozen; MW-FUT-01 remains Discovery.
 
 Initial Search observations recorded October 18, 2026 for PR #175, following
 implementation commit `80c6f2a32f3305458de81e6e62c92e47efe6e498`.

@@ -7,15 +7,16 @@ now consolidates source evidence, field boundaries, the #175–#181 stack review
 and proposed roadmap. Recommended next slice: automatic TMDb+MOTN UA discovery,
 optional fixed-card Kinobaza candidates, explicit selection into a local MW-shaped
 draft, **without an LLM or production writes**. Now approved/implemented only as
-isolated research, offline/mock tested; consolidated live utility remains pending.
+isolated research. The owner has now completed the two-film functional checkpoint;
+this is not independent validation, general accuracy or production readiness.
 The [13-section handoff](docs/consolidated-poc-handoff.md) records the bounded
 approval and the later implementation record. Existing modes remain unchanged.
 MEGOGO stays unresolved/frozen; no new owner/live/parser-debugging cycle.
 
 Historical per-source implementation/owner checkpoints follow; they are not
 general accuracy, current entitlement or full six-platform coverage. This
-implementation agent makes no live request. Only the new consolidated scenario
-has the single short owner plan below; no repeat source/card/parser test cycle.
+implementation agent makes no live request. The consolidated owner session is
+complete; no new owner/live/source/card/parser test cycle is requested.
 
 ## Consolidated UA discovery and local draft
 
@@ -34,9 +35,12 @@ own identity; a stable-ID conflict withholds that source and explicitly prevents
 a common matched identity. Source claims are never merged solely by platform.
 Partial stages survive. Total cancellation65s; existing source bounds retained.
 
-UI: short UA rows, separate territory-unknown candidates, source/receipt/access/
-link kind, separate audio/subtitles/video/price states; details collapse catalogue
-dates/technical evidence. Criteria are UA availability → UA audio → subtitles →
+UI: one shared source-claim/unknown explanation, short provider/access rows with
+known fields, short unknown/conflict markers and permitted candidate link.
+Rent/rental, buy/purchase and flatrate/subscription share display labels only;
+raw access, source/receipt/link kind, field provenance, missing-field and technical
+details stay collapsed. Source failures/identity conflicts and attribution remain
+visible. Criteria are UA availability → UA audio → subtitles →
 video → price; price remains informational given source anomalies. No best-option
 claim, numeric confidence, missing→negative or source-currency correction.
 
@@ -47,7 +51,18 @@ URLs never populate purchase_url. Exact-card shape is still unverified. Opaque
 tracking requires an additional acknowledgement; exact href/type/provenance stay
 unchanged. Without an allowed link, purchase_url stays blank. Status defaults to
 wishlist, never acquired from a rent/buy/subscription claim. Cancel selection
-preserves an existing draft; Cancel edits restores the confirmed local values.
+preserves an existing confirmed or edited draft. The old destructive Cancel-edits
+reset is removed; Clear, film change or reload explicitly discards the draft.
+Included fields are reviewed separately from the collapsed evidence/exclusion sidecar.
+
+[Owner checkpoint and offline diagnosis](docs/digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint):
+Coherence 4/4 requests, 490ms; Dune 4/4, 482ms. These are two owner observations,
+not a benchmark. Both Kinobaza operations stopped on redirects; exact HTTP codes/
+destinations were not reported. Coherence TMDb A partial cause is unresolved;
+identity/B succeeded. No speculative source fix: request URLs/bodies/budget and
+manual redirect policy remain unchanged. Collapsed source diagnostics now show
+observed HTTP codes/Location presence (not value), TMDb resource/field shape states
+without diagnostic content values. No automatic follow-up or new owner test.
 
 Server-only `TMDB_READ_ACCESS_TOKEN` and `MOTN_API_KEY`; helper prompts separately
 and hidden, with the LAN password. No Gemini key. Attribution visible with data.
