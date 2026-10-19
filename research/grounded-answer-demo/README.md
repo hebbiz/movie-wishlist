@@ -2,6 +2,18 @@
 
 ## Consolidated architecture checkpoint
 
+**Final code/stack review, October20, 2026: research merge is BLOCKED pending two
+P2 fixes, not production approval.** At reviewed runtime #183
+`1454c279c4d208538b93b3ee10cef14310388372`, an accepted `tv.apple.com` URL carrying
+the recognized affiliate `at` key can enter the draft without acknowledgement;
+contradictory labels for the same namespaced TMDb provider ID can be assigned to
+different platform groups without a conflict. These were reproduced by authored
+offline probes, not observed live source failures. No runtime fix is made by this
+documentation checkpoint. See the single [review/findings/fix and consolidation plan](docs/regional-card-proposal.md#pr-stack-review-and-merge-sequencing).
+Existing284 offline/HTTP and124 browser checks pass (8 browser skips), but omit
+these two cases. Next approval needed: narrow R1/R2 fix scope, then separate
+consolidation approval; no new owner/live test cycle is requested.
+
 The [canonical proposal](docs/regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
 now consolidates source evidence, field boundaries, the #175–#181 stack review
 and proposed roadmap. Recommended next slice: automatic TMDb+MOTN UA discovery,

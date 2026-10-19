@@ -36,6 +36,12 @@ from #183 `133a9fe3631362bd967ec57dc8b4e2fa201e8a96`, same base #182.
 It used four canonical-card GETs in agent memory only. This establishes current
 classification defects, not the historical owner hrefs or provider entitlement.
 
+The subsequent [final code/stack review](#pr-stack-review-and-merge-sequencing)
+rechecked #175–#183 at runtime1454c27 without live requests. **Research merge is
+blocked pending two P2 fixes (affiliate gate and conflicting provider-ID mapping)**
+plus normal policy/owner approval. This documentation update implements neither
+fix and authorizes no merge; source/owner evidence below remains scoped history.
+
 **Discovery only. Owner approved one isolated, non-LLM, two-film UA discovery →
 selection → explicit draft-transfer PoC.** Required capabilities: TMDb identity/
 UA signals and MOTN direct links/access types. Optional bounded Kinobaza HTML
@@ -310,71 +316,190 @@ source/second owner round by default. **No live run or owner test in this task.*
 
 ### PR stack review and merge sequencing
 
-Snapshot October 18, 2026 before this docs commit: all seven PRs **open, non-draft,
-mergeable=true**. API returned no submitted reviews/review threads. Every parent
-HEAD is ancestor of child; incremental diffs/whitespace checked, paths research-
-demo only, no production entry point/migration/PR173 change. Mergeable means
-Git conflict status, **not approval**. Required branch-policy API returned 403:
-required-check/approval rules unverified. Abbreviated base SHAs in the table
-identify the prior row's full HEAD (develop's full SHA appears above).
+**Final research review, October20, 2026. Reviewed runtime #183
+`1454c279c4d208538b93b3ee10cef14310388372`. Research merge: BLOCKED pending R1/R2
+below and normal policy/owner approval.** No functional fix or consolidation is
+authorized by this review. Earlier owner/source findings retain their limited
+scope; this replaces the older seven-PR review snapshot, not the architecture.
 
-| PR | HEAD / base branch (base SHA) | Incremental scope | Remote checks; historical evidence unless marked fresh | Research review/merge assessment; limits |
+Fetched refs and inspected actual code/incremental diffs, not descriptions only.
+All nine PRs are **open, non-draft, mergeable=true**; every current base HEAD is
+an ancestor of its child. All69 changed paths from develop are inside this demo.
+`develop=a5d4f42149c616d4dc3cdac35c6086240b3fdacf`,
+`main=e92392856038e40e6d98c6c8744eed04c4e8dff9`; no deployment inference.
+Each row's base SHA is the preceding row's full HEAD; #175 uses develop above.
+The table freezes pre-documentation reviewed HEADs; this two-document commit
+advances only #183, with unchanged runtime. Its resulting SHA belongs in the PR
+and final report, not a self-referential follow-up commit.
+Git mergeability is not code approval. Branch-protection API returned403
+Resource not accessible by integration; rules endpoint unavailable to connector.
+**Required checks/approvals/merge-method policy remain unknown**, not absent.
+
+| PR | Reviewed HEAD / actual base | Incremental scope | Fresh remote statuses / check-runs | Research readiness / findings |
 | --- | --- | --- | --- | --- |
-| [#175](https://github.com/hebbiz/movie-wishlist/pull/175) | `01db2331da3c169ce7c7b267fe69adadefe6952a` / `develop` (`a5d4f42`) | 23 files; digital/Amazon, LAN/detached helpers, docs. | Netlify Preview success; 3 completed neutral checks; no Actions. Historical 88 passed / 1 skip, Windows; owner LAN/SSH synthetic. | Reviewable first with known multi-PATH launcher defect fixed in #176; not a corrected standalone integration endpoint. Home HTTP, PS5.1/WebKit limits; Amazon live-unvalidated. |
-| [#176](https://github.com/hebbiz/movie-wishlist/pull/176) | `714a1766d8c8224ab8f62399a0b89cecc43d14ec` / `codex/mw-fut-01-digital-ua-amazon` (`01db233`) | 23 files; Apple URL Context, launcher diagnostics/PATH fix, records. | Empty statuses/check-runs/Actions; historical 78 offline, 43 browser passed / 3 skips; paired Windows diagnosis. | Reviewable after parent; Apple partial metadata, source-rights/live gates. Not every SSH configuration validated. |
-| [#177](https://github.com/hebbiz/movie-wishlist/pull/177) | `a4dbbab2b8a4b0030e1e9063d0f957fc1f72931b` / `codex/mw-fut-01-url-context` (`714a176`) | 16 files; fixed Kinobaza URL Context/HTML feasibility. | Empty statuses/check-runs/Actions; historical 87 offline, 49 browser passed / 3 skips; isolated Windows. | Reviewable as unsuccessful research hypothesis; both owner runs no hrefs. Not an automatic link generator, cause unresolved. |
-| [#178](https://github.com/hebbiz/movie-wishlist/pull/178) | `30c3160efcf4ad2e1c489159db815445e61fa539` / `codex/mw-fut-01-kinobaza-url-context` (`a4dbbab`) | 21 files; bounded HTML/isolated parse5+lockfile. | Empty statuses/check-runs/Actions; historical 107 offline, 60 browser passed / 4 skips; Windows; two owner cases. | Reviewable after parent. Prime/search-link limits; broader automation rights unresolved, not entitlement evidence. |
-| [#179](https://github.com/hebbiz/movie-wishlist/pull/179) | `9e4bf4f90ab3d0cc4d8e203f5b47470511be0b4c` / `codex/mw-fut-01-kinobaza-html` (`30c3160`) | 16 files; MOTN, year-gate fix/provenance, TMDb handoff. | Empty statuses/check-runs/Actions; historical latest 139 offline / 75 browser passed / 5 skips; fresh cumulative covers fix. | Reviewable after parent; no invented currency correction. Coherence fix not live-retested; source fields/coverage/terms limits. |
-| [#180](https://github.com/hebbiz/movie-wishlist/pull/180) | `b9f3c65342f9b558bf021f81aee26bb2f22029a8` / `codex/mw-fut-01-motn-api` (`9e4bf4f`) | 17 files; TMDb two calls/append fix/compact display/shared model. | Empty statuses/check-runs/Actions; historical 188 offline; latest TMDb Edge 19 passed / 1 skip; Windows; Dune owner success. | Reviewable after parent. Current full terms/branding gate; catalogue/UA buckets not tracks/entitlement. |
-| [#181](https://github.com/hebbiz/movie-wishlist/pull/181) | `77b44b32a8570d55a567d952173d258a251bce88` / `codex/mw-fut-01-tmdb-data` (`b9f3c65`) | 16 files at reviewed HEAD; MEGOGO/diagnostics/policy/docs. | Empty statuses/check-runs/Actions; fresh cumulative 234 offline; prior targeted Edge 12 passed / 1 skip, Windows historical. | Reviewable after parent with MEGOGO unresolved/frozen. No demonstrated opt-in isolation/honest-failure blocker; not full security/live validation. This docs commit advances this row only. |
+| [#175](https://github.com/hebbiz/movie-wishlist/pull/175) | `01db2331da3c169ce7c7b267fe69adadefe6952a` / `develop` | 23 files: digital/Amazon, LAN/helpers | Preview success;3 completed neutral checks | Conditional only with #176 fix included; **not a corrected standalone checkpoint**. |
+| [#176](https://github.com/hebbiz/movie-wishlist/pull/176) | `714a1766d8c8224ab8f62399a0b89cecc43d14ec` / `codex/mw-fut-01-digital-ua-amazon` | 23: Apple URL Context, launcher fix/diagnostics | Empty / empty | Conditional roll-up; no new scoped blocker. Includes required launcher fix. |
+| [#177](https://github.com/hebbiz/movie-wishlist/pull/177) | `a4dbbab2b8a4b0030e1e9063d0f957fc1f72931b` / `codex/mw-fut-01-url-context` | 16: Kinobaza URL Context, HTML feasibility | Empty / empty | Conditional roll-up; unsuccessful href hypothesis is valid research, not merge blocker. |
+| [#178](https://github.com/hebbiz/movie-wishlist/pull/178) | `30c3160efcf4ad2e1c489159db815445e61fa539` / `codex/mw-fut-01-kinobaza-url-context` | 21: bounded HTML/parse5 | Empty / empty | Conditional roll-up; source-rights/live limits, no new scoped code blocker. |
+| [#179](https://github.com/hebbiz/movie-wishlist/pull/179) | `9e4bf4f90ab3d0cc4d8e203f5b47470511be0b4c` / `codex/mw-fut-01-kinobaza-html` | 16: MOTN/identity fix, TMDb handoff | Empty / empty | Conditional roll-up; currency/quality/language/coverage discrepancies remain source limitations. |
+| [#180](https://github.com/hebbiz/movie-wishlist/pull/180) | `b9f3c65342f9b558bf021f81aee26bb2f22029a8` / `codex/mw-fut-01-motn-api` | 17: TMDb metadata/UA, append fix | Empty / empty | Conditional roll-up; Coherence A partial unresolved, not security/merge defect by itself. |
+| [#181](https://github.com/hebbiz/movie-wishlist/pull/181) | `e978e72389ec5fae7e2be141062b5606fd862f75` / `codex/mw-fut-01-tmdb-data` | 17: MEGOGO/failure policy/architecture | Empty / empty | Conditional roll-up; opt-in isolated, honest failure, MEGOGO unresolved/frozen. |
+| [#182](https://github.com/hebbiz/movie-wishlist/pull/182) | `264ad83206c5304f41cc7abe56235cce4d2fae0c` / `codex/mw-fut-01-megogo-html` | 18: composed discovery/local draft | Empty / empty | R2 in mapping/composition; do not treat as a corrected standalone integration endpoint. |
+| [#183](https://github.com/hebbiz/movie-wishlist/pull/183) | `1454c279c4d208538b93b3ee10cef14310388372` / `codex/mw-fut-01-consolidated-discovery` | 18: localization/canonical hop/link policy/grouping | Empty / empty | **Blocked: R1 and inherited R2**. Documentation-only review does not fix these. |
 
-Check-runs and statuses inspected separately: **empty is not all-green**. No
-Actions workflow in repository. Fresh 234 ran at child tree, not each parent HEAD;
-historical metrics retain baselines, no fresh browser/Windows claim for Markdown.
+No Actions workflow found in Git. Empty statuses/check-runs are **not successful
+checks**, nor does #175's Preview test research code. Fresh local cumulative
+checks below ran at the reviewed child tree, not independently at all nine HEADs.
 
-Blocker classes: research merge needs normal owner review and applicable repo
-checks/permissions; successful MEGOGO is not required. No new functional research
-merge blocker identified in scoped code/isolation/failure audit plus offline suite;
-required policy inaccessible. Live use needs keys/current applicable terms/exact
-scope and honest source statuses. Production blocked by absent authorization,
-rights/retention/hosting/write/RLS design, arbitrary-film coverage and unresolved
-field reliability. Home-LAN HTTP is not production transport.
+#### Findings and bounded fix plan — implementation not authorized
 
-Known #175 launcher defect with multiple Node PATH matches is fixed by #176;
-do not pause integration/use at #175 as if that fix were already present. For an
-environment requiring that fix, include/review #176 before running the demo.
+**R1 — P2, affiliate acknowledgement bypass on an already accepted Apple route.**
+[discovery.mjs](../discovery.mjs), line85 (classifier lines74–87), and
+[discovery-client.mjs](../public/discovery-client.mjs), lines25–31/65–74.
+Authored offline trigger:
+`https://tv.apple.com/ua/movie/fictional/umc.cmc.fictional999?at=fictional`.
+The same recognized Apple affiliate key `at` sets the gate only on the new
+itunes route. On this accepted tv.apple route the result is transferable exact
+card with no acknowledgement flag; `prepareDraft(..., false)` includes the URL,
+so the review checkbox is absent. Explicit navigation/review still occur; this
+is a promised consent/provenance-boundary defect, **not proven credential leak,
+entitlement or hidden network activity**. No assertion that a live source returned
+this authored URL.
 
-MEGOGO isolation checked: validated opt-in configuration; synthetic default; only
-explicit mode's `/answer` takes this path; fixed source; independent/overall
-identity separate, unresolved withholds fields; explicit errors, no follow-ups/
-JS/persistence; old request-body/auth/one-shot regressions pass. Thus unresolved
-utility is not itself a research merge blocker. Research files' exclusion from
-Netlify static publishing **not established**: live publish/branch mapping is
-not in Git; verify separately before production promotion, no deployment now.
+Proposed fix: detect the reviewed Apple affiliate marker after safe host/path
+validation independently of its accepted card route; preserve exact href/query,
+unverified kind/referral/provenance and separate navigation. Add both-route
+at/plain URL and encoded-query tests, draft blank-before-ack/check/uncheck,
+confirm/cancel/mobile tests. Do not infer arbitrary query semantics or strip URLs.
 
-After authorization, oldest-first **#175 → #176 → #177 → #178 → #179 → #180 →
-#181**, preserving history. Keep parent branch until child's retarget/review.
-After parent merge, inspect actual merge; retarget only next child to develop;
-recheck ancestry/diff-only-remaining-work/conflicts/paths/review freshness/checks.
-If squash/rebase lost ancestry, **do not auto-retarget duplicated diff/force-push**:
-stop for reviewed non-rewriting reconciliation (e.g. merge develop into child),
-then re-diff/test. Prefer history-preserving merges if allowed; repo merge-method
-policy not assumed. No merge/retarget/history rewrite performed here.
+**R2 — P2, same namespaced provider ID can become two conflicting platform groups.**
+[discovery.mjs](../discovery.mjs), lines44–56 and TMDb row projection lines109–120.
+Authored offline UA bucket with `provider_id=999999` twice, once labelled Netflix
+and once Prime Video: composition emits both groups with the same
+`tmdb:provider:999999`, empty conflicts and no unmapped record. The ID is fictional;
+no claim about a real ID's service or occurrence in a live response. The TMDb
+guard checks ID/label coherence only for Apple Store ID2, while other names map
+without a same-ID/cross-label consistency check. Consequence: contradictory
+upstream identity can appear as two independent positive platform/access claims
+and supply the wrong selected draft medium. Row grouping itself does not merge
+fields and no production write occurs; **data integrity, not a security finding**.
 
-After base-only change with no effective code change: scope/whitespace/links,
-remote/required checks and cumulative offline integration suite. Conflict/helper/
-adapter/UI changes additionally require targeted browser/Windows/security tests
-in temp copies, never owner demo. Preview is not research testing. No new live
-owner tests merely for documentation/retarget. Final develop diff research-only;
-stop before main/tag/release.
+Proposed fix: retain source labels/IDs and detect conflicting canonical mappings
+for one namespaced provider ID within the response, including across UA access
+buckets; keep conflicting rows unresolved/unmapped rather than choosing a label
+or positive group. Maintain reviewed ID/label guards and source namespaces; do not
+invent new provider IDs. Add same-ID/different-platform negatives, consistent
+aliases/rent-buy positives, missing-ID and Apple Store/subscription distinction,
+plus browser unresolved-provenance/draft exclusion checks. No source call needed.
 
-Documentation validation for this checkpoint: five Markdown files only; **197
-local links / 133 anchors** checked across nine research Markdown documents,
-13 ordered handoff sections, scope/final diff/whitespace checked. Runtime,
-prompts, model/settings, dependencies and previous request bodies unchanged.
-Fresh offline checks above are supplementary review evidence; browser/Windows
-were not rerun for Markdown-only changes. Owner demo and existing untracked
-research/media-discovery preserved; no live/API/system/deployment operations.
+Apply these only after a separate narrow fix approval, preferably one new commit
+on current #183, without changing parent history. Rerun relevant authored probes,
+full offline/security/body/budget tests and targeted/full mock browser suites.
+No launcher change is needed; no Windows/owner/live rerun by default. A fix plan
+is not permission to implement or merge. No P0/P1 found in the inspected scope;
+this is not a general security certification.
+
+#### Verified safeguards, coverage limits and readiness classes
+
+Reviewed in actual code: HTTPS plus populated-userinfo/non-default-port/unsafe
+character checks, exact provider hosts/native paths, matching provider key,
+search/relative/watch refusal, exact href/referral/query retention; no destination
+resolution. WHATWG URL parsing accepts normalized default443 and empty userinfo;
+these authored probes did not demonstrate credential or address bypass, and are
+not labelled security blockers. The canonical source hop instead compares exact
+raw strings and rejects those variants, foreign hosts, wrong titles, credentials,
+queries/fragment/ports/loops/second hops; max one301/308 transition.
+
+Budgets4/base or5 only with the approved hop, independent TMDb/MOTN/Kinobaza
+identity/failure gates, unique allowlisted requests and cancellation are retained.
+Provider groups hold original rows, not synthesized offers; territories/claims
+do not leak across source rows. Tracking and the **currently recognized** native
+referrals have correct acknowledgement/review behavior, except R1's missing
+recognition. Draft excludes prices/tracks/video/ownership, stays page-memory only,
+explicit confirm and Cancel preserving manual edits; no autosave/production writes.
+Keys remain server-side, fixed LAN/auth/Host/Origin/session controls precede API
+calls, response projection/text-only display/no-store retained. No new endpoints
+outside research or root runtime/dependency/schema changes.
+
+- **A. Research merge:** R1/R2 block the final roll-up as-is. #175 alone retains
+  its known launcher defect; include #176 before any integrated use. Policy/owner
+  approval remains required and unknown policy cannot be assumed satisfied.
+- **B. Live use/source rights:** credentials/current applicable agreements and
+  bounded source-use gates remain conditional. Prior observations, including
+  Kinobaza's current links, are not broader extraction/cache/redistribution rights
+  or account entitlement. No fresh source rules review/live request in this task.
+- **C. Production integration:** not authorized; rights/retention/attribution,
+  hosting/static-publish isolation, auth/TLS/write/RLS design, arbitrary-film
+  discovery and coverage/field reliability require separate work. Research files'
+  exclusion from Netlify publishing is not established in Git; no publish probe.
+
+MEGOGO transport/policy remains opt-in/fixed/synthetic by default with explicit
+unresolved failure; not a composition dependency. Its lack of a useful live
+result, Coherence A partial, incomplete provider fields/coverage and entitlement
+are **not automatic research merge blockers** or new security findings.
+
+#### Proposed consolidation sequence — no operations performed
+
+Prefer an **existing-base, child-into-parent roll-up**, after R1/R2 fixes/review
+and explicit consolidation approval. This replaces the old oldest-first plan:
+do not land #175 alone as an apparently corrected develop checkpoint.
+
+1. Freeze/re-fetch all refs, verify policy and that the reviewed corrected tip
+   includes launcher fix **`e596341f2fdc1203b52b9abae840f7090cef30c0`** from #176.
+   That commit selects one Node executable, retains breakaway/no-fallback and
+   secret-safe diagnostics. All later current heads contain it by ancestry.
+2. History-preserving merge **#183 into #182's branch**, its existing base.
+   Keep branches; review the widened #182 HEAD/diff/checks before the next step.
+3. Likewise merge **#182→#181, #181→#180, #180→#179, #179→#178,
+   #178→#177, #177→#176, #176→#175**, each into its already configured base.
+   The parent tip changes, so refresh its review/checks; earlier empty checks
+   are not portable approvals. Do not auto-delete branches during the roll-up.
+4. Only then review the full combined #175 diff against current develop and
+   merge **#175→develop** after explicit approval. #175 now includes #176 fix
+   and the reviewed corrected later research, never an intermediate broken
+   launcher checkpoint. Main/PR173/tag/release/deployment remain out of scope.
+
+**Preferred retarget count: zero**, because existing bases already form the
+chain. Require the repository's allowed history-preserving merge method; do not
+assume policy permits it. If policy requires squash/rebase, a base disappears,
+refs diverge or parallel changes occur: stop for a revised owner-approved plan.
+Do not force-push, cherry-pick, duplicate diffs or improvise history reconciliation.
+An alternative oldest-first/retarget workflow requires separate approval,
+including how to avoid exposing #175 without its fix.
+
+After every parent advance (or any separately approved retarget): verify base/
+ancestry/reviewed tip, remaining diff/scope/whitespace/links, required approvals/
+remote checks and cumulative offline regressions. Re-run mock browser/security
+checks for effective UI/adapter/conflict changes; Windows temp-copy lifecycle/
+key-routing only if those components change. Final full browser suite at roll-up
+candidate. No new live/owner test merely for documentation/base changes.
+
+**Final develop SHA cannot be predicted.** After a future authorized final merge,
+record actual remote develop SHA `D`, corrected reviewed tip `H` and actual merge
+commits. Validate **D itself**, not this pre-merge tip: launcher-fix and H are
+ancestors; research tree matches the reviewed candidate (unless separately
+reviewed parallel changes); diff from recorded old develop is research-only;
+production/main remain unchanged. Run offline/browser/link/whitespace/required
+checks on D, sync local develop without overwriting local files. If current
+develop moved, preserve/review its changes and re-establish these assertions.
+
+#### Fresh review checks, not live validation
+
+At runtime1454c27: **284 offline/HTTP passed**, **124 installed-Edge browser
+passed /8 skips** (seven absent-WebKit checks, optional same-host LAN unset).
+Mock narrow viewport is not real iPhone. Existing suites pass but omit R1/R2;
+separate authored in-memory probes reproduce them, no network/storage. Initial
+R2 probe selected an empty synthetic bucket and failed in the diagnostic harness;
+corrected selection of the reported rent bucket then reproduced the actual issue.
+This was not a runtime/test fixture fix or hidden failing product check.
+Windows was not rerun: helpers/key routing unchanged since previously recorded
+integration tests; no new uncovered launcher defect established. Actual launcher
+source/ancestry and historical controlled diagnosis re-read. No owner process
+touched, live API/source/destination request, system/deployment operation or
+response archive. This follow-up changes only README and this existing document;
+PR description updated separately. Untracked research/media-discovery preserved.
+Documentation checks:236 local links/168 anchors across nine Markdown documents,
+13 ordered handoff sections; final scope/whitespace and unchanged runtime checked.
 
 ### Consolidated implementation and source-use checkpoint
 
