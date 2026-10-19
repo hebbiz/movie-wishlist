@@ -2,11 +2,153 @@
 
 The [consolidated architecture evidence ledger](regional-card-proposal.md#evidence-ledger-and-limits)
 summarizes the reports below separately from independent code/tests and hypotheses.
-No new owner observations are added at this architecture checkpoint. Existing
-recording dates are not invented execution timestamps; no general accuracy,
+The consolidated owner checkpoint below supersedes the earlier live-pending
+label. Recording dates are not invented execution timestamps; no general accuracy,
 current entitlement or complete platform coverage is inferred. MEGOGO remains
-unresolved; no new manual cycle. The [proposed handoff](consolidated-poc-handoff.md)
-does not authorize implementation or live requests.
+unresolved; no new MEGOGO cycle. The [approved research handoff](consolidated-poc-handoff.md)
+now records separately approved research implementation, not production authorization.
+
+## Kinobaza localization — owner-run checkpoint
+
+Reported after #183 implementation `7997b032abcef7d8af67c97ea8e879e3955e0dd4`.
+**Owner-reported source claims**, not independent agent reproduction or current
+provider-offer/account-entitlement checks. No execution timestamps, exact hrefs,
+HTTP status sequence or account settings are inferred from this summary.
+
+| Film | Reported stages / requests | Reported Kinobaza observations, kept separate |
+| --- | --- | --- |
+| Coherence | 5/5 HTTP requests, 567ms. TMDb A partial/B ok, identity matched. MOTN matched/no-ua-options. Kinobaza ok/matched. | Apple tracking candidate in UA country section. Prime provider block: UA audio +, territory unknown; old UI said **No permitted provider link**. |
+| Dune: Part Two | 5/5 HTTP requests, 665ms. TMDb A/B ok, MOTN ok, Kinobaza ok; identities matched. | HBO/Rakuten tracking candidates in UA country section. Separate territory-unknown provider blocks: Apple audio + / subtitles −; Rakuten audio + / subtitles +; MEGOGO audio + / subtitles +. Old UI said **No permitted provider link** for Apple/MEGOGO; Rakuten tracking transfer allowed with acknowledgement. |
+
+The country signal does not lend territory to a different provider block. Signs
+are source/block-label claims, not complete track lists or universal negatives.
+Two elapsed observations are not a benchmark. 5/5 does not assert that every HTTP
+response was200. No full responses/HTML/screenshots or owner-output archive added.
+This closes the narrow owner session, not general accuracy/coverage or production
+readiness. **No new owner/live/synthetic/SSH-disconnect/platform tests requested.**
+
+### Offline link audit and presentation follow-up
+
+For all three reported provider blocks, a mapped row with localization already
+means recognized extraction/provider mapping/block association succeeded. The
+old label was only a display of `transferable=false`; it did **not** establish
+missing href, upstream link absence or a legal ban. Exact live href/kind/issue
+were not reported, so Prime, Apple and MEGOGO's individual causes remain **unknown**.
+Known exact-card shapes pass authored fixtures; unsupported shapes do not. Those
+examples are not reconstructions of the three source URLs.
+
+A separate defect was reproduced offline before the fix: unsafe href sanitization
+sets href=null, then composition incorrectly called it missing. The composer now
+preserves `unsafe` and extraction reason, without restoring the withheld URL or
+broadening classification. It is **not established** that this defect caused any
+of the three owner observations. Audit details distinguish extraction, mapping,
+block association, classification and transfer policy; no new request is needed.
+
+Provider headings now group **presentation only**; all rows/source/territory/
+access/package/cut/properties/conflicts stay separate. Source-labelled summaries
+describe available field types/counts, not one verified offer. Unknown mappings
+are separate, Apple subscriptions are not Store rows, selection stays row-specific.
+New precise link labels distinguish not reported / unsafe / unsupported kind /
+not eligible for transfer, with navigation and draft restrictions separately.
+Default exclusions, exact links, tracking acknowledgement and edited-draft cancel
+unchanged. These UI/reason corrections have offline/browser evidence only, not
+new owner validation. [Canonical audit](regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping).
+
+### Subsequent current agent link diagnosis — separate from owner history
+
+Under new explicit approval, October20, 2026: four canonical source GETs (one
+per card before fix, one per card after), all200, both identities matched and
+extraction ok. Current Prime/Apple/MEGOGO hrefs, mapping and respective localization
+blocks were present and reached projection. Refusal was at URL classification:
+Prime detail-ID/referral suffix, iTunes UA numeric movie-ID route and MEGOGO short
+UA numeric view route were unsupported. The bounded fix now admits those native
+card shapes as **unverified** candidates. Prime/iTunes referral URLs need explicit
+draft acknowledgement; no URL rewrite or destination request. All block territories
+stay unknown; no offer/property merging or entitlement claim.
+
+This identifies the **current** cause, not unsaved historical owner hrefs. No new
+owner result or test cycle. Offline authored fixtures and mock mobile browser
+cover subsequent UI/draft behavior; source HTML/IDs were not copied into fixtures.
+No HTML/full response archive or data sent to an external LLM. See the single
+[canonical diagnosis/rules/policy record](regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix).
+
+## Kinobaza localization iteration — independent inspection, no new owner result
+
+Separate approval after #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c` permits
+this narrow iteration. On October19, 2026, agent Node/Windows performed exactly
+four explicitly approved diagnostic film-card GETs, all manual/no auto-follow:
+
+| Step | Coherence | Dune: Part Two |
+| --- | --- | --- |
+| Original fixed URL on kinobaza.com.ua (one GET each) | 301 to https://kinobazaua.com/titles/coherence | 301 to https://kinobazaua.com/titles/dune-part-two |
+| Separately approved canonical URL (one GET each) | 200, UTF-8 HTML | 200, UTF-8 HTML |
+
+No body archive, destination requests, account session, JS/assets or API calls.
+Public-rule reads are separate from these four card GETs. This current transition
+does not establish the cause/code/Location of the earlier owner redirects; past
+content and fetcher geographical/egress context are unavailable.
+
+Structural inspection found separate general badges on both cards; Coherence's
+single-provider Amazon Prime paragraph with its own token; Dune's isolated iTunes/
+Rakuten tables and MEGOGO paragraph with its own tokens. This is structural source
+evidence, not new owner observations, current entitlement or complete offer metadata.
+No table sign values or provider characteristics are hardcoded as expected answers.
+The parser/transport/composer was **not independently live-run** on those responses.
+
+Implementation and authored mocks test block binding, exact canonical-hop
+validation and separate film/country/link/property observations. At that checkpoint
+end-to-end owner validation was pending; it is now recorded above, without any
+new agent source requests. Existing owner findings
+below remain unchanged. See the [canonical scope/rules/evidence record](regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration).
+
+## Consolidated discovery — owner-run functional checkpoint
+
+Reported against #182 implementation `3cd175af47db6af31fe83e9eafae5336cad6eb36`.
+These are **owner-reported observations**, not independent agent reproduction.
+No precise execution timestamps, account settings or unreported draft values are
+inferred. No full responses, HTML, screenshots or owner-output archive retained.
+
+| Film | Owner-observed source results | Request/elapsed observation |
+| --- | --- | --- |
+| Coherence | TMDb A partial, B ok, identity matched; Apple TV Store rental/purchase, no provider URL. MOTN matched, no-ua-options. Kinobaza redirect-not-followed, identity unresolved. | 4/4 HTTP requests; 490 ms. |
+| Dune: Part Two | TMDb A/B ok, identity matched; HBO Max subscription, Rakuten rent/buy. MOTN matched; Prime and Apple rent/buy with direct URLs. Returned quality/currency shown literally, without correction. Kinobaza redirect-not-followed, identity unresolved. | 4/4 HTTP requests; 482 ms. |
+
+The owner confirmed select → review → confirm → edit → cancel of the local draft
+after the two discoveries. Exact transferred values or excluded fields were not
+separately reported; their rules are established by implementation tests, not
+invented owner evidence. Prior MOTN/Apple quality/currency observations below
+remain separate dated controls, not substitutions for these returned values.
+
+This is bounded functional validation of two scenarios, **not general accuracy,
+account entitlement, full coverage or production readiness**. Two elapsed values
+are not a latency benchmark; request counts do not assert four successful 200s.
+
+### Offline diagnosis and correction after the checkpoint
+
+- Kinobaza: configured URLs match the fixed catalogue; one GET, manual redirects.
+  A redirect stops before body parsing, so unresolved identity is expected, not
+  evidence of a wrong card. The report lacks the specific HTTP code/Location;
+  destination/canonical URL and cause remain **unknown**. No redirect-following
+  fix or new live request. New-mode diagnostics expose actual HTTP status and
+  Location-header presence only, never its value/body, on any future authorized run.
+- Coherence A: `partial` is separate from identity matched and B ok. Code can mark
+  A partial for missing/null/invalid appended resources or invalid metadata fields;
+  a valid resource with missing optional fields alone is not partial. Without the
+  original projected issues/resource states, the particular cause is **unknown**.
+  New-mode details summarize resource states and missing/invalid/empty field paths
+  (no values, first32 plus omitted count). No reconstruction of the live response.
+- Proven UI contract defect: the old **Cancel edits — restore confirmed draft**
+  reset discarded manual edits. That reset is removed. Cancel selection closes
+  only the review and preserves the confirmed/edited form; explicit confirm can
+  replace it, explicit Clear/film change/reload can discard it. Authored browser
+  regressions establish this correction, not a newly reported owner failure.
+- Default draft exclusions already omitted price/currency, audio/subtitles/video,
+  ownership and unsupported fields; no adapter/source-value correction warranted.
+  Exact allowed hrefs and explicit tracking acknowledgement remain unchanged.
+
+Compact rows/access labels/details are offline/browser-tested changes, **not
+live-revalidated UI**. No additional owner/live/synthetic/SSH-disconnect cycle is
+requested. MEGOGO remains unresolved/frozen; MW-FUT-01 remains Discovery.
 
 Initial Search observations recorded October 18, 2026 for PR #175, following
 implementation commit `80c6f2a32f3305458de81e6e62c92e47efe6e498`.

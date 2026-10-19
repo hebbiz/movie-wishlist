@@ -17,6 +17,10 @@ try {
   const response = await fetch('/session', { cache: 'no-store', signal: lifetime.signal });
   if (!response.ok) throw new Error('Local session unavailable. Reload the page.');
   const session = await response.json();
+  if (session.retrieval === 'ua-discovery') {
+    const { mountDiscovery } = await import('./discovery-client.mjs');
+    await mountDiscovery(document, session, { signal: lifetime.signal });
+  } else {
   const urlOnly = session.retrieval === 'url-context';
   const htmlOnly = session.retrieval === 'kinobaza-html';
   const motnOnly = session.retrieval === 'motn-api';
@@ -153,6 +157,7 @@ try {
       el('status').textContent = `${error instanceof TypeError || error instanceof SyntaxError ? 'Network or invalid JSON response.' : error.message} Reload for a new request.`;
     }
   }));
+  }
 } catch {
   el('status').textContent = 'Local session setup failed. No Gemini request was made. Reload the page.';
 }
