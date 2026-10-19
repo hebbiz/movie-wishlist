@@ -2,17 +2,24 @@
 
 ## Consolidated architecture checkpoint
 
-**Final code/stack review, October20, 2026: research merge is BLOCKED pending two
-P2 fixes, not production approval.** At reviewed runtime #183
-`1454c279c4d208538b93b3ee10cef14310388372`, an accepted `tv.apple.com` URL carrying
-the recognized affiliate `at` key can enter the draft without acknowledgement;
-contradictory labels for the same namespaced TMDb provider ID can be assigned to
-different platform groups without a conflict. These were reproduced by authored
-offline probes, not observed live source failures. No runtime fix is made by this
-documentation checkpoint. See the single [review/findings/fix and consolidation plan](docs/regional-card-proposal.md#pr-stack-review-and-merge-sequencing).
-Existing284 offline/HTTP and124 browser checks pass (8 browser skips), but omit
-these two cases. Next approval needed: narrow R1/R2 fix scope, then separate
-consolidation approval; no new owner/live test cycle is requested.
+**R1/R2 approved fixes after #183 `868032969dd737c96c11613ec532b79caac428ca`: both
+code blockers resolved in offline/browser checks; research merge is CONDITIONAL on review, branch
+policy and separate consolidation approval, not production approval.**
+R1 now gates the exact decoded Apple affiliate key `at` on both already supported
+iTunes/tv.apple.com card routes. Presence alone requires acknowledgement, including
+empty/bare/repeated `at`; decoded `%61t` is the same key. Query values/order/encoding
+remain untouched. Other keys (including uppercase `AT`) are not new markers;
+plain URLs and repeated nonaffiliate parameters do not acquire an extra gate.
+R2 checks explicit source/provider IDs across identity-gated TMDb/MOTN observations:
+recognized labels implying different canonical platforms for the same namespaced
+ID stay unresolved, not platform/access/availability rows or draft media. Compatible
+aliases and rent/buy rows remain separate; independent correct observations and
+equal IDs in different namespaces are unaffected. Missing IDs are not invented.
+The visible unresolved panel retains raw labels/source access/provenance, with no
+Select/navigation/transfer action. No live requests or new owner tests.
+See the single [findings/resolution and consolidation record](docs/regional-card-proposal.md#r1r2-approved-resolution--offline-evidence).
+Verification: **289 offline/HTTP passed;126 mock browser passed /8 skips**.
+Windows helpers/key routing unchanged, so no lifecycle rerun or owner-demo restart.
 
 The [canonical proposal](docs/regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
 now consolidates source evidence, field boundaries, the #175–#181 stack review
@@ -61,6 +68,9 @@ retain territory/basis, access/package/cut, link kind, properties and conflicts.
 Unknown mappings are separate; Apple Store is not Apple TV+. Select/review/confirm
 targets a specific source row, never a group. One shared explanation, short rows with
 known fields, short unknown/conflict markers and permitted candidate link.
+Provider-ID conflicts are explicitly unresolved with their original namespaced
+ID, labels, bucket/observation and receipt provenance; no canonical access claim
+or automatic draft medium is created for those observations.
 Rent/rental, buy/purchase and flatrate/subscription share display labels only;
 raw access, source/receipt/link kind, field provenance, missing-field and technical
 details stay collapsed. Source failures/identity conflicts and attribution remain

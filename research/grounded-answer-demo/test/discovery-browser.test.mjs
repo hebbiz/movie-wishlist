@@ -11,7 +11,7 @@ const modulePath = process.env.PLAYWRIGHT_MODULE_PATH;
 test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { skip: !modulePath }, async t => {
   const { chromium, webkit } = await import(pathToFileURL(modulePath).href);
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) }); t.after(() => browser.close());
-  for (const kind of ['synthetic', 'normal', 'group-links', 'native-links', 'store-subscription', 'localization-hop', 'partial-redirect', 'tmdb-down', 'identity-conflict', 'providers-conflict', 'no-key', 'kino-fail', 'unknown-link', 'tracking', 'hostile', 'empty-UA', 'fields-conflict']) await t.test(kind, async t => {
+  for (const kind of ['synthetic', 'normal', 'group-links', 'native-links', 'apple-affiliate', 'provider-id-conflict', 'store-subscription', 'localization-hop', 'partial-redirect', 'tmdb-down', 'identity-conflict', 'providers-conflict', 'no-key', 'kino-fail', 'unknown-link', 'tracking', 'hostile', 'empty-UA', 'fields-conflict']) await t.test(kind, async t => {
     const calls = [], logs = [], external = [], errors = []; let posts = 0;
     const server = createDemo({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence',
       mode: kind === 'synthetic' ? 'synthetic' : 'live', tmdbToken: kind === 'no-key' ? '' : 'offline-browser-tmdb', motnKey: 'offline-browser-motn',
@@ -38,6 +38,15 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
           paragraphBlock('amazon prime', '(укр. аудіо)', 'https://www.primevideo.com/detail/FICTIONAL123/ref=atv_demo_1') +
           tableBlock('itunes', [['Укр. звук', '+'], ['Укр. субтитри', '-']], 'https://itunes.apple.com/ua/movie/id999999?at=fictional123&amp;l=uk') +
           paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', 'https://megogo.net/ua/view/999999'), film.id);
+        if (kind === 'apple-affiliate') data.html = localizedMarkup(
+          tableBlock('itunes', [['Укр. звук', '+']], 'https://tv.apple.com/ua/movie/fictional/umc.cmc.fictional999?at=&amp;at=second%2fCode') +
+          tableBlock('itunes', [['Укр. субтитри', '+']], 'https://itunes.apple.com/ua/movie/id999999?at'), film.id);
+        if (kind === 'provider-id-conflict') {
+          data.tmdb.providers.results.UA.rent.push({ provider_id: 999999, provider_name: 'Netflix' });
+          data.tmdb.providers.results.UA.buy = [{ provider_id: 999999, provider_name: 'Prime Video' }];
+          const first = data.motn.streamingOptions.ua[0];
+          data.motn.streamingOptions.ua.push({ ...first, service: { id: 'prime', name: 'Prime Video' } }, { ...first, service: { id: 'prime', name: 'Netflix' } });
+        }
         if (kind === 'localization-hop' && url.includes('kinobaza')) {
           if (url.includes('kinobaza.com.ua')) return new Response(null, { status: 301, headers: { Location: `https://kinobazaua.com/titles/${film.id}` } });
           return new Response(localizedMarkup(tableBlock() + paragraphBlock(), film.id), { headers: { 'content-type': 'text/html' } });
@@ -112,6 +121,44 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
       assert.match(await page.locator('#draft-included').textContent(), /"purchase_url": ""/);
       assert.match(await page.locator('#draft-review').textContent(), /Navigation: disabled by demo URL policy.*Draft: not eligible for transfer/s);
       await page.locator('#draft-review-cancel').click();
+    }
+    if (kind === 'provider-id-conflict') {
+      const panel = page.locator('#discovery-unmapped');
+      assert.equal(await panel.locator(':scope > p').filter({ hasText: 'provider ID conflict' }).count(), 4);
+      assert.match(await panel.textContent(), /provider ID conflict.*unresolved.*no canonical access or draft selection/s);
+      assert.equal(await panel.locator('button,a,input').count(), 0);
+      assert.equal(await page.locator('.provider-group[data-provider="prime"],.provider-group[data-provider="netflix"]').count(), 0);
+      assert.ok(await page.locator('.provider-group[data-provider="apple"] article[data-row-id^="tmdb:"]').count());
+      assert.ok(await page.locator('.provider-group[data-provider="apple"] article[data-row-id^="motn:"]').count());
+      await panel.locator('summary').click();
+      assert.match(await panel.locator('pre').textContent(), /tmdb:provider:999999/);
+      assert.match(await panel.locator('pre').textContent(), /motn:provider:prime/);
+      assert.match(await panel.locator('pre').textContent(), /sourceBucket|observation/);
+      await panel.locator('summary').click();
+    }
+    if (kind === 'apple-affiliate') {
+      const count = calls.length, rows = page.locator('.provider-group[data-provider="apple"] article[data-row-id^="kinobaza:"]').filter({ hasText: 'Kinobaza block' });
+      assert.equal(await rows.count(), 2);
+      for (const [index, href] of [
+        'https://tv.apple.com/ua/movie/fictional/umc.cmc.fictional999?at=&at=second%2fCode',
+        'https://itunes.apple.com/ua/movie/id999999?at',
+      ].entries()) {
+        const row = rows.nth(index);
+        assert.equal(await row.locator('a').getAttribute('href'), href);
+        await row.getByRole('button', { name: 'Select and review' }).click();
+        const included = async () => JSON.parse(await page.locator('#draft-included').textContent());
+        assert.equal((await included()).purchase_url, '');
+        await page.locator('#draft-tracking-ack').check(); assert.equal((await included()).purchase_url, href);
+        await page.locator('#draft-tracking-ack').uncheck(); assert.equal((await included()).purchase_url, '');
+        await page.locator('#draft-tracking-ack').check(); await page.locator('#draft-confirm').click();
+        const draftURL = page.locator('#local-draft input[name="purchase_url"]'); assert.equal(await draftURL.inputValue(), href);
+        await page.locator('#local-draft input[name="title"]').fill('R1 manual edit');
+        await row.getByRole('button', { name: 'Select and review' }).click();
+        assert.equal(await page.locator('#draft-tracking-ack').isChecked(), false);
+        await page.locator('#draft-review-cancel').click(); assert.equal(await draftURL.inputValue(), href);
+        assert.equal(await page.locator('#local-draft input[name="title"]').inputValue(), 'R1 manual edit');
+      }
+      assert.equal(calls.length, count); await page.locator('#draft-clear').click();
     }
     if (kind === 'native-links') {
       const originalCalls = calls.length;

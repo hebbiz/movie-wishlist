@@ -37,10 +37,12 @@ It used four canonical-card GETs in agent memory only. This establishes current
 classification defects, not the historical owner hrefs or provider entitlement.
 
 The subsequent [final code/stack review](#pr-stack-review-and-merge-sequencing)
-rechecked #175–#183 at runtime1454c27 without live requests. **Research merge is
-blocked pending two P2 fixes (affiliate gate and conflicting provider-ID mapping)**
-plus normal policy/owner approval. This documentation update implements neither
-fix and authorizes no merge; source/owner evidence below remains scoped history.
+rechecked #175–#183 at runtime1454c27 without live requests and found two P2
+blockers. The [subsequently approved R1/R2 resolution](#r1r2-approved-resolution--offline-evidence)
+after documentation checkpoint8680329 fixes those cases with authored offline
+evidence. **Research merge is now conditional on review/policy/separate approval**,
+not blocked by those two code findings. No roll-up/merge authorized or performed;
+source/owner evidence below remains scoped history, not new live validation.
 
 **Discovery only. Owner approved one isolated, non-LLM, two-film UA discovery →
 selection → explicit draft-transfer PoC.** Required capabilities: TMDb identity/
@@ -317,9 +319,10 @@ source/second owner round by default. **No live run or owner test in this task.*
 ### PR stack review and merge sequencing
 
 **Final research review, October20, 2026. Reviewed runtime #183
-`1454c279c4d208538b93b3ee10cef14310388372`. Research merge: BLOCKED pending R1/R2
-below and normal policy/owner approval.** No functional fix or consolidation is
-authorized by this review. Earlier owner/source findings retain their limited
+`1454c279c4d208538b93b3ee10cef14310388372`. At that snapshot research merge was
+BLOCKED pending R1/R2 below.** The [later authorized narrow resolution](#r1r2-approved-resolution--offline-evidence)
+supersedes that code-blocker status only; normal policy/owner approval remains.
+No consolidation authorized by either record. Earlier owner/source findings retain their limited
 scope; this replaces the older seven-PR review snapshot, not the architecture.
 
 Fetched refs and inspected actual code/incremental diffs, not descriptions only.
@@ -351,7 +354,12 @@ No Actions workflow found in Git. Empty statuses/check-runs are **not successful
 checks**, nor does #175's Preview test research code. Fresh local cumulative
 checks below ran at the reviewed child tree, not independently at all nine HEADs.
 
-#### Findings and bounded fix plan — implementation not authorized
+#### Findings and bounded fix plan — historical review, now resolved below
+
+R1/R2 were P2 at reviewed1454c27, reproduced without live data. The fixes were
+not authorized by that review itself; the owner subsequently approved only
+these two cases after8680329. Original triggers/plan remain below as history;
+current implementation/evidence/status are in the resolution record.
 
 **R1 — P2, affiliate acknowledgement bypass on an already accepted Apple route.**
 [discovery.mjs](../discovery.mjs), line85 (classifier lines74–87), and
@@ -421,7 +429,9 @@ Keys remain server-side, fixed LAN/auth/Host/Origin/session controls precede API
 calls, response projection/text-only display/no-store retained. No new endpoints
 outside research or root runtime/dependency/schema changes.
 
-- **A. Research merge:** R1/R2 block the final roll-up as-is. #175 alone retains
+- **A. Research merge at1454c27:** R1/R2 blocked the final roll-up. Both are now
+  fixed in the separately authorized child iteration below, not in parent HEADs.
+  Review/policy/merge approval still gate the roll-up. #175 alone retains
   its known launcher defect; include #176 before any integrated use. Policy/owner
   approval remains required and unknown policy cannot be assumed satisfied.
 - **B. Live use/source rights:** credentials/current applicable agreements and
@@ -500,6 +510,77 @@ response archive. This follow-up changes only README and this existing document;
 PR description updated separately. Untracked research/media-discovery preserved.
 Documentation checks:236 local links/168 anchors across nine Markdown documents,
 13 ordered handoff sections; final scope/whitespace and unchanged runtime checked.
+
+#### R1/R2 approved resolution — offline evidence
+
+Separate narrow runtime approval after #183 documentation HEAD
+`868032969dd737c96c11613ec532b79caac428ca`; base remains #182
+`264ad83206c5304f41cc7abe56235cce4d2fae0c`. Parent branches are unchanged; the
+table above remains the prior review snapshot, not a claim that parent commits
+contain this fix. Existing untracked research preserved. No source/live/API/
+destination request, new provider/host/route/marker, helper change or owner test.
+
+**R1 resolved:** after the existing safe host/path/provider gate, decoded query
+key `at` is treated identically on accepted iTunes and tv.apple.com card routes.
+Presence requires explicit draft acknowledgement even if its value is empty,
+bare, repeated or the key uses equivalent percent encoding. This is a conservative
+consent policy, not proof an empty key actually performs affiliate accounting.
+Keys are case-sensitive: `AT`, `attribution` and repeated `l` are not `at` and
+do not add a gate. No markers inferred or parameters removed/reordered/decoded
+in the stored href. Navigation remains explicit-only and separate. Before ack
+purchase_url is blank; check/uncheck toggles inclusion of the exact string.
+Existing opaque tracking/Prime referral gates, provenance/default exclusions and
+cancel preserving confirmed/manual draft edits are unchanged.
+
+**R2 resolved:** an in-memory consistency pass uses only explicit IDs and
+recognized canonical labels from independently identity-gated TMDb/MOTN data.
+Key is `source:provider:id`, not bare numeric ID. The same namespaced ID mapping
+to more than one recognized canonical platform is quarantined for that response,
+including across UA access buckets. A conflicting label rejected by the normal
+source-specific mapper still participates in consistency detection; do not let
+one half silently win. Compatible reviewed aliases normalize to one key and
+are not conflicts. Rent/buy/package observations remain distinct, not merged.
+Unknown labels keep the existing unresolved mapping behavior, not invented
+aliases/platforms/IDs. Kinobaza has no reported provider ID, so no ID is inferred
+from block name/href and no name-only cross-source property join is introduced.
+
+Conflicting observations are retained in `unmapped` with reason
+`provider-id-conflict`, exact namespaced ID/raw label, source bucket or projected
+option and receipt/source/country/upstream provenance. No canonical provider,
+access/availability row or draft medium is emitted for them. The UI explicitly
+shows provider ID conflict/unresolved and no selection/navigation/transfer action;
+details retain raw source access/link evidence, not a synthesized offer. The
+existing draft membership/identity guard rejects these entries. Other IDs and
+other source namespaces remain independent; an ID conflict does not convert
+film identity into a mismatch or suppress good observations from that source.
+
+**Current readiness: conditional for isolated research review/merge approval.**
+R1/R2 code blockers are resolved by this child, not waived by passing old tests.
+Required branch checks/approval/merge-method policy remains unknown from the
+previous inaccessible API; zero remote checks are not success. Consolidation
+sequence is still a proposal, no permission to execute it. #175 launcher caveat
+and mandatory inclusion of #176 remain unchanged. Live use/source-rights and
+production blockers remain as listed above; MEGOGO unresolved, Coherence A
+partial, entitlement and incomplete coverage/fields remain limitations, not
+automatically new research merge defects. No new owner test cycle requested.
+
+Verification: the R1/R2 regression cases first failed at the prior runtime
+(missing Apple gate and two conflicting rows still canonical), then passed.
+**55 targeted offline/HTTP passed;289 full offline/HTTP passed** including five
+new authored tests. Cases cover both Apple routes/plain/at/empty/bare/repeated/
+decoded query, exact string preservation, same ID incompatible labels across
+access buckets, aliases/rent-buy, numeric namespace isolation/no invented IDs,
+MOTN conflicts and unaffected independent source rows, draft membership refusal.
+Full installed-Edge mock browser suite: **126 passed /8 skips** (seven missing
+WebKit binaries, optional same-host LAN setup). Not real iPhone/live validation.
+Two new browser scenarios cover affiliate ack check/uncheck/confirm/cancel and
+conflict panel/provenance/no selection, with good rows still selectable, unchanged
+request counts/auth/one-shot/no storage. The first conflict-panel assertion counted
+an unrelated pre-existing Kinobaza unmapped item; selector corrected to conflict
+rows only, without relaxing runtime or hiding independent unknown observations.
+Windows lifecycle not rerun: helpers/key routing unchanged. Local links238/
+anchors170 across9 Markdown documents and13 handoff sections, scope/whitespace
+checked. Owner demo/untracked files untouched; no merge/retarget/roll-up or deployment.
 
 ### Consolidated implementation and source-use checkpoint
 

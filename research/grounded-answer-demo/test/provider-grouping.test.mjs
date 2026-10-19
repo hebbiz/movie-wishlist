@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FILMS, selectRequest } from '../config.mjs';
-import { runDiscovery, composeDiscovery, classifyLink, mapProvider } from '../discovery.mjs';
+import { runDiscovery, composeDiscovery, classifyLink, mapProvider, conflictingProviderIds } from '../discovery.mjs';
 import { extractHtml } from '../html-source.mjs';
 import { linkPresentation, groupProviderRows, providerSummary, prepareDraft } from '../public/discovery-client.mjs';
 import { localizedMarkup, paragraphBlock, tableBlock } from './kinobaza-localization.fixture.mjs';
@@ -157,4 +157,91 @@ test('provider-native shape additions keep scheme/host/path/provider and search/
     const other = provider(key === 'prime' ? 'apple' : 'prime');
     assert.equal(classifyLink(href, other).transferable, false);
   }
+});
+
+test('R1: Apple at presence gates both accepted routes; empty/repeated/decoded keys preserve the exact URL', async () => {
+  const base = await runDiscovery(config, { fetchImpl: () => assert.fail('No network') });
+  const original = base.rows.find(r => r.id.startsWith('motn:'));
+  const apple = mapProvider('kinobaza', undefined, 'itunes');
+  for (const route of ['https://itunes.apple.com/ua/movie/id999999', 'https://tv.apple.com/ua/movie/fictional/umc.cmc.fictional999']) {
+    for (const [query, needsAck] of [
+      ['', false], ['?l=uk&l=en', false], ['?attribution=x', false], ['?AT=x', false],
+      ['?at=fictional%2fCode&l=uk', true], ['?at=', true], ['?at', true],
+      ['?at=&at=second', true], ['?at=first&at=second', true], ['?%61t=encoded', true],
+    ]) {
+      const href = route + query, row = { ...original, link: classifyLink(href, apple) };
+      const result = { ...base, rows: [row] };
+      assert.equal(row.link.kind, 'exact-card-unverified'); assert.equal(row.link.href, href);
+      assert.equal(linkPresentation(row.link).canOpen, true);
+      assert.equal(prepareDraft(result, row, false).fields.purchase_url, needsAck ? '' : href, href);
+      assert.equal(prepareDraft(result, row, true).fields.purchase_url, href);
+      assert.equal(prepareDraft(result, row, false).sidecar.linkPolicy.acknowledgementRequired, needsAck);
+    }
+  }
+});
+
+test('R2: same TMDb ID with incompatible platform labels is withheld across access buckets; independent rows survive', async () => {
+  const base = await runDiscovery(config, { fetchImpl: () => assert.fail('No network') });
+  const reported = value => ({ state: 'reported', value });
+  const provider = name => ({ id: reported(999999), name: reported(name) });
+  const buckets = base.stages.tmdb.result.providers.buckets;
+  buckets.find(b => b.name === 'rent').providers = { state: 'reported', items: [provider('Netflix'), { id: reported(2), name: reported('Apple TV Store') }] };
+  buckets.find(b => b.name === 'buy').providers = { state: 'reported', items: [provider('Prime Video')] };
+  const before = JSON.stringify(base.stages), result = composeDiscovery(base.film, base.stages, { synthetic: true, metrics: base.metrics });
+  assert.equal(result.rows.filter(r => r.provider.sourceId === 'tmdb:provider:999999').length, 0);
+  const unresolved = result.unmapped.filter(r => r.reason === 'provider-id-conflict');
+  assert.equal(unresolved.length, 2); assert.ok(unresolved.every(r => r.sourceId === 'tmdb:provider:999999'));
+  assert.deepEqual(unresolved.map(r => r.sourceBucket), ['rent', 'buy']);
+  assert.ok(unresolved.every(r => r.provenance.source === 'TMDB / JustWatch' && r.provenance.receivedAt));
+  assert.ok(unresolved.every(r => r.provider === undefined && r.availability === undefined));
+  for (const item of unresolved) assert.throws(() => prepareDraft(result, item), /identity-gated row/);
+  assert.ok(result.rows.some(r => r.provider.sourceId === 'tmdb:provider:2'));
+  assert.ok(result.rows.some(r => r.id.startsWith('motn:')));
+  assert.equal(JSON.stringify(base.stages), before);
+});
+
+test('R2: compatible aliases and rent/buy remain separate valid observations, without invented IDs', async () => {
+  const base = await runDiscovery(config, { fetchImpl: () => assert.fail('No network') });
+  const reported = value => ({ state: 'reported', value });
+  for (const bucket of base.stages.tmdb.result.providers.buckets.filter(b => ['rent', 'buy'].includes(b.name))) {
+    bucket.providers = { state: 'reported', items: [{ id: reported(999999), name: reported(bucket.name === 'rent' ? 'Prime Video' : 'Amazon Prime Video') }] };
+  }
+  const result = composeDiscovery(base.film, base.stages, { synthetic: true, metrics: base.metrics });
+  const rows = result.rows.filter(r => r.provider.sourceId === 'tmdb:provider:999999');
+  assert.equal(rows.length, 2); assert.ok(rows.every(r => r.provider.key === 'prime'));
+  assert.deepEqual(rows.map(r => r.access.sourceBucket), ['rent', 'buy']);
+  assert.equal(result.unmapped.filter(r => r.reason === 'provider-id-conflict').length, 0);
+});
+
+test('R2: numeric IDs in different source namespaces never conflict; absent IDs are not invented', () => {
+  const claims = [
+    { source: 'tmdb', id: 999999, name: 'Netflix' },
+    { source: 'motn', id: 999999, name: 'Prime Video' },
+    { source: 'tmdb', name: 'Prime Video' },
+    { source: 'tmdb', id: null, name: 'HBO Max' },
+    { source: 'tmdb', id: '', name: 'MEGOGO' },
+  ];
+  assert.equal(conflictingProviderIds(claims).size, 0);
+  const conflicts = conflictingProviderIds([...claims, { source: 'motn', id: 999999, name: 'HBO Max' }]);
+  assert.deepEqual([...conflicts.keys()], ['motn:provider:999999']);
+  assert.deepEqual(conflicts.get('motn:provider:999999'), ['prime', 'hbo']);
+  assert.equal(conflicts.has('tmdb:provider:999999'), false);
+});
+
+test('R2: conflicting MOTN label/ID observations retain source projection but cannot supply platform or draft', async () => {
+  const base = await runDiscovery(config, { fetchImpl: () => assert.fail('No network') });
+  const original = base.stages.motn.result.options[0], reported = value => ({ state: 'reported', value });
+  base.stages.motn.result.options = [
+    { ...original, service: { id: reported('prime'), name: reported('Prime Video') } },
+    { ...original, service: { id: reported('prime'), name: reported('Netflix') } },
+    { ...original, service: { id: reported('apple'), name: reported('Apple TV Store') } },
+  ];
+  const result = composeDiscovery(base.film, base.stages, { synthetic: true, metrics: base.metrics });
+  const conflicts = result.unmapped.filter(r => r.reason === 'provider-id-conflict');
+  assert.equal(conflicts.length, 2); assert.ok(conflicts.every(r => r.sourceId === 'motn:provider:prime'));
+  assert.ok(conflicts.every(r => r.observation.link.value === original.link.value && r.provenance.receivedAt));
+  assert.equal(result.rows.filter(r => r.provider.sourceId === 'motn:provider:prime').length, 0);
+  assert.ok(result.rows.some(r => r.provider.sourceId === 'motn:provider:apple'));
+  assert.ok(result.rows.some(r => r.provider.sourceId === 'tmdb:provider:2'));
+  for (const conflict of conflicts) assert.throws(() => prepareDraft(result, conflict), /identity-gated row/);
 });

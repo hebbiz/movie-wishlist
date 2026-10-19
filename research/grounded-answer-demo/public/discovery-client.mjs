@@ -173,7 +173,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     }
     if (data.unmapped.length || grouped.unmapped.length) {
       const section = add(host, 'section'); section.id = 'discovery-unmapped'; add(section, 'h3', 'Unmapped observations — no platform assignment');
-      for (const item of data.unmapped) add(section, 'p', `${item.source}: ${item.name ?? '(name not reported)'} · provider mapping unresolved; not assigned to a Store/subscription group.`);
+      for (const item of data.unmapped) add(section, 'p', `${item.source}: ${item.name ?? '(name not reported)'} · ${item.reason === 'provider-id-conflict' ? `provider ID conflict (${item.sourceId}) — unresolved; no canonical access or draft selection` : 'provider mapping unresolved; not assigned to a Store/subscription group'}.`);
       const details = add(section, 'details'); add(details, 'summary', 'Unmapped source labels / access / reasons'); add(details, 'pre', JSON.stringify({ unmapped: data.unmapped, ungroupedRows: grouped.unmapped }, null, 2));
     }
     const details = add(host, 'details'); details.id = 'discovery-source-details'; add(details, 'summary', `Source diagnostics / unmapped (${data.unmapped.length}) / catalogue (not provider tracks)`); add(details, 'pre', JSON.stringify({ diagnostics: data.sources.map(s => ({ source: s.source, diagnostics: s.diagnostics })), calls: data.metrics.calls, stages: data.stages, unmapped: data.unmapped, limits: data.limits }, null, 2));

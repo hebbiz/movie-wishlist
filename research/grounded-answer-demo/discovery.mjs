@@ -56,6 +56,21 @@ export function mapProvider(source, id, name, access) {
   return { key, ...providers[key], sourceId: id === undefined ? null : `${source}:provider:${id}`, sourceName: name };
 }
 
+// Compare only explicit source IDs and recognized canonical labels. This is not
+// an offer join: compatible aliases/access buckets stay distinct observations.
+export function conflictingProviderIds(claims) {
+  const platforms = new Map();
+  for (const { source, id, name, access } of claims) {
+    if (!(Number.isSafeInteger(id) && id > 0 || typeof id === 'string' && id.length > 0)) continue;
+    const key = typeof name === 'string' ? aliases.get(name.trim().toLowerCase()) ?? mapProvider(source, id, name, access)?.key : undefined;
+    if (!key) continue;
+    const sourceId = `${source}:provider:${id}`;
+    if (!platforms.has(sourceId)) platforms.set(sourceId, new Set());
+    platforms.get(sourceId).add(key);
+  }
+  return new Map([...platforms].filter(([, keys]) => keys.size > 1).map(([id, keys]) => [id, [...keys]]));
+}
+
 // Classification only, never resolve, serialize or follow the observed href.
 export function classifyLink(href, provider) {
   const result = { href: typeof href === 'string' ? href : null, kind: 'unknown', transferable: false };
@@ -82,7 +97,9 @@ export function classifyLink(href, provider) {
     megogo: ['megogo.net', 'www.megogo.net'].includes(host) && /^\/ua\/view\/\d+-[^/]+\.html$/i.test(u.pathname) || megogoIdCard,
   };
   if (!Object.hasOwn(exact, provider?.key) || !exact[provider.key]) return result;
-  const referral = primeReferral || itunesCard && u.searchParams.has('at');
+  // Presence of exact decoded key "at" is conservative even when empty/repeated.
+  // The original query stays untouched; no extra markers/hosts/routes inferred.
+  const referral = primeReferral || provider.key === 'apple' && u.searchParams.has('at');
   return { ...result, kind: 'exact-card-unverified', transferable: true,
     ...(referral ? { referral: 'provider-native', acknowledgementRequired: true } : {}) };
 }
@@ -106,8 +123,21 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
     { source: 'motn', status: stages.motn.status, identity: motn?.identity?.status ?? 'unresolved', evidence: motn?.identity ?? null, elapsedMs: stages.motn.elapsedMs },
     { source: 'kinobaza', status: stages.kinobaza.status, identity: kino?.identity?.status ?? 'unresolved', evidence: kino?.identity ?? null, elapsedMs: stages.kinobaza.elapsedMs },
   ];
+  const providerClaims = [];
+  if (tmdbIdentity === 'matched' && ['ok', 'partial'].includes(tmdb?.providers?.status)) {
+    for (const b of tmdb.providers.buckets ?? []) for (const p of b.providers?.items ?? []) providerClaims.push({ source: 'tmdb', id: val(p.id), name: val(p.name), access: b.access });
+  }
+  if (motn?.identity?.status === 'matched') for (const o of motn.options ?? []) providerClaims.push({ source: 'motn', id: val(o.service.id), name: val(o.service.name), access: val(o.access) });
+  const providerConflicts = conflictingProviderIds(providerClaims);
   if (tmdbIdentity === 'matched' && ['ok', 'partial'].includes(tmdb?.providers?.status)) {
     for (const b of tmdb.providers.buckets ?? []) for (const p of b.providers?.items ?? []) {
+      const sourceId = `tmdb:provider:${val(p.id)}`;
+      if (providerConflicts.has(sourceId)) {
+        unmapped.push({ source: 'tmdb', id: val(p.id), name: val(p.name), sourceId, sourceBucket: b.name,
+          reason: 'provider-id-conflict', conflictingPlatforms: providerConflicts.get(sourceId), observation: p,
+          provenance: { source: 'TMDB / JustWatch', upstream: 'JustWatch', method: 'API results.UA', country: 'UA', sourceURL: tmdbScenario(film, { discovery: 'digital-ua' }).providersURL, receivedAt: tmdb.providers.receivedAt } });
+        continue; // No canonical platform/access/availability row or draft medium.
+      }
       const provider = mapProvider('tmdb', val(p.id), val(p.name));
       if (!provider) { unmapped.push({ source: 'tmdb', id: val(p.id) ?? null, name: val(p.name) ?? null, access: b.access, reason: 'provider-mapping-unresolved' }); continue; }
       const r = rowBase('tmdb', film, provider, rows.length, { source: 'TMDB / JustWatch', upstream: 'JustWatch', method: 'API results.UA',
@@ -118,6 +148,13 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
     }
   }
   if (motn?.identity?.status === 'matched') for (const [i, o] of (motn.options ?? []).entries()) {
+    const sourceId = `motn:provider:${val(o.service.id)}`;
+    if (providerConflicts.has(sourceId)) {
+      unmapped.push({ source: 'motn', id: val(o.service.id), name: val(o.service.name), sourceId,
+        reason: 'provider-id-conflict', conflictingPlatforms: providerConflicts.get(sourceId), observation: o,
+        provenance: { source: 'Movie of the Night', upstream: 'not-established', method: 'API streamingOptions.ua', country: 'UA', sourceURL: motnScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: motn.receivedAt } });
+      continue;
+    }
     const provider = mapProvider('motn', val(o.service.id), val(o.service.name), val(o.access));
     if (!provider) { unmapped.push({ source: 'motn', id: val(o.service.id) ?? null, name: val(o.service.name) ?? null, access: o.access, reason: 'provider-mapping-unresolved' }); continue; }
     const r = rowBase('motn', film, provider, i, { source: 'Movie of the Night', upstream: 'not-established', method: 'API streamingOptions.ua',
