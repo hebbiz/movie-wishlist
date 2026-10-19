@@ -1,8 +1,11 @@
-param([string]$DemoRoot, [int]$Port, [string]$LanIPv4, [switch]$UrlContext)
+param([string]$DemoRoot, [int]$Port, [string]$LanIPv4, [switch]$UrlContext, [switch]$Kinobaza, [switch]$Html, [switch]$Motn, [switch]$Tmdb, [switch]$Megogo, [switch]$Discovery)
 $env:DEMO_MODE = 'synthetic'
 $env:DEMO_DISCOVERY = 'digital-ua'
-$env:DEMO_FILM = 'coherence'
-$env:DEMO_RETRIEVAL = if ($UrlContext) { 'url-context' } else { 'search' }
+$env:DEMO_FILM = if ($Megogo) { 'dune-part-two' } else { 'coherence' }
+$env:DEMO_RETRIEVAL = if ($Discovery) { 'ua-discovery' } elseif ($Megogo) { 'megogo-html' } elseif ($Tmdb) { 'tmdb-data' } elseif ($Motn) { 'motn-api' } elseif ($Html) { 'kinobaza-html' } elseif ($UrlContext) { 'url-context' } else { 'search' }
+if ($Discovery) { $env:DEMO_KINOBAZA = 'on' } else { Remove-Item Env:DEMO_KINOBAZA -ErrorAction SilentlyContinue }
+if ($Kinobaza -or $Html) { $env:DEMO_URL_SOURCE = 'kinobaza' } else { Remove-Item Env:DEMO_URL_SOURCE -ErrorAction SilentlyContinue }
+$env:DEMO_SYNTHETIC_SCENARIO = 'grounded'
 Remove-Item Env:DEMO_AMAZON_REGION -ErrorAction SilentlyContinue
 if ($LanIPv4) {
     # Deliberately public offline-test fixture, never an owner's credential.

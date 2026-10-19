@@ -184,33 +184,35 @@ test('URL mode missing key/API/JSON/transport errors consume one session, no ret
 });
 
 test('URL-only LAN gate protects assets/session/answer; wrong auth/Host/Origin cannot spend token', async t => {
-  const address = '192.168.88.7'; // Test-only Host; server listens only on loopback.
-  const password = 'offline-url-password';
-  const auth = `Basic ${Buffer.from(`demo:${password}`).toString('base64')}`;
-  let calls = 0;
-  const server = createDemo({ ...options, access: 'lan', bindIPv4: address, lanPassword: password,
-    interfaces: { test: [{ address, internal: false }] }, mode: 'live', apiKey: 'offline-key',
-    fetchImpl: async () => { calls++; return Response.json(fixture()); },
+  for (const urlSource of ['apple-tv', 'kinobaza']) await t.test(urlSource, async t => {
+    const address = '192.168.88.7'; // Test-only Host; server listens only on loopback.
+    const password = 'offline-url-password';
+    const auth = `Basic ${Buffer.from(`demo:${password}`).toString('base64')}`;
+    let calls = 0;
+    const server = createDemo({ ...options, urlSource, access: 'lan', bindIPv4: address, lanPassword: password,
+      interfaces: { test: [{ address, internal: false }] }, mode: 'live', apiKey: 'offline-key',
+      fetchImpl: async () => { calls++; return Response.json(syntheticResponse('grounded', undefined, { ...options, urlSource })); },
+    });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    t.after(() => new Promise(resolve => server.close(resolve)));
+    const port = server.address().port;
+    const origin = `http://${address}:${port}`;
+    const request = (path, method = 'GET', headers = {}) => new Promise((resolve, reject) => {
+      const req = httpRequest(`http://127.0.0.1:${port}${path}`, { method, headers: { Host: `${address}:${port}`, ...headers } }, res => {
+        const chunks = []; res.on('data', chunk => chunks.push(chunk));
+        res.on('end', () => resolve(new Response(Buffer.concat(chunks), { status: res.statusCode, headers: res.headers })));
+      }); req.on('error', reject); req.end();
+    });
+    for (const path of ['/', '/url-display.mjs', '/session', '/answer']) assert.equal((await request(path)).status, 401);
+    const page = await (await request('/session', 'GET', { Authorization: auth })).json();
+    assert.ok(!JSON.stringify(page).includes(password));
+    const headers = { Authorization: auth, Origin: origin, 'x-demo-session': page.token };
+    for (const [override, expected] of [[{ Authorization: 'Basic d3Jvbmc=' }, 401], [{ Host: 'localhost' }, 403], [{ Origin: 'http://example.com' }, 403]]) assert.equal((await request('/answer', 'POST', { ...headers, ...override })).status, expected);
+    assert.equal(calls, 0);
+    assert.equal((await request('/answer', 'POST', headers)).status, 200);
+    assert.equal((await request('/answer', 'POST', headers)).status, 409);
+    assert.equal(calls, 1);
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  t.after(() => new Promise(resolve => server.close(resolve)));
-  const port = server.address().port;
-  const origin = `http://${address}:${port}`;
-  const request = (path, method = 'GET', headers = {}) => new Promise((resolve, reject) => {
-    const req = httpRequest(`http://127.0.0.1:${port}${path}`, { method, headers: { Host: `${address}:${port}`, ...headers } }, res => {
-      const chunks = []; res.on('data', chunk => chunks.push(chunk));
-      res.on('end', () => resolve(new Response(Buffer.concat(chunks), { status: res.statusCode, headers: res.headers })));
-    }); req.on('error', reject); req.end();
-  });
-  for (const path of ['/', '/url-display.mjs', '/session', '/answer']) assert.equal((await request(path)).status, 401);
-  const page = await (await request('/session', 'GET', { Authorization: auth })).json();
-  assert.ok(!JSON.stringify(page).includes(password));
-  const headers = { Authorization: auth, Origin: origin, 'x-demo-session': page.token };
-  for (const [override, expected] of [[{ Authorization: 'Basic d3Jvbmc=' }, 401], [{ Host: 'localhost' }, 403], [{ Origin: 'http://example.com' }, 403]]) assert.equal((await request('/answer', 'POST', { ...headers, ...override })).status, expected);
-  assert.equal(calls, 0);
-  assert.equal((await request('/answer', 'POST', headers)).status, 200);
-  assert.equal((await request('/answer', 'POST', headers)).status, 409);
-  assert.equal(calls, 1);
 });
 
 test('URL modules have no storage/logging/network calls; prompt/catalogue have no search tool', async () => {

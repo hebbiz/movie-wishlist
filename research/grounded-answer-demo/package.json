@@ -1,0 +1,8 @@
+{
+  "name": "mw-fut-01-isolated-demo",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "parse5": "8.0.1"
+  }
+}
