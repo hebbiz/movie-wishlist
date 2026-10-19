@@ -19,4 +19,7 @@ a { color: #204fc6; }
 .discovery-ui button { margin: 8px 8px 8px 0; }
 .discovery-card { border: 1px solid #dbe1e9; border-radius: 8px; padding: 12px; margin: 12px 0; white-space: normal; }
 .discovery-card h4 { margin: 0; }
+.provider-group { white-space: normal; margin-top: 20px; padding-top: 8px; border-top: 1px solid #dbe1e9; }
+.provider-group > h3 { margin-bottom: 4px; }
+.provider-summary { font-size: .9rem; color: #59657a; }
 @media (max-width: 600px) { main { margin: 20px auto; padding: 0 12px 24px; } header, #result { padding: 18px; } }

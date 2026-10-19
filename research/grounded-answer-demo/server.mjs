@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { MODEL, MAX_OUTPUT_TOKENS, FILMS, selectRequest, requestBody } from './config.mjs';
 import { runDiscovery, DISCOVERY_IDS } from './discovery.mjs';
 import { syntheticResponse, syntheticHtml } from './synthetic.mjs';
-import { extractHtml, fetchHtmlCandidates, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS } from './html-source.mjs';
+import { extractHtml, fetchHtmlCandidates, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS, canonicalKinobazaURL } from './html-source.mjs';
 import { networkConfig } from './network.mjs';
 import { fetchMotn, normalizeMotn, syntheticMotn, MOTN_FILMS, MOTN_TIMEOUT_MS, MOTN_LIMIT_BYTES } from './motn.mjs';
 import { fetchTmdb, projectSyntheticTmdb, TMDB_TIMEOUT_MS, TMDB_LIMIT_BYTES } from './tmdb.mjs';
@@ -88,8 +88,9 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
           return [s.sourceURL, ...(s.providersURL ? [s.providersURL] : [])];
         }) : [];
         if (composed) return send(200, { token, mode, model: null, prompt: null, discovery: 'digital-ua', retrieval: 'ua-discovery', film: selectedFilm, films: DISCOVERY_IDS.map(id => FILMS[id]),
-          country: 'UA', kinobaza: selection.kinobaza, requestBudget: selection.requestBudget, operation: selection.operation,
+          country: 'UA', kinobaza: selection.kinobaza, requestBudget: selection.requestBudget, baseRequestBudget: selection.baseRequestBudget, operation: selection.operation,
           plannedRequests: planned,
+          conditionalRequests: selection.kinobaza === 'on' ? [canonicalKinobazaURL(selectedFilm.id)] : [],
           sources: ['TMDb', 'Movie of the Night', ...(selection.kinobaza === 'on' ? ['Kinobaza HTML'] : [])] });
         return send(200, { token, mode, model: nonGemini ? null : MODEL, maxOutputTokens: nonGemini ? null : MAX_OUTPUT_TOKENS, film, discovery: selection.discovery, amazonRegion: selection.amazonRegion, retrieval: selection.retrieval, urlSource: selection.urlSource ?? null, sourceURL: selection.sourceURL, prompt: selection.prompt,
           ...(htmlOnly ? { operation: selection.operation, htmlLimitBytes: HTML_LIMIT_BYTES, htmlTimeoutMs: HTML_TIMEOUT_MS } : {}),
@@ -162,5 +163,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const nonGemini = ['kinobaza-html', 'motn-api', 'tmdb-data', 'megogo-html', 'ua-discovery'].includes(process.env.DEMO_RETRIEVAL);
   const server = createDemo({ mode, filmId: process.env.DEMO_FILM, discovery: process.env.DEMO_DISCOVERY, amazonRegion: process.env.DEMO_AMAZON_REGION, retrieval: process.env.DEMO_RETRIEVAL, urlSource: process.env.DEMO_URL_SOURCE, kinobaza: process.env.DEMO_KINOBAZA, scenario: process.env.DEMO_SYNTHETIC_SCENARIO || 'grounded', apiKey: nonGemini ? '' : process.env.GEMINI_API_KEY || '', motnKey: ['motn-api', 'ua-discovery'].includes(process.env.DEMO_RETRIEVAL) ? process.env.MOTN_API_KEY || '' : '', tmdbToken: ['tmdb-data', 'ua-discovery'].includes(process.env.DEMO_RETRIEVAL) ? process.env.TMDB_READ_ACCESS_TOKEN || '' : '', ...networkOptions });
   server.on('error', () => { console.error('Demo could not listen. Check DEMO_PORT.'); process.exitCode = 1; });
-  server.listen(port, network.bindAddress, () => console.log(`Local ${mode} demo: http://${network.bindAddress}:${port} — ${process.env.DEMO_RETRIEVAL === 'ua-discovery' ? 'UA discovery, max four requests/film, local draft only, no LLM' : ['kinobaza-html', 'megogo-html'].includes(process.env.DEMO_RETRIEVAL) ? 'HTML only, no API key' : process.env.DEMO_RETRIEVAL === 'motn-api' ? 'Movie of the Night v4, UA, no LLM' : process.env.DEMO_RETRIEVAL === 'tmdb-data' ? 'TMDB metadata / UA, max two requests, no LLM' : `${MODEL}, output limit ${MAX_OUTPUT_TOKENS}`}. No request until button click.`));
+  server.listen(port, network.bindAddress, () => console.log(`Local ${mode} demo: http://${network.bindAddress}:${port} — ${process.env.DEMO_RETRIEVAL === 'ua-discovery' ? 'UA discovery, max4 without redirect / max5 only with canonical hop (Kinobaza off: max3), local draft only, no LLM' : ['kinobaza-html', 'megogo-html'].includes(process.env.DEMO_RETRIEVAL) ? 'HTML only, no API key' : process.env.DEMO_RETRIEVAL === 'motn-api' ? 'Movie of the Night v4, UA, no LLM' : process.env.DEMO_RETRIEVAL === 'tmdb-data' ? 'TMDB metadata / UA, max two requests, no LLM' : `${MODEL}, output limit ${MAX_OUTPUT_TOKENS}`}. No request until button click.`));
 }

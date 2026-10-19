@@ -19,6 +19,31 @@ The two-film owner functional session is complete, with limits below; no new
 live/owner cycle or merge is authorized. Earlier stack tables remain their dated
 review snapshots, not fresh checks or approval of every parent.
 
+The next separately approved research slice starts from open #182
+`264ad83206c5304f41cc7abe56235cce4d2fae0c`, base #181 unchanged. Its
+[Kinobaza localization record](#kinobaza-localization-enrichment--approved-bounded-iteration)
+supersedes the link-only/no-hop limitation only within two fixed cards. Prior
+owner results remain dated controls; no production or regular/commercial reuse approval.
+
+Current owner-checkpoint/link-audit work rechecked open #183 HEAD
+`7997b032abcef7d8af67c97ea8e879e3955e0dd4`, base #182
+`264ad83206c5304f41cc7abe56235cce4d2fae0c`. The localization owner session is
+complete; [the subsequent audit and presentation policy](#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
+do not authorize another owner/live cycle or broaden source discovery.
+
+Subsequent explicit approval permits the [bounded provider-link diagnosis/fix](#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+from #183 `133a9fe3631362bd967ec57dc8b4e2fa201e8a96`, same base #182.
+It used four canonical-card GETs in agent memory only. This establishes current
+classification defects, not the historical owner hrefs or provider entitlement.
+
+The subsequent [final code/stack review](#pr-stack-review-and-merge-sequencing)
+rechecked #175–#183 at runtime1454c27 without live requests and found two P2
+blockers. The [subsequently approved R1/R2 resolution](#r1r2-approved-resolution--offline-evidence)
+after documentation checkpoint8680329 fixes those cases with authored offline
+evidence. **Research merge is now conditional on review/policy/separate approval**,
+not blocked by those two code findings. No roll-up/merge authorized or performed;
+source/owner evidence below remains scoped history, not new live validation.
+
 **Discovery only. Owner approved one isolated, non-LLM, two-film UA discovery →
 selection → explicit draft-transfer PoC.** Required capabilities: TMDb identity/
 UA signals and MOTN direct links/access types. Optional bounded Kinobaza HTML
@@ -48,7 +73,7 @@ found; significant proposed decisions are recorded in place, not a new framework
 | Implementation tests | Fresh cumulative **234 offline/HTTP passed** at the source checkpoint, including 46 MEGOGO and 22 unchanged Gemini request-body goldens. Authored mocks cover request bounds, identity, partial results, auth/one-shot, no destinations/persistence. Initial sandbox spawn EPERM was an execution restriction; unchanged suite passed with approved execution. | Not live source facts, entitlement, general accuracy or terms approval. |
 | Owner: TMDb | Coherence identity/UA Apple Store rent/buy; first appends rejected. Dune after fix passed both blocks/five appends, UA HBO Max subscription/Rakuten rent/buy. Ukrainian title/overview/tagline useful; shown UA event language empty. | Coherence appends not revalidated. Catalogue localization is not provider audio/subtitles. |
 | Owner: MOTN | Dune Apple/Prime links and rent/buy. Coherence options withheld by original identity/year defect, not a proven empty API list; separate website check had no UA offers. | Complete coverage/tracks/quality/currency. Apple HD/empty lists/UAH conflict with dated owner 4K/DV/UA-audio/USD. Field mapping audited; original response absent, upstream cause unknown. Year-only rejection fixed offline, not live-retested. |
-| Owner: Kinobaza HTML | Two manual cases extracted hrefs: Coherence Apple in UA; Dune HBO Max/Rakuten in UA, Apple/MEGOGO outside country sections. | Prime omission cause unresolved; foreign Dune YouTube search link accepted. Existing adapter distinguishes absolute/relative, not exact/search. Candidate links are not offers. |
+| Owner: Kinobaza HTML | Initial two manual cases extracted hrefs. Later #183 session: Coherence Apple UA tracking + separate Prime audio-positive block; Dune HBO/Rakuten UA tracking + separate Apple/Rakuten/MEGOGO localization blocks, territory unknown. | Old Prime omission and three later link-policy refusal causes are not the same question. Current exact hrefs were not reported. Initial standalone parser accepted a foreign YouTube search candidate; composed URL policy excludes search from navigation/draft. Candidate links are not offers/entitlement. |
 | Independent checks | Earlier read-only HTML inspection found relevant hrefs before JavaScript. Code audits established MOTN year gate, TMDb appended-ID assumption and MEGOGO policy defects. Current scope/isolation/stack audit. | Sampled HTML is not hidden Gemini payload or fresh destination/entitlement validation. No live source/API calls in this checkpoint. |
 | Owner: Gemini URL Context | Apple tests supplied some identity/audio metadata. Both Kinobaza cases returned platform names but no hrefs; territory partial for Coherence, present for Dune. | SUCCESS/citation is not truth/completeness/freshness. Dune `m.vkino.com.ua` citation anomaly proves neither external fetch nor exclusive Kinobaza provenance. Href omission cause unknown. |
 | Owner: MEGOGO; offline correction | First attempt HTTP 200/policy refusal; later DOM/canonical/JSON-LD/two H1s/30 duplicates, still pre-identity refusal. Attribute-aware v2 fixes authored defects. | Actual duplicate roles/locations, live identity/fields and post-fix compatibility unknown. **Unresolved/frozen; no new parser/live test cycle.** |
@@ -76,13 +101,15 @@ or an LLM. Fixed Kinobaza source cards are still inputs: arbitrary-film Kinobaza
 card discovery is **not solved**. No general movie search or coverage guarantee.
 
 Allowlist: **Apple TV Store, Rakuten TV, HBO Max, Netflix, Prime Video, MEGOGO**.
-Unknown/out-of-scope IDs stay in a compact diagnostic count, never silently
+Unknown/out-of-scope IDs stay in a separate unmapped section, never silently
 rebranded. No observation means “no result from selected sources”, not unavailable.
 
 Default UI: chosen film/UA/request ceiling before click; source stage status;
-short rows with provider, display-normalized access, known key fields, unknown/
-conflict markers and permitted link. One shared source-claim/unknown explanation;
-unscoped candidates have a separate territory-unknown group. Raw access/link kind,
+platform groups containing separate source rows with display-normalized access,
+known key fields, unknown/conflict markers and precise link-policy statuses.
+Group summaries identify source and available field types, not a shared verified
+offer. One shared source-claim/unknown explanation; each unscoped row explicitly
+retains territory unknown. Raw access/link kind,
 territory/basis, source/receipt time, missing fields, foreign dates/aliases/IDs and
 field/conflict evidence are collapsed details;
 warnings/unknowns/errors/attribution remain visible. No JSON dump by default.
@@ -121,13 +148,14 @@ retain their own identity gate, never borrowing A's matched label.
 | TMDb A Details + existing five appends | 1 | Fixed TMDb/IMDb, uk-UA; no append fallback. ID failure stops TMDb B, not independent sources; stable conflicts block combination. |
 | TMDb B Watch Providers | 1 | Only after A passes; actual results.UA. TMDb watch-page link is not a provider deep link. Missing/empty/error is not unavailable. |
 | MOTN fixed IMDb title, country=ua | 1 | Required capability/key, no country enumeration/search/enrichment. Error/missing key is explicit partial state, not success. |
-| Kinobaza fixed initial HTML | 0 or 1 | Optional and visible before click, only two existing cards under scoped access review. No card search, Prime recovery/parser expansion or destinations. |
+| Kinobaza fixed initial HTML | 0, 1 or 2 | Optional; second GET only for the validated permanent same-title canonical hop. Two fixed cards, approved source-block localization; no arbitrary card search, broad parser expansion or destinations. |
 | Other sources/destinations/LLMs | 0 | No MEGOGO/Apple GET, Search, URL Context, tracking resolve/retries/polling. Explicit owner navigation is separate. |
 
-Ceiling **4/film, 8 for the two-film session; 3/film with Kinobaza off**. One film
+Ceiling **4/film without redirect; 5 only with canonical hop; two-film max10 only
+with both hops; 3/film with Kinobaza off**. One film
 per action, no batch or reload calls. Run A+B as one serial task alongside
 independent MOTN/optional Kinobaza tasks with isolated failures. Existing limits:
-TMDb/MOTN 20s / 2 MiB per request, Kinobaza 15s / 2 MiB. Proposed total cancellation
+TMDb/MOTN 20s / 2 MiB per request, Kinobaza whole-operation15s / 2 MiB including hop. Total cancellation
 deadline 65s bounds composition, retaining margin beyond the serial two-call
 TMDb task's transport limits; **not measured latency**. Preserve completed stages on expiry;
 no retries/token replenishment. Record elapsed stages/call counts/errors in
@@ -290,71 +318,269 @@ source/second owner round by default. **No live run or owner test in this task.*
 
 ### PR stack review and merge sequencing
 
-Snapshot October 18, 2026 before this docs commit: all seven PRs **open, non-draft,
-mergeable=true**. API returned no submitted reviews/review threads. Every parent
-HEAD is ancestor of child; incremental diffs/whitespace checked, paths research-
-demo only, no production entry point/migration/PR173 change. Mergeable means
-Git conflict status, **not approval**. Required branch-policy API returned 403:
-required-check/approval rules unverified. Abbreviated base SHAs in the table
-identify the prior row's full HEAD (develop's full SHA appears above).
+**Final research review, October20, 2026. Reviewed runtime #183
+`1454c279c4d208538b93b3ee10cef14310388372`. At that snapshot research merge was
+BLOCKED pending R1/R2 below.** The [later authorized narrow resolution](#r1r2-approved-resolution--offline-evidence)
+supersedes that code-blocker status only; normal policy/owner approval remains.
+No consolidation authorized by either record. Earlier owner/source findings retain their limited
+scope; this replaces the older seven-PR review snapshot, not the architecture.
 
-| PR | HEAD / base branch (base SHA) | Incremental scope | Remote checks; historical evidence unless marked fresh | Research review/merge assessment; limits |
+Fetched refs and inspected actual code/incremental diffs, not descriptions only.
+All nine PRs are **open, non-draft, mergeable=true**; every current base HEAD is
+an ancestor of its child. All69 changed paths from develop are inside this demo.
+`develop=a5d4f42149c616d4dc3cdac35c6086240b3fdacf`,
+`main=e92392856038e40e6d98c6c8744eed04c4e8dff9`; no deployment inference.
+Each row's base SHA is the preceding row's full HEAD; #175 uses develop above.
+The table freezes pre-documentation reviewed HEADs; this two-document commit
+advances only #183, with unchanged runtime. Its resulting SHA belongs in the PR
+and final report, not a self-referential follow-up commit.
+Git mergeability is not code approval. Branch-protection API returned403
+Resource not accessible by integration; rules endpoint unavailable to connector.
+**Required checks/approvals/merge-method policy remain unknown**, not absent.
+
+| PR | Reviewed HEAD / actual base | Incremental scope | Fresh remote statuses / check-runs | Research readiness / findings |
 | --- | --- | --- | --- | --- |
-| [#175](https://github.com/hebbiz/movie-wishlist/pull/175) | `01db2331da3c169ce7c7b267fe69adadefe6952a` / `develop` (`a5d4f42`) | 23 files; digital/Amazon, LAN/detached helpers, docs. | Netlify Preview success; 3 completed neutral checks; no Actions. Historical 88 passed / 1 skip, Windows; owner LAN/SSH synthetic. | Reviewable first with known multi-PATH launcher defect fixed in #176; not a corrected standalone integration endpoint. Home HTTP, PS5.1/WebKit limits; Amazon live-unvalidated. |
-| [#176](https://github.com/hebbiz/movie-wishlist/pull/176) | `714a1766d8c8224ab8f62399a0b89cecc43d14ec` / `codex/mw-fut-01-digital-ua-amazon` (`01db233`) | 23 files; Apple URL Context, launcher diagnostics/PATH fix, records. | Empty statuses/check-runs/Actions; historical 78 offline, 43 browser passed / 3 skips; paired Windows diagnosis. | Reviewable after parent; Apple partial metadata, source-rights/live gates. Not every SSH configuration validated. |
-| [#177](https://github.com/hebbiz/movie-wishlist/pull/177) | `a4dbbab2b8a4b0030e1e9063d0f957fc1f72931b` / `codex/mw-fut-01-url-context` (`714a176`) | 16 files; fixed Kinobaza URL Context/HTML feasibility. | Empty statuses/check-runs/Actions; historical 87 offline, 49 browser passed / 3 skips; isolated Windows. | Reviewable as unsuccessful research hypothesis; both owner runs no hrefs. Not an automatic link generator, cause unresolved. |
-| [#178](https://github.com/hebbiz/movie-wishlist/pull/178) | `30c3160efcf4ad2e1c489159db815445e61fa539` / `codex/mw-fut-01-kinobaza-url-context` (`a4dbbab`) | 21 files; bounded HTML/isolated parse5+lockfile. | Empty statuses/check-runs/Actions; historical 107 offline, 60 browser passed / 4 skips; Windows; two owner cases. | Reviewable after parent. Prime/search-link limits; broader automation rights unresolved, not entitlement evidence. |
-| [#179](https://github.com/hebbiz/movie-wishlist/pull/179) | `9e4bf4f90ab3d0cc4d8e203f5b47470511be0b4c` / `codex/mw-fut-01-kinobaza-html` (`30c3160`) | 16 files; MOTN, year-gate fix/provenance, TMDb handoff. | Empty statuses/check-runs/Actions; historical latest 139 offline / 75 browser passed / 5 skips; fresh cumulative covers fix. | Reviewable after parent; no invented currency correction. Coherence fix not live-retested; source fields/coverage/terms limits. |
-| [#180](https://github.com/hebbiz/movie-wishlist/pull/180) | `b9f3c65342f9b558bf021f81aee26bb2f22029a8` / `codex/mw-fut-01-motn-api` (`9e4bf4f`) | 17 files; TMDb two calls/append fix/compact display/shared model. | Empty statuses/check-runs/Actions; historical 188 offline; latest TMDb Edge 19 passed / 1 skip; Windows; Dune owner success. | Reviewable after parent. Current full terms/branding gate; catalogue/UA buckets not tracks/entitlement. |
-| [#181](https://github.com/hebbiz/movie-wishlist/pull/181) | `77b44b32a8570d55a567d952173d258a251bce88` / `codex/mw-fut-01-tmdb-data` (`b9f3c65`) | 16 files at reviewed HEAD; MEGOGO/diagnostics/policy/docs. | Empty statuses/check-runs/Actions; fresh cumulative 234 offline; prior targeted Edge 12 passed / 1 skip, Windows historical. | Reviewable after parent with MEGOGO unresolved/frozen. No demonstrated opt-in isolation/honest-failure blocker; not full security/live validation. This docs commit advances this row only. |
+| [#175](https://github.com/hebbiz/movie-wishlist/pull/175) | `01db2331da3c169ce7c7b267fe69adadefe6952a` / `develop` | 23 files: digital/Amazon, LAN/helpers | Preview success;3 completed neutral checks | Conditional only with #176 fix included; **not a corrected standalone checkpoint**. |
+| [#176](https://github.com/hebbiz/movie-wishlist/pull/176) | `714a1766d8c8224ab8f62399a0b89cecc43d14ec` / `codex/mw-fut-01-digital-ua-amazon` | 23: Apple URL Context, launcher fix/diagnostics | Empty / empty | Conditional roll-up; no new scoped blocker. Includes required launcher fix. |
+| [#177](https://github.com/hebbiz/movie-wishlist/pull/177) | `a4dbbab2b8a4b0030e1e9063d0f957fc1f72931b` / `codex/mw-fut-01-url-context` | 16: Kinobaza URL Context, HTML feasibility | Empty / empty | Conditional roll-up; unsuccessful href hypothesis is valid research, not merge blocker. |
+| [#178](https://github.com/hebbiz/movie-wishlist/pull/178) | `30c3160efcf4ad2e1c489159db815445e61fa539` / `codex/mw-fut-01-kinobaza-url-context` | 21: bounded HTML/parse5 | Empty / empty | Conditional roll-up; source-rights/live limits, no new scoped code blocker. |
+| [#179](https://github.com/hebbiz/movie-wishlist/pull/179) | `9e4bf4f90ab3d0cc4d8e203f5b47470511be0b4c` / `codex/mw-fut-01-kinobaza-html` | 16: MOTN/identity fix, TMDb handoff | Empty / empty | Conditional roll-up; currency/quality/language/coverage discrepancies remain source limitations. |
+| [#180](https://github.com/hebbiz/movie-wishlist/pull/180) | `b9f3c65342f9b558bf021f81aee26bb2f22029a8` / `codex/mw-fut-01-motn-api` | 17: TMDb metadata/UA, append fix | Empty / empty | Conditional roll-up; Coherence A partial unresolved, not security/merge defect by itself. |
+| [#181](https://github.com/hebbiz/movie-wishlist/pull/181) | `e978e72389ec5fae7e2be141062b5606fd862f75` / `codex/mw-fut-01-tmdb-data` | 17: MEGOGO/failure policy/architecture | Empty / empty | Conditional roll-up; opt-in isolated, honest failure, MEGOGO unresolved/frozen. |
+| [#182](https://github.com/hebbiz/movie-wishlist/pull/182) | `264ad83206c5304f41cc7abe56235cce4d2fae0c` / `codex/mw-fut-01-megogo-html` | 18: composed discovery/local draft | Empty / empty | R2 in mapping/composition; do not treat as a corrected standalone integration endpoint. |
+| [#183](https://github.com/hebbiz/movie-wishlist/pull/183) | `1454c279c4d208538b93b3ee10cef14310388372` / `codex/mw-fut-01-consolidated-discovery` | 18: localization/canonical hop/link policy/grouping | Empty / empty | **Blocked: R1 and inherited R2**. Documentation-only review does not fix these. |
 
-Check-runs and statuses inspected separately: **empty is not all-green**. No
-Actions workflow in repository. Fresh 234 ran at child tree, not each parent HEAD;
-historical metrics retain baselines, no fresh browser/Windows claim for Markdown.
+No Actions workflow found in Git. Empty statuses/check-runs are **not successful
+checks**, nor does #175's Preview test research code. Fresh local cumulative
+checks below ran at the reviewed child tree, not independently at all nine HEADs.
 
-Blocker classes: research merge needs normal owner review and applicable repo
-checks/permissions; successful MEGOGO is not required. No new functional research
-merge blocker identified in scoped code/isolation/failure audit plus offline suite;
-required policy inaccessible. Live use needs keys/current applicable terms/exact
-scope and honest source statuses. Production blocked by absent authorization,
-rights/retention/hosting/write/RLS design, arbitrary-film coverage and unresolved
-field reliability. Home-LAN HTTP is not production transport.
+#### Findings and bounded fix plan — historical review, now resolved below
 
-Known #175 launcher defect with multiple Node PATH matches is fixed by #176;
-do not pause integration/use at #175 as if that fix were already present. For an
-environment requiring that fix, include/review #176 before running the demo.
+R1/R2 were P2 at reviewed1454c27, reproduced without live data. The fixes were
+not authorized by that review itself; the owner subsequently approved only
+these two cases after8680329. Original triggers/plan remain below as history;
+current implementation/evidence/status are in the resolution record.
 
-MEGOGO isolation checked: validated opt-in configuration; synthetic default; only
-explicit mode's `/answer` takes this path; fixed source; independent/overall
-identity separate, unresolved withholds fields; explicit errors, no follow-ups/
-JS/persistence; old request-body/auth/one-shot regressions pass. Thus unresolved
-utility is not itself a research merge blocker. Research files' exclusion from
-Netlify static publishing **not established**: live publish/branch mapping is
-not in Git; verify separately before production promotion, no deployment now.
+**R1 — P2, affiliate acknowledgement bypass on an already accepted Apple route.**
+[discovery.mjs](../discovery.mjs), line85 (classifier lines74–87), and
+[discovery-client.mjs](../public/discovery-client.mjs), lines25–31/65–74.
+Authored offline trigger:
+`https://tv.apple.com/ua/movie/fictional/umc.cmc.fictional999?at=fictional`.
+The same recognized Apple affiliate key `at` sets the gate only on the new
+itunes route. On this accepted tv.apple route the result is transferable exact
+card with no acknowledgement flag; `prepareDraft(..., false)` includes the URL,
+so the review checkbox is absent. Explicit navigation/review still occur; this
+is a promised consent/provenance-boundary defect, **not proven credential leak,
+entitlement or hidden network activity**. No assertion that a live source returned
+this authored URL.
 
-After authorization, oldest-first **#175 → #176 → #177 → #178 → #179 → #180 →
-#181**, preserving history. Keep parent branch until child's retarget/review.
-After parent merge, inspect actual merge; retarget only next child to develop;
-recheck ancestry/diff-only-remaining-work/conflicts/paths/review freshness/checks.
-If squash/rebase lost ancestry, **do not auto-retarget duplicated diff/force-push**:
-stop for reviewed non-rewriting reconciliation (e.g. merge develop into child),
-then re-diff/test. Prefer history-preserving merges if allowed; repo merge-method
-policy not assumed. No merge/retarget/history rewrite performed here.
+Proposed fix: detect the reviewed Apple affiliate marker after safe host/path
+validation independently of its accepted card route; preserve exact href/query,
+unverified kind/referral/provenance and separate navigation. Add both-route
+at/plain URL and encoded-query tests, draft blank-before-ack/check/uncheck,
+confirm/cancel/mobile tests. Do not infer arbitrary query semantics or strip URLs.
 
-After base-only change with no effective code change: scope/whitespace/links,
-remote/required checks and cumulative offline integration suite. Conflict/helper/
-adapter/UI changes additionally require targeted browser/Windows/security tests
-in temp copies, never owner demo. Preview is not research testing. No new live
-owner tests merely for documentation/retarget. Final develop diff research-only;
-stop before main/tag/release.
+**R2 — P2, same namespaced provider ID can become two conflicting platform groups.**
+[discovery.mjs](../discovery.mjs), lines44–56 and TMDb row projection lines109–120.
+Authored offline UA bucket with `provider_id=999999` twice, once labelled Netflix
+and once Prime Video: composition emits both groups with the same
+`tmdb:provider:999999`, empty conflicts and no unmapped record. The ID is fictional;
+no claim about a real ID's service or occurrence in a live response. The TMDb
+guard checks ID/label coherence only for Apple Store ID2, while other names map
+without a same-ID/cross-label consistency check. Consequence: contradictory
+upstream identity can appear as two independent positive platform/access claims
+and supply the wrong selected draft medium. Row grouping itself does not merge
+fields and no production write occurs; **data integrity, not a security finding**.
 
-Documentation validation for this checkpoint: five Markdown files only; **197
-local links / 133 anchors** checked across nine research Markdown documents,
-13 ordered handoff sections, scope/final diff/whitespace checked. Runtime,
-prompts, model/settings, dependencies and previous request bodies unchanged.
-Fresh offline checks above are supplementary review evidence; browser/Windows
-were not rerun for Markdown-only changes. Owner demo and existing untracked
-research/media-discovery preserved; no live/API/system/deployment operations.
+Proposed fix: retain source labels/IDs and detect conflicting canonical mappings
+for one namespaced provider ID within the response, including across UA access
+buckets; keep conflicting rows unresolved/unmapped rather than choosing a label
+or positive group. Maintain reviewed ID/label guards and source namespaces; do not
+invent new provider IDs. Add same-ID/different-platform negatives, consistent
+aliases/rent-buy positives, missing-ID and Apple Store/subscription distinction,
+plus browser unresolved-provenance/draft exclusion checks. No source call needed.
+
+Apply these only after a separate narrow fix approval, preferably one new commit
+on current #183, without changing parent history. Rerun relevant authored probes,
+full offline/security/body/budget tests and targeted/full mock browser suites.
+No launcher change is needed; no Windows/owner/live rerun by default. A fix plan
+is not permission to implement or merge. No P0/P1 found in the inspected scope;
+this is not a general security certification.
+
+#### Verified safeguards, coverage limits and readiness classes
+
+Reviewed in actual code: HTTPS plus populated-userinfo/non-default-port/unsafe
+character checks, exact provider hosts/native paths, matching provider key,
+search/relative/watch refusal, exact href/referral/query retention; no destination
+resolution. WHATWG URL parsing accepts normalized default443 and empty userinfo;
+these authored probes did not demonstrate credential or address bypass, and are
+not labelled security blockers. The canonical source hop instead compares exact
+raw strings and rejects those variants, foreign hosts, wrong titles, credentials,
+queries/fragment/ports/loops/second hops; max one301/308 transition.
+
+Budgets4/base or5 only with the approved hop, independent TMDb/MOTN/Kinobaza
+identity/failure gates, unique allowlisted requests and cancellation are retained.
+Provider groups hold original rows, not synthesized offers; territories/claims
+do not leak across source rows. Tracking and the **currently recognized** native
+referrals have correct acknowledgement/review behavior, except R1's missing
+recognition. Draft excludes prices/tracks/video/ownership, stays page-memory only,
+explicit confirm and Cancel preserving manual edits; no autosave/production writes.
+Keys remain server-side, fixed LAN/auth/Host/Origin/session controls precede API
+calls, response projection/text-only display/no-store retained. No new endpoints
+outside research or root runtime/dependency/schema changes.
+
+- **A. Research merge at1454c27:** R1/R2 blocked the final roll-up. Both are now
+  fixed in the separately authorized child iteration below, not in parent HEADs.
+  Review/policy/merge approval still gate the roll-up. #175 alone retains
+  its known launcher defect; include #176 before any integrated use. Policy/owner
+  approval remains required and unknown policy cannot be assumed satisfied.
+- **B. Live use/source rights:** credentials/current applicable agreements and
+  bounded source-use gates remain conditional. Prior observations, including
+  Kinobaza's current links, are not broader extraction/cache/redistribution rights
+  or account entitlement. No fresh source rules review/live request in this task.
+- **C. Production integration:** not authorized; rights/retention/attribution,
+  hosting/static-publish isolation, auth/TLS/write/RLS design, arbitrary-film
+  discovery and coverage/field reliability require separate work. Research files'
+  exclusion from Netlify publishing is not established in Git; no publish probe.
+
+MEGOGO transport/policy remains opt-in/fixed/synthetic by default with explicit
+unresolved failure; not a composition dependency. Its lack of a useful live
+result, Coherence A partial, incomplete provider fields/coverage and entitlement
+are **not automatic research merge blockers** or new security findings.
+
+#### Proposed consolidation sequence — no operations performed
+
+Prefer an **existing-base, child-into-parent roll-up**, after R1/R2 fixes/review
+and explicit consolidation approval. This replaces the old oldest-first plan:
+do not land #175 alone as an apparently corrected develop checkpoint.
+
+1. Freeze/re-fetch all refs, verify policy and that the reviewed corrected tip
+   includes launcher fix **`e596341f2fdc1203b52b9abae840f7090cef30c0`** from #176.
+   That commit selects one Node executable, retains breakaway/no-fallback and
+   secret-safe diagnostics. All later current heads contain it by ancestry.
+2. History-preserving merge **#183 into #182's branch**, its existing base.
+   Keep branches; review the widened #182 HEAD/diff/checks before the next step.
+3. Likewise merge **#182→#181, #181→#180, #180→#179, #179→#178,
+   #178→#177, #177→#176, #176→#175**, each into its already configured base.
+   The parent tip changes, so refresh its review/checks; earlier empty checks
+   are not portable approvals. Do not auto-delete branches during the roll-up.
+4. Only then review the full combined #175 diff against current develop and
+   merge **#175→develop** after explicit approval. #175 now includes #176 fix
+   and the reviewed corrected later research, never an intermediate broken
+   launcher checkpoint. Main/PR173/tag/release/deployment remain out of scope.
+
+**Preferred retarget count: zero**, because existing bases already form the
+chain. Require the repository's allowed history-preserving merge method; do not
+assume policy permits it. If policy requires squash/rebase, a base disappears,
+refs diverge or parallel changes occur: stop for a revised owner-approved plan.
+Do not force-push, cherry-pick, duplicate diffs or improvise history reconciliation.
+An alternative oldest-first/retarget workflow requires separate approval,
+including how to avoid exposing #175 without its fix.
+
+After every parent advance (or any separately approved retarget): verify base/
+ancestry/reviewed tip, remaining diff/scope/whitespace/links, required approvals/
+remote checks and cumulative offline regressions. Re-run mock browser/security
+checks for effective UI/adapter/conflict changes; Windows temp-copy lifecycle/
+key-routing only if those components change. Final full browser suite at roll-up
+candidate. No new live/owner test merely for documentation/base changes.
+
+**Final develop SHA cannot be predicted.** After a future authorized final merge,
+record actual remote develop SHA `D`, corrected reviewed tip `H` and actual merge
+commits. Validate **D itself**, not this pre-merge tip: launcher-fix and H are
+ancestors; research tree matches the reviewed candidate (unless separately
+reviewed parallel changes); diff from recorded old develop is research-only;
+production/main remain unchanged. Run offline/browser/link/whitespace/required
+checks on D, sync local develop without overwriting local files. If current
+develop moved, preserve/review its changes and re-establish these assertions.
+
+#### Fresh review checks, not live validation
+
+At runtime1454c27: **284 offline/HTTP passed**, **124 installed-Edge browser
+passed /8 skips** (seven absent-WebKit checks, optional same-host LAN unset).
+Mock narrow viewport is not real iPhone. Existing suites pass but omit R1/R2;
+separate authored in-memory probes reproduce them, no network/storage. Initial
+R2 probe selected an empty synthetic bucket and failed in the diagnostic harness;
+corrected selection of the reported rent bucket then reproduced the actual issue.
+This was not a runtime/test fixture fix or hidden failing product check.
+Windows was not rerun: helpers/key routing unchanged since previously recorded
+integration tests; no new uncovered launcher defect established. Actual launcher
+source/ancestry and historical controlled diagnosis re-read. No owner process
+touched, live API/source/destination request, system/deployment operation or
+response archive. This follow-up changes only README and this existing document;
+PR description updated separately. Untracked research/media-discovery preserved.
+Documentation checks:236 local links/168 anchors across nine Markdown documents,
+13 ordered handoff sections; final scope/whitespace and unchanged runtime checked.
+
+#### R1/R2 approved resolution — offline evidence
+
+Separate narrow runtime approval after #183 documentation HEAD
+`868032969dd737c96c11613ec532b79caac428ca`; base remains #182
+`264ad83206c5304f41cc7abe56235cce4d2fae0c`. Parent branches are unchanged; the
+table above remains the prior review snapshot, not a claim that parent commits
+contain this fix. Existing untracked research preserved. No source/live/API/
+destination request, new provider/host/route/marker, helper change or owner test.
+
+**R1 resolved:** after the existing safe host/path/provider gate, decoded query
+key `at` is treated identically on accepted iTunes and tv.apple.com card routes.
+Presence requires explicit draft acknowledgement even if its value is empty,
+bare, repeated or the key uses equivalent percent encoding. This is a conservative
+consent policy, not proof an empty key actually performs affiliate accounting.
+Keys are case-sensitive: `AT`, `attribution` and repeated `l` are not `at` and
+do not add a gate. No markers inferred or parameters removed/reordered/decoded
+in the stored href. Navigation remains explicit-only and separate. Before ack
+purchase_url is blank; check/uncheck toggles inclusion of the exact string.
+Existing opaque tracking/Prime referral gates, provenance/default exclusions and
+cancel preserving confirmed/manual draft edits are unchanged.
+
+**R2 resolved:** an in-memory consistency pass uses only explicit IDs and
+recognized canonical labels from independently identity-gated TMDb/MOTN data.
+Key is `source:provider:id`, not bare numeric ID. The same namespaced ID mapping
+to more than one recognized canonical platform is quarantined for that response,
+including across UA access buckets. A conflicting label rejected by the normal
+source-specific mapper still participates in consistency detection; do not let
+one half silently win. Compatible reviewed aliases normalize to one key and
+are not conflicts. Rent/buy/package observations remain distinct, not merged.
+Unknown labels keep the existing unresolved mapping behavior, not invented
+aliases/platforms/IDs. Kinobaza has no reported provider ID, so no ID is inferred
+from block name/href and no name-only cross-source property join is introduced.
+
+Conflicting observations are retained in `unmapped` with reason
+`provider-id-conflict`, exact namespaced ID/raw label, source bucket or projected
+option and receipt/source/country/upstream provenance. No canonical provider,
+access/availability row or draft medium is emitted for them. The UI explicitly
+shows provider ID conflict/unresolved and no selection/navigation/transfer action;
+details retain raw source access/link evidence, not a synthesized offer. The
+existing draft membership/identity guard rejects these entries. Other IDs and
+other source namespaces remain independent; an ID conflict does not convert
+film identity into a mismatch or suppress good observations from that source.
+
+**Current readiness: conditional for isolated research review/merge approval.**
+R1/R2 code blockers are resolved by this child, not waived by passing old tests.
+Required branch checks/approval/merge-method policy remains unknown from the
+previous inaccessible API; zero remote checks are not success. Consolidation
+sequence is still a proposal, no permission to execute it. #175 launcher caveat
+and mandatory inclusion of #176 remain unchanged. Live use/source-rights and
+production blockers remain as listed above; MEGOGO unresolved, Coherence A
+partial, entitlement and incomplete coverage/fields remain limitations, not
+automatically new research merge defects. No new owner test cycle requested.
+
+Verification: the R1/R2 regression cases first failed at the prior runtime
+(missing Apple gate and two conflicting rows still canonical), then passed.
+**55 targeted offline/HTTP passed;289 full offline/HTTP passed** including five
+new authored tests. Cases cover both Apple routes/plain/at/empty/bare/repeated/
+decoded query, exact string preservation, same ID incompatible labels across
+access buckets, aliases/rent-buy, numeric namespace isolation/no invented IDs,
+MOTN conflicts and unaffected independent source rows, draft membership refusal.
+Full installed-Edge mock browser suite: **126 passed /8 skips** (seven missing
+WebKit binaries, optional same-host LAN setup). Not real iPhone/live validation.
+Two new browser scenarios cover affiliate ack check/uncheck/confirm/cancel and
+conflict panel/provenance/no selection, with good rows still selectable, unchanged
+request counts/auth/one-shot/no storage. The first conflict-panel assertion counted
+an unrelated pre-existing Kinobaza unmapped item; selector corrected to conflict
+rows only, without relaxing runtime or hiding independent unknown observations.
+Windows lifecycle not rerun: helpers/key routing unchanged. Local links238/
+anchors170 across9 Markdown documents and13 handoff sections, scope/whitespace
+checked. Owner demo/untracked files untouched; no merge/retarget/roll-up or deployment.
 
 ### Consolidated implementation and source-use checkpoint
 
@@ -502,6 +728,295 @@ nine Markdown documents and 13 handoff sections checked; scope/whitespace clean.
 Windows lifecycle not rerun: helpers/key routing unchanged; prior results above
 remain historical evidence only. No owner process, live request, system change,
 merge/retarget/tag/release/deployment or production mutation.
+
+### Kinobaza localization enrichment — approved bounded iteration
+
+**October 19, 2026; implementation parent #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c`.**
+Separate stacked branch `codex/mw-fut-01-kinobaza-localization`, no parent
+modification/merge/retarget. This iteration is active research, not a claim that
+the earlier link-only parser was an offer-property extractor. No new source,
+LLM, MEGOGO parsing, price objective or production writes.
+
+#### Diagnostic facts and environment limits
+
+Offline materials could not establish the owner redirect target. Initial explicit
+approval allowed one manual GET of each old fixed card; both returned **301** with
+Location exactly `https://kinobazaua.com/titles/<same-film>`: Coherence and Dune.
+No query/fragment/userinfo/port. Responses were not followed or archived.
+After separately reporting the exhausted two-GET allowance, the owner explicitly
+approved two more GETs, one per canonical card. Both returned **200**, UTF-8 HTML,
+no parse5 warnings during structural inspection. **Four film-card diagnostic GETs
+total**, not counting separate public-rules/documentation reads. No additional
+card, provider/tracking, Gemini, TMDb or MOTN requests. No saved HTML/raw responses.
+
+This was agent Node/Windows unauthenticated fetch, not the owner's historical
+Termius/Safari execution. Fetcher geographic/egress context and past response
+contents remain unknown. The current old-host→canonical-host transition explains
+the current agent no-hop refusal; it **does not prove the historical owner cause**.
+The implemented adapter was not live-run against those bodies afterward.
+
+Structural observations, not hardcoded expected answers:
+
+- Both cards had an explicit general film-UA-audio badge, separate from provider
+  blocks and the country availability accordion.
+- Dune had direct single-provider anchors with their own tables under separate
+  `div.d-md-flex` children (iTunes and Rakuten), with labelled Ukrainian audio/
+  subtitle rows. Its MEGOGO block was an isolated `p.mt-2` with one provider
+  anchor and explicit parenthesized localization tokens, **not that table shape**.
+- Coherence separately had a `p.mt-2` Amazon Prime badge with its own audio token.
+  This proved why the old `prime video`-only badge regex could miss that observed
+  `amazon prime` spelling. Support the explicit alias, not arbitrary Prime matching.
+- Country panels remain separate explicit JustWatch signals. Pre-accordion position
+  alone does not assign a territory to a localization/provider block.
+
+#### Public rules for this expanded scope
+
+Checked the current canonical host directly (Terms/Privacy/robots each HTTP200),
+not only the previous link-only review:
+
+- [Terms](https://kinobazaua.com/terms) §1 applies to public users; §2 site conduct
+  restrictions, including language/content conduct, provide neither a documented
+  extraction licence nor an identified direct prohibition of this read-only,
+  no-post/no-account, two-card transient experiment. §3 puts use/third-party-rights
+  responsibility on the user; §4 permits changes. **No direct scoped conflict
+  identified**, not a legal guarantee or inferred blanket permission.
+- [Privacy](https://kinobazaua.com/privacy) distinguishes external-site responsibility
+  and public discussion RSS/API distribution; it is not a catalogue/property reuse
+  API contract. Broader automatic access, redistribution, retention and licensing
+  remain unestablished. No personal/account data is collected here.
+- [robots.txt](https://kinobazaua.com/robots.txt) generic exclusions do not cover
+  these exact two title paths; `meta-externalagent` has a separate deny-all group.
+  Keep the existing descriptive research UA, no impersonation/bypass. Robots and
+  public accessibility are **not licences**. Source attribution and country-panel
+  JustWatch lineage retained; their rights are not independently cleared by this.
+
+Proceed only within the owner's expanded bounded approval; no email prerequisite
+merely because broader rights are unresolved. Stop on an applicable new restriction,
+CAPTCHA/403/429/technical block, not retry/bypass. No regular/commercial integration,
+cache, archive, source-data forwarding to LLMs or partner/private endpoints.
+
+#### Implemented field and redirect boundaries
+
+[Extractor](../kinobaza-localization.mjs) reads the already bounded parse5 DOM;
+the existing identity gate and conservative parse-error refusal are unchanged.
+No scripts/eval/HTML insertion, assets or destination requests. Four layers:
+
+1. `localization.film`: exact general film badge, never provider tracks.
+2. `localization.blocks`: only isolated, recognized direct film-content blocks:
+   one direct provider anchor plus its own table under `d-md-flex`, or one anchor
+   in `p.mt-2` with an otherwise exact parenthesized token list. Generic anchor
+   audio/subtitle tooltip, nearby text and original language are not evidence.
+   Multiple headers, nested tables/active nodes, conflicting links or unknown
+   boundaries leave properties unknown. Input remains 2MiB/bounded DOM; over100
+   blocks or over64 property rows per block refuse the respective property set.
+   Duplicate provider names remain separate
+   block IDs, with qualified possible conflicts rather than a shared offer.
+3. `availabilitySignals`: explicit country/provider panel claims, access unknown
+   unless actually established. Foreign panels cannot become UA availability.
+4. `candidates`: exact observed href/raw spelling and link kind; no resolve/rewrite.
+
+Only exact labelled `Укр. звук` / `Укр. субтитри` rows can interpret literal `+`,
+`-` or `−`; missing/unrecognized labels/signs remain unknown. Negative is scoped
+to the named block/format/type, never universal absence. List completeness stays
+unknown. Conflicting identical labels stay conflicting; stereo/generic Dolby
+and subtitle-type literals are not promoted to codecs/channels/Atmos. An absent
+Dolby label says nothing about all audio. Each block retains source/href/receipt/
+territory basis/upstream and evidence; source audio is not copied from controls.
+
+The composer attaches a block only by parser-issued anchor/block ID + exact href
+and provider label, **never by provider-name join into MOTN** or a country panel.
+Film claim, country signal and block localization remain distinct in compact UI/
+collapsed provenance. Draft excludes tracks/formats/prices as before; localization
+stays sidecar only, exact permitted link transfer/cancel rules unchanged.
+
+Only composed discovery opts into **one** permanent canonical hop: exact
+`https://kinobaza.com.ua/titles/<fixed-film>` →
+`https://kinobazaua.com/titles/<same-fixed-film>`, only301/308, validated again by
+transport and composition allowlist before GET. Reject all other hosts/schemes,
+userinfo/ports/query/fragments/path encodings/variations, unknown targets, loops
+and second hops. Construct clean fixed headers, omit cookies/credentials; never
+forward source secrets or auto-follow provider/tracking links. Original and
+conditional canonical URL are shown before action. Standalone HTML remains one
+GET/no hop; all non-Kinobaza request bodies/model/settings remain unchanged.
+
+Budget: **max4 without redirect; max5 only with canonical hop**, Kinobaza off max3.
+Two-film ceiling10 only with both hops. Same source whole-operation15s/2MiB,
+overall65s, no retries. Auth/Host/Origin/one-shot/no-store/CSP/transient-only boundary
+unchanged; owner demo and unrelated files never touched. No helper/key-routing change.
+
+**Status at implementation:** authored offline/mock/browser checks were
+implementation evidence, not live extraction/entitlement/accuracy. The later
+[owner localization session is now complete](digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint).
+No new owner/live cycle, streaming-app tour, full JSON/HTML/screenshots or
+synthetic/SSH-disconnect repeat is requested by the subsequent audit below.
+[Existing workflow reference](iphone-windows.md#consolidated-discovery-owner-workflow).
+
+Implementation verification: **276 offline/HTTP passed** (12 new authored cases,
+including label/format/boundary/redirect/budget/provenance regressions; 22 unchanged
+Gemini-body goldens). Full installed-Edge browser suites: **121 passed /8 skips**;
+final frozen-code targeted mobile suite **15 passed /1 WebKit skip**, no failures.
+Skipped engines are seven absent WebKit cases and the optional same-host browser
+LAN setup; mobile viewport is not real iPhone. The first authored Dune fixture
+accidentally invoked Coherence's identity gate and was corrected, not the validator.
+The initial browser helper assumed every Kinobaza row was tracking; corrected
+the selector to genuine tracking rows, without relaxing runtime URL/draft policy.
+
+Windows Discovery and standalone HTML temp-copy/free-port checks passed:
+parent-exit survival, inherited config/module loading, duplicate start, forged PID
+refusal/safe stop, restart and mock multi-key/one-shot flow. No owner process or
+real SSH connection touched; Windows helper logic/key routing unchanged. Local
+links/anchors, 13-section handoff, command syntax, scope and whitespace checked.
+No production/schema/MEGOGO changes, extra dependency, response archive or deployment.
+
+### Kinobaza owner checkpoint, link audit and provider grouping
+
+Documentation/audit checkpoint recorded October 20, 2026 against #183
+`7997b032abcef7d8af67c97ea8e879e3955e0dd4`; no new source HTTP/API calls.
+The [owner ledger](digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint)
+records two successful composed Kinobaza identity/localization paths, 5/5 calls
+each (Coherence567ms, Dune665ms). These are owner-reported source claims, not
+independent provider/account checks, general accuracy or a latency benchmark.
+The historical unknown redirect cause and Coherence TMDb A partial remain
+unresolved; successful later requests do not reconstruct earlier responses.
+
+| Audited owner row | Established by the report/code | Not established |
+| --- | --- | --- |
+| Coherence Prime | Mapped provider-block row with UA-audio-positive claim; territory unknown. Anchor recognition/provider mapping/block association succeeded for that row. | Actual href and rejection reason: missing/empty, unsafe/extraction-withheld, unsupported URL shape or transfer gate. |
+| Dune Apple/iTunes | Separate mapped block with audio+/subtitles−, territory unknown. Not the same observation as any TMDb/MOTN/country-section row. | Actual source href/kind; do not assume a legacy iTunes URL or substitute the known Apple control card. |
+| Dune MEGOGO | Separate mapped block with audio+/subtitles+, territory unknown; property association succeeded. | Actual href/kind; the fixed MEGOGO control URL is not proof of this anchor's URL. |
+
+The old phrase **No permitted provider link** tested only `transferable === false`.
+It did not establish absence of an href, legal prohibition or even which URL
+policy failed. No unsaved live href/Location/response is reconstructed. No URL
+allowlist, parser, redirect target, transport, request body or budget expanded.
+Fictional authored Prime/iTunes/MEGOGO fixtures exercise extraction → mapping →
+block association → classification → navigation → draft eligibility. Accepted
+exact paths and unsupported shapes remain separate, preserving observed href
+and raw entity spelling without resolving tracking URLs.
+
+**Proven offline defect:** extraction safely nulls an unsafe href, but composition
+previously classified that null as `missing`, losing the known refusal reason.
+A regression first failed (`missing` instead of `unsafe`); composition now carries
+`unsafe` plus extraction reason. The unsafe URL stays withheld and draft-empty.
+This proves a reason-loss defect, **not the cause of any of the three owner rows**.
+Safe row-level link audit retains extraction state/issue, provider mapping,
+block association and classification; unmatched provider labels retain reasons
+in their own section. Unsupported labels cannot silently become platform offers.
+
+**Presentation only:** group by explicit canonical platform mapping. Apple TV Store
+is not Apple TV+; unresolved mappings remain separate. A group summarizes source
+row counts and field types, never merges values or yields a combined status.
+Each original observation keeps its own source/territory and basis/access/
+package/cut/link kind/localization/unknowns/conflicts/provenance. A UA country
+claim cannot supply territory to a nearby unscoped localization block, nor can
+Kinobaza properties enrich a MOTN offer by platform name. Select/review/confirm
+targets one row; the draft sidecar records that row ID, not a platform selection.
+
+Link labels distinguish **not reported**, **unsafe — withheld**, **unsupported
+kind** and **not eligible for transfer**. Navigation policy and draft eligibility
+are explained separately: unsupported/watch/search/relative/unsafe URLs neither
+navigate through this demo nor substitute for purchase_url; exact candidates stay
+unverified and tracking candidates need acknowledgement. This is demo policy,
+not a new legal finding. Exact allowed URL/type/provenance, default exclusions,
+memory-only draft and Cancel preserving confirmed/manual edits remain unchanged.
+
+Verification: **282 offline/HTTP passed**; targeted link/grouping/source suite
+**48 passed**. Full sequential installed-Edge/browser suites **123 passed /8 skips**
+(seven absent-WebKit checks, optional same-host LAN setup); targeted consolidated
+mobile suite **17 passed /1 WebKit skip**. Mobile viewport is not a real iPhone.
+Tests use authored fixtures/mocks and free-port servers, not live source evidence.
+Windows lifecycle/key-routing checks were not rerun because those components
+are unchanged; prior results are historical. No owner process or unrelated files
+touched. No new owner test is requested; actual live link causes remain unknown.
+
+### Kinobaza provider-link loss — current agent diagnosis and bounded fix
+
+October 20, 2026, reviewed #183 `133a9fe3631362bd967ec57dc8b4e2fa201e8a96`,
+base #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c`; tracked tree initially clean,
+unrelated untracked research preserved. This is separately approved functional
+diagnosis, not git consolidation or a new source. Prior owner reports above
+remain unchanged. No historical unsaved owner response is reconstructed.
+
+**Current agent evidence:** one direct GET per fixed canonical card, then one
+further GET per card to check the fix: **four source GETs total**, all HTTP200,
+no redirects followed. Both extractions `ok`, identity `matched`, no issues.
+Only in-memory initial HTML; no scripts/assets/accounts/cookies, provider/tracking
+requests, browser automation, LLM transport or saved bodies/HAR/fixtures.
+Environment: agent Node/Windows, unauthenticated; egress geography unknown, not
+the owner's Windows/Safari response or an account-specific offer. Three separate
+public-rules GETs described below are not film-card extraction validations.
+
+| Current source block | Anchor → extraction → mapping/block → projection before fix | Exact refusal rule / root cause | After fix: navigation / draft |
+| --- | --- | --- | --- |
+| Coherence Prime | href present, absolute candidate, provider Prime mapped, own paragraph block associated, href preserved, territory unknown | Classifier accepted detail ID with no trailing referral segment; native `/detail/<alphanumeric-id>/ref=atv_<alphanumeric-or-underscore-token>` became `unknown`. | `exact-card-unverified`, explicit-open only. Native referral preserved; draft URL blank until acknowledgement, then exact original URL. |
+| Dune Apple/iTunes | href present, absolute candidate, Apple Store mapped, own table block associated, href preserved, territory unknown | Classifier accepted `tv.apple.com` card shape only, not the observed `itunes.apple.com/ua/movie/id<digits>` with affiliate `at` / language `l` query. | `exact-card-unverified`, explicit-open only. Observed `at` referral requires acknowledgement before exact unchanged draft URL. |
+| Dune MEGOGO | href present, absolute candidate, MEGOGO mapped, own paragraph block associated, href preserved, territory unknown | Classifier required `/ua/view/<digits>-<slug>.html`, excluding native short `/ua/view/<digits>`. | `exact-card-unverified`, explicit-open only; exact short URL eligible for selected-row draft confirmation. |
+
+All three current failures were **unsupported classification**, not missing href,
+unsafe extraction, unmapped provider or absent block association. No extraction/
+localization/provider-mapping defect was established, so those modules are unchanged.
+All three matched rows now reach the UI policy; a mock browser test separately
+checks the actual rendered anchors/review/confirm/cancel, not a live provider visit.
+Destination identity/redirects/availability remain unverified even for a card-shaped
+URL. No known control URL or current source ID was hardcoded into fixtures/runtime.
+
+**Narrow URL policy:** existing HTTPS/userinfo/port/unsafe-character checks precede
+classification; search/relative/watch-page URLs remain ineligible. The additions
+require an already mapped matching provider, exact native host and bounded path:
+`primevideo.com`/`www.primevideo.com` with the specific detail-ID/`ref=atv_...`
+suffix, `itunes.apple.com` with **UA movie numeric-ID route only** (not album,
+search, other country, arbitrary legacy slug route), and `megogo.net`/`www.megogo.net`
+with **UA numeric view route only**. Existing supported paths remain intact. Other
+hosts, extra path suffixes, malformed IDs/referral path, credentials, non-default
+ports, unsafe protocols and search/relative forms are refused. Query/encoding/
+referral components stay exactly as extracted, never reconstructed or resolved.
+
+Native provider referral is not asserted to be an opaque redirect. It retains
+`exact-card-unverified` plus `referral: provider-native` and an acknowledgement
+gate. Prime's observed `ref=atv_...` path and iTunes `at` query require the same
+explicit draft acknowledgement as opaque tracking, without falsely labelling
+their destination as fetched/verified. Navigation is a separate explicit user
+action; it makes no network request during discovery. The sidecar retains original
+URL/kind/referral/gate/ack state and the selected row's provenance. Acknowledgement
+does not verify entitlement or import localization into another source offer.
+Without it the URL stays blank; Cancel still preserves the existing manual draft.
+
+**Rules review, October20:** direct HTTP200 reads of current canonical
+[Terms](https://kinobazaua.com/terms), [Privacy](https://kinobazaua.com/privacy) and
+[robots.txt](https://kinobazaua.com/robots.txt), after web-reader cache failures.
+Terms §1 covers public users; §2 conduct restrictions disclose no identified
+direct prohibition applicable to this no-account/no-post bounded read; §3 leaves
+information-use/third-party responsibility with the user; §4 allows changes.
+Privacy's public-discussion RSS/API wording is not catalogue extraction permission.
+Generic robots exclusions do not match either exact title card; separate
+meta-externalagent deny-all is not bypassed/impersonated. No scoped direct conflict
+or technical blocking observed, **not an established licence or legal guarantee**.
+Robots/public access is not permission; regular/commercial reuse, redistribution
+and broader retention rights remain unresolved. No email prerequisite inferred.
+Existing attribution/transient-only/source-use boundaries stay in force.
+
+Source fetch/config/redirect/parser/request bodies/budgets are unchanged: max4
+composed calls without canonical hop, max5 only with it, no retries/destinations.
+Search/Apple/Gemini/TMDb/MOTN modes, MEGOGO adapter and Windows helpers unchanged.
+Current agent extraction/projection checks are not a new owner run, provider
+verification, general accuracy result or full live multi-source UI run. No further
+owner/source test cycle requested; historical owner response causes remain unknown.
+
+Verification: two new authored regressions failed before the classifier fix
+(`unknown` instead of `exact-card-unverified`), then passed. **284 offline/HTTP
+passed**, including **50 targeted** link/grouping/localization/discovery cases;
+full installed-Edge mock browser suites **124 passed /8 skips**. Targeted
+consolidated mobile suite **18 passed /1 WebKit skip**. Full skips: seven absent
+WebKit binaries, optional same-host LAN setup; no downloads, not real iPhone.
+Browser checks cover all three rendered links, explicit click (destination
+navigation intercepted before request), acknowledgement check/uncheck, exact URL
+confirmation and cancel preserving manual edits, plus unchanged source-call
+counts/auth/one-shot/no persistence. Source-card extraction/projection above is
+separate current live evidence, not a mock claim or provider navigation test.
+Windows lifecycle/key routing not rerun because unchanged; owner demo untouched.
+All nine Markdown documents checked:231 local links/166 anchors,13 handoff
+sections. Owner restart-command syntax parsed only, not executed; scope/whitespace
+clean. No production/other adapter/request changes or full-response archive.
 
 ## Historical experiments and feasibility records
 
@@ -1359,7 +1874,7 @@ link into UA just because a separate owner observation was Ukrainian.
 | TMDb Details/translations | Stable identity, names/aliases/directors/dates, explicit Ukrainian catalogue text evidence. | Offered audio/subtitles from spoken/original language, title/overview/tagline or an empty UA release-language field. |
 | TMDb / JustWatch results.UA | Country provider/access-bucket observations; TMDb watch-page link separately. | Exact provider URL, account entitlement, current offer characteristics or independence from Kinobaza's JustWatch sections. |
 | MOTN | Additional provider URLs and access types; literal per-offer metadata with provenance. | Complete language lists, reliable price currency/quality or absence from empty/missing data; no automatic correction or AI forwarding permission. |
-| Kinobaza HTML | Additional exact/tracking href candidates and explicit section territories; otherwise unknown. Includes MEGOGO candidate. | Availability, localization, entitlement, resolved tracking destinations or UA territory from a loose page location. |
+| Kinobaza HTML | Exact/tracking candidates, explicit country-section signals and separately scoped film/provider-block localization claims in the approved iteration. | Verified entitlement/offer tracks, cross-source enrichment by provider name, complete lists, resolved tracking destinations or UA territory from a loose page location. |
 | Owner observations | Field/context-specific manual controls with owner attribution; no account credentials. | Agent validation, universal truth, current guaranteed price or whole-platform verification. |
 
 Future acceptance tests (authored data only): same provider rent/buy stay separate;

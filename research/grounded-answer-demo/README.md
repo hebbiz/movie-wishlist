@@ -2,6 +2,25 @@
 
 ## Consolidated architecture checkpoint
 
+**R1/R2 approved fixes after #183 `868032969dd737c96c11613ec532b79caac428ca`: both
+code blockers resolved in offline/browser checks; research merge is CONDITIONAL on review, branch
+policy and separate consolidation approval, not production approval.**
+R1 now gates the exact decoded Apple affiliate key `at` on both already supported
+iTunes/tv.apple.com card routes. Presence alone requires acknowledgement, including
+empty/bare/repeated `at`; decoded `%61t` is the same key. Query values/order/encoding
+remain untouched. Other keys (including uppercase `AT`) are not new markers;
+plain URLs and repeated nonaffiliate parameters do not acquire an extra gate.
+R2 checks explicit source/provider IDs across identity-gated TMDb/MOTN observations:
+recognized labels implying different canonical platforms for the same namespaced
+ID stay unresolved, not platform/access/availability rows or draft media. Compatible
+aliases and rent/buy rows remain separate; independent correct observations and
+equal IDs in different namespaces are unaffected. Missing IDs are not invented.
+The visible unresolved panel retains raw labels/source access/provenance, with no
+Select/navigation/transfer action. No live requests or new owner tests.
+See the single [findings/resolution and consolidation record](docs/regional-card-proposal.md#r1r2-approved-resolution--offline-evidence).
+Verification: **289 offline/HTTP passed;126 mock browser passed /8 skips**.
+Windows helpers/key routing unchanged, so no lifecycle rerun or owner-demo restart.
+
 The [canonical proposal](docs/regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
 now consolidates source evidence, field boundaries, the #175–#181 stack review
 and proposed roadmap. Recommended next slice: automatic TMDb+MOTN UA discovery,
@@ -10,13 +29,20 @@ draft, **without an LLM or production writes**. Now approved/implemented only as
 isolated research. The owner has now completed the two-film functional checkpoint;
 this is not independent validation, general accuracy or production readiness.
 The [13-section handoff](docs/consolidated-poc-handoff.md) records the bounded
-approval and the later implementation record. Existing modes remain unchanged.
-MEGOGO stays unresolved/frozen; no new owner/live/parser-debugging cycle.
+approval and the later implementation record. Non-Kinobaza source requests remain unchanged.
+MEGOGO stays unresolved/frozen. A separately approved
+[Kinobaza localization iteration](docs/regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration)
+adds source-block claims and a strict canonical hop, not production integration.
 
 Historical per-source implementation/owner checkpoints follow; they are not
-general accuracy, current entitlement or full six-platform coverage. This
-implementation agent makes no live request. The consolidated owner session is
-complete; no new owner/live/source/card/parser test cycle is requested.
+general accuracy, current entitlement or full six-platform coverage. The
+previous checkpoint made no live request. The localization iteration subsequently
+used four expressly approved diagnostic card GETs (two old URLs, then two canonical
+URLs), no automatic transitions or API/provider requests. The prior owner session
+and localization owner sessions are complete. The later grouping/reason checkpoint
+made no source requests. Separately approved current link diagnosis then used
+four canonical-card GETs (one per card before/after fix), no provider requests or
+HTML archive. No new owner test cycle is requested.
 
 ## Consolidated UA discovery and local draft
 
@@ -29,14 +55,22 @@ is default and performs zero external requests; its providers/URLs/metadata are
 authored examples, not live facts. Existing retrievals require DEMO_KINOBAZA unset.
 
 One explicit action consumes a film-bound token: independent TMDb (A+B max2),
-MOTN (max1) and optional Kinobaza (max1), **max4/film**, no retries or destination
+MOTN (max1) and optional Kinobaza (one GET, plus at most one verified canonical
+hop): **max4/film without redirect, max5 only with that hop**, no retries or destination
 requests. TMDb failure does not suppress fixed-ID MOTN. Each source gates its
 own identity; a stable-ID conflict withholds that source and explicitly prevents
 a common matched identity. Source claims are never merged solely by platform.
 Partial stages survive. Total cancellation65s; existing source bounds retained.
 
-UI: one shared source-claim/unknown explanation, short provider/access rows with
+UI: platform groups are presentation only, with short source-labelled field/count
+summaries, **no unified verified status or combined offer**. Separate source rows
+retain territory/basis, access/package/cut, link kind, properties and conflicts.
+Unknown mappings are separate; Apple Store is not Apple TV+. Select/review/confirm
+targets a specific source row, never a group. One shared explanation, short rows with
 known fields, short unknown/conflict markers and permitted candidate link.
+Provider-ID conflicts are explicitly unresolved with their original namespaced
+ID, labels, bucket/observation and receipt provenance; no canonical access claim
+or automatic draft medium is created for those observations.
 Rent/rental, buy/purchase and flatrate/subscription share display labels only;
 raw access, source/receipt/link kind, field provenance, missing-field and technical
 details stay collapsed. Source failures/identity conflicts and attribution remain
@@ -48,21 +82,68 @@ Select → review included/excluded fields → explicit confirm → editable **l
 draft**, not production MW. Draft is page-memory only; film change/clear/reload/navigation
 discards it, no autosave/storage/submit. Search/relative/unsafe/unknown/TMDb watch
 URLs never populate purchase_url. Exact-card shape is still unverified. Opaque
-tracking requires an additional acknowledgement; exact href/type/provenance stay
+tracking and recognized provider-native referrals require an additional acknowledgement; exact href/type/provenance stay
 unchanged. Without an allowed link, purchase_url stays blank. Status defaults to
 wishlist, never acquired from a rent/buy/subscription claim. Cancel selection
 preserves an existing confirmed or edited draft. The old destructive Cancel-edits
 reset is removed; Clear, film change or reload explicitly discards the draft.
 Included fields are reviewed separately from the collapsed evidence/exclusion sidecar.
 
+Kinobaza now keeps four independent layers: general film UA badge, single-provider
+block audio/subtitle claims, explicit country-section signals (access unknown
+unless established), exact href candidates. Properties require a recognized
+isolated paragraph or single-provider/table container, not nearby text/name-only
+matching. Source `+`/`−` applies to its exact label; list completeness stays unknown.
+Stereo/generic Dolby/subtitle-type labels stay literal, not codec/channel inference.
+Film badges never populate provider tracks; block claims do not enrich MOTN offers.
+Compact block markers and collapsed evidence preserve this distinction. Audio/
+subtitles remain excluded from the draft fields, with claims only in the sidecar.
+
+Only composed discovery opts into `301/308` from an exact old fixed URL to
+`https://kinobazaua.com/titles/<same-fixed-film>`. Exact spelling/host/path, HTTPS,
+no userinfo/port/query/fragment, revalidation before the second GET, no credentials
+forwarding. Any unknown target/second hop/loop is refused, never followed generally.
+Both planned original and conditional canonical URLs are available before click.
+Standalone `kinobaza-html` retains its one-GET/no-hop transport; its projection gains
+the separate localization/country blocks. Search/Apple/Gemini/TMDb/MOTN requests,
+model/settings, security and Windows helpers unchanged.
+
 [Owner checkpoint and offline diagnosis](docs/digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint):
 Coherence 4/4 requests, 490ms; Dune 4/4, 482ms. These are two owner observations,
-not a benchmark. Both Kinobaza operations stopped on redirects; exact HTTP codes/
-destinations were not reported. Coherence TMDb A partial cause is unresolved;
-identity/B succeeded. No speculative source fix: request URLs/bodies/budget and
-manual redirect policy remain unchanged. Collapsed source diagnostics now show
+not a benchmark. Both Kinobaza operations stopped on redirects; their historical
+HTTP codes/destinations were not reported. Later agent diagnostics found current
+301s to the exact canonical host; this does not reconstruct those owner responses.
+Coherence TMDb A partial cause is unresolved;
+identity/B succeeded. At that checkpoint there was no speculative source fix or
+request/budget/no-hop policy change. The new strict canonical
+exception above is separately approved. Collapsed source diagnostics show
 observed HTTP codes/Location presence (not value), TMDb resource/field shape states
-without diagnostic content values. No automatic follow-up or new owner test.
+without diagnostic content values. No destination follow-up or automatic retry.
+Localization implementation is offline/mock tested, **live-unvalidated as an
+end-to-end adapter** at its implementation baseline; the subsequent
+[owner checkpoint](docs/digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint)
+reported Kinobaza ok/matched for both films, 5/5 requests each (567/665ms, not a
+benchmark). These are source claims, not provider verification. No new owner tests.
+
+The [earlier offline link audit](docs/regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
+could not establish historical Prime/Apple/MEGOGO hrefs. A proven
+unsafe→missing reason-loss defect is fixed without restoring unsafe hrefs.
+Rows now show **not reported**, **unsafe**, **unsupported kind**, or **not eligible
+for transfer**, and separate Navigation/Draft status. This is demo URL policy,
+not a legal ban or proof the source lacks href. Exact/tracking candidates keep
+explicit-open/acknowledgement rules. Per-row details preserve extraction/mapping/
+block/classification reasons; draft sidecar records the selected row ID.
+The [subsequent bounded live diagnosis](docs/regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+found all three current hrefs extracted/mapped/associated correctly; the classifier
+excluded native Prime detail-ID/referral, iTunes UA numeric movie-ID and MEGOGO
+short UA view-ID paths. Those narrow shapes now reach explicit-open UI as
+`exact-card-unverified`. Prime `ref=atv_...` / iTunes `at` referrals are preserved,
+not resolved; draft transfer requires acknowledgement. Plain MEGOGO short card
+is eligible only through selected-row review/confirm. Source properties/territory
+remain separate; no localization borrowing or account entitlement inference.
+Current extraction/projection passed agent checks, UI/draft passed mocks; this is
+not provider navigation validation or reconstruction of past owner responses.
+See [iPhone guide](docs/iphone-windows.md#consolidated-discovery-owner-workflow).
 
 Server-only `TMDB_READ_ACCESS_TOKEN` and `MOTN_API_KEY`; helper prompts separately
 and hidden, with the LAN password. No Gemini key. Attribution visible with data.

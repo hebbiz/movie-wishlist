@@ -8,6 +8,24 @@ October 18, 2026. The [canonical architecture](regional-card-proposal.md#current
 owns decisions, source/field boundaries, rights gates and PR review. This is the
 reviewable task boundary for D1, not production approval or a second architecture.
 
+**Approved amendment after #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c`:**
+bounded Kinobaza localization extraction and one exact old-host→canonical-host
+hop in composed discovery. The [canonical iteration record](regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration)
+owns rules/evidence and supersedes the former link-only/Prime-recovery exclusion
+only within this two-card scope. No MEGOGO work, new source or production approval.
+
+Owner completed that session after #183 `7997b03`; the
+[current audit/grouping checkpoint](regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
+adds only presentation groups and precise per-row link reasons. It authorizes no
+new source/owner requests or merged offer. Existing source bodies/budgets unchanged.
+
+A later separately approved [current link diagnosis](regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+used four canonical-card GETs, without provider requests or archives. Only proven
+classification gaps for Prime native referral, iTunes UA movie-ID and MEGOGO short
+UA view-ID routes are fixed. Native referrals now require draft acknowledgement;
+exact href/row provenance, independent claims, request bodies and budgets remain.
+No new owner test session is requested or production permission inferred.
+
 ## 1. Context
 
 Verified implementation baseline: #181 `e978e72389ec5fae7e2be141062b5606fd862f75`, stacked on
@@ -15,7 +33,8 @@ Verified implementation baseline: #181 `e978e72389ec5fae7e2be141062b5606fd862f75
 review; develop `a5d4f42`, production agreed v1.3.1 `e923928` unchanged. Recheck
 instructions/stack/local changes before implementation. The
 [owner ledger](digital-ua-owner-validation.md) separates reports from agent tests;
-no live bodies archived. No new owner test is requested by this handoff.
+no live bodies archived. The original handoff requested no repeat source testing;
+the approved localization amendment has only its single new-path acceptance session.
 
 ## 2. Objective
 
@@ -50,7 +69,9 @@ Choose actual new filenames/switches after inspection; none claimed implemented.
 No new source, Gemini/LLM/Mykola inference, production UI/Supabase/schema/write,
 Netlify endpoint/hosting/cache/queue, arbitrary text/URL/card discovery, destination
 fetch, account/login/cookies/playback, complete audio/video/pricing enrichment,
-parser broadening/Prime recovery/MEGOGO debugging. No JustWatch Partner API,
+general parser broadening/MEGOGO debugging. The amendment permits recognizing the
+independently observed `amazon prime` badge and isolated provider-block properties,
+not arbitrary Prime discovery or offer verification. No JustWatch Partner API,
 authenticated workers, scoring, cross-source offer merge, batch or raw/evaluation
 archive. No paid subscription/system changes. PR #173 and unrelated files untouched.
 
@@ -95,10 +116,16 @@ archive. No paid subscription/system changes. PR #173 and unrelated files untouc
 
 ## 7. Technical constraints
 
-Max **4 HTTP requests/film** (TMDb2 + MOTN1 + optional Kinobaza1), 8 for two-film
-owner plan. Preserve current endpoints/bounds: TMDb/MOTN 20s/2MiB each, Kinobaza
+Max **4 HTTP requests/film without redirect; 5 only with one exact canonical
+Kinobaza hop** (TMDb2 + MOTN1 + Kinobaza1+conditional1), max10 for two films.
+Kinobaza off remains max3. Preserve current endpoints/bounds: TMDb/MOTN 20s/2MiB each, Kinobaza
 15s/2MiB; proposed overall cancellation 65s, not measured latency. No retries,
-fallback/enrichment/continuations/polling/destinations or automatic redirects.
+fallback/continuations/polling/destinations or general automatic redirects.
+Only exact `301/308` old fixed URL→`https://kinobazaua.com/titles/<same fixed film>`
+is allowed in composed mode, no query/fragment/credentials/port/normalization tricks;
+revalidate before request, never forward credentials, refuse loops/second hops.
+Standalone HTML retains one GET. Provider-block enrichment remains Kinobaza-scoped,
+not a provider-name join into MOTN or a generalized Data Merge Engine.
 Cancel pending tasks on expiry; safe completed projections remain partial.
 
 Keep localhost default, opt-in assigned private-IP LAN, exact Host/Origin,
@@ -141,6 +168,9 @@ Inspected at review baseline; re-inspect before changes:
 - [TMDb](../tmdb.mjs), [MOTN](../motn.mjs), [HTML](../html-source.mjs):
   catalogue/identity/bounded transports/projections. Existing parse5 isolated in
   [research package](../package.json), not production dependencies.
+- [Kinobaza source-block extraction](../kinobaza-localization.mjs): general badge,
+  isolated table/paragraph binding, exact labels/literal signs/formats, unknown
+  completeness, no original-language/provider or cross-source inference.
 - [client](../public/client.mjs), [TMDb display](../public/tmdb-display.mjs),
   [MOTN display](../public/motn-display.mjs), [HTML display](../public/html-display.mjs):
   separate outputs, no composed list or transfer.
@@ -223,7 +253,7 @@ production writes/persistence or merge. #175 launcher caveat remains: fix is #17
 
 Subsequent [owner functional checkpoint at #182 `3cd175a`](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint)
 completed the two-film/draft session with partial results. No new owner test is
-requested. Narrow follow-up keeps the same requests/security/budget: compact rows,
+requested by that checkpoint. Narrow follow-up kept the same requests/security/budget: compact rows,
 display-only access aliases, collapsed provenance/shape diagnostics and removal
 of the destructive Cancel-edits reset. Cancel selection preserves edited draft.
 Existing field exclusions/exact href handling stay unchanged. Redirect cause and
@@ -258,3 +288,19 @@ owner synthetic/disconnect repeat is not required by these covered changes.
 Live readiness remains conditional on applicable source agreements/credentials;
 no directly identified MOTN/Kinobaza conflict with this bounded non-LLM scope,
 not blanket permission. [One-session owner commands](iphone-windows.md#consolidated-discovery-owner-workflow).
+
+The separately approved localization amendment is now implemented from #182:
+`kinobaza-localization.mjs` reads isolated block claims, `html-source.mjs` exposes
+four independent layers and optional exact canonical transport, composition/UI
+preserve provenance and do not join properties into MOTN by name. The standalone
+HTML path stays one GET; composed max5 is conditional on the verified hop (base4).
+Audio/subtitle properties remain sidecar-only, not draft fields. Requests/prompts/
+settings for other sources unchanged; Windows helpers unchanged. Four approved
+diagnostic GETs were source-structure inspection, not live execution of the new
+adapter. Authored mocks/Edge and temp-copy Windows checks are implementation
+evidence. Subsequent owner acceptance/source-claim observations are in the ledger;
+the current grouping/reason correction has offline/browser validation, no new
+owner acceptance requested. Grouping keeps row references and evidence separate;
+unknown mappings remain separate and select/review/confirm binds to one row ID.
+Unsafe sanitized hrefs remain unsafe, not missing. Navigation/draft labels explain
+demo policy without broadening kinds, resolving URLs or changing draft exclusions.
