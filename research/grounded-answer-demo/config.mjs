@@ -1,3 +1,10 @@
+import { urlScenario } from './url-context.mjs';
+import { htmlScenario } from './html-source.mjs';
+import { motnScenario } from './motn.mjs';
+import { tmdbScenario } from './tmdb.mjs';
+import { megogoScenario } from './megogo.mjs';
+import { discoveryScenario } from './discovery.mjs';
+
 export const MODEL = 'gemini-3.8-flash';
 export const MAX_OUTPUT_TOKENS = 4096;
 export const DEFAULT_FILM = 'dune-part-two';
@@ -55,11 +62,31 @@ export function selectScenario({ filmId, discovery = 'physical', amazonRegion } 
 
 export const PROMPT = selectScenario().prompt;
 
+export function selectRequest({ retrieval = 'search', ...options } = {}) {
+  if (retrieval !== 'ua-discovery' && options.kinobaza !== undefined) throw new Error('DEMO_KINOBAZA is only supported in ua-discovery; unset it for existing modes.');
+  if (retrieval === 'ua-discovery') return discoveryScenario(selectFilm(options.filmId), options);
+  if (retrieval === 'search') {
+    if (options.urlSource !== undefined) throw new Error('DEMO_URL_SOURCE requires DEMO_RETRIEVAL=url-context; unset it for Search.');
+    return { ...selectScenario(options), retrieval, sourceURL: null };
+  }
+  if (retrieval === 'url-context') return urlScenario(selectFilm(options.filmId), options);
+  if (retrieval === 'kinobaza-html') return htmlScenario(selectFilm(options.filmId), options);
+  if (retrieval === 'motn-api') return motnScenario(selectFilm(options.filmId), options);
+  if (retrieval === 'tmdb-data') return tmdbScenario(selectFilm(options.filmId), options);
+  if (retrieval === 'megogo-html') return megogoScenario(selectFilm(options.filmId), options);
+  throw new Error('Unknown DEMO_RETRIEVAL. Choose: search, url-context, kinobaza-html, motn-api, tmdb-data, megogo-html, ua-discovery.');
+}
+
 export function requestBody(filmId = DEFAULT_FILM, options = {}) {
-  const { prompt } = selectScenario({ ...options, filmId });
+  const { prompt, retrieval } = selectRequest({ ...options, filmId });
+  if (retrieval === 'ua-discovery') throw new Error('UA discovery has no Gemini request body.');
+  if (retrieval === 'kinobaza-html') throw new Error('HTML mode has no Gemini request body.');
+  if (retrieval === 'motn-api') throw new Error('Movie of the Night mode has no Gemini request body.');
+  if (retrieval === 'tmdb-data') throw new Error('TMDb mode has no Gemini request body.');
+  if (retrieval === 'megogo-html') throw new Error('MEGOGO HTML mode has no Gemini request body.');
   return {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    tools: [{ googleSearch: {} }],
+    tools: retrieval === 'url-context' ? [{ urlContext: {} }] : [{ googleSearch: {} }],
     generationConfig: {
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       thinkingConfig: { thinkingLevel: 'low' },
