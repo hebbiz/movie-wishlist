@@ -8,7 +8,11 @@ export function accessLabel(field) {
 export function compactFields(row) {
   const known = [], unknown = [];
   for (const [key, label] of [['audio', 'UA audio'], ['subtitles', 'UA subtitles']]) {
-    if (row[key]?.ukrainian?.length) known.push(`${label} listed`); else unknown.push(label);
+    const claim = row.kinobazaLocalization?.[key];
+    if (claim?.state === 'reported-positive') known.push(`${label} + (Kinobaza block)`);
+    else if (claim?.state === 'reported-negative') known.push(`${label} − (named block labels only)`);
+    else if (claim?.state === 'conflicting') known.push(`${label} CONFLICT (block)`);
+    else if (row[key]?.ukrainian?.length) known.push(`${label} listed`); else unknown.push(label);
   }
   for (const [key, label] of [['quality', 'Video'], ['hdr10', 'HDR10'], ['dolbyVision', 'DV']]) {
     if (row[key]?.state === 'reported') known.push(`${label}: ${value(row[key])}`); else unknown.push(label);
@@ -28,6 +32,7 @@ export function prepareDraft(result, row, trackingAcknowledged = false) {
     title: result.film.title.replace(/ \(\d{4}\)$/, ''), year: result.film.id === 'coherence' ? '2013' : '2024',
     recommended_medium: row.provider.medium, purchase_url: purchaseURL, status: 'wishlist' },
     sidecar: { source: row.provenance, provider: row.provider, linkKind: row.link.kind, territory: row.country ?? 'unknown',
+      kinobazaLocalization: row.kinobazaLocalization ?? null, countrySignal: row.countrySignal ?? null,
       access: row.access, package: row.package, cut: row.cut, identity: row.identityStatus,
       commonIdentity: result.identity.status, conflicts: row.conflicts,
       titleBasis: 'Fixed verified film catalogue; original film year, not inferred regional release year.',
@@ -44,7 +49,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   el('director').textContent = 'Independent source gates; not a production MW transfer.';
   el('discovery').textContent = 'Country UA · priority: availability → Ukrainian audio → Ukrainian subtitles → video → price';
   el('retrieval-mode').textContent = `DEMO_RETRIEVAL=ua-discovery · Kinobaza ${session.kinobaza}`;
-  el('settings').textContent = `${session.sources.join(' + ')} · max ${session.requestBudget} HTTP requests/film · no retries, LLM or storage`;
+  el('settings').textContent = `${session.sources.join(' + ')} · max ${session.requestBudget} HTTP requests/film (${session.baseRequestBudget} without redirect) · no retries, LLM or storage`;
   el('mode').textContent = session.mode === 'synthetic' ? 'SYNTHETIC ONLY — invented source responses, links and fields. No external requests or real offers.' : 'LIVE — manually initiated fixed source requests. Source claims are not entitlement. Current source-use readiness remains conditional.';
   el('operation-label').textContent = 'Bounded source operations (no model prompt)';
   el('prompt').textContent = session.operation;
@@ -60,7 +65,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   picker.value = session.film.id; button.before(pickerHost);
   const requestDetails = add(pickerHost, 'details'); add(requestDetails, 'summary', 'Exact fixed requests (no credentials)'); const planned = add(requestDetails, 'pre');
   const chosen = add(pickerHost, 'p'); chosen.id = 'discovery-chosen';
-  const syncChoice = () => { chosen.textContent = `${session.film.title} · ${session.film.director} · UA · Kinobaza ${session.kinobaza} · budget ${session.requestBudget}`; planned.textContent = session.plannedRequests.join('\n'); button.disabled = loading || used.has(session.film.id); button.textContent = used.has(session.film.id) ? 'Used for this film — choose the other film' : 'Discover selected film once'; };
+  const syncChoice = () => { chosen.textContent = `${session.film.title} · ${session.film.director} · UA · Kinobaza ${session.kinobaza} · budget ${session.requestBudget} (${session.baseRequestBudget} without redirect)`; planned.textContent = [...session.plannedRequests, ...(session.conditionalRequests ?? []).map(url => `Conditional canonical GET only after validated redirect: ${url}`)].join('\n'); button.disabled = loading || used.has(session.film.id); button.textContent = used.has(session.film.id) ? 'Used for this film — choose the other film' : 'Discover selected film once'; };
   const panes = add(el('result'), 'div'); panes.className = 'discovery-ui';
   const review = add(panes, 'section'); review.id = 'draft-review'; review.hidden = true;
   const draft = add(panes, 'section'); draft.id = 'local-draft'; draft.hidden = true;
@@ -102,13 +107,14 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     add(host, 'p', `HTTP calls: ${data.metrics.requestsMade}/${data.metrics.requestBudget} · elapsed ${data.metrics.elapsedMs}ms (not a cost estimate)`);
     const sourceSummary = add(host, 'p'); sourceSummary.id = 'discovery-source-status';
     sourceSummary.textContent = data.sources.map(s => `${s.source}: ${s.status} · identity ${s.identity}`).join(' | ');
+    if (data.filmLocalization?.ukrainianAudio?.state === 'reported-positive') add(host, 'p', 'Kinobaza film-level UA audio claim — not provider tracks.');
     if (!data.rows.length) add(host, 'p', 'No usable rows from selected sources. This is not proof of unavailability.');
     for (const [label, rows] of [['UA source context', data.rows.filter(r => r.country === 'UA')], ['Territory unknown — not a UA offer claim', data.rows.filter(r => r.country !== 'UA')]]) {
       add(host, 'h3', label);
       for (const row of rows) {
         const card = add(host, 'article'); card.className = 'discovery-card'; card.dataset.rowId = row.id;
         add(card, 'h4', `${row.provider.name} · ${accessLabel(row.access)}`);
-        add(card, 'p', row.kind === 'candidate-link' ? 'Candidate link · availability unknown' : 'UA source availability claim');
+        add(card, 'p', row.kind === 'candidate-link' ? row.countrySignal ? 'Candidate link · UA country-section claim (not entitlement)' : 'Candidate link · availability unknown' : 'UA source availability claim');
         const fields = compactFields(row);
         if (fields.known.length) add(card, 'p', fields.known.join(' · '));
         add(card, 'p', `Unknown: ${fields.unknown.join(', ') || 'no missing summary fields'}${row.conflicts.length ? ' · CONFLICT — inspect details' : ''}`);

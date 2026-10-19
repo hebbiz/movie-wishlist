@@ -10,13 +10,17 @@ draft, **without an LLM or production writes**. Now approved/implemented only as
 isolated research. The owner has now completed the two-film functional checkpoint;
 this is not independent validation, general accuracy or production readiness.
 The [13-section handoff](docs/consolidated-poc-handoff.md) records the bounded
-approval and the later implementation record. Existing modes remain unchanged.
-MEGOGO stays unresolved/frozen; no new owner/live/parser-debugging cycle.
+approval and the later implementation record. Non-Kinobaza source requests remain unchanged.
+MEGOGO stays unresolved/frozen. A separately approved
+[Kinobaza localization iteration](docs/regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration)
+adds source-block claims and a strict canonical hop, not production integration.
 
 Historical per-source implementation/owner checkpoints follow; they are not
-general accuracy, current entitlement or full six-platform coverage. This
-implementation agent makes no live request. The consolidated owner session is
-complete; no new owner/live/source/card/parser test cycle is requested.
+general accuracy, current entitlement or full six-platform coverage. The
+previous checkpoint made no live request. The localization iteration subsequently
+used four expressly approved diagnostic card GETs (two old URLs, then two canonical
+URLs), no automatic transitions or API/provider requests. The prior owner session
+is complete; the new path has only the narrow acceptance plan below.
 
 ## Consolidated UA discovery and local draft
 
@@ -29,7 +33,8 @@ is default and performs zero external requests; its providers/URLs/metadata are
 authored examples, not live facts. Existing retrievals require DEMO_KINOBAZA unset.
 
 One explicit action consumes a film-bound token: independent TMDb (A+B max2),
-MOTN (max1) and optional Kinobaza (max1), **max4/film**, no retries or destination
+MOTN (max1) and optional Kinobaza (one GET, plus at most one verified canonical
+hop): **max4/film without redirect, max5 only with that hop**, no retries or destination
 requests. TMDb failure does not suppress fixed-ID MOTN. Each source gates its
 own identity; a stable-ID conflict withholds that source and explicitly prevents
 a common matched identity. Source claims are never merged solely by platform.
@@ -55,14 +60,41 @@ preserves an existing confirmed or edited draft. The old destructive Cancel-edit
 reset is removed; Clear, film change or reload explicitly discards the draft.
 Included fields are reviewed separately from the collapsed evidence/exclusion sidecar.
 
+Kinobaza now keeps four independent layers: general film UA badge, single-provider
+block audio/subtitle claims, explicit country-section signals (access unknown
+unless established), exact href candidates. Properties require a recognized
+isolated paragraph or single-provider/table container, not nearby text/name-only
+matching. Source `+`/`−` applies to its exact label; list completeness stays unknown.
+Stereo/generic Dolby/subtitle-type labels stay literal, not codec/channel inference.
+Film badges never populate provider tracks; block claims do not enrich MOTN offers.
+Compact block markers and collapsed evidence preserve this distinction. Audio/
+subtitles remain excluded from the draft fields, with claims only in the sidecar.
+
+Only composed discovery opts into `301/308` from an exact old fixed URL to
+`https://kinobazaua.com/titles/<same-fixed-film>`. Exact spelling/host/path, HTTPS,
+no userinfo/port/query/fragment, revalidation before the second GET, no credentials
+forwarding. Any unknown target/second hop/loop is refused, never followed generally.
+Both planned original and conditional canonical URLs are available before click.
+Standalone `kinobaza-html` retains its one-GET/no-hop transport; its projection gains
+the separate localization/country blocks. Search/Apple/Gemini/TMDb/MOTN requests,
+model/settings, security and Windows helpers unchanged.
+
 [Owner checkpoint and offline diagnosis](docs/digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint):
 Coherence 4/4 requests, 490ms; Dune 4/4, 482ms. These are two owner observations,
-not a benchmark. Both Kinobaza operations stopped on redirects; exact HTTP codes/
-destinations were not reported. Coherence TMDb A partial cause is unresolved;
-identity/B succeeded. No speculative source fix: request URLs/bodies/budget and
-manual redirect policy remain unchanged. Collapsed source diagnostics now show
+not a benchmark. Both Kinobaza operations stopped on redirects; their historical
+HTTP codes/destinations were not reported. Later agent diagnostics found current
+301s to the exact canonical host; this does not reconstruct those owner responses.
+Coherence TMDb A partial cause is unresolved;
+identity/B succeeded. At that checkpoint there was no speculative source fix or
+request/budget/no-hop policy change. The new strict canonical
+exception above is separately approved. Collapsed source diagnostics show
 observed HTTP codes/Location presence (not value), TMDb resource/field shape states
-without diagnostic content values. No automatic follow-up or new owner test.
+without diagnostic content values. No destination follow-up or automatic retry.
+Localization implementation is offline/mock tested, **live-unvalidated as an
+end-to-end adapter**; source inspection is not owner validation. At most one short
+new session: one consolidated click per film, max10 GETs total only with both hops,
+short new/missing/conflicting-field summary. No app tour, raw output or repeated
+synthetic/SSH-disconnect required. See [iPhone guide](docs/iphone-windows.md#consolidated-discovery-owner-workflow).
 
 Server-only `TMDB_READ_ACCESS_TOKEN` and `MOTN_API_KEY`; helper prompts separately
 and hidden, with the LAN password. No Gemini key. Attribution visible with data.

@@ -19,6 +19,12 @@ The two-film owner functional session is complete, with limits below; no new
 live/owner cycle or merge is authorized. Earlier stack tables remain their dated
 review snapshots, not fresh checks or approval of every parent.
 
+The next separately approved research slice starts from open #182
+`264ad83206c5304f41cc7abe56235cce4d2fae0c`, base #181 unchanged. Its
+[Kinobaza localization record](#kinobaza-localization-enrichment--approved-bounded-iteration)
+supersedes the link-only/no-hop limitation only within two fixed cards. Prior
+owner results remain dated controls; no production or regular/commercial reuse approval.
+
 **Discovery only. Owner approved one isolated, non-LLM, two-film UA discovery →
 selection → explicit draft-transfer PoC.** Required capabilities: TMDb identity/
 UA signals and MOTN direct links/access types. Optional bounded Kinobaza HTML
@@ -121,13 +127,14 @@ retain their own identity gate, never borrowing A's matched label.
 | TMDb A Details + existing five appends | 1 | Fixed TMDb/IMDb, uk-UA; no append fallback. ID failure stops TMDb B, not independent sources; stable conflicts block combination. |
 | TMDb B Watch Providers | 1 | Only after A passes; actual results.UA. TMDb watch-page link is not a provider deep link. Missing/empty/error is not unavailable. |
 | MOTN fixed IMDb title, country=ua | 1 | Required capability/key, no country enumeration/search/enrichment. Error/missing key is explicit partial state, not success. |
-| Kinobaza fixed initial HTML | 0 or 1 | Optional and visible before click, only two existing cards under scoped access review. No card search, Prime recovery/parser expansion or destinations. |
+| Kinobaza fixed initial HTML | 0, 1 or 2 | Optional; second GET only for the validated permanent same-title canonical hop. Two fixed cards, approved source-block localization; no arbitrary card search, broad parser expansion or destinations. |
 | Other sources/destinations/LLMs | 0 | No MEGOGO/Apple GET, Search, URL Context, tracking resolve/retries/polling. Explicit owner navigation is separate. |
 
-Ceiling **4/film, 8 for the two-film session; 3/film with Kinobaza off**. One film
+Ceiling **4/film without redirect; 5 only with canonical hop; two-film max10 only
+with both hops; 3/film with Kinobaza off**. One film
 per action, no batch or reload calls. Run A+B as one serial task alongside
 independent MOTN/optional Kinobaza tasks with isolated failures. Existing limits:
-TMDb/MOTN 20s / 2 MiB per request, Kinobaza 15s / 2 MiB. Proposed total cancellation
+TMDb/MOTN 20s / 2 MiB per request, Kinobaza whole-operation15s / 2 MiB including hop. Total cancellation
 deadline 65s bounds composition, retaining margin beyond the serial two-call
 TMDb task's transport limits; **not measured latency**. Preserve completed stages on expiry;
 no retries/token replenishment. Record elapsed stages/call counts/errors in
@@ -502,6 +509,146 @@ nine Markdown documents and 13 handoff sections checked; scope/whitespace clean.
 Windows lifecycle not rerun: helpers/key routing unchanged; prior results above
 remain historical evidence only. No owner process, live request, system change,
 merge/retarget/tag/release/deployment or production mutation.
+
+### Kinobaza localization enrichment — approved bounded iteration
+
+**October 19, 2026; implementation parent #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c`.**
+Separate stacked branch `codex/mw-fut-01-kinobaza-localization`, no parent
+modification/merge/retarget. This iteration is active research, not a claim that
+the earlier link-only parser was an offer-property extractor. No new source,
+LLM, MEGOGO parsing, price objective or production writes.
+
+#### Diagnostic facts and environment limits
+
+Offline materials could not establish the owner redirect target. Initial explicit
+approval allowed one manual GET of each old fixed card; both returned **301** with
+Location exactly `https://kinobazaua.com/titles/<same-film>`: Coherence and Dune.
+No query/fragment/userinfo/port. Responses were not followed or archived.
+After separately reporting the exhausted two-GET allowance, the owner explicitly
+approved two more GETs, one per canonical card. Both returned **200**, UTF-8 HTML,
+no parse5 warnings during structural inspection. **Four film-card diagnostic GETs
+total**, not counting separate public-rules/documentation reads. No additional
+card, provider/tracking, Gemini, TMDb or MOTN requests. No saved HTML/raw responses.
+
+This was agent Node/Windows unauthenticated fetch, not the owner's historical
+Termius/Safari execution. Fetcher geographic/egress context and past response
+contents remain unknown. The current old-host→canonical-host transition explains
+the current agent no-hop refusal; it **does not prove the historical owner cause**.
+The implemented adapter was not live-run against those bodies afterward.
+
+Structural observations, not hardcoded expected answers:
+
+- Both cards had an explicit general film-UA-audio badge, separate from provider
+  blocks and the country availability accordion.
+- Dune had direct single-provider anchors with their own tables under separate
+  `div.d-md-flex` children (iTunes and Rakuten), with labelled Ukrainian audio/
+  subtitle rows. Its MEGOGO block was an isolated `p.mt-2` with one provider
+  anchor and explicit parenthesized localization tokens, **not that table shape**.
+- Coherence separately had a `p.mt-2` Amazon Prime badge with its own audio token.
+  This proved why the old `prime video`-only badge regex could miss that observed
+  `amazon prime` spelling. Support the explicit alias, not arbitrary Prime matching.
+- Country panels remain separate explicit JustWatch signals. Pre-accordion position
+  alone does not assign a territory to a localization/provider block.
+
+#### Public rules for this expanded scope
+
+Checked the current canonical host directly (Terms/Privacy/robots each HTTP200),
+not only the previous link-only review:
+
+- [Terms](https://kinobazaua.com/terms) §1 applies to public users; §2 site conduct
+  restrictions, including language/content conduct, provide neither a documented
+  extraction licence nor an identified direct prohibition of this read-only,
+  no-post/no-account, two-card transient experiment. §3 puts use/third-party-rights
+  responsibility on the user; §4 permits changes. **No direct scoped conflict
+  identified**, not a legal guarantee or inferred blanket permission.
+- [Privacy](https://kinobazaua.com/privacy) distinguishes external-site responsibility
+  and public discussion RSS/API distribution; it is not a catalogue/property reuse
+  API contract. Broader automatic access, redistribution, retention and licensing
+  remain unestablished. No personal/account data is collected here.
+- [robots.txt](https://kinobazaua.com/robots.txt) generic exclusions do not cover
+  these exact two title paths; `meta-externalagent` has a separate deny-all group.
+  Keep the existing descriptive research UA, no impersonation/bypass. Robots and
+  public accessibility are **not licences**. Source attribution and country-panel
+  JustWatch lineage retained; their rights are not independently cleared by this.
+
+Proceed only within the owner's expanded bounded approval; no email prerequisite
+merely because broader rights are unresolved. Stop on an applicable new restriction,
+CAPTCHA/403/429/technical block, not retry/bypass. No regular/commercial integration,
+cache, archive, source-data forwarding to LLMs or partner/private endpoints.
+
+#### Implemented field and redirect boundaries
+
+[Extractor](../kinobaza-localization.mjs) reads the already bounded parse5 DOM;
+the existing identity gate and conservative parse-error refusal are unchanged.
+No scripts/eval/HTML insertion, assets or destination requests. Four layers:
+
+1. `localization.film`: exact general film badge, never provider tracks.
+2. `localization.blocks`: only isolated, recognized direct film-content blocks:
+   one direct provider anchor plus its own table under `d-md-flex`, or one anchor
+   in `p.mt-2` with an otherwise exact parenthesized token list. Generic anchor
+   audio/subtitle tooltip, nearby text and original language are not evidence.
+   Multiple headers, nested tables/active nodes, conflicting links or unknown
+   boundaries leave properties unknown. Input remains 2MiB/bounded DOM; over100
+   blocks or over64 property rows per block refuse the respective property set.
+   Duplicate provider names remain separate
+   block IDs, with qualified possible conflicts rather than a shared offer.
+3. `availabilitySignals`: explicit country/provider panel claims, access unknown
+   unless actually established. Foreign panels cannot become UA availability.
+4. `candidates`: exact observed href/raw spelling and link kind; no resolve/rewrite.
+
+Only exact labelled `Укр. звук` / `Укр. субтитри` rows can interpret literal `+`,
+`-` or `−`; missing/unrecognized labels/signs remain unknown. Negative is scoped
+to the named block/format/type, never universal absence. List completeness stays
+unknown. Conflicting identical labels stay conflicting; stereo/generic Dolby
+and subtitle-type literals are not promoted to codecs/channels/Atmos. An absent
+Dolby label says nothing about all audio. Each block retains source/href/receipt/
+territory basis/upstream and evidence; source audio is not copied from controls.
+
+The composer attaches a block only by parser-issued anchor/block ID + exact href
+and provider label, **never by provider-name join into MOTN** or a country panel.
+Film claim, country signal and block localization remain distinct in compact UI/
+collapsed provenance. Draft excludes tracks/formats/prices as before; localization
+stays sidecar only, exact permitted link transfer/cancel rules unchanged.
+
+Only composed discovery opts into **one** permanent canonical hop: exact
+`https://kinobaza.com.ua/titles/<fixed-film>` →
+`https://kinobazaua.com/titles/<same-fixed-film>`, only301/308, validated again by
+transport and composition allowlist before GET. Reject all other hosts/schemes,
+userinfo/ports/query/fragments/path encodings/variations, unknown targets, loops
+and second hops. Construct clean fixed headers, omit cookies/credentials; never
+forward source secrets or auto-follow provider/tracking links. Original and
+conditional canonical URL are shown before action. Standalone HTML remains one
+GET/no hop; all non-Kinobaza request bodies/model/settings remain unchanged.
+
+Budget: **max4 without redirect; max5 only with canonical hop**, Kinobaza off max3.
+Two-film ceiling10 only with both hops. Same source whole-operation15s/2MiB,
+overall65s, no retries. Auth/Host/Origin/one-shot/no-store/CSP/transient-only boundary
+unchanged; owner demo and unrelated files never touched. No helper/key-routing change.
+
+**Status:** authored offline/mock/browser checks are implementation evidence,
+not live extraction/entitlement/accuracy. End-to-end localization path remains
+**owner-validation pending**. At most one short session, one consolidated click
+per film, useful new/missing/conflicting claims and redirect/call summary only.
+No streaming-app tour, full JSON/HTML/screenshots, repeated synthetic or SSH-disconnect
+required. Stop on identity/security/budget/terms conflict or a blocked/unknown
+redirect; no second diagnostic loop. [Exact workflow](iphone-windows.md#consolidated-discovery-owner-workflow).
+
+Implementation verification: **276 offline/HTTP passed** (12 new authored cases,
+including label/format/boundary/redirect/budget/provenance regressions; 22 unchanged
+Gemini-body goldens). Full installed-Edge browser suites: **121 passed /8 skips**;
+final frozen-code targeted mobile suite **15 passed /1 WebKit skip**, no failures.
+Skipped engines are seven absent WebKit cases and the optional same-host browser
+LAN setup; mobile viewport is not real iPhone. The first authored Dune fixture
+accidentally invoked Coherence's identity gate and was corrected, not the validator.
+The initial browser helper assumed every Kinobaza row was tracking; corrected
+the selector to genuine tracking rows, without relaxing runtime URL/draft policy.
+
+Windows Discovery and standalone HTML temp-copy/free-port checks passed:
+parent-exit survival, inherited config/module loading, duplicate start, forged PID
+refusal/safe stop, restart and mock multi-key/one-shot flow. No owner process or
+real SSH connection touched; Windows helper logic/key routing unchanged. Local
+links/anchors, 13-section handoff, command syntax, scope and whitespace checked.
+No production/schema/MEGOGO changes, extra dependency, response archive or deployment.
 
 ## Historical experiments and feasibility records
 
@@ -1359,7 +1506,7 @@ link into UA just because a separate owner observation was Ukrainian.
 | TMDb Details/translations | Stable identity, names/aliases/directors/dates, explicit Ukrainian catalogue text evidence. | Offered audio/subtitles from spoken/original language, title/overview/tagline or an empty UA release-language field. |
 | TMDb / JustWatch results.UA | Country provider/access-bucket observations; TMDb watch-page link separately. | Exact provider URL, account entitlement, current offer characteristics or independence from Kinobaza's JustWatch sections. |
 | MOTN | Additional provider URLs and access types; literal per-offer metadata with provenance. | Complete language lists, reliable price currency/quality or absence from empty/missing data; no automatic correction or AI forwarding permission. |
-| Kinobaza HTML | Additional exact/tracking href candidates and explicit section territories; otherwise unknown. Includes MEGOGO candidate. | Availability, localization, entitlement, resolved tracking destinations or UA territory from a loose page location. |
+| Kinobaza HTML | Exact/tracking candidates, explicit country-section signals and separately scoped film/provider-block localization claims in the approved iteration. | Verified entitlement/offer tracks, cross-source enrichment by provider name, complete lists, resolved tracking destinations or UA territory from a loose page location. |
 | Owner observations | Field/context-specific manual controls with owner attribution; no account credentials. | Agent validation, universal truth, current guaranteed price or whole-platform verification. |
 
 Future acceptance tests (authored data only): same provider rent/buy stay separate;

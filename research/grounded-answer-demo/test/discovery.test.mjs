@@ -28,7 +28,7 @@ const live = (selection = chosen(), changes = {}) => runDiscovery(selection, { m
 test('fixed config, default Kinobaza on, no LLM body; unknown combinations fail closed', () => {
   for (const filmId of ['coherence', 'dune-part-two']) {
     assert.equal(chosen({ filmId }).film.id, filmId); assert.equal(chosen().kinobaza, 'on');
-    assert.equal(chosen().requestBudget, 4); assert.equal(chosen({ kinobaza: 'off' }).requestBudget, 3);
+    assert.equal(chosen().requestBudget, 5); assert.equal(chosen().baseRequestBudget, 4); assert.equal(chosen({ kinobaza: 'off' }).requestBudget, 3);
     assert.throws(() => requestBody(filmId, opts), /no Gemini/);
   }
   for (const change of [{ filmId: 'blade-runner-final-cut' }, { discovery: 'physical' }, { amazonRegion: 'us' }, { urlSource: 'kinobaza' }, { kinobaza: '' }, { kinobaza: 'yes' }]) assert.throws(() => createDemo({ ...opts, ...change }));
@@ -63,7 +63,7 @@ test('Kinobaza manual redirect: exact fixed GET, content-free diagnostics, no Lo
     assert.equal(calls.length, 4);
     assert.equal(calls.filter(c => c.url.includes('kinobaza')).length, 1);
     assert.ok(calls.some(c => c.url === 'https://kinobaza.com.ua/titles/coherence'));
-    assert.equal(r.stages.kinobaza.result.status, 'redirect-not-followed');
+    assert.equal(r.stages.kinobaza.result.status, 'canonical-redirect-refused');
     assert.equal(r.sources[2].identity, 'unresolved');
     assert.deepEqual(r.metrics.calls.find(c => c.stage === 'kinobaza'), { stage: 'kinobaza', method: 'GET', httpStatus: status, redirectLocation: 'present-not-retained' });
     assert.doesNotMatch(JSON.stringify(r), /PRIVATE_|private.example/);
@@ -213,7 +213,7 @@ test('HTTP session picker, ignored browser overrides, no startup requests, one-s
   for (const path of ['/session?film=evil', '/session?film=coherence&url=https://example.com', '/session?film=coherence&film=dune-part-two', '/session?prompt=override']) assert.equal((await fetch(origin + path)).status, 400);
   for (const filmId of ['coherence', 'dune-part-two']) {
     const response = await fetch(origin + '/session?film=' + filmId); const s = await response.json();
-    assert.equal(s.film.id, filmId); assert.equal(s.requestBudget, 4); assert.equal(s.kinobaza, 'on'); assert.equal(s.model, null);
+    assert.equal(s.film.id, filmId); assert.equal(s.requestBudget, 5); assert.equal(s.baseRequestBudget, 4); assert.equal(s.kinobaza, 'on'); assert.equal(s.model, null);
     assert.doesNotMatch(JSON.stringify(s), /offline-TMDB|offline-MOTN/);
     const init = { method: 'POST', headers: { Origin: origin, 'x-demo-session': s.token }, body: JSON.stringify({ filmId: 'evil', prompt: 'evil', url: 'https://example.com' }) };
     const r = await fetch(origin + '/answer', init); assert.match(r.headers.get('cache-control'), /no-store/);

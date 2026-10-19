@@ -8,6 +8,35 @@ current entitlement or complete platform coverage is inferred. MEGOGO remains
 unresolved; no new MEGOGO cycle. The [approved research handoff](consolidated-poc-handoff.md)
 now records separately approved research implementation, not production authorization.
 
+## Kinobaza localization iteration — independent inspection, no new owner result
+
+Separate approval after #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c` permits
+this narrow iteration. On October19, 2026, agent Node/Windows performed exactly
+four explicitly approved diagnostic film-card GETs, all manual/no auto-follow:
+
+| Step | Coherence | Dune: Part Two |
+| --- | --- | --- |
+| Original fixed URL on kinobaza.com.ua (one GET each) | 301 to https://kinobazaua.com/titles/coherence | 301 to https://kinobazaua.com/titles/dune-part-two |
+| Separately approved canonical URL (one GET each) | 200, UTF-8 HTML | 200, UTF-8 HTML |
+
+No body archive, destination requests, account session, JS/assets or API calls.
+Public-rule reads are separate from these four card GETs. This current transition
+does not establish the cause/code/Location of the earlier owner redirects; past
+content and fetcher geographical/egress context are unavailable.
+
+Structural inspection found separate general badges on both cards; Coherence's
+single-provider Amazon Prime paragraph with its own token; Dune's isolated iTunes/
+Rakuten tables and MEGOGO paragraph with its own tokens. This is structural source
+evidence, not new owner observations, current entitlement or complete offer metadata.
+No table sign values or provider characteristics are hardcoded as expected answers.
+The parser/transport/composer was **not independently live-run** on those responses.
+
+Implementation and authored mocks now test block binding, exact canonical-hop
+validation and separate film/country/link/property observations. End-to-end new-path
+owner validation remains pending, at most one short two-film session, no old
+streaming-app tour or synthetic/SSH-disconnect repeat. Existing owner findings
+below remain unchanged. See the [canonical scope/rules/evidence record](regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration).
+
 ## Consolidated discovery — owner-run functional checkpoint
 
 Reported against #182 implementation `3cd175af47db6af31fe83e9eafae5336cad6eb36`.

@@ -1,7 +1,7 @@
-// Isolated non-LLM composition. No source changes, raw archive or destination fetch.
+// Isolated non-LLM composition. Source-scoped claims, no archive or destination fetch.
 import { tmdbScenario, fetchTmdb, projectTmdbIdentity, projectTmdbProviders, syntheticTmdb } from './tmdb.mjs';
 import { motnScenario, fetchMotn, normalizeMotn, syntheticMotn } from './motn.mjs';
-import { htmlScenario, fetchHtmlCandidates, extractHtml } from './html-source.mjs';
+import { htmlScenario, fetchHtmlCandidates, extractHtml, canonicalKinobazaURL, canonicalRedirectTarget } from './html-source.mjs';
 import { syntheticHtml } from './synthetic.mjs';
 
 export const DISCOVERY_DEADLINE_MS = 65_000;
@@ -11,8 +11,8 @@ export function discoveryScenario(film, { discovery, amazonRegion, urlSource, ki
     throw new Error('ua-discovery requires digital-ua, fixed Coherence/Dune, DEMO_KINOBAZA=on|off, unset URL_SOURCE/AMAZON_REGION.');
   }
   return Object.freeze({ film, discovery, retrieval: 'ua-discovery', amazonRegion: null, sourceURL: null, prompt: null, kinobaza,
-    country: 'UA', requestBudget: kinobaza === 'on' ? 4 : 3,
-    operation: 'Fixed-ID TMDb (max 2 GETs), independent MOTN (1 GET), optional fixed Kinobaza (1 GET). No LLM, destination requests, retries or storage. Source identity gates remain independent; no cross-source offer merging. Local draft only, not production MW.' });
+    country: 'UA', requestBudget: kinobaza === 'on' ? 5 : 3, baseRequestBudget: kinobaza === 'on' ? 4 : 3,
+    operation: 'Fixed-ID TMDb (max 2 GETs), independent MOTN (1 GET), optional fixed Kinobaza (1 GET, plus at most one exact canonical host hop only after validated 301/308). Max4 without redirect, max5 only with canonical hop. No LLM, destination requests, retries or storage. Source identity gates remain independent; no cross-source offer merging. Local draft only, not production MW.' });
 }
 
 const providers = {
@@ -23,7 +23,7 @@ const providers = {
 const aliases = new Map([
   ['apple tv store', 'apple'], ['itunes', 'apple'], ['apple tv / itunes', 'apple'],
   ['rakuten tv', 'rakuten'], ['rakuten', 'rakuten'], ['hbo max', 'hbo'], ['netflix', 'netflix'],
-  ['prime video', 'prime'], ['amazon prime video', 'prime'], ['megogo', 'megogo'],
+  ['prime video', 'prime'], ['amazon prime video', 'prime'], ['amazon prime', 'prime'], ['megogo', 'megogo'],
 ]);
 const val = f => f?.state === 'reported' ? f.value : undefined;
 const unknown = note => ({ state: 'unknown', note });
@@ -123,11 +123,19 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
     const provider = mapProvider('kinobaza', undefined, c.provider);
     if (!provider) { unmapped.push({ source: 'kinobaza', name: c.provider }); continue; }
     const r = rowBase('kinobaza', film, provider, i, { source: 'Kinobaza HTML', upstream: c.territory ? 'JustWatch section (shared with TMDb)' : 'not-established',
-      method: 'initial HTML href', sourceURL: htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: stages.kinobaza.receivedAt,
+      method: 'initial HTML href / source block', sourceURL: kino.sourceURL ?? htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: kino.receivedAt ?? stages.kinobaza.receivedAt,
       receiptBasis: 'Local source-operation completion, not provider update time', observationTime: null });
     r.kind = 'candidate-link'; r.country = c.territory?.code ?? null;
     r.territoryBasis = c.territory ? 'Explicit Ukrainian section; not entitlement' : 'Outside territory section';
     r.availability = unknown('Link presence does not establish availability');
+    r.countrySignal = (kino.availabilitySignals ?? []).find(s => s.href === c.href && s.provider === c.provider && s.territory.code === c.territory?.code) ?? null;
+    // Only a parser-issued block ID associates this source claim with this
+    // candidate. No provider-name join to MOTN or to a country-section row.
+    const block = (kino.localization?.blocks ?? []).find(b => b.blockId === c.blockId && b.href === c.href && b.provider === c.provider);
+    if (block) {
+      r.kinobazaLocalization = block;
+      for (const issue of block.issues) r.conflicts.push({ field: 'localization', type: issue });
+    }
     r.link = classifyLink(c.href, provider); r.rawHref = c.rawHref;
     add(r);
   }
@@ -158,7 +166,8 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
   const conflicts = sources.filter(s => s.identity === 'mismatch');
   return { synthetic, film, country: 'UA', identity: { status: conflicts.length ? 'conflict-no-common-identity' : 'independent-source-gates',
     conflicts: conflicts.map(s => s.source), note: 'No common identity or cross-source offer merge is asserted.' },
-    rows, sources, unmapped, metrics, stages,
+    rows, sources, unmapped, metrics, stages, filmLocalization: kino?.identity?.status === 'matched' && kino.localization ? { ...kino.localization.film,
+      provenance: kino.localization.provenance ?? { source: 'Kinobaza HTML', method: 'authored synthetic source blocks', sourceURL: htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: stages.kinobaza.receivedAt, upstream: 'not-established' } } : null,
     limits: 'Not a best-option recommendation, account entitlement, full coverage or production transfer. Unknown is not negative. Historical owner controls do not replace source fields.' };
 }
 
@@ -182,10 +191,12 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
   const metrics = { requestsMade: 0, requestBudget: selection.requestBudget, elapsedMs: 0, calls: [] };
   const timer = setTimeout(() => controller.abort(), deadlineMs);
   const allowed = new Set([tmdbScenario(film, { discovery: 'digital-ua' }).sourceURL, tmdbScenario(film, { discovery: 'digital-ua' }).providersURL,
-    motnScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(kinobaza === 'on' ? [htmlScenario(film, { discovery: 'digital-ua' }).sourceURL] : [])]);
+    motnScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(kinobaza === 'on' ? [htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, canonicalKinobazaURL(film.id)] : [])]);
+  let approvedHop = null;
   const seen = new Set();
   const boundedFetch = async (url, init) => {
     if (controller.signal.aborted || !allowed.has(url) || seen.has(url) || seen.size >= selection.requestBudget) throw new Error('Budget/allowlist/deadline');
+    if (kinobaza === 'on' && url === canonicalKinobazaURL(film.id) && approvedHop !== url) throw new Error('Unapproved canonical hop');
     seen.add(url); metrics.requestsMade++;
     const call = { stage: url.includes('themoviedb') ? 'tmdb' : url.includes('movieofthenight') ? 'motn' : 'kinobaza', method: 'GET' };
     metrics.calls.push(call);
@@ -195,6 +206,7 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
     const response = await fetchImpl(url, { ...init, signal });
     call.httpStatus = response.status;
     if (response.status >= 300 && response.status < 400) call.redirectLocation = response.headers.has('location') ? 'present-not-retained' : 'missing';
+    if (kinobaza === 'on') approvedHop = canonicalRedirectTarget(url, response.headers.get('location'), response.status) ?? approvedHop;
     return response;
   };
   const stage = async (name, work) => {
@@ -220,7 +232,7 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
       await Promise.all([
         stage('tmdb', () => fetchTmdb(tmdbScenario(film, { discovery: 'digital-ua' }), tmdbToken, boundedFetch)),
         stage('motn', () => fetchMotn(motnScenario(film, { discovery: 'digital-ua' }), motnKey, boundedFetch)),
-        ...(kinobaza === 'on' ? [stage('kinobaza', () => fetchHtmlCandidates(htmlScenario(film, { discovery: 'digital-ua' }), boundedFetch))] : []),
+        ...(kinobaza === 'on' ? [stage('kinobaza', () => fetchHtmlCandidates(htmlScenario(film, { discovery: 'digital-ua' }), boundedFetch, { canonicalRedirect: true }))] : []),
       ]);
     }
     stages.kinobaza ??= { status: 'disabled-no-request', result: null, elapsedMs: 0 };

@@ -19,7 +19,7 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
-    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
+    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
         $null = New-Item -ItemType Directory -Path (Join-Path $copy 'node_modules')
@@ -79,7 +79,7 @@ try {
     if ($Megogo) {
         Assert ($response.sourceURL -ceq 'https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html' -and $response.expectedIds.nativeId -ceq '22027436' -and $null -eq $response.model -and $response.requestBudget -eq 1) 'MEGOGO fixed config mismatch.'
     }
-    if ($Discovery) { Assert ($response.kinobaza -ceq 'on' -and $response.requestBudget -eq 4 -and $response.films.Count -eq 2) 'Discovery config not inherited.' }
+    if ($Discovery) { Assert ($response.kinobaza -ceq 'on' -and $response.requestBudget -eq 5 -and $response.films.Count -eq 2) 'Discovery config not inherited.' }
     if ($Html -or $Motn -or $Tmdb -or $Megogo -or $Discovery) {
         $handler = [Net.Http.HttpClientHandler]::new(); $handler.UseProxy = $false
         $client = [Net.Http.HttpClient]::new($handler)
@@ -208,7 +208,7 @@ try {
         } finally { $client.Dispose(); $handler.Dispose() }
     }
     if ($Discovery) {
-        Assert ($afterRestart.mode -ceq 'live' -and $afterRestart.kinobaza -ceq 'on' -and $afterRestart.requestBudget -eq 4) 'Discovery restart config mismatch.'
+        Assert ($afterRestart.mode -ceq 'live' -and $afterRestart.kinobaza -ceq 'on' -and $afterRestart.requestBudget -eq 5) 'Discovery restart config mismatch.'
         $handler = [Net.Http.HttpClientHandler]::new(); $handler.UseProxy = $false
         $client = [Net.Http.HttpClient]::new($handler)
         if ($LanIPv4) { $client.DefaultRequestHeaders.Authorization = [Net.Http.Headers.AuthenticationHeaderValue]::new('Basic', [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('demo:offline-integration-password'))) }
