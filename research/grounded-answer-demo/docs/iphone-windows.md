@@ -1,5 +1,128 @@
 # Windows + iPhone manual test guide (trusted home LAN only)
 
+Current [consolidated proposal](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
+and [handoff](consolidated-poc-handoff.md) now have bounded research implementation
+approval. The original [consolidated workflow](#consolidated-discovery-owner-workflow)
+has a completed owner functional session. The separately approved
+[Kinobaza localization owner session is also complete](digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint).
+The subsequent link-audit/provider-grouping changes are covered by agent mocks;
+no new owner test, restart or repeat of completed source/platform tests is requested.
+**MEGOGO remains unresolved/frozen.** Existing commands below retain
+their individual historical scope/readiness labels; do not start a new test cycle
+just because the stack is reviewed. For the approved implemented research mode,
+the [single short acceptance plan](regional-card-proposal.md#acceptance-and-one-short-owner-session)
+limits owner work to the new end-to-end flow/material discrepancies. No source
+probe/card tour/parser-debugging cycle is restarted.
+
+## Consolidated discovery owner workflow
+
+Implemented isolated research; the [two-film owner functional session is complete](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint),
+not general accuracy/entitlement/production readiness. The subsequent
+[localization iteration](regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration)
+also has a completed owner-reported session, not independent verification.
+The commands/steps below are retained as workflow reference, **not a request to
+repeat it**. No streaming-app tour/synthetic/disconnect repeat. One
+server, UI picker Coherence/Dune, optional Kinobaza **on** for the control session.
+No Gemini key/LLM, response storage or production writes. Source conditions:
+[current combined-use record](regional-card-proposal.md#consolidated-implementation-and-source-use-checkpoint).
+Review current applicable TMDb agreement in normal token setup before live; it
+remained unreadable to the agent. No automatic permission/ban/email requirement.
+MOTN key comes from the existing direct developer portal, not RapidAPI; existing
+TMDb Read Access Token setup below applies. No new subscription selected.
+
+If SSH opens cmd, enter `powershell -NoProfile` (or your already approved installed
+`pwsh -NoProfile`) first. Do not bypass/change execution policy. From the correct
+copy inspect before updating; preserve all local/untracked files:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'
+git status --short --branch
+git fetch --prune origin
+git switch codex/mw-fut-01-kinobaza-localization
+git merge --ff-only origin/codex/mw-fut-01-kinobaza-localization
+git rev-parse HEAD
+```
+
+Stop on conflicts/divergence; no reset/clean/force or blind stash. The agreed
+stack includes #176's launcher fix; **#175 alone is not a corrected checkpoint**.
+For the optional HTML parser, if not already installed in this copy:
+`npm ci --prefix research/grounded-answer-demo --ignore-scripts`. Research
+dependencies only; no live source request. No system/firewall/SSH changes.
+
+One **standalone restart line** in PowerShell from that repo; all switches reset
+after reconnect. This is for the owner to run, never run by the agent on owner
+demo. It stops only this copy's verified process, refusing stale/unrelated PID.
+Enter THIS Windows machine's assigned private IPv4, then separate hidden LAN,
+TMDb and MOTN credentials at helper prompts; never paste secrets into arguments.
+
+```powershell
+$ErrorActionPreference='Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; $demoIPv4=Read-Host 'Verified private IPv4 of THIS Windows machine'; $env:DEMO_MODE='live'; $env:DEMO_RETRIEVAL='ua-discovery'; $env:DEMO_DISCOVERY='digital-ua'; $env:DEMO_FILM='coherence'; $env:DEMO_KINOBAZA='on'; $env:DEMO_SYNTHETIC_SCENARIO='grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:DEMO_URL_SOURCE,Env:DEMO_PORT,Env:DEMO_ACCESS,Env:DEMO_BIND_IPV4,Env:GEMINI_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $demoIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Safari: exact printed **`http://<entered-Windows-IPv4>:4317`**, username **demo**,
+separate LAN password. No guessed IP from another home project. Trusted private
+home HTTP only: Basic is not encryption; no internet exposure. To deliberately
+use synthetic instead, change only DEMO_MODE to synthetic in the standalone line;
+no API-key prompts/network. Optional Kinobaza off means max3 requests/film.
+
+**Completed session reference only — do not repeat now. Original ceiling:
+one session, max10 requests total, not a platform recheck:**
+
+1. Confirm Coherence/UA/Kinobaza on: ceiling5, base4 without redirect. Inspect original
+   and conditional canonical URL in fixed-request details before click. Run once;
+   verify separate general-film badge, provider-block claims and country signals.
+   Missing data is unknown, `−` applies only to its named block label/format.
+2. Pick Dune in the same page/server; no restart. Run once. No batch/retries.
+3. Inspect literal stereo/Dolby/subtitle-type evidence in collapsed details. Do not
+   infer codec/channels, full track lists or UA entitlement. No enrichment of MOTN
+   by provider name. Existing local draft flow needs no repeat acceptance; if used,
+   Select and review included/excluded fields; if transferring an
+   opaque tracking candidate, explicitly acknowledge its unchanged URL/type/
+   provenance. Otherwise purchase_url is empty without permitted exact candidate.
+   Confirm into **local draft only**, edit; Cancel selection leaves the confirmed/
+   edited draft unchanged. The destructive Cancel-edits reset is removed. Clear,
+   film change or reload discards it. No MW submit/ownership update/autosave.
+4. Send a short new/missing/conflicting-fields and redirect/call-count summary,
+   not JSON/HTML/screenshots.
+   Do not tour the old streaming apps/cards. Existing observations are dated
+   controls; only a new material discrepancy justifies a targeted check.
+
+Each film is disabled after its one click on that page; reselecting does not
+rerun. Reload clears local results/draft but is not an instruction to retry.
+Source failures retain safe independent results. Stop on stable-ID conflict,
+credential leak, terms conflict, 403/429/CAPTCHA or unexpected calls/storage; no
+new source/second owner round by default. No repeated synthetic/SSH-disconnect
+owner check required: agent tests cover the changed key routing/lifecycle, not a
+new real-iPhone assertion. Existing sleep/IP/firewall/Wi-Fi/stale-page guidance below
+still applies. Keep existing Stop/Status commands; no merge/deployment authorization.
+
+Rows now sit in platform presentation groups with source-labelled field-type
+summaries, **not merged offers**. Each source row retains its own territory/basis,
+access/package/cut, claims, link and unknown/conflict markers. Apple TV+ is not
+Apple TV Store; unresolved mappings appear separately. Select/review/confirm
+still targets one row. A group's UA signal does not make an unscoped audio block
+a Ukrainian offer. Expand that row for raw access/provenance/missing details, or
+Source diagnostics for HTTP status/Location presence (no value) and TMDb A
+resource/field states. Only one exact301/308 old-host→kinobazaua.com same-title hop
+is allowed in composed mode; unknown target/loop/second hop is refused. Max4 calls
+without redirect, max5 only with the validated hop (Kinobaza off max3). The agent
+observed this current transition, not the historical owner Location. Coherence A
+partial cause remains unknown. No separate diagnostic cycle or retry now.
+Link statuses now distinguish not reported, unsafe, unsupported kind and not
+eligible for transfer. Navigation and draft restrictions are shown separately;
+they are demo URL policy, not a statement that a source href is absent or legally
+prohibited. Unsupported rows keep purchase_url empty; allowed exact URLs remain
+unchanged and tracking transfer requires acknowledgement. Historical owner hrefs
+remain unknown; [new agent diagnosis](regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+found current native Prime/iTunes/MEGOGO paths refused by the classifier, now fixed.
+Those source rows show explicit-open unverified links; Prime native referral and
+iTunes affiliate query need the review checkbox before draft URL inclusion. Their
+exact URL/type/provenance is retained; no automatic navigation/resolve. MEGOGO's
+short numeric card needs normal row review/confirm. This changes no env/helper
+commands and requests **no new owner test cycle or restart now**.
+Default draft exclusions/exact href handling remain unchanged. Agent-covered UI
+changes do not require repeating synthetic/SSH-disconnect or the old platform tour.
+
 MW-FUT-01 remains Discovery. Three digital scenarios now have limited
 [owner-reported observations](digital-ua-owner-validation.md), not a general
 accuracy assessment. Amazon-region scenarios remain live-unvalidated.
@@ -673,3 +796,109 @@ link; JustWatch overlap is not independent confirmation or account entitlement.
 No general accuracy, full JSON, screenshots or output archive. Reopen a known
 streaming card only for a **concrete new material discrepancy**, not by default.
 Stop only this copy via its Stop helper when finished.
+
+## MEGOGO initial-HTML owner workflow
+
+Separate approved non-LLM `megogo-html` PoC, stacked on #180. The
+[first owner attempt](digital-ua-owner-validation.md#megogo-initial-html--owner-run-parse-policy-rejection)
+returned HTTP 200 but failed the pre-identity parse policy; characteristics are
+**unvalidated/unresolved**. The owner has completed the subsequent attempt and
+reported 30 duplicate attributes with identity still not evaluated. Commands
+below are retained only for separately approved future reproduction, **not a
+new owner run/restart now**. The agent does not restart the owner's demo.
+Only fixed Dune: Part Two (2024):
+<https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html>.
+[Scope/rules and residual uncertainty](regional-card-proposal.md#megogo-one-card-html-poc).
+No API key, login/cookies, assets/scripts, redirects, retry or follow-up endpoints.
+One click permits at most one GET, 20s / 2 MiB. Other modes remain unchanged.
+LAN Basic Auth still uses **demo** and a separate hidden password. HTTP is
+unencrypted: trusted private home LAN only, no internet exposure/system changes.
+
+### Update the correct copy safely
+
+If SSH opens `cmd`, first enter `powershell -NoProfile` (or `pwsh -NoProfile`
+if installed). Run the lines below **inside PowerShell**, not in cmd. Use THIS
+Windows machine's actual private IPv4; never another device/project's address.
+Do not depend on environment surviving SSH reconnect.
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'
+git fetch --prune origin
+git status --short --branch
+git branch --show-current
+```
+
+If tracked edits overlap the demo or branches diverged, stop and preserve them;
+no reset/clean/force or overwrite of untracked files. Stop this copy only when
+**you** choose to switch it for the approved test. The implementation agent did
+not stop the owner's running demo. If clean/compatible:
+
+```powershell
+.\research\grounded-answer-demo\windows\Stop-Demo.ps1
+# Existing local branch:
+git switch codex/mw-fut-01-megogo-html
+# If not yet local, use instead:
+# git switch --track origin/codex/mw-fut-01-megogo-html
+git pull --ff-only origin codex/mw-fut-01-megogo-html
+npm ci --prefix research/grounded-answer-demo --ignore-scripts --no-audit --no-fund
+```
+
+The install is only the existing isolated `parse5` lockfile; no production
+dependencies or executable install scripts. No need to reinstall when the
+research dependencies already match. Native detached-launch/auth/session
+mechanics are unchanged; synthetic/Windows/mobile mock checks are agent work.
+No compulsory repeat synthetic or SSH-disconnect owner test for this iteration.
+
+### One standalone restart command — no API key
+
+Paste the **entire one line** in PowerShell after every SSH reconnect; explicit
+`;` separators, all switches assigned/reset. It intentionally stops only this
+copy via verified process metadata. Enter actual Windows IPv4, then the LAN
+password hidden when Start prompts. No API credential is needed or forwarded.
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'megogo-html'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'dune-part-two'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Optional synthetic only: change that line's `DEMO_MODE` to `synthetic`; invented
+fixtures, no network. This is not an additional required owner test. Status/stop
+use the existing helpers; launch survives the launching shell's exit. Actual
+Termius→Safari/SSH-disconnect behavior was owner-validated earlier, not freshly
+repeated for this new mode. Start/status alone makes no card request.
+
+### Safari — retained workflow, no new owner GET
+
+Open **http://<actual-Windows-IPv4>:4317**, exactly the URL printed by Start/Status;
+Basic Auth username **demo**, hidden password supplied above. Reload stale pages
+after restart. Before clicking check `megogo-html`, Dune, exact source/native ID,
+20s / 2 MiB, no model and fetcher geography unknown. **Do not click/run another
+test for this checkpoint.** The offline v2 correction is not a new live-readiness
+or success claim. Any future approved use retains one click/max one GET and
+combined fields/diagnostics; no automatic retry, diagnostic-only cycle or
+compulsory synthetic/SSH-disconnect round.
+
+For a future separately approved use only, the result summary is HTTP/retrieval/identity status and **new, missing or
+conflicting fields** (access/package, languages/associated audio format, subtitles/
+types, resolution, HDR10/DV, price+currency, regional statement). No full HTML,
+JSON, responses or screenshots. No repeated streaming-app tour. Unknown/unsupported
+markup or JS/login-only fields are findings, not an instruction to log in, enable
+scraping or try private endpoints. Blocks/CAPTCHA/redirect/429 terminate this path.
+
+Reported public-card metadata need not prove account entitlement, which remains
+unknown; `/ua/`, UI language or private LAN IP do not prove fetch geography or
+Ukrainian viewing rights. Compare old observations only as dated controls, never
+fill missing fields from memory. The PoC does not establish general accuracy.
+Stop this copy with its Stop helper when done; no service/firewall/network changes.
+
+The [attribute-aware scoped acceptance policy](regional-card-proposal.md#megogo-duplicate-attribute-scope--offline-correction-v2)
+returns a text-only **Structural diagnostics** block alongside useful fields,
+not only on rejection. Read decision, identity evaluation, parser code counts/
+actions and field/page refusal reasons. Legacy DOCTYPE/entity warnings alone do
+not block identity; damaged fields stay unknown, ambiguous identity stays blocked.
+No raw body/text/attributes/URLs/positions/logs in diagnostics. The original run's
+codes remain unrecoverable; current mocks are not a reconstruction of that body.
+The existing 30-event owner summary is recorded; do not obtain more diagnostics
+now. In future approved results, distinguish overall identity from the clean
+independent-signal status: the latter cannot override withheld significant
+attributes. Keep unknowns unknown; no new JSON/HTML/screenshots, diagnostic test
+or streaming-app tour is requested. MEGOGO remains unresolved.
