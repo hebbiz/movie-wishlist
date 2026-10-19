@@ -25,6 +25,12 @@ The next separately approved research slice starts from open #182
 supersedes the link-only/no-hop limitation only within two fixed cards. Prior
 owner results remain dated controls; no production or regular/commercial reuse approval.
 
+Current owner-checkpoint/link-audit work rechecked open #183 HEAD
+`7997b032abcef7d8af67c97ea8e879e3955e0dd4`, base #182
+`264ad83206c5304f41cc7abe56235cce4d2fae0c`. The localization owner session is
+complete; [the subsequent audit and presentation policy](#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
+do not authorize another owner/live cycle or broaden source discovery.
+
 **Discovery only. Owner approved one isolated, non-LLM, two-film UA discovery →
 selection → explicit draft-transfer PoC.** Required capabilities: TMDb identity/
 UA signals and MOTN direct links/access types. Optional bounded Kinobaza HTML
@@ -54,7 +60,7 @@ found; significant proposed decisions are recorded in place, not a new framework
 | Implementation tests | Fresh cumulative **234 offline/HTTP passed** at the source checkpoint, including 46 MEGOGO and 22 unchanged Gemini request-body goldens. Authored mocks cover request bounds, identity, partial results, auth/one-shot, no destinations/persistence. Initial sandbox spawn EPERM was an execution restriction; unchanged suite passed with approved execution. | Not live source facts, entitlement, general accuracy or terms approval. |
 | Owner: TMDb | Coherence identity/UA Apple Store rent/buy; first appends rejected. Dune after fix passed both blocks/five appends, UA HBO Max subscription/Rakuten rent/buy. Ukrainian title/overview/tagline useful; shown UA event language empty. | Coherence appends not revalidated. Catalogue localization is not provider audio/subtitles. |
 | Owner: MOTN | Dune Apple/Prime links and rent/buy. Coherence options withheld by original identity/year defect, not a proven empty API list; separate website check had no UA offers. | Complete coverage/tracks/quality/currency. Apple HD/empty lists/UAH conflict with dated owner 4K/DV/UA-audio/USD. Field mapping audited; original response absent, upstream cause unknown. Year-only rejection fixed offline, not live-retested. |
-| Owner: Kinobaza HTML | Two manual cases extracted hrefs: Coherence Apple in UA; Dune HBO Max/Rakuten in UA, Apple/MEGOGO outside country sections. | Prime omission cause unresolved; foreign Dune YouTube search link accepted. Existing adapter distinguishes absolute/relative, not exact/search. Candidate links are not offers. |
+| Owner: Kinobaza HTML | Initial two manual cases extracted hrefs. Later #183 session: Coherence Apple UA tracking + separate Prime audio-positive block; Dune HBO/Rakuten UA tracking + separate Apple/Rakuten/MEGOGO localization blocks, territory unknown. | Old Prime omission and three later link-policy refusal causes are not the same question. Current exact hrefs were not reported. Initial standalone parser accepted a foreign YouTube search candidate; composed URL policy excludes search from navigation/draft. Candidate links are not offers/entitlement. |
 | Independent checks | Earlier read-only HTML inspection found relevant hrefs before JavaScript. Code audits established MOTN year gate, TMDb appended-ID assumption and MEGOGO policy defects. Current scope/isolation/stack audit. | Sampled HTML is not hidden Gemini payload or fresh destination/entitlement validation. No live source/API calls in this checkpoint. |
 | Owner: Gemini URL Context | Apple tests supplied some identity/audio metadata. Both Kinobaza cases returned platform names but no hrefs; territory partial for Coherence, present for Dune. | SUCCESS/citation is not truth/completeness/freshness. Dune `m.vkino.com.ua` citation anomaly proves neither external fetch nor exclusive Kinobaza provenance. Href omission cause unknown. |
 | Owner: MEGOGO; offline correction | First attempt HTTP 200/policy refusal; later DOM/canonical/JSON-LD/two H1s/30 duplicates, still pre-identity refusal. Attribute-aware v2 fixes authored defects. | Actual duplicate roles/locations, live identity/fields and post-fix compatibility unknown. **Unresolved/frozen; no new parser/live test cycle.** |
@@ -82,13 +88,15 @@ or an LLM. Fixed Kinobaza source cards are still inputs: arbitrary-film Kinobaza
 card discovery is **not solved**. No general movie search or coverage guarantee.
 
 Allowlist: **Apple TV Store, Rakuten TV, HBO Max, Netflix, Prime Video, MEGOGO**.
-Unknown/out-of-scope IDs stay in a compact diagnostic count, never silently
+Unknown/out-of-scope IDs stay in a separate unmapped section, never silently
 rebranded. No observation means “no result from selected sources”, not unavailable.
 
 Default UI: chosen film/UA/request ceiling before click; source stage status;
-short rows with provider, display-normalized access, known key fields, unknown/
-conflict markers and permitted link. One shared source-claim/unknown explanation;
-unscoped candidates have a separate territory-unknown group. Raw access/link kind,
+platform groups containing separate source rows with display-normalized access,
+known key fields, unknown/conflict markers and precise link-policy statuses.
+Group summaries identify source and available field types, not a shared verified
+offer. One shared source-claim/unknown explanation; each unscoped row explicitly
+retains territory unknown. Raw access/link kind,
 territory/basis, source/receipt time, missing fields, foreign dates/aliases/IDs and
 field/conflict evidence are collapsed details;
 warnings/unknowns/errors/attribution remain visible. No JSON dump by default.
@@ -625,13 +633,12 @@ Two-film ceiling10 only with both hops. Same source whole-operation15s/2MiB,
 overall65s, no retries. Auth/Host/Origin/one-shot/no-store/CSP/transient-only boundary
 unchanged; owner demo and unrelated files never touched. No helper/key-routing change.
 
-**Status:** authored offline/mock/browser checks are implementation evidence,
-not live extraction/entitlement/accuracy. End-to-end localization path remains
-**owner-validation pending**. At most one short session, one consolidated click
-per film, useful new/missing/conflicting claims and redirect/call summary only.
-No streaming-app tour, full JSON/HTML/screenshots, repeated synthetic or SSH-disconnect
-required. Stop on identity/security/budget/terms conflict or a blocked/unknown
-redirect; no second diagnostic loop. [Exact workflow](iphone-windows.md#consolidated-discovery-owner-workflow).
+**Status at implementation:** authored offline/mock/browser checks were
+implementation evidence, not live extraction/entitlement/accuracy. The later
+[owner localization session is now complete](digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint).
+No new owner/live cycle, streaming-app tour, full JSON/HTML/screenshots or
+synthetic/SSH-disconnect repeat is requested by the subsequent audit below.
+[Existing workflow reference](iphone-windows.md#consolidated-discovery-owner-workflow).
 
 Implementation verification: **276 offline/HTTP passed** (12 new authored cases,
 including label/format/boundary/redirect/budget/provenance regressions; 22 unchanged
@@ -649,6 +656,67 @@ refusal/safe stop, restart and mock multi-key/one-shot flow. No owner process or
 real SSH connection touched; Windows helper logic/key routing unchanged. Local
 links/anchors, 13-section handoff, command syntax, scope and whitespace checked.
 No production/schema/MEGOGO changes, extra dependency, response archive or deployment.
+
+### Kinobaza owner checkpoint, link audit and provider grouping
+
+Documentation/audit checkpoint recorded October 20, 2026 against #183
+`7997b032abcef7d8af67c97ea8e879e3955e0dd4`; no new source HTTP/API calls.
+The [owner ledger](digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint)
+records two successful composed Kinobaza identity/localization paths, 5/5 calls
+each (Coherence567ms, Dune665ms). These are owner-reported source claims, not
+independent provider/account checks, general accuracy or a latency benchmark.
+The historical unknown redirect cause and Coherence TMDb A partial remain
+unresolved; successful later requests do not reconstruct earlier responses.
+
+| Audited owner row | Established by the report/code | Not established |
+| --- | --- | --- |
+| Coherence Prime | Mapped provider-block row with UA-audio-positive claim; territory unknown. Anchor recognition/provider mapping/block association succeeded for that row. | Actual href and rejection reason: missing/empty, unsafe/extraction-withheld, unsupported URL shape or transfer gate. |
+| Dune Apple/iTunes | Separate mapped block with audio+/subtitles−, territory unknown. Not the same observation as any TMDb/MOTN/country-section row. | Actual source href/kind; do not assume a legacy iTunes URL or substitute the known Apple control card. |
+| Dune MEGOGO | Separate mapped block with audio+/subtitles+, territory unknown; property association succeeded. | Actual href/kind; the fixed MEGOGO control URL is not proof of this anchor's URL. |
+
+The old phrase **No permitted provider link** tested only `transferable === false`.
+It did not establish absence of an href, legal prohibition or even which URL
+policy failed. No unsaved live href/Location/response is reconstructed. No URL
+allowlist, parser, redirect target, transport, request body or budget expanded.
+Fictional authored Prime/iTunes/MEGOGO fixtures exercise extraction → mapping →
+block association → classification → navigation → draft eligibility. Accepted
+exact paths and unsupported shapes remain separate, preserving observed href
+and raw entity spelling without resolving tracking URLs.
+
+**Proven offline defect:** extraction safely nulls an unsafe href, but composition
+previously classified that null as `missing`, losing the known refusal reason.
+A regression first failed (`missing` instead of `unsafe`); composition now carries
+`unsafe` plus extraction reason. The unsafe URL stays withheld and draft-empty.
+This proves a reason-loss defect, **not the cause of any of the three owner rows**.
+Safe row-level link audit retains extraction state/issue, provider mapping,
+block association and classification; unmatched provider labels retain reasons
+in their own section. Unsupported labels cannot silently become platform offers.
+
+**Presentation only:** group by explicit canonical platform mapping. Apple TV Store
+is not Apple TV+; unresolved mappings remain separate. A group summarizes source
+row counts and field types, never merges values or yields a combined status.
+Each original observation keeps its own source/territory and basis/access/
+package/cut/link kind/localization/unknowns/conflicts/provenance. A UA country
+claim cannot supply territory to a nearby unscoped localization block, nor can
+Kinobaza properties enrich a MOTN offer by platform name. Select/review/confirm
+targets one row; the draft sidecar records that row ID, not a platform selection.
+
+Link labels distinguish **not reported**, **unsafe — withheld**, **unsupported
+kind** and **not eligible for transfer**. Navigation policy and draft eligibility
+are explained separately: unsupported/watch/search/relative/unsafe URLs neither
+navigate through this demo nor substitute for purchase_url; exact candidates stay
+unverified and tracking candidates need acknowledgement. This is demo policy,
+not a new legal finding. Exact allowed URL/type/provenance, default exclusions,
+memory-only draft and Cancel preserving confirmed/manual edits remain unchanged.
+
+Verification: **282 offline/HTTP passed**; targeted link/grouping/source suite
+**48 passed**. Full sequential installed-Edge/browser suites **123 passed /8 skips**
+(seven absent-WebKit checks, optional same-host LAN setup); targeted consolidated
+mobile suite **17 passed /1 WebKit skip**. Mobile viewport is not a real iPhone.
+Tests use authored fixtures/mocks and free-port servers, not live source evidence.
+Windows lifecycle/key-routing checks were not rerun because those components
+are unchanged; prior results are historical. No owner process or unrelated files
+touched. No new owner test is requested; actual live link causes remain unknown.
 
 ## Historical experiments and feasibility records
 

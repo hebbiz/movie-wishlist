@@ -20,7 +20,8 @@ general accuracy, current entitlement or full six-platform coverage. The
 previous checkpoint made no live request. The localization iteration subsequently
 used four expressly approved diagnostic card GETs (two old URLs, then two canonical
 URLs), no automatic transitions or API/provider requests. The prior owner session
-is complete; the new path has only the narrow acceptance plan below.
+and localization owner sessions are complete. No new owner/live/source tests are
+requested by this checkpoint; the UI grouping/reason changes are offline-tested.
 
 ## Consolidated UA discovery and local draft
 
@@ -40,7 +41,11 @@ own identity; a stable-ID conflict withholds that source and explicitly prevents
 a common matched identity. Source claims are never merged solely by platform.
 Partial stages survive. Total cancellation65s; existing source bounds retained.
 
-UI: one shared source-claim/unknown explanation, short provider/access rows with
+UI: platform groups are presentation only, with short source-labelled field/count
+summaries, **no unified verified status or combined offer**. Separate source rows
+retain territory/basis, access/package/cut, link kind, properties and conflicts.
+Unknown mappings are separate; Apple Store is not Apple TV+. Select/review/confirm
+targets a specific source row, never a group. One shared explanation, short rows with
 known fields, short unknown/conflict markers and permitted candidate link.
 Rent/rental, buy/purchase and flatrate/subscription share display labels only;
 raw access, source/receipt/link kind, field provenance, missing-field and technical
@@ -91,10 +96,21 @@ exception above is separately approved. Collapsed source diagnostics show
 observed HTTP codes/Location presence (not value), TMDb resource/field shape states
 without diagnostic content values. No destination follow-up or automatic retry.
 Localization implementation is offline/mock tested, **live-unvalidated as an
-end-to-end adapter**; source inspection is not owner validation. At most one short
-new session: one consolidated click per film, max10 GETs total only with both hops,
-short new/missing/conflicting-field summary. No app tour, raw output or repeated
-synthetic/SSH-disconnect required. See [iPhone guide](docs/iphone-windows.md#consolidated-discovery-owner-workflow).
+end-to-end adapter** at its implementation baseline; the subsequent
+[owner checkpoint](docs/digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint)
+reported Kinobaza ok/matched for both films, 5/5 requests each (567/665ms, not a
+benchmark). These are source claims, not provider verification. No new owner tests.
+
+The [offline link audit](docs/regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
+cannot establish individual live Prime/Apple/MEGOGO link causes without their exact
+href/kind; no speculative URL whitelist expansion or destination lookup. A proven
+unsafe→missing reason-loss defect is fixed without restoring unsafe hrefs.
+Rows now show **not reported**, **unsafe**, **unsupported kind**, or **not eligible
+for transfer**, and separate Navigation/Draft status. This is demo URL policy,
+not a legal ban or proof the source lacks href. Exact/tracking candidates keep
+explicit-open/acknowledgement rules. Per-row details preserve extraction/mapping/
+block/classification reasons; draft sidecar records the selected row ID.
+See [iPhone guide](docs/iphone-windows.md#consolidated-discovery-owner-workflow).
 
 Server-only `TMDB_READ_ACCESS_TOKEN` and `MOTN_API_KEY`; helper prompts separately
 and hidden, with the LAN password. No Gemini key. Attribution visible with data.

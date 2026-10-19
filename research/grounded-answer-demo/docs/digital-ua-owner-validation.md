@@ -8,6 +8,52 @@ current entitlement or complete platform coverage is inferred. MEGOGO remains
 unresolved; no new MEGOGO cycle. The [approved research handoff](consolidated-poc-handoff.md)
 now records separately approved research implementation, not production authorization.
 
+## Kinobaza localization — owner-run checkpoint
+
+Reported after #183 implementation `7997b032abcef7d8af67c97ea8e879e3955e0dd4`.
+**Owner-reported source claims**, not independent agent reproduction or current
+provider-offer/account-entitlement checks. No execution timestamps, exact hrefs,
+HTTP status sequence or account settings are inferred from this summary.
+
+| Film | Reported stages / requests | Reported Kinobaza observations, kept separate |
+| --- | --- | --- |
+| Coherence | 5/5 HTTP requests, 567ms. TMDb A partial/B ok, identity matched. MOTN matched/no-ua-options. Kinobaza ok/matched. | Apple tracking candidate in UA country section. Prime provider block: UA audio +, territory unknown; old UI said **No permitted provider link**. |
+| Dune: Part Two | 5/5 HTTP requests, 665ms. TMDb A/B ok, MOTN ok, Kinobaza ok; identities matched. | HBO/Rakuten tracking candidates in UA country section. Separate territory-unknown provider blocks: Apple audio + / subtitles −; Rakuten audio + / subtitles +; MEGOGO audio + / subtitles +. Old UI said **No permitted provider link** for Apple/MEGOGO; Rakuten tracking transfer allowed with acknowledgement. |
+
+The country signal does not lend territory to a different provider block. Signs
+are source/block-label claims, not complete track lists or universal negatives.
+Two elapsed observations are not a benchmark. 5/5 does not assert that every HTTP
+response was200. No full responses/HTML/screenshots or owner-output archive added.
+This closes the narrow owner session, not general accuracy/coverage or production
+readiness. **No new owner/live/synthetic/SSH-disconnect/platform tests requested.**
+
+### Offline link audit and presentation follow-up
+
+For all three reported provider blocks, a mapped row with localization already
+means recognized extraction/provider mapping/block association succeeded. The
+old label was only a display of `transferable=false`; it did **not** establish
+missing href, upstream link absence or a legal ban. Exact live href/kind/issue
+were not reported, so Prime, Apple and MEGOGO's individual causes remain **unknown**.
+Known exact-card shapes pass authored fixtures; unsupported shapes do not. Those
+examples are not reconstructions of the three source URLs.
+
+A separate defect was reproduced offline before the fix: unsafe href sanitization
+sets href=null, then composition incorrectly called it missing. The composer now
+preserves `unsafe` and extraction reason, without restoring the withheld URL or
+broadening classification. It is **not established** that this defect caused any
+of the three owner observations. Audit details distinguish extraction, mapping,
+block association, classification and transfer policy; no new request is needed.
+
+Provider headings now group **presentation only**; all rows/source/territory/
+access/package/cut/properties/conflicts stay separate. Source-labelled summaries
+describe available field types/counts, not one verified offer. Unknown mappings
+are separate, Apple subscriptions are not Store rows, selection stays row-specific.
+New precise link labels distinguish not reported / unsafe / unsupported kind /
+not eligible for transfer, with navigation and draft restrictions separately.
+Default exclusions, exact links, tracking acknowledgement and edited-draft cancel
+unchanged. These UI/reason corrections have offline/browser evidence only, not
+new owner validation. [Canonical audit](regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping).
+
 ## Kinobaza localization iteration — independent inspection, no new owner result
 
 Separate approval after #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c` permits
@@ -31,10 +77,10 @@ evidence, not new owner observations, current entitlement or complete offer meta
 No table sign values or provider characteristics are hardcoded as expected answers.
 The parser/transport/composer was **not independently live-run** on those responses.
 
-Implementation and authored mocks now test block binding, exact canonical-hop
-validation and separate film/country/link/property observations. End-to-end new-path
-owner validation remains pending, at most one short two-film session, no old
-streaming-app tour or synthetic/SSH-disconnect repeat. Existing owner findings
+Implementation and authored mocks test block binding, exact canonical-hop
+validation and separate film/country/link/property observations. At that checkpoint
+end-to-end owner validation was pending; it is now recorded above, without any
+new agent source requests. Existing owner findings
 below remain unchanged. See the [canonical scope/rules/evidence record](regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration).
 
 ## Consolidated discovery — owner-run functional checkpoint

@@ -22,6 +22,45 @@ export function compactFields(row) {
   return { known, unknown };
 }
 
+export function linkPresentation(link) {
+  const kind = link?.kind ?? 'missing';
+  const allowedKind = ['exact-card-unverified', 'tracking-redirect'].includes(kind);
+  const canOpen = allowedKind && link?.transferable === true && typeof link.href === 'string' && Boolean(link.href);
+  if (canOpen) return { canOpen, summary: `Link: ${kind}${kind === 'tracking-redirect' ? ' — Tracking candidate — destination unverified' : ''}`,
+    navigation: 'Navigation: explicit user-open only', draft: kind === 'tracking-redirect' ? 'Draft: acknowledgement required' : 'Draft: eligible candidate (unverified)' };
+  const summary = kind === 'missing' ? 'Link: not reported' : kind === 'unsafe' ? 'Link: unsafe — withheld' : allowedKind ? 'Link: not eligible for transfer' : `Link: unsupported kind (${kind})`;
+  return { canOpen: false, summary, navigation: kind === 'missing' ? 'Navigation: unavailable' : kind === 'unsafe' ? 'Navigation: blocked (unsafe)' : 'Navigation: disabled by demo URL policy', draft: 'Draft: not eligible for transfer' };
+}
+
+const platformNames = Object.freeze({ apple: 'Apple TV Store', rakuten: 'Rakuten TV', hbo: 'HBO Max', netflix: 'Netflix', prime: 'Prime Video', megogo: 'MEGOGO' });
+export function groupProviderRows(rows) {
+  const groups = new Map(), unmapped = [];
+  for (const row of rows) {
+    const key = row.provider?.key;
+    if (!Object.hasOwn(platformNames, key) || row.provider.name !== platformNames[key]) { unmapped.push(row); continue; }
+    if (!groups.has(key)) groups.set(key, { key, name: platformNames[key], rows: [] });
+    groups.get(key).rows.push(row); // Same row references; no field/offer merging.
+  }
+  return { groups: [...groups.values()], unmapped };
+}
+
+export function providerSummary(rows) {
+  const sources = new Map();
+  for (const row of rows) {
+    const name = row.provenance?.source ?? 'Source unknown';
+    if (!sources.has(name)) sources.set(name, { count: 0, fields: new Set() });
+    const source = sources.get(name); source.count++;
+    if (row.access?.state === 'reported') source.fields.add('access');
+    if (row.country === 'UA') source.fields.add('UA context');
+    if (row.link?.href) source.fields.add('candidate href');
+    if (row.kinobazaLocalization) source.fields.add('block localization');
+    if (row.audio?.ukrainian?.length || row.subtitles?.ukrainian?.length) source.fields.add('listed tracks');
+    if (row.quality?.state === 'reported') source.fields.add('video claim');
+    if (row.price?.state === 'reported') source.fields.add('price claim');
+  }
+  return [...sources].map(([name, source]) => `${name}: ${source.count} separate row(s)${source.fields.size ? ` — ${[...source.fields].join(', ')}` : ''}`).join(' | ');
+}
+
 export function prepareDraft(result, row, trackingAcknowledged = false) {
   if (!result.rows.includes(row) || row.identityStatus !== 'matched') throw new Error('Select an independently identity-gated row.');
   const ids = { coherence: 'tt2866360', 'dune-part-two': 'tt15239678' };
@@ -31,7 +70,7 @@ export function prepareDraft(result, row, trackingAcknowledged = false) {
   return { fields: { imdb_url: `https://www.imdb.com/title/${ids[result.film.id]}/`,
     title: result.film.title.replace(/ \(\d{4}\)$/, ''), year: result.film.id === 'coherence' ? '2013' : '2024',
     recommended_medium: row.provider.medium, purchase_url: purchaseURL, status: 'wishlist' },
-    sidecar: { source: row.provenance, provider: row.provider, linkKind: row.link.kind, territory: row.country ?? 'unknown',
+    sidecar: { rowId: row.id, source: row.provenance, provider: row.provider, linkKind: row.link.kind, linkAudit: row.linkAudit ?? null, territory: row.country ?? 'unknown',
       kinobazaLocalization: row.kinobazaLocalization ?? null, countrySignal: row.countrySignal ?? null,
       access: row.access, package: row.package, cut: row.cut, identity: row.identityStatus,
       commonIdentity: result.identity.status, conflicts: row.conflicts,
@@ -84,7 +123,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   };
   const select = row => {
     hideReview(); reviewRow = row; review.hidden = false;
-    add(review, 'h3', `Review included fields — ${row.provider.name}`);
+    add(review, 'h3', `Review included fields — ${row.provider.name} · ${row.provenance.source} · ${accessLabel(row.access)}`);
     add(review, 'p', 'Review then explicitly confirm. Existing draft is unchanged until confirmation. This is not a verified offer or production MW write.');
     const included = add(review, 'pre'); included.id = 'draft-included';
     const evidence = add(review, 'details'); add(evidence, 'summary', 'Excluded fields and provenance'); const sidecar = add(evidence, 'pre');
@@ -95,7 +134,8 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     }
     const refresh = () => { const prepared = prepareDraft(result, row, tracking?.checked ?? false); included.textContent = JSON.stringify(prepared.fields, null, 2); sidecar.textContent = JSON.stringify(prepared.sidecar, null, 2); };
     tracking?.addEventListener('change', refresh); refresh();
-    if (!row.link.transferable) add(review, 'p', 'No permitted exact/tracking candidate: purchase_url stays empty. Watch/search/relative/unsafe/unknown URLs are not substituted.');
+    const linkStatus = linkPresentation(row.link);
+    add(review, 'p', `${linkStatus.summary} · ${linkStatus.navigation} · ${linkStatus.draft}. ${row.link.transferable ? 'Exact URL/type/provenance retained.' : 'purchase_url stays empty; no substitute URL.'}`);
     const confirm = add(review, 'button', 'Confirm to local draft'); confirm.id = 'draft-confirm'; confirm.type = 'button';
     confirm.addEventListener('click', () => { const prepared = prepareDraft(result, reviewRow, tracking?.checked ?? false); showDraft(prepared); hideReview(); });
     const cancel = add(review, 'button', 'Cancel selection'); cancel.type = 'button'; cancel.id = 'draft-review-cancel'; cancel.addEventListener('click', hideReview);
@@ -109,21 +149,31 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     sourceSummary.textContent = data.sources.map(s => `${s.source}: ${s.status} · identity ${s.identity}`).join(' | ');
     if (data.filmLocalization?.ukrainianAudio?.state === 'reported-positive') add(host, 'p', 'Kinobaza film-level UA audio claim — not provider tracks.');
     if (!data.rows.length) add(host, 'p', 'No usable rows from selected sources. This is not proof of unavailability.');
-    for (const [label, rows] of [['UA source context', data.rows.filter(r => r.country === 'UA')], ['Territory unknown — not a UA offer claim', data.rows.filter(r => r.country !== 'UA')]]) {
-      add(host, 'h3', label);
-      for (const row of rows) {
-        const card = add(host, 'article'); card.className = 'discovery-card'; card.dataset.rowId = row.id;
-        add(card, 'h4', `${row.provider.name} · ${accessLabel(row.access)}`);
-        add(card, 'p', row.kind === 'candidate-link' ? row.countrySignal ? 'Candidate link · UA country-section claim (not entitlement)' : 'Candidate link · availability unknown' : 'UA source availability claim');
+    const grouped = groupProviderRows(data.rows);
+    for (const group of grouped.groups) {
+      const section = add(host, 'section'); section.className = 'provider-group'; section.dataset.provider = group.key;
+      add(section, 'h3', group.name);
+      const summary = add(section, 'p', `${providerSummary(group.rows)}. Separate observations, not one verified offer or shared territory.`); summary.className = 'provider-summary';
+      for (const row of group.rows) {
+        const card = add(section, 'article'); card.className = 'discovery-card'; card.dataset.rowId = row.id;
+        add(card, 'h4', `${row.provenance.source} · ${accessLabel(row.access)}`);
+        const scope = row.country === 'UA' ? 'UA source context' : 'Territory unknown — not a UA offer claim';
+        const optional = [row.package?.name?.state === 'reported' ? `Package: ${value(row.package.name)}` : '', row.cut?.state === 'reported' ? `Cut: ${value(row.cut)}` : ''].filter(Boolean).join(' · ');
+        add(card, 'p', `${scope} · ${row.kind === 'candidate-link' ? row.countrySignal ? 'candidate link / country-section claim (not entitlement)' : 'candidate link / availability unknown' : 'source availability claim'}${optional ? ` · ${optional}` : ''}`);
         const fields = compactFields(row);
         if (fields.known.length) add(card, 'p', fields.known.join(' · '));
         add(card, 'p', `Unknown: ${fields.unknown.join(', ') || 'no missing summary fields'}${row.conflicts.length ? ' · CONFLICT — inspect details' : ''}`);
-        if (!row.link.transferable) add(card, 'p', 'No permitted provider link');
-        if (row.link.kind === 'tracking-redirect') add(card, 'p', 'Tracking candidate — destination unverified; transfer needs acknowledgement');
-        if (row.link.transferable) { const link = add(card, 'a', 'Open candidate explicitly (not verified)'); link.href = row.link.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.referrerPolicy = 'no-referrer'; }
+        const status = linkPresentation(row.link);
+        add(card, 'p', `${status.summary} · ${status.navigation} · ${status.draft}`);
+        if (status.canOpen) { const link = add(card, 'a', 'Open candidate explicitly (not verified)'); link.href = row.link.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.referrerPolicy = 'no-referrer'; }
         const details = add(card, 'details'); add(details, 'summary', 'Field provenance, unknowns and conflicts'); add(details, 'pre', JSON.stringify(row, null, 2));
         const button = add(card, 'button', 'Select and review'); button.type = 'button'; button.addEventListener('click', () => select(row));
       }
+    }
+    if (data.unmapped.length || grouped.unmapped.length) {
+      const section = add(host, 'section'); section.id = 'discovery-unmapped'; add(section, 'h3', 'Unmapped observations — no platform assignment');
+      for (const item of data.unmapped) add(section, 'p', `${item.source}: ${item.name ?? '(name not reported)'} · provider mapping unresolved; not assigned to a Store/subscription group.`);
+      const details = add(section, 'details'); add(details, 'summary', 'Unmapped source labels / access / reasons'); add(details, 'pre', JSON.stringify({ unmapped: data.unmapped, ungroupedRows: grouped.unmapped }, null, 2));
     }
     const details = add(host, 'details'); details.id = 'discovery-source-details'; add(details, 'summary', `Source diagnostics / unmapped (${data.unmapped.length}) / catalogue (not provider tracks)`); add(details, 'pre', JSON.stringify({ diagnostics: data.sources.map(s => ({ source: s.source, diagnostics: s.diagnostics })), calls: data.metrics.calls, stages: data.stages, unmapped: data.unmapped, limits: data.limits }, null, 2));
   };

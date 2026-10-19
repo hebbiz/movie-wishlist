@@ -11,7 +11,7 @@ const modulePath = process.env.PLAYWRIGHT_MODULE_PATH;
 test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { skip: !modulePath }, async t => {
   const { chromium, webkit } = await import(pathToFileURL(modulePath).href);
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) }); t.after(() => browser.close());
-  for (const kind of ['synthetic', 'normal', 'localization-hop', 'partial-redirect', 'tmdb-down', 'identity-conflict', 'providers-conflict', 'no-key', 'kino-fail', 'unknown-link', 'tracking', 'hostile', 'empty-UA', 'fields-conflict']) await t.test(kind, async t => {
+  for (const kind of ['synthetic', 'normal', 'group-links', 'store-subscription', 'localization-hop', 'partial-redirect', 'tmdb-down', 'identity-conflict', 'providers-conflict', 'no-key', 'kino-fail', 'unknown-link', 'tracking', 'hostile', 'empty-UA', 'fields-conflict']) await t.test(kind, async t => {
     const calls = [], logs = [], external = [], errors = []; let posts = 0;
     const server = createDemo({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence',
       mode: kind === 'synthetic' ? 'synthetic' : 'live', tmdbToken: kind === 'no-key' ? '' : 'offline-browser-tmdb', motnKey: 'offline-browser-motn',
@@ -20,6 +20,20 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
         if (kind === 'synthetic') assert.fail('No synthetic external call');
         const film = /220289|tt2866360|\/coherence$/.test(url) ? FILMS.coherence : FILMS['dune-part-two'];
         const data = authoredDiscoveryData(film);
+        if (kind === 'group-links') data.html = localizedMarkup(
+          paragraphBlock('amazon prime', '(укр. аудіо)', 'https://www.primevideo.com/unsupported/fictional') +
+          tableBlock('itunes', [['Укр. звук', '+'], ['Укр. субтитри', '-']], 'https://itunes.apple.com/ua/movie/fictional/id999999') +
+          paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', 'https://megogo.net/fictional-card') +
+          paragraphBlock('megogo', '(укр. аудіо)', 'javascript:alert(1)') +
+          paragraphBlock('megogo', '(укр. субтитри)', '') +
+          paragraphBlock('megogo', '(укр. аудіо)', '/relative?x=%2F') +
+          paragraphBlock('megogo', '(укр. аудіо)', 'https://www.youtube.com/results?search_query=fictional'), film.id)
+          .replaceAll('Example UA', 'Apple TV Store').replace('https://example.com/redirect?x=%2F&amp;y=1', 'https://click.justwatch.com/a?synthetic=%2F&amp;x=1');
+        if (kind === 'store-subscription') {
+          const first = data.motn.streamingOptions.ua[0];
+          data.motn.streamingOptions.ua.push({ ...first, service: { id: 'apple', name: 'Apple TV' }, type: 'subscription' });
+          data.tmdb.providers.results.UA.flatrate = [{ provider_id: 350, provider_name: 'Apple TV+' }];
+        }
         if (kind === 'localization-hop' && url.includes('kinobaza')) {
           if (url.includes('kinobaza.com.ua')) return new Response(null, { status: 301, headers: { Location: `https://kinobazaua.com/titles/${film.id}` } });
           return new Response(localizedMarkup(tableBlock() + paragraphBlock(), film.id), { headers: { 'content-type': 'text/html' } });
@@ -54,6 +68,11 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
     if (kind === 'fields-conflict') assert.match(shown, /CONFLICT/);
     assert.equal(await page.locator('#discovery-source-details').evaluate(n => n.open), false);
     assert.equal(await page.locator('#answer article details[open]').count(), 0);
+    assert.equal(await page.locator('.provider-group[data-provider="apple"]').count(), 1);
+    assert.equal(await page.locator('.provider-group > button').count(), 0); // Selection belongs to a source row, never a group.
+    assert.equal(await page.locator('#answer article').evaluateAll(nodes => nodes.every(n => n.parentElement.classList.contains('provider-group'))), true);
+    assert.match(await page.locator('.provider-group[data-provider="apple"] > .provider-summary').textContent(), /separate row.*not one verified offer/);
+    assert.doesNotMatch(shown, /No permitted provider link/);
     assert.equal(await page.locator('#answer article').evaluateAll(nodes => nodes.every(n => n.querySelectorAll(':scope > p').length <= 4)), true);
     assert.equal(await page.locator('#answer article h4').evaluateAll(nodes => nodes.every(n => !/ · (rent|buy|rental|purchase|flatrate|subscription)\b/.test(n.textContent))), true);
     assert.ok(await page.locator('#discovery-credits').getByText('Movie of the Night', { exact: false }).count());
@@ -71,6 +90,24 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
       assert.match(shown, /film-level UA audio claim — not provider tracks/);
       assert.match(shown, /UA audio \+ \(Kinobaza block\)/);
       assert.match(shown, /UA subtitles − \(named block labels only\)/);
+    }
+    if (kind === 'store-subscription') {
+      assert.match(await page.locator('#discovery-unmapped').textContent(), /Apple TV\+.*provider mapping unresolved/s);
+      assert.equal(await page.locator('.provider-group h3').getByText('Apple TV+', { exact: true }).count(), 0);
+      assert.match(await page.locator('#discovery-unmapped details').textContent(), /subscription|flatrate/);
+    }
+    if (kind === 'group-links') {
+      const apple = page.locator('.provider-group[data-provider="apple"]');
+      const kino = apple.locator('article[data-row-id^="kinobaza:"]');
+      assert.equal(await kino.count(), 2); assert.match(await kino.first().textContent(), /UA source context/);
+      assert.doesNotMatch(await kino.first().locator(':scope > p').allTextContents().then(t => t.join(' ')), /UA audio \+/);
+      assert.match(await kino.last().textContent(), /Territory unknown.*UA audio \+/s);
+      for (const status of ['Link: not reported', 'Link: unsafe — withheld', 'Link: unsupported kind (unknown)', 'Link: unsupported kind (relative)', 'Link: unsupported kind (search)']) assert.ok(shown.includes(status), status);
+      const unsupported = kino.last(); assert.equal(await unsupported.locator('a').count(), 0);
+      await unsupported.getByRole('button', { name: 'Select and review' }).click();
+      assert.match(await page.locator('#draft-included').textContent(), /"purchase_url": ""/);
+      assert.match(await page.locator('#draft-review').textContent(), /Navigation: disabled by demo URL policy.*Draft: not eligible for transfer/s);
+      await page.locator('#draft-review-cancel').click();
     }
     const exactRow = page.locator('article[data-row-id^="motn:"]').first();
     if (await exactRow.count()) {

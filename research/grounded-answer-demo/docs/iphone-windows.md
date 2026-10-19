@@ -3,9 +3,10 @@
 Current [consolidated proposal](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
 and [handoff](consolidated-poc-handoff.md) now have bounded research implementation
 approval. The original [consolidated workflow](#consolidated-discovery-owner-workflow)
-has a completed owner functional session. A separately approved Kinobaza
-localization iteration now needs only the narrow new-path check below, not a
-repeat of completed source/platform tests.
+has a completed owner functional session. The separately approved
+[Kinobaza localization owner session is also complete](digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint).
+The subsequent link-audit/provider-grouping changes are covered by agent mocks;
+no new owner test, restart or repeat of completed source/platform tests is requested.
 **MEGOGO remains unresolved/frozen.** Existing commands below retain
 their individual historical scope/readiness labels; do not start a new test cycle
 just because the stack is reviewed. For the approved implemented research mode,
@@ -18,8 +19,9 @@ probe/card tour/parser-debugging cycle is restarted.
 Implemented isolated research; the [two-film owner functional session is complete](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint),
 not general accuracy/entitlement/production readiness. The subsequent
 [localization iteration](regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration)
-is live-unvalidated end to end. Use at most one new short session to check that
-corrected path; no streaming-app tour/synthetic/disconnect repeat. One
+also has a completed owner-reported session, not independent verification.
+The commands/steps below are retained as workflow reference, **not a request to
+repeat it**. No streaming-app tour/synthetic/disconnect repeat. One
 server, UI picker Coherence/Dune, optional Kinobaza **on** for the control session.
 No Gemini key/LLM, response storage or production writes. Source conditions:
 [current combined-use record](regional-card-proposal.md#consolidated-implementation-and-source-use-checkpoint).
@@ -63,7 +65,8 @@ home HTTP only: Basic is not encryption; no internet exposure. To deliberately
 use synthetic instead, change only DEMO_MODE to synthetic in the standalone line;
 no API-key prompts/network. Optional Kinobaza off means max3 requests/film.
 
-**New-path check only: one session, max10 requests total, not a platform recheck:**
+**Completed session reference only — do not repeat now. Original ceiling:
+one session, max10 requests total, not a platform recheck:**
 
 1. Confirm Coherence/UA/Kinobaza on: ceiling5, base4 without redirect. Inspect original
    and conditional canonical URL in fixed-request details before click. Run once;
@@ -93,14 +96,24 @@ owner check required: agent tests cover the changed key routing/lifecycle, not a
 new real-iPhone assertion. Existing sleep/IP/firewall/Wi-Fi/stale-page guidance below
 still applies. Keep existing Stop/Status commands; no merge/deployment authorization.
 
-Rows now show concise display-only access labels, known fields and short unknown/
-conflict markers. Expand a row for raw access/provenance/missing details, or
+Rows now sit in platform presentation groups with source-labelled field-type
+summaries, **not merged offers**. Each source row retains its own territory/basis,
+access/package/cut, claims, link and unknown/conflict markers. Apple TV+ is not
+Apple TV Store; unresolved mappings appear separately. Select/review/confirm
+still targets one row. A group's UA signal does not make an unscoped audio block
+a Ukrainian offer. Expand that row for raw access/provenance/missing details, or
 Source diagnostics for HTTP status/Location presence (no value) and TMDb A
 resource/field states. Only one exact301/308 old-host→kinobazaua.com same-title hop
 is allowed in composed mode; unknown target/loop/second hop is refused. Max4 calls
 without redirect, max5 only with the validated hop (Kinobaza off max3). The agent
 observed this current transition, not the historical owner Location. Coherence A
 partial cause remains unknown. No separate diagnostic cycle or retry now.
+Link statuses now distinguish not reported, unsafe, unsupported kind and not
+eligible for transfer. Navigation and draft restrictions are shown separately;
+they are demo URL policy, not a statement that a source href is absent or legally
+prohibited. Unsupported rows keep purchase_url empty; allowed exact URLs remain
+unchanged and tracking transfer requires acknowledgement. The three reported
+Prime/Apple/MEGOGO live refusal reasons remain unknown without the actual hrefs.
 Default draft exclusions/exact href handling remain unchanged. Agent-covered UI
 changes do not require repeating synthetic/SSH-disconnect or the old platform tour.
 

@@ -101,7 +101,7 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
   if (tmdbIdentity === 'matched' && ['ok', 'partial'].includes(tmdb?.providers?.status)) {
     for (const b of tmdb.providers.buckets ?? []) for (const p of b.providers?.items ?? []) {
       const provider = mapProvider('tmdb', val(p.id), val(p.name));
-      if (!provider) { unmapped.push({ source: 'tmdb', id: val(p.id) ?? null, name: val(p.name) ?? null }); continue; }
+      if (!provider) { unmapped.push({ source: 'tmdb', id: val(p.id) ?? null, name: val(p.name) ?? null, access: b.access, reason: 'provider-mapping-unresolved' }); continue; }
       const r = rowBase('tmdb', film, provider, rows.length, { source: 'TMDB / JustWatch', upstream: 'JustWatch', method: 'API results.UA',
         sourceURL: tmdbScenario(film, { discovery: 'digital-ua' }).providersURL, receivedAt: tmdb.providers.receivedAt, observationTime: null });
       r.access = { state: 'reported', value: b.access, sourceBucket: b.name };
@@ -111,7 +111,7 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
   }
   if (motn?.identity?.status === 'matched') for (const [i, o] of (motn.options ?? []).entries()) {
     const provider = mapProvider('motn', val(o.service.id), val(o.service.name), val(o.access));
-    if (!provider) { unmapped.push({ source: 'motn', id: val(o.service.id) ?? null, name: val(o.service.name) ?? null }); continue; }
+    if (!provider) { unmapped.push({ source: 'motn', id: val(o.service.id) ?? null, name: val(o.service.name) ?? null, access: o.access, reason: 'provider-mapping-unresolved' }); continue; }
     const r = rowBase('motn', film, provider, i, { source: 'Movie of the Night', upstream: 'not-established', method: 'API streamingOptions.ua',
       sourceURL: motnScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: motn.receivedAt, observationTime: null });
     r.access = { ...o.access }; r.package = { ...o.addon }; r.audio = o.ukrainianAudio; r.subtitles = o.ukrainianSubtitles;
@@ -121,7 +121,7 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
   if (kino?.identity?.status === 'matched') for (const [i, c] of (kino.candidates ?? []).entries()) {
     if (c.territory && c.territory.code !== 'UA') continue;
     const provider = mapProvider('kinobaza', undefined, c.provider);
-    if (!provider) { unmapped.push({ source: 'kinobaza', name: c.provider }); continue; }
+    if (!provider) { unmapped.push({ source: 'kinobaza', name: c.provider, territory: c.territory, extractionIssue: c.issue ?? null, reason: 'provider-mapping-unresolved' }); continue; }
     const r = rowBase('kinobaza', film, provider, i, { source: 'Kinobaza HTML', upstream: c.territory ? 'JustWatch section (shared with TMDb)' : 'not-established',
       method: 'initial HTML href / source block', sourceURL: kino.sourceURL ?? htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: kino.receivedAt ?? stages.kinobaza.receivedAt,
       receiptBasis: 'Local source-operation completion, not provider update time', observationTime: null });
@@ -136,7 +136,14 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
       r.kinobazaLocalization = block;
       for (const issue of block.issues) r.conflicts.push({ field: 'localization', type: issue });
     }
-    r.link = classifyLink(c.href, provider); r.rawHref = c.rawHref;
+    const unsafeExtraction = ['unsafe-url-or-label', 'unsafe-url-scheme', 'unsafe-or-invalid-url'].includes(c.issue);
+    // Sanitization deliberately removes unsafe hrefs. Do not reinterpret that
+    // withheld value as evidence that the source never reported a link.
+    r.link = unsafeExtraction ? { href: null, kind: 'unsafe', transferable: false } : classifyLink(c.href, provider); r.rawHref = c.rawHref;
+    r.linkAudit = { extraction: { status: c.status, hrefKind: c.hrefKind, issue: c.issue ?? null,
+      hrefValue: unsafeExtraction ? 'reported-but-withheld' : c.href ? 'reported' : 'not-reported-or-empty' },
+      providerMapping: 'mapped', blockAssociation: c.blockId ? block ? 'associated' : 'unresolved' : 'not-a-provider-block',
+      classification: r.link.kind, note: 'Demo URL policy, not a legal restriction or proof of missing source href. No destination resolution.' };
     add(r);
   }
   // No row/value merging. Comparable disagreements are retained with peer refs.

@@ -14,6 +14,11 @@ hop in composed discovery. The [canonical iteration record](regional-card-propos
 owns rules/evidence and supersedes the former link-only/Prime-recovery exclusion
 only within this two-card scope. No MEGOGO work, new source or production approval.
 
+Owner completed that session after #183 `7997b03`; the
+[current audit/grouping checkpoint](regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
+adds only presentation groups and precise per-row link reasons. It authorizes no
+new source/owner requests or merged offer. Existing source bodies/budgets unchanged.
+
 ## 1. Context
 
 Verified implementation baseline: #181 `e978e72389ec5fae7e2be141062b5606fd862f75`, stacked on
@@ -286,4 +291,9 @@ Audio/subtitle properties remain sidecar-only, not draft fields. Requests/prompt
 settings for other sources unchanged; Windows helpers unchanged. Four approved
 diagnostic GETs were source-structure inspection, not live execution of the new
 adapter. Authored mocks/Edge and temp-copy Windows checks are implementation
-evidence; new-path owner acceptance remains pending under the canonical plan.
+evidence. Subsequent owner acceptance/source-claim observations are in the ledger;
+the current grouping/reason correction has offline/browser validation, no new
+owner acceptance requested. Grouping keeps row references and evidence separate;
+unknown mappings remain separate and select/review/confirm binds to one row ID.
+Unsafe sanitized hrefs remain unsafe, not missing. Navigation/draft labels explain
+demo policy without broadening kinds, resolving URLs or changing draft exclusions.
