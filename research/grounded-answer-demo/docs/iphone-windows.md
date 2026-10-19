@@ -112,8 +112,14 @@ Link statuses now distinguish not reported, unsafe, unsupported kind and not
 eligible for transfer. Navigation and draft restrictions are shown separately;
 they are demo URL policy, not a statement that a source href is absent or legally
 prohibited. Unsupported rows keep purchase_url empty; allowed exact URLs remain
-unchanged and tracking transfer requires acknowledgement. The three reported
-Prime/Apple/MEGOGO live refusal reasons remain unknown without the actual hrefs.
+unchanged and tracking transfer requires acknowledgement. Historical owner hrefs
+remain unknown; [new agent diagnosis](regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+found current native Prime/iTunes/MEGOGO paths refused by the classifier, now fixed.
+Those source rows show explicit-open unverified links; Prime native referral and
+iTunes affiliate query need the review checkbox before draft URL inclusion. Their
+exact URL/type/provenance is retained; no automatic navigation/resolve. MEGOGO's
+short numeric card needs normal row review/confirm. This changes no env/helper
+commands and requests **no new owner test cycle or restart now**.
 Default draft exclusions/exact href handling remain unchanged. Agent-covered UI
 changes do not require repeating synthetic/SSH-disconnect or the old platform tour.
 

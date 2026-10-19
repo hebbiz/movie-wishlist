@@ -11,7 +11,7 @@ const modulePath = process.env.PLAYWRIGHT_MODULE_PATH;
 test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { skip: !modulePath }, async t => {
   const { chromium, webkit } = await import(pathToFileURL(modulePath).href);
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) }); t.after(() => browser.close());
-  for (const kind of ['synthetic', 'normal', 'group-links', 'store-subscription', 'localization-hop', 'partial-redirect', 'tmdb-down', 'identity-conflict', 'providers-conflict', 'no-key', 'kino-fail', 'unknown-link', 'tracking', 'hostile', 'empty-UA', 'fields-conflict']) await t.test(kind, async t => {
+  for (const kind of ['synthetic', 'normal', 'group-links', 'native-links', 'store-subscription', 'localization-hop', 'partial-redirect', 'tmdb-down', 'identity-conflict', 'providers-conflict', 'no-key', 'kino-fail', 'unknown-link', 'tracking', 'hostile', 'empty-UA', 'fields-conflict']) await t.test(kind, async t => {
     const calls = [], logs = [], external = [], errors = []; let posts = 0;
     const server = createDemo({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence',
       mode: kind === 'synthetic' ? 'synthetic' : 'live', tmdbToken: kind === 'no-key' ? '' : 'offline-browser-tmdb', motnKey: 'offline-browser-motn',
@@ -34,6 +34,10 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
           data.motn.streamingOptions.ua.push({ ...first, service: { id: 'apple', name: 'Apple TV' }, type: 'subscription' });
           data.tmdb.providers.results.UA.flatrate = [{ provider_id: 350, provider_name: 'Apple TV+' }];
         }
+        if (kind === 'native-links') data.html = localizedMarkup(
+          paragraphBlock('amazon prime', '(укр. аудіо)', 'https://www.primevideo.com/detail/FICTIONAL123/ref=atv_demo_1') +
+          tableBlock('itunes', [['Укр. звук', '+'], ['Укр. субтитри', '-']], 'https://itunes.apple.com/ua/movie/id999999?at=fictional123&amp;l=uk') +
+          paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', 'https://megogo.net/ua/view/999999'), film.id);
         if (kind === 'localization-hop' && url.includes('kinobaza')) {
           if (url.includes('kinobaza.com.ua')) return new Response(null, { status: 301, headers: { Location: `https://kinobazaua.com/titles/${film.id}` } });
           return new Response(localizedMarkup(tableBlock() + paragraphBlock(), film.id), { headers: { 'content-type': 'text/html' } });
@@ -108,6 +112,43 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
       assert.match(await page.locator('#draft-included').textContent(), /"purchase_url": ""/);
       assert.match(await page.locator('#draft-review').textContent(), /Navigation: disabled by demo URL policy.*Draft: not eligible for transfer/s);
       await page.locator('#draft-review-cancel').click();
+    }
+    if (kind === 'native-links') {
+      const originalCalls = calls.length;
+      const cases = [
+        ['prime', 'https://www.primevideo.com/detail/FICTIONAL123/ref=atv_demo_1', true],
+        ['apple', 'https://itunes.apple.com/ua/movie/id999999?at=fictional123&l=uk', true],
+        ['megogo', 'https://megogo.net/ua/view/999999', false],
+      ];
+      for (const [provider, href, ack] of cases) {
+        const row = page.locator(`.provider-group[data-provider="${provider}"] article[data-row-id^="kinobaza:"]`).filter({ hasText: 'Kinobaza block' });
+        assert.equal(await row.count(), 1); assert.match(await row.textContent(), /Territory unknown/);
+        const link = row.getByRole('link', { name: 'Open candidate explicitly (not verified)' });
+        assert.equal(await link.getAttribute('href'), href); assert.equal(await link.getAttribute('rel'), 'noopener noreferrer');
+        assert.equal(await link.getAttribute('target'), '_blank');
+        // Native navigation is explicit-only. Suppress it in this test: no destination request.
+        await link.evaluate(n => { n.dataset.openClicks = '0'; n.addEventListener('click', e => { e.preventDefault(); n.dataset.openClicks = String(Number(n.dataset.openClicks) + 1); }); });
+        await link.click(); assert.equal(await link.getAttribute('data-open-clicks'), '1'); assert.equal(calls.length, originalCalls);
+        await row.getByRole('button', { name: 'Select and review' }).click();
+        assert.equal(await page.locator('#draft-tracking-ack').count(), ack ? 1 : 0);
+        const included = async () => JSON.parse(await page.locator('#draft-included').textContent());
+        assert.equal((await included()).purchase_url, ack ? '' : href);
+        if (ack) {
+          assert.match(await page.locator('#draft-review').textContent(), /provider-native referral candidate/);
+          await page.locator('#draft-tracking-ack').check(); assert.equal((await included()).purchase_url, href);
+          await page.locator('#draft-tracking-ack').uncheck(); assert.equal((await included()).purchase_url, '');
+          await page.locator('#draft-tracking-ack').check();
+        }
+        await page.locator('#draft-confirm').click();
+        const input = page.locator('#local-draft input[name="purchase_url"]'); assert.equal(await input.inputValue(), href);
+        await page.locator('#local-draft input[name="title"]').fill('Manual edit survives cancel');
+        await row.getByRole('button', { name: 'Select and review' }).click();
+        if (ack) assert.equal(await page.locator('#draft-tracking-ack').isChecked(), false);
+        await page.locator('#draft-review-cancel').click(); assert.equal(await input.inputValue(), href);
+        assert.equal(await page.locator('#local-draft input[name="title"]').inputValue(), 'Manual edit survives cancel');
+        assert.equal(calls.length, originalCalls);
+      }
+      await page.locator('#draft-clear').click(); // Leave the unchanged common flow with an empty draft.
     }
     const exactRow = page.locator('article[data-row-id^="motn:"]').first();
     if (await exactRow.count()) {

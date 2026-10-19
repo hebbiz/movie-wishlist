@@ -19,6 +19,13 @@ Owner completed that session after #183 `7997b03`; the
 adds only presentation groups and precise per-row link reasons. It authorizes no
 new source/owner requests or merged offer. Existing source bodies/budgets unchanged.
 
+A later separately approved [current link diagnosis](regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+used four canonical-card GETs, without provider requests or archives. Only proven
+classification gaps for Prime native referral, iTunes UA movie-ID and MEGOGO short
+UA view-ID routes are fixed. Native referrals now require draft acknowledgement;
+exact href/row provenance, independent claims, request bodies and budgets remain.
+No new owner test session is requested or production permission inferred.
+
 ## 1. Context
 
 Verified implementation baseline: #181 `e978e72389ec5fae7e2be141062b5606fd862f75`, stacked on

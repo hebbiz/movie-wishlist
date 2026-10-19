@@ -54,6 +54,24 @@ Default exclusions, exact links, tracking acknowledgement and edited-draft cance
 unchanged. These UI/reason corrections have offline/browser evidence only, not
 new owner validation. [Canonical audit](regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping).
 
+### Subsequent current agent link diagnosis — separate from owner history
+
+Under new explicit approval, October20, 2026: four canonical source GETs (one
+per card before fix, one per card after), all200, both identities matched and
+extraction ok. Current Prime/Apple/MEGOGO hrefs, mapping and respective localization
+blocks were present and reached projection. Refusal was at URL classification:
+Prime detail-ID/referral suffix, iTunes UA numeric movie-ID route and MEGOGO short
+UA numeric view route were unsupported. The bounded fix now admits those native
+card shapes as **unverified** candidates. Prime/iTunes referral URLs need explicit
+draft acknowledgement; no URL rewrite or destination request. All block territories
+stay unknown; no offer/property merging or entitlement claim.
+
+This identifies the **current** cause, not unsaved historical owner hrefs. No new
+owner result or test cycle. Offline authored fixtures and mock mobile browser
+cover subsequent UI/draft behavior; source HTML/IDs were not copied into fixtures.
+No HTML/full response archive or data sent to an external LLM. See the single
+[canonical diagnosis/rules/policy record](regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix).
+
 ## Kinobaza localization iteration — independent inspection, no new owner result
 
 Separate approval after #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c` permits

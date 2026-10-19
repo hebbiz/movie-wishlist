@@ -22,12 +22,13 @@ export function compactFields(row) {
   return { known, unknown };
 }
 
+export const needsLinkAcknowledgement = link => link?.kind === 'tracking-redirect' || link?.acknowledgementRequired === true;
 export function linkPresentation(link) {
   const kind = link?.kind ?? 'missing';
   const allowedKind = ['exact-card-unverified', 'tracking-redirect'].includes(kind);
   const canOpen = allowedKind && link?.transferable === true && typeof link.href === 'string' && Boolean(link.href);
-  if (canOpen) return { canOpen, summary: `Link: ${kind}${kind === 'tracking-redirect' ? ' — Tracking candidate — destination unverified' : ''}`,
-    navigation: 'Navigation: explicit user-open only', draft: kind === 'tracking-redirect' ? 'Draft: acknowledgement required' : 'Draft: eligible candidate (unverified)' };
+  if (canOpen) return { canOpen, summary: `Link: ${kind}${kind === 'tracking-redirect' ? ' — Tracking candidate — destination unverified' : link.referral === 'provider-native' ? ' — provider referral preserved; destination unverified' : ''}`,
+    navigation: 'Navigation: explicit user-open only', draft: needsLinkAcknowledgement(link) ? 'Draft: acknowledgement required' : 'Draft: eligible candidate (unverified)' };
   const summary = kind === 'missing' ? 'Link: not reported' : kind === 'unsafe' ? 'Link: unsafe — withheld' : allowedKind ? 'Link: not eligible for transfer' : `Link: unsupported kind (${kind})`;
   return { canOpen: false, summary, navigation: kind === 'missing' ? 'Navigation: unavailable' : kind === 'unsafe' ? 'Navigation: blocked (unsafe)' : 'Navigation: disabled by demo URL policy', draft: 'Draft: not eligible for transfer' };
 }
@@ -64,13 +65,13 @@ export function providerSummary(rows) {
 export function prepareDraft(result, row, trackingAcknowledged = false) {
   if (!result.rows.includes(row) || row.identityStatus !== 'matched') throw new Error('Select an independently identity-gated row.');
   const ids = { coherence: 'tt2866360', 'dune-part-two': 'tt15239678' };
-  const exact = row.link.kind === 'exact-card-unverified';
-  const tracking = row.link.kind === 'tracking-redirect' && trackingAcknowledged;
-  const purchaseURL = row.link.transferable && (exact || tracking) ? row.link.href : '';
+  const acknowledgementRequired = needsLinkAcknowledgement(row.link);
+  const purchaseURL = linkPresentation(row.link).canOpen && (!acknowledgementRequired || trackingAcknowledged) ? row.link.href : '';
   return { fields: { imdb_url: `https://www.imdb.com/title/${ids[result.film.id]}/`,
     title: result.film.title.replace(/ \(\d{4}\)$/, ''), year: result.film.id === 'coherence' ? '2013' : '2024',
     recommended_medium: row.provider.medium, purchase_url: purchaseURL, status: 'wishlist' },
-    sidecar: { rowId: row.id, source: row.provenance, provider: row.provider, linkKind: row.link.kind, linkAudit: row.linkAudit ?? null, territory: row.country ?? 'unknown',
+    sidecar: { rowId: row.id, source: row.provenance, provider: row.provider, linkKind: row.link.kind, linkAudit: row.linkAudit ?? null,
+      linkPolicy: { originalURL: row.link.href, referral: row.link.referral ?? null, acknowledgementRequired, acknowledged: acknowledgementRequired && trackingAcknowledged }, territory: row.country ?? 'unknown',
       kinobazaLocalization: row.kinobazaLocalization ?? null, countrySignal: row.countrySignal ?? null,
       access: row.access, package: row.package, cut: row.cut, identity: row.identityStatus,
       commonIdentity: result.identity.status, conflicts: row.conflicts,
@@ -128,9 +129,9 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     const included = add(review, 'pre'); included.id = 'draft-included';
     const evidence = add(review, 'details'); add(evidence, 'summary', 'Excluded fields and provenance'); const sidecar = add(evidence, 'pre');
     let tracking;
-    if (row.link.kind === 'tracking-redirect') {
+    if (needsLinkAcknowledgement(row.link)) {
       const label = add(review, 'label'); tracking = add(label, 'input'); tracking.type = 'checkbox'; tracking.id = 'draft-tracking-ack';
-      label.append(document.createTextNode(' I explicitly accept this opaque tracking candidate with its original URL/type/provenance; destination and entitlement unverified.'));
+      label.append(document.createTextNode(` I explicitly accept this ${row.link.kind === 'tracking-redirect' ? 'opaque tracking candidate' : 'provider-native referral candidate'} with its original URL/type/provenance; destination and entitlement unverified.`));
     }
     const refresh = () => { const prepared = prepareDraft(result, row, tracking?.checked ?? false); included.textContent = JSON.stringify(prepared.fields, null, 2); sidecar.textContent = JSON.stringify(prepared.sidecar, null, 2); };
     tracking?.addEventListener('change', refresh); refresh();

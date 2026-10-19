@@ -69,14 +69,22 @@ export function classifyLink(href, provider) {
   if (['themoviedb.org', 'www.themoviedb.org'].includes(host)) return { ...result, kind: 'tmdb-watch-page' };
   if (/\/(?:search|results)(?:\/|$)/i.test(u.pathname) || ['q', 'query', 'search_query'].some(k => u.searchParams.has(k))) return { ...result, kind: 'search' };
   if (host === 'click.justwatch.com') return { ...result, kind: 'tracking-redirect', transferable: Boolean(provider) };
+  // Observed provider-native card routes, not arbitrary paths/redirect services.
+  // Retain the original string; no destination fetch, referral stripping or ID substitution.
+  const primeReferral = ['primevideo.com', 'www.primevideo.com'].includes(host) && /^\/detail\/[a-z0-9]+\/ref=atv_[a-z0-9_]+$/i.test(u.pathname);
+  const itunesCard = host === 'itunes.apple.com' && /^\/ua\/movie\/id\d+$/.test(u.pathname);
+  const megogoIdCard = ['megogo.net', 'www.megogo.net'].includes(host) && /^\/ua\/view\/\d+$/.test(u.pathname);
   const exact = {
-    apple: host === 'tv.apple.com' && /^\/[a-z]{2}\/movie\/[^/]+\/umc\.cmc\.[a-z0-9]+$/i.test(u.pathname),
-    prime: ['primevideo.com', 'www.primevideo.com'].includes(host) && /^\/(?:[^/]+\/)?detail\/[a-z0-9]+\/?$/i.test(u.pathname),
+    apple: host === 'tv.apple.com' && /^\/[a-z]{2}\/movie\/[^/]+\/umc\.cmc\.[a-z0-9]+$/i.test(u.pathname) || itunesCard,
+    prime: ['primevideo.com', 'www.primevideo.com'].includes(host) && /^\/(?:[^/]+\/)?detail\/[a-z0-9]+\/?$/i.test(u.pathname) || primeReferral,
     netflix: ['netflix.com', 'www.netflix.com'].includes(host) && /^\/(?:[a-z]{2}\/)?title\/\d+\/?$/i.test(u.pathname),
     rakuten: ['rakuten.tv', 'www.rakuten.tv'].includes(host) && /^\/ua\/movies\/[^/]+\/?$/i.test(u.pathname),
-    megogo: ['megogo.net', 'www.megogo.net'].includes(host) && /^\/ua\/view\/\d+-[^/]+\.html$/i.test(u.pathname),
+    megogo: ['megogo.net', 'www.megogo.net'].includes(host) && /^\/ua\/view\/\d+-[^/]+\.html$/i.test(u.pathname) || megogoIdCard,
   };
-  return Object.hasOwn(exact, provider?.key) && exact[provider.key] ? { ...result, kind: 'exact-card-unverified', transferable: true } : result;
+  if (!Object.hasOwn(exact, provider?.key) || !exact[provider.key]) return result;
+  const referral = primeReferral || itunesCard && u.searchParams.has('at');
+  return { ...result, kind: 'exact-card-unverified', transferable: true,
+    ...(referral ? { referral: 'provider-native', acknowledgementRequired: true } : {}) };
 }
 
 function rowBase(source, film, provider, index, provenance) {

@@ -31,6 +31,11 @@ Current owner-checkpoint/link-audit work rechecked open #183 HEAD
 complete; [the subsequent audit and presentation policy](#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
 do not authorize another owner/live cycle or broaden source discovery.
 
+Subsequent explicit approval permits the [bounded provider-link diagnosis/fix](#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+from #183 `133a9fe3631362bd967ec57dc8b4e2fa201e8a96`, same base #182.
+It used four canonical-card GETs in agent memory only. This establishes current
+classification defects, not the historical owner hrefs or provider entitlement.
+
 **Discovery only. Owner approved one isolated, non-LLM, two-film UA discovery →
 selection → explicit draft-transfer PoC.** Required capabilities: TMDb identity/
 UA signals and MOTN direct links/access types. Optional bounded Kinobaza HTML
@@ -717,6 +722,95 @@ Tests use authored fixtures/mocks and free-port servers, not live source evidenc
 Windows lifecycle/key-routing checks were not rerun because those components
 are unchanged; prior results are historical. No owner process or unrelated files
 touched. No new owner test is requested; actual live link causes remain unknown.
+
+### Kinobaza provider-link loss — current agent diagnosis and bounded fix
+
+October 20, 2026, reviewed #183 `133a9fe3631362bd967ec57dc8b4e2fa201e8a96`,
+base #182 `264ad83206c5304f41cc7abe56235cce4d2fae0c`; tracked tree initially clean,
+unrelated untracked research preserved. This is separately approved functional
+diagnosis, not git consolidation or a new source. Prior owner reports above
+remain unchanged. No historical unsaved owner response is reconstructed.
+
+**Current agent evidence:** one direct GET per fixed canonical card, then one
+further GET per card to check the fix: **four source GETs total**, all HTTP200,
+no redirects followed. Both extractions `ok`, identity `matched`, no issues.
+Only in-memory initial HTML; no scripts/assets/accounts/cookies, provider/tracking
+requests, browser automation, LLM transport or saved bodies/HAR/fixtures.
+Environment: agent Node/Windows, unauthenticated; egress geography unknown, not
+the owner's Windows/Safari response or an account-specific offer. Three separate
+public-rules GETs described below are not film-card extraction validations.
+
+| Current source block | Anchor → extraction → mapping/block → projection before fix | Exact refusal rule / root cause | After fix: navigation / draft |
+| --- | --- | --- | --- |
+| Coherence Prime | href present, absolute candidate, provider Prime mapped, own paragraph block associated, href preserved, territory unknown | Classifier accepted detail ID with no trailing referral segment; native `/detail/<alphanumeric-id>/ref=atv_<alphanumeric-or-underscore-token>` became `unknown`. | `exact-card-unverified`, explicit-open only. Native referral preserved; draft URL blank until acknowledgement, then exact original URL. |
+| Dune Apple/iTunes | href present, absolute candidate, Apple Store mapped, own table block associated, href preserved, territory unknown | Classifier accepted `tv.apple.com` card shape only, not the observed `itunes.apple.com/ua/movie/id<digits>` with affiliate `at` / language `l` query. | `exact-card-unverified`, explicit-open only. Observed `at` referral requires acknowledgement before exact unchanged draft URL. |
+| Dune MEGOGO | href present, absolute candidate, MEGOGO mapped, own paragraph block associated, href preserved, territory unknown | Classifier required `/ua/view/<digits>-<slug>.html`, excluding native short `/ua/view/<digits>`. | `exact-card-unverified`, explicit-open only; exact short URL eligible for selected-row draft confirmation. |
+
+All three current failures were **unsupported classification**, not missing href,
+unsafe extraction, unmapped provider or absent block association. No extraction/
+localization/provider-mapping defect was established, so those modules are unchanged.
+All three matched rows now reach the UI policy; a mock browser test separately
+checks the actual rendered anchors/review/confirm/cancel, not a live provider visit.
+Destination identity/redirects/availability remain unverified even for a card-shaped
+URL. No known control URL or current source ID was hardcoded into fixtures/runtime.
+
+**Narrow URL policy:** existing HTTPS/userinfo/port/unsafe-character checks precede
+classification; search/relative/watch-page URLs remain ineligible. The additions
+require an already mapped matching provider, exact native host and bounded path:
+`primevideo.com`/`www.primevideo.com` with the specific detail-ID/`ref=atv_...`
+suffix, `itunes.apple.com` with **UA movie numeric-ID route only** (not album,
+search, other country, arbitrary legacy slug route), and `megogo.net`/`www.megogo.net`
+with **UA numeric view route only**. Existing supported paths remain intact. Other
+hosts, extra path suffixes, malformed IDs/referral path, credentials, non-default
+ports, unsafe protocols and search/relative forms are refused. Query/encoding/
+referral components stay exactly as extracted, never reconstructed or resolved.
+
+Native provider referral is not asserted to be an opaque redirect. It retains
+`exact-card-unverified` plus `referral: provider-native` and an acknowledgement
+gate. Prime's observed `ref=atv_...` path and iTunes `at` query require the same
+explicit draft acknowledgement as opaque tracking, without falsely labelling
+their destination as fetched/verified. Navigation is a separate explicit user
+action; it makes no network request during discovery. The sidecar retains original
+URL/kind/referral/gate/ack state and the selected row's provenance. Acknowledgement
+does not verify entitlement or import localization into another source offer.
+Without it the URL stays blank; Cancel still preserves the existing manual draft.
+
+**Rules review, October20:** direct HTTP200 reads of current canonical
+[Terms](https://kinobazaua.com/terms), [Privacy](https://kinobazaua.com/privacy) and
+[robots.txt](https://kinobazaua.com/robots.txt), after web-reader cache failures.
+Terms §1 covers public users; §2 conduct restrictions disclose no identified
+direct prohibition applicable to this no-account/no-post bounded read; §3 leaves
+information-use/third-party responsibility with the user; §4 allows changes.
+Privacy's public-discussion RSS/API wording is not catalogue extraction permission.
+Generic robots exclusions do not match either exact title card; separate
+meta-externalagent deny-all is not bypassed/impersonated. No scoped direct conflict
+or technical blocking observed, **not an established licence or legal guarantee**.
+Robots/public access is not permission; regular/commercial reuse, redistribution
+and broader retention rights remain unresolved. No email prerequisite inferred.
+Existing attribution/transient-only/source-use boundaries stay in force.
+
+Source fetch/config/redirect/parser/request bodies/budgets are unchanged: max4
+composed calls without canonical hop, max5 only with it, no retries/destinations.
+Search/Apple/Gemini/TMDb/MOTN modes, MEGOGO adapter and Windows helpers unchanged.
+Current agent extraction/projection checks are not a new owner run, provider
+verification, general accuracy result or full live multi-source UI run. No further
+owner/source test cycle requested; historical owner response causes remain unknown.
+
+Verification: two new authored regressions failed before the classifier fix
+(`unknown` instead of `exact-card-unverified`), then passed. **284 offline/HTTP
+passed**, including **50 targeted** link/grouping/localization/discovery cases;
+full installed-Edge mock browser suites **124 passed /8 skips**. Targeted
+consolidated mobile suite **18 passed /1 WebKit skip**. Full skips: seven absent
+WebKit binaries, optional same-host LAN setup; no downloads, not real iPhone.
+Browser checks cover all three rendered links, explicit click (destination
+navigation intercepted before request), acknowledgement check/uncheck, exact URL
+confirmation and cancel preserving manual edits, plus unchanged source-call
+counts/auth/one-shot/no persistence. Source-card extraction/projection above is
+separate current live evidence, not a mock claim or provider navigation test.
+Windows lifecycle/key routing not rerun because unchanged; owner demo untouched.
+All nine Markdown documents checked:231 local links/166 anchors,13 handoff
+sections. Owner restart-command syntax parsed only, not executed; scope/whitespace
+clean. No production/other adapter/request changes or full-response archive.
 
 ## Historical experiments and feasibility records
 

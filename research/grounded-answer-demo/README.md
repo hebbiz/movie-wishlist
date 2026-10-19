@@ -20,8 +20,10 @@ general accuracy, current entitlement or full six-platform coverage. The
 previous checkpoint made no live request. The localization iteration subsequently
 used four expressly approved diagnostic card GETs (two old URLs, then two canonical
 URLs), no automatic transitions or API/provider requests. The prior owner session
-and localization owner sessions are complete. No new owner/live/source tests are
-requested by this checkpoint; the UI grouping/reason changes are offline-tested.
+and localization owner sessions are complete. The later grouping/reason checkpoint
+made no source requests. Separately approved current link diagnosis then used
+four canonical-card GETs (one per card before/after fix), no provider requests or
+HTML archive. No new owner test cycle is requested.
 
 ## Consolidated UA discovery and local draft
 
@@ -58,7 +60,7 @@ Select → review included/excluded fields → explicit confirm → editable **l
 draft**, not production MW. Draft is page-memory only; film change/clear/reload/navigation
 discards it, no autosave/storage/submit. Search/relative/unsafe/unknown/TMDb watch
 URLs never populate purchase_url. Exact-card shape is still unverified. Opaque
-tracking requires an additional acknowledgement; exact href/type/provenance stay
+tracking and recognized provider-native referrals require an additional acknowledgement; exact href/type/provenance stay
 unchanged. Without an allowed link, purchase_url stays blank. Status defaults to
 wishlist, never acquired from a rent/buy/subscription claim. Cancel selection
 preserves an existing confirmed or edited draft. The old destructive Cancel-edits
@@ -101,15 +103,24 @@ end-to-end adapter** at its implementation baseline; the subsequent
 reported Kinobaza ok/matched for both films, 5/5 requests each (567/665ms, not a
 benchmark). These are source claims, not provider verification. No new owner tests.
 
-The [offline link audit](docs/regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
-cannot establish individual live Prime/Apple/MEGOGO link causes without their exact
-href/kind; no speculative URL whitelist expansion or destination lookup. A proven
+The [earlier offline link audit](docs/regional-card-proposal.md#kinobaza-owner-checkpoint-link-audit-and-provider-grouping)
+could not establish historical Prime/Apple/MEGOGO hrefs. A proven
 unsafe→missing reason-loss defect is fixed without restoring unsafe hrefs.
 Rows now show **not reported**, **unsafe**, **unsupported kind**, or **not eligible
 for transfer**, and separate Navigation/Draft status. This is demo URL policy,
 not a legal ban or proof the source lacks href. Exact/tracking candidates keep
 explicit-open/acknowledgement rules. Per-row details preserve extraction/mapping/
 block/classification reasons; draft sidecar records the selected row ID.
+The [subsequent bounded live diagnosis](docs/regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+found all three current hrefs extracted/mapped/associated correctly; the classifier
+excluded native Prime detail-ID/referral, iTunes UA numeric movie-ID and MEGOGO
+short UA view-ID paths. Those narrow shapes now reach explicit-open UI as
+`exact-card-unverified`. Prime `ref=atv_...` / iTunes `at` referrals are preserved,
+not resolved; draft transfer requires acknowledgement. Plain MEGOGO short card
+is eligible only through selected-row review/confirm. Source properties/territory
+remain separate; no localization borrowing or account entitlement inference.
+Current extraction/projection passed agent checks, UI/draft passed mocks; this is
+not provider navigation validation or reconstruction of past owner responses.
 See [iPhone guide](docs/iphone-windows.md#consolidated-discovery-owner-workflow).
 
 Server-only `TMDB_READ_ACCESS_TOKEN` and `MOTN_API_KEY`; helper prompts separately
