@@ -274,6 +274,10 @@ the separate Dune `m.vkino.com.ua` citation-source anomaly, and the
 [initial-HTML/terms assessment](regional-card-proposal.md#initial-html-inspection-after-the-owner-tests)
 for the next feasibility conclusion. A citation source is not a retrieval log;
 do not claim exclusive Kinobaza origin for the complete answer.
+The later [owner-approved HTML-only PoC](regional-card-proposal.md#owner-approved-html-extraction-poc)
+is separate from URL Context: it changes none of these Gemini requests and has
+no model, Search, citations or destination fetch. Its live extraction remains
+owner-validation pending; a public-rules check is not live extraction evidence.
 
 Use the [one-line Termius/PowerShell commands](iphone-windows.md#kinobaza-url-context-one-line-owner-commands):
 synthetic first, then **one live request per film**, no automatic rerun. Reload
