@@ -1,0 +1,82 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { createDemo } from '../server.mjs';
+import { MEGOGO_URL } from '../megogo.mjs';
+import { syntheticMegogo } from '../megogo-synthetic.mjs';
+
+test('MEGOGO mobile browser (mock only, not real iPhone)', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
+  const { chromium, webkit } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href);
+  const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) }); t.after(() => browser.close());
+  const run = async (engine, mode, kind, t) => {
+    let calls = 0;
+    const server = createDemo({ mode, retrieval: 'megogo-html', discovery: 'digital-ua', fetchImpl: async (url, init) => {
+      calls++; assert.equal(url, MEGOGO_URL); assert.equal(init.redirect, 'manual');
+      if (kind === 'blocked') return new Response('DO_NOT_SHOW_BODY', { status: 403 });
+      if (kind === 'redirect') return new Response(null, { status: 302, headers: { location: 'https://example.com/no' } });
+      let html = syntheticMegogo({ body: '<dl><dt>Package</dt><dd>&lt;img src=x onerror=alert(1)&gt;</dd></dl>' });
+      if (kind === 'mismatch') html = html.replaceAll('22027436', '999');
+      if (kind === 'geo') html = html.replace('</main>', '<p>Not available in your country</p></main>');
+      if (kind === 'unknown') html = '<!doctype html><main>Unknown markup</main>';
+      if (kind === 'parse-policy') html += '<p data-private="PRIVATE_DIAGNOSTIC_BROWSER" data-private="other">PRIVATE_DIAGNOSTIC_BROWSER &copy text</p>';
+      if (kind === 'field-refusal') html = html.replace('English — PCM 1.0', '<span data-lang=en data-lang=uk>English PCM</span>');
+      if (kind === 'page-refusal') html = html.replace('<link rel="canonical"', '<link rel="canonical" rel="alternate"');
+      if (kind === 'decorative-duplicates') html = html.replace('<link rel="canonical"', '<link class=desktop class=mobile rel="canonical"')
+        .replace('type="application/ld+json"', 'class=one class=two type="application/ld+json"').replace('<h1>Dune: Part Two</h1>', '<h1>Dune: Part Two</h1><h1>Дюна. Частина друга</h1>');
+      return new Response(html, { headers: { 'content-type': 'text/html' } });
+    } });
+    await new Promise(r => server.listen(0, '127.0.0.1', r)); t.after(() => new Promise(r => server.close(r)));
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    const page = await engine.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true }); t.after(() => page.close());
+    const external = [], logs = []; let posts = 0;
+    page.on('request', req => { if (!req.url().startsWith(origin)) external.push(req.url()); if (req.method() === 'POST') posts++; });
+    page.on('console', m => logs.push(m.text()));
+    await page.route('**/*', route => route.request().url().startsWith(origin) ? route.continue() : route.abort());
+    await page.goto(origin); await page.waitForFunction(() => !document.querySelector('#run').disabled);
+    assert.equal(calls, 0); assert.match(await page.locator('#source-url').textContent(), /22027436-dyuna/);
+    assert.match(await page.locator('#retrieval-mode').textContent(), /megogo-html/);
+    assert.match(await page.locator('#settings').textContent(), /fetcher geography: unknown/);
+    assert.match(await page.locator('#prompt').textContent(), /One GET/);
+    await page.locator('#run').evaluate(b => { b.click(); b.click(); });
+    await page.locator('#result').waitFor({ state: 'visible' });
+    assert.equal(posts, 1); assert.equal(calls, mode === 'live' ? 1 : 0); assert.equal(await page.locator('#run').isDisabled(), true);
+    const text = await page.locator('#answer').textContent();
+    assert.match(text, /entitlement/); assert.match(text, /unknown/);
+    if (mode === 'synthetic') assert.match(text, /SYNTHETIC/);
+    if (kind === 'normal' || kind === 'geo') { assert.match(text, /SYNTHETIC Example Package/); if (mode === 'live') assert.match(text, /<img src=x/); }
+    if (kind === 'geo') assert.match(text, /geo-restricted/);
+    if (kind === 'blocked') assert.match(text, /access-blocked/);
+    if (kind === 'mismatch') assert.match(text, /identity-mismatch/);
+    if (kind === 'unknown') assert.match(text, /unsupported-markup/);
+    if (kind === 'redirect') assert.match(text, /redirect-not-followed/);
+    if (kind === 'parse-policy') {
+      assert.match(text, /Identity: matched/); assert.match(text, /Structural diagnostics/);
+      assert.match(text, /duplicate-attribute/); assert.match(text, /missing-semicolon-after-character-reference/);
+      assert.match(text, /fields-evaluated/); assert.doesNotMatch(text, /PRIVATE_DIAGNOSTIC_BROWSER|data-private|startOffset/);
+      assert.match(text, /SYNTHETIC Example Package/);
+    }
+    if (kind === 'field-refusal') {
+      assert.match(text, /Identity: matched/); assert.match(text, /audio: unknown/);
+      assert.match(text, /partial-fields/); assert.match(text, /SYNTHETIC Example Package/);
+      assert.doesNotMatch(text, /PCM/);
+    }
+    if (kind === 'page-refusal') {
+      assert.match(text, /Identity: unknown/); assert.match(text, /significant-duplicate-attribute/);
+      assert.match(text, /Independent unambiguous identity signals: matched/); assert.doesNotMatch(text, /SYNTHETIC Example Package/);
+    }
+    if (kind === 'decorative-duplicates') { assert.match(text, /Identity: matched/); assert.match(text, /decorative-class/); assert.match(text, /SYNTHETIC Example Package/); }
+    assert.equal(await page.locator('#answer a,#answer img,#answer script,#answer iframe').count(), 0);
+    assert.equal(await page.locator('#retrieval-result').textContent(), ''); assert.equal(await page.locator('#suggestions').textContent(), '');
+    assert.deepEqual(external, []); assert.ok(!logs.some(s => /Example Package|DO_NOT_SHOW_BODY/.test(s)));
+    assert.deepEqual(await page.evaluate(async () => [localStorage.length, sessionStorage.length, (await indexedDB.databases()).length, (await caches.keys()).length]), [0, 0, 0, 0]);
+    for (const selector of ['#source-url', '#prompt', '#run', '#answer']) { await page.locator(selector).scrollIntoViewIfNeeded(); assert.equal(await page.locator(selector).isVisible(), true); }
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await page.reload(); await page.waitForFunction(() => !document.querySelector('#run').disabled); assert.equal(await page.locator('#answer').textContent(), '');
+    assert.equal(calls, mode === 'live' ? 1 : 0);
+  };
+  for (const [mode, kind] of [['synthetic', 'normal'], ...['normal', 'geo', 'blocked', 'redirect', 'mismatch', 'unknown', 'parse-policy', 'field-refusal', 'page-refusal', 'decorative-duplicates'].map(k => ['live', k])]) await t.test(`${mode}/${kind}`, t => run(browser, mode, kind, t));
+  await t.test('WebKit', { skip: !existsSync(webkit.executablePath()) && 'WebKit binary absent; no download.' }, async t => {
+    const engine = await webkit.launch({ headless: true }); t.after(() => engine.close()); await run(engine, 'synthetic', 'normal', t);
+  });
+});

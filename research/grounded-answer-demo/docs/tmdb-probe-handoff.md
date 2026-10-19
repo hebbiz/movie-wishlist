@@ -1,4 +1,14 @@
-# TMDb data probe — implementation handoff (design only)
+# TMDb data probe — approved handoff and implementation record
+
+The owner approved this handoff after #179 closeout `9e4bf4f`. It is now
+implemented in isolated `tmdb-data`, on a separate branch stacked on open #179.
+The design requirements below retain their preparation context; current runtime,
+validation and remaining live-readiness conditions are in the
+[implementation record](#implementation-record). **No agent live TMDb test performed.**
+The first Coherence owner-run result and subsequent offline-only correction are
+separate [below](#appended-resource-validation-correction). The owner subsequently
+completed Dune successfully; the [manual checkpoint is closed](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint),
+without a Coherence rerun. No further owner tests are requested.
 
 ## Context
 
@@ -6,7 +16,7 @@ MW-FUT-01 remains **Discovery**. This document accompanies the MOTN closeout in
 PR #179, whose inspected implementation HEAD was `d3e32b0`, base #178 `30c3160`.
 [Owner results](digital-ua-owner-validation.md#movie-of-the-night--two-completed-owner-run-results)
 and the [adapter audit](regional-card-proposal.md#motn-closeout-identity-and-field-provenance)
-are separate evidence. No TMDb runtime or live API test is implemented here.
+are separate evidence. At handoff preparation no TMDb runtime/live test existed.
 Recheck instructions, branch/stack and docs before the follow-up task.
 
 ## Objective
@@ -16,7 +26,7 @@ In one short owner session, inspect two independent blocks for **Coherence** and
 country-keyed Watch Providers data for UA. Discover what is returned/missing,
 not general accuracy, offer localization or account-specific entitlement.
 
-## Current implementation
+## Current implementation at design checkpoint
 
 `research/grounded-answer-demo/` has fixed-film Search, Apple/Kinobaza URL Context,
 Kinobaza HTML and MOTN modes; default synthetic, localhost/LAN auth, one-shot
@@ -213,3 +223,187 @@ current develop after inspecting intervening changes. Preserve unrelated files,
 including untracked `research/media-discovery/`; no PR #173/production changes.
 Separate feature commit, tests, scope/link/whitespace checks, review-ready stop.
 No force/history rewrite, merge, tag, release, live agent API or deployment.
+
+## Implementation record
+
+Implemented October 18, 2026 from #179 HEAD `9e4bf4f90ab3d0cc4d8e203f5b47470511be0b4c`,
+whose base remains #178 `30c3160`; separate branch `codex/mw-fut-01-tmdb-data`.
+The earlier future-tense design is now fulfilled by [tmdb.mjs](../tmdb.mjs),
+[TMDb display](../public/tmdb-display.mjs), shared config/server/session controls
+and minimal hidden-token routing in the existing Windows Start helper. No
+production key/endpoint reuse, dependency, MOTN adapter or Kinobaza parser change.
+Model/generation settings and all existing Gemini request bodies are unchanged.
+
+Public official docs and OpenAPI rechecked **October 18, 2026**, read-only;
+not authenticated title calls. The seven endpoint schemas match the table above;
+Details supports five appended resources (under its 20 limit), Watch Providers
+has no country query parameter. At initial implementation the combined request
+was live-unvalidated; the subsequent owner Coherence run is recorded separately.
+Missing/invalid append is a displayed limitation, never additional requests.
+`TMDB_READ_ACCESS_TOKEN` / Bearer transport and hidden helper prompt are now
+implemented, not merely proposed. The child receives only its selected provider
+credential; no inherited production/other-provider key is forwarded.
+
+The current [FAQ](https://developer.themoviedb.org/docs/faq),
+[application-auth docs](https://developer.themoviedb.org/docs/authentication-application),
+[append docs](https://developer.themoviedb.org/docs/append-to-response) and
+[Watch Providers attribution](https://developer.themoviedb.org/reference/movie-watch-providers)
+support the documented technical/attribution contract, not full legal clearance.
+The full API Terms URL again returned robots denial; no bypass/alternate route.
+**Live readiness remains conditional**, exactly as in the terms section: owner
+reviews their applicable current agreement during normal token setup; direct
+conflict means stop, unavailable/ambiguous text means keep live conditional.
+No blanket AI/inference finding, paid-plan assumption, mandatory email or claim
+that public docs substitute for the agreement. This implementation is bounded
+non-LLM transient display, not consent for a regular/commercial integration.
+
+Credits/About shows the required TMDb notice, links to TMDB, and attributes Watch
+Providers to JustWatch. [Local SVG](../public/tmdb-logo.svg) is the unchanged
+[official documentation logo](https://files.readme.io/29c6fee-blue_short.svg),
+identified in the FAQ page's own HTML header, not recreated artwork. The
+dedicated [approved-logo page](https://www.themoviedb.org/about/logos-attribution)
+also could not be read due to robots; exact current approved-branding status is
+part of the owner terms/attribution review, not independently certified here.
+The SVG is static branding, not live response evidence. It is served locally
+behind existing auth; no browser/CDN/provider-logo request. Only `tmdb-data`
+adds `'self'` to image CSP to allow this asset; existing modes keep their CSP.
+
+### Result interpretation and pending comparison
+
+The implemented projection separates A metadata from B UA country buckets.
+It preserves field-level missing/null/reported-empty/invalid states, receipt
+times and stage HTTP statuses. A missing primary ID or supplied malformed IMDb
+is unresolved; stable-ID conflict is mismatch. Missing crosswalk does not veto
+an exact primary ID. B error/missing/empty is distinct from B not requested.
+No current UA availability conclusion or fixed expected translations/providers
+are asserted. An explicit `uk` translation title only proves catalogue text.
+
+Relative to prior probes, the **potential** new information is stable crosswalk,
+aliases/directors/release events, labelled translations and aggregate UA access
+buckets. MOTN supplies candidate deep links/access types; TMDb Watch Providers
+does not supply provider deep links or the missing offer audio/video/price data.
+Kinobaza/JustWatch overlap is not independent confirmation. Whether this adds
+useful real data is a pending owner comparison, not an offline-test finding.
+
+Executed checks (Node 24.22.0, PowerShell 7, October 18, 2026): **184 offline/HTTP
+tests passed**, including 45 new TMDb tests and the unchanged 22-body Gemini
+golden regression. Full sequential installed-Edge suites: **90 passed / 6
+skipped**, five absent WebKit binaries and optional explicit-IP LAN. Final TMDb
+browser rerun after heading/aspect-ratio refinements: **15 passed / 1 WebKit
+skip**. No browsers downloaded; mobile viewport is not real iPhone/Safari.
+
+Windows temp-copy/free-port lifecycle passed for all six modes, including TMDb
+mock-only token routing/two-call budget, parent exit, switches, duplicate start,
+forged-PID refusal, safe stop and restart. Native diagnostics passed in a fresh
+PowerShell process; an initial chained diagnostic invocation collided with an
+already-loaded test type, not detached-launch/runtime failure. Native launcher
+source is unchanged. Owner demo was not stopped; real SSH-disconnect behavior
+was not revalidated or requested. Synthetic/mock checks cover serial budget,
+both-stage errors, auth/one-shot, source matching, no secret/foreign/prose leakage,
+storage or destination calls. Owner restart command was syntax-parsed only.
+Local links/anchors and scope/whitespace checked; exact PR diff is the review
+artifact, not live evidence. No live API, raw archive, system/deployment change
+or terms acceptance by agent.
+
+Follow the [single-session owner workflow](iphone-windows.md#tmdb-data-owner-workflow)
+only for a separately justified reproduction after scoped terms readiness, not
+as another test request. The [existing owner record](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint)
+now closes the manual stage. No Coherence/card/SSH/synthetic round is needed.
+
+### Appended-resource validation correction
+
+Reviewed October 18, 2026 at #180 HEAD `0fcb1d27beaa3c00e26d94330152a21363ae2df8`,
+base #179 `9e4bf4f`. [First owner-run Coherence result](digital-ua-owner-validation.md#coherence--first-owner-run-result)
+is reported separately: both requests 200, primary identity matched, all five
+appended resources displayed invalid, B returned UA Apple TV Store rent/buy.
+No independent live repeat or retained live response is available.
+
+**Request audit:** the exact fixed Details URL contains `language=uk-UA` and
+`append_to_response=external_ids,alternative_titles,credits,release_dates,translations`.
+The [current official append guide](https://developer.themoviedb.org/docs/append-to-response)
+documents comma-separated movie subresources as nested JSON objects; the
+[Details reference](https://developer.themoviedb.org/reference/movie-details)
+allows 20, so five is within budget. No request construction defect demonstrated.
+The URL, headers, serial two-call cap and Watch Providers request/projection are
+unchanged; no separate-resource fallback or retries added.
+
+**Schema evidence and its limits:** the public
+[OpenAPI](https://developer.themoviedb.org/openapi/tmdb-api.json) re-read on this
+date lists standalone resource properties as `id,imdb_id,…` (external IDs),
+`id,titles` (alternative titles), `id,cast,crew` (credits), `id,results` (release
+dates), `id,translations` (translations). None of these five response schemas
+has a `required` list making `id` mandatory. The Details schema does not model
+the combined appended variants, and the append guide does **not** promise a
+repeated `id` inside each object. This is not a published exact five-resource
+combined example or proof of the owner's original live shape. Do not claim
+that the original objects definitely omitted IDs, that the API changed, or that
+all appended objects always lack IDs. The standalone examples are not a basis
+for imposing an extra mandatory-ID contract on every appended object.
+
+**Proven code defect:** `appended()` rejected an otherwise valid object whenever
+`v.id !== expectedId`, including an absent `id`. A new authored regression
+removed only the repeated IDs from all five otherwise-valid objects: all
+became invalid/partial before the fix. A separate resource-state regression also
+failed; supplied stable-ID conflict checks already passed. This proves the
+validator's unsupported repeated-ID assumption and a deterministic mechanism
+consistent with the symptoms, **not the exact live root cause**. Since the live
+body/IDs are unknown, other shape problems cannot be excluded or fabricated.
+
+**Minimal fix:** accept a nested object in its validated parent movie context
+without a repeated movie ID. If an `id` is present, still validate it strictly;
+all actually supplied valid conflicting movie/IMDb IDs retain the existing
+identity mismatch gate and B-not-requested behavior. Root ID remains required.
+Nonobjects, supplied malformed IDs and explicit API-error objects are invalid,
+not missing. A missing resource is missing; null stays null; a valid `{}` is
+reported with missing fields. The UI now exposes resource state separately from
+field state, avoiding the old conflation. No provider/localization inference or
+confidence score is added.
+
+**Fixture correction:** original authored data repeated `id` in every appended
+object, mirroring standalone endpoint examples and masking the assumption.
+Default synthetic now omits those repeated movie IDs and keeps resource-specific
+documented keys (`imdb_id`, `titles`, `crew`, `results`, `translations`). Separate
+tests add matching IDs, conflicting IDs, missing/null/malformed resources,
+API-error objects and valid objects with absent fields. Person/crew IDs are not
+mistaken for movie IDs. These are schema-oriented authored compatibility cases,
+not copied live bodies or a claim that mocks establish the actual live format.
+
+At correction delivery the fix was **offline-tested / live-unvalidated**; owner
+Coherence B success was preserved. The subsequent owner Dune run passed both
+blocks and all five appends. This establishes practical post-fix compatibility
+in that case, not the exact omitted-ID shape of the original Coherence response.
+The manual stage is now complete, with no Coherence repeat or new test cycle. No
+streaming-card rechecks, extra endpoints, API calls by agent, raw-response archive,
+terms change or owner-demo stop. [Updated minimal plan](iphone-windows.md#tmdb-data-owner-workflow).
+
+Correction checks: **188 offline/HTTP passed** (49 TMDb); **18 TMDb Edge
+browser checks passed / 1 absent-WebKit skip**, narrow viewport not real iPhone.
+TMDb Windows temp-copy lifecycle/mock token routing/two-call/one-shot regression
+passed; owner process untouched. Local links/anchors, scope diff and whitespace
+checked. These tests establish code compatibility, not the live response shape.
+
+### Completed probe and compact display checkpoint
+
+The [owner completion record](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint)
+separates practical source complementarity from entitlement and shared JustWatch
+lineage. Explicit Ukrainian title/overview/tagline metadata support catalogue
+search/matching, not offered audio/subtitles; displayed UA release-event language
+was empty. Dune A/B and five append resources succeeded; Coherence is not rerun.
+No additional manual verification requested, no raw responses/screenshots added.
+
+Display-only follow-up keeps UA aliases/release events, uk translations, identity
+and UA provider/access rows visible. All non-UA or unknown-territory release
+events remain in **collapsed details**; other aliases/translations/person IDs and
+provider technical fields also move to details. Issues, field states and unknowns
+are retained; empty values display as reported-empty, never implied absence.
+Opening details causes no requests. Transport, projection, budget, session/auth,
+Windows helpers and other modes are unchanged. The [shared model and MEGOGO
+proposal](regional-card-proposal.md#shared-offer-observation-model--design-only)
+are documentation only, not runtime integration or new owner testing.
+
+Display checkpoint checks: **188 offline/HTTP passed**, **19 TMDb Edge browser
+checks passed / 1 absent-WebKit skip**. Authored foreign/unknown-country events,
+aliases and translations stay collapsed and become visible on explicit expansion
+without more requests. Mobile viewport is not real iPhone; no manual round asked.
+Windows/helper/server/transport/adapter code did not change, so the previous
+Windows lifecycle evidence is preserved rather than misreported as a new run.

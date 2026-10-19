@@ -1,4 +1,17 @@
 import { KINOBAZA_CARDS } from './url-context.mjs';
+import { extractLocalization } from './kinobaza-localization.mjs';
+
+export function canonicalKinobazaURL(filmId) {
+  if (!Object.hasOwn(KINOBAZA_CARDS, filmId)) throw new Error('Fixed Kinobaza film required.');
+  return `https://kinobazaua.com/titles/${filmId}`;
+}
+export function canonicalRedirectTarget(source, location, status) {
+  if (![301, 308].includes(status) || typeof location !== 'string') return null;
+  const entry = Object.entries(KINOBAZA_CARDS).find(([, url]) => source === url);
+  // Exact spelling deliberately excludes credentials, query, fragments, ports,
+  // encoded path tricks, downgrade, extra hosts and a second hop/loop.
+  return entry && location === canonicalKinobazaURL(entry[0]) ? location : null;
+}
 
 export const HTML_LIMIT_BYTES = 2 * 1024 * 1024;
 export const HTML_TIMEOUT_MS = 15_000;
@@ -77,8 +90,9 @@ function providerName(a) {
   }
   const badges = [label, attr(a, 'aria-label') ?? '', text(a),
     ...nodes(a).filter(n => n.tagName === 'img').map(n => attr(n, 'alt') ?? '')];
-  const match = badges.map(s => /^Доступно (?:в|у) (itunes|rakuten|megogo|netflix|prime video)$/i.exec(clean(s))).find(Boolean);
-  return match ? { name: match[1] } : null;
+  const matches = badges.map(s => /^(?:Доступно (?:в|у)|Купити в) (itunes|rakuten|megogo|netflix|prime video|amazon prime)(?: з українською аудіо доріжкою \/ субтитрами)?$/i.exec(clean(s))).filter(Boolean);
+  if (new Set(matches.map(m => m[1].toLowerCase())).size > 1) return { unsupported: true };
+  return matches.length ? { name: matches[0][1] } : null;
 }
 function candidate(a, territory, html, provider) {
   const href = attr(a, 'href');
@@ -116,6 +130,8 @@ export async function extractHtml(html, film) {
     const accordions = all.filter(n => attr(n, 'id') === 'availabilityAccordion');
     if (accordions.length !== 1) return fail('missing-or-duplicate-availabilityAccordion');
     const accordion = accordions[0];
+    const localization = extractLocalization({ accordion, h1: all.find(n => n.tagName === 'h1'), identifyProvider: providerName, isExcluded: excluded,
+      makeCandidate: (anchor, territory, provider) => candidate(anchor, territory, html, provider) });
     const items = children(accordion).filter(n => n.tagName);
     if (!items.length || items.some(n => !hasClass(n, 'accordion-item'))) return fail('unsupported-accordion-items');
     const candidates = []; const issues = []; const panels = new Set();
@@ -125,6 +141,7 @@ export async function extractHtml(html, film) {
       if (provider?.unsupported) { issues.push('conflicting-provider-label'); return; }
       if (!provider?.name || /^justwatch$/i.test(provider.name)) return;
       const entry = candidate(a, territory, html, provider.name);
+      if (entry && localization.byAnchor.has(a)) entry.blockId = localization.byAnchor.get(a).blockId;
       if (entry) { candidates.push(entry); if (entry.issue) issues.push(entry.issue); }
     };
     for (const item of items) {
@@ -148,11 +165,14 @@ export async function extractHtml(html, film) {
       if (offset > h1.sourceCodeLocation.startOffset && offset < accordion.sourceCodeLocation.startOffset) add(a, null);
     }
     if (candidates.length > 100) return fail('candidate-count-limit');
-    return { status: candidates.length ? (issues.length ? 'partial' : 'ok') : 'unresolved', identity: checked, candidates, issues: [...new Set(issues)] };
+    const availabilitySignals = candidates.filter(c => c.territory).map(c => ({ provider: c.provider, href: c.href, territory: c.territory,
+      state: 'source-section-claim', value: 'available', access: 'unknown', upstream: 'JustWatch', basis: 'Explicit country heading/panel, not href presence or account entitlement.' }));
+    return { status: candidates.length ? (issues.length || localization.issues.length ? 'partial' : 'ok') : 'unresolved', identity: checked, candidates,
+      localization: { film: localization.film, blocks: localization.blocks }, availabilitySignals, issues: [...new Set([...issues, ...localization.issues])] };
   } catch { return { status: 'unsupported-markup', candidates: [], issues: ['unresolved-parser-or-structure'] }; }
 }
 
-export async function fetchHtmlCandidates(selection, fetchImpl = globalThis.fetch, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES } = {}) {
+export async function fetchHtmlCandidates(selection, fetchImpl = globalThis.fetch, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, canonicalRedirect = false } = {}) {
   if (selection.retrieval !== 'kinobaza-html' || !Object.hasOwn(KINOBAZA_CARDS, selection.film.id) || selection.sourceURL !== KINOBAZA_CARDS[selection.film.id]) throw new Error('Fixed HTML source required.');
   try { await import('parse5'); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['Install isolated parser before live GET.'] }; }
   const controller = new AbortController(); let reader;
@@ -161,8 +181,16 @@ export async function fetchHtmlCandidates(selection, fetchImpl = globalThis.fetc
   const bounded = promise => Promise.race([promise, aborted]);
   const failure = (status, httpStatus) => ({ status, ...(httpStatus ? { httpStatus } : {}), candidates: [] });
   try {
-    const response = await bounded(fetchImpl(selection.sourceURL, { method: 'GET', redirect: 'manual', credentials: 'omit',
+    const get = url => bounded(fetchImpl(url, { method: 'GET', redirect: 'manual', credentials: 'omit',
       headers: { Accept: 'text/html', 'User-Agent': 'MovieWishlistResearchPoC/0.1 (manual fixed-card experiment)' }, signal: controller.signal }));
+    let response = await get(selection.sourceURL), sourceURL = selection.sourceURL, requestsMade = 1;
+    if (canonicalRedirect && response.status >= 300 && response.status < 400) {
+      const target = canonicalRedirectTarget(sourceURL, response.headers.get('location'), response.status);
+      void response.body?.cancel().catch(() => {});
+      if (!target) return { ...failure('canonical-redirect-refused', response.status), requestsMade };
+      sourceURL = target; requestsMade++; response = await get(target);
+      if (response.status >= 300 && response.status < 400) { void response.body?.cancel().catch(() => {}); return { ...failure('redirect-loop-or-second-hop-refused', response.status), requestsMade }; }
+    }
     if (response.status >= 300 && response.status < 400) { void response.body?.cancel().catch(() => {}); return failure('redirect-not-followed', response.status); }
     if (!response.ok) { void response.body?.cancel().catch(() => {}); return failure([403, 429].includes(response.status) ? 'access-blocked-no-retry' : 'http-error-no-retry', response.status); }
     const type = response.headers.get('content-type') ?? '';
@@ -178,7 +206,9 @@ export async function fetchHtmlCandidates(selection, fetchImpl = globalThis.fetc
       chunks.push(value);
     }
     const html = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, size));
-    return { ...await extractHtml(html, selection.film), httpStatus: response.status, bytes: size };
+    const extracted = await extractHtml(html, selection.film), receivedAt = new Date().toISOString();
+    if (extracted.localization) extracted.localization.provenance = { source: 'Kinobaza HTML', method: 'initial HTML source blocks', sourceURL, receivedAt, upstream: 'not-established' };
+    return { ...extracted, httpStatus: response.status, bytes: size, sourceURL, requestsMade, receivedAt };
   } catch { if (reader) void reader.cancel().catch(() => {}); return failure(controller.signal.aborted ? 'timeout-no-retry' : 'network-or-decoding-error-no-retry'); }
   finally { clearTimeout(timer); }
 }
