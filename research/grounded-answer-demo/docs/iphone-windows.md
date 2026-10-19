@@ -1,5 +1,128 @@
 # Windows + iPhone manual test guide (trusted home LAN only)
 
+Current [consolidated proposal](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
+and [handoff](consolidated-poc-handoff.md) now have bounded research implementation
+approval. The original [consolidated workflow](#consolidated-discovery-owner-workflow)
+has a completed owner functional session. The separately approved
+[Kinobaza localization owner session is also complete](digital-ua-owner-validation.md#kinobaza-localization--owner-run-checkpoint).
+The subsequent link-audit/provider-grouping changes are covered by agent mocks;
+no new owner test, restart or repeat of completed source/platform tests is requested.
+**MEGOGO remains unresolved/frozen.** Existing commands below retain
+their individual historical scope/readiness labels; do not start a new test cycle
+just because the stack is reviewed. For the approved implemented research mode,
+the [single short acceptance plan](regional-card-proposal.md#acceptance-and-one-short-owner-session)
+limits owner work to the new end-to-end flow/material discrepancies. No source
+probe/card tour/parser-debugging cycle is restarted.
+
+## Consolidated discovery owner workflow
+
+Implemented isolated research; the [two-film owner functional session is complete](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint),
+not general accuracy/entitlement/production readiness. The subsequent
+[localization iteration](regional-card-proposal.md#kinobaza-localization-enrichment--approved-bounded-iteration)
+also has a completed owner-reported session, not independent verification.
+The commands/steps below are retained as workflow reference, **not a request to
+repeat it**. No streaming-app tour/synthetic/disconnect repeat. One
+server, UI picker Coherence/Dune, optional Kinobaza **on** for the control session.
+No Gemini key/LLM, response storage or production writes. Source conditions:
+[current combined-use record](regional-card-proposal.md#consolidated-implementation-and-source-use-checkpoint).
+Review current applicable TMDb agreement in normal token setup before live; it
+remained unreadable to the agent. No automatic permission/ban/email requirement.
+MOTN key comes from the existing direct developer portal, not RapidAPI; existing
+TMDb Read Access Token setup below applies. No new subscription selected.
+
+If SSH opens cmd, enter `powershell -NoProfile` (or your already approved installed
+`pwsh -NoProfile`) first. Do not bypass/change execution policy. From the correct
+copy inspect before updating; preserve all local/untracked files:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'
+git status --short --branch
+git fetch --prune origin
+git switch codex/mw-fut-01-kinobaza-localization
+git merge --ff-only origin/codex/mw-fut-01-kinobaza-localization
+git rev-parse HEAD
+```
+
+Stop on conflicts/divergence; no reset/clean/force or blind stash. The agreed
+stack includes #176's launcher fix; **#175 alone is not a corrected checkpoint**.
+For the optional HTML parser, if not already installed in this copy:
+`npm ci --prefix research/grounded-answer-demo --ignore-scripts`. Research
+dependencies only; no live source request. No system/firewall/SSH changes.
+
+One **standalone restart line** in PowerShell from that repo; all switches reset
+after reconnect. This is for the owner to run, never run by the agent on owner
+demo. It stops only this copy's verified process, refusing stale/unrelated PID.
+Enter THIS Windows machine's assigned private IPv4, then separate hidden LAN,
+TMDb and MOTN credentials at helper prompts; never paste secrets into arguments.
+
+```powershell
+$ErrorActionPreference='Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; $demoIPv4=Read-Host 'Verified private IPv4 of THIS Windows machine'; $env:DEMO_MODE='live'; $env:DEMO_RETRIEVAL='ua-discovery'; $env:DEMO_DISCOVERY='digital-ua'; $env:DEMO_FILM='coherence'; $env:DEMO_KINOBAZA='on'; $env:DEMO_SYNTHETIC_SCENARIO='grounded'; Remove-Item Env:DEMO_AMAZON_REGION,Env:DEMO_URL_SOURCE,Env:DEMO_PORT,Env:DEMO_ACCESS,Env:DEMO_BIND_IPV4,Env:GEMINI_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $demoIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Safari: exact printed **`http://<entered-Windows-IPv4>:4317`**, username **demo**,
+separate LAN password. No guessed IP from another home project. Trusted private
+home HTTP only: Basic is not encryption; no internet exposure. To deliberately
+use synthetic instead, change only DEMO_MODE to synthetic in the standalone line;
+no API-key prompts/network. Optional Kinobaza off means max3 requests/film.
+
+**Completed session reference only — do not repeat now. Original ceiling:
+one session, max10 requests total, not a platform recheck:**
+
+1. Confirm Coherence/UA/Kinobaza on: ceiling5, base4 without redirect. Inspect original
+   and conditional canonical URL in fixed-request details before click. Run once;
+   verify separate general-film badge, provider-block claims and country signals.
+   Missing data is unknown, `−` applies only to its named block label/format.
+2. Pick Dune in the same page/server; no restart. Run once. No batch/retries.
+3. Inspect literal stereo/Dolby/subtitle-type evidence in collapsed details. Do not
+   infer codec/channels, full track lists or UA entitlement. No enrichment of MOTN
+   by provider name. Existing local draft flow needs no repeat acceptance; if used,
+   Select and review included/excluded fields; if transferring an
+   opaque tracking candidate, explicitly acknowledge its unchanged URL/type/
+   provenance. Otherwise purchase_url is empty without permitted exact candidate.
+   Confirm into **local draft only**, edit; Cancel selection leaves the confirmed/
+   edited draft unchanged. The destructive Cancel-edits reset is removed. Clear,
+   film change or reload discards it. No MW submit/ownership update/autosave.
+4. Send a short new/missing/conflicting-fields and redirect/call-count summary,
+   not JSON/HTML/screenshots.
+   Do not tour the old streaming apps/cards. Existing observations are dated
+   controls; only a new material discrepancy justifies a targeted check.
+
+Each film is disabled after its one click on that page; reselecting does not
+rerun. Reload clears local results/draft but is not an instruction to retry.
+Source failures retain safe independent results. Stop on stable-ID conflict,
+credential leak, terms conflict, 403/429/CAPTCHA or unexpected calls/storage; no
+new source/second owner round by default. No repeated synthetic/SSH-disconnect
+owner check required: agent tests cover the changed key routing/lifecycle, not a
+new real-iPhone assertion. Existing sleep/IP/firewall/Wi-Fi/stale-page guidance below
+still applies. Keep existing Stop/Status commands; no merge/deployment authorization.
+
+Rows now sit in platform presentation groups with source-labelled field-type
+summaries, **not merged offers**. Each source row retains its own territory/basis,
+access/package/cut, claims, link and unknown/conflict markers. Apple TV+ is not
+Apple TV Store; unresolved mappings appear separately. Select/review/confirm
+still targets one row. A group's UA signal does not make an unscoped audio block
+a Ukrainian offer. Expand that row for raw access/provenance/missing details, or
+Source diagnostics for HTTP status/Location presence (no value) and TMDb A
+resource/field states. Only one exact301/308 old-host→kinobazaua.com same-title hop
+is allowed in composed mode; unknown target/loop/second hop is refused. Max4 calls
+without redirect, max5 only with the validated hop (Kinobaza off max3). The agent
+observed this current transition, not the historical owner Location. Coherence A
+partial cause remains unknown. No separate diagnostic cycle or retry now.
+Link statuses now distinguish not reported, unsafe, unsupported kind and not
+eligible for transfer. Navigation and draft restrictions are shown separately;
+they are demo URL policy, not a statement that a source href is absent or legally
+prohibited. Unsupported rows keep purchase_url empty; allowed exact URLs remain
+unchanged and tracking transfer requires acknowledgement. Historical owner hrefs
+remain unknown; [new agent diagnosis](regional-card-proposal.md#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix)
+found current native Prime/iTunes/MEGOGO paths refused by the classifier, now fixed.
+Those source rows show explicit-open unverified links; Prime native referral and
+iTunes affiliate query need the review checkbox before draft URL inclusion. Their
+exact URL/type/provenance is retained; no automatic navigation/resolve. MEGOGO's
+short numeric card needs normal row review/confirm. This changes no env/helper
+commands and requests **no new owner test cycle or restart now**.
+Default draft exclusions/exact href handling remain unchanged. Agent-covered UI
+changes do not require repeating synthetic/SSH-disconnect or the old platform tour.
+
 MW-FUT-01 remains Discovery. Three digital scenarios now have limited
 [owner-reported observations](digital-ua-owner-validation.md), not a general
 accuracy assessment. Amazon-region scenarios remain live-unvalidated.
@@ -466,3 +589,316 @@ this mode's explicit SSH-disconnect behavior was not separately reported in that
 checkpoint. No additional test is required for the documentation update. Stop
 via this copy's helper when finished; old Gemini modes remain available under
 their previous switches.
+
+## Movie of the Night API owner workflow
+
+Non-LLM UA probe; [two owner runs are now complete](digital-ua-owner-validation.md#movie-of-the-night--two-completed-owner-run-results).
+Commands below are retained reproduction steps, **not a request to rerun**.
+The year-only identity correction is offline-tested, not live-revalidated.
+See [scope/terms](regional-card-proposal.md#approved-non-llm-api-probe)
+and [fixed IDs/result contract](../README.md#movie-of-the-night-api-probe). Previous
+LAN auth and detached-process safeguards apply unchanged. No systems changes.
+The helper adds only credential routing for this provider; synthetic/mock Windows
+tests cover it. No compulsory repeat SSH-disconnect or already confirmed card
+checks. The original plan of **two requests**, one per film, is complete. The
+optional synthetic smoke and live commands below are reproduction instructions
+only. Do not run them on behalf of the owner or request another round now.
+
+### Get a direct API key (owner action, no paid plan required)
+
+1. Open the official [developer portal](https://developers.movieofthenight.com/),
+   sign in/create a developer account using its normal flow, and review its
+   [current Terms](https://developers.movieofthenight.com/terms-and-conditions).
+2. Choose/activate **Free** if the console requires a plan choice. The
+   [direct pricing page](https://www.movieofthenight.com/about/api/pricing), checked
+   October 18, 2026, lists **1,000 requests/month**, all endpoints/catalogues,
+   $0/month and no payment details. No paid upgrade is needed for these two
+   requests. Stop if signup shows different requirements; do not authorize a
+   payment/paid subscription automatically. Quota is a hard limit, not retries.
+3. Obtain/copy the API key from the developer console as described in the
+   [official getting-started docs](https://docs.movieofthenight.com/). Use the
+   **direct portal** key, not a RapidAPI subscription/key. This transport is
+   `https://api.movieofthenight.com/v4` with the `X-API-Key` header.
+4. Do not paste the key into source, chat, a PowerShell command, file, task,
+   transcript or screenshot. Each live helper start asks for **MOTN_API_KEY**
+   through `Read-Host -AsSecureString`; paste only into that hidden prompt.
+   `-ApiKey` accepts SecureString for programmatic callers, not a plaintext CLI
+   argument. Gemini key is not used. Synthetic does not need an API key.
+
+### Correct checkout, restart and Safari
+
+If SSH initially opens cmd.exe, enter `powershell.exe -NoProfile` (or installed
+`pwsh.exe -NoProfile`). Do not bypass execution policy. Inspect the right copy:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; git status --short --branch; git fetch --prune origin
+```
+
+Preserve tracked/untracked files. When ready, stop only this copy's verified demo
+before switching files. Select **codex/mw-fut-01-motn-api**: if not local,
+`git switch --track origin/codex/mw-fut-01-motn-api`; otherwise
+`git switch codex/mw-fut-01-motn-api`, then
+`git merge --ff-only origin/codex/mw-fut-01-motn-api`. Inspect HEAD; stop on
+conflict/divergence, no reset/clean/force/stash. This PR is stacked on #178.
+No npm install is needed for this API mode.
+
+Each block below is **one standalone PowerShell line**, redefines all relevant
+switches after any SSH reconnect, clears stale key/source/region variables,
+and asks for the actual private IPv4 of this Windows machine. Start asks for the
+LAN password hidden; live also asks for the direct API key hidden. Secrets go
+only into the detached child's environment, not arguments/state/logs. Do not
+infer keys from an inherited SSH environment. Current owner demo is stopped only
+when the owner deliberately runs these restart lines.
+
+Optional synthetic Coherence (no API/network):
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'synthetic'; $env:DEMO_RETRIEVAL = 'motn-api'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Live Coherence — one title GET after the click:
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'motn-api'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'coherence'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Live Dune — one separate title GET:
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'motn-api'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'dune-part-two'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Safari: **http://<actual-Windows-IPv4>:4317**, exact URL printed by Start,
+username **demo**, separate LAN password. Trusted private home Wi-Fi only;
+HTTP Basic is not encrypted. Reload after restart, verify film/IMDb, `motn-api`,
+UA and fixed API URL **before** one click. Start/status/reload do not call the
+provider. Waiting/finished/error consumes one token; do not automatically retry.
+No Search/model call, country request or destination navigation follows.
+
+Check compact per-offer fields and unknowns, without transferring audio/price
+between offers or treating Apple service name as subscription. Record only a
+short useful/missing/new-or-conflicting summary for each film; no full JSON or
+metadata unless an error requires narrow diagnosis (never keys/account data).
+Earlier dated card checks are not guaranteed current truth: repeat a specific
+card check **only** for a new or materially conflicting observation, not all
+platforms. Do not archive output/screenshots/HAR. Stop after the two requests;
+errors/quota/identity mismatch are findings, not instructions to retry or scrape.
+No data may be sent to an LLM or used for AI training/evaluation/improvement.
+The current checkpoint does not request another live/synthetic/SSH-disconnect
+test or card recheck. If a genuine disconnect problem appears, report status without secrets;
+do not relax auth/Host/Origin or introduce a session-bound fallback.
+
+## TMDb data owner workflow
+
+Isolated non-LLM probe, fixed Coherence/Dune IDs, separate metadata A / UA
+providers B. [Result contract](../README.md#tmdb-data-probe),
+[scoped terms/readiness record](tmdb-probe-handoff.md#implementation-record).
+The [first Coherence owner run](digital-ua-owner-validation.md#coherence--first-owner-run-result)
+is recorded; the owner subsequently reported Dune passed both blocks and all
+five appends after the fix. [TMDb manual stage is complete](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint).
+Commands below are reproduction only, **not another owner test request**.
+No compulsory repeat synthetic or
+SSH-disconnect owner test: the existing detached/LAN workflow is unchanged;
+only provider token routing was added and checked with a mock-only temp child.
+Do not repeat MOTN or known streaming-card checks without a specific new issue.
+
+### Token and readiness (once, owner only)
+
+1. Sign in to your own [TMDb account/API settings](https://www.themoviedb.org/settings/api).
+   If API access is not set up, follow the normal developer application flow
+   linked there. Describe this actual personal, non-commercial research scope;
+   do not invent a production URL or submit information on the owner's behalf.
+2. Review the applicable current API/account agreement and attribution for this
+   bounded non-LLM, transient-display use. Agent reads of the
+   [complete Terms](https://www.themoviedb.org/api-terms-of-use) were robots-denied,
+   including October 18, 2026. The current [FAQ](https://developer.themoviedb.org/docs/faq)
+   describes conditional non-commercial use without an API fee, not zero total
+   costs or full legal clearance. Commercial licensing is a separate question;
+   no paid plan is selected or purchased here. If normal setup presents new
+   requirements, stop rather than automatically accepting a paid upgrade.
+   If direct conflict applies, stop. If text remains unavailable/ambiguous,
+   retain synthetic only and keep live readiness conditional. No email is
+   demanded just because the text was inaccessible. The local logo comes from
+   official docs; include current approved-logo/attribution requirements in
+   this review. Do not accept terms automatically via this demo.
+3. In API settings copy **API Read Access Token**, not the v3 `api_key` value.
+   [Official application authentication](https://developer.themoviedb.org/docs/authentication-application)
+   documents `Authorization: Bearer` for v3/v4. No account/user token OAuth flow
+   or TMDb/provider account password is needed by the demo.
+4. Start prompts for `TMDB_READ_ACCESS_TOKEN` with `Read-Host -AsSecureString`
+   (`-ApiKey` parameter is SecureString for tests/programmatic callers). Paste
+   only in the hidden prompt, never commands/chat/files/transcripts/screenshots.
+   Helper passes only this credential in the child's environment; no Gemini,
+   MOTN or inherited production key. Separate hidden LAN password, username demo.
+
+### Checkout and a single restart command
+
+If Termius SSH opens cmd.exe, first run `powershell.exe -NoProfile` (or installed
+`pwsh.exe -NoProfile`). Do not bypass execution policy. Inspect your actual copy:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; git status --short --branch; git fetch --prune origin
+```
+
+Preserve all tracked/untracked files. Before switching/updating running demo
+files, the **owner**, not the agent/test, deliberately stops only this copy with
+`.\research\grounded-answer-demo\windows\Stop-Demo.ps1`. Then select
+`codex/mw-fut-01-tmdb-data` (if absent locally:
+`git switch --track origin/codex/mw-fut-01-tmdb-data`; otherwise
+`git switch codex/mw-fut-01-tmdb-data`), then
+`git merge --ff-only origin/codex/mw-fut-01-tmdb-data`. Inspect HEAD and scope;
+stop on divergence/conflict, no reset/clean/stash/force. This branch is stacked
+on #179, not a reason to merge its parents. No npm install for TMDb mode.
+
+**One standalone PowerShell restart line**, after the terms readiness condition.
+It resets every relevant switch/key after SSH reconnect. Select the film for an
+explicitly needed reproduction, not a fresh two-film round; enter THIS Windows host's actual
+private IPv4, not another device/project's IP. Start prompts for LAN password and
+TMDb token hidden. Secrets are not arguments/state/logs; no response archive.
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; $tmdbFilm = Read-Host 'Film: coherence or dune-part-two'; if ($tmdbFilm -notin @('coherence','dune-part-two')) { throw 'Unsupported fixed film' }; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'tmdb-data'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = $tmdbFilm; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+For optional synthetic use only (not an additional required owner test), change
+that line's `DEMO_MODE` to `synthetic`; no API token prompt or network request.
+Status/stop remain the existing helpers. Each live start asks for the token
+again; no reliance on prior SSH environment. Detached process keeps the token
+only in memory until stopped; no storage or service/task configuration.
+
+### Completed Safari pilot — reproduction only
+
+Open **http://<actual-Windows-IPv4>:4317**, exactly Start's printed URL, Basic
+username **demo**, separate LAN password. Trusted private home Wi-Fi only; HTTP
+Basic credentials are not encrypted. No firewall/SSH/network/service changes.
+Reload after each restart, check film/IDs, `tmdb-data`, UA, uk-UA, both planned
+URLs and max-two cap before clicking **once**. The existing Termius → Safari
+workflow works independently of an active SSH session; there is no requirement
+to repeat the earlier disconnect demonstration for this iteration.
+
+The two-film manual stage is now complete: Coherence supplied B data and exposed
+the validator issue; owner-run Dune passed both blocks/all five appends after
+the correction. **Do not rerun Coherence/Dune or streaming cards for this checkpoint.**
+For a separately justified future reproduction only, the same command/reload/one
+click contract allows at most two serial title-level HTTP requests. No new
+SSH-disconnect/synthetic round. B is not requested if A fails primary identity. Missing append
+stays partial, errors/quota/identity conflicts are findings: stop, no retry or
+follow-up round. Start/status/reload alone makes no TMDb request.
+
+The [completed owner record](digital-ua-owner-validation.md#tmdb-data-probe--completed-owner-checkpoint)
+already distinguishes identity, actual UA providers/access buckets and explicit
+Ukrainian catalogue metadata from provider tracks. Compact UI now shows UA/uk
+and relevant fields by default; expand details for other/unknown territory dates,
+other metadata or provider technical fields. Opening details makes no requests.
+No extra manual display check required. Requested locale/UA alias/original audio
+is not provider dubbing/subtitles. TMDb watch-page link is not a provider deep
+link; JustWatch overlap is not independent confirmation or account entitlement.
+No general accuracy, full JSON, screenshots or output archive. Reopen a known
+streaming card only for a **concrete new material discrepancy**, not by default.
+Stop only this copy via its Stop helper when finished.
+
+## MEGOGO initial-HTML owner workflow
+
+Separate approved non-LLM `megogo-html` PoC, stacked on #180. The
+[first owner attempt](digital-ua-owner-validation.md#megogo-initial-html--owner-run-parse-policy-rejection)
+returned HTTP 200 but failed the pre-identity parse policy; characteristics are
+**unvalidated/unresolved**. The owner has completed the subsequent attempt and
+reported 30 duplicate attributes with identity still not evaluated. Commands
+below are retained only for separately approved future reproduction, **not a
+new owner run/restart now**. The agent does not restart the owner's demo.
+Only fixed Dune: Part Two (2024):
+<https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html>.
+[Scope/rules and residual uncertainty](regional-card-proposal.md#megogo-one-card-html-poc).
+No API key, login/cookies, assets/scripts, redirects, retry or follow-up endpoints.
+One click permits at most one GET, 20s / 2 MiB. Other modes remain unchanged.
+LAN Basic Auth still uses **demo** and a separate hidden password. HTTP is
+unencrypted: trusted private home LAN only, no internet exposure/system changes.
+
+### Update the correct copy safely
+
+If SSH opens `cmd`, first enter `powershell -NoProfile` (or `pwsh -NoProfile`
+if installed). Run the lines below **inside PowerShell**, not in cmd. Use THIS
+Windows machine's actual private IPv4; never another device/project's address.
+Do not depend on environment surviving SSH reconnect.
+
+```powershell
+Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'
+git fetch --prune origin
+git status --short --branch
+git branch --show-current
+```
+
+If tracked edits overlap the demo or branches diverged, stop and preserve them;
+no reset/clean/force or overwrite of untracked files. Stop this copy only when
+**you** choose to switch it for the approved test. The implementation agent did
+not stop the owner's running demo. If clean/compatible:
+
+```powershell
+.\research\grounded-answer-demo\windows\Stop-Demo.ps1
+# Existing local branch:
+git switch codex/mw-fut-01-megogo-html
+# If not yet local, use instead:
+# git switch --track origin/codex/mw-fut-01-megogo-html
+git pull --ff-only origin codex/mw-fut-01-megogo-html
+npm ci --prefix research/grounded-answer-demo --ignore-scripts --no-audit --no-fund
+```
+
+The install is only the existing isolated `parse5` lockfile; no production
+dependencies or executable install scripts. No need to reinstall when the
+research dependencies already match. Native detached-launch/auth/session
+mechanics are unchanged; synthetic/Windows/mobile mock checks are agent work.
+No compulsory repeat synthetic or SSH-disconnect owner test for this iteration.
+
+### One standalone restart command — no API key
+
+Paste the **entire one line** in PowerShell after every SSH reconnect; explicit
+`;` separators, all switches assigned/reset. It intentionally stops only this
+copy via verified process metadata. Enter actual Windows IPv4, then the LAN
+password hidden when Start prompts. No API credential is needed or forwarded.
+
+```powershell
+$ErrorActionPreference = 'Stop'; Set-Location 'C:\Users\DenysLis\movie-wishlist-codex'; $windowsIPv4 = Read-Host 'Actual private IPv4 of THIS Windows machine'; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; $env:DEMO_MODE = 'live'; $env:DEMO_RETRIEVAL = 'megogo-html'; $env:DEMO_DISCOVERY = 'digital-ua'; $env:DEMO_FILM = 'dune-part-two'; $env:DEMO_SYNTHETIC_SCENARIO = 'grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:MOTN_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:DEMO_LAN_PASSWORD -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 $windowsIPv4 -Port 4317; .\research\grounded-answer-demo\windows\Status-Demo.ps1
+```
+
+Optional synthetic only: change that line's `DEMO_MODE` to `synthetic`; invented
+fixtures, no network. This is not an additional required owner test. Status/stop
+use the existing helpers; launch survives the launching shell's exit. Actual
+Termius→Safari/SSH-disconnect behavior was owner-validated earlier, not freshly
+repeated for this new mode. Start/status alone makes no card request.
+
+### Safari — retained workflow, no new owner GET
+
+Open **http://<actual-Windows-IPv4>:4317**, exactly the URL printed by Start/Status;
+Basic Auth username **demo**, hidden password supplied above. Reload stale pages
+after restart. Before clicking check `megogo-html`, Dune, exact source/native ID,
+20s / 2 MiB, no model and fetcher geography unknown. **Do not click/run another
+test for this checkpoint.** The offline v2 correction is not a new live-readiness
+or success claim. Any future approved use retains one click/max one GET and
+combined fields/diagnostics; no automatic retry, diagnostic-only cycle or
+compulsory synthetic/SSH-disconnect round.
+
+For a future separately approved use only, the result summary is HTTP/retrieval/identity status and **new, missing or
+conflicting fields** (access/package, languages/associated audio format, subtitles/
+types, resolution, HDR10/DV, price+currency, regional statement). No full HTML,
+JSON, responses or screenshots. No repeated streaming-app tour. Unknown/unsupported
+markup or JS/login-only fields are findings, not an instruction to log in, enable
+scraping or try private endpoints. Blocks/CAPTCHA/redirect/429 terminate this path.
+
+Reported public-card metadata need not prove account entitlement, which remains
+unknown; `/ua/`, UI language or private LAN IP do not prove fetch geography or
+Ukrainian viewing rights. Compare old observations only as dated controls, never
+fill missing fields from memory. The PoC does not establish general accuracy.
+Stop this copy with its Stop helper when done; no service/firewall/network changes.
+
+The [attribute-aware scoped acceptance policy](regional-card-proposal.md#megogo-duplicate-attribute-scope--offline-correction-v2)
+returns a text-only **Structural diagnostics** block alongside useful fields,
+not only on rejection. Read decision, identity evaluation, parser code counts/
+actions and field/page refusal reasons. Legacy DOCTYPE/entity warnings alone do
+not block identity; damaged fields stay unknown, ambiguous identity stays blocked.
+No raw body/text/attributes/URLs/positions/logs in diagnostics. The original run's
+codes remain unrecoverable; current mocks are not a reconstruction of that body.
+The existing 30-event owner summary is recorded; do not obtain more diagnostics
+now. In future approved results, distinguish overall identity from the clean
+independent-signal status: the latter cannot override withheld significant
+attributes. Keep unknowns unknown; no new JSON/HTML/screenshots, diagnostic test
+or streaming-app tour is requested. MEGOGO remains unresolved.

@@ -4,13 +4,16 @@ param(
     [string]$BindIPv4,
     [ValidateRange(1024, 65535)][int]$Port = 4317,
     [Security.SecureString]$LanPassword,
-    [Security.SecureString]$ApiKey
+    [Security.SecureString]$ApiKey,
+    [Security.SecureString]$TmdbToken,
+    [Security.SecureString]$MotnKey
 )
 . (Join-Path $PSScriptRoot 'Common.ps1')
 $lock = Enter-DemoLock
 $process = $null
 $plainPassword = ''
 $plainKey = ''
+$plainTmdb = ''; $plainMotn = ''
 try {
     $old = Read-DemoState
     $existing = Get-OwnedDemoProcess $old
@@ -27,9 +30,21 @@ try {
         if (-not $plainPassword.Trim()) { throw 'LAN password is required.' }
     } elseif ($BindIPv4) { throw 'Do not set -BindIPv4 in localhost mode.' }
     $mode = if ($env:DEMO_MODE) { $env:DEMO_MODE } else { 'synthetic' }
-    $needsGemini = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -ne 'kinobaza-html'
-    if ($needsGemini) {
-        if (-not $ApiKey) { $ApiKey = Read-Host 'GEMINI_API_KEY (server memory only)' -AsSecureString }
+    $combined = $env:DEMO_RETRIEVAL -eq 'ua-discovery'
+    $needsMotn = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -eq 'motn-api'
+    $needsTmdb = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -eq 'tmdb-data'
+    $needsGemini = $mode -eq 'live' -and $env:DEMO_RETRIEVAL -notin @('kinobaza-html', 'motn-api', 'tmdb-data', 'megogo-html', 'ua-discovery')
+    if ($combined -and $mode -eq 'live') {
+        if ($ApiKey) { throw 'ua-discovery uses separate TmdbToken and MotnKey, not ApiKey.' }
+        if (-not $TmdbToken) { $TmdbToken = Read-Host 'TMDB_READ_ACCESS_TOKEN (server memory only)' -AsSecureString }
+        if (-not $MotnKey) { $MotnKey = Read-Host 'MOTN_API_KEY (server memory only)' -AsSecureString }
+        $plainTmdb = [Net.NetworkCredential]::new('', $TmdbToken).Password
+        $plainMotn = [Net.NetworkCredential]::new('', $MotnKey).Password
+        if (-not $plainTmdb.Trim() -or -not $plainMotn.Trim()) { throw 'Both source credentials are required for live discovery.' }
+    }
+    if ($needsGemini -or $needsMotn -or $needsTmdb) {
+        $keyName = if ($needsTmdb) { 'TMDB_READ_ACCESS_TOKEN' } elseif ($needsMotn) { 'MOTN_API_KEY' } else { 'GEMINI_API_KEY' }
+        if (-not $ApiKey) { $ApiKey = Read-Host "$keyName (server memory only)" -AsSecureString }
         $plainKey = [Net.NetworkCredential]::new('', $ApiKey).Password
         if (-not $plainKey.Trim()) { throw 'Live mode requires a key.' }
     }
@@ -43,7 +58,7 @@ try {
         $value = [Environment]::GetEnvironmentVariable($name)
         if ($null -ne $value) { $child[$name] = $value }
     }
-    foreach ($name in @('DEMO_FILM', 'DEMO_DISCOVERY', 'DEMO_AMAZON_REGION', 'DEMO_SYNTHETIC_SCENARIO', 'DEMO_RETRIEVAL', 'DEMO_URL_SOURCE')) {
+    foreach ($name in @('DEMO_FILM', 'DEMO_DISCOVERY', 'DEMO_AMAZON_REGION', 'DEMO_SYNTHETIC_SCENARIO', 'DEMO_RETRIEVAL', 'DEMO_URL_SOURCE', 'DEMO_KINOBAZA')) {
         $value = [Environment]::GetEnvironmentVariable($name)
         if ($null -ne $value) { $child[$name] = $value }
     }
@@ -52,6 +67,9 @@ try {
     $child['DEMO_ACCESS'] = $Access
     if ($Access -eq 'lan') { $child['DEMO_BIND_IPV4'] = $BindIPv4; $child['DEMO_LAN_PASSWORD'] = $plainPassword }
     if ($needsGemini) { $child['GEMINI_API_KEY'] = $plainKey }
+    if ($needsMotn) { $child['MOTN_API_KEY'] = $plainKey }
+    if ($needsTmdb) { $child['TMDB_READ_ACCESS_TOKEN'] = $plainKey }
+    if ($combined -and $mode -eq 'live') { $child['TMDB_READ_ACCESS_TOKEN'] = $plainTmdb; $child['MOTN_API_KEY'] = $plainMotn }
     if (-not ('DemoDetachedProcess' -as [type])) { Add-Type -Path (Join-Path $PSScriptRoot 'DetachedProcess.cs') }
     $environment = @($child.GetEnumerator() | ForEach-Object { $_.Key + '=' + $_.Value })
     $process = [DemoDetachedProcess]::Start($node, $command, $script:DemoRoot, $environment)
@@ -79,6 +97,6 @@ try {
     $process.Dispose(); $process = $null
 } finally {
     if ($process) { try { if (-not $process.HasExited) { $process.Kill(); $process.WaitForExit(3000) | Out-Null } } finally { $process.Dispose() } }
-    $plainPassword = ''; $plainKey = ''; $environment = $null; $child = $null
+    $plainPassword = ''; $plainKey = ''; $plainTmdb = ''; $plainMotn = ''; $environment = $null; $child = $null
     $lock.ReleaseMutex(); $lock.Dispose()
 }
