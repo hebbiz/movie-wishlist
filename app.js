@@ -252,6 +252,51 @@ let appHasInitialized = false;
 let pendingInviteRole = null;
 let isLoggingOut = false;
 let activeAdviceRoom = null;
+let mediaAdviceController = null;
+let mediaAdviceFormSession = crypto.randomUUID();
+let mediaAdviceEstablished = null;
+
+function invalidateMediaAdvice() {
+  mediaAdviceFormSession = crypto.randomUUID();
+  mediaAdviceEstablished = null;
+  mediaAdviceController?.invalidate();
+}
+
+function mediaAdviceContext() {
+  const imdbId = normalizeImdbIdFromUrl(document.getElementById("imdb_url").value);
+  const stamp = JSON.stringify([imdbId, document.getElementById("title").value, document.getElementById("year").value]);
+  if (!currentUser || !canUpdateMovie() || !mediaAdviceEstablished || mediaAdviceEstablished !== stamp || formPanel.style.display === "none") return null;
+  return { userId: currentUser.id, groupId: currentGroupId, imdbId, listId: editingMovieId, formSession: mediaAdviceFormSession };
+}
+
+function establishMediaAdvice() {
+  mediaAdviceEstablished = JSON.stringify([normalizeImdbIdFromUrl(document.getElementById("imdb_url").value), document.getElementById("title").value, document.getElementById("year").value]);
+  mediaAdviceController?.refresh();
+}
+
+async function mediaAdviceRequest(action, context, signal) {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session?.access_token || !context) throw new Error("Access unavailable");
+  const response = await fetch("/.netlify/functions/media-advice", {
+    method: "POST", credentials: "same-origin", cache: "no-store", signal,
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+    body: JSON.stringify({ action, groupId: context.groupId, imdbId: context.imdbId, listId: context.listId, formSession: context.formSession }),
+  });
+  if (!response.ok) throw new Error("Advice unavailable");
+  return response.json();
+}
+
+import("./assets/media-advice.mjs").then(({ createMediaAdvice }) => {
+  mediaAdviceController = createMediaAdvice({
+    document, entry: document.getElementById("mediaAdviceEntry"), context: mediaAdviceContext,
+    readForm: () => ({ recommended_medium: document.getElementById("recommended_medium").value, purchase_url: document.getElementById("purchase_url").value }),
+    writeForm: fields => { for (const [key, value] of Object.entries(fields)) document.getElementById(key).value = value; },
+    capability: async c => (await mediaAdviceRequest("capability", c)).mykola_media_advice === true,
+    discover: async (c, { signal }) => (await mediaAdviceRequest("discover", c, signal)).result,
+  });
+  mediaAdviceController.refresh();
+}).catch(() => {}); // Feature failure must not prevent ordinary editing.
+document.getElementById("imdb_url").addEventListener("input", invalidateMediaAdvice);
 let adviceRoomPollingTimer = null;
 let adviceRoomResultShown = false;
 
@@ -1977,6 +2022,7 @@ const accessMessages = {
 };
 
 async function loadCurrentRole() {
+  invalidateMediaAdvice();
   if (!currentUser) {
     currentRole = null;
     return;
@@ -2030,6 +2076,7 @@ loginButton.addEventListener("click", async () => {
 });
 
 logoutButton.addEventListener("click", async () => {
+  invalidateMediaAdvice();
   isLoggingOut = true;
 
   showAppLoader();
@@ -6717,6 +6764,7 @@ function updateFormVisibility() {
 }
 
 function resetFormMode() {
+  invalidateMediaAdvice();
   console.log("Reset form mode");
 
   editingMovieId = null;
@@ -6735,6 +6783,7 @@ function resetFormMode() {
 }
 
 function startEditMovie(id) {
+  invalidateMediaAdvice();
   console.log("Editing movie:", id);
 
   const movie = movies.find((item) => item.id === id);
@@ -6755,6 +6804,7 @@ function startEditMovie(id) {
   lookupButton.style.display = "none";
 
   fillForm(movie);
+  establishMediaAdvice();
 
   submitButton.textContent = "Зберегти зміни";
 
@@ -8857,6 +8907,8 @@ sublistOptions.addEventListener("click", (event) => {
 
     document.getElementById("title").value = data.title || "";
     document.getElementById("year").value = data.year || "";
+    invalidateMediaAdvice();
+    establishMediaAdvice();
 
     alert("Дані фільму заповнено.");
   } catch (error) {
@@ -9425,6 +9477,7 @@ wireMykolaActionButtons();
 initApp();
 
 supabaseClient.auth.onAuthStateChange(() => {
+  invalidateMediaAdvice();
   if (appHasInitialized && !isLoggingOut) {
     initApp();
   }

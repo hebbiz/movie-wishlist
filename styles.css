@@ -4109,3 +4109,14 @@ body.invite-page.app-ready .container {
     font-size: 1.38rem;
   }
 }
+/* Media advice owns a separate dialog; never shares social chat containers. */
+.media-advice-entry { color: #c6ae75; background: transparent; border: 1px solid #766440; border-radius: 8px; min-height: 44px; padding: 8px 12px; font: inherit; }
+.media-advice-entry[hidden] { display: none; }
+.media-advice-entry:focus-visible, .media-advice-dialog button:focus-visible { outline: 3px solid #d8bf7e; outline-offset: 3px; }
+.media-advice-dialog { box-sizing: border-box; width: min(620px, calc(100vw - 24px)); max-height: 90dvh; overflow: auto; color: #eee; background: #111827; border: 1px solid #766440; border-radius: 14px; padding: 20px; }
+.media-advice-dialog::backdrop { background: #0009; }
+.media-advice-dialog button { min-height: 44px; margin: 6px 8px 6px 0; }
+.media-advice-dialog p, .media-advice-dialog pre { overflow-wrap: anywhere; white-space: pre-wrap; }
+.media-advice-row { border-top: 1px solid #5558; margin-top: 12px; padding-top: 8px; }
+.media-advice-dialog label { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+.media-advice-dialog input[type="checkbox"] { width: 22px; height: 22px; flex: 0 0 22px; }
