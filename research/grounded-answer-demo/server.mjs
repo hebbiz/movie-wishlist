@@ -4,11 +4,13 @@ import { randomBytes } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { MODEL, MAX_OUTPUT_TOKENS, FILMS, selectRequest, requestBody } from './config.mjs';
 import { runDiscovery, DISCOVERY_IDS } from './discovery.mjs';
+import { describeDiscovery } from './matching.mjs';
+import { HELD_OUT_FILMS } from './held-out.mjs';
 import { syntheticResponse, syntheticHtml } from './synthetic.mjs';
-import { extractHtml, fetchHtmlCandidates, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS, canonicalKinobazaURL } from './html-source.mjs';
+import { extractHtml, fetchHtmlCandidates, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS, canonicalKinobazaURL, htmlScenario } from './html-source.mjs';
 import { networkConfig } from './network.mjs';
-import { fetchMotn, normalizeMotn, syntheticMotn, MOTN_FILMS, MOTN_TIMEOUT_MS, MOTN_LIMIT_BYTES } from './motn.mjs';
-import { fetchTmdb, projectSyntheticTmdb, TMDB_TIMEOUT_MS, TMDB_LIMIT_BYTES } from './tmdb.mjs';
+import { fetchMotn, normalizeMotn, syntheticMotn, MOTN_FILMS, MOTN_TIMEOUT_MS, MOTN_LIMIT_BYTES, motnScenario } from './motn.mjs';
+import { fetchTmdb, projectSyntheticTmdb, TMDB_TIMEOUT_MS, TMDB_LIMIT_BYTES, tmdbScenario } from './tmdb.mjs';
 import { extractMegogo, fetchMegogo, MEGOGO_IDS, MEGOGO_TIMEOUT_MS, MEGOGO_LIMIT_BYTES } from './megogo.mjs';
 import { syntheticMegogo } from './megogo-synthetic.mjs';
 
@@ -22,6 +24,7 @@ const assets = new Map([
   ['/tmdb-display.mjs', ['public/tmdb-display.mjs', 'text/javascript; charset=utf-8']],
   ['/megogo-display.mjs', ['public/megogo-display.mjs', 'text/javascript; charset=utf-8']],
   ['/discovery-client.mjs', ['public/discovery-client.mjs', 'text/javascript; charset=utf-8']],
+  ['/discovery-report.mjs', ['public/discovery-report.mjs', 'text/javascript; charset=utf-8']],
   ['/tmdb-logo.svg', ['public/tmdb-logo.svg', 'image/svg+xml']],
   ['/style.css', ['public/style.css', 'text/css; charset=utf-8']],
 ]);
@@ -38,6 +41,7 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
   const tmdbOnly = selection.retrieval === 'tmdb-data';
   const megogoOnly = selection.retrieval === 'megogo-html';
   const composed = selection.retrieval === 'ua-discovery';
+  const configuredKinobaza = kinobaza ?? 'on';
   const nonGemini = htmlOnly || motnOnly || tmdbOnly || megogoOnly || composed;
   const body = nonGemini ? null : requestBody(film.id, options);
   if (!['synthetic', 'live'].includes(mode)) throw new Error('DEMO_MODE must be synthetic or live.');
@@ -76,22 +80,23 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
         if (composed && req.url !== '/session') {
           const params = new URL(req.url, origin).searchParams;
           if ([...params.keys()].length !== 1 || !DISCOVERY_IDS.includes(params.get('film'))) return send(400, { error: 'Choose one fixed film; no other overrides allowed.' });
-          selectedFilm = FILMS[params.get('film')];
+          selectedFilm = HELD_OUT_FILMS[params.get('film')] ?? FILMS[params.get('film')];
         }
         const now = Date.now();
         for (const [token, session] of sessions) if (session.expires < now) sessions.delete(token);
         if (sessions.size >= 100) return send(429, { error: 'Too many open pages. Restart the demo.' });
         const token = randomBytes(32).toString('hex');
         sessions.set(token, { expires: now + 30 * 60 * 1000, filmId: selectedFilm.id });
-        const planned = composed ? ['tmdb-data', 'motn-api', ...(selection.kinobaza === 'on' ? ['kinobaza-html'] : [])].flatMap(retrieval => {
-          const s = selectRequest({ retrieval, discovery: 'digital-ua', filmId: selectedFilm.id });
+        const selected = composed ? selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: selectedFilm.id, kinobaza: configuredKinobaza }) : selection;
+        const planned = composed ? [tmdbScenario, motnScenario, ...(selected.kinobaza === 'on' ? [htmlScenario] : [])].flatMap(build => {
+          const s = build(selectedFilm, { discovery: 'digital-ua' });
           return [s.sourceURL, ...(s.providersURL ? [s.providersURL] : [])];
         }) : [];
-        if (composed) return send(200, { token, mode, model: null, prompt: null, discovery: 'digital-ua', retrieval: 'ua-discovery', film: selectedFilm, films: DISCOVERY_IDS.map(id => FILMS[id]),
-          country: 'UA', kinobaza: selection.kinobaza, requestBudget: selection.requestBudget, baseRequestBudget: selection.baseRequestBudget, operation: selection.operation,
+        if (composed) return send(200, { token, mode, model: null, prompt: null, discovery: 'digital-ua', retrieval: 'ua-discovery', film: selectedFilm, films: DISCOVERY_IDS.map(id => HELD_OUT_FILMS[id] ?? FILMS[id]),
+          country: 'UA', kinobaza: selected.kinobaza, requestBudget: selected.requestBudget, baseRequestBudget: selected.baseRequestBudget, operation: selected.operation,
           plannedRequests: planned,
-          conditionalRequests: selection.kinobaza === 'on' ? [canonicalKinobazaURL(selectedFilm.id)] : [],
-          sources: ['TMDb', 'Movie of the Night', ...(selection.kinobaza === 'on' ? ['Kinobaza HTML'] : [])] });
+          conditionalRequests: !selected.heldOut && selected.kinobaza === 'on' ? [canonicalKinobazaURL(selectedFilm.id)] : [],
+          sources: ['TMDb', 'Movie of the Night', ...(selected.kinobaza === 'on' ? ['Kinobaza HTML'] : [])] });
         return send(200, { token, mode, model: nonGemini ? null : MODEL, maxOutputTokens: nonGemini ? null : MAX_OUTPUT_TOKENS, film, discovery: selection.discovery, amazonRegion: selection.amazonRegion, retrieval: selection.retrieval, urlSource: selection.urlSource ?? null, sourceURL: selection.sourceURL, prompt: selection.prompt,
           ...(htmlOnly ? { operation: selection.operation, htmlLimitBytes: HTML_LIMIT_BYTES, htmlTimeoutMs: HTML_TIMEOUT_MS } : {}),
           ...(megogoOnly ? { operation: selection.operation, expectedIds: MEGOGO_IDS, requestBudget: 1, htmlLimitBytes: MEGOGO_LIMIT_BYTES, htmlTimeoutMs: MEGOGO_TIMEOUT_MS, fetcherGeography: 'unknown' } : {}),
@@ -106,9 +111,9 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
         sessions.delete(token); // Consume synchronously, before any await, even on failure.
         if (!session || session.expires < Date.now()) return send(409, { error: 'Request already used or session expired. Reload the page.' });
         if (composed) {
-          const chosen = selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: session.filmId, kinobaza: selection.kinobaza });
+          const chosen = selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: session.filmId, kinobaza: configuredKinobaza });
           const result = await runDiscovery(chosen, { mode, tmdbToken, motnKey, fetchImpl });
-          return send(200, { mode, result });
+          return send(200, { mode, result: { ...result, matching: describeDiscovery(result) } });
         }
         if (megogoOnly) {
           const result = mode === 'synthetic' ? await extractMegogo(syntheticMegogo()) : await fetchMegogo(selection, fetchImpl);

@@ -4,6 +4,7 @@ import { motnScenario } from './motn.mjs';
 import { tmdbScenario } from './tmdb.mjs';
 import { megogoScenario } from './megogo.mjs';
 import { discoveryScenario } from './discovery.mjs';
+import { HELD_OUT_FILMS, isHeldOut } from './held-out.mjs';
 
 export const MODEL = 'gemini-3.8-flash';
 export const MAX_OUTPUT_TOKENS = 4096;
@@ -64,7 +65,7 @@ export const PROMPT = selectScenario().prompt;
 
 export function selectRequest({ retrieval = 'search', ...options } = {}) {
   if (retrieval !== 'ua-discovery' && options.kinobaza !== undefined) throw new Error('DEMO_KINOBAZA is only supported in ua-discovery; unset it for existing modes.');
-  if (retrieval === 'ua-discovery') return discoveryScenario(selectFilm(options.filmId), options);
+  if (retrieval === 'ua-discovery') return discoveryScenario(isHeldOut(options.filmId) ? HELD_OUT_FILMS[options.filmId] : selectFilm(options.filmId), options);
   if (retrieval === 'search') {
     if (options.urlSource !== undefined) throw new Error('DEMO_URL_SOURCE requires DEMO_RETRIEVAL=url-context; unset it for Search.');
     return { ...selectScenario(options), retrieval, sourceURL: null };

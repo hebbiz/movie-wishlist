@@ -13,7 +13,7 @@ const key = 'OFFLINE-MOTN-KEY-DO-NOT-LOG';
 const parse = data => normalizeMotn(data, 'coherence', '2026-10-18T00:00:00.000Z');
 
 test('fixed two-film country/endpoint selection; unsupported input never builds Gemini request', () => {
-  for (const filmId of Object.keys(MOTN_FILMS)) {
+  for (const filmId of ['coherence', 'dune-part-two']) {
     const selected = selectRequest({ ...options, filmId });
     assert.equal(selected.country, 'ua'); assert.equal(selected.prompt, null);
     assert.equal(selected.sourceURL, `https://api.movieofthenight.com/v4/shows/${MOTN_FILMS[filmId].imdbId}?country=ua`);

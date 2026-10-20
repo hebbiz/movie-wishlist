@@ -3,16 +3,24 @@ import { tmdbScenario, fetchTmdb, projectTmdbIdentity, projectTmdbProviders, syn
 import { motnScenario, fetchMotn, normalizeMotn, syntheticMotn } from './motn.mjs';
 import { htmlScenario, fetchHtmlCandidates, extractHtml, canonicalKinobazaURL, canonicalRedirectTarget } from './html-source.mjs';
 import { syntheticHtml } from './synthetic.mjs';
+import { HELD_OUT_FILMS, isHeldOut } from './held-out.mjs';
 
 export const DISCOVERY_DEADLINE_MS = 65_000;
-export const DISCOVERY_IDS = Object.freeze(['coherence', 'dune-part-two']);
+export const DISCOVERY_IDS = Object.freeze(['coherence', 'dune-part-two', ...Object.keys(HELD_OUT_FILMS)]);
 export function discoveryScenario(film, { discovery, amazonRegion, urlSource, kinobaza = 'on' } = {}) {
   if (!DISCOVERY_IDS.includes(film.id) || discovery !== 'digital-ua' || amazonRegion !== undefined || urlSource !== undefined || !['on', 'off'].includes(kinobaza)) {
-    throw new Error('ua-discovery requires digital-ua, fixed Coherence/Dune, DEMO_KINOBAZA=on|off, unset URL_SOURCE/AMAZON_REGION.');
+    throw new Error('ua-discovery requires digital-ua, a fixed catalogue film, DEMO_KINOBAZA=on|off, unset URL_SOURCE/AMAZON_REGION.');
   }
+  const heldOut = isHeldOut(film.id);
+  // The two Thing scenarios cannot enable Kinobaza, even under global "on".
+  if (heldOut && !HELD_OUT_FILMS[film.id].kinobazaURL) kinobaza = 'off';
+  const hop = !heldOut && kinobaza === 'on';
   return Object.freeze({ film, discovery, retrieval: 'ua-discovery', amazonRegion: null, sourceURL: null, prompt: null, kinobaza,
-    country: 'UA', requestBudget: kinobaza === 'on' ? 5 : 3, baseRequestBudget: kinobaza === 'on' ? 4 : 3,
-    operation: 'Fixed-ID TMDb (max 2 GETs), independent MOTN (1 GET), optional fixed Kinobaza (1 GET, plus at most one exact canonical host hop only after validated 301/308). Max4 without redirect, max5 only with canonical hop. No LLM, destination requests, retries or storage. Source identity gates remain independent; no cross-source offer merging. Local draft only, not production MW.' });
+    country: 'UA', requestBudget: (kinobaza === 'on' ? 4 : 3) + Number(hop), baseRequestBudget: kinobaza === 'on' ? 4 : 3,
+    ...(heldOut ? { heldOut: true, canonicalHop: false } : {}),
+    operation: heldOut
+      ? `Held-out fixed IDs: TMDb max2 GETs, independent MOTN max1; Kinobaza ${kinobaza === 'on' ? 'one direct canonical GET' : 'disabled for this scenario/configuration'}. No redirect follow, retries or fallback. Four held-out discoveries total max14 requests. A/B only, no offer/field merge, LLM, destinations or storage; memory-only draft.`
+      : 'Fixed-ID TMDb (max 2 GETs), independent MOTN (1 GET), optional fixed Kinobaza (1 GET, plus at most one exact canonical host hop only after validated 301/308). Max4 without redirect, max5 only with canonical hop. No LLM, destination requests, retries or storage. Source identity gates remain independent; no cross-source offer merging. Local draft only, not production MW.' });
 }
 
 const providers = {
@@ -110,7 +118,7 @@ function rowBase(source, film, provider, index, provenance) {
     availability: { state: 'source-reported', value: 'available', note: 'Aggregator UA claim, not account entitlement.' },
     accountEntitlement: 'unknown', audio: unknown('No provider track evidence'), subtitles: unknown('No provider subtitle evidence'),
     quality: unknown('Not reported'), hdr10: unknown('Not reported'), dolbyVision: unknown('Not reported'), price: unknown('Not reported'),
-    link: classifyLink(null), provenance, conflicts: [], choiceBasis: [], identityStatus: 'matched' };
+    link: classifyLink(null), provenance, conflicts: [], comparisons: [], comparisonsOmitted: 0, choiceBasis: [], identityStatus: 'matched' };
 }
 
 export function composeDiscovery(film, stages, { synthetic = false, metrics = {} } = {}) {
@@ -179,7 +187,9 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
     const block = (kino.localization?.blocks ?? []).find(b => b.blockId === c.blockId && b.href === c.href && b.provider === c.provider);
     if (block) {
       r.kinobazaLocalization = block;
-      for (const issue of block.issues) r.conflicts.push({ field: 'localization', type: issue });
+      for (const field of ['audio', 'subtitles']) if (block[field]?.state === 'conflicting') {
+        r.conflicts.push({ field, type: 'conflicting-block-labels', scope: 'one-source-block-not-universal-track-truth' });
+      } // Other ambiguity/unsupported issues remain in block.issues, not proved conflicts.
     }
     const unsafeExtraction = ['unsafe-url-or-label', 'unsafe-url-scheme', 'unsafe-or-invalid-url'].includes(c.issue);
     // Sanitization deliberately removes unsafe hrefs. Do not reinterpret that
@@ -191,17 +201,28 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
       classification: r.link.kind, note: 'Demo URL policy, not a legal restriction or proof of missing source href. No destination resolution.' };
     add(r);
   }
-  // No row/value merging. Comparable disagreements are retained with peer refs.
+  // Limited discrepancy diagnostics, not a C/D equivalence/applicability engine.
+  // Same platform/access or even a card cannot establish a confirmed offer conflict.
+  const compareScope = (a, b) => {
+    for (const [field, code] of [['package', 'package'], ['cut', 'version']]) {
+      const av = field === 'package' ? val(a.package?.id) ?? val(a.package?.name) : val(a.cut);
+      const bv = field === 'package' ? val(b.package?.id) ?? val(b.package?.name) : val(b.cut);
+      if (av !== bv) return { outcome: 'non-comparable', reason: av === undefined || bv === undefined ? `${code}-scope-unresolved` : `${code}-differs` };
+    }
+    return a.link.kind === 'exact-card-unverified' && b.link.kind === 'exact-card-unverified' && a.link.href && a.link.href === b.link.href
+      ? { outcome: 'possible-discrepancy', reason: 'same-declared-card-offer-scope-unknown' }
+      : { outcome: 'non-comparable', reason: 'card-pointer-equivalence-unestablished' };
+  };
+  const record = (row, entry) => { if (row.comparisons.length < 8) row.comparisons.push(entry); else row.comparisonsOmitted++; };
   for (let i = 0; i < rows.length; i++) for (let j = i + 1; j < rows.length; j++) {
     const a = rows[i], b = rows[j];
     if (a.provider.key !== b.provider.key || a.country !== b.country || val(a.access) !== val(b.access) || val(a.access) === undefined) continue;
-    if (val(a.package?.id) && val(b.package?.id) && val(a.package.id) !== val(b.package.id)) continue;
+    const scope = compareScope(a, b);
     for (const field of ['quality', 'price']) {
       if (a[field]?.state !== 'reported' || b[field]?.state !== 'reported') continue;
       if (field === 'price' && (!val(a.price.amount) || !val(a.price.currency) || !val(b.price.amount) || !val(b.price.currency))) continue;
-      if (JSON.stringify(a[field]) === JSON.stringify(b[field])) continue;
-      const type = a.link.href && a.link.href === b.link.href ? 'conflict' : 'possible-conflict-scope-unestablished';
-      a.conflicts.push({ field, peer: b.id, type }); b.conflicts.push({ field, peer: a.id, type });
+      if (field === 'quality' ? val(a.quality) === val(b.quality) : val(a.price.amount) === val(b.price.amount) && val(a.price.currency) === val(b.price.currency)) continue;
+      record(a, { field, peer: b.id, ...scope }); record(b, { field, peer: a.id, ...scope });
     }
   }
   // Evidence bands, not numeric confidence or "best" claim. Stable within band.
@@ -213,7 +234,7 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
     const qa = formats.indexOf(val(a.quality)), qb = formats.indexOf(val(b.quality));
     // Only compare explicit formats. Price is informational because source
     // currency/quality reliability remains unresolved, not "cheapest" inference.
-    return qa >= 0 && qb >= 0 && !a.conflicts.length && !b.conflicts.length ? qb - qa : 0;
+    return qa >= 0 && qb >= 0 && !a.conflicts.length && !b.conflicts.length && !a.comparisons.length && !b.comparisons.length ? qb - qa : 0;
   });
   const conflicts = sources.filter(s => s.identity === 'mismatch');
   return { synthetic, film, country: 'UA', identity: { status: conflicts.length ? 'conflict-no-common-identity' : 'independent-source-gates',
@@ -237,18 +258,19 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
   deadlineMs = DISCOVERY_DEADLINE_MS } = {}) {
   const { film, kinobaza } = selection;
   const verified = discoveryScenario(film, { discovery: selection.discovery, kinobaza });
-  if (selection.retrieval !== 'ua-discovery' || selection.requestBudget !== verified.requestBudget) throw new Error('Fixed discovery configuration required.');
+  if (selection.retrieval !== 'ua-discovery' || selection.requestBudget !== verified.requestBudget || kinobaza !== verified.kinobaza) throw new Error('Fixed discovery configuration required.');
   if (!['synthetic', 'live'].includes(mode)) throw new Error('Explicit synthetic/live mode required.');
   const start = performance.now(), stages = {}; const controller = new AbortController();
+  const allowHop = !isHeldOut(film.id) && kinobaza === 'on';
   const metrics = { requestsMade: 0, requestBudget: selection.requestBudget, elapsedMs: 0, calls: [] };
   const timer = setTimeout(() => controller.abort(), deadlineMs);
   const allowed = new Set([tmdbScenario(film, { discovery: 'digital-ua' }).sourceURL, tmdbScenario(film, { discovery: 'digital-ua' }).providersURL,
-    motnScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(kinobaza === 'on' ? [htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, canonicalKinobazaURL(film.id)] : [])]);
+    motnScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(kinobaza === 'on' ? [htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(allowHop ? [canonicalKinobazaURL(film.id)] : [])] : [])]);
   let approvedHop = null;
   const seen = new Set();
   const boundedFetch = async (url, init) => {
     if (controller.signal.aborted || !allowed.has(url) || seen.has(url) || seen.size >= selection.requestBudget) throw new Error('Budget/allowlist/deadline');
-    if (kinobaza === 'on' && url === canonicalKinobazaURL(film.id) && approvedHop !== url) throw new Error('Unapproved canonical hop');
+    if (allowHop && url === canonicalKinobazaURL(film.id) && approvedHop !== url) throw new Error('Unapproved canonical hop');
     seen.add(url); metrics.requestsMade++;
     const call = { stage: url.includes('themoviedb') ? 'tmdb' : url.includes('movieofthenight') ? 'motn' : 'kinobaza', method: 'GET' };
     metrics.calls.push(call);
@@ -258,7 +280,7 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
     const response = await fetchImpl(url, { ...init, signal });
     call.httpStatus = response.status;
     if (response.status >= 300 && response.status < 400) call.redirectLocation = response.headers.has('location') ? 'present-not-retained' : 'missing';
-    if (kinobaza === 'on') approvedHop = canonicalRedirectTarget(url, response.headers.get('location'), response.status) ?? approvedHop;
+    if (allowHop) approvedHop = canonicalRedirectTarget(url, response.headers.get('location'), response.status) ?? approvedHop;
     return response;
   };
   const stage = async (name, work) => {
@@ -284,7 +306,7 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
       await Promise.all([
         stage('tmdb', () => fetchTmdb(tmdbScenario(film, { discovery: 'digital-ua' }), tmdbToken, boundedFetch)),
         stage('motn', () => fetchMotn(motnScenario(film, { discovery: 'digital-ua' }), motnKey, boundedFetch)),
-        ...(kinobaza === 'on' ? [stage('kinobaza', () => fetchHtmlCandidates(htmlScenario(film, { discovery: 'digital-ua' }), boundedFetch, { canonicalRedirect: true }))] : []),
+        ...(kinobaza === 'on' ? [stage('kinobaza', () => fetchHtmlCandidates(htmlScenario(film, { discovery: 'digital-ua' }), boundedFetch, { canonicalRedirect: allowHop }))] : []),
       ]);
     }
     stages.kinobaza ??= { status: 'disabled-no-request', result: null, elapsedMs: 0 };

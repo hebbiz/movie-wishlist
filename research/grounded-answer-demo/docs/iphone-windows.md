@@ -14,6 +14,91 @@ the [single short acceptance plan](regional-card-proposal.md#acceptance-and-one-
 limits owner work to the new end-to-end flow/material discrepancies. No source
 probe/card tour/parser-debugging cycle is restarted.
 
+## Deterministic Mykola answer — no new owner run requested
+
+The [separately approved presentation child](regional-card-proposal.md#mykola-answer-implementation--authored-validation-only)
+uses natural Ukrainian labels: «Знайти варіанти», «Відкрити посилання», «Обрати».
+Source claims stay separate; unbound localization is a hint, not a track added
+to another offer. A/B/technical diagnostics are collapsed, material warnings
+visible. Review/confirm/edit/cancel still targets one original source row;
+«Скасувати вибір» preserves the confirmed/manual draft. Exact URL/acknowledgement
+and excluded fields remain. Source requests/budgets, six-film picker, keys and
+Windows helpers are unchanged; no restart/SSH-disconnect or owner live test cycle
+is requested for these automatically checked presentation changes.
+
+## M2 A/B and short-report UI — historical implementation, M2 now closed
+
+The [bounded implementation](regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only)
+is on a separate child of #184. Existing Coherence/Dune, keys, launcher and network
+budgets are unchanged. Subsequent held-out preflight and runtime preparation
+are authorized/completed; the owner-reported held-out session is now complete.
+B development/probe is deferred; **no new live evaluation is requested**. Do not run
+older live commands merely to test this change.
+No repeat synthetic/SSH-disconnect/platform session is requested.
+
+When a later explicitly approved session uses this implementation: inspect short
+source-labelled A/B reasons beside separate rows; they are not offer equality,
+localization enrichment or entitlement. Select/review/confirm/edit/cancel still
+targets one original row. After a completed/partial/failed discovery,
+**«Скопіювати короткий звіт»** copies the current film's allowlisted text only, with unknown runtime
+commit and no raw payloads, URLs, credentials or manual draft values. Copying
+again does not rerun discovery. Film change/reload clears the old report.
+
+If Safari allows the clipboard write, the page reports success after it completes.
+If unavailable/denied, use **«Виділити текст звіту»** in the read-only fallback and
+Safari's manual Copy action. Capability is not assumed for LAN HTTP; no auth/TLS/
+firewall/system change or extra source request is needed for fallback. The device
+clipboard can outlive/sync beyond page memory after explicit copying. Browser
+mock/mobile checks are not real iPhone validation. Fold any eventual check into
+the single separately approved acceptance session, not an additional cycle.
+
+## M2 held-out runtime preparation
+
+The [canonical runtime/source-use record](regional-card-proposal.md#held-out-runtime-preparation--authored-checks-only)
+owns scope and readiness. This is preparation, not a request for a new owner run.
+One server/picker retains Coherence/Dune and adds Kingdom of Heaven, The Thing
+1982/2011 and Parasite. The four held-out ceilings are4/3/3/4, total14. Kinobaza
+is explicitly off for both Thing films and direct-canonical-only for the other
+two; no redirect/retry/fallback. Existing Coherence/Dune hop policy is unchanged.
+
+**Live readiness is conditional:** full TMDb Terms are accessible but their
+derivative restriction's application to matching/display/draft is unresolved;
+Kinobaza rights also remain scoped/unresolved. MOTN is assessed compatible only
+for the bounded private non-LLM use, not a public/competing product. No legal
+guarantee or live-evaluation authorization follows from runtime preparation.
+
+Prepared **synthetic-only** restart command below needs no TMDb/MOTN/Gemini key
+and performs no external requests. It is provided for reproducibility, not a
+required repeat of synthetic/SSH-disconnect owner testing. The agent did not run
+it against the owner demo. It stops only this implementation copy's verified PID;
+do not use another checkout's PID/state. First enter PowerShell if SSH opens cmd:
+
+```text
+pwsh -NoProfile
+```
+
+Inspect this copy's Git status/HEAD first; preserve local/untracked changes and
+do not pull/reset over them. The command assumes the already updated implementation
+branch, not the root design checkout. All scenario variables are set again:
+
+```powershell
+Set-Location 'C:\Users\DenysLis\.codex\visualizations\2026\09\28\01a0e7c4-3dc8-75e0-a3ed-84a709483b8d\mw-m2-ab-implementation'; $env:DEMO_MODE='synthetic'; $env:DEMO_RETRIEVAL='ua-discovery'; $env:DEMO_DISCOVERY='digital-ua'; $env:DEMO_FILM='kingdom-of-heaven'; $env:DEMO_KINOBAZA='on'; $env:DEMO_SYNTHETIC_SCENARIO='grounded'; Remove-Item Env:DEMO_URL_SOURCE,Env:DEMO_AMAZON_REGION,Env:GEMINI_API_KEY,Env:TMDB_READ_ACCESS_TOKEN,Env:MOTN_API_KEY -ErrorAction SilentlyContinue; .\research\grounded-answer-demo\windows\Stop-Demo.ps1; .\research\grounded-answer-demo\windows\Start-Demo.ps1 -Access lan -BindIPv4 (Read-Host 'Verified IPv4 of THIS Windows') -LanPassword (Read-Host 'LAN password' -AsSecureString) -Port 4317
+```
+
+Safari: use exactly the helper's printed `http://<entered Windows IPv4>:4317`,
+username **demo**, the separately entered LAN password. HTTP is trusted-home-LAN
+only, not encrypted credentials or internet exposure. No firewall/SSH change.
+
+After separate live approval/readiness, the existing hidden-key helper interface
+remains `-TmdbToken (Read-Host 'TMDb token' -AsSecureString)` and
+`-MotnKey (Read-Host 'MOTN key' -AsSecureString)`, only with explicitly chosen
+`DEMO_MODE=live`; no Gemini key. Do not switch now merely because code is ready.
+Use one future session: one click per new film, no repeats/platform tour, short
+copied/fallback summaries separating source claims, A/B findings, conflicts/
+unknowns and actual calls. Unsupported cards/missing pointers are findings, not
+successful B matches or reasons to replace a film. One draft flow only if it adds
+a new semantic check; no mandatory repeat of already validated functionality.
+
 ## Consolidated discovery owner workflow
 
 Implemented isolated research; the [two-film owner functional session is complete](digital-ua-owner-validation.md#consolidated-discovery--owner-run-functional-checkpoint),
