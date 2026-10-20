@@ -69,15 +69,13 @@ export function assistedIdentity(all, film, sourceURL) {
   if (Number(heading[2]) !== film.year && !stableMatch) return outcome('mismatch', 'source-year-conflict-without-stable-crosswalk');
   const directorAliases = new Set((film.directorAliases ?? []).map(normalize).filter(Boolean));
   if (!directors.size || !directorAliases.size) return outcome('unresolved', 'source-or-selected-director-missing');
-  // Nonmatching localized spelling is not a proved different director. Do not
-  // transliterate or assume the model's romanization. Multiple source values
-  // require every value to be an alias actually supplied by selected metadata.
-  if (![...directors].every(d => directorAliases.has(normalize(d)))) {
-    const scripts = s => /\p{Script=Cyrillic}/u.test(s) ? 'cyrillic' : /\p{Script=Latin}/u.test(s) ? 'latin' : 'other';
-    const unmatched = [...directors].filter(d => !directorAliases.has(normalize(d)));
-    if (unmatched.some(d => [...directorAliases].some(a => scripts(a) === scripts(d) && scripts(d) !== 'other'))) return outcome('mismatch', 'source-director-conflict');
-    return outcome('unresolved', 'director-alias-unestablished');
-  }
+  // Flat aliases do not establish a multi-person group. Do not split source
+  // formatting or guess membership/completeness. Count comes from the already
+  // selected director records, never from aliases, script or browser input.
+  if (film.directorCount !== 1 || directors.size !== 1) return outcome('unresolved', 'director-scope-unestablished');
+  // A spelling/script difference is not person-ID evidence. Even an exact film
+  // ID cannot bypass this unresolved gate; no fuzzy/diacritic/transliteration repair.
+  if (![...directors].every(d => directorAliases.has(normalize(d)))) return outcome('unresolved', 'director-alias-unestablished');
   return outcome('matched', stableMatch ? 'explicit-stable-and-structural-match' : 'explicit-title-year-director-match');
 }
 

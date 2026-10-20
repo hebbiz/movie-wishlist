@@ -3528,11 +3528,21 @@ resolution, live preflight/evaluation, general scraping or production.
   agreeing with the admitted URL, and explicit labelled director evidence.
   Normalize NFC/case/whitespace only. Aliases come solely from selected TMDb
   preview; no per-film or generated transliteration aliases. Missing evidence,
-  multiple headings or unestablished cross-script director spelling is
-  **unresolved**. Explicit different title/year/canonical/same-script director
-  or stable ID is **mismatch**, not overridable by a click. Unrecognized same-
-  script names conservatively refuse; this may miss real aliases, never proves
-  a different actual person. IDs are optional evidence only from labelled
+  multiple headings or unestablished director spelling in **any script** is
+  **unresolved** (`director-alias-unestablished`), even with an exact film IMDb ID.
+  Same-script differences/diacritics are not person-identity contradictions.
+  No transliteration, fuzzy matching, diacritic stripping, invented aliases or
+  user override. Explicit different title/year/canonical or stable ID remains
+  **mismatch**; spelling uncertainty cannot hide an independent ID conflict.
+  Director records already in the selected TMDb projection supply only a count
+  to this gate (no new request or public film/draft field). A flat alias list
+  cannot establish a multi-person group: unknown/multiple selected director
+  records or multiple distinct source director values stay **unresolved**
+  (`director-scope-unestablished`). Combined names are not split, reordered or
+  heuristically grouped; partial aliases/subsets cannot produce matched. For
+  one selected director record/one source value, an exact supplied alias can
+  pass the existing other gates. This deliberately withholds some legitimate
+  multi-director/formatting cases, not a proved different film/person. IDs are optional evidence only from labelled
   IMDb/TMDb film-metadata rows with supported exact links; all returned IDs
   must agree with one another and known selected IDs. Malformed IDs unresolved.
   Proven valid-ID conflict takes precedence over other incomplete/malformed
@@ -3614,6 +3624,18 @@ ack/draft preservation/cancel/copy/no-storage. Windows temporary-copy lifecycle
 also exercises new module inheritance and one admitted mock source GET with no
 API credential on that request. These are implementation checks, not live HTML
 shape, real iPhone/SSH-disconnect, coverage, accuracy or entitlement validation.
+
+**Narrow director classification review after #189 a4020a0:** authored unchanged
+title/year + exact IMDb, `Denis Villeneuve` versus `Dénis Villeneuve`, reproduced
+the old `mismatch/source-director-conflict`; seven initial authored spelling/
+group-scope regressions failed before correction. Script equality was the
+unsupported inference, not live evidence of different people. It is removed,
+and the obsolete reason is removed from the safe-report allowlist. Authored
+projection-to-extraction/browser/report cases verify unresolved claims withheld,
+stable-ID-conflict priority, same-film draft preservation, cap/one-shot and
+stale protection. No live/source/rules request, owner session, new alias or
+matching capability. Launcher/imports/dependencies/key routing are unchanged,
+so Windows lifecycle is not repeated for this classification-only correction.
 
 ### M3.1 bounded implementation — authored checks only
 

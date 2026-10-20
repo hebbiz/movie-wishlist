@@ -78,8 +78,12 @@ separate **«Прочитати одну картку»** action. Only exact
 host, port, query, fragment, subpage, encoding/dot trick or guessed repair.
 One opaque run-bound reference; server revalidates it. One15s/2MiB GET,
 no redirects/retries, cookies, credentials or destinations. Failed GET consumes
-the attempt. Missing metadata/transliteration remains unresolved; identity
-conflict cannot be overridden. Film-level, own provider-block and country/link
+the attempt. Unestablished director spelling in any script stays unresolved;
+same-script differences/diacritics are not proved person conflicts. Unknown or
+multi-director scope also stays unresolved without heuristic splitting. Exact
+film ID does not bypass this gate; independent stable-ID conflict stays mismatch.
+Claims are withheld in either case; identity cannot be user-overridden.
+Film-level, own provider-block and country/link
 claims stay separate. The new contribution summary reports identity, source
 candidates, displayed rows and localization blocks, not enriched verified offers.
 Same-film addition preserves the confirmed/manual draft; a pending review is

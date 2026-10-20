@@ -7,8 +7,38 @@ import { prepareDraft } from '../public/discovery-client.mjs';
 import { buildShortReport, buildWorkflowReport } from '../public/discovery-report.mjs';
 import { mockTransport } from './film-workflow.fixture.mjs';
 import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
-const film = { dynamic: true, id: 'tmdb:999900001', tmdbId: 999900001, imdbId: 'tt999900001', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: [], directorAliases: ['Authored director'] };
+const film = { dynamic: true, id: 'tmdb:999900001', tmdbId: 999900001, imdbId: 'tt999900001', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: [], directorAliases: ['Authored director'], directorCount: 1 };
 const response = html => new Response(html, { headers: { 'content-type': 'text/html; charset=UTF-8' } });
+// Author-written spelling/grouping cases, not live pages or person aliases.
+for (const [name, expectedAliases, observed, directorCount, stable, status, reason] of [
+  ['exact returned alias', ['Denis Villeneuve'], 'Denis Villeneuve', 1, 'tt999900001', 'matched', 'explicit-stable-and-structural-match'],
+  ['exact supplied alias, not guessed transliteration', ['Denis Villeneuve', 'Дені Вільнев'], 'Дені Вільнев', 1, 'tt999900001', 'matched', 'explicit-stable-and-structural-match'],
+  ['Latin diacritic is unestablished', ['Denis Villeneuve'], 'Dénis Villeneuve', 1, 'tt999900001', 'unresolved', 'director-alias-unestablished'],
+  ['Cyrillic spelling is unestablished', ['Дені Вільнев'], 'Дені Вільньов', 1, 'tt999900001', 'unresolved', 'director-alias-unestablished'],
+  ['cross-script spelling is unestablished', ['Denis Villeneuve'], 'Дені Вільньов', 1, 'tt999900001', 'unresolved', 'director-alias-unestablished'],
+  ['different Latin name is not person-ID evidence', ['Denis Villeneuve'], 'Other director', 1, 'tt999900001', 'unresolved', 'director-alias-unestablished'],
+  ['missing aliases', [], 'Denis Villeneuve', 1, 'tt999900001', 'unresolved', 'source-or-selected-director-missing'],
+  ['combined names are not split', ['Author One', 'Author Two'], 'Author One / Author Two', 2, 'tt999900001', 'unresolved', 'director-scope-unestablished'],
+  ['partial observed group is not a full match', ['Author One', 'Author Two'], 'Author One', 2, 'tt999900001', 'unresolved', 'director-scope-unestablished'],
+  ['incomplete aliases with known multi-director scope', ['Author One'], 'Author One', 2, 'tt999900001', 'unresolved', 'director-scope-unestablished'],
+  ['unknown director scope is not a full match', ['Author One'], 'Author One', null, 'tt999900001', 'unresolved', 'director-scope-unestablished'],
+  ['stable-ID conflict overrides unknown spelling', ['Denis Villeneuve'], 'Dénis Villeneuve', 1, 'tt999900002', 'mismatch', 'source-stable-id-conflict'],
+  ['stable-ID conflict overrides unknown multi-director scope', ['Author One'], 'Author One / Author Two', 2, 'tt999900002', 'mismatch', 'source-stable-id-conflict'],
+]) test(`director evidence semantics: ${name}`, async () => {
+  let calls = 0;
+  const r = await fetchAssistedKinobaza(CARD, { ...film, directorAliases: expectedAliases, directorCount }, async url => {
+    calls++; assert.equal(url, CARD);
+    return response(markup({ director: observed, stable: `<tr><td>IMDb:</td><td>${stable}</td></tr>` }));
+  });
+  assert.equal(r.identity.status, status); assert.equal(r.identity.reason, reason); assert.equal(calls, 1);
+  if (status !== 'matched') { assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined); }
+});
+test('separately formatted source director values do not prove a person conflict or complete group', async () => {
+  const r = await fetchAssistedKinobaza(CARD, { ...film, directorCount: 1, directorAliases: ['Author One', 'Another supplied spelling'] }, async () => response(markup({
+    director: 'Author One', stable: '<tr><td>Режисер:</td><td>Another supplied spelling</td></tr>',
+  })));
+  assert.equal(r.identity.status, 'unresolved'); assert.equal(r.identity.reason, 'director-scope-unestablished'); assert.deepEqual(r.candidates, []);
+});
 function harness({ html = markup(), reply, apiOptions = {}, ...options } = {}) {
   const transport = mockTransport(apiOptions), calls = [];
   const flows = createFilmWorkflows({ mode: 'live', tmdbToken: 'author-tmdb-key', motnKey: 'author-motn-key', ...options,
@@ -68,7 +98,7 @@ for (const [name, html, status] of [
   ['empty original metadata', markup({ original: '' }), 'unresolved'],
   ['missing director', markup({ director: '' }), 'unresolved'],
   ['unestablished transliteration', markup({ director: 'Авторський режисер' }), 'unresolved'],
-  ['explicit different director', markup({ director: 'Other director' }), 'mismatch'],
+  ['unestablished director name', markup({ director: 'Other director' }), 'unresolved'],
   ['canonical conflict', markup({ url: CARD + '-other' }), 'mismatch'],
   ['multiple h1', markup().replace('</h1>', '</h1><h1>Other (2001)</h1>'), 'unresolved'],
 ]) test(`independent assisted identity: ${name}`, async () => {
@@ -86,6 +116,21 @@ test('partial TMDb Watch Providers does not block independent MOTN or later assi
   const r = await h.read(); assert.equal(r.payload.result.assistedContribution.identity, 'matched');
   assert.equal(r.payload.result.rows.find(row => row.id === 'motn:0').link.href, before.rows[0].link.href); assert.equal(h.calls.length, 5);
   assert.ok(r.payload.result.rows.some(row => row.id.startsWith('kinobaza:')));
+});
+for (const kind of ['unestablished-spelling', 'multiple-directors', 'incomplete-director-aliases', 'id-conflict']) test(`withheld claims and safe report use selected projection: ${kind}`, async () => {
+  const h = harness({ html: markup({ director: kind === 'unestablished-spelling' || kind === 'id-conflict' ? 'Áuthored director' : 'Authored director',
+    stable: `<tr><td>IMDb:</td><td>${kind === 'id-conflict' ? 'tt999900002' : 'tt999900001'}</td></tr>` }),
+    apiOptions: { mutate(data, phase) { if (phase === 'preview' && ['multiple-directors', 'incomplete-director-aliases'].includes(kind)) data.credits.crew.push({ id: 999998, job: 'Director', ...(kind === 'multiple-directors' ? { name: 'Other authored director' } : {}) }); } },
+  });
+  const before = (await h.setup()).payload.result; const r = await h.read(), result = r.payload.result; result.accounting = r.payload.workflow;
+  assert.equal(result.assistedContribution.identity, kind === 'id-conflict' ? 'mismatch' : 'unresolved');
+  assert.equal(result.assistedContribution.reason, kind === 'id-conflict' ? 'source-stable-id-conflict' : kind === 'unestablished-spelling' ? 'director-alias-unestablished' : 'director-scope-unestablished');
+  assert.deepEqual(result.rows, before.rows); assert.equal(result.filmLocalization, null); assert.equal(result.assistedContribution.blocks, 0);
+  assert.equal(h.calls.length, 5); assert.equal(r.payload.workflow.uses.kinobaza, 1);
+  const report = buildShortReport({ filmId: film.id, mode: 'live', result });
+  assert.ok(report.includes(`reason ${result.assistedContribution.reason}`));
+  assert.doesNotMatch(report, /source-director-conflict|https?:|Áuthored|author-tmdb-key|author-motn-key/);
+  assert.equal((await h.read()).status, 400); assert.equal(h.calls.length, 5);
 });
 for (const kind of ['redirect', '403', '429', 'timeout', 'oversize', 'stream-size', 'invalid-type', 'malformed', 'challenge', 'secret']) test(`one bounded failed assisted attempt: ${kind}, no retries or fallback`, async () => {
   const h = harness({ timeoutMs: 15, maxBytes: 4096, reply() {

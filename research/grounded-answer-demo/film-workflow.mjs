@@ -95,9 +95,11 @@ export function createFilmWorkflows({ mode = 'synthetic', tmdbToken = '', motnKe
           called = true; p.counters.kinobaza++; const call = { phase: 'kinobaza', stage: 'kinobaza', method: 'GET' }; p.calls.push(call);
           const r = await fetchImpl(target, init); call.httpStatus = r.status; return r;
         };
+        const directorRecords = snapshot.stages.tmdb.result.identity.metadata.directors;
+        const identityFilm = { ...snapshot.film, directorCount: directorRecords?.state === 'reported' ? directorRecords.items?.length : null };
         let kino = mode === 'synthetic'
-          ? await extractHtml(authoredAssistedHtml(snapshot.film, card.sourceURL), snapshot.film, { identityCheck: all => assistedIdentity(all, snapshot.film, card.sourceURL) })
-          : await fetchAssistedKinobaza(card.sourceURL, snapshot.film, boundedFetch, { signal: controller.signal, timeoutMs: Math.min(timeoutMs, 15_000), maxBytes: Math.min(maxBytes, 2 * 1024 * 1024) });
+          ? await extractHtml(authoredAssistedHtml(snapshot.film, card.sourceURL), snapshot.film, { identityCheck: all => assistedIdentity(all, identityFilm, card.sourceURL) })
+          : await fetchAssistedKinobaza(card.sourceURL, identityFilm, boundedFetch, { signal: controller.signal, timeoutMs: Math.min(timeoutMs, 15_000), maxBytes: Math.min(maxBytes, 2 * 1024 * 1024) });
         if (p.revision !== revision) return { status: 409, payload: { status: 'superseded' } };
         if ([tmdbToken, motnKey].filter(Boolean).some(s => JSON.stringify(kino).includes(s))) kino = { status: 'unsafe-response-withheld', candidates: [] };
         kino.sourceURL = card.sourceURL; kino.receivedAt ??= new Date().toISOString();
