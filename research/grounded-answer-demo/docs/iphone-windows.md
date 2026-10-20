@@ -1,5 +1,41 @@
 # Windows + iPhone manual test guide (trusted home LAN only)
 
+## M3.1 arbitrary-film search — no owner run requested
+
+M3.1 is implemented for isolated research; **live preflight/evaluation is not
+authorized and is not requested here**. [Implementation/source-use boundaries](regional-card-proposal.md#m31-bounded-implementation--authored-checks-only)
+and [handoff](m3-arbitrary-film-handoff.md) retain M3.2/production deferral.
+Windows helpers, LAN username `demo`, exact printed Safari URL, hidden source
+key/password prompts and detached lifecycle are unchanged; agent temp-copy
+lifecycle/module-copy checks cover this iteration. No mandatory repeated owner
+synthetic/SSH-disconnect or old streaming-app tour.
+
+Only after future evaluation approval:
+
+1. Use the correct reviewed PoC copy/branch and existing safe-update/start/status
+   workflow below, preserving local/untracked files. Same `ua-discovery` +
+   `digital-ua` setup and TMDb/MOTN credentials; no new switch/provider/key.
+   `DEMO_FILM` still selects an initial fixed control. Dynamic Kinobaza stays
+   not evaluated even if fixed controls use `DEMO_KINOBAZA=on`.
+2. In Safari choose **«Знайти інший фільм»**, type title/optional year and explicitly
+   press **«Шукати в TMDb»**. Select the intended candidate (not automatically
+   first), review original/title/year/directors and IMDb crosswalk. Confirm
+   **«Це потрібний фільм — підтвердити»**, then explicitly request viewing options.
+3. Read phase counters: normally search1 +preview1 +discovery2 =4 HTTP requests;
+   at most2 explicit searches/2 different previews/one discovery action, cap6
+   per case. Missing IMDb skips MOTN; absent offers are not universal unavailable.
+   No Details refetch. Synthetic shows invented identities unrelated to the
+   typed title and0 source HTTP calls, with action counts separately labelled.
+4. Copy the safe short report/fallback, including failure/preview outcomes if
+   unresolved; do not send full JSON/HTML/URLs/keys. New query clears prior
+   report/draft immediately. Use **«Новий випадок — очистити попередній»** for
+   the next film, no server restart; no automatic retry or film replacement.
+5. A single dynamic draft semantic check only if needed after authorization;
+   original-row review/ack/confirm/edit/cancel unchanged. No production write.
+   Do not open provider links beyond the separately agreed small evaluation
+   sample or repeat already completed platform checks. Stop at cap, wrong identity,
+   access block or stale state; short new/missing/conflicting summary only.
+
 Current [consolidated proposal](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
 and [handoff](consolidated-poc-handoff.md) now have bounded research implementation
 approval. The original [consolidated workflow](#consolidated-discovery-owner-workflow)

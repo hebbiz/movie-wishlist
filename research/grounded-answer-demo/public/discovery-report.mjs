@@ -15,6 +15,7 @@ const reasons = {
   'source-territory-differs': 'Source territories differ; no common regional scope established',
   'regional-pointer-unresolved': 'Regional card context unresolved', 'pointer-qualifiers-unresolved': 'Card pointer qualifiers unresolved (not a proved cut/version)',
   'disabled-by-scenario': 'not evaluated — disabled by scenario',
+  'missing-imdb-crosswalk': 'not evaluated — no verified IMDb crosswalk',
   'no-supported-direct-pointer': 'Related film/provider claim, exact card unresolved',
   'no-comparable-card-peer': 'Supported pointer reported; no comparable peer card',
 };
@@ -54,6 +55,7 @@ function diagnosticSummary(d) {
     : 'partial-cause-not-in-summary; missing optional fields alone are not a cause';
 }
 const statuses = new Set(['ok', 'partial', 'no-ua-options', 'disabled-no-request', 'missing-key-no-request', 'missing-token-no-request',
+  'not-evaluated-missing-crosswalk',
   'identity-mismatch', 'identity-unresolved', 'stage-failed-no-retry', 'deadline-no-retry', 'canonical-redirect-refused',
   'redirect-not-followed', 'http-error', 'invalid-response', 'timeout', 'unsupported-markup']);
 function statusText(s) {
@@ -69,9 +71,18 @@ const access = f => f?.state === 'reported' ? known({ rent: 'rental', rental: 'r
   subscription: 'subscription', flatrate: 'subscription', 'ad-supported': 'ad-supported', free: 'free', addon: 'addon' }, f.value, 'unknown') : 'unknown';
 const linkKinds = new Set(['missing', 'unsafe', 'unknown', 'relative', 'search', 'tmdb-watch-page', 'tracking-redirect', 'exact-card-unverified']);
 export function buildShortReport({ filmId, mode, receivedAt, result, failed = false, draft = {} } = {}) {
-  const lines = ['MW-FUT-01-M2 — short report', known(films, filmId, 'Fixed film unknown'),
+  const dynamic = result?.dynamic === true && result.film?.dynamic === true && result.film.id === filmId;
+  const safeTitle = dynamic && typeof result.film.title === 'string' && result.film.title.length <= 180 && !/[\p{C}<>]|https?:|@/iu.test(result.film.title) ? result.film.title : 'Selected title withheld';
+  const lines = [dynamic ? 'MW-FUT-01-M3.1 — short report' : 'MW-FUT-01-M2 — short report', dynamic ? safeTitle : known(films, filmId, 'Fixed film unknown'),
     mode === 'synthetic' ? 'SYNTHETIC ONLY — authored data, not live validation.' : mode === 'live' ? 'LIVE source claims — not owner validation or entitlement.' : 'Mode unknown.',
     `Browser receipt: ${timestamp(receivedAt)}`, 'Commit: unknown (runtime provenance not attested).'];
+  if (dynamic) {
+    const a = result.accounting;
+    lines.push(`HTTP phases: search ${count(a?.counters?.search)}/2; preview ${count(a?.counters?.preview)}/2; discovery ${count(a?.counters?.discovery)}/2; case cap6.`,
+      `Phase elapsed ms: search ${count(a?.phaseElapsedMs?.search)}; preview ${count(a?.phaseElapsedMs?.preview)}; discovery ${count(a?.phaseElapsedMs?.discovery)}. Not benchmark/cost.`,
+      `Selected TMDb ID: ${Number.isSafeInteger(result.film.tmdbId) && result.film.tmdbId > 0 && result.film.tmdbId <= 2_147_483_647 ? result.film.tmdbId : 'unknown'}; IMDb crosswalk ${/^tt\d{1,20}$/.test(result.film.imdbId ?? '') ? `reported-match (${result.film.imdbId})` : 'unknown — MOTN not evaluated'}.`,
+      'Kinobaza: not evaluated — dynamic M3.1 scope, not a resolver failure.');
+  }
   if (failed) lines.push('Request failed/invalid response; source results and HTTP-call count unknown. No retry.');
   else {
     lines.push(`HTTP calls: ${count(result?.metrics?.requestsMade)}/${count(result?.metrics?.requestBudget)}; elapsed: ${count(result?.metrics?.elapsedMs)} ms (not benchmark/cost).`);
@@ -79,13 +90,13 @@ export function buildShortReport({ filmId, mode, receivedAt, result, failed = fa
       const s = result?.sources?.find(s => s.source === source);
       const a = result?.matching?.subjects?.find(s => s.source === source);
       if (s?.status === 'disabled-no-request') {
-        lines.push(`${sourceLabel(source)}: not evaluated — disabled by scenario; no request.`); continue;
+        lines.push(`${sourceLabel(source)}: not evaluated — ${dynamic ? 'dynamic M3.1 scope' : 'disabled by scenario'}; no request.`); continue;
       }
       lines.push(`${sourceLabel(source)}: ${statusText(s?.status)}; identity ${identity(s?.identity)}; A ${relationText(a)}.`);
       if (source === 'tmdb' && s?.diagnostics?.status === 'partial') lines.push(`TMDb A partial diagnostics: ${diagnosticSummary(s.diagnostics)}.`);
     }
     lines.push(result?.sources?.some(s => s.source === 'kinobaza' && s.status === 'disabled-no-request')
-      ? 'Kinobaza localization: not evaluated — disabled by scenario.'
+      ? `Kinobaza localization: not evaluated — ${dynamic ? 'dynamic M3.1 scope' : 'disabled by scenario'}.`
       : `Kinobaza film-level localization: UA audio ${localizationState(result?.filmLocalization?.ukrainianAudio)}; not provider tracks.`);
     const rows = Array.isArray(result?.rows) ? result.rows : [];
     const links = new Map((result?.matching?.rows ?? []).map(r => [r.rowId, r]));
@@ -121,4 +132,20 @@ export async function writeShortReport(text, navigator) {
     await navigator.clipboard.writeText(text);
     return 'copied';
   } catch { return 'fallback'; } // Never surface browser exception text or falsely report success.
+}
+
+// Search/preview failures are reportable without inventing a selected film/offer.
+export function buildWorkflowReport({ workflow, status, mode, film } = {}) {
+  const allowed = new Set(['results', 'no-results-for-query', 'invalid-search-response', 'preview', 'confirmed', 'identity-unresolved-or-conflicting',
+    'missing-token-no-request', 'invalid-token-no-request', 'api-auth-error', 'api-access-denied', 'title-not-returned', 'quota-or-rate-limit',
+    'api-http-error', 'api-error-object-withheld', 'redirect-not-followed', 'invalid-content-type', 'response-too-large', 'unsafe-response-withheld', 'timeout-no-retry',
+    'invalid-or-network-response-no-retry', 'action-failed-no-retry', 'search-cap', 'candidate-unavailable-or-preview-cap', 'same-query-no-retry']);
+  const c = workflow?.counters, e = workflow?.phaseElapsedMs;
+  const selected = status === 'confirmed' && film?.dynamic === true && Number.isSafeInteger(film.tmdbId) && film.id === `tmdb:${film.tmdbId}`;
+  return ['MW-FUT-01-M3.1 — short report', mode === 'synthetic' ? 'SYNTHETIC ONLY — authored, no live validation.' : 'Source actions only — not independent identity/availability validation.',
+    'Commit: unknown (runtime provenance not attested).', `Last action: ${allowed.has(status) ? status : 'unresolved status'}.`,
+    selected ? `User-confirmed TMDb ID: ${film.tmdbId}; IMDb crosswalk ${/^tt\d{1,20}$/.test(film.imdbId ?? '') ? 'reported-match' : 'unknown'}.` : 'Selected identity: not confirmed. No film/offer match asserted.',
+    `HTTP phases: search ${count(c?.search)}/2; preview ${count(c?.preview)}/2; discovery ${count(c?.discovery)}/2; case cap6.`,
+    `Phase elapsed ms: search ${count(e?.search)}; preview ${count(e?.preview)}; discovery ${count(e?.discovery)}. Not benchmark/cost.`,
+    'Kinobaza: not evaluated — dynamic M3.1 scope, not a resolver failure.', 'Discovery not completed. Unknown is not unavailable. No draft values, queries, source bodies, URLs or credentials.'].join('\n');
 }

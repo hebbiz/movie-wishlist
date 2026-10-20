@@ -18,10 +18,13 @@ final develop had0 remote statuses/check-runs. Effective required policy was
 unreadable (403), not assumed absent; ordinary GitHub merges succeeded without
 bypass. These are historical implementation checks, **not rerun for M3 docs**.
 
-**M3 is Proposed / design-only; implementation and evaluation are not authorized.**
+**M3.1 subsequently approved/implemented for bounded isolated research after
+#187 eb21427. M3.2 and all new live preflight/evaluation remain unapproved.**
 The [M3 decision and feasibility](#m3-arbitrary-film-discovery--proposed-design-only)
 and [13-section handoff](m3-arbitrary-film-handoff.md) are the current next-step
-design, not a second architecture. Six fixed controls remain the actual runtime.
+design, not a second architecture. Six fixed controls remain alongside the new
+M3.1 search in composed discovery; the [actual implementation record](#m31-bounded-implementation--authored-checks-only)
+distinguishes shipped scope from the still-proposed resolver/evaluation.
 M2 is closed, B auxiliary/deferred, C/D/enrichment absent; MW-FUT-01 remains
 Discovery. Earlier open-stack/no-merge statements below are dated history,
 superseded by this verified consolidation record, not new instructions.
@@ -2872,7 +2875,7 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | Two-request Dune pointer probe | Deferred, not authorized; dormant design only, not a prerequisite for a useful answer. |
 | P3 short-report release-event `date` | Technical debt, non-blocking; not an established cause of owner-run partial. No runtime fix in this task. |
 | Deterministic Mykola viewing answer | Implemented in #186, merged via #185/#184; separate source claims, no LLM/production. Authored checks only. |
-| M3.1 arbitrary TMDb selection + MOTN | **Proposed / design-only**; explicit search/identity/discovery budgets, six controls retained. Separate implementation/evaluation approval required. |
+| M3.1 arbitrary TMDb selection + MOTN | **Subsequently approved/implemented, authored checks only**; explicit phase counters/cap6, six controls retained. Live preflight/evaluation and merge unapproved. |
 | M3.2 Kinobaza card resolution | **Proposed / design-only**, assisted public-UI card selection recommended pending product approval; native automated search conflicts with current robots exclusions. No automatic resolver capability established. |
 | MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
@@ -3176,9 +3179,9 @@ M1/M2 and approved successor retain13 sections each; scope/whitespace clean.
 
 ### Decision and verified implementation gap
 
-**M3-D1:** recommend two separately reviewable implementation PRs, M3.1 then
-M3.2, each requiring separate approval. Neither runtime work nor live evaluation
-is authorized by this design. Do not expand B/C/D, introduce LLM, add sources,
+**M3-D1:** two separately reviewable implementation PRs, M3.1 then M3.2.
+The owner subsequently authorized M3.1 only; its implementation record follows.
+This design never authorizes live evaluation or M3.2. Do not expand B/C/D, introduce LLM, add sources,
 or restart MEGOGO work. This extends the existing observation contract and
 deterministic answer; it does not replace them with an offer-merge engine.
 
@@ -3416,7 +3419,7 @@ Evaluation register separates source assertions from independent checks:
 
 | Metric | Record / denominator | Proposed acceptance, not a current result |
 | --- | --- | --- |
-| Identity correctness |8 intended identities; selected root/crosswalk versus separately attested identity; unresolved counts separately. |0 wrong automatic assignments/ID-conflict bypasses;8 cases accounted for. At least6/8 usable confirmed selections for product usefulness; remainder explicit failure, not silently dropped. |
+| Identity correctness |8 intended identities; selected root/crosswalk versus separately attested identity; unresolved counts separately. |**0 wrong assignments/ID-conflict bypasses mandatory**;8 cases accounted for. Hypothesis:6/8 usable confirmed selections; remainder explicit failure, not silently dropped. |
 | Kinobaza resolution | Outcome/basis for all8; automatic vs owner-assisted and attempted vs skipped separately. |0 falsely matched cards; at least4/8 matched for assisted M3.2 usefulness, otherwise defer resolver investment. No API/SLA/automated coverage claim. |
 | Useful links | Per film/source: safe exact/tracking candidates, search/unsafe/missing excluded; source labels/ack retained. | At least4/8 films offer one navigable candidate. This is utility, not independently verified working-link rate. |
 | Provider-specific UA localization | Number of films/blocks with explicit audio/subtitle claims and unknown territory/completeness; film badges separate. | All reported claims stay scoped;0 propagated/unsubstantiated tracks. A zero yield is a finding, not a security failure; usefulness separately judged. |
@@ -3424,7 +3427,9 @@ Evaluation register separates source assertions from independent checks:
 | Calls/latency | Actual phase counts/attempts, per-phase and total elapsed from search click and confirmed discovery separately. | Every run within6/7 cap, aggregate48/56; no per-keystroke/destination/retry traffic. Median/range may describe8 runs, never promised SLA/cost. No zero-price inference. |
 | Help with choosing | Owner yes/partial/no per film: could choose or open a candidate without another provider search? Assisted Kinobaza lookup time recorded separately. | At least4/8 yes for M3.1 utility; assisted M3.2 must add a useful scoped link/localization hint for at least2 cases, else defer. Not mandatory “best” recommendation. |
 
-Thresholds are proposed product acceptance, not arbitrary confidence scores.
+Usefulness ratios are product hypotheses, not arbitrary confidence scores,
+runtime gates or permission to replace an inconvenient film. Missing offers is
+not itself an implementation defect. **0 false identity assignments is mandatory.**
 Passing the identity/safety invariants is mandatory even if usefulness targets
 fail. Source outage/missing cards remain in denominators. Threshold changes
 require product agreement before evaluation, not after seeing results.
@@ -3475,8 +3480,9 @@ to manufacture successful outcomes. Source rights remain separate from metrics.
 
 ### Approvals actually needed
 
-1. Approve/revise **M3.1 implementation** independently; no new source/plan,
-   poster infrastructure, hosting, DB/cache/queue or numerical matching score.
+1. **M3.1 implementation was subsequently approved and implemented** below;
+   review/merge remains separate. No new source/plan, poster infrastructure,
+   hosting, DB/cache/queue or numerical matching score.
 2. Choose **assisted M3.2** as a bounded intermediate step, or defer it if the
    product requires automatic card discovery. Native automated search is not
    ready under current access rules; do not claim this fallback solves it.
@@ -3484,8 +3490,100 @@ to manufacture successful outcomes. Source rights remain separate from metrics.
    eight nominations, usefulness thresholds and max3 manual opens/time window.
 
 All implementation details and standard13 sections are in the linked
-[M3 handoff](m3-arbitrary-film-handoff.md), **Proposed / not authorized**.
+[M3 handoff](m3-arbitrary-film-handoff.md), **M3.1 approved/implemented;
+M3.2/evaluation not authorized**.
 MW-FUT-01 remains Discovery; no production write/integration or new owner cycle.
+
+### M3.1 bounded implementation — authored checks only
+
+Owner approval cites #187 eb21427; implementation branch is separately stacked
+on that unchanged open design PR, not develop/main. Only this research directory
+changes. The eight M3 nominations have **no configured IDs/cards or live results**.
+All six fixed controls, prior modes and fixed request bodies/budgets remain.
+
+- [film-workflow.mjs](../film-workflow.mjs) owns bounded per-page projected state,
+  opaque candidate/preview/action references and generated exact API URLs.
+  Auth/Host/Origin protect new local `/dynamic/search`, `/dynamic/preview`,
+  `/dynamic/confirm`, `/dynamic/discover`, `/dynamic/invalidate` and
+  `/dynamic/new-case` actions. JSON input max4096bytes/2s, unknown overrides
+  rejected; credentials never passed from browser.100 page contexts/30min TTL,
+  eager local expiry purge plus close cleanup, not background source polling.
+- Search is explicit page1, `uk-UA`, adult false, optional year, max8 safe
+  projections,0 per-result lookups/posters. At most2 explicitly different search
+  submissions and2 different selected-ID previews per case. Same-query/preview
+  retry refused. An explicit new case resets counters and destroys prior state.
+- Preview uses the unchanged five-resource Details query. Root/supplied IDs and
+  IMDb values must agree; root HTTP200 API-error object, malformed IDs and
+  ambiguous crosswalk cannot become confirmed. Missing optional metadata may
+  stay partial. Preview context is immutable, derived from actual projected
+  TMDb metadata/aliases, never editable browser expected IDs or hardcoded films.
+- Confirmation makes0 source calls. Discovery reuses preview, then at most one
+  Watch Providers and one verified-IMDb MOTN call, independently gated/parallel.
+  No crosswalk → MOTN not evaluated,0 calls; provider failure after a valid
+  preview does not suppress independent MOTN. Dynamic Kinobaza is always not
+  evaluated, not a resolver failure. No Google Search, LLM or provider destinations.
+- **Actual HTTP counters** search≤2 +preview≤2 +discovery≤2 =cap6; usual1+1+2=4.
+  At most one discovery action/case. Attempted errors/redirects count, missing
+  credentials do not create fake calls. Content-free phase/source/status call
+  ledger covers all phases; source elapsed timings are measured, not a benchmark
+  or cost estimate. Workflow wall time includes interaction, is not API latency.
+  Lost local response → unknown accounting, not stale counters or fabricated0;
+  safe failure summary and manual reload, no automatic retry.
+- [Server](../server.mjs) page binding revokes old fixed capabilities too. Query,
+  candidate or fixed-film change aborts obsolete work; server revision and client
+  generation checks stop late writes. Fixed/dynamic selection never shares an
+  old confirmed identity. No restart per film. Pure selected-context variants of
+  [TMDb](../tmdb.mjs)/[MOTN](../motn.mjs) reuse projectors; fixed wrappers stay intact.
+  Composition accepts server-generated provenance URLs; auxiliary matching only
+  receives the validated expected context, no B/C/D policy expansion or joining.
+- [film-search.mjs](../public/film-search.mjs) adds the explicit mobile flow to
+  existing `ua-discovery`. [Existing answer/draft](../public/discovery-client.mjs)
+  retains original-row choice, R1/R2, literal exact href/ack, excluded tracks/
+  video/price and cancel-without-losing-edits. A new query/case clears rows/draft/
+  report immediately; local invalidation is not a per-keystroke API search.
+- [Report](../public/discovery-report.mjs) also handles failed/unconfirmed
+  search/preview without a false selected film. Safe selected title/IDs after
+  discovery, counts/status/reasons/phase times only; query, capability tokens,
+  URLs/tracking, credentials, bodies and edited draft text excluded. Clipboard
+  denied/unavailable fallback, phase/film stale guards and unknown runtime commit
+  retained. Only explicit copy exports outside page memory.
+- [Synthetic](../film-workflow-synthetic.mjs) always shows2 explicitly invented
+  same-title identities, not matches to user input or live-verified IDs;0 external
+  requests, action-use counts distinct. Authored mock fixtures are not archives.
+
+**Source-use findings:** reuse the dated first-party review already in this
+document/#187; **0 new external documentation/card/API/destination requests**
+during implementation. TMDb selected-ID/search capability is documented; current
+Terms Application/derivative projection/draft interpretation remains unresolved,
+not unavailable text or blanket permission/ban. The non-LLM path never forwards
+source data to models; legacy isolated modes do not settle contractual scope.
+Prior MOTN bounded private non-LLM display assessment remains conditional on
+account/quota/attribution/third-party rights, not public competing integration
+clearance; no purchase/plan change. Dynamic Kinobaza is not used; fixed-card rights
+do not authorize M3.2 search. No new source-use acknowledgement switch/legal gate, cache/storage,
+API endpoint outside research, source/LLM or legal guarantee is added.
+
+**Implementation checks:** new authored regressions cover request/counter
+contracts, remake-like selected IDs, root/appended/crosswalk conflicts, missing
+crosswalk, independent failures, literal properties, URL/query/tracking ack and
+R2 isolation; HTTP guards/replay/bounds; late preview/discovery and stale copy;
+dynamic draft/cancel, mobile320/390px and no destinations/storage. Windows Search
+and multi-key Discovery lifecycle plus M3.1 four-call mock sequence passed in
+unique temporary copies, including dependency-copy list, parent-exit survival,
+duplicate start, forged-PID refusal, safe stop/restart and hidden key routing.
+No owner process, SSH/firewall/service or primary-copy change. Real Safari/
+SSH-disconnect not repeated. Final full suite totals/skips are recorded in the
+implementation PR at its SHA, not borrowed from the merged baseline.
+
+**Live status:** unvalidated; no owner session requested. After separate readiness/
+preflight/evaluation approval, use one server, existing hidden TMDb/MOTN/LAN keys,
+one case per nominated film,1 search+1 preview+1 discovery normally4 calls,
+max6. Explicit changed query/second preview consume that same case's limits;
+new case is not an automatic retry of a failed example.8 cases max48, source
+absence stays a finding.0 false assignments mandatory; useful-links/choices
+ratios remain hypotheses. No platform tour; follow the separately proposed
+bounded link sample only if evaluation is authorized. M3.2, production and merge
+remain separate decisions. See the [future UI guide](iphone-windows.md#m31-arbitrary-film-search--no-owner-run-requested).
 
 ## MEGOGO one-card HTML PoC
 

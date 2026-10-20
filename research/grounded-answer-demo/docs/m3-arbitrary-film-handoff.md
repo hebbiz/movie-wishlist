@@ -1,12 +1,15 @@
 # MW-FUT-01-M3 handoff: arbitrary-film discovery
 
-**Proposed / not authorized for implementation or live evaluation.**
-October20,2026. Design-only approval does not authorize runtime/source probes,
-owner testing or merge. MW-FUT-01 remains Discovery. The
+**M3.1 subsequently approved/implemented for bounded isolated research** after
+#187 `eb21427a325c8331bddfb1dd05c17d4db5c96cac`. **M3.2, live preflight/evaluation,
+merge and production remain Proposed / not authorized.** The13 sections retain
+the design; the [implementation record](regional-card-proposal.md#m31-bounded-implementation--authored-checks-only)
+states the actual M3.1 boundary and authored verification. No new owner cycle.
+October20,2026. MW-FUT-01 remains Discovery. The
 [canonical M3 decision](regional-card-proposal.md#m3-arbitrary-film-discovery--proposed-design-only)
 owns architecture, source-use evidence, metrics and trade-offs; this file is the
-reviewable task boundary, not a parallel specification. Recommend separate M3.1
-and M3.2 PRs, each requiring implementation approval; automatic Kinobaza search
+reviewable task boundary, not a parallel specification. M3.1 is implemented in
+a separate child PR; M3.2 still requires approval. Automatic Kinobaza search
 is not a verified dependency.
 
 ## 1. Context
@@ -170,11 +173,13 @@ and resolver actions consume their separate counted budgets. Kinobaza failure do
 TMDb/MOTN. No track/price/video repair, C/D join or best/verified badge.
 
 Future [evaluation matrix/metrics](regional-card-proposal.md#eight-film-evaluation-matrix-and-measurable-acceptance):
-8 nominated films,0 false assignments, at least6 usable identity selections;
-at least4 cases with eligible link and4 useful choices; assisted M3.2 at least4
+8 nominated films; **0 false assignments is mandatory**. Ratios of6 usable
+selections,4 cases with eligible links/choices, and assisted M3.2 at least4
 matched cards and2 added useful hints, otherwise defer. Unknown/missing cases
 stay in denominator. These product thresholds need approval before execution;
-they are not current coverage facts or confidence scores. Max3 independent
+they are usefulness hypotheses, not permission to repair data, replace failed
+cases or call absent offers an implementation defect. They are not current
+coverage facts or confidence scores. Max3 independent
 manual link checks, scoped source claims separate from verified correctness.
 
 ## 11. Test plan
@@ -217,7 +222,9 @@ acknowledgement switches or mandatory emails due only to unknown rights.
 
 After separate approval, fetch/instructions/dirty-tree check and create M3.1
 feature branch from actual develop, isolated from owner demo/untracked files.
-Review-only PR into develop; M3.2 separate child PR only after its scope is
+Actual M3.1 implementation is stacked on still-open #187, with only the new
+implementation diff, per subsequent owner authorization. Review-only path;
+M3.2 separate child PR only after its scope is
 approved, use actual stack/base without duplicate diffs. Pin reviewed/tested SHA
 and report checks/skips, scope, source rights and pending evaluation separately.
 No history rewrite/force, merge/retarget/tag/release/deployment/system changes.

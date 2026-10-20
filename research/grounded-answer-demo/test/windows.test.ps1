@@ -19,7 +19,7 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
-    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
+    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs','film-workflow.mjs','film-workflow-synthetic.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
         $null = New-Item -ItemType Directory -Path (Join-Path $copy 'node_modules')
@@ -142,6 +142,7 @@ try {
     }
     if ($Discovery) {
         Copy-Item -LiteralPath (Join-Path $copy 'server.mjs') -Destination (Join-Path $copy 'server-core.mjs')
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'film-workflow.fixture.mjs') -Destination (Join-Path $copy 'film-probe.fixture.mjs')
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'discovery-launch.fixture.mjs') -Destination (Join-Path $copy 'server.mjs')
         $env:DEMO_MODE = 'live'
         $env:DEMO_FILM = 'kingdom-of-heaven'
@@ -232,6 +233,29 @@ try {
             }
             $metadata = Get-Content -LiteralPath $statePath -Raw
             Assert (-not ($metadata -match 'offline-discovery|API_KEY|ACCESS_TOKEN|Authorization')) 'Credential persisted in metadata.'
+            # M3.1 uses the same detached process, separately bounded mock-only case.
+            $dynamic = $afterRestart.dynamic
+            $searchReply = $null; $previewReply = $null
+            foreach ($action in @('search','preview','confirm','discover')) {
+                $body = if ($action -eq 'search') { @{query='Authored Windows case'} } elseif ($action -eq 'preview') { @{candidate=$searchReply.candidates[0].ref} } elseif ($action -eq 'confirm') { @{preview=$previewReply.preview.ref} } else { @{} }
+                $client.DefaultRequestHeaders.Remove('x-demo-workflow') | Out-Null
+                $client.DefaultRequestHeaders.Remove('x-demo-action') | Out-Null
+                $client.DefaultRequestHeaders.Remove('Origin') | Out-Null
+                $client.DefaultRequestHeaders.Add('Origin', $restarted.url)
+                $client.DefaultRequestHeaders.Add('x-demo-workflow', $dynamic.id)
+                $client.DefaultRequestHeaders.Add('x-demo-action', $dynamic.actionToken)
+                $content = [Net.Http.StringContent]::new(($body | ConvertTo-Json -Compress), [Text.Encoding]::UTF8, 'application/json')
+                $reply = $client.PostAsync($restarted.url + '/dynamic/' + $action, $content).GetAwaiter().GetResult()
+                try {
+                    $text = $reply.Content.ReadAsStringAsync().GetAwaiter().GetResult(); $payload = $text | ConvertFrom-Json
+                    Assert ([int]$reply.StatusCode -eq 200) 'Detached M3.1 action failed.'
+                    Assert (-not ($text -match 'offline-discovery-tmdb|offline-discovery-motn|unrelated-key-not-inherited')) 'M3.1 key echo.'
+                    $dynamic = $payload.workflow
+                    if ($action -eq 'search') { $searchReply = $payload }
+                    if ($action -eq 'preview') { $previewReply = $payload }
+                    if ($action -eq 'discover') { Assert ($payload.result.dynamic -and $payload.result.rows.Count -eq 2 -and $dynamic.counters.search -eq 1 -and $dynamic.counters.preview -eq 1 -and $dynamic.counters.discovery -eq 2) 'Detached M3.1 counters/key routing failed.' }
+                } finally { $reply.Dispose(); $content.Dispose() }
+            }
         } finally { $client.Dispose(); $handler.Dispose() }
     }
     Assert (-not ($saved -match 'offline-integration-password|PASSWORD|GEMINI_API_KEY|MOTN_API_KEY|TMDB_READ_ACCESS_TOKEN|Authorization|SYNTHETIC ONLY')) 'Metadata contains content/secret fields.'

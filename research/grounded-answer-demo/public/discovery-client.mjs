@@ -1,5 +1,5 @@
 // Page memory only. Never stores, submits, resolves URLs or rewrites source data.
-import { buildShortReport, writeShortReport, relationText, sourceLabel, comparisonSummary } from './discovery-report.mjs';
+import { buildShortReport, buildWorkflowReport, writeShortReport, relationText, sourceLabel, comparisonSummary } from './discovery-report.mjs';
 const value = f => f?.state === 'reported' ? String(f.value) : `[${f?.state ?? 'unknown'}]`;
 export function accessLabel(field) {
   const raw = field?.state === 'reported' ? field.value : undefined;
@@ -73,6 +73,7 @@ const viewingSource = source => ({ tmdb: 'TMDb / JustWatch', motn: 'MOTN', kinob
 const rowSource = row => viewingSource(row.id?.split(':')[0]);
 export function viewingSourceState(source) {
   if (source.status === 'disabled-no-request') return 'вимкнено для цього сценарію';
+  if (source.status === 'not-evaluated-missing-crosswalk') return 'не перевірялося — немає підтвердженого IMDb crosswalk';
   if (source.identity === 'mismatch') return 'суперечлива ідентифікація, записи приховано';
   if (source.status === 'no-ua-options') return 'варіантів для України не повідомлено';
   if (source.identity === 'matched' && ['ok', 'A: ok; B: ok'].includes(source.status)) return 'дані отримано';
@@ -118,29 +119,35 @@ export function prepareDraft(result, row, trackingAcknowledged = false) {
   const ids = { coherence: 'tt2866360', 'dune-part-two': 'tt15239678',
     'kingdom-of-heaven': 'tt0320661', 'the-thing-1982': 'tt0084787', 'the-thing-2011': 'tt0905372', parasite: 'tt6751668' };
   const years = { coherence: '2013', 'dune-part-two': '2024', 'kingdom-of-heaven': '2005', 'the-thing-1982': '1982', 'the-thing-2011': '2011', parasite: '2019' };
-  if (!Object.hasOwn(ids, result.film.id)) throw new Error('Fixed draft film required.');
+  const dynamic = result.dynamic === true && result.film.dynamic === true && Number.isSafeInteger(result.film.tmdbId) && result.film.tmdbId > 0 &&
+    result.film.id === `tmdb:${result.film.tmdbId}` && row.filmId === result.film.id &&
+    (result.film.imdbId === null || /^tt\d{1,20}$/.test(result.film.imdbId)) && typeof result.film.title === 'string' && result.film.title.length <= 180;
+  if (!Object.hasOwn(ids, result.film.id) && !dynamic) throw new Error('Validated draft film required.');
+  const imdbId = dynamic ? result.film.imdbId : ids[result.film.id];
   const acknowledgementRequired = needsLinkAcknowledgement(row.link);
   const purchaseURL = linkPresentation(row.link).canOpen && (!acknowledgementRequired || trackingAcknowledged) ? row.link.href : '';
-  return { fields: { imdb_url: `https://www.imdb.com/title/${ids[result.film.id]}/`,
-    title: result.film.title.replace(/ \(\d{4}\)$/, ''), year: years[result.film.id],
+  return { fields: { imdb_url: imdbId ? `https://www.imdb.com/title/${imdbId}/` : '',
+    title: result.film.title.replace(/ \(\d{4}\)$/, ''), year: dynamic ? Number.isInteger(result.film.year) ? String(result.film.year) : '' : years[result.film.id],
     recommended_medium: row.provider.medium, purchase_url: purchaseURL, status: 'wishlist' },
     sidecar: { rowId: row.id, source: row.provenance, provider: row.provider, linkKind: row.link.kind, linkAudit: row.linkAudit ?? null,
       linkPolicy: { originalURL: row.link.href, referral: row.link.referral ?? null, acknowledgementRequired, acknowledged: acknowledgementRequired && trackingAcknowledged }, territory: row.country ?? 'unknown',
       kinobazaLocalization: row.kinobazaLocalization ?? null, countrySignal: row.countrySignal ?? null,
       access: row.access, package: row.package, cut: row.cut, identity: row.identityStatus,
       commonIdentity: result.identity.status, conflicts: row.conflicts, comparisons: row.comparisons ?? [],
-      titleBasis: 'Fixed verified film catalogue; original film year, not inferred regional release year.',
+      titleBasis: dynamic ? 'User-confirmed TMDb selected identity; reported release year, not provider edition/cut. Missing IMDb stays blank.' : 'Fixed verified film catalogue; original film year, not inferred regional release year.',
       availability: row.availability, accountEntitlement: 'unknown',
       excluded: ['Price/currency (including anomalies), audio, subtitles, video, ownership/account/group fields and all unreported characteristics.'] } };
 }
 
-export async function mountDiscovery(document, initial, { signal, fetchImpl = fetch } = {}) {
+export async function mountDiscovery(document, initial, { signal, fetchImpl = fetch, onFixedChange } = {}) {
   const el = id => document.getElementById(id), button = el('run');
   let session = initial, result = null, reviewRow = null, loading = false;
   let generation = 0, reportReady = false, reportFailed = false, receivedAt = null;
+  let workflowReport = null;
   const emptyDraftState = () => ({ present: false, confirmed: false, edited: false, selectionCancelled: false, cleared: false });
   let draftState = emptyDraftState();
   const used = new Set();
+  let requestController;
   const add = (host, tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; host.append(n); return n; };
   document.documentElement.lang = 'uk';
   el('answer').classList.add('discovery-ui');
@@ -172,7 +179,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     el('prompt').textContent = session.operation;
     chosen.textContent = `${session.film.title} · ${session.film.director} · Україна · ліміт ${session.requestBudget} запитів`;
     planned.textContent = [...session.plannedRequests, ...(session.conditionalRequests ?? []).map(url => `Conditional canonical GET only after validated redirect: ${url}`)].join('\n');
-    button.disabled = loading || used.has(session.film.id); button.textContent = used.has(session.film.id) ? 'Запит уже виконано — оберіть інший фільм' : 'Знайти варіанти';
+    button.disabled = session.dynamicSelection || loading || used.has(session.film.id); button.textContent = session.dynamicSelection ? 'Довільний фільм — керування в блоці пошуку' : used.has(session.film.id) ? 'Запит уже виконано — оберіть інший фільм' : 'Знайти варіанти';
   };
   const panes = add(el('result'), 'div'); panes.className = 'discovery-ui';
   const review = add(panes, 'section'); review.id = 'draft-review'; review.hidden = true;
@@ -186,11 +193,11 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   const selectText = add(fallback, 'button', 'Виділити текст звіту'); selectText.type = 'button';
   selectText.addEventListener('click', () => { reportText.focus(); reportText.select(); });
   add(report, 'p', 'Після копіювання звіт може залишитися в буфері пристрою. Без ключів, повних відповідей і вмісту чернетки.');
-  const resetReport = () => { generation++; reportReady = false; copy.disabled = true; reportStatus.textContent = ''; reportText.value = ''; fallback.hidden = true; };
+  const resetReport = () => { generation++; workflowReport = null; reportReady = false; copy.disabled = true; reportStatus.textContent = ''; reportText.value = ''; fallback.hidden = true; };
   copy.addEventListener('click', async () => {
     if (!reportReady || loading || copy.disabled) return;
     const at = generation;
-    const text = buildShortReport({ filmId: session.film.id, mode: session.mode, receivedAt, result, failed: reportFailed, draft: draftState });
+    const text = workflowReport ? buildWorkflowReport(workflowReport) : buildShortReport({ filmId: session.film.id, mode: session.mode, receivedAt, result, failed: reportFailed, draft: draftState });
     copy.disabled = true; reportStatus.textContent = 'Копіюю…'; fallback.hidden = true;
     const outcome = await writeShortReport(text, document.defaultView.navigator);
     if (at !== generation || signal?.aborted) return;
@@ -245,7 +252,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     if (data.identity.conflicts.length) add(technical, 'p', `Identity: ${data.identity.status}. Conflicting stable IDs: ${data.identity.conflicts.join(', ')}. Affected source withheld; no common identity.`);
     add(technical, 'p', `HTTP calls: ${data.metrics.requestsMade}/${data.metrics.requestBudget} · elapsed ${data.metrics.elapsedMs}ms (not a cost estimate)`);
     const sourceSummary = add(technical, 'p'); sourceSummary.id = 'discovery-source-status';
-    sourceSummary.textContent = data.sources.map(s => s.status === 'disabled-no-request' ? `${s.source}: not evaluated — disabled by scenario` : `${s.source}: ${s.status} · identity ${s.identity}`).join(' | ');
+    sourceSummary.textContent = data.sources.map(s => s.status === 'disabled-no-request' ? `${s.source}: not evaluated — ${data.dynamic ? 'dynamic M3.1 scope' : 'disabled by scenario'}` : `${s.source}: ${s.status} · identity ${s.identity}`).join(' | ');
     const subjects = add(technical, 'details'); subjects.id = 'matching-subjects'; add(subjects, 'summary', 'A — source film identity evidence');
     for (const s of data.matching?.subjects ?? []) add(subjects, 'p', `${sourceLabel(s.source)}: ${relationText(s)}${s.yearVariance ? ' · Year variance retained; reason not inferred.' : ''}`);
     const matches = new Map((data.matching?.rows ?? []).map(m => [m.rowId, m]));
@@ -308,10 +315,14 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   picker.addEventListener('change', async () => {
     if (loading) return; loading = true; syncChoice(); picker.disabled = true;
     resetReport();
+    result = null; hideReview(); draft.replaceChildren(); draft.hidden = true; draftState = emptyDraftState();
+    el('answer').replaceChildren(); el('result').hidden = true; onFixedChange?.();
     try {
-      const response = await fetchImpl(`/session?film=${encodeURIComponent(picker.value)}`, { cache: 'no-store', signal });
+      const response = await fetchImpl(`/session?film=${encodeURIComponent(picker.value)}`, { cache: 'no-store', signal,
+        ...(session.dynamic?.id ? { headers: { 'x-demo-page': session.dynamic.id } } : {}) });
       if (!response.ok) throw new Error('Fixed-film session unavailable.');
       session = await response.json(); result = null; hideReview(); draft.replaceChildren(); draft.hidden = true;
+      onFixedChange?.(session.dynamic);
       draftState = emptyDraftState();
       el('answer').replaceChildren(); el('result').hidden = true;
     } catch { el('status').textContent = 'Не вдалося обрати фільм. Перезавантажте сторінку; запитів до джерел не було.'; button.disabled = true; return; }
@@ -319,19 +330,42 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     el('status').textContent = 'Фільм обрано. Запит до джерел — лише після натискання.'; syncChoice();
   });
   button.addEventListener('click', async () => {
-    if (loading || used.has(session.film.id)) return;
+    if (session.dynamicSelection || loading || used.has(session.film.id)) return;
     used.add(session.film.id); loading = true; picker.disabled = true; syncChoice();
     resetReport(); reportFailed = false;
+    const at = generation; requestController = new AbortController();
     el('status').textContent = 'Шукаю варіанти один раз, без автоматичних повторів.';
     try {
-      const response = await fetchImpl('/answer', { method: 'POST', headers: { 'x-demo-session': session.token }, cache: 'no-store', signal });
+      const response = await fetchImpl('/answer', { method: 'POST', headers: { 'x-demo-session': session.token }, cache: 'no-store', signal: signal ? AbortSignal.any([signal, requestController.signal]) : requestController.signal });
       const payload = await response.json(); if (!response.ok) throw new Error('Discovery failed.');
-      if (signal?.aborted) return;
+      if (signal?.aborted || at !== generation) return;
       result = payload.result; render(result); el('result').hidden = false;
       el('status').textContent = 'Готово. Перегляньте варіанти й обмеження; автоматичного повтору не буде.';
-    } catch { if (!signal?.aborted) { result = null; reportFailed = true; el('answer').replaceChildren(); el('result').hidden = false; el('status').textContent = 'Не вдалося отримати коректну відповідь. Автоматичного повтору не буде.'; } }
-    finally { loading = false; picker.disabled = false; if (!signal?.aborted) { receivedAt = new Date().toISOString(); reportReady = true; copy.disabled = false; } syncChoice(); }
+    } catch { if (!signal?.aborted && at === generation) { result = null; reportFailed = true; el('answer').replaceChildren(); el('result').hidden = false; el('status').textContent = 'Не вдалося отримати коректну відповідь. Автоматичного повтору не буде.'; } }
+    finally { if (at === generation) { loading = false; picker.disabled = false; if (!signal?.aborted) { receivedAt = new Date().toISOString(); reportReady = true; copy.disabled = false; } syncChoice(); } }
   });
   document.defaultView.addEventListener('pagehide', () => { resetReport(); result = null; reviewRow = null; draftState = emptyDraftState(); panes.replaceChildren(); pickerHost.remove(); }, { once: true });
   syncChoice();
+  return {
+    beginDynamic() {
+      requestController?.abort(); resetReport(); loading = false; picker.disabled = false;
+      session = { ...session, dynamicSelection: true, film: { id: 'pending', title: 'Оберіть identity у блоці пошуку', director: 'не підтверджено' },
+        kinobaza: 'off — not evaluated', sources: ['TMDb', 'Movie of the Night'], requestBudget: 6, baseRequestBudget: 6,
+        plannedRequests: [], conditionalRequests: [], operation: 'M3.1 · search max2, preview max2, discovery max2; no retries/LLM/destinations. Kinobaza not evaluated.' };
+      result = null; hideReview(); draft.replaceChildren(); draft.hidden = true; draftState = emptyDraftState();
+      el('answer').replaceChildren(); el('result').hidden = true;
+      if (!picker.querySelector('option[value=""]')) { const option = add(picker, 'option', 'Довільний фільм'); option.value = ''; option.disabled = true; }
+      picker.value = ''; syncChoice();
+    },
+    presentDynamic(data) {
+      workflowReport = null;
+      session = { ...session, dynamicSelection: true, film: data.film, kinobaza: 'off — not evaluated for dynamic selections', sources: ['TMDb', 'Movie of the Night'],
+        requestBudget: 6, baseRequestBudget: 6, plannedRequests: [], conditionalRequests: [], operation: 'M3.1: explicit search max2, preview max2, discovery max2; Details preview reused; Kinobaza not evaluated. No LLM, retries, destinations or storage.' };
+      result = data; reportFailed = false; receivedAt = new Date().toISOString(); render(data); el('result').hidden = false;
+      reportReady = true; copy.disabled = false; syncChoice();
+    },
+    presentWorkflowReport(data) { workflowReport = data; reportReady = true; copy.disabled = false; el('result').hidden = false; },
+    beginAction() { resetReport(); },
+    page() { return session.dynamic; },
+  };
 }
