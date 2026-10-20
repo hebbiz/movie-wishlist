@@ -14,9 +14,11 @@ create table media_advice_private.permissions (
 create table media_advice_private.sessions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  group_id uuid not null references public.groups(id) on delete cascade,
+  -- Keep accounting after group/list deletion: cascading away rate records
+  -- would let session reset evade the rolling cap. Fresh RPC checks still bind access.
+  group_id uuid not null,
   imdb_id text not null check (imdb_id ~ '^tt[0-9]{7,10}$'),
-  list_id uuid references public.movie_group_lists(id) on delete cascade,
+  list_id uuid,
   form_session uuid not null,
   created_at timestamptz not null default now(),
   expires_at timestamptz not null default now() + interval '30 minutes',

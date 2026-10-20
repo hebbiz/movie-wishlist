@@ -55,8 +55,10 @@ test('atomic replay/rate/TTL cap and reservations survive error/lost result, no 
   await assert.rejects(rpc('reserve', { session: s.id, stage: 'tmdb-find' }), /session-unavailable/);
   for (let n = 2; n <= 20; n++) await rpc('start', { n });
   await assert.rejects(rpc('start', { n: 21 }), /daily-session-cap/);
+  await db.exec('delete from public.movie_group_lists');
+  await assert.rejects(rpc('start', { n: 21, targetList: null }), /daily-session-cap/); // deleting a list must not erase rate accounting
   await db.exec("update media_advice_private.sessions set expires_at=now()-interval '1 second'");
-  await assert.rejects(rpc('start', { n: 21 }), /daily-session-cap/); // expiry doesn't reset rolling rate
+  await assert.rejects(rpc('start', { n: 21, targetList: null }), /daily-session-cap/); // expiry doesn't reset rolling rate
   const cols = (await db.query("select column_name from information_schema.columns where table_schema='media_advice_private' and table_name='sessions'")).rows.map(r => r.column_name);
   assert.ok(!cols.some(c => /body|response|html|chat|secret|token/.test(c)));
   await db.exec("update media_advice_private.sessions set created_at=now()-interval '25 hours'");
