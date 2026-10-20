@@ -53,11 +53,12 @@ export function assistedIdentity(all, film, sourceURL) {
     if (next?.tagName === 'a') directors.add(text(next));
   }
   directors.delete('');
-  if (canonicals.length > 1 || canonicals.some(u => u !== sourceURL)) return outcome('mismatch', 'source-canonical-conflict');
-  if (stable.some(s => !s.id)) return outcome('unresolved', 'malformed-source-stable-id');
   const expected = { tmdb: String(film.tmdbId), imdb: film.imdbId };
-  if (stable.some(s => expected[s.namespace] && s.id !== expected[s.namespace]) || ['tmdb', 'imdb'].some(ns => new Set(stable.filter(s => s.namespace === ns).map(s => s.id)).size > 1)) return outcome('mismatch', 'source-stable-id-conflict');
-  if (headings.length !== 1 || !originals.length || canonicals.length !== 1) return outcome('unresolved', 'source-identity-structure-incomplete');
+  if (canonicals.some(u => u && u !== sourceURL)) return outcome('mismatch', 'source-canonical-conflict');
+  if (stable.some(s => s.id && expected[s.namespace] && s.id !== expected[s.namespace]) || ['tmdb', 'imdb'].some(ns => new Set(stable.filter(s => s.id && s.namespace === ns).map(s => s.id)).size > 1)) return outcome('mismatch', 'source-stable-id-conflict');
+  if (stable.some(s => !s.id)) return outcome('unresolved', 'malformed-source-stable-id');
+  if (canonicals.length > 1) return outcome('unresolved', 'source-canonical-ambiguous');
+  if (headings.length !== 1 || !originals.length || canonicals.length !== 1 || canonicals[0] !== sourceURL) return outcome('unresolved', 'source-identity-structure-incomplete');
   const aliases = new Set([film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])].map(normalize).filter(Boolean));
   const heading = /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]);
   if (!heading) return outcome('unresolved', 'source-title-year-missing');

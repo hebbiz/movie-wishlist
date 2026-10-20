@@ -3535,6 +3535,9 @@ resolution, live preflight/evaluation, general scraping or production.
   a different actual person. IDs are optional evidence only from labelled
   IMDb/TMDb film-metadata rows with supported exact links; all returned IDs
   must agree with one another and known selected IDs. Malformed IDs unresolved.
+  Proven valid-ID conflict takes precedence over other incomplete/malformed
+  evidence. Repeated agreeing canonical links or a missing href are unresolved,
+  not a proved different card; an explicitly different canonical is mismatch.
   An exact agreed stable ID permits year variance, but does not erase title/
   director/canonical conflict. No ID is assumed present in real HTML.
 - Existing localization extractor preserves film badge / own provider block /
