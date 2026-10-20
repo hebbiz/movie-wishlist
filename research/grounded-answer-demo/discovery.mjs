@@ -3,16 +3,24 @@ import { tmdbScenario, fetchTmdb, projectTmdbIdentity, projectTmdbProviders, syn
 import { motnScenario, fetchMotn, normalizeMotn, syntheticMotn } from './motn.mjs';
 import { htmlScenario, fetchHtmlCandidates, extractHtml, canonicalKinobazaURL, canonicalRedirectTarget } from './html-source.mjs';
 import { syntheticHtml } from './synthetic.mjs';
+import { HELD_OUT_FILMS, isHeldOut } from './held-out.mjs';
 
 export const DISCOVERY_DEADLINE_MS = 65_000;
-export const DISCOVERY_IDS = Object.freeze(['coherence', 'dune-part-two']);
+export const DISCOVERY_IDS = Object.freeze(['coherence', 'dune-part-two', ...Object.keys(HELD_OUT_FILMS)]);
 export function discoveryScenario(film, { discovery, amazonRegion, urlSource, kinobaza = 'on' } = {}) {
   if (!DISCOVERY_IDS.includes(film.id) || discovery !== 'digital-ua' || amazonRegion !== undefined || urlSource !== undefined || !['on', 'off'].includes(kinobaza)) {
-    throw new Error('ua-discovery requires digital-ua, fixed Coherence/Dune, DEMO_KINOBAZA=on|off, unset URL_SOURCE/AMAZON_REGION.');
+    throw new Error('ua-discovery requires digital-ua, a fixed catalogue film, DEMO_KINOBAZA=on|off, unset URL_SOURCE/AMAZON_REGION.');
   }
+  const heldOut = isHeldOut(film.id);
+  // The two Thing scenarios cannot enable Kinobaza, even under global "on".
+  if (heldOut && !HELD_OUT_FILMS[film.id].kinobazaURL) kinobaza = 'off';
+  const hop = !heldOut && kinobaza === 'on';
   return Object.freeze({ film, discovery, retrieval: 'ua-discovery', amazonRegion: null, sourceURL: null, prompt: null, kinobaza,
-    country: 'UA', requestBudget: kinobaza === 'on' ? 5 : 3, baseRequestBudget: kinobaza === 'on' ? 4 : 3,
-    operation: 'Fixed-ID TMDb (max 2 GETs), independent MOTN (1 GET), optional fixed Kinobaza (1 GET, plus at most one exact canonical host hop only after validated 301/308). Max4 without redirect, max5 only with canonical hop. No LLM, destination requests, retries or storage. Source identity gates remain independent; no cross-source offer merging. Local draft only, not production MW.' });
+    country: 'UA', requestBudget: (kinobaza === 'on' ? 4 : 3) + Number(hop), baseRequestBudget: kinobaza === 'on' ? 4 : 3,
+    ...(heldOut ? { heldOut: true, canonicalHop: false } : {}),
+    operation: heldOut
+      ? `Held-out fixed IDs: TMDb max2 GETs, independent MOTN max1; Kinobaza ${kinobaza === 'on' ? 'one direct canonical GET' : 'disabled for this scenario/configuration'}. No redirect follow, retries or fallback. Four held-out discoveries total max14 requests. A/B only, no offer/field merge, LLM, destinations or storage; memory-only draft.`
+      : 'Fixed-ID TMDb (max 2 GETs), independent MOTN (1 GET), optional fixed Kinobaza (1 GET, plus at most one exact canonical host hop only after validated 301/308). Max4 without redirect, max5 only with canonical hop. No LLM, destination requests, retries or storage. Source identity gates remain independent; no cross-source offer merging. Local draft only, not production MW.' });
 }
 
 const providers = {
@@ -237,18 +245,19 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
   deadlineMs = DISCOVERY_DEADLINE_MS } = {}) {
   const { film, kinobaza } = selection;
   const verified = discoveryScenario(film, { discovery: selection.discovery, kinobaza });
-  if (selection.retrieval !== 'ua-discovery' || selection.requestBudget !== verified.requestBudget) throw new Error('Fixed discovery configuration required.');
+  if (selection.retrieval !== 'ua-discovery' || selection.requestBudget !== verified.requestBudget || kinobaza !== verified.kinobaza) throw new Error('Fixed discovery configuration required.');
   if (!['synthetic', 'live'].includes(mode)) throw new Error('Explicit synthetic/live mode required.');
   const start = performance.now(), stages = {}; const controller = new AbortController();
+  const allowHop = !isHeldOut(film.id) && kinobaza === 'on';
   const metrics = { requestsMade: 0, requestBudget: selection.requestBudget, elapsedMs: 0, calls: [] };
   const timer = setTimeout(() => controller.abort(), deadlineMs);
   const allowed = new Set([tmdbScenario(film, { discovery: 'digital-ua' }).sourceURL, tmdbScenario(film, { discovery: 'digital-ua' }).providersURL,
-    motnScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(kinobaza === 'on' ? [htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, canonicalKinobazaURL(film.id)] : [])]);
+    motnScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(kinobaza === 'on' ? [htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(allowHop ? [canonicalKinobazaURL(film.id)] : [])] : [])]);
   let approvedHop = null;
   const seen = new Set();
   const boundedFetch = async (url, init) => {
     if (controller.signal.aborted || !allowed.has(url) || seen.has(url) || seen.size >= selection.requestBudget) throw new Error('Budget/allowlist/deadline');
-    if (kinobaza === 'on' && url === canonicalKinobazaURL(film.id) && approvedHop !== url) throw new Error('Unapproved canonical hop');
+    if (allowHop && url === canonicalKinobazaURL(film.id) && approvedHop !== url) throw new Error('Unapproved canonical hop');
     seen.add(url); metrics.requestsMade++;
     const call = { stage: url.includes('themoviedb') ? 'tmdb' : url.includes('movieofthenight') ? 'motn' : 'kinobaza', method: 'GET' };
     metrics.calls.push(call);
@@ -258,7 +267,7 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
     const response = await fetchImpl(url, { ...init, signal });
     call.httpStatus = response.status;
     if (response.status >= 300 && response.status < 400) call.redirectLocation = response.headers.has('location') ? 'present-not-retained' : 'missing';
-    if (kinobaza === 'on') approvedHop = canonicalRedirectTarget(url, response.headers.get('location'), response.status) ?? approvedHop;
+    if (allowHop) approvedHop = canonicalRedirectTarget(url, response.headers.get('location'), response.status) ?? approvedHop;
     return response;
   };
   const stage = async (name, work) => {
@@ -284,7 +293,7 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
       await Promise.all([
         stage('tmdb', () => fetchTmdb(tmdbScenario(film, { discovery: 'digital-ua' }), tmdbToken, boundedFetch)),
         stage('motn', () => fetchMotn(motnScenario(film, { discovery: 'digital-ua' }), motnKey, boundedFetch)),
-        ...(kinobaza === 'on' ? [stage('kinobaza', () => fetchHtmlCandidates(htmlScenario(film, { discovery: 'digital-ua' }), boundedFetch, { canonicalRedirect: true }))] : []),
+        ...(kinobaza === 'on' ? [stage('kinobaza', () => fetchHtmlCandidates(htmlScenario(film, { discovery: 'digital-ua' }), boundedFetch, { canonicalRedirect: allowHop }))] : []),
       ]);
     }
     stages.kinobaza ??= { status: 'disabled-no-request', result: null, elapsedMs: 0 };

@@ -1,4 +1,5 @@
 // Direct official API only. No SDK, LLM, destination fetch, cache or raw archive.
+import { HELD_OUT_FILMS } from './held-out.mjs';
 export const MOTN_SOURCE = 'Streaming Availability API by Movie of the Night';
 export const MOTN_ATTRIBUTION = 'https://www.movieofthenight.com/about/api';
 export const MOTN_TIMEOUT_MS = 20_000;
@@ -8,6 +9,10 @@ export const MOTN_LIMIT_BYTES = 2 * 1024 * 1024;
 export const MOTN_FILMS = Object.freeze({
   coherence: Object.freeze({ imdbId: 'tt2866360', tmdbId: '220289', title: 'Coherence', year: 2013, director: 'James Ward Byrkit' }),
   'dune-part-two': Object.freeze({ imdbId: 'tt15239678', tmdbId: '693134', title: 'Dune: Part Two', year: 2024, director: 'Denis Villeneuve' }),
+  ...Object.fromEntries(Object.entries(HELD_OUT_FILMS).map(([id, f]) => [id, Object.freeze({
+    imdbId: f.imdbId, tmdbId: String(f.tmdbId), title: f.identityTitle, year: f.year,
+    director: f.director, titleAliases: f.titleAliases, directorAliases: f.directorAliases,
+  })])),
 });
 
 export function motnScenario(film, { discovery, amazonRegion, urlSource } = {}) {
@@ -76,9 +81,9 @@ export function normalizeMotn(data, filmId, receivedAt = new Date().toISOString(
     (hasTmdb && tmdbValid && ![expected.tmdbId, `movie/${expected.tmdbId}`].includes(tmdb));
   const identityOK = !stableConflict && data.imdbId === expected.imdbId && data.showType === 'movie' &&
     (!hasTmdb || tmdbValid) &&
-    (title === undefined || title === expected.title) &&
+    (title === undefined || (expected.titleAliases ?? [expected.title]).includes(title)) &&
     (data.releaseYear === undefined || Number.isInteger(data.releaseYear)) &&
-    (data.directors === undefined || (Array.isArray(data.directors) && data.directors.includes(expected.director)));
+    (data.directors === undefined || (Array.isArray(data.directors) && data.directors.some(d => (expected.directorAliases ?? [expected.director]).includes(d))));
   const identityStatus = stableConflict || data.showType === 'series' ? 'mismatch' : identityOK ? 'matched' : 'unresolved';
   const identity = { status: identityStatus, imdbId: stringField(data.imdbId, 30),
     tmdbId: hasTmdb ? tmdbValid ? field(tmdb) : invalid() : field(),

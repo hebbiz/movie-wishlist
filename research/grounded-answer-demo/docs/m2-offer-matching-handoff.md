@@ -5,7 +5,8 @@ The owner subsequently approved the scope below including the clipboard design
 at actual #184 HEAD `9208e507f8282f2499655dead0c12381b4a20566` (approval cited
 earlier `aefb166`). Implementation/checks are recorded in the canonical checkpoint;
 the subsequent bounded held-out identity/card preflight is approved/completed;
-discovery/evaluation, C/D engines, persistence and production remain unapproved.
+subsequent four-film runtime preparation is also authorized/implemented, while
+live discovery/evaluation, C/D engines, persistence and production remain unapproved.
 MW-FUT-01 remains Discovery.
 October 20, 2026. The [canonical M2 policy](regional-card-proposal.md#m2-digital-offer-matching--proposed)
 owns the matching matrix M01–M20, decisions and evidence boundaries. This file
@@ -16,8 +17,8 @@ history, not authorization for M2.
 **First implementation slice: A/B-only direct associations and explanations.**
 C/D are deferred design constraints/forbidden-inference tests, not runtime
 engines, generated outcomes or a general relation graph. The A/B implementation
-and later public identity/card preflight are authorized; runtime catalogue/live
-discovery evaluation are not.
+and later public identity/card preflight and held-out runtime preparation are
+authorized. Live discovery evaluation is not authorized by those preparation tasks.
 
 ## 1. Context
 
@@ -68,8 +69,10 @@ Implement A/B checks from M01–M09, with existing scope/lineage/time context fr
 M10/M14/M19/M20 where available. Preserve C/D rules M11–M13/M15–M18 as negative
 guards: no commercial join, property borrowing or field propagation. Do not
 implement positive C/D matching, full all-row pairwise engine or graph schema.
-The four-film held-out plan is [separate proposed evaluation scope](regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films),
-not a requirement to add new catalogue entries/endpoints/live calls to this slice.
+The first slice's four-film plan was separate; the later
+[held-out runtime preparation](regional-card-proposal.md#held-out-runtime-preparation--authored-checks-only)
+is now authorized/implemented with the ledger's exact fixed identities and cards,
+not new sources/endpoints or live calls.
 
 ## 5. Non-goals
 
@@ -234,7 +237,7 @@ Only after separate approval/readiness, use the canonical four-film plan:
 Kingdom of Heaven and Parasite **require Kinobaza** with exact source film-card
 URLs now independently checked in the [completed bounded preflight](regional-card-proposal.md#held-out-preflight-checkpoint--october-20-2026);
 The Thing1982/2011 use TMDb+MOTN and have distinct verified documentary IDs.
-No runtime catalogue entries have been added. Direct TMDb versus indexed IMDb
+Runtime preparation now adds only the four ledger entries. Direct TMDb versus indexed IMDb
 evidence and unknown API/availability/localization facts are explicitly separated.
 Failure/empty coverage in future evaluation is not permission to drop Kinobaza
 or substitute old films. Risk/hypothesis, source combinations, semantic behavior
@@ -248,7 +251,8 @@ remains unapproved: **next ceiling14** (TMDb8+MOTN4+Kinobaza2), direct verified
 canonical cards, no hop allowance. This supersedes the generic14/16 estimate for
 this new set, not existing two-film budgets. No retries or provider GETs; matching,
 report and draft add0. Catalogue/evaluation approval and source-use readiness
-remain necessary. One short Termius →
+remain necessary for live evaluation (catalogue preparation is now approved).
+One short Termius →
 iPhone/Safari summary session, one discovery per film and one draft flow;
 old observations are dated controls, not rerun requirements. Stop criteria from
 canonical plan apply; no compulsory second synthetic/SSH-disconnect or app tour.
@@ -264,8 +268,8 @@ is unchanged. No full responses/HTML, evaluation screenshots or production notes
 
 ## 13. Git workflow
 
-Bounded A/B-only implementation and identity/card preflight are approved;
-held-out runtime catalogue/live evaluation still need separate approval.
+Bounded A/B-only implementation, identity/card preflight and held-out runtime
+preparation are approved; live evaluation still needs separate approval.
 Fetch/reinspect instructions/HEAD/base
 and local changes. #184 was open at9208e50: create a separate stacked implementation
 branch/PR on its actual HEAD, not repeated develop/design diffs. If merged before
@@ -277,7 +281,11 @@ integration. No approval is inherited merely from M1's completed merge.
 
 Implementation is recorded once in the
 [canonical checkpoint](regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only).
-The four-film catalogue is **not** configured. The subsequent public-document
-preflight is in the canonical ledger; no new discovery/owner evaluation ran.
+The four-film catalogue is now configured by the subsequent approved runtime
+preparation, with exact URLs/aliases, per-scenario Kinobaza policy and14-request
+ceiling. Canonical source-use findings are MOTN compatible for this private
+non-LLM scope; TMDb derivative applicability and Kinobaza rights unresolved, with
+no direct conflict identified and no blanket clearance. No new discovery/owner
+evaluation ran. Public-document preflight remains separately dated in the ledger.
 Runtime report commit is explicitly
 unknown unless a future trusted provenance mechanism is separately established.

@@ -49,12 +49,14 @@ cards for Kingdom of Heaven/Parasite are recorded with direct versus indexed
 evidence distinguished; The Thing1982/2011 have different IDs. **17 controlled
 GETs** (identity7 +cards4 +rules6), plus15 public search queries whose internal
 traffic is not exposed. No API/discovery/owner evaluation ran; no new runtime
-IDs/cards are configured. TMDb full terms are now accessible, but applicability
+IDs/cards were configured by that documentation checkpoint. The subsequent
+[held-out runtime preparation](docs/regional-card-proposal.md#held-out-runtime-preparation--authored-checks-only)
+now adds the fixed catalogue; it does not run discovery. TMDb full terms are accessible, but applicability
 to the future combined projection/draft remains conditional; agent research
 token is absent, public-document checks did not require it.
 The **next proposed evaluation ceiling is14 HTTP requests** (TMDb8 +MOTN4
 +Kinobaza2), using verified direct canonical cards, no hops/retries. Runtime
-catalogue changes and one short future owner session need separate approval;
+catalogue preparation is approved; one short future owner live session still needs approval/readiness;
 no repeated streaming-app tour. Existing two-film setup/iPhone commands are unchanged.
 This implementation has authored offline/HTTP/browser checks, not live validation.
 Existing two-film commands, keys and request budgets are unchanged. Copy does
@@ -110,8 +112,10 @@ HTML archive. No new owner test cycle is requested.
 ## Consolidated UA discovery and local draft
 
 Opt in with `DEMO_RETRIEVAL=ua-discovery`, `DEMO_DISCOVERY=digital-ua`;
-`DEMO_FILM=coherence|dune-part-two` selects the initial picker value, not a server
-restart requirement. Both films are selectable in one process. `DEMO_KINOBAZA=on`
+`DEMO_FILM` selects the initial picker value, not a server restart requirement.
+The picker contains Coherence, Dune, `kingdom-of-heaven`, `the-thing-1982`,
+`the-thing-2011`, and `parasite`. Search/URL Context and standalone probes keep
+their previous film-selection scope. `DEMO_KINOBAZA=on`
 is the default and the agreed owner-control configuration; `off` omits that
 optional source. Invalid switches/combinations fail before listening. Synthetic
 is default and performs zero external requests; its providers/URLs/metadata are
@@ -120,7 +124,13 @@ authored examples, not live facts. Existing retrievals require DEMO_KINOBAZA uns
 One explicit action consumes a film-bound token: independent TMDb (A+B max2),
 MOTN (max1) and optional Kinobaza (one GET, plus at most one verified canonical
 hop): **max4/film without redirect, max5 only with that hop**, no retries or destination
-requests. TMDb failure does not suppress fixed-ID MOTN. Each source gates its
+requests **for the original Coherence/Dune cases**. Held-out Kingdom/Parasite
+use the ledger's direct canonical Kinobaza cards, one GET with no redirect follow;
+The Thing1982/2011 disable Kinobaza at scenario level regardless of global `on`.
+Their budgets are **4+3+3+4=14** total, no retry/fallback/hop. General Kingdom
+film/card identity does not establish Director's Cut; Parasite catalogue
+localization does not establish offered tracks.
+TMDb failure does not suppress fixed-ID MOTN. Each source gates its
 own identity; a stable-ID conflict withholds that source and explicitly prevents
 a common matched identity. Source claims are never merged solely by platform.
 Partial stages survive. Total cancellation65s; existing source bounds retained.

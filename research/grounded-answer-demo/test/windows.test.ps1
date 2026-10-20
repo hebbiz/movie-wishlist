@@ -19,7 +19,7 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
-    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
+    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
         $null = New-Item -ItemType Directory -Path (Join-Path $copy 'node_modules')
@@ -79,7 +79,7 @@ try {
     if ($Megogo) {
         Assert ($response.sourceURL -ceq 'https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html' -and $response.expectedIds.nativeId -ceq '22027436' -and $null -eq $response.model -and $response.requestBudget -eq 1) 'MEGOGO fixed config mismatch.'
     }
-    if ($Discovery) { Assert ($response.kinobaza -ceq 'on' -and $response.requestBudget -eq 5 -and $response.films.Count -eq 2) 'Discovery config not inherited.' }
+    if ($Discovery) { Assert ($response.kinobaza -ceq 'on' -and $response.requestBudget -eq 5 -and $response.films.Count -eq 6) 'Discovery config not inherited.' }
     if ($Html -or $Motn -or $Tmdb -or $Megogo -or $Discovery) {
         $handler = [Net.Http.HttpClientHandler]::new(); $handler.UseProxy = $false
         $client = [Net.Http.HttpClient]::new($handler)
@@ -144,6 +144,7 @@ try {
         Copy-Item -LiteralPath (Join-Path $copy 'server.mjs') -Destination (Join-Path $copy 'server-core.mjs')
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'discovery-launch.fixture.mjs') -Destination (Join-Path $copy 'server.mjs')
         $env:DEMO_MODE = 'live'
+        $env:DEMO_FILM = 'kingdom-of-heaven'
         $restartArgs.TmdbToken = ConvertTo-SecureString 'offline-discovery-tmdb' -AsPlainText -Force
         $restartArgs.MotnKey = ConvertTo-SecureString 'offline-discovery-motn' -AsPlainText -Force
         $env:GEMINI_API_KEY = 'unrelated-key-not-inherited'
@@ -208,12 +209,12 @@ try {
         } finally { $client.Dispose(); $handler.Dispose() }
     }
     if ($Discovery) {
-        Assert ($afterRestart.mode -ceq 'live' -and $afterRestart.kinobaza -ceq 'on' -and $afterRestart.requestBudget -eq 5) 'Discovery restart config mismatch.'
+        Assert ($afterRestart.mode -ceq 'live' -and $afterRestart.film.id -ceq 'kingdom-of-heaven' -and $afterRestart.kinobaza -ceq 'on' -and $afterRestart.requestBudget -eq 4) 'Discovery restart config mismatch.'
         $handler = [Net.Http.HttpClientHandler]::new(); $handler.UseProxy = $false
         $client = [Net.Http.HttpClient]::new($handler)
         if ($LanIPv4) { $client.DefaultRequestHeaders.Authorization = [Net.Http.Headers.AuthenticationHeaderValue]::new('Basic', [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('demo:offline-integration-password'))) }
         try {
-            foreach ($film in @('coherence','dune-part-two')) {
+            foreach ($film in @('coherence','dune-part-two','kingdom-of-heaven','the-thing-1982','the-thing-2011','parasite')) {
                 $session = $client.GetStringAsync($restarted.url + '/session?film=' + $film).GetAwaiter().GetResult() | ConvertFrom-Json
                 $client.DefaultRequestHeaders.Remove('x-demo-session') | Out-Null
                 $client.DefaultRequestHeaders.Add('Origin', $restarted.url)
@@ -221,7 +222,8 @@ try {
                 $answer = $client.PostAsync($restarted.url + '/answer', [Net.Http.StringContent]::new('{}')).GetAwaiter().GetResult()
                 $text = $answer.Content.ReadAsStringAsync().GetAwaiter().GetResult()
                 $payload = $text | ConvertFrom-Json
-                Assert ([int]$answer.StatusCode -eq 200 -and $payload.result.metrics.requestsMade -eq 4 -and $payload.result.rows.Count -ge 3 -and $payload.result.film.id -ceq $film) 'Discovery mock multi-key/fixed-film flow failed.'
+                $expectedCalls = if ($film -in @('the-thing-1982','the-thing-2011')) { 3 } else { 4 }
+                Assert ([int]$answer.StatusCode -eq 200 -and $payload.result.metrics.requestsMade -eq $expectedCalls -and $payload.result.rows.Count -ge 3 -and $payload.result.film.id -ceq $film) 'Discovery mock multi-key/fixed-film flow failed.'
                 Assert (-not ($text -match 'offline-discovery-tmdb|offline-discovery-motn|unrelated-key-not-inherited')) 'Credential echo reached response.'
                 $answer.Dispose()
                 $again = $client.PostAsync($restarted.url + '/answer', [Net.Http.StringContent]::new('{}')).GetAwaiter().GetResult()

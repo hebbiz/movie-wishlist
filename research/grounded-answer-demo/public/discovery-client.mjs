@@ -65,11 +65,14 @@ export function providerSummary(rows) {
 
 export function prepareDraft(result, row, trackingAcknowledged = false) {
   if (!result.rows.includes(row) || row.identityStatus !== 'matched') throw new Error('Select an independently identity-gated row.');
-  const ids = { coherence: 'tt2866360', 'dune-part-two': 'tt15239678' };
+  const ids = { coherence: 'tt2866360', 'dune-part-two': 'tt15239678',
+    'kingdom-of-heaven': 'tt0320661', 'the-thing-1982': 'tt0084787', 'the-thing-2011': 'tt0905372', parasite: 'tt6751668' };
+  const years = { coherence: '2013', 'dune-part-two': '2024', 'kingdom-of-heaven': '2005', 'the-thing-1982': '1982', 'the-thing-2011': '2011', parasite: '2019' };
+  if (!Object.hasOwn(ids, result.film.id)) throw new Error('Fixed draft film required.');
   const acknowledgementRequired = needsLinkAcknowledgement(row.link);
   const purchaseURL = linkPresentation(row.link).canOpen && (!acknowledgementRequired || trackingAcknowledged) ? row.link.href : '';
   return { fields: { imdb_url: `https://www.imdb.com/title/${ids[result.film.id]}/`,
-    title: result.film.title.replace(/ \(\d{4}\)$/, ''), year: result.film.id === 'coherence' ? '2013' : '2024',
+    title: result.film.title.replace(/ \(\d{4}\)$/, ''), year: years[result.film.id],
     recommended_medium: row.provider.medium, purchase_url: purchaseURL, status: 'wishlist' },
     sidecar: { rowId: row.id, source: row.provenance, provider: row.provider, linkKind: row.link.kind, linkAudit: row.linkAudit ?? null,
       linkPolicy: { originalURL: row.link.href, referral: row.link.referral ?? null, acknowledgementRequired, acknowledged: acknowledgementRequired && trackingAcknowledged }, territory: row.country ?? 'unknown',
@@ -89,7 +92,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   let draftState = emptyDraftState();
   const used = new Set();
   const add = (host, tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; host.append(n); return n; };
-  el('film').textContent = 'UA discovery — two fixed films';
+  el('film').textContent = `UA discovery — ${session.films.length} fixed films`;
   el('director').textContent = 'Independent source gates; not a production MW transfer.';
   el('discovery').textContent = 'Country UA · priority: availability → Ukrainian audio → Ukrainian subtitles → video → price';
   el('retrieval-mode').textContent = `DEMO_RETRIEVAL=ua-discovery · Kinobaza ${session.kinobaza}`;
@@ -109,7 +112,14 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   picker.value = session.film.id; button.before(pickerHost);
   const requestDetails = add(pickerHost, 'details'); add(requestDetails, 'summary', 'Exact fixed requests (no credentials)'); const planned = add(requestDetails, 'pre');
   const chosen = add(pickerHost, 'p'); chosen.id = 'discovery-chosen';
-  const syncChoice = () => { chosen.textContent = `${session.film.title} · ${session.film.director} · UA · Kinobaza ${session.kinobaza} · budget ${session.requestBudget} (${session.baseRequestBudget} without redirect)`; planned.textContent = [...session.plannedRequests, ...(session.conditionalRequests ?? []).map(url => `Conditional canonical GET only after validated redirect: ${url}`)].join('\n'); button.disabled = loading || used.has(session.film.id); button.textContent = used.has(session.film.id) ? 'Used for this film — choose the other film' : 'Discover selected film once'; };
+  const syncChoice = () => {
+    el('retrieval-mode').textContent = `DEMO_RETRIEVAL=ua-discovery · Kinobaza ${session.kinobaza}`;
+    el('settings').textContent = `${session.sources.join(' + ')} · max ${session.requestBudget} HTTP requests/film (${session.baseRequestBudget} without redirect) · no retries, LLM or storage`;
+    el('prompt').textContent = session.operation;
+    chosen.textContent = `${session.film.title} · ${session.film.director} · UA · Kinobaza ${session.kinobaza} · budget ${session.requestBudget} (${session.baseRequestBudget} without redirect)`;
+    planned.textContent = [...session.plannedRequests, ...(session.conditionalRequests ?? []).map(url => `Conditional canonical GET only after validated redirect: ${url}`)].join('\n');
+    button.disabled = loading || used.has(session.film.id); button.textContent = used.has(session.film.id) ? 'Used for this film — choose another film' : 'Discover selected film once';
+  };
   const panes = add(el('result'), 'div'); panes.className = 'discovery-ui';
   const review = add(panes, 'section'); review.id = 'draft-review'; review.hidden = true;
   const draft = add(panes, 'section'); draft.id = 'local-draft'; draft.hidden = true;

@@ -15,7 +15,7 @@ const b = d => projectTmdbProviders(d, 'coherence', '2026-10-18T00:00:00Z');
 const mock = (data = fixture(), calls = []) => async (url, init) => { calls.push({ url, init }); return Response.json(url.endsWith('/watch/providers') ? data.providers : data.details); };
 
 test('fixed IDs, uk-UA metadata / uppercase UA projection, exact two URLs; invalid config fails before listening', () => {
-  for (const filmId of Object.keys(TMDB_FILMS)) {
+  for (const filmId of ['coherence', 'dune-part-two']) {
     const s = selectRequest({ ...options, filmId }); const f = TMDB_FILMS[filmId];
     assert.equal(s.sourceURL, `https://api.themoviedb.org/3/movie/${f.tmdbId}?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations`);
     assert.equal(s.providersURL, `https://api.themoviedb.org/3/movie/${f.tmdbId}/watch/providers`);

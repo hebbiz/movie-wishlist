@@ -1,9 +1,14 @@
 import { KINOBAZA_CARDS } from './url-context.mjs';
 import { extractLocalization } from './kinobaza-localization.mjs';
+import { HELD_OUT_FILMS, isHeldOut } from './held-out.mjs';
+
+const HTML_CARDS = Object.freeze({ ...KINOBAZA_CARDS,
+  ...Object.fromEntries(Object.entries(HELD_OUT_FILMS).filter(([, f]) => f.kinobazaURL).map(([id, f]) => [id, f.kinobazaURL])),
+});
 
 export function canonicalKinobazaURL(filmId) {
-  if (!Object.hasOwn(KINOBAZA_CARDS, filmId)) throw new Error('Fixed Kinobaza film required.');
-  return `https://kinobazaua.com/titles/${filmId}`;
+  if (!Object.hasOwn(HTML_CARDS, filmId)) throw new Error('Fixed Kinobaza film required.');
+  return isHeldOut(filmId) ? HTML_CARDS[filmId] : `https://kinobazaua.com/titles/${filmId}`;
 }
 export function canonicalRedirectTarget(source, location, status) {
   if (![301, 308].includes(status) || typeof location !== 'string') return null;
@@ -19,11 +24,11 @@ export const HTML_OPERATION = 'One GET of the fixed Kinobaza card; initial HTML 
 
 export function htmlScenario(film, { discovery, amazonRegion, urlSource } = {}) {
   if (discovery !== 'digital-ua' || amazonRegion !== undefined ||
-      !Object.hasOwn(KINOBAZA_CARDS, film.id) || (urlSource !== undefined && urlSource !== 'kinobaza')) {
+      !Object.hasOwn(HTML_CARDS, film.id) || (urlSource !== undefined && urlSource !== 'kinobaza')) {
     throw new Error('kinobaza-html requires digital-ua, Dune/Coherence, no Amazon region and URL source unset or kinobaza.');
   }
   return Object.freeze({ film, discovery, amazonRegion: null, retrieval: 'kinobaza-html',
-    urlSource: 'kinobaza', sourceURL: KINOBAZA_CARDS[film.id], prompt: null, operation: HTML_OPERATION });
+    urlSource: 'kinobaza', sourceURL: HTML_CARDS[film.id], prompt: null, operation: HTML_OPERATION });
 }
 
 const attr = (n, key) => n.attrs?.find(a => a.name === key)?.value;
@@ -53,9 +58,11 @@ function excluded(n) {
 function identity(all, film) {
   const h1 = all.filter(n => n.tagName === 'h1' && !excluded(n));
   const headings = all.filter(n => n.tagName === 'h2' && !excluded(n)).map(text);
-  const title = film.id === 'coherence' ? 'Coherence' : 'Dune: Part Two';
-  const year = film.id === 'coherence' ? '2013' : '2024';
-  const aliases = film.id === 'coherence' ? ['James Ward Byrkit', 'Джеймс Ворд Біркіт'] : ['Denis Villeneuve', 'Денні Вільньов'];
+  const entry = isHeldOut(film.id) ? HELD_OUT_FILMS[film.id] : null;
+  if (entry && !entry.kinobazaURL || !entry && !Object.hasOwn(KINOBAZA_CARDS, film.id)) return { status: 'unresolved', observed: {} };
+  const title = entry?.identityTitle ?? (film.id === 'coherence' ? 'Coherence' : 'Dune: Part Two');
+  const year = entry?.year ?? (film.id === 'coherence' ? '2013' : '2024');
+  const aliases = entry?.directorAliases ?? (film.id === 'coherence' ? ['James Ward Byrkit', 'Джеймс Ворд Біркіт'] : ['Denis Villeneuve', 'Денні Вільньов']);
   const directors = new Set();
   // A labelled table cell or an adjacent inline label, not a whole-page name hit.
   for (const n of all) {
@@ -72,6 +79,9 @@ function identity(all, film) {
     }
   }
   const observed = { heading: h1.map(text), originalTitles: headings.filter(h => h === title), directors: [...directors] };
+  // A supplied canonical is evidence, not a URL to follow or silently repair.
+  const canonicals = entry ? all.filter(n => n.tagName === 'link' && attr(n, 'rel') === 'canonical').map(n => attr(n, 'href')) : [];
+  if (canonicals.length > 1 || canonicals.some(url => url !== entry.kinobazaURL)) return { status: 'unresolved', observed, reason: 'conflicting-source-canonical' };
   const matches = h1.length === 1 && new RegExp(`\\(\\s*${year}\\s*\\)`).test(text(h1[0])) &&
     observed.originalTitles.length === 1 && directors.size > 0 && [...directors].every(d => aliases.includes(d));
   return { status: matches ? 'matched' : 'unresolved', observed };
@@ -173,7 +183,7 @@ export async function extractHtml(html, film) {
 }
 
 export async function fetchHtmlCandidates(selection, fetchImpl = globalThis.fetch, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, canonicalRedirect = false } = {}) {
-  if (selection.retrieval !== 'kinobaza-html' || !Object.hasOwn(KINOBAZA_CARDS, selection.film.id) || selection.sourceURL !== KINOBAZA_CARDS[selection.film.id]) throw new Error('Fixed HTML source required.');
+  if (selection.retrieval !== 'kinobaza-html' || !Object.hasOwn(HTML_CARDS, selection.film.id) || selection.sourceURL !== HTML_CARDS[selection.film.id]) throw new Error('Fixed HTML source required.');
   try { await import('parse5'); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['Install isolated parser before live GET.'] }; }
   const controller = new AbortController(); let reader;
   const aborted = new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true }));

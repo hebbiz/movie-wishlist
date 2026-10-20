@@ -1,5 +1,7 @@
 // Allowlisted plain text only. Never serialize source payloads, URLs or draft input.
-const films = { coherence: 'Coherence (2013)', 'dune-part-two': 'Dune: Part Two (2024)' };
+const films = { coherence: 'Coherence (2013)', 'dune-part-two': 'Dune: Part Two (2024)',
+  'kingdom-of-heaven': 'Kingdom of Heaven (2005)', 'the-thing-1982': 'The Thing (1982)',
+  'the-thing-2011': 'The Thing (2011)', parasite: 'Parasite (2019)' };
 const sources = { tmdb: 'TMDb / JustWatch', motn: 'Movie of the Night', kinobaza: 'Kinobaza HTML' };
 const providers = { apple: 'Apple TV Store', prime: 'Prime Video', netflix: 'Netflix', rakuten: 'Rakuten TV', hbo: 'HBO Max', megogo: 'MEGOGO' };
 const outcomes = new Set(['compatible', 'conflicting', 'insufficient-evidence']);

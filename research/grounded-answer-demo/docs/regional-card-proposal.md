@@ -6,7 +6,8 @@
 The implementation record below supersedes the initial Proposed status only for
 that narrow slice and explicit-copy summary. The subsequent bounded held-out
 identity/card preflight is authorized and recorded below; discovery/evaluation,
-C/D and production/persistence remain unapproved.
+C/D and production/persistence remain unapproved. The subsequent held-out
+runtime preparation is now approved/implemented; no live evaluation has run.
 Repository inspection on October 20, 2026, after fetching refs, confirms
 `origin/develop` **`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. #175–#183
 were consolidated through merge commits; launcher fix
@@ -2261,7 +2262,7 @@ selected by risk **before knowing provider results**, not viewing recommendation
 
 **Documentary identity/card readiness:** see the completed preflight below.
 Verified source cards are not provider destinations or evidence of offers;
-runtime catalogue/configuration and discovery remain unauthorized. Do not
+runtime preparation is now authorized; live discovery remains separately gated. Do not
 substitute old Coherence/Dune cards or silently disable Kinobaza. Arbitrary-card
 discovery is not solved. Empty future coverage remains a finding; do not replace
 samples after seeing results. Missing block claims mean that aspect was not
@@ -2405,9 +2406,10 @@ no credential value/file read). It did not block public-document preflight. It
 does block an authenticated API crosswalk check **in this environment** if one
 is later required; no such extra API request was made or added to the budget.
 Future owner discovery requires their configured TMDb/MOTN credentials, not
-extraction of production secrets. Remaining gates: explicit evaluation/runtime
-catalogue approval, reviewed fixed configuration/parser support for these new
-cards, source-use applicability above, and actual environment credentials. No
+extraction of production secrets. At that preflight checkpoint, remaining gates
+were evaluation/runtime catalogue approval, fixed configuration/parser support,
+source-use applicability and environment credentials. Runtime preparation is
+subsequently approved/implemented below; live/source-use gates remain. No
 new owner session is requested now.
 
 Markdown-only verification:10 existing demo documents,299 local references and
@@ -2417,6 +2419,115 @@ Runtime/HTTP/browser/Windows suites are not rerun: runtime, helpers, key routing
 and catalogue are unchanged. No owner/iPhone/disconnect test is requested.
 
 <a id="separate-proposed-request-budgets--no-requests-authorized-now"></a>
+
+#### Held-out runtime preparation — authored checks only
+
+Owner authorized preparation after #185 `7c8262a75042c04f1036c3a45ec5385950a3069a`.
+Rechecked open #184 at9208e50/base develop0140143 and open #185 at7c8262a/base
+#184; no intervening changes. Implementation continues on #185 in the isolated
+checkout, leaving owner demo, production and unrelated files untouched.
+
+- [Fixed catalogue](../held-out.mjs) adds only the four documentary-preflight
+  subjects above; the original Coherence/Dune picker entries remain. New
+  subjects are supported only in `ua-discovery`, not new Search/URL Context
+  prompts or standalone-probe selections.
+- TMDb and MOTN re-use their fixed-ID transports, response/ID gates and unchanged
+  URL shapes. Reviewed Parasite name/director aliases are explicit identity
+  labels, not an excuse to ignore stable-ID conflicts or accept unseen directors.
+- Kingdom/Parasite HTML requests use exactly the direct canonical source URLs
+  in the ledger. No old-host request, automatic redirect, second GET, fallback or
+  destination resolution. The two Thing scenarios always disable Kinobaza even
+  under global `on`; switching from Thing to a configured card restores that
+  scenario's source policy, not the previous selection's effective `off`.
+- HTML identity retains the existing single h1/year, exact h2 subject and
+  explicitly labelled director gate. Only reviewed new names/aliases are added;
+  extraction structure is not widened. A supplied wrong/multiple canonical
+  declaration is unresolved, never followed. Missing/unfamiliar structure remains
+  unsupported, not a reason to repair/guess the page.
+- Sessions show selected-film budgets and planned URLs, not startup-film values.
+  Fixed server catalogue is authoritative; browser film selection is allowlisted,
+  and request-body URL/prompt/source overrides remain ignored. Four new clicks
+  have ceiling14 requests. Copy/draft add0 requests.
+- A/B reasons stay source-labelled and rows separate. No commercial-offer join,
+  track propagation or successful-B claim from absent evidence. Film/card identity
+  does not establish Kingdom Director's Cut. Parasite catalogue text cannot fill
+  provider tracks. New-film draft title/year/IMDb come from the fixed catalogue;
+  other included/excluded fields, R1/R2, exact href and acknowledgement stay intact.
+- Picker changes clear the prior report/fallback, reasons and current-film draft.
+  Copy retains bounded safe contents, unknown commit provenance and error fallback.
+  Cancel within one film preserves manually edited confirmed draft values.
+
+**Source-use assessment, checked October20,2026; not legal advice or guarantee:**
+
+| Source | Specific applicable provisions and this exact use | Finding / capability boundary |
+| --- | --- | --- |
+| TMDb | [Current full API Terms](https://www.themoviedb.org/api-terms-of-use) directly re-read HTTP200: §1A licence/rights reserved; §1B compliance/credit; §1C prohibits derivatives and AI/ML-based applications and caps caching; §2 commercial agreement; §3 logo/notice. This private non-LLM transient path neither trains/evaluates AI, changes source prices/tracks nor keeps a cache. However deriving A/B annotations and projecting selected fields into a private editable draft is not explicitly classified by these terms. | **Unresolved** specifically for derivative/combined-projection applicability. The AI restriction is real but not automatically a ban on this non-LLM path. No demonstrated direct conflict for the described scope and no blanket clearance; full text is accessible, not “unavailable”. Scoped applicable-agreement review remains a live-readiness condition. |
+| MOTN | [Current portal Terms](https://developers.movieofthenight.com/terms-and-conditions), current index-linked [public module](https://developers.movieofthenight.com/assets/terms-and-conditions-By-pMztN.js), read as text without execution. §3 permits app/end-user display, excludes standalone redistribution/data services and competing products; §4 visible linked attribution; §5 third-party rights remain separate; §6 retention subject to terms; §8 key security; §10 no abnormal extraction, AI training/evaluation/improvement. This owner-only transient app is not a public availability dataset/API, does not train/evaluate AI and archives nothing. | **Compatible for this bounded private non-LLM display/draft assessment**, conditional on account terms, attribution and third-party rights, not a licence for a future public/competing integration. No new plan or purchase; existing quota/auth stops remain. |
+| Kinobaza | [Current Terms](https://kinobazaua.com/terms) re-read HTTP200: §§1–2 public-user scope/conduct, §3 user/third-party responsibility, §4 changes. Current experiment uses two owner-approved fixed public cards, no account, writes, recurring crawler or redistribution. Prior same-date privacy/robots review remains in the ledger; robots are not a licence. | **Unresolved rights**, with **no direct applicable prohibition identified** for the bounded transient read. This is not an API/extraction/retention/commercial grant and does not require an email merely because express permission is absent. |
+
+Rules-only review made5 ordinary documentation GETs: MOTN portal, currently
+linked Terms module and index, TMDb full agreement, Kinobaza Terms (all200).
+Separate web-reader attempts returned TMDb robots refusal, Kinobaza cache miss
+and MOTN shell/module-reader errors; they did not run source extraction.
+These are new rules-review operations, not additions to the historical17-GET
+preflight ledger or the future14 discovery cap. No identity/card/API/provider/
+tracking/LLM request or new owner run occurred in this implementation task.
+
+No direct conflict was established that would justify a new blanket transport
+disable; neither was unresolved use silently marked approved. **Technical
+preparation is available; full live readiness remains conditional** on the
+scoped unresolved assessment and separate owner evaluation approval. No
+source-use acknowledgement switch, secret production proxy, policy bypass or
+legal guarantee is introduced. If a concrete applicable conflict is established,
+disable that affected live source, retain independent permitted partials and
+synthetic/offline capability.
+TMDb's definition of Application also needs scoped review because this research
+executable retains separate legacy Gemini modes, even though the held-out path
+uses no LLM and forwards no source data to one. Path isolation is a technical fact,
+not an established contractual definition or permission.
+
+One prepared server shows all six films. Future owner evaluation, **not requested
+now**: Kingdom, Thing1982, Thing2011, Parasite, one click each, no repeats or app
+tour, max14 calls; copy four short reports/fallback. Summaries must distinguish
+returned claims, A/B reasons, conflicts/unknowns and request counts. “No conflict”
+is not accurate matching; missing pointers are not compatible B. Do one draft
+flow only for a substantively new check (for example Kingdom title/year with no
+inferred cut), not a mandatory repeat of the old functional tour. No additional
+synthetic/SSH-disconnect owner cycle is required; agent tests cover changed code.
+The [iPhone guide](iphone-windows.md#m2-held-out-runtime-preparation) gives a
+safe synthetic preparation command, **not a new live request**.
+
+Implementation verification:
+
+- **318 offline/HTTP tests passed**, zero failures/skips;9 new authored held-out
+  cases cover exact fixed URLs/cap14, Thing ID conflicts, scoped aliases/canonical
+  conflicts, independent failures, no redirect/destination, source isolation,
+  unknown cut/tracks and new-film draft metadata. Existing request-body/security/
+  R1/R2/acknowledgement/cancel regressions remain.
+- **137 installed-Edge browser/mobile checks passed,10 skips**, zero failures:
+  9 unavailable WebKit checks plus the unconfigured optional LAN check. New mobile
+  cases cover four picker selections,14/partial13 mocked requests, stale report
+  clearing, copy-denied selectable fallback, draft/cancel and no external/storage
+  requests. This is not real iPhone/Safari/SSH-disconnect validation.
+- **Windows Search and multi-key Discovery lifecycle passed** in separate unique
+  temporary copies: parent-exit survival, duplicate start, forged unrelated PID
+  refusal, safe stop/restart, new initial film inherited after restart and all6
+  picker subjects with mock-only key routing. Owner processes unaffected; no
+  services/firewall/network changes. Other6 older lifecycle combinations not rerun:
+  helper/key-routing logic is unchanged.
+- First test pass exposed a new-session planned-request construction error:
+  standalone selectors intentionally reject held-out films, so composed session
+  planning now calls fixed adapter builders directly. Also corrected authored
+  assertions (partial fixture, short-report function arguments, negative-warning
+  wording) and kept standalone-probe tests scoped to their unchanged original
+  selections. No parser relaxation or live response was used to make tests pass.
+- Parasite's Korean original title remains separate from the international
+  identity label and explicitly reviewed title aliases. Full offline checks and
+  targeted browser checks are repeated after this metadata clarification.
+- Documentation:303 local-reference occurrences and200 anchor references across
+  the existing10 demo Markdown documents, zero broken references;13 M2 sections
+  retained. Scope/whitespace checked. No new dependency, production file or owner
+  observation/response archive.
 
 #### Separate completed preflight and proposed evaluation budgets
 
@@ -2428,7 +2539,7 @@ and catalogue are unchanged. No owner/iPhone/disconnect test is requested.
 | **Preflight actual** | Exact controlled client ledger above; search queries/backend limits separately disclosed, not silently counted as source GETs. | **17/21 controlled GETs** (7+4+6), plus15 indexed-search queries with unexposed internal traffic. No strict all-network bound asserted. |
 | Discovery, Kinobaza-off cases | The Thing1982/2011: TMDb A+B max2 plus independent MOTN1 each. | 3 each;6 total. |
 | Discovery, Kinobaza-required cases | Kingdom of Heaven/Parasite: TMDb2 +MOTN1 +Kinobaza1 at the verified direct canonical URL. No hop allowance in this proposed new configuration. | **4 each;8 total**. |
-| **Next four-film evaluation ceiling** | Only after separate catalogue/evaluation approval: one discovery per film; exact canonical cards, no retries, new endpoints or destinations. | **14 HTTP requests total = TMDb8 +MOTN4 +Kinobaza2**. Matching/copy/draft add0. |
+| **Next four-film evaluation ceiling** | Catalogue prepared; only after separate evaluation approval/readiness: one discovery per film; exact canonical cards, no retries, new endpoints or destinations. | **14 HTTP requests total = TMDb8 +MOTN4 +Kinobaza2**. Matching/copy/draft add0. |
 
 Preflight is completed as recorded, not hidden inside discovery or a request to
 the owner now. The earlier generic **14/conditional16** estimate assumed up to2
@@ -2480,14 +2591,15 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | M2 matching matrix/handoff | Full A–D design remains canonical; narrow A/B implementation approved and recorded below, C/D deferred. |
 | M2 implementation on existing fixed Coherence/Dune | **Authorized for isolated research; implemented on stacked child, authored/offline/browser checks only.** A/B direct explanations and safe-copy summary; not merged, no graph/full pairwise/C/D engine. |
 | C/D commercial identity/field applicability | Deferred long-term rules/forbidden-inference tests only, not required runtime in the first slice. |
-| Held-out identity/source-card preflight | **Authorized/completed**, documentary identity/canonical evidence only; controlled GET17, search queries15 separately disclosed. Runtime catalogue unchanged. |
-| Held-out four-film discovery/evaluation | **Proposed, not authorized**;2 now verified direct canonical Kinobaza cards. Next ceiling14 HTTP requests; approval/readiness/configuration still needed. |
+| Held-out identity/source-card preflight | **Authorized/completed**, documentary identity/canonical evidence only; controlled GET17, search queries15 separately disclosed. |
+| Held-out runtime catalogue/preparation | **Authorized/implemented**, authored offline/browser/Windows checks; no factual availability results or live owner requests. |
+| Held-out four-film discovery/evaluation | **Not executed/requested**;2 verified direct canonical cards, ceiling14. Separate evaluation approval and conditional source-use readiness remain. |
 | Arbitrary Kinobaza cards/MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
 The first scope approval has been provided for A/B implementation; the remaining
-product approval is the held-out runtime catalogue/evaluation with its explicit
-14-request ceiling and source-use gates. Preflight approval does not authorize
-that execution or catalogue additions. Rule mechanics,
+product approval is live held-out evaluation with its explicit14-request ceiling
+and source-use gates. Runtime preparation is now separately approved; neither
+it nor preflight approval executes evaluation. Rule mechanics,
 unknown preservation and safety are proposed engineering defaults, not a request
 for the owner to pick a confidence threshold. No need to choose an aggregator,
 subscription, storage TTL or new hosting to review M2. The separate

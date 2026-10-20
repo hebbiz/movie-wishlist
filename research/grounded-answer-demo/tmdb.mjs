@@ -1,9 +1,11 @@
 // Isolated fixed-ID, non-LLM probe. No production key reuse or destination fetch.
+import { HELD_OUT_FILMS } from './held-out.mjs';
 export const TMDB_TIMEOUT_MS = 20_000;
 export const TMDB_LIMIT_BYTES = 2 * 1024 * 1024;
 export const TMDB_FILMS = Object.freeze({
   coherence: Object.freeze({ tmdbId: 220289, imdbId: 'tt2866360' }),
   'dune-part-two': Object.freeze({ tmdbId: 693134, imdbId: 'tt15239678' }),
+  ...Object.fromEntries(Object.entries(HELD_OUT_FILMS).map(([id, f]) => [id, Object.freeze({ tmdbId: f.tmdbId, imdbId: f.imdbId })])),
 });
 const APPEND = 'external_ids,alternative_titles,credits,release_dates,translations';
 export function tmdbScenario(film, { discovery, amazonRegion, urlSource } = {}) {
