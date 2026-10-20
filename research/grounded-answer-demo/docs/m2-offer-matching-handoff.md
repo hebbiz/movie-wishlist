@@ -85,6 +85,8 @@ database/browser persistence, production writes or new hosting/dependencies.
 This implementation non-goal does not erase the later, separately authorized
 public-document identity/card preflight recorded in the canonical ledger; it
 still gives no permission for four-film discovery or runtime catalogue changes.
+Those preparation-task limits do not erase the later separately reported owner
+session; they authorize no further run or catalogue expansion now.
 No source characteristic repair from owner observations. No changes to R1/R2,
 older request bodies, security controls or owner demo. No implementation of a
 ranking algorithm: recommendation ordering remains requirement-level only.
@@ -210,7 +212,10 @@ stronger matching is insufficient. Draft takes only original selected-row fields
 R1/R2 and exact URL preserved; excluded fields/cancel remain correct. No increased
 requests, storage, key exposure, production access or changes to older modes.
 Mock coverage is not real coverage/accuracy. C/D stay deferred: absence of a C/D
-runtime result is intentional, not an acceptance failure.
+runtime result is intentional, not an acceptance failure. This authored technical
+acceptance does not demonstrate practical B benefit; the later owner session
+showed no B compatible outcomes. See the offline review decision below before
+planning more implementation or evaluation.
 
 ## 11. Test plan
 
@@ -248,8 +253,8 @@ and possible positive/ambiguous/conflicting outcomes are in the canonical table.
 Keep [phase budgets](regional-card-proposal.md#separate-proposed-request-budgets--no-requests-authorized-now)
 separate: completed preflight **17 controlled GETs =identity7 +cards4 +rules6**
 within the8/4/9 phase ceilings, plus15 public search queries with unexposed backend
-traffic. Do not label that a measured all-network GET count. Four-film discovery
-remains unapproved: **next ceiling14** (TMDb8+MOTN4+Kinobaza2), direct verified
+traffic. Do not label that a measured all-network GET count. The completed owner
+four-film session used the **ceiling14** (TMDb8+MOTN4+Kinobaza2), direct verified
 canonical cards, no hop allowance. This supersedes the generic14/16 estimate for
 this new set, not existing two-film budgets. No retries or provider GETs; matching,
 report and draft add0. Catalogue/evaluation approval and source-use readiness
@@ -318,3 +323,43 @@ fallback and stale-report clearing unchanged. No new source capability, request,
 owner session or Windows lifecycle change. Positive B usefulness remains
 **not demonstrated** by the held-out session; offline positive fixtures are not
 live matching accuracy. Any broader qualifier policy is a separate proposal.
+
+## Offline review decision — B development deferred
+
+The [canonical pointer matrix, last-fix review and recommendation](regional-card-proposal.md#offline-b-pointer-feasibility-review-and-decision)
+are the single source for observed versus accepted URL shapes and limitations.
+No new blocking defect was found in the inspected presence/conflict/B/report
+fixes; diagnostic bounds and unknown historical causes remain explicit. Ordinary
+prose whitespace is presence-only, source labels are not offer truth, and B
+never fills C/D. Clipboard fallback/stale reset and draft controls remain.
+Canonical review records one non-blocking P3: the short-report path whitelist
+omits release-event `date`; an invalid authored date remains in page diagnostics
+but its safe short summary can omit that cause. Not a proved owner-run cause;
+runtime correction/test is deferred, not silently added to this documentation task.
+
+**Recommendation B:** retain existing direct explanations as auxiliary
+diagnostics; defer engine expansion. Current evidence shows no practical
+cross-source B match. TMDb linklessness, opaque Kinobaza country pointers,
+iTunes/UMC namespaces, unknown query/region semantics and missing peers explain
+the small supported intersection, not the exact unsaved held-out refusals.
+Same-source rent/buy pointer reuse is not cross-source usefulness; synthetic
+compatible cases are not live evidence. Do not add keys/crosswalks or simplify
+source/territory semantics merely to obtain compatible. No new owner session.
+
+An **optional, separately authorized evidence probe** could reopen this decision:
+existing Dune, MOTN fixed IMDb title GET1 +direct canonical Kinobaza card GET1,
+**max2 total**, no TMDb/LLM/rules/destination requests, redirects, retries or
+replacement films. Server-side MOTN_API_KEY only; each source's existing identity
+gate applies independently. This is a proposed agent operation, not implemented
+as a new mode, not a normal up-to5-call consolidated run, not an instruction for
+the owner. Current review made0 source requests. No current credentials or
+source-use clearance is presumed, and no permission follows from this document.
+
+Use only transient comparison components; report safe identity/link-kind/route/
+qualifier reason categories and equal/different/unknown outcomes, not literal
+keys/native IDs, raw URLs/query names/values, tracking tokens, headers or bodies.
+Separate cross-source from within-source peers. No source data to LLM or archive.
+Canonical acceptance/stop criteria apply: a documented unsupported/missing peer
+is an informative negative, not B success; fail closed on identity conflict,
+blocking/redirect/bounds/access error without chasing destinations or relaxing
+policy. No broader C/D, ranking/enrichment or implementation handoff is approved.

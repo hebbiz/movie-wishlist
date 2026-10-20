@@ -15,6 +15,19 @@ bounded identity/card preflight is recorded below; production integration is
 not approved. A subsequent
 [owner-reported held-out checkpoint and bounded audit](docs/regional-card-proposal.md#held-out-owner-checkpoint-and-ab-usefulness-audit)
 records14 calls but **no demonstrated B matches**; runtime commit remains unknown.
+The subsequent [offline pointer review and product decision](docs/regional-card-proposal.md#offline-b-pointer-feasibility-review-and-decision)
+recommends **B: keep conservative matching as an auxiliary diagnostic, defer
+further B engine development**. TMDb has no provider deep links; opaque country
+tracking, Apple iTunes/UMC namespaces, unknown query/region semantics and absent
+source peers limit useful intersection. Recognized URL grammar and authored
+compatible cases are not demonstrated cross-source matches. No new blocking
+defect was found in the inspected last-fix scope; actual live partial causes and
+historical conflict fields remain unknown.
+An optional evidence-only Dune pointer probe is **design only**, not requested
+or authorized: exactly MOTN1 +direct canonical Kinobaza1, max2 GETs, no TMDb,
+redirects/retries/destinations, raw/token export or owner session. It is not the
+existing up-to5-request Dune discovery action. No runtime or source capability
+changes are made here; the present review made0 source requests.
 See the
 [implementation checkpoint and count reconciliation](docs/regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only).
 The [canonical matching matrix M01–M20](docs/regional-card-proposal.md#matching-rules-matrix)

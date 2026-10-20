@@ -2616,6 +2616,152 @@ Documentation:308 local references/205 anchor-reference occurrences across10
 Markdown docs, zero missing targets/anchors,13 M2 numbered sections retained;
 final scope/diff/whitespace checked. No production/owner-demo/untracked changes.
 
+#### Offline B pointer feasibility review and decision
+
+**October20,2026; #185 reviewed at `f436076b5e4b0f45d3d03c9492d26bd610e4b9ae`,
+base #184 `9208e507f8282f2499655dead0c12381b4a20566`.** Both refs were fetched
+and unchanged; isolated implementation tree clean before documentation edits.
+This is a code/document review, not a source read or reconstruction of the
+unsaved held-out responses. The earlier owner preparation SHA is not attested
+runtime provenance. No new owner validation is added.
+
+**Review result:** no new blocking implementation defect found in the inspected
+last-fix scope. `tmdb.mjs` presence projection accepts CR/LF/tab but still rejects
+other controls/non-string/oversize input without retaining prose; root/returned
+stable-ID gates remain separate. `discovery.mjs` no longer calls automatic
+price/quality differences confirmed conflicts; same declared card yields at most
+possible discrepancy, different/unestablished commercial scope is non-comparable.
+Literal source values and own-block label conflicts remain separate. In
+`matching.mjs`, access/package/cut gaps do not gate B; a changed cut does not
+establish C/D. Safe qualifier reason codes do not assert unknown keys select a
+version. Report labels/paths are allowlisted, disabled Kinobaza is not evaluated,
+film/block localization is not offered tracks, and stale clipboard completion
+cannot restore an old-film report. Selectable fallback and one-row draft/cancel
+remain intact. Bounded/truncated diagnostics are not a complete response trace;
+the four live partial causes and historical purchase flag fields remain unknown.
+
+**Non-blocking review finding R3 (P3, diagnostic completeness):**
+[discovery-report.mjs](../public/discovery-report.mjs), `diagnosticSummary` path
+allowlist, omits the literal field segment `date` used by TMDb release events.
+An in-memory authored value with non-string `release_date` correctly becomes
+`metadata.releaseDates.items.0.dates.items.0.date:invalid` in projected diagnostics,
+but the short report falls back to `partial-cause-not-in-summary` when this is
+the only invalid path. The existing page's source details retain that path.
+No response value leaks, identity relaxation or false B match follows; this is
+not a blocker for the reviewed research slice and **not a diagnosis of any owner
+partial**. A future narrow fix could add only this known path segment and a
+positive/unknown-path-negative report fixture. This documentation-only task
+does not change that runtime whitelist or initiate an owner test.
+
+##### Pointer matrix: implemented grammar versus source evidence
+
+Authority/safety checks run before these rules: HTTPS, supported mapped platform,
+no populated userinfo/non-default port, unsafe text, backslash or search query.
+B additionally refuses explicit authority ports (including written `:443`),
+encoded path ambiguity and fragments. Navigation acceptance is **not** B
+comparability or destination validation. Original href/query/referral is never
+rewritten. `N`, `TOKEN` and `slug` below denote grammar, not catalogue results.
+
+| Source / platform | Supported or observed shape | Qualifiers and current parser decision | Basis / possible B outcome |
+| --- | --- | --- | --- |
+| TMDb / any UA provider | `results.UA` provider/access; TMDb country watch-page link only | Composition leaves provider `link.href` missing. A watch page is not a native card; never borrow another row's URL. | Actual projection contract in [discovery.mjs](../discovery.mjs); B insufficient `link-not-reported` (or watch-page-only if separately classified). No TMDb-to-native-card B pair available. |
+| MOTN or Kinobaza / Apple Store UMC | `https://tv.apple.com/<cc>/movie/<slug>/umc.cmc.N` | Same exact native ID and lowercased route-country key accepted; slug differences do not matter. Only decoded lowercase `at` is ignored for the comparison key, including bare/empty/repeated `at`; acknowledgement still required. | `classifyLink` / `supportedPointer`; historical fixed Coherence/Dune UMC cards in [url-context.mjs](../url-context.mjs), plus owner MOTN Dune same-card report. These are not saved contemporaneous source pairs. Matching supported keys can give B compatible, never C/D. |
+| Kinobaza / Apple Store iTunes | `https://itunes.apple.com/ua/movie/idN` | Numeric namespace is distinct from UMC; only UA numeric route supported. `at` handled as above. Any other query key, including observed language `l`, blocks B as unclassified. No cross-ID conversion. | [Earlier independent link audit](#kinobaza-provider-link-loss--current-agent-diagnosis-and-bounded-fix) documented native iTunes plus `at`/`l`; navigation/draft acceptance was fixed, not proof of B. Same clean iTunes key could match; iTunes versus UMC is insufficient without crosswalk. |
+| MOTN or Kinobaza / Apple regional variants | Same UMC ID with `/ua/` versus `/gb/`, or different UMC IDs on one route | Different route keys are insufficient for same regional pointer; different native IDs in the same proposed comparison scope are conflicting card evidence, not a film/offer verdict. Explicit incompatible source countries also prevent equality. | Implemented route/namespace comparison, not a claim that any live source returned this pair. Unknown source territory on a UA route is not silently filled: B route evidence can match, offer territory/entitlement remains unknown. |
+| Kinobaza / Coherence Prime; MOTN / Prime | `https://[www.]primevideo.com/detail/N[/]` or `/detail/N/ref=atv_TOKEN` | Known native referral suffix may share the plain detail-ID key; exact href/ack gate retained. **Each row needs explicit UA source market**, since this route itself is regionless. Any query key still blocks B; generic prefixed routes accepted for navigation are not comparable B routes. | Prior owner candidate is recorded in the [owner ledger](digital-ua-owner-validation.md#reported-observations-coherence-candidates); independent audit confirmed referral shape but block territory unknown. MOTN Coherence last reported no UA options. Thus no documented usable cross-source B pair, even with the known candidate ID. |
+| MOTN or Kinobaza / Netflix | `https://[www.]netflix.com/title/N[/]` | Regionless path requires explicit UA source market per row. Navigation can accept a country prefix such as `/ua/title/N`, but B deliberately leaves its semantics unresolved. Queries/fragments not ignored. | Implemented grammar and authored cases only; no contemporaneous cross-source Netflix card pair documented. Compatible only with independently supported equal keys/markets, otherwise insufficient. |
+| Kinobaza / Rakuten | `https://[www.]rakuten.tv/ua/movies/<slug>[/]` | B uses the entire exact pathname, not a fabricated native ID. Slug or trailing-slash differences are not canonicalized; queries unresolved. Host `www` variants accepted by the classifier. | Prior country links are often tracking; MOTN UA adapter maps Apple/Prime/Netflix, not Rakuten. Equal supported path rows could match, but no demonstrated independent source peer. |
+| Kinobaza / MEGOGO | `https://[www.]megogo.net/ua/view/N` or `/ua/view/N-<slug>.html` | Same numeric ID/UA route can match across these supported forms; query/fragment uncertainty still refused. Literal URLs retained. | Earlier independent audit documented the short numeric route. MOTN UA scope supplies no MEGOGO peer; TMDb has no provider deep link. No MEGOGO direct-adapter result is substituted as a peer. |
+| Kinobaza JustWatch country section / any mapped platform | `https://click.justwatch.com/...` | Opaque tracking: exact candidate preserved, draft requires acknowledgement. Embedded destination-looking parameters are not decoded/resolved into B pointers; even repeated identical opaque href is not destination-card equality. | Source sections/lineage documented; B insufficient `opaque-tracking-destination-unknown`. TMDb's related JustWatch signals are not independent/native-card evidence. |
+| HBO Max mapped rows | Candidate tracking or another non-reviewed direct route | No HBO native direct-card grammar exists in this classifier/B parser; mapping a platform alone cannot supply one. | Actual supported-route set, not proof HBO cards do not exist. B insufficient; no new route inferred. |
+| Any supported direct route / referral differences | Apple `at`, or the narrow Prime `ref=atv_...` path above | Only these reviewed comparison exceptions; no generic stripping of `utm_*`, `ref`, `l`, `language`, repeated/empty other keys or uppercase `AT`. Even equal unknown qualifiers are refused, not assumed harmless. | Project's bounded grammar/earlier structural evidence, **not a general official provider guarantee**. Can yield compatible B only if all remaining key/market/identity gates agree. R1/draft acknowledgement remains independent. |
+| Any / ambiguous, search, relative, unsafe | Unknown query key, duplicate non-`at` key, malformed decoding, fragment, search path/query, relative href, unsafe authority/protocol | B insufficient with safe category where available; unsafe navigation/transfer withheld. Query key names/values and tracking strings do not enter the short report. | Defensive unsupported semantics, not a proved cut/version requirement, legal ban or assertion that source href was absent. No destination request. |
+
+The matrix distinguishes **recognized grammar**, **historically documented source
+shapes** and **a demonstrated pair**. They are not interchangeable. Fixed Apple
+UMC cards and the owner-recorded Prime candidate are known pointers, not proof
+those exact strings occurred in the later held-out responses. Native IDs remain
+namespaced; same numeric iTunes/UMC-looking text is not a crosswalk. Same-source
+rent/buy rows can also produce B compatible under the existing lookup, but that
+is reuse of one source's declared card, **not cross-source practical benefit** or
+commercial-offer equality. No amount of positive authored equality proves coverage.
+
+##### Product recommendation B: retain diagnostics, defer B development
+
+Current evidence does not establish a useful cross-source intersection: TMDb is
+linkless, Kinobaza country links are opaque, Apple block iTunes pointers differ
+from the known MOTN UMC namespace (and observed `l` remains unclassified), Prime
+block territory can be unknown while MOTN Coherence has no reported UA options,
+and Rakuten/MEGOGO lack a MOTN peer in the approved scope. These are concrete
+coverage/semantic boundaries, **not proof every live pointer has those forms**.
+The held-out reports omit exact pointer components, so their particular refusals
+cannot be reconstructed. Zero reported B matches is not impossibility in general.
+
+**Recommend B:** keep the conservative source-labelled aid and existing selection
+flow; defer engine/qualifier/cross-ID expansion. Continue treating useful original
+source rows as M1 benefits, not an M2 B success. No unified offer, ranking, C/D,
+field transfer or new source capability follows. Do not seek synthetic compatible
+cases as a product objective, or send the owner around the same platforms again.
+
+##### Optional evidence-only probe: proposed, not authorized or required now
+
+If the product decision is later reopened, the smallest useful uncertainty is:
+**does a currently returned MOTN Dune Apple pointer have a supported counterpart
+in the fixed Kinobaza card, or is the refusal due to namespace/qualifier/peer
+coverage?** Use Dune, an existing control with prior MOTN Apple output and
+independently inspected Kinobaza blocks. No new films, full consolidated discovery,
+TMDb providers, destination reads or owner session are needed. Coherence's known
+no-UA MOTN result is not a reason to replace Dune or expand the sample if negative.
+
+| Proposed operation | Hard cap | Credential / handling |
+| --- | --- | --- |
+| `GET https://api.movieofthenight.com/v4/shows/tt15239678?country=ua` |1|Server-only `MOTN_API_KEY` in the existing header, never URL/args/report. Existing fixed-ID gate checks TMDb693134/IMDbtt15239678 and withholds mismatches.|
+| `GET https://kinobazaua.com/titles/dune-part-two` |1|No credential/cookies. Exact previously checked canonical card; independent structural identity gate. Direct GET, no redirect hop.|
+
+**Maximum2 source GETs total**, zero TMDb/LLM/provider/tracking/rules requests,
+redirects, retries, fallback or replacement-film calls. No code/command or live
+capability is added by this design. Existing demo discovery still costs up to5
+for Dune; it is **not** a2-request implementation of this proposed narrower probe.
+An implementation agent may execute only after separate authorization, with
+properly supplied research credentials and applicable source-use readiness;
+missing key/access or unresolved authorization is a blocker, never grounds to
+read production secrets or request owner testing. No new source-rights grant
+or current terms review is claimed by this offline task. Changed/unclear rules
+must be resolved before any run; no unbudgeted rules fetch is hidden in this cap.
+
+Process each bounded body only in memory with existing parser/projection gates.
+Compare only source/platform namespace, direct/opaque link kind, supported
+route-region/source-market basis, native-ID equality/difference, qualifier **code
+categories**, block association and reason/peer presence. Original href may stay
+briefly in adapter memory; do not persist/print full pointers, raw body, unknown
+query names/values, affiliate/tracking tokens, headers or personal parameters.
+Export only film/source labels, identity/shape statuses, counts, safe rule codes
+and equal/different/unknown key outcomes, with cross-source and within-source
+pairs counted separately. Do not echo literal native IDs/keys into this probe's
+summary or infer destination from an embedded parameter. No source data to LLM.
+
+Acceptance: distinguish no returned peer, unsupported namespace, unclassified
+qualifier, insufficient regional context and an actual supported equal/different
+declared-pointer pair. Record an honest negative as a completed evidence probe,
+**not a successful B match**. A cross-source supported equality would establish
+one useful repeated-card link only, not C/D/tracks/entitlement/general accuracy.
+Stop after the two allowed reads or sooner on authorization failure, blocked
+403/429/CAPTCHA, redirect, timeout/oversize, unsafe source response or identity
+conflict. Keep independent good evidence, report inability to compare; do not
+chase queries/destinations, relax keys or trigger a new owner/manual-app cycle.
+No probe is being requested now; present-task source GET count is **0**.
+
+Review verification: **107 targeted offline/loopback HTTP tests passed**;
+matching, checkpoint-audit, report, TMDb and discovery suites. M2 installed-Edge
+mobile browser: **9 passed /1 absent-WebKit skip**, including clipboard denied/
+unavailable/stale completion, partial diagnostics and unchanged draft/cancel;
+no real iPhone assertion. The R3 reproduction above is a separate ephemeral
+authored check, not a new committed fixture or live payload. No runtime/dependency
+diff, so no full-suite or Windows lifecycle rerun. Source requests0, owner tests0;
+only repository metadata and localhost mocks were accessed. Markdown validation:
+315 local references/209 anchor-reference occurrences across10 docs, all targets
+and anchors valid;13 numbered M2 handoff sections retained; whitespace/scope clean.
+
 #### Separate completed preflight and proposed evaluation budgets
 
 The table retains the approved preflight/discovery ceilings as history. The owner
