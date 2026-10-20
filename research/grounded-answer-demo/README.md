@@ -1,10 +1,132 @@
 # MW-FUT-01: isolated grounded-answer demo
 
+## Current baseline, M2 closeout and deterministic Mykola answer
+
+**M2 bounded research checkpoint is closed; MW-FUT-01 remains Discovery.**
+A explains existing identity gates, not a newly validated crosswalk. Positive
+cross-source B benefit was not demonstrated; retain B as auxiliary diagnostics,
+defer further development and the reserved two-request probe. C/D and automatic
+enrichment are not implemented. P3 short-report release-event `date` omission is
+technical debt, not an established owner-partial cause.
+
+The [final review and conditional merge readiness](docs/regional-card-proposal.md#m2-closeout-and-final-stack-review)
+separate scoped code findings, live-use/source-rights limits and production
+blockers. #184/#185 remain open; merge is not authorized. The
+[eventual child-to-parent-to-develop plan](docs/regional-card-proposal.md#eventual-merge-plan--no-authorization-or-operations-now)
+requires fresh expected HEADs, parent-advance diff/checks and actual final-tip
+validation without bypassing unknown protections. No main/release change.
+
+**Separately approved / implemented bounded research UX:** a compact
+[deterministic Ukrainian Mykola viewing answer](docs/regional-card-proposal.md#mykola-viewing-answer--proposed-deterministic-presentation),
+without LLM or production integration. Short summary → platform groups with
+source-labelled access/localization/link rows → explicit candidate open or
+one-row review/confirm → local draft. Useful claims remain visible even when
+B is insufficient; no offer/field merging, best badge, source price/format
+repair or historical controls substituted as facts. Full projected provenance
+in details; attribution/material warnings stay visible. Five authored examples
+and acceptance criteria are canonical, not live results. The
+[13-section successor handoff](docs/m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
+records the owner's subsequent implementation approval at #185474a335.
+Implemented on a separate stacked child of still-open #185; not production or
+merged. Natural Ukrainian actions: **«Знайти варіанти»**, **«Відкрити посилання»**,
+**«Обрати»**. Summary is at most two sentences; source labels/unknowns/material
+warnings visible, technical A/B/binding/account diagnostics in details.
+For an unbound block: «Кінобаза вказує українське аудіо; для цієї пропозиції ще
+не перевірено». Original source rows, exact URLs/R1/R2/ack, draft/cancel/exclusions
+and safe-report controls are unchanged; no new ranking or requests. The report's
+safe fixed-label content remains unchanged, with Ukrainian copy/fallback controls.
+Five authored states and mobile/browser checks are not live validation;
+screenshots are synthetic only and kept outside Git. See the
+[implementation/check record](docs/regional-card-proposal.md#mykola-answer-implementation--authored-validation-only).
+No live probe, merge or new owner cycle is authorized/requested.
+
+Fetched `develop` on October 20, 2026:
+**`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. Research #175–#183 are
+merged, including launcher fix #176 and R1/R2. Main/production were not promoted.
+The [canonical verified baseline](docs/regional-card-proposal.md#verified-baseline-and-m2-design-status)
+supersedes older open-stack/conditional-merge statements retained below as history.
+
+**MW-FUT-01-M2 A/B-only implementation is approved for isolated research and is
+implemented on this stacked child of #184, not merged into develop.** Actual
+parent HEAD9208e50 includes the agreed clipboard design after aefb166. Subsequent
+bounded identity/card preflight is recorded below; production integration is
+not approved. A subsequent
+[owner-reported held-out checkpoint and bounded audit](docs/regional-card-proposal.md#held-out-owner-checkpoint-and-ab-usefulness-audit)
+records14 calls but **no demonstrated B matches**; runtime commit remains unknown.
+The subsequent [offline pointer review and product decision](docs/regional-card-proposal.md#offline-b-pointer-feasibility-review-and-decision)
+recommends **B: keep conservative matching as an auxiliary diagnostic, defer
+further B engine development**. TMDb has no provider deep links; opaque country
+tracking, Apple iTunes/UMC namespaces, unknown query/region semantics and absent
+source peers limit useful intersection. Recognized URL grammar and authored
+compatible cases are not demonstrated cross-source matches. No new blocking
+defect was found in the inspected last-fix scope; actual live partial causes and
+historical conflict fields remain unknown.
+The reserved evidence-only Dune pointer probe is **deferred**, not requested
+or authorized: dormant MOTN1 +direct canonical Kinobaza1 design, max2 GETs, no TMDb,
+redirects/retries/destinations, raw/token export or owner session. It is not the
+existing up-to5-request Dune discovery action. No runtime or source capability
+changes are made here; the present review made0 source requests.
+See the
+[implementation checkpoint and count reconciliation](docs/regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only).
+The [canonical matching matrix M01–M20](docs/regional-card-proposal.md#matching-rules-matrix)
+separates same film (A), same declared regional provider-card pointer (B), same
+commercial offer (C), and applicability of one field to that offer (D). The
+**first implementation is A/B-only**, not a general relation graph or
+full pairwise engine. C/D stay deferred constraints/forbidden-inference tests,
+not runtime engines. A/B is not C/D or entitlement. A/B outcomes are
+compatible / conflicting / insufficient-evidence, with evidence/reasons
+(disabled sources are not-evaluated),
+not numeric confidence.
+
+Implemented: direct source-labelled A/B explanations beside separate rows:
+same supported regional card pointer; related film/provider claim with exact
+card unresolved; insufficient territory/access/version for enrichment; conflicting
+identity/card evidence. Long technical reasons remain in details;
+no automatic enriched/verified offer. Provider-name/card matches do not transfer
+Kinobaza localization into MOTN offers. Unknown territory/access/package/cut stays
+unknown; shared JustWatch lineage is not independent corroboration. Exact links,
+Apple `at`/tracking acknowledgement, R2 quarantine and one-row memory-only draft
+remain unchanged. Price/video/tracks stay excluded from draft fields.
+
+UI also includes [Copy short report](docs/regional-card-proposal.md#copy-short-test-summary--proposed-ui-requirement):
+explicit-click plain-text summary of the current film/run, source statuses, A/B
+reasons/unknowns/conflicts and draft interactions, not raw JSON/HTML, credentials
+or draft contents. No extra requests/autosave. Show an honest selectable-text
+fallback if clipboard writing is unavailable/denied; Safari LAN HTTP behavior
+remains unverified on a real iPhone; mocked checks do not establish it. Explicit
+copy exports to the OS clipboard; its lifetime is not controlled by page memory.
+
+The [M2 13-section handoff](docs/m2-offer-matching-handoff.md) records the bounded
+implementation approval. Its [held-out four-film evaluation plan](docs/regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films)
+has a completed, separately authorized [identity/card preflight and factual ledger](docs/regional-card-proposal.md#held-out-preflight-checkpoint--october-20-2026).
+All four documentary TMDb/IMDb identities and the exact self-canonical Kinobaza
+cards for Kingdom of Heaven/Parasite are recorded with direct versus indexed
+evidence distinguished; The Thing1982/2011 have different IDs. **17 controlled
+GETs** (identity7 +cards4 +rules6), plus15 public search queries whose internal
+traffic is not exposed. No API/discovery/owner evaluation ran; no new runtime
+IDs/cards were configured by that documentation checkpoint. The subsequent
+[held-out runtime preparation](docs/regional-card-proposal.md#held-out-runtime-preparation--authored-checks-only)
+added the fixed catalogue without agent discovery. TMDb full terms are accessible, but applicability
+to combined matching/display/draft remains conditional and is not cleared by owner runs; agent research
+token is absent, public-document checks did not require it.
+The **approved held-out ceiling was14 HTTP requests** (TMDb8 +MOTN4
++Kinobaza2), using verified direct canonical cards, no hops/retries. Runtime
+catalogue preparation is approved; the owner has now reported one completed
+four-film session, not independently repeated or a resolution of source-use gates;
+no repeated streaming-app tour. Existing two-film setup/iPhone commands are unchanged.
+Agent verification is authored offline/HTTP/browser checks; owner observations
+are separately attributed, not independent live validation.
+Existing two-film commands, keys and request budgets are unchanged. Copy does
+not rerun discovery or alter the draft. Report excludes raw payloads/URLs/secrets/
+draft inputs and reports **Commit: unknown** rather than guessing a Git SHA.
+MW-FUT-01 remains Discovery.
+
 ## Consolidated architecture checkpoint
 
-**R1/R2 approved fixes after #183 `868032969dd737c96c11613ec532b79caac428ca`: both
+**Historical pre-consolidation checkpoint (superseded by the baseline above).**
+R1/R2 approved fixes after #183 `868032969dd737c96c11613ec532b79caac428ca`: both
 code blockers resolved in offline/browser checks; research merge is CONDITIONAL on review, branch
-policy and separate consolidation approval, not production approval.**
+policy and separate consolidation approval at that checkpoint, not production approval.
 R1 now gates the exact decoded Apple affiliate key `at` on both already supported
 iTunes/tv.apple.com card routes. Presence alone requires acknowledgement, including
 empty/bare/repeated `at`; decoded `%61t` is the same key. Query values/order/encoding
@@ -47,8 +169,10 @@ HTML archive. No new owner test cycle is requested.
 ## Consolidated UA discovery and local draft
 
 Opt in with `DEMO_RETRIEVAL=ua-discovery`, `DEMO_DISCOVERY=digital-ua`;
-`DEMO_FILM=coherence|dune-part-two` selects the initial picker value, not a server
-restart requirement. Both films are selectable in one process. `DEMO_KINOBAZA=on`
+`DEMO_FILM` selects the initial picker value, not a server restart requirement.
+The picker contains Coherence, Dune, `kingdom-of-heaven`, `the-thing-1982`,
+`the-thing-2011`, and `parasite`. Search/URL Context and standalone probes keep
+their previous film-selection scope. `DEMO_KINOBAZA=on`
 is the default and the agreed owner-control configuration; `off` omits that
 optional source. Invalid switches/combinations fail before listening. Synthetic
 is default and performs zero external requests; its providers/URLs/metadata are
@@ -57,10 +181,26 @@ authored examples, not live facts. Existing retrievals require DEMO_KINOBAZA uns
 One explicit action consumes a film-bound token: independent TMDb (A+B max2),
 MOTN (max1) and optional Kinobaza (one GET, plus at most one verified canonical
 hop): **max4/film without redirect, max5 only with that hop**, no retries or destination
-requests. TMDb failure does not suppress fixed-ID MOTN. Each source gates its
+requests **for the original Coherence/Dune cases**. Held-out Kingdom/Parasite
+use the ledger's direct canonical Kinobaza cards, one GET with no redirect follow;
+The Thing1982/2011 disable Kinobaza at scenario level regardless of global `on`.
+Their budgets are **4+3+3+4=14** total, no retry/fallback/hop. General Kingdom
+film/card identity does not establish Director's Cut; Parasite catalogue
+localization does not establish offered tracks.
+TMDb failure does not suppress fixed-ID MOTN. Each source gates its
 own identity; a stable-ID conflict withholds that source and explicitly prevents
 a common matched identity. Source claims are never merged solely by platform.
 Partial stages survive. Total cancellation65s; existing source bounds retained.
+
+Held-out outcome: all reported film gates passed, but every shown B was
+insufficient-evidence and all TMDb A stages partial. Short reports did not contain
+the concrete qualifiers/partial field paths or purchase-conflict fields, so their
+exact live causes remain unknown. Offline audit fixes false confirmed-offer
+conflict labels, permits ordinary whitespace in presence-only TMDb prose and
+adds safe diagnostics/localization summaries. It does **not** relax B query
+policy or prove improved live matching. Separate source-label conflicts, possible
+discrepancies and non-comparable observations remain visible; literal values and
+one-row draft exclusions are unchanged. No new owner session is requested.
 
 UI: platform groups are presentation only, with short source-labelled field/count
 summaries, **no unified verified status or combined offer**. Separate source rows

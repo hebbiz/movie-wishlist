@@ -1,5 +1,17 @@
 # Approved research handoff: bounded UA discovery and local draft
 
+**Historical M1 handoff, now implemented and consolidated into develop
+`014014337ef5d2eb9ab95db09c334cef42d4b2fa`.** Earlier stack/approval statements
+below describe their preparation dates. Launcher fix #176 and R1/R2 are included
+in that baseline; #175's original standalone HEAD was not a corrected launcher.
+The subsequent [M2 task handoff](m2-offer-matching-handoff.md) records its
+separately approved implementation and now-closed research checkpoint, governed by the same
+[canonical architecture](regional-card-proposal.md#m2-digital-offer-matching--proposed).
+B/probe expansion and C/D remain deferred. The Mykola presentation successor in
+that existing handoff was subsequently **separately approved for bounded isolated
+implementation**, not by historical M1/M2 approval. No new films/live runs,
+production integration or merge are authorized by that presentation approval.
+
 **Approved for isolated research implementation only. MW-FUT-01 remains Discovery.**
 Authorization follows checkpoint `e978e72389ec5fae7e2be141062b5606fd862f75`;
 no production integration, persistence or merge approval. Optional Kinobaza is

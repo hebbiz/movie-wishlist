@@ -8,6 +8,37 @@ current entitlement or complete platform coverage is inferred. MEGOGO remains
 unresolved; no new MEGOGO cycle. The [approved research handoff](consolidated-poc-handoff.md)
 now records separately approved research implementation, not production authorization.
 
+## M2 held-out — completed owner-reported session
+
+Recorded October20,2026 from the owner's summary, **not independently repeated**.
+The session was prepared against `56db620f010f9f6a684a9a2c0d393b4bc3dd712d`;
+runtime reports said **Commit unknown**. That preparation SHA is not an attested
+running commit; exact execution timestamps are not supplied.
+
+| Film | Owner-reported calls / elapsed | Owner-reported source gates and relations |
+| --- | --- | --- |
+| Kingdom of Heaven |4/4,616ms|TMDb A partial/B ok; TMDb/MOTN identity matched; Kinobaza ok/matched. All shown B insufficient-evidence.|
+| The Thing1982 |3/3,486ms|TMDb A partial/B ok; TMDb/MOTN identity matched; Kinobaza disabled by scenario. All shown B insufficient-evidence.|
+| The Thing2011 |3/3,516ms|TMDb A partial/B ok; TMDb/MOTN identity matched; Kinobaza disabled by scenario. All shown B insufficient-evidence.|
+| Parasite |4/4,482ms|TMDb A partial/B ok; TMDb/MOTN identity matched; Kinobaza ok/matched. All shown B insufficient-evidence.|
+
+**14 application HTTP calls reported, one discovery per film, no retries.**
+Latency is four observations, not a benchmark. B labels were related claim/card
+unresolved or card qualifiers/version ambiguous; actual qualifier keys/values,
+peer pointers and TMDb invalid/missing paths were not supplied. In Kingdom,
+Thing2011 and Parasite the owner saw two Apple purchase observations each, with
+two conflict flags per observation. Exact fields/types/values and offer scopes
+were not reported; do not reconstruct them or assert confirmed price/quality
+conflicts from that count. Draft was **not tested in this session**.
+
+These are owner-run source outputs, not independent availability/track/account
+entitlement checks or general matching accuracy. They demonstrate no positive
+B match, commercial-offer equivalence or field applicability. The
+[bounded code/fixture audit](regional-card-proposal.md#held-out-owner-checkpoint-and-ab-usefulness-audit)
+separates proved implementation mechanisms from unknown live causes. No new
+owner/source/destination requests, raw reports/HTML/JSON or screenshots are added.
+Existing observations remain dated controls, not repaired source values.
+
 ## Kinobaza localization — owner-run checkpoint
 
 Reported after #183 implementation `7997b032abcef7d8af67c97ea8e879e3955e0dd4`.

@@ -71,20 +71,21 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
     await context.route('**/*', route => { if (new URL(route.request().url()).origin === origin) return route.continue(); external.push(route.request().url()); return route.abort(); });
     const page = await context.newPage(); page.on('console', m => logs.push(m.text())); page.on('pageerror', e => errors.push(e.message)); page.on('request', r => { if (r.url() === origin + '/answer') posts++; });
     await page.goto(origin); await page.waitForFunction(() => !document.querySelector('#run').disabled);
-    assert.equal(calls.length, 0); assert.match(await page.locator('#discovery-chosen').textContent(), /Coherence.*UA.*budget 5 \(4 without redirect\)/);
+    assert.equal(calls.length, 0); assert.match(await page.locator('#discovery-chosen').textContent(), /Coherence.*Україна.*ліміт 5/);
+    assert.match(await page.locator('#settings').textContent(), /5 HTTP requests.*4 without redirect/);
     await page.locator('#run').dblclick(); await page.locator('#result').waitFor({ state: 'visible' });
     assert.equal(posts, 1); assert.equal(await page.locator('#run').isDisabled(), true);
     const shown = await page.locator('#answer').textContent();
     assert.match(shown, /not|Not/); assert.doesNotMatch(shown, /offline-browser|PRIVATE_ERROR/);
     if (['identity-conflict', 'providers-conflict'].includes(kind)) assert.match(shown, /conflict-no-common-identity/);
     if (kind === 'tmdb-down' || kind === 'no-key') assert.ok(await page.locator('article[data-row-id^="motn:"]').count());
-    if (kind === 'fields-conflict') assert.match(shown, /CONFLICT/);
+    if (kind === 'fields-conflict') { assert.match(shown, /Possible discrepancy/); assert.doesNotMatch(shown, /CONFLICT —/); }
     assert.equal(await page.locator('#discovery-source-details').evaluate(n => n.open), false);
     assert.equal(await page.locator('#answer article details[open]').count(), 0);
     assert.equal(await page.locator('.provider-group[data-provider="apple"]').count(), 1);
     assert.equal(await page.locator('.provider-group > button').count(), 0); // Selection belongs to a source row, never a group.
     assert.equal(await page.locator('#answer article').evaluateAll(nodes => nodes.every(n => n.parentElement.classList.contains('provider-group'))), true);
-    assert.match(await page.locator('.provider-group[data-provider="apple"] > .provider-summary').textContent(), /separate row.*not one verified offer/);
+    assert.match(await page.locator('.provider-group[data-provider="apple"] > .provider-summary').textContent(), /показано окремо/);
     assert.doesNotMatch(shown, /No permitted provider link/);
     assert.equal(await page.locator('#answer article').evaluateAll(nodes => nodes.every(n => n.querySelectorAll(':scope > p').length <= 4)), true);
     assert.equal(await page.locator('#answer article h4').evaluateAll(nodes => nodes.every(n => !/ · (rent|buy|rental|purchase|flatrate|subscription)\b/.test(n.textContent))), true);
@@ -92,15 +93,15 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
     if (kind === 'partial-redirect') {
       assert.match(await page.locator('#discovery-source-status').textContent(), /A: partial; B: ok.*canonical-redirect-refused/);
       assert.doesNotMatch(shown, /PRIVATE_LOCATION|private.example/);
-      await page.locator('#discovery-source-details summary').click();
+      await page.locator('#discovery-source-details > summary').click();
       assert.match(await page.locator('#discovery-source-details').textContent(), /present-not-retained|"httpStatus": 302/);
-      await page.locator('#discovery-source-details summary').click();
+      await page.locator('#discovery-source-details > summary').click();
     }
     if (kind === 'hostile') { assert.equal(await page.locator('#answer img,#answer script,#answer iframe').count(), 0); assert.match(shown, /<img src=/); }
     if (kind === 'synthetic') assert.match(shown, /SYNTHETIC ONLY/);
     if (kind === 'localization-hop') {
       assert.equal(calls.length, 5); assert.match(shown, /HTTP calls: 5\/5/);
-      assert.match(shown, /film-level UA audio claim — not provider tracks/);
+      assert.match(shown, /загальну позначку українського аудіо для фільму — це не перелік доріжок на платформі/);
       assert.match(shown, /UA audio \+ \(Kinobaza block\)/);
       assert.match(shown, /UA subtitles − \(named block labels only\)/);
     }
@@ -114,17 +115,17 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
       const kino = apple.locator('article[data-row-id^="kinobaza:"]');
       assert.equal(await kino.count(), 2); assert.match(await kino.first().textContent(), /UA source context/);
       assert.doesNotMatch(await kino.first().locator(':scope > p').allTextContents().then(t => t.join(' ')), /UA audio \+/);
-      assert.match(await kino.last().textContent(), /Territory unknown.*UA audio \+/s);
+      assert.match(await kino.last().textContent(), /Територія не встановлена.*Кінобаза вказує українське аудіо/s);
       for (const status of ['Link: not reported', 'Link: unsafe — withheld', 'Link: unsupported kind (unknown)', 'Link: unsupported kind (relative)', 'Link: unsupported kind (search)']) assert.ok(shown.includes(status), status);
       const unsupported = kino.last(); assert.equal(await unsupported.locator('a').count(), 0);
-      await unsupported.getByRole('button', { name: 'Select and review' }).click();
+      await unsupported.getByRole('button', { name: 'Обрати' }).click();
       assert.match(await page.locator('#draft-included').textContent(), /"purchase_url": ""/);
       assert.match(await page.locator('#draft-review').textContent(), /Navigation: disabled by demo URL policy.*Draft: not eligible for transfer/s);
       await page.locator('#draft-review-cancel').click();
     }
     if (kind === 'provider-id-conflict') {
       const panel = page.locator('#discovery-unmapped');
-      assert.equal(await panel.locator(':scope > p').filter({ hasText: 'provider ID conflict' }).count(), 4);
+      assert.equal(await panel.locator('details > p').filter({ hasText: 'provider ID conflict' }).count(), 4);
       assert.match(await panel.textContent(), /provider ID conflict.*unresolved.*no canonical access or draft selection/s);
       assert.equal(await panel.locator('button,a,input').count(), 0);
       assert.equal(await page.locator('.provider-group[data-provider="prime"],.provider-group[data-provider="netflix"]').count(), 0);
@@ -145,7 +146,7 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
       ].entries()) {
         const row = rows.nth(index);
         assert.equal(await row.locator('a').getAttribute('href'), href);
-        await row.getByRole('button', { name: 'Select and review' }).click();
+        await row.getByRole('button', { name: 'Обрати' }).click();
         const included = async () => JSON.parse(await page.locator('#draft-included').textContent());
         assert.equal((await included()).purchase_url, '');
         await page.locator('#draft-tracking-ack').check(); assert.equal((await included()).purchase_url, href);
@@ -153,7 +154,7 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
         await page.locator('#draft-tracking-ack').check(); await page.locator('#draft-confirm').click();
         const draftURL = page.locator('#local-draft input[name="purchase_url"]'); assert.equal(await draftURL.inputValue(), href);
         await page.locator('#local-draft input[name="title"]').fill('R1 manual edit');
-        await row.getByRole('button', { name: 'Select and review' }).click();
+        await row.getByRole('button', { name: 'Обрати' }).click();
         assert.equal(await page.locator('#draft-tracking-ack').isChecked(), false);
         await page.locator('#draft-review-cancel').click(); assert.equal(await draftURL.inputValue(), href);
         assert.equal(await page.locator('#local-draft input[name="title"]').inputValue(), 'R1 manual edit');
@@ -170,18 +171,18 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
       for (const [provider, href, ack] of cases) {
         const row = page.locator(`.provider-group[data-provider="${provider}"] article[data-row-id^="kinobaza:"]`).filter({ hasText: 'Kinobaza block' });
         assert.equal(await row.count(), 1); assert.match(await row.textContent(), /Territory unknown/);
-        const link = row.getByRole('link', { name: 'Open candidate explicitly (not verified)' });
+        const link = row.getByRole('link', { name: 'Відкрити посилання' });
         assert.equal(await link.getAttribute('href'), href); assert.equal(await link.getAttribute('rel'), 'noopener noreferrer');
         assert.equal(await link.getAttribute('target'), '_blank');
         // Native navigation is explicit-only. Suppress it in this test: no destination request.
         await link.evaluate(n => { n.dataset.openClicks = '0'; n.addEventListener('click', e => { e.preventDefault(); n.dataset.openClicks = String(Number(n.dataset.openClicks) + 1); }); });
         await link.click(); assert.equal(await link.getAttribute('data-open-clicks'), '1'); assert.equal(calls.length, originalCalls);
-        await row.getByRole('button', { name: 'Select and review' }).click();
+        await row.getByRole('button', { name: 'Обрати' }).click();
         assert.equal(await page.locator('#draft-tracking-ack').count(), ack ? 1 : 0);
         const included = async () => JSON.parse(await page.locator('#draft-included').textContent());
         assert.equal((await included()).purchase_url, ack ? '' : href);
         if (ack) {
-          assert.match(await page.locator('#draft-review').textContent(), /provider-native referral candidate/);
+          assert.match(await page.locator('#draft-review').textContent(), /партнерськими параметрами/);
           await page.locator('#draft-tracking-ack').check(); assert.equal((await included()).purchase_url, href);
           await page.locator('#draft-tracking-ack').uncheck(); assert.equal((await included()).purchase_url, '');
           await page.locator('#draft-tracking-ack').check();
@@ -189,7 +190,7 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
         await page.locator('#draft-confirm').click();
         const input = page.locator('#local-draft input[name="purchase_url"]'); assert.equal(await input.inputValue(), href);
         await page.locator('#local-draft input[name="title"]').fill('Manual edit survives cancel');
-        await row.getByRole('button', { name: 'Select and review' }).click();
+        await row.getByRole('button', { name: 'Обрати' }).click();
         if (ack) assert.equal(await page.locator('#draft-tracking-ack').isChecked(), false);
         await page.locator('#draft-review-cancel').click(); assert.equal(await input.inputValue(), href);
         assert.equal(await page.locator('#local-draft input[name="title"]').inputValue(), 'Manual edit survives cancel');
@@ -199,7 +200,7 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
     }
     const exactRow = page.locator('article[data-row-id^="motn:"]').first();
     if (await exactRow.count()) {
-      await exactRow.getByRole('button', { name: 'Select and review' }).click();
+      await exactRow.getByRole('button', { name: 'Обрати' }).click();
       assert.equal(await page.locator('#local-draft').isVisible(), false);
       assert.match(await page.locator('#draft-included').textContent(), /wishlist/);
       assert.doesNotMatch(await page.locator('#draft-included').textContent(), /sidecar|audio|subtitles|price|quality|currency/);
@@ -210,15 +211,15 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
       const draftValues = () => page.locator('#local-draft input').evaluateAll(nodes => nodes.map(n => [n.name, n.value]));
       const edited = await draftValues(), requestsBeforeDraftCancel = calls.length;
       assert.equal(await page.locator('#draft-cancel-edits').count(), 0); // No destructive reset disguised as Cancel.
-      await exactRow.getByRole('button', { name: 'Select and review' }).click(); await page.locator('#draft-review-cancel').click(); assert.equal(await page.locator('#local-draft').isVisible(), true);
+      await exactRow.getByRole('button', { name: 'Обрати' }).click(); await page.locator('#draft-review-cancel').click(); assert.equal(await page.locator('#local-draft').isVisible(), true);
       assert.deepEqual(await draftValues(), edited); assert.equal(calls.length, requestsBeforeDraftCancel);
       const before = await input.inputValue();
       const tracking = page.locator('article[data-row-id^="kinobaza:"]').filter({ hasText: 'Tracking candidate — destination unverified' });
       if (await tracking.count()) {
-        await tracking.first().getByRole('button', { name: 'Select and review' }).click();
+        await tracking.first().getByRole('button', { name: 'Обрати' }).click();
         assert.match(await page.locator('#draft-included').textContent(), /"purchase_url": ""/);
         await page.locator('#draft-review-cancel').click(); assert.equal(await input.inputValue(), before);
-        await tracking.first().getByRole('button', { name: 'Select and review' }).click(); await page.locator('#draft-tracking-ack').check();
+        await tracking.first().getByRole('button', { name: 'Обрати' }).click(); await page.locator('#draft-tracking-ack').check();
         assert.match(await page.locator('#draft-included').textContent(), /click.justwatch.com\/a\?synthetic=%2F&x=1/);
         await page.locator('#draft-confirm').click(); assert.equal(await input.inputValue(), 'https://click.justwatch.com/a?synthetic=%2F&x=1');
       }

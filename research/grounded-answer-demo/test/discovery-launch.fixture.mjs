@@ -2,6 +2,8 @@
 import { createDemo } from './server-core.mjs';
 import { authoredDiscoveryData } from './discovery.mjs';
 import { FILMS } from './config.mjs';
+import { HELD_OUT_FILMS } from './held-out.mjs';
+import { MOTN_FILMS } from './motn.mjs';
 import { networkConfig } from './network.mjs';
 const tmdb = 'offline-discovery-tmdb', motn = 'offline-discovery-motn';
 if (process.env.TMDB_READ_ACCESS_TOKEN !== tmdb || process.env.MOTN_API_KEY !== motn || process.env.GEMINI_API_KEY !== undefined) throw new Error('Mock multi-key isolation failed.');
@@ -10,8 +12,16 @@ const network = networkConfig(options); const calls = new Set();
 const server = createDemo({ mode: 'live', retrieval: 'ua-discovery', discovery: process.env.DEMO_DISCOVERY, filmId: process.env.DEMO_FILM,
   kinobaza: process.env.DEMO_KINOBAZA, tmdbToken: tmdb, motnKey: motn, ...options,
   fetchImpl: async (url, init) => {
-    if (calls.has(url) || calls.size >= 8) throw new Error('Mock budget exceeded.'); calls.add(url);
-    const film = /220289|tt2866360|\/coherence$/.test(url) ? FILMS.coherence : FILMS['dune-part-two'];
+    if (calls.has(url) || calls.size >= 22) throw new Error('Mock budget exceeded.'); calls.add(url);
+    const id = Object.keys(MOTN_FILMS).find(id => {
+      const f = MOTN_FILMS[id];
+      return url === `https://api.movieofthenight.com/v4/shows/${f.imdbId}?country=ua` ||
+        url.startsWith(`https://api.themoviedb.org/3/movie/${f.tmdbId}?`) ||
+        url === `https://api.themoviedb.org/3/movie/${f.tmdbId}/watch/providers` ||
+        url === HELD_OUT_FILMS[id]?.kinobazaURL || url === `https://kinobaza.com.ua/titles/${id}`;
+    });
+    if (!id) throw new Error('Unconfigured mock source');
+    const film = HELD_OUT_FILMS[id] ?? FILMS[id];
     const data = authoredDiscoveryData(film);
     if (url.includes('themoviedb')) {
       if (init.headers.Authorization !== `Bearer ${tmdb}` || init.headers['X-API-Key']) throw new Error('Mock TMDb routing failed.');
@@ -21,7 +31,7 @@ const server = createDemo({ mode: 'live', retrieval: 'ua-discovery', discovery: 
       if (init.headers['X-API-Key'] !== motn || init.headers.Authorization) throw new Error('Mock MOTN routing failed.');
       return Response.json(data.motn);
     }
-    if (url.includes('kinobaza.com.ua/titles/') && !init.headers.Authorization && !init.headers['X-API-Key']) return new Response(data.html, { headers: { 'content-type': 'text/html' } });
+    if (url.includes('kinobaza') && !init.headers.Authorization && !init.headers['X-API-Key']) return new Response(data.html, { headers: { 'content-type': 'text/html' } });
     throw new Error('Unexpected mock request; no global fetch.');
   } });
 server.listen(Number(process.env.DEMO_PORT), network.bindAddress);
