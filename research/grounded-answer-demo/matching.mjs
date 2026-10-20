@@ -10,6 +10,7 @@ const conflict = reason => answer('conflicting', reason);
 function filmAssociation(source, expected) {
   const refs = { source: source.source, evidenceRefs: [`sources.${source.source}.evidence`] };
   const done = a => ({ ...a, ...refs });
+  if (source.status === 'disabled-no-request') return done(answer('not-evaluated', 'disabled-by-scenario'));
   if (source.identity === 'mismatch') return done(conflict('stable-id-conflict'));
   if (source.identity !== 'matched') return done(insufficient('source-identity-unresolved'));
   const e = source.evidence;
@@ -39,20 +40,25 @@ function filmAssociation(source, expected) {
 // Narrower than navigation: an accepted href can still lack a comparable region/key.
 export function supportedPointer(row) {
   const checked = classifyLink(row.link?.href, row.provider);
-  if (row.link?.kind !== 'exact-card-unverified' || checked.kind !== 'exact-card-unverified') return insufficient('no-supported-direct-pointer');
+  if (row.link?.kind !== 'exact-card-unverified' || checked.kind !== 'exact-card-unverified') return answer('insufficient-evidence', 'no-supported-direct-pointer', {
+    detailCodes: [checked.kind === 'tracking-redirect' ? 'opaque-tracking-destination-unknown' : checked.kind === 'tmdb-watch-page' ? 'country-watch-page-only' : checked.kind === 'missing' ? 'link-not-reported' : 'link-kind-not-comparable'],
+  });
   const u = new URL(row.link.href);
   // Never equate parser-normalized paths/explicit ports or unknown fragments.
   const authority = /^https:\/\/([^/]+)\//i.exec(row.link.href)?.[1];
-  if (!authority || authority.includes(':') || /(?:%2f|%5c|%2e|\/\.\.?\/)/i.test(row.link.href.split('?')[0]) || u.hash) return insufficient('pointer-qualifiers-unresolved');
+  const qualifier = code => answer('insufficient-evidence', 'pointer-qualifiers-unresolved', { detailCodes: [code] });
+  if (!authority || authority.includes(':')) return qualifier('explicit-authority-unresolved');
+  if (/(?:%2f|%5c|%2e|\/\.\.?\/)/i.test(row.link.href.split('?')[0])) return qualifier('path-encoding-unresolved');
+  if (u.hash) return qualifier('fragment-unclassified');
   const keys = new Set();
   for (const pair of u.search.slice(1).split('&').filter(Boolean)) {
     let key;
-    try { key = decodeURIComponent(pair.split('=')[0].replaceAll('+', ' ')); } catch { return insufficient('pointer-qualifiers-unresolved'); }
+    try { key = decodeURIComponent(pair.split('=')[0].replaceAll('+', ' ')); } catch { return qualifier('query-key-malformed'); }
     if (row.provider.key === 'apple' && key === 'at') continue; // Comparison only; original URL and R1 gate untouched.
-    if (keys.has(key)) return insufficient('pointer-qualifiers-unresolved');
+    if (keys.has(key)) return qualifier('query-key-repeated');
     keys.add(key);
   }
-  if (keys.size) return insufficient('pointer-qualifiers-unresolved');
+  if (keys.size) return qualifier('query-key-unclassified');
   const path = u.pathname; let match, namespace, nativeId, route;
   if (row.provider.key === 'apple' && u.hostname === 'tv.apple.com' && (match = /^\/([a-z]{2})\/movie\/[^/]+\/(umc\.cmc\.[a-z0-9]+)$/i.exec(path))) {
     namespace = 'apple-tv-card'; nativeId = match[2]; route = `route:${match[1].toLowerCase()}`;

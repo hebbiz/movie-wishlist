@@ -78,7 +78,7 @@ test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { sk
     assert.match(shown, /not|Not/); assert.doesNotMatch(shown, /offline-browser|PRIVATE_ERROR/);
     if (['identity-conflict', 'providers-conflict'].includes(kind)) assert.match(shown, /conflict-no-common-identity/);
     if (kind === 'tmdb-down' || kind === 'no-key') assert.ok(await page.locator('article[data-row-id^="motn:"]').count());
-    if (kind === 'fields-conflict') assert.match(shown, /CONFLICT/);
+    if (kind === 'fields-conflict') { assert.match(shown, /Possible discrepancy/); assert.doesNotMatch(shown, /CONFLICT —/); }
     assert.equal(await page.locator('#discovery-source-details').evaluate(n => n.open), false);
     assert.equal(await page.locator('#answer article details[open]').count(), 0);
     assert.equal(await page.locator('.provider-group[data-provider="apple"]').count(), 1);

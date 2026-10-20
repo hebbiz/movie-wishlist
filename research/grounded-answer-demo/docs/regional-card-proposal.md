@@ -7,7 +7,9 @@ The implementation record below supersedes the initial Proposed status only for
 that narrow slice and explicit-copy summary. The subsequent bounded held-out
 identity/card preflight is authorized and recorded below; discovery/evaluation,
 C/D and production/persistence remain unapproved. The subsequent held-out
-runtime preparation is now approved/implemented; no live evaluation has run.
+runtime preparation is approved/implemented; the owner subsequently reports a
+completed held-out session. The audit below records no demonstrated B benefit
+and does not attest the runtime SHA or independently validate source outputs.
 Repository inspection on October 20, 2026, after fetching refs, confirms
 `origin/develop` **`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. #175–#183
 were consolidated through merge commits; launcher fix
@@ -2529,7 +2531,96 @@ Implementation verification:
   retained. Scope/whitespace checked. No new dependency, production file or owner
   observation/response archive.
 
+#### Held-out owner checkpoint and A/B usefulness audit
+
+**Inspected #185 at56db620/base #1849208e50, October20,2026**, clean isolated
+implementation checkout; no new remote changes. The owner reports one discovery
+per held-out film and14 HTTP calls, with all attempted TMDb/MOTN identities
+matched, Kinobaza ok/matched on the two configured cards. Full observations and
+limits are in the existing [owner ledger](digital-ua-owner-validation.md#m2-held-out--completed-owner-reported-session):
+616/486/516/482ms are observations, not a benchmark. The preparation checkpoint
+is not an attested running SHA; reports say Commit unknown. Draft was not tested.
+All shown B outcomes were insufficient-evidence; all four TMDb A partial/B ok.
+
+| Audit topic | Proved code/authored evidence | Limit for the owner session / correction |
+| --- | --- | --- |
+| B support/qualifiers | `supportedPointer` accepts only supported direct routes; tracking destination, watch-page, relative/search/unsafe references cannot establish card identity. It ignores only the already agreed Apple `at` key; all other query keys, repeated/malformed keys, fragment, encoded-path/explicit-authority ambiguity are rejected. Their actual semantic meaning is **unknown**, not proven cut/version selection. | Reports did not contain actual qualifier keys/values or peer references. Cannot identify which keys caused those particular failures, prove missed joins, or say every insufficient result was correct. No allowlist/policy relaxation. Add safe cause categories, never raw qualifiers/URLs. |
+| B versus C/D | A fixture with the same supported regional card pointer matches B with cut/access unknown, even when two explicit cut labels differ; scope gaps describe why enrichment is unavailable, not a B prerequisite. | No code path requiring a known cut/version was found in B equality. Old generic “Card qualifiers/version ambiguous” was misleading: replaced with pointer-qualifier uncertainty, not a proved version conflict. Same pointer is still not resolved destination, commercial offer or field applicability. |
+| Purchase flags | Old composition compared same platform/country/access, then marked price/quality differences a conflict when exact href matched. An authored two-purchase example produces exactly two flags per row even with cut/package/offer applicability unknown. | A real classification defect, **not proof of those historical flag fields**: the owner's short reports supplied no concrete fields, values or scopes. Same card is insufficient for a confirmed offer-field conflict; do not infer prices/currencies/formats or which source produced each row. |
+| TMDb A partial | Missing/null/invalid appended resource adds an issue. Invalid projected metadata also adds an issue. Valid resource with absent optional fields alone stays ok. Ordinary newline/tab prose was rejected by the control-character validator although overview/tagline are reduced to presence, never rendered/retained. Authored `metadata.translations.items.0.overview` reproduced invalid/partial. | Permit ordinary CR/LF/tab only in presence-only prose, preserving type/100k bound, other-control refusal and every stable-ID gate. **Actual four-film root cause remains unknown**: no resource/field paths or responses retained from those runs. Multiline is a proved possible mechanism, not a claim about the owner's payloads. |
+
+**Narrow conflict-classification correction, no commercial matching engine:**
+
+- `conflicts` no longer receives automatic price/quality flags from provider/
+  access/card equality. Its explicit own-block audio/subtitle contradictory
+  labels remain source-internal conflicts, not a claim about universal tracks.
+  Other block ambiguity stays a diagnostic/unknown, not a confirmed field clash.
+- Different explicit package/cut scopes or absent/unequal/unestablished card
+  references produce **non-comparable observations**, not offer conflicts.
+  With the same exact declared direct card, source country/access and no reported
+  scope difference, differing literal price/quality may be shown only as a
+  **possible discrepancy: offer/field scope unknown**. Even that is not C/D.
+- Comparisons retain peer refs/field/reason, max8 per row plus omitted count;
+  values stay literal on their original rows, no winner or source repair.
+  Comparison of price uses only supplied amount/currency, quality only its
+  supplied scalar, not unrelated JSON serialization/order/provenance differences.
+  Separate price/quality offers are not merged or enriched; draft exclusions
+  remain. Existing display ordering does not promote a disputed format.
+
+**Short-report correction:** disabled Kinobaza is “not evaluated — disabled by
+scenario”, not failed identity. Film-level UA claim and own provider-block audio/
+subtitles are separate labelled summaries with territory/completeness limitations,
+not provider-offer fields. Partial/resource/invalid-field paths and B qualifier/
+link-kind codes are whitelisted; price/quality comparisons distinguish possible
+discrepancy from non-comparability, while explicit source-label conflicts have
+field/type codes. No raw URL, query key/value, tracking string, body, credentials
+or manual draft contents are exported. Unknown/truncated diagnostic paths remain
+explicit. Clipboard remains explicit-click, denied/unavailable selectable fallback;
+film changes invalidate the report. Text retains a12k cap and safety footer.
+
+**Usefulness demonstrated, not inferred from passing tests:** owner outputs
+support consistent source-film gates and bounded source composition. A makes
+those existing identity gates explicit; it does not independently validate them
+or demonstrate a new crosswalk beyond the earlier source gates. The source
+candidate/access information is useful M1 discovery output, not a new M2 B
+achievement. **No positive B card association or additional offer enrichment was
+demonstrated** in these four runs. Current B's practical live benefit is therefore
+unproven; reason/unknown visibility is not a substitute for a successful association.
+No-conflict cannot be called accurate matching; insufficient data is not a pass.
+
+**Policy proposal only:** retain conservative B for now. A separately approved
+review may assess documented qualifier semantics or a distinct, explicitly
+qualified declared-reference relation, while preserving exact URLs, region/native
+namespaces, unresolved destinations and C/D boundaries. No arbitrary query key
+is treated as ignorable; no tracking resolve, new source or general pairwise/
+relation-graph engine is implemented. Without evidence there is no justified join.
+
+This audit made **zero live source/API/destination/rules requests** and no owner
+test request. Authored regressions establish the mechanisms/corrections only.
+Windows helpers/key routing/lifecycle are unchanged; no lifecycle rerun or
+synthetic/SSH-disconnect owner cycle is needed. No response/HTML/report archive,
+source-use gate/ack switch, persistence, ranking engine or production change.
+The previous source-use findings/limitations are not cleared by this evaluation.
+
+Verification for this bounded correction: **326 full offline/HTTP passed**,
+zero failures/skips, including8 new authored audit regressions. Relevant
+Discovery/M2/held-out/TMDb browser suites: **51 passed /4 WebKit-unavailable
+skips**, zero failures. First browser pass found one compact-row regression;
+the discrepancy text was folded into the existing summary paragraph and the
+same <=4-paragraph assertion retained, not weakened. Existing R1/R2, exact link/
+acknowledgement, draft/cancel, partial/error, auth/one-shot, request-budget and
+no-storage/destination controls pass. **Windows lifecycle not rerun**: no helper,
+key routing or server dependency/lifecycle change. Other unrelated browser modes
+not rerun; mocks/viewport are not real iPhone validation.
+Documentation:308 local references/205 anchor-reference occurrences across10
+Markdown docs, zero missing targets/anchors,13 M2 numbered sections retained;
+final scope/diff/whitespace checked. No production/owner-demo/untracked changes.
+
 #### Separate completed preflight and proposed evaluation budgets
+
+The table retains the approved preflight/discovery ceilings as history. The owner
+now reports completion within14 discovery calls; it is **not** a request for
+another session or extra budget. Current interpretation is the audit above.
 
 | Phase | Bounded work, after its own approval | Ceiling |
 | --- | --- | --- |
@@ -2593,13 +2684,13 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | C/D commercial identity/field applicability | Deferred long-term rules/forbidden-inference tests only, not required runtime in the first slice. |
 | Held-out identity/source-card preflight | **Authorized/completed**, documentary identity/canonical evidence only; controlled GET17, search queries15 separately disclosed. |
 | Held-out runtime catalogue/preparation | **Authorized/implemented**, authored offline/browser/Windows checks; no factual availability results or live owner requests. |
-| Held-out four-film discovery/evaluation | **Not executed/requested**;2 verified direct canonical cards, ceiling14. Separate evaluation approval and conditional source-use readiness remain. |
+| Held-out four-film discovery/evaluation | **Owner reports completed**,14 calls, all shown B insufficient, all TMDb A partial/B ok; no draft test/runtime attestation/general accuracy. No agent repetition/new session requested; source-use limits remain. |
 | Arbitrary Kinobaza cards/MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
 The first scope approval has been provided for A/B implementation; the remaining
-product approval is live held-out evaluation with its explicit14-request ceiling
-and source-use gates. Runtime preparation is now separately approved; neither
-it nor preflight approval executes evaluation. Rule mechanics,
+product approval would be any additional held-out evaluation or broader pointer
+policy. Runtime preparation and a completed owner-reported session are recorded;
+neither passing tests nor that session clears source-use limits. Rule mechanics,
 unknown preservation and safety are proposed engineering defaults, not a request
 for the owner to pick a confidence threshold. No need to choose an aggregator,
 subscription, storage TTL or new hosting to review M2. The separate

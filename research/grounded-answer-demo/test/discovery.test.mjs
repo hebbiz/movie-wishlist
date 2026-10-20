@@ -139,13 +139,14 @@ test('Watch Providers returned stable-ID conflict is explicit and cannot borrow 
   const error = await live(chosen(), { fetchImpl: mockDiscovery({ fail: url => url.endsWith('/watch/providers') ? new Response('', { status: 429 }) : null }) });
   assert.match(error.sources[0].status, /B: quota-or-rate-limit/);
 });
-test('exact source values and scope-specific possible conflicts retained; no country currency/quality fallback', async () => {
+test('literal source values retained as possible discrepancies, not confirmed offer conflicts', async () => {
   const r = await live(chosen(), { fetchImpl: mockDiscovery({ mutate: d => {
     const first = d.motn.streamingOptions.ua[0]; first.price = { amount: '3.99', currency: 'UAH' }; first.quality = 'hd';
     d.motn.streamingOptions.ua.push({ ...first, price: { amount: '3.99', currency: 'USD' }, quality: 'uhd' });
   } }) });
   const rows = r.rows.filter(r => r.id.startsWith('motn:') && r.access.value === 'rent');
-  assert.deepEqual(rows.map(r => r.price.currency.value).sort(), ['UAH', 'USD']); assert.ok(rows.every(r => r.conflicts.length === 2));
+  assert.deepEqual(rows.map(r => r.price.currency.value).sort(), ['UAH', 'USD']);
+  assert.ok(rows.every(r => r.conflicts.length === 0 && r.comparisons.length === 2 && r.comparisons.every(c => c.outcome === 'possible-discrepancy')));
   assert.ok(r.rows.some(r => r.access.value === 'buy' && r.price.state === 'not-reported'));
 });
 test('audio then subtitles precede explicit format, without a best-option label', async () => {

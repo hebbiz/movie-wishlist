@@ -118,7 +118,7 @@ function rowBase(source, film, provider, index, provenance) {
     availability: { state: 'source-reported', value: 'available', note: 'Aggregator UA claim, not account entitlement.' },
     accountEntitlement: 'unknown', audio: unknown('No provider track evidence'), subtitles: unknown('No provider subtitle evidence'),
     quality: unknown('Not reported'), hdr10: unknown('Not reported'), dolbyVision: unknown('Not reported'), price: unknown('Not reported'),
-    link: classifyLink(null), provenance, conflicts: [], choiceBasis: [], identityStatus: 'matched' };
+    link: classifyLink(null), provenance, conflicts: [], comparisons: [], comparisonsOmitted: 0, choiceBasis: [], identityStatus: 'matched' };
 }
 
 export function composeDiscovery(film, stages, { synthetic = false, metrics = {} } = {}) {
@@ -187,7 +187,9 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
     const block = (kino.localization?.blocks ?? []).find(b => b.blockId === c.blockId && b.href === c.href && b.provider === c.provider);
     if (block) {
       r.kinobazaLocalization = block;
-      for (const issue of block.issues) r.conflicts.push({ field: 'localization', type: issue });
+      for (const field of ['audio', 'subtitles']) if (block[field]?.state === 'conflicting') {
+        r.conflicts.push({ field, type: 'conflicting-block-labels', scope: 'one-source-block-not-universal-track-truth' });
+      } // Other ambiguity/unsupported issues remain in block.issues, not proved conflicts.
     }
     const unsafeExtraction = ['unsafe-url-or-label', 'unsafe-url-scheme', 'unsafe-or-invalid-url'].includes(c.issue);
     // Sanitization deliberately removes unsafe hrefs. Do not reinterpret that
@@ -199,17 +201,28 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
       classification: r.link.kind, note: 'Demo URL policy, not a legal restriction or proof of missing source href. No destination resolution.' };
     add(r);
   }
-  // No row/value merging. Comparable disagreements are retained with peer refs.
+  // Limited discrepancy diagnostics, not a C/D equivalence/applicability engine.
+  // Same platform/access or even a card cannot establish a confirmed offer conflict.
+  const compareScope = (a, b) => {
+    for (const [field, code] of [['package', 'package'], ['cut', 'version']]) {
+      const av = field === 'package' ? val(a.package?.id) ?? val(a.package?.name) : val(a.cut);
+      const bv = field === 'package' ? val(b.package?.id) ?? val(b.package?.name) : val(b.cut);
+      if (av !== bv) return { outcome: 'non-comparable', reason: av === undefined || bv === undefined ? `${code}-scope-unresolved` : `${code}-differs` };
+    }
+    return a.link.kind === 'exact-card-unverified' && b.link.kind === 'exact-card-unverified' && a.link.href && a.link.href === b.link.href
+      ? { outcome: 'possible-discrepancy', reason: 'same-declared-card-offer-scope-unknown' }
+      : { outcome: 'non-comparable', reason: 'card-pointer-equivalence-unestablished' };
+  };
+  const record = (row, entry) => { if (row.comparisons.length < 8) row.comparisons.push(entry); else row.comparisonsOmitted++; };
   for (let i = 0; i < rows.length; i++) for (let j = i + 1; j < rows.length; j++) {
     const a = rows[i], b = rows[j];
     if (a.provider.key !== b.provider.key || a.country !== b.country || val(a.access) !== val(b.access) || val(a.access) === undefined) continue;
-    if (val(a.package?.id) && val(b.package?.id) && val(a.package.id) !== val(b.package.id)) continue;
+    const scope = compareScope(a, b);
     for (const field of ['quality', 'price']) {
       if (a[field]?.state !== 'reported' || b[field]?.state !== 'reported') continue;
       if (field === 'price' && (!val(a.price.amount) || !val(a.price.currency) || !val(b.price.amount) || !val(b.price.currency))) continue;
-      if (JSON.stringify(a[field]) === JSON.stringify(b[field])) continue;
-      const type = a.link.href && a.link.href === b.link.href ? 'conflict' : 'possible-conflict-scope-unestablished';
-      a.conflicts.push({ field, peer: b.id, type }); b.conflicts.push({ field, peer: a.id, type });
+      if (field === 'quality' ? val(a.quality) === val(b.quality) : val(a.price.amount) === val(b.price.amount) && val(a.price.currency) === val(b.price.currency)) continue;
+      record(a, { field, peer: b.id, ...scope }); record(b, { field, peer: a.id, ...scope });
     }
   }
   // Evidence bands, not numeric confidence or "best" claim. Stable within band.
@@ -221,7 +234,7 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
     const qa = formats.indexOf(val(a.quality)), qb = formats.indexOf(val(b.quality));
     // Only compare explicit formats. Price is informational because source
     // currency/quality reliability remains unresolved, not "cheapest" inference.
-    return qa >= 0 && qb >= 0 && !a.conflicts.length && !b.conflicts.length ? qb - qa : 0;
+    return qa >= 0 && qb >= 0 && !a.conflicts.length && !b.conflicts.length && !a.comparisons.length && !b.comparisons.length ? qb - qa : 0;
   });
   const conflicts = sources.filter(s => s.identity === 'mismatch');
   return { synthetic, film, country: 'UA', identity: { status: conflicts.length ? 'conflict-no-common-identity' : 'independent-source-gates',

@@ -1,5 +1,5 @@
 // Page memory only. Never stores, submits, resolves URLs or rewrites source data.
-import { buildShortReport, writeShortReport, relationText, sourceLabel } from './discovery-report.mjs';
+import { buildShortReport, writeShortReport, relationText, sourceLabel, comparisonSummary } from './discovery-report.mjs';
 const value = f => f?.state === 'reported' ? String(f.value) : `[${f?.state ?? 'unknown'}]`;
 export function accessLabel(field) {
   const raw = field?.state === 'reported' ? field.value : undefined;
@@ -78,7 +78,7 @@ export function prepareDraft(result, row, trackingAcknowledged = false) {
       linkPolicy: { originalURL: row.link.href, referral: row.link.referral ?? null, acknowledgementRequired, acknowledged: acknowledgementRequired && trackingAcknowledged }, territory: row.country ?? 'unknown',
       kinobazaLocalization: row.kinobazaLocalization ?? null, countrySignal: row.countrySignal ?? null,
       access: row.access, package: row.package, cut: row.cut, identity: row.identityStatus,
-      commonIdentity: result.identity.status, conflicts: row.conflicts,
+      commonIdentity: result.identity.status, conflicts: row.conflicts, comparisons: row.comparisons ?? [],
       titleBasis: 'Fixed verified film catalogue; original film year, not inferred regional release year.',
       availability: row.availability, accountEntitlement: 'unknown',
       excluded: ['Price/currency (including anomalies), audio, subtitles, video, ownership/account/group fields and all unreported characteristics.'] } };
@@ -184,7 +184,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     if (data.identity.conflicts.length) add(host, 'p', `Identity: ${data.identity.status}. Conflicting stable IDs: ${data.identity.conflicts.join(', ')}. Affected source withheld; no common identity.`);
     add(host, 'p', `HTTP calls: ${data.metrics.requestsMade}/${data.metrics.requestBudget} · elapsed ${data.metrics.elapsedMs}ms (not a cost estimate)`);
     const sourceSummary = add(host, 'p'); sourceSummary.id = 'discovery-source-status';
-    sourceSummary.textContent = data.sources.map(s => `${s.source}: ${s.status} · identity ${s.identity}`).join(' | ');
+      sourceSummary.textContent = data.sources.map(s => s.status === 'disabled-no-request' ? `${s.source}: not evaluated — disabled by scenario` : `${s.source}: ${s.status} · identity ${s.identity}`).join(' | ');
     const subjects = add(host, 'details'); subjects.id = 'matching-subjects'; add(subjects, 'summary', 'A — source film identity evidence');
     for (const s of data.matching?.subjects ?? []) add(subjects, 'p', `${sourceLabel(s.source)}: ${relationText(s)}${s.yearVariance ? ' · Year variance retained; reason not inferred.' : ''}`);
     const matches = new Map((data.matching?.rows ?? []).map(m => [m.rowId, m]));
@@ -203,7 +203,8 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
         add(card, 'p', `${scope} · ${row.kind === 'candidate-link' ? row.countrySignal ? 'candidate link / country-section claim (not entitlement)' : 'candidate link / availability unknown' : 'source availability claim'}${optional ? ` · ${optional}` : ''}`);
         const fields = compactFields(row);
         if (fields.known.length) add(card, 'p', fields.known.join(' · '));
-        add(card, 'p', `Unknown: ${fields.unknown.join(', ') || 'no missing summary fields'}${row.conflicts.length ? ' · CONFLICT — inspect details' : ''}`);
+        const comparison = comparisonSummary(row);
+        add(card, 'p', `Unknown: ${fields.unknown.join(', ') || 'no missing summary fields'}${row.conflicts.length ? ' · CONFLICT — inspect details' : ''}${comparison ? ` · ${comparison}` : ''}`);
         const status = linkPresentation(row.link);
         add(card, 'p', `${status.summary} · ${status.navigation} · ${status.draft}`);
         const match = matches.get(row.id);

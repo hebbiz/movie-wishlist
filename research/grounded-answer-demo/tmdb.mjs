@@ -36,7 +36,12 @@ function list(v, project, limit = 2000) {
   return { state: v.length ? 'reported' : 'reported-empty', items: v.map(project) };
 }
 function presence(v) {
-  return v === undefined || v === null ? absent(v) : !safeText(v, 100_000) ? invalid() : { state: v.trim() ? 'reported-nonempty' : 'reported-empty' };
+  // Prose is reduced to presence only, never rendered or retained. Ordinary
+  // JSON string line breaks/tabs are not malformed metadata. Other controls,
+  // non-strings and oversize values remain invalid; no content repair/echo.
+  return v === undefined || v === null ? absent(v)
+    : typeof v !== 'string' || v.length > 100_000 || !safeText(v.replace(/[\t\r\n]/g, ''), 100_000) ? invalid()
+    : { state: v.trim() ? 'reported-nonempty' : 'reported-empty' };
 }
 function appended(data, name, expectedId, issues) {
   const v = data[name];

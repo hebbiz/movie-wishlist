@@ -4,7 +4,7 @@ const films = { coherence: 'Coherence (2013)', 'dune-part-two': 'Dune: Part Two 
   'the-thing-2011': 'The Thing (2011)', parasite: 'Parasite (2019)' };
 const sources = { tmdb: 'TMDb / JustWatch', motn: 'Movie of the Night', kinobaza: 'Kinobaza HTML' };
 const providers = { apple: 'Apple TV Store', prime: 'Prime Video', netflix: 'Netflix', rakuten: 'Rakuten TV', hbo: 'HBO Max', megogo: 'MEGOGO' };
-const outcomes = new Set(['compatible', 'conflicting', 'insufficient-evidence']);
+const outcomes = new Set(['compatible', 'conflicting', 'insufficient-evidence', 'not-evaluated']);
 const reasons = {
   'tmdb-primary-gate': 'TMDb primary ID gate; crosswalk separate', 'imdb-film-gate': 'Exact IMDb gate; supplied stable IDs agree',
   'structural-film-gate': 'Source title/year/director gate; no stable-ID crosswalk', 'stable-id-conflict': 'Conflicting stable identity evidence',
@@ -13,7 +13,8 @@ const reasons = {
   'same-supported-regional-pointer': 'Same supported regional card pointer; destination unverified',
   'different-supported-card-ids': 'Different supported card IDs for proposed same-card link',
   'source-territory-differs': 'Source territories differ; no common regional scope established',
-  'regional-pointer-unresolved': 'Regional card context unresolved', 'pointer-qualifiers-unresolved': 'Card qualifiers/version ambiguous',
+  'regional-pointer-unresolved': 'Regional card context unresolved', 'pointer-qualifiers-unresolved': 'Card pointer qualifiers unresolved (not a proved cut/version)',
+  'disabled-by-scenario': 'not evaluated — disabled by scenario',
   'no-supported-direct-pointer': 'Related film/provider claim, exact card unresolved',
   'no-comparable-card-peer': 'Supported pointer reported; no comparable peer card',
 };
@@ -24,6 +25,33 @@ export const reasonText = r => known(reasons, r, 'Evidence/reason unresolved');
 export const sourceLabel = s => known(sources, s, 'Source unknown');
 export function relationText(link) {
   return `${outcomes.has(link?.outcome) ? link.outcome : 'insufficient-evidence'}: ${reasonText(link?.reason)}`;
+}
+const pointerCodes = new Set(['opaque-tracking-destination-unknown', 'country-watch-page-only', 'link-not-reported',
+  'link-kind-not-comparable', 'explicit-authority-unresolved', 'path-encoding-unresolved', 'fragment-unclassified',
+  'query-key-malformed', 'query-key-repeated', 'query-key-unclassified']);
+const comparisonCodes = new Set(['same-declared-card-offer-scope-unknown', 'card-pointer-equivalence-unestablished',
+  'package-differs', 'package-scope-unresolved', 'version-differs', 'version-scope-unresolved']);
+const localizationState = field => ['reported-positive', 'reported-negative', 'conflicting'].includes(field?.state) ? field.state : 'unknown';
+const fieldNames = new Set(['quality', 'price', 'audio', 'subtitles', 'localization']);
+export function comparisonSummary(row) {
+  const possible = (row.comparisons ?? []).filter(c => c.outcome === 'possible-discrepancy');
+  const separate = (row.comparisons ?? []).filter(c => c.outcome === 'non-comparable');
+  const fields = items => [...new Set(items.map(c => c.field).filter(f => fieldNames.has(f)))].join('/');
+  return [possible.length ? `Possible discrepancy ${fields(possible)} — offer/field scope unestablished` : '',
+    separate.length ? `Non-comparable observations ${fields(separate)} — no confirmed field conflict` : ''].filter(Boolean).join('; ');
+}
+function diagnosticSummary(d) {
+  const parts = [];
+  for (const key of ['external_ids', 'alternative_titles', 'credits', 'release_dates', 'translations']) {
+    const state = d?.resources?.[key]?.state;
+    if (['missing', 'null', 'invalid'].includes(state)) parts.push(`resource.${key}:${state}`);
+  }
+  const path = /^metadata(?:\.(?:originalTitle|requestedTitle|releaseDate|originalLanguage|spokenLanguages|externalIds|alternativeTitles|directors|releaseDates|translations|items|country|title|type|language|name|id|originalName|dates|overview|tagline|[0-9]{1,4}))+$/;
+  for (const field of (Array.isArray(d?.fields) ? d.fields : []).slice(0, 32)) {
+    if (field.state === 'invalid' && typeof field.path === 'string' && field.path.length <= 180 && path.test(field.path)) parts.push(`${field.path}:invalid`);
+  }
+  return parts.length ? parts.slice(0, 8).join(', ') + (parts.length > 8 || d?.omitted > 0 ? '; diagnostic-paths-omitted' : '')
+    : 'partial-cause-not-in-summary; missing optional fields alone are not a cause';
 }
 const statuses = new Set(['ok', 'partial', 'no-ua-options', 'disabled-no-request', 'missing-key-no-request', 'missing-token-no-request',
   'identity-mismatch', 'identity-unresolved', 'stage-failed-no-retry', 'deadline-no-retry', 'canonical-redirect-refused',
@@ -50,8 +78,15 @@ export function buildShortReport({ filmId, mode, receivedAt, result, failed = fa
     for (const source of ['tmdb', 'motn', 'kinobaza']) {
       const s = result?.sources?.find(s => s.source === source);
       const a = result?.matching?.subjects?.find(s => s.source === source);
+      if (s?.status === 'disabled-no-request') {
+        lines.push(`${sourceLabel(source)}: not evaluated — disabled by scenario; no request.`); continue;
+      }
       lines.push(`${sourceLabel(source)}: ${statusText(s?.status)}; identity ${identity(s?.identity)}; A ${relationText(a)}.`);
+      if (source === 'tmdb' && s?.diagnostics?.status === 'partial') lines.push(`TMDb A partial diagnostics: ${diagnosticSummary(s.diagnostics)}.`);
     }
+    lines.push(result?.sources?.some(s => s.source === 'kinobaza' && s.status === 'disabled-no-request')
+      ? 'Kinobaza localization: not evaluated — disabled by scenario.'
+      : `Kinobaza film-level localization: UA audio ${localizationState(result?.filmLocalization?.ukrainianAudio)}; not provider tracks.`);
     const rows = Array.isArray(result?.rows) ? result.rows : [];
     const links = new Map((result?.matching?.rows ?? []).map(r => [r.rowId, r]));
     for (const row of rows.slice(0, 12)) {
@@ -61,8 +96,11 @@ export function buildShortReport({ filmId, mode, receivedAt, result, failed = fa
         ['version', row.cut?.state === 'reported'], ['audio', row.audio?.ukrainian?.length > 0], ['subtitles', row.subtitles?.ukrainian?.length > 0],
         ['video', row.quality?.state === 'reported'], ['price', row.price?.amount?.state === 'reported' && row.price?.currency?.state === 'reported']].filter(([, present]) => !present).map(([key]) => key);
       const block = row.kinobazaLocalization;
-      const blockState = s => ['reported-positive', 'reported-negative', 'conflicting'].includes(s) ? s : 'unknown';
-      lines.push(`${sourceLabel(source)} / ${known(providers, row.provider?.key, 'Platform unresolved')} / ${access(row.access)} / link ${linkKinds.has(row.link?.kind) ? row.link.kind : 'unknown'}; B ${relationText(m?.B)}; unknown: ${unknowns.join(', ') || 'none in summary'}; conflicts ${count(row.conflicts?.length)}${block ? `; own-block audio ${blockState(block.audio?.state)}, subtitles ${blockState(block.subtitles?.state)} (no enrichment)` : ''}.`);
+      const details = (m?.B?.detailCodes ?? []).filter(c => pointerCodes.has(c)).slice(0, 2);
+      const conflicts = (row.conflicts ?? []).filter(c => fieldNames.has(c.field)).slice(0, 4).map(c => `${c.field}:${c.type === 'conflicting-block-labels' ? 'conflicting-block-labels' : 'unverified-flag'}`);
+      const comparisons = (row.comparisons ?? []).slice(0, 4).filter(c => ['possible-discrepancy', 'non-comparable'].includes(c.outcome) && fieldNames.has(c.field) && comparisonCodes.has(c.reason)).map(c => `${c.outcome}:${c.field}:${c.reason}`);
+      lines.push(`${sourceLabel(source)} / ${known(providers, row.provider?.key, 'Platform unresolved')} / ${access(row.access)} / link ${linkKinds.has(row.link?.kind) ? row.link.kind : 'unknown'}; B ${relationText(m?.B)}${details.length ? ` [${details.join(',')}]` : ''}; unknown: ${unknowns.join(', ') || 'none in summary'}; conflicts ${count(row.conflicts?.length)}${conflicts.length ? ` [${conflicts.join(',')}]` : ''}${comparisons.length ? `; ${comparisons.join(',')}` : ''}${row.comparisonsOmitted > 0 ? '; comparison-details-omitted' : ''}.`);
+      if (block) lines.push(`Kinobaza own provider-block / ${known(providers, row.provider?.key, 'Platform unresolved')}: audio ${localizationState(block.audio)}, subtitles ${localizationState(block.subtitles)}; territory unknown; completeness unknown; not offer enrichment.`);
     }
     if (rows.length > 12) lines.push(`Omitted rows: ${count(rows.length - 12)}; inspect the page for remaining unknowns/conflicts.`);
     lines.push(`Unmapped observations: ${count(result?.unmapped?.length)} (no canonical draft selection).`);
@@ -70,7 +108,11 @@ export function buildShortReport({ filmId, mode, receivedAt, result, failed = fa
   lines.push(`Draft: ${draft.present === true ? 'present' : 'not present'}; confirmed ${draft.confirmed === true ? 'yes' : 'no'}; edited ${draft.edited === true ? 'yes' : 'no'}; latest selection cancelled ${draft.selectionCancelled === true ? 'yes' : 'no'}; cleared ${draft.cleared === true ? 'yes' : 'no'}. Contents excluded.`,
     'Separate source rows; C/D deferred; unknown is not absent. No verified/best offer or account entitlement.',
     'TMDb and Kinobaza JustWatch sections share lineage; other upstream independence not established.');
-  return lines.join('\n'); // Bounded fixed fields/12 compact rows, no raw strings or URLs.
+  const text = lines.join('\n');
+  if (text.length <= 12_000) return text;
+  const footer = lines.slice(-2).join('\n');
+  const prefix = text.slice(0, 12_000 - footer.length - 100);
+  return prefix.slice(0, prefix.lastIndexOf('\n')) + '\nSummary truncated; inspect page for remaining diagnostics.\n' + footer;
 }
 
 export async function writeShortReport(text, navigator) {

@@ -5,8 +5,10 @@ The owner subsequently approved the scope below including the clipboard design
 at actual #184 HEAD `9208e507f8282f2499655dead0c12381b4a20566` (approval cited
 earlier `aefb166`). Implementation/checks are recorded in the canonical checkpoint;
 the subsequent bounded held-out identity/card preflight is approved/completed;
-subsequent four-film runtime preparation is also authorized/implemented, while
-live discovery/evaluation, C/D engines, persistence and production remain unapproved.
+subsequent four-film runtime preparation is also authorized/implemented.
+The owner has since reported a completed held-out session; this is not agent
+reproduction, runtime attestation or general accuracy. C/D engines, persistence,
+production and additional evaluation remain unapproved.
 MW-FUT-01 remains Discovery.
 October 20, 2026. The [canonical M2 policy](regional-card-proposal.md#m2-digital-offer-matching--proposed)
 owns the matching matrix M01–M20, decisions and evidence boundaries. This file
@@ -269,7 +271,8 @@ is unchanged. No full responses/HTML, evaluation screenshots or production notes
 ## 13. Git workflow
 
 Bounded A/B-only implementation, identity/card preflight and held-out runtime
-preparation are approved; live evaluation still needs separate approval.
+preparation are approved; the owner-reported session is recorded, not rerun.
+No additional live evaluation is authorized by this bounded audit.
 Fetch/reinspect instructions/HEAD/base
 and local changes. #184 was open at9208e50: create a separate stacked implementation
 branch/PR on its actual HEAD, not repeated develop/design diffs. If merged before
@@ -285,7 +288,33 @@ The four-film catalogue is now configured by the subsequent approved runtime
 preparation, with exact URLs/aliases, per-scenario Kinobaza policy and14-request
 ceiling. Canonical source-use findings are MOTN compatible for this private
 non-LLM scope; TMDb derivative applicability and Kinobaza rights unresolved, with
-no direct conflict identified and no blanket clearance. No new discovery/owner
-evaluation ran. Public-document preflight remains separately dated in the ledger.
+no direct conflict identified and no blanket clearance. No agent discovery/owner
+evaluation ran; the subsequent owner-reported session is in the
+[owner ledger](digital-ua-owner-validation.md#m2-held-out--completed-owner-reported-session).
+Public-document preflight remains separately dated in the ledger.
 Runtime report commit is explicitly
 unknown unless a future trusted provenance mechanism is separately established.
+
+## Held-out checkpoint audit — bounded corrections, no new evaluation
+
+The [canonical usefulness audit](regional-card-proposal.md#held-out-owner-checkpoint-and-ab-usefulness-audit)
+supersedes the old automatic price/quality-conflict classification, not the A/B
+pointer policy. Same-card/access observations may still be different offers:
+keep literal values and mark only possible discrepancy or non-comparable scope;
+no winner, C/D engine or draft enrichment. Explicit contradictory labels within
+one Kinobaza block remain source-label conflicts, not universal track truth.
+
+Cut/access scope gaps do not gate B declared-pointer equality. Unknown query/
+fragment semantics still block B; no additional key is ignored. The report now
+provides whitelisted reason codes rather than claiming an unverified version
+conflict. TMDb ordinary multiline presence-only prose is no longer invalid;
+missing resources/invalid fields still make A partial, and stable-ID gates stay.
+This authored fix is not the established cause of the four unknown live partials.
+
+Report: disabled source not evaluated; film-level/own-block localization separate
+from offer fields; safe resource/field paths, qualifier/discrepancy reason codes,
+bounded text, unknown runtime commit, no URLs/keys/body/manual input. Clipboard
+fallback and stale-report clearing unchanged. No new source capability, request,
+owner session or Windows lifecycle change. Positive B usefulness remains
+**not demonstrated** by the held-out session; offline positive fixtures are not
+live matching accuracy. Any broader qualifier policy is a separate proposal.

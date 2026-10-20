@@ -11,8 +11,11 @@ supersedes older open-stack/conditional-merge statements retained below as histo
 **MW-FUT-01-M2 A/B-only implementation is approved for isolated research and is
 implemented on this stacked child of #184, not merged into develop.** Actual
 parent HEAD9208e50 includes the agreed clipboard design after aefb166. Subsequent
-bounded identity/card preflight is recorded below; discovery/evaluation and
-production integration are not approved. See the
+bounded identity/card preflight is recorded below; production integration is
+not approved. A subsequent
+[owner-reported held-out checkpoint and bounded audit](docs/regional-card-proposal.md#held-out-owner-checkpoint-and-ab-usefulness-audit)
+records14 calls but **no demonstrated B matches**; runtime commit remains unknown.
+See the
 [implementation checkpoint and count reconciliation](docs/regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only).
 The [canonical matching matrix M01–M20](docs/regional-card-proposal.md#matching-rules-matrix)
 separates same film (A), same declared regional provider-card pointer (B), same
@@ -20,7 +23,8 @@ commercial offer (C), and applicability of one field to that offer (D). The
 **first implementation is A/B-only**, not a general relation graph or
 full pairwise engine. C/D stay deferred constraints/forbidden-inference tests,
 not runtime engines. A/B is not C/D or entitlement. A/B outcomes are
-compatible / conflicting / insufficient-evidence, with evidence/reasons,
+compatible / conflicting / insufficient-evidence, with evidence/reasons
+(disabled sources are not-evaluated),
 not numeric confidence.
 
 Implemented: direct source-labelled A/B explanations beside separate rows:
@@ -51,14 +55,16 @@ GETs** (identity7 +cards4 +rules6), plus15 public search queries whose internal
 traffic is not exposed. No API/discovery/owner evaluation ran; no new runtime
 IDs/cards were configured by that documentation checkpoint. The subsequent
 [held-out runtime preparation](docs/regional-card-proposal.md#held-out-runtime-preparation--authored-checks-only)
-now adds the fixed catalogue; it does not run discovery. TMDb full terms are accessible, but applicability
-to the future combined projection/draft remains conditional; agent research
+added the fixed catalogue without agent discovery. TMDb full terms are accessible, but applicability
+to combined matching/display/draft remains conditional and is not cleared by owner runs; agent research
 token is absent, public-document checks did not require it.
-The **next proposed evaluation ceiling is14 HTTP requests** (TMDb8 +MOTN4
+The **approved held-out ceiling was14 HTTP requests** (TMDb8 +MOTN4
 +Kinobaza2), using verified direct canonical cards, no hops/retries. Runtime
-catalogue preparation is approved; one short future owner live session still needs approval/readiness;
+catalogue preparation is approved; the owner has now reported one completed
+four-film session, not independently repeated or a resolution of source-use gates;
 no repeated streaming-app tour. Existing two-film setup/iPhone commands are unchanged.
-This implementation has authored offline/HTTP/browser checks, not live validation.
+Agent verification is authored offline/HTTP/browser checks; owner observations
+are separately attributed, not independent live validation.
 Existing two-film commands, keys and request budgets are unchanged. Copy does
 not rerun discovery or alter the draft. Report excludes raw payloads/URLs/secrets/
 draft inputs and reports **Commit: unknown** rather than guessing a Git SHA.
@@ -134,6 +140,16 @@ TMDb failure does not suppress fixed-ID MOTN. Each source gates its
 own identity; a stable-ID conflict withholds that source and explicitly prevents
 a common matched identity. Source claims are never merged solely by platform.
 Partial stages survive. Total cancellation65s; existing source bounds retained.
+
+Held-out outcome: all reported film gates passed, but every shown B was
+insufficient-evidence and all TMDb A stages partial. Short reports did not contain
+the concrete qualifiers/partial field paths or purchase-conflict fields, so their
+exact live causes remain unknown. Offline audit fixes false confirmed-offer
+conflict labels, permits ordinary whitespace in presence-only TMDb prose and
+adds safe diagnostics/localization summaries. It does **not** relax B query
+policy or prove improved live matching. Separate source-label conflicts, possible
+discrepancies and non-comparable observations remain visible; literal values and
+one-row draft exclusions are unchanged. No new owner session is requested.
 
 UI: platform groups are presentation only, with short source-labelled field/count
 summaries, **no unified verified status or combined offer**. Separate source rows

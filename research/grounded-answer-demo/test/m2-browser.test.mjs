@@ -10,16 +10,20 @@ import { localizedMarkup, tableBlock } from './kinobaza-localization.fixture.mjs
 test('M2 direct A/B + copy report mobile browser (authored mocks only)', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const { chromium, webkit } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href);
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) }); t.after(() => browser.close());
-  for (const kind of ['copied', 'denied', 'unavailable', 'partial', 'request-error', 'stale-copy', 'region-identity']) await t.test(kind, async t => {
+  for (const kind of ['copied', 'denied', 'unavailable', 'partial', 'request-error', 'stale-copy', 'region-identity', 'audit-diagnostics']) await t.test(kind, async t => {
     const calls = [], external = [], errors = []; let posts = 0;
     const server = createDemo({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence', mode: 'live',
       tmdbToken: 'offline-m2-token', motnKey: 'offline-m2-key', fetchImpl: async (url, init) => {
         calls.push(url); assert.equal(init.method, 'GET');
         const film = /220289|tt2866360|\/coherence$/.test(url) ? FILMS.coherence : FILMS['dune-part-two'];
-        const data = authoredDiscoveryData(film), href = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authored000?at=&at=TEST%2fCODE';
+        const data = authoredDiscoveryData(film), href = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authored000?at=&at=TEST%2fCODE' + (kind === 'audit-diagnostics' ? '&unclassified=SECRET_QUALIFIER' : '');
         data.motn.streamingOptions.ua[0].link = kind === 'region-identity' ? href.replace('/ua/', '/gb/') : href;
         data.html = localizedMarkup(tableBlock('itunes', [['Укр. звук', '+'], ['Укр. субтитри', '-']], href.replaceAll('&', '&amp;')), film.id);
         if (kind === 'region-identity') data.tmdb.details.imdb_id = 'tt99999999';
+        if (kind === 'audit-diagnostics') {
+          delete data.tmdb.details.external_ids;
+          data.motn.streamingOptions.ua.push({ ...data.motn.streamingOptions.ua[0], quality: 'hd', price: { amount: '9.99', currency: 'XXX' } });
+        }
         if (url.includes('themoviedb')) {
           if (kind === 'partial') return new Response('SECRET_SOURCE_BODY', { status: 500 });
           return Response.json(url.endsWith('/watch/providers') ? data.tmdb.providers : data.tmdb.details);
@@ -33,7 +37,7 @@ test('M2 direct A/B + copy report mobile browser (authored mocks only)', { skip:
     await context.addInitScript(kind => {
       window.__writes = [];
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: kind === 'unavailable' ? undefined : {
-        writeText(text) { window.__writes.push(text); if (kind === 'denied') return Promise.reject(new Error('SECRET_CLIPBOARD_ERROR'));
+        writeText(text) { window.__writes.push(text); if (['denied', 'audit-diagnostics'].includes(kind)) return Promise.reject(new Error('SECRET_CLIPBOARD_ERROR'));
           if (kind === 'stale-copy') return new Promise(resolve => { window.__finishCopy = resolve; }); return Promise.resolve(); },
         readText() { throw new Error('No clipboard reads allowed'); },
       } });
@@ -59,12 +63,13 @@ test('M2 direct A/B + copy report mobile browser (authored mocks only)', { skip:
         assert.match(await page.locator('#matching-subjects').textContent(), /Conflicting stable identity/);
         assert.equal(await page.locator('article[data-row-id^="tmdb:"]').count(), 0);
         assert.doesNotMatch(await page.locator('.matching-summary').allTextContents().then(s => s.join('\n')), /Same supported regional card pointer/);
-      } else assert.match(shown, /Same supported regional card pointer/);
+      } else if (kind === 'audit-diagnostics') assert.match(shown, /Possible discrepancy/);
+      else assert.match(shown, /Same supported regional card pointer/);
       const row = page.locator('article[data-row-id^="motn:"]').first();
       await row.getByRole('button', { name: 'Select and review' }).click();
       const included = async () => JSON.parse(await page.locator('#draft-included').textContent());
       assert.equal((await included()).purchase_url, '');
-      await page.locator('#draft-tracking-ack').check(); assert.match((await included()).purchase_url, /at=&at=TEST%2fCODE$/);
+      await page.locator('#draft-tracking-ack').check(); assert.ok((await included()).purchase_url.includes('at=&at=TEST%2fCODE'));
       await page.locator('#draft-confirm').click();
       await page.locator('#local-draft input[name="title"]').fill('PRIVATE_MANUAL_DRAFT');
       await row.getByRole('button', { name: 'Select and review' }).click(); await page.locator('#draft-review-cancel').click();
@@ -81,12 +86,17 @@ test('M2 direct A/B + copy report mobile browser (authored mocks only)', { skip:
       assert.equal(await page.locator('#report-copy').isDisabled(), true);
     } else {
       await page.waitForFunction(() => !document.querySelector('#report-copy').disabled);
-      const fallback = ['denied', 'unavailable'].includes(kind);
+      const fallback = ['denied', 'unavailable', 'audit-diagnostics'].includes(kind);
       assert.equal(await page.locator('#report-fallback').isVisible(), fallback);
       assert.match(await page.locator('#report-status').textContent(), fallback ? /copy manually/ : /Copied short report/);
       const text = fallback ? await page.locator('#report-text').inputValue() : await page.evaluate(() => window.__writes.at(-1));
       assert.match(text, /Commit: unknown/); assert.match(text, /Coherence/);
       assert.doesNotMatch(text, /PRIVATE_MANUAL_DRAFT|SECRET_|offline-m2|https?:|Authorization|TEST%2fCODE/);
+      if (kind === 'audit-diagnostics') {
+        assert.match(text, /resource.external_ids:missing/); assert.match(text, /query-key-unclassified/);
+        assert.match(text, /possible-discrepancy:quality/); assert.match(text, /film-level localization: UA audio reported-positive/);
+        assert.match(text, /own provider-block.*subtitles reported-negative/);
+      }
       if (kind !== 'request-error') assert.match(text, /edited yes; latest selection cancelled yes/);
       else assert.match(text, /HTTP-call count unknown/);
       if (fallback) {
