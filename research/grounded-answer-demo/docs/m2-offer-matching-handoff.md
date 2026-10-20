@@ -1,5 +1,17 @@
 # MW-FUT-01-M2 handoff: digital-offer matching
 
+**M2 research checkpoint closed.** Historical approved task/13 sections below
+are retained as an implementation record, not permission for further work.
+A explains existing gates; no positive cross-source B match was demonstrated.
+B remains auxiliary diagnostics; its expansion and the two-request probe are
+**deferred**. C/D and automatic enrichment are not implemented. P3 release-event
+`date` report omission is technical debt, not a known owner-partial cause.
+MW-FUT-01 remains Discovery. The
+[proposed successor task](#proposed-successor-handoff--mykola-viewing-answer)
+at the end is a distinct **Proposed / not authorized for implementation** handoff
+within this existing file; the [canonical closeout/UX](regional-card-proposal.md#m2-closeout-and-final-stack-review)
+owns decisions, evidence, review/readiness and eventual merge sequence.
+
 **Approved for bounded isolated A/B-only research implementation.**
 The owner subsequently approved the scope below including the clipboard design
 at actual #184 HEAD `9208e507f8282f2499655dead0c12381b4a20566` (approval cited
@@ -346,7 +358,8 @@ Same-source rent/buy pointer reuse is not cross-source usefulness; synthetic
 compatible cases are not live evidence. Do not add keys/crosswalks or simplify
 source/territory semantics merely to obtain compatible. No new owner session.
 
-An **optional, separately authorized evidence probe** could reopen this decision:
+A **deferred evidence-probe design** could reopen this decision only after new
+explicit scope approval, not as part of closing M2:
 existing Dune, MOTN fixed IMDb title GET1 +direct canonical Kinobaza card GET1,
 **max2 total**, no TMDb/LLM/rules/destination requests, redirects, retries or
 replacement films. Server-side MOTN_API_KEY only; each source's existing identity
@@ -363,3 +376,149 @@ Canonical acceptance/stop criteria apply: a documented unsupported/missing peer
 is an informative negative, not B success; fail closed on identity conflict,
 blocking/redirect/bounds/access error without chasing destinations or relaxing
 policy. No broader C/D, ranking/enrichment or implementation handoff is approved.
+
+## Proposed successor handoff — Mykola viewing answer
+
+**Proposed / not authorized for implementation.** Only review/documentation of
+this task is approved. Historical M2 approval above does not authorize it or a
+live probe. This is a bounded presentation task, not a second architecture.
+
+### 1. Context
+
+M2 is closed as research: source-gate explanation A remains, useful cross-source
+B not demonstrated, B/probe deferred, C/D/enrichment absent. #184/#185 are still
+open at the [canonical review](regional-card-proposal.md#m2-closeout-and-final-stack-review);
+neither merge nor successor runtime is approved. Recheck repository instructions,
+actual head/base/local changes and owner demo before any separately approved work.
+Owner observations are dated controls, not expected current facts/runtime SHA.
+
+### 2. Objective
+
+Make existing UA viewing leads useful in one compact deterministic Ukrainian
+answer: where to look, which source reports localization, what remains unknown,
+eligible explicit links and one-row selection into a local editable draft.
+Useful source claims do not require B/C/D equality; no LLM or production write.
+
+### 3. Current implementation
+
+`ua-discovery` supports six fixed films, independent TMDb/MOTN/Kinobaza gates,
+platform groups and source rows, safe link/ack/draft controls, M2 explanations,
+safe short report/fallback/stale reset. No Ukrainian Mykola answer template is
+implemented by this document. Kinobaza own-block claims remain separate from
+offered tracks; TMDb has UA access signals but no deep links. P3 short-report
+`date` remains technical debt outside this proposed presentation-only scope.
+
+### 4. Scope
+
+Only the existing isolated demo's deterministic presentation over projected
+observations. Reuse fixed six-film picker/source policy; no new films, sources,
+endpoints, credentials or requests. Implement the single canonical mobile UX
+and five authored states, with short source labels/details and original-row
+selection. Preserve old modes/report/attribution and research-only boundaries.
+
+### 5. Non-goals
+
+No B policy development, two-request probe, C/D/offer/field merging, automatic
+enrichment, ranking/best badge, LLM, parser fixes, MEGOGO debugging, new APIs,
+arbitrary film search, cache/DB/workers/persistence, account access, provider
+fetches, production integration or writes. Do not fix source prices/formats from
+historical controls, or include the P3 runtime correction without separate scope.
+No live requests or new owner tests authorized by this handoff.
+
+### 6. Functional requirements
+
+- At most two-sentence Ukrainian summary counts platforms with usable source
+  observations, not verified offers. Show material partial-source warning.
+- Platform groups retain source-labelled access lines and separate original
+  rows/packages/cuts. Apple Store is not TV+/channels. Unknown mappings remain
+  unresolved, never canonical selectable media.
+- Audio/subtitles separately labelled with source/block/territory/access limits;
+  film-level hint separate. A Kinobaza claim may sit beside MOTN without being
+  attached to that offer. No B/C/D-compatible prerequisite or implicit join.
+- Keep unknown/negative/source-label conflict/possible discrepancy/non-comparable
+  messages distinct. Literal values, no winner/repairs/owner controls. Full
+  projected provenance/technical reasons collapsed; attribution and material
+  warnings visible. No repeated raw response rendering.
+- Eligible link opens only on explicit action, exact href untouched. Tracking/
+  native affiliate acknowledgement stays required for draft; no auto-resolve.
+  Missing/unsafe/search/relative/watch links retain distinct existing statuses.
+- Original-row select → review included/excluded fields → confirm → editable
+  memory-only draft. Preserve default tracks/video/price exclusion, cancel
+  retaining manual edits, safe-copy/fallback/stale protection. No platform-wide
+  selection, peer URL borrowing or production-transfer claim.
+
+### 7. Technical constraints
+
+Render text safely from existing projected states; never execute source markup
+or send observations to an LLM. Preserve independent identity/R2 gates,
+server-side keys, LAN Basic/Host/Origin/session/no-store and fixed URL controls.
+Presentation adds0 requests; do not change existing request bodies/bounds:
+Coherence/Dune max4 without hop/max5 only with validated hop; held-out budgets
+4+3+3+4=14; scenario-disabled Kinobaza stays off. No retries/destinations/storage.
+No new production dependencies, schema, hosting, worker or infrastructure.
+Existing source-use/attribution conditions remain; UI redesign grants no rights.
+
+### 8. Approach
+
+Prefer small pure display/template functions in the inspected research client,
+not a new service or merge engine. Reuse grouping, link presentation and original
+row IDs; labels/summary are a view, never a new offer object. Deterministic group
+order, priority of visible information rather than a best-option score. Keep
+technical A/B explanations in details. Reuse original review/confirm and copy
+logic. Final file/function choice follows inspection, not invented filenames.
+
+### 9. Verified components
+
+Inspected during this design review; recheck after any base advance:
+
+| Existing component | Reuse / preserve |
+| --- | --- |
+| [public/discovery-client.mjs](../public/discovery-client.mjs) | `groupProviderRows`, `providerSummary`, `compactFields`, `linkPresentation`, `prepareDraft`, `mountDiscovery`; text rendering, original selection/ack/cancel and report reset. |
+| [public/discovery-report.mjs](../public/discovery-report.mjs) | Safe bounded report/fallback, unknown runtime SHA, disabled/localization distinction; no answer/raw/draft auto-export. |
+| [public/style.css](../public/style.css), [public/index.html](../public/index.html) | Existing research shell/mobile style, no production layout assumptions. |
+| [discovery.mjs](../discovery.mjs), [matching.mjs](../matching.mjs) | Observation/provenance/R1/R2 contracts and auxiliary A/B; inspect for compatibility, do not change matching or transport. |
+| [server.mjs](../server.mjs), [config.mjs](../config.mjs), [held-out.mjs](../held-out.mjs) | Fixed catalogue/session/request budgets unchanged; no new endpoint. |
+| [test/discovery-browser.test.mjs](../test/discovery-browser.test.mjs), [test/m2-browser.test.mjs](../test/m2-browser.test.mjs), [test/checkpoint-audit.test.mjs](../test/checkpoint-audit.test.mjs) | Authored compact layout, clipboard/stale/draft/security/unknown contracts; extend without weakening safeguards. |
+
+### 10. Acceptance criteria
+
+Meet the [canonical UX acceptance](regional-card-proposal.md#ux-acceptance-and-open-product-decisions)
+and all five authored states. With B insufficient the user can still identify
+source/access, localization scope, unknowns/material discrepancies and eligible
+link, select exactly one original row and inspect review before confirmation.
+No merged verified offer, localization transfer, best badge, source-value repair,
+hidden request or changed draft default. No runtime attestation/source freshness
+claim invented. Actions/details work at390px without overflow, no full technical
+wall required to understand limits; attribution remains available and visible.
+
+### 11. Test plan
+
+If implementation is later approved, authored offline tests cover summary counts,
+source labels, separate audio/subtitles/film hint, unknown and scoped negative,
+one-block conflict vs possible/non-comparable rows, source failure/disabled,
+R2 unknown mappings/Store-channel distinction, no controls used as source truth,
+text-only unsafe input and no mutated observations. Browser/mobile mocks cover
+all five examples, B-insufficient usable rows, per-row navigation, exact affiliate/
+tracking ack, review/exclusions/confirm/edit/cancel, clipboard/fallback/stale and
+zero extra/destination calls/storage. Preserve existing body/security/budget tests.
+Use installed browsers; declare WebKit skips, not real iPhone validation.
+Windows lifecycle only if helpers/dependency-copy/key routing actually change,
+using temporary copies, never owner demo. No new live/owner cycle in this scope.
+
+### 12. Documentation updates
+
+Update this proposed task's approval/implementation status, canonical UX/checks
+and README only as facts change. Keep M2 closure, owner history and deferred
+B/probe/C/D/P3 distinctions; no duplicate architecture or live evidence archive.
+Keep iPhone instructions unless actual workflow changes. Five examples remain
+explicitly authored, not evaluation results or new catalogue expectations.
+
+### 13. Git workflow
+
+Separate implementation approval required. Then inspect actual #184/#185 stack:
+if open, select explicitly approved stacked base and only incremental diff;
+if merged, current develop after review of intervening changes. Preserve owner
+checkout/process/untracked files. Small research feature commit/PR, actual
+tests/skips and source-use limits; stop review-ready. No merge/retarget/history
+rewrite/tag/release/deployment. Eventual M2 consolidation uses the separate
+canonical expected-head/parent-advance/final-tip plan, not approval from this task.

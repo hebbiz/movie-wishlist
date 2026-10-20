@@ -1928,6 +1928,14 @@ conditions are established; do not retrofit current adapters now.
 
 ## M2 digital offer matching — Proposed
 
+**Current status: bounded M2 research checkpoint closed; B development deferred.**
+The heading/approval history is retained for existing references. See the
+[M2 closeout and final review](#m2-closeout-and-final-stack-review) and the
+[proposed deterministic Mykola answer](#mykola-viewing-answer--proposed-deterministic-presentation).
+MW-FUT-01 remains Discovery; neither PR merge nor successor implementation is
+authorized. Historical preparation statements below do not undo the later
+owner-reported held-out session or authorize another one.
+
 **Design decision M2-D1, A/B subset approved for isolated implementation.** The
 first implementation slice is **A/B-only**: same-film association and comparison
 of supported regional provider-card pointers, with direct evidence/reason links
@@ -1942,7 +1950,7 @@ This documentation-only narrowing continues open #184 after
 `d8b24719fbe2a6de41a8c25858ac9890e714c2a0`, on the same verified develop base.
 That amendment was documentation-only. The later implementation record below
 records the separately authorized work. Subsequent identity/card preflight is
-recorded below; discovery/evaluation remain unperformed.
+recorded below; discovery/evaluation were unperformed at that earlier checkpoint.
 
 ### Inspected implementation and evidence boundary
 
@@ -2705,6 +2713,9 @@ cases as a product objective, or send the owner around the same platforms again.
 
 ##### Optional evidence-only probe: proposed, not authorized or required now
 
+**Deferred at M2 closeout.** Retained as a dormant design, not the next approved
+operation or an implementation requirement. No source requests are scheduled.
+
 If the product decision is later reopened, the smallest useful uncertainty is:
 **does a currently returned MOTN Dune Apple pointer have a supported counterpart
 in the fixed Kinobaza card, or is the refusal due to namespace/qualifier/peer
@@ -2825,23 +2836,233 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | Phase | Status / decision |
 | --- | --- |
 | M1 isolated probes/composition | Merged into research develop; bounded owner observations, not production. |
-| M2 matching matrix/handoff | Full A–D design remains canonical; narrow A/B implementation approved and recorded below, C/D deferred. |
-| M2 implementation on existing fixed Coherence/Dune | **Authorized for isolated research; implemented on stacked child, authored/offline/browser checks only.** A/B direct explanations and safe-copy summary; not merged, no graph/full pairwise/C/D engine. |
+| M2 matching matrix/handoff | Bounded research checkpoint **closed**, not the whole initiative. Full A–D constraints retained; C/D/enrichment not implemented. |
+| M2 A/B implementation | Implemented on open stacked #185; A explains existing gates, no positive cross-source B benefit demonstrated. B remains auxiliary diagnostics; further development deferred. Not merged. |
 | C/D commercial identity/field applicability | Deferred long-term rules/forbidden-inference tests only, not required runtime in the first slice. |
 | Held-out identity/source-card preflight | **Authorized/completed**, documentary identity/canonical evidence only; controlled GET17, search queries15 separately disclosed. |
 | Held-out runtime catalogue/preparation | **Authorized/implemented**, authored offline/browser/Windows checks; no factual availability results or live owner requests. |
 | Held-out four-film discovery/evaluation | **Owner reports completed**,14 calls, all shown B insufficient, all TMDb A partial/B ok; no draft test/runtime attestation/general accuracy. No agent repetition/new session requested; source-use limits remain. |
+| Two-request Dune pointer probe | Deferred, not authorized; dormant design only, not a prerequisite for a useful answer. |
+| P3 short-report release-event `date` | Technical debt, non-blocking; not an established cause of owner-run partial. No runtime fix in this task. |
+| Deterministic Mykola viewing answer | **Proposed / not authorized for implementation**; presentation of existing separate claims, no LLM or production. |
 | Arbitrary Kinobaza cards/MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
-The first scope approval has been provided for A/B implementation; the remaining
-product approval would be any additional held-out evaluation or broader pointer
-policy. Runtime preparation and a completed owner-reported session are recorded;
+The earlier scope approval covered A/B implementation, not indefinite engine
+development. Further B/probe work is deferred; the next proposed product choice
+is the deterministic presentation below, with separate implementation approval.
+Runtime preparation and a completed owner-reported session are recorded;
 neither passing tests nor that session clears source-use limits. Rule mechanics,
 unknown preservation and safety are proposed engineering defaults, not a request
 for the owner to pick a confidence threshold. No need to choose an aggregator,
 subscription, storage TTL or new hosting to review M2. The separate
-[implementation handoff](m2-offer-matching-handoff.md) references this policy;
-it is not an implementation instruction until separately approved.
+[handoff](m2-offer-matching-handoff.md) preserves historical M2 approval and the
+separately labelled proposed successor task; neither authorizes new live work.
+
+### M2 closeout and final stack review
+
+Recorded October20,2026. Reviewed #184 `9208e507f8282f2499655dead0c12381b4a20566`
+over develop `014014337ef5d2eb9ab95db09c334cef42d4b2fa`, and #185
+`0622b8b6341ed2e2f67844a5b692d7b55849886b` over that #184 branch. Refs fetched,
+no intervening changes, isolated tracked tree clean before this documentation.
+The new documentation commit will advance #185 only; these are review-input SHAs,
+not an attested owner runtime or a prediction of a future merge SHA.
+
+**Closed research conclusions:** A exposes the basis of existing identity gates;
+it is not a new validated crosswalk. Positive cross-source B equality has not
+been demonstrated. Keep B as auxiliary diagnostics, defer both engine expansion
+and the two-request probe. Do not implement C/D, automatic enrichment or rank
+offers as verified. P3 release-event `date` reporting is technical debt, not a
+known cause of any owner partial. Earlier source observations/controls remain
+dated, not inserted into current output. This closes a bounded M2 research
+iteration, **not MW-FUT-01**, production readiness, the open PRs or all unknowns.
+
+| Reviewed boundary / actual files | Result and readiness class |
+| --- | --- |
+| Research scope | #184 is4 research Markdown files; #185 incremental diff is30 research files at the reviewed HEAD. Combined diff is confined to `research/grounded-answer-demo/`; root frontend/functions/schema/manifests unchanged. No known code merge blocker in inspected scope. |
+| R1/R2: `discovery.mjs`, `discovery-client.mjs` | Exact Apple `at` presence on both supported routes retains acknowledgement and literal href; namespaced provider-ID conflicts are quarantined, not canonical rows/access/draft media. Store/channel distinction and independent valid sources survive. No newly identified blocker. |
+| Matching: `matching.mjs`, `discovery.mjs` | B does not require C/D scope, join offers or move fields. Missing/unknown qualifiers stay insufficient; opaque tracking not resolved. Same-source repeated-card equality is not demonstrated cross-source benefit. No newly identified blocker; usefulness limit is explicit. |
+| Safe report: `discovery-report.mjs`, client | Allowlisted text, unknown runtime SHA, separate film/block localization, disabled-source not-evaluated, clipboard fallback/stale guard. P3 `date` omission remains **non-blocking technical debt**; bounded report is not a full diagnostic trace. |
+| Draft / provenance | One original row, review/confirm/edit/cancel, manual edits survive cancel; default price/video/tracks exclusions, exact URL/referral/ack and source sidecar retained. Platform groups are presentation, not unified offers or entitlement. |
+| Requests / security | Matching/report add0 external requests. `server.mjs` checks LAN auth/Host/Origin before session/action and consumes token before await; `runDiscovery` uses fixed allowlist, seen-set/budget and independent bounded source gates. Held-out cap14, original two-film max4/5 only on approved hop; no hidden provider fetch/storage. Helpers unchanged by M2; test-copy list gained matching/held-out dependencies. |
+
+**Fresh remote snapshot, not local test results:**
+
+| PR / actual base | Head / mergeability | Visible checks at reviewed head |
+| --- | --- | --- |
+| [#184](https://github.com/hebbiz/movie-wishlist/pull/184) / `develop` | `9208e50…`, open/mergeable | Netlify deploy-preview **success**;3 completed **neutral** check-runs, not test passes. |
+| [#185](https://github.com/hebbiz/movie-wishlist/pull/185) / `codex/mw-fut-01-m2-offer-matching-design` | `0622b8b…`, open/mergeable | No commit statuses and0 check-runs; **absent, not successful**. Recheck at the new documentation head and after parent advance. |
+
+Repository metadata allows merge commits. Develop protection read returns403
+`Resource not accessible by integration`; parent branch-protection read is not
+supported by the connector's path validator. Rulesets listing is empty, while
+effective branch-rules lookup is unavailable. Thus required checks/approvals and
+effective protections remain **unknown**, not absent; repository admin/push flags
+do not grant permission to bypass. No Actions workflow is defined in this tree.
+
+**Readiness:** conditional for a separately authorized research merge, with no
+known scoped code blocker; not unconditional ready-to-merge or merge permission.
+P3 is non-blocking. Live-use limitations include credentials/applicable terms,
+TMDb derivative/Application interpretation, Kinobaza reuse rights, coverage,
+literal MOTN price/format/track anomalies and account entitlement. Production
+blockers remain separate: no integration approval; source-use/retention and
+hosting/public exposure, production auth/write/RLS design and arbitrary-film
+coverage unresolved. MEGOGO direct extraction and actual Coherence/TMDb partial
+causes stay unresolved. None automatically implies a research security defect.
+
+No runtime suite rerun for this Markdown-only closeout: relevant code is unchanged
+since the recorded326 full offline/HTTP,51 relevant browser/4 skips and later107
+targeted/9 browser/1 skip checks. Those are historical authored/agent results,
+not fresh runs at each PR or provider accuracy. Review inspected actual code and
+tests rather than treating Netlify/mergeability as code approval. No live source,
+API/destination request, owner session or process/lifecycle change here.
+Closeout documentation checks:338 local references/220 anchor-reference
+occurrences across the existing10 Markdown docs, zero missing targets/anchors;
+historical M1/M2 handoffs retain their13 sections and the proposed successor has
+its own13 labelled sections. Four Markdown files changed, no runtime/dependency
+diff; scope and whitespace clean. No full responses, reports or HTML archived.
+
+#### Eventual merge plan — no authorization or operations now
+
+1. After explicit merge approval, refetch and pin **H185, H184, D** to actual
+   head/base SHAs; inspect new/unreviewed commits and local files. Read available
+   checks/merge policy at both targets. Stop for failing required checks,
+   conflicts, unexpected changes or GitHub refusal; never admin-override,
+   force-push, change policy or guess unknown requirements.
+2. Review #185's incremental diff against H184, require expected-head **H185**
+   on the merge-commit operation into #184's branch. Retarget/squash/rebase are
+   unnecessary. Record actual child merge commit **M185**; keep parent branch
+   until the chain is complete.
+3. After parent advance, refresh #184 metadata/diff against actual develop D.
+   Require H185 and M185 to be ancestors of the new parent tip **H184-new**;
+   verify the combined research-only diff includes all source gates, R1/R2,
+   report/fix/held-out files and this closure, not just design docs. Old #184
+   preview/checks at9208e50 are stale for H184-new: wait for available checks and
+   approvals there. New changes or materially changed base require review first.
+4. On that assembled tip use an isolated checkout/temp copies, not owner demo:
+   full authored offline/HTTP +installed-browser/mobile suites; Windows Search
+   and multi-key Discovery lifecycle/inheritance/safe-stop/restart checks,
+   including the M2 module copy-list. No new source/owner requests. Record actual
+   results/skips rather than assigning prior counts to the new tip. Verify
+   ancestry of launcher fix `e596341f2fdc1203b52b9abae840f7090cef30c0`, R1/R2
+   `16461b22f001499720193d6b72df745dc8890a20` and the final approved H185.
+5. Only if still authorized/acceptable, merge #184 into develop using a merge
+   commit and expected **H184-new**, with a fresh base/policy/check check. Record
+   actual merge **M184** and final remote **D-final**; do not predeclare either
+   SHA. Stop on a race or rejection, do not bypass or substitute a cherry-pick.
+6. Verify D-final ancestry includes M185, M184, final H185 and the launcher/R1/R2
+   fixes; compare tree with reviewed assembled content (or review intervening
+   develop changes). Check final scope/main unchanged, links/whitespace, and run
+   the same applicable offline/browser/temp Windows checks on actual D-final.
+   Synchronize local develop only without overwriting local/untracked files;
+   report SHAs/results/skips. No main/tag/release/manual deployment. Later design
+   approval is separate from this consolidation plan.
+
+### Mykola viewing answer — Proposed deterministic presentation
+
+**Design only / not authorized for implementation.** One useful mobile-first
+answer over existing source observations, without LLM, new source or production
+integration. The existing grouping/control runtime is a substrate, not proof
+the proposed Ukrainian wording/layout already exists. The [successor handoff](m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
+below the historical M2 task defines implementation boundaries; no new runtime
+file/API name is prescribed and no parallel offer architecture is introduced.
+
+#### Recommended single screen and evidence rules
+
+1. Film selection and current bounded discovery action remain. Answer begins
+   with at most two short Ukrainian sentences: number of **platforms with usable
+   source observations**, what is still uncertain, and visible partial-source
+   warning if applicable. Do not count platform groups as verified offers or
+   call every link a way to play. No mandatory joke or “best” recommendation.
+2. One compact platform group, Apple Store kept distinct from TV+/channels.
+   Within it, short **source-labelled lines**, not a synthesized offer:
+   TMDb/JustWatch UA access signal; MOTN's individual access/link rows; Kinobaza
+   own-block audio/subtitle claim and candidate row. Access labels may be
+   translated consistently (оренда/купівля/передплата) while raw values stay in
+   details. Repeated rent/buy/packages remain separate original selectable rows.
+3. Ukrainian audio and subtitles are always separate labels. A Kinobaza block
+   can say `укр. звук +; субтитри − — територія/тип доступу невідомі`; show it
+   **beside** its mapped platform, not as attributes of MOTN rental or TMDb UA
+   availability. No B/C/D-compatible requirement for this helpful display.
+   Film-level localization is a separate film hint, never a provider track.
+   Source negative stays limited to its own block; list completeness unknown
+   is visible. Original language is not an offered track. UA interface/URL is
+   not entitlement, and foreign/unknown territory is not silently UA.
+4. Use source labels on every access/localization/property line; one compact
+   unknown/discrepancy marker, with full **projected** provenance and safe
+   diagnostics in collapsed details (never a new raw-response archive).
+   Conflicting own-block labels, possible price/format discrepancies and
+   non-comparable offers are different messages. Keep literal source values,
+   do not choose a winner, correct UAH→USD/HD→UHD or use old owner controls.
+   Video/price/technical detail remains secondary/collapsed by default; a
+   material discrepancy warning must remain visible. Receipt time is not
+   provider freshness. Shared TMDb/Kinobaza JustWatch lineage is not two
+   independent confirmations. Required source attribution stays visible.
+5. Each eligible original link has explicit `Відкрити кандидата` action and
+   exact href. URL safety and referral/tracking acknowledgement stay unchanged;
+   navigation does not happen during discovery/render. “Working link” here
+   means eligible for explicit navigation, **not independently tested today**.
+   Missing/unsafe/search/relative/watch links show the accurate existing reason,
+   not an invented replacement. A linkless TMDb signal can still be useful.
+6. `Обрати цей запис` targets one original row → included/excluded-field review
+   → explicit confirm → editable local draft. No action on the whole platform
+   group, no peer field/link borrowing. Price/audio/subtitles/video remain
+   excluded by default; tracking/affiliate URL blank until acknowledgement.
+   Cancel preserves previous manual draft edits. Not a production MW transfer.
+   Keep safe-copy/selectable fallback/stale reset, page memory only, no autosave.
+
+Default platform/group ordering reuses current deterministic presentation; no
+new scoring/ranking engine. The priority UA source availability → Ukrainian
+audio → Ukrainian subtitles → video → price guides what is shown prominently,
+not an unsupported claim that one offer wins. Unknown is not negative. A source
+failure is stated once, usable independent rows remain; no usable rows means
+“джерела не дали достатніх даних”, not “фільм недоступний”. B technical reasons
+remain in details, not the headline/product acceptance target.
+
+#### Authored Mykola examples — invented, not live evaluation
+
+All five examples use **fictional inputs**, not Coherence/Dune controls or new
+catalogue facts. No real URLs or destinations are supplied. Bracketed actions
+refer to a source row; voice/templates cannot invent them or new evidence.
+Wording is short, restrained Ukrainian; dry irony is optional and never replaces
+a scope warning. No generative model is involved.
+
+| Authored case / input | Proposed compact answer |
+| --- | --- |
+| Several useful platforms: fictional TMDb Apple rent/buy signals and MOTN Prime rental with an eligible direct candidate; tracks unknown | «Є зачіпки на двох платформах. Українські доріжки поки не встановлені. **Apple TV Store — TMDb/JustWatch:** оренда й купівля для України за даними джерела; прямого посилання немає. **Prime Video — MOTN:** оренда; [Відкрити кандидата] [Обрати цей запис]. Доступ у вашому акаунті не перевіряв.» |
+| Kinobaza Apple own-block audio+, subtitles−, territory/access/completeness unknown; separate MOTN Apple buy | «**Apple TV Store:** MOTN повідомляє про купівлю. **Окрема підказка Кінобази, блок iTunes:** укр. звук +, субтитри −; територія, тип доступу й повнота списку невідомі. До цієї покупки доріжки не прив'язую. Платформа та сама, доказ — ще ні.» |
+| Conflicting audio labels inside one fictional Kinobaza block; two MOTN purchases of unproved common offer scope report HD/UHD and different currencies | «**Кінобаза, цей блок:** позначки укр. звуку суперечливі. **MOTN, два окремі записи купівлі:** формат і валюта різняться; чи це та сама пропозиція — невідомо. Значення — у деталях, переможця не призначаю.» |
+| Only two eligible Kinobaza candidates, no provider localization/availability evidence | «Є два посилання-кандидати. Українські доріжки й доступність не встановлені. [Відкрити кандидата] — окремо для кожного джерельного запису. Посилання є; решта поки за кадром.» |
+| TMDb failed, MOTN returned one independently matched Prime rental; Kinobaza disabled | «Дані неповні: TMDb не відповів, Кінобазу вимкнено. **Prime Video — MOTN:** повідомляє про оренду; [Відкрити кандидата] [Обрати цей запис]. Українські доріжки й доступ у вашому акаунті невідомі. Невдала перевірка джерела — не вирок фільму.» |
+
+The examples are design copy, not raw live output, expected provider results or
+new automatic conflict detection. Technical scope stays in source labels/details;
+visible wording uses natural Ukrainian, e.g. «джерело повідомляє, не перевірка
+акаунта». Irony must not replace the explicit unknown/conflict warning.
+
+#### UX acceptance and open product decisions
+
+- From one compact mobile answer the reader can tell **which source says what**,
+  distinguish a UA access signal, a candidate link and an unbound localization
+  hint, and select one original row without B equality. No unified verified or
+  best badge; unknown/negative/conflicting/non-comparable are not conflated.
+- Show separate audio/subtitles, exact source-specific scope and visible
+  material warnings; keep details/attribution accessible without overwhelming
+  the default screen. At390px viewport actions/details do not overflow; long
+  safe text wraps and no HTML executes. At least the five authored states above
+  have offline/browser tests in any future implementation.
+- Draft/ack/exclusions/cancel and copy/stale controls behave exactly as before;
+  render/group/copy/select adds0 requests. Original request bodies, six-film
+  catalogue/source policies, budgets/security and no-storage remain unchanged.
+- Unavailable sources preserve independent results and disclose partial state;
+  no automatic retries, destinations or extra owner cycles. No fabricated
+  localization, source currency repair, stable-ID match or provider mapping.
+
+**Only next product approval needed:** accept or revise this compact
+source-labelled UX/voice and separately authorize its bounded research
+implementation. Suggested default is all five states and subtle optional irony,
+no tone setting or new infrastructure. Merge approval is independent. B/probe,
+C/D, persistence/production remain deferred; no need to choose a new API,
+subscription, cache, data schema or hosting to proceed with this design review.
 
 <a id="megogo-one-card-adapter-proposal--not-implemented"></a>
 

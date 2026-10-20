@@ -1,6 +1,33 @@
 # MW-FUT-01: isolated grounded-answer demo
 
-## Current baseline and proposed M2 design
+## Current baseline, M2 closeout and proposed Mykola answer
+
+**M2 bounded research checkpoint is closed; MW-FUT-01 remains Discovery.**
+A explains existing identity gates, not a newly validated crosswalk. Positive
+cross-source B benefit was not demonstrated; retain B as auxiliary diagnostics,
+defer further development and the reserved two-request probe. C/D and automatic
+enrichment are not implemented. P3 short-report release-event `date` omission is
+technical debt, not an established owner-partial cause.
+
+The [final review and conditional merge readiness](docs/regional-card-proposal.md#m2-closeout-and-final-stack-review)
+separate scoped code findings, live-use/source-rights limits and production
+blockers. #184/#185 remain open; merge is not authorized. The
+[eventual child-to-parent-to-develop plan](docs/regional-card-proposal.md#eventual-merge-plan--no-authorization-or-operations-now)
+requires fresh expected HEADs, parent-advance diff/checks and actual final-tip
+validation without bypassing unknown protections. No main/release change.
+
+**Next UX — Proposed / not authorized for implementation:** a compact
+[deterministic Ukrainian Mykola viewing answer](docs/regional-card-proposal.md#mykola-viewing-answer--proposed-deterministic-presentation),
+without LLM or production integration. Short summary → platform groups with
+source-labelled access/localization/link rows → explicit candidate open or
+one-row review/confirm → local draft. Useful claims remain visible even when
+B is insufficient; no offer/field merging, best badge, source price/format
+repair or historical controls substituted as facts. Full projected provenance
+in details; attribution/material warnings stay visible. Five authored examples
+and acceptance criteria are canonical, not live results. The
+[proposed 13-section successor handoff](docs/m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
+is appended to the existing M2 task record, not a parallel architecture.
+Runtime, live probe and merge require separate approval; no new owner session.
 
 Fetched `develop` on October 20, 2026:
 **`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. Research #175–#183 are
@@ -23,8 +50,8 @@ source peers limit useful intersection. Recognized URL grammar and authored
 compatible cases are not demonstrated cross-source matches. No new blocking
 defect was found in the inspected last-fix scope; actual live partial causes and
 historical conflict fields remain unknown.
-An optional evidence-only Dune pointer probe is **design only**, not requested
-or authorized: exactly MOTN1 +direct canonical Kinobaza1, max2 GETs, no TMDb,
+The reserved evidence-only Dune pointer probe is **deferred**, not requested
+or authorized: dormant MOTN1 +direct canonical Kinobaza1 design, max2 GETs, no TMDb,
 redirects/retries/destinations, raw/token export or owner session. It is not the
 existing up-to5-request Dune discovery action. No runtime or source capability
 changes are made here; the present review made0 source requests.
