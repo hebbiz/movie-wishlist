@@ -4,8 +4,9 @@
 The owner subsequently approved the scope below including the clipboard design
 at actual #184 HEAD `9208e507f8282f2499655dead0c12381b4a20566` (approval cited
 earlier `aefb166`). Implementation/checks are recorded in the canonical checkpoint;
-held-out preflight/live evaluation, C/D engines, persistence and production remain
-unapproved. MW-FUT-01 remains Discovery.
+the subsequent bounded held-out identity/card preflight is approved/completed;
+discovery/evaluation, C/D engines, persistence and production remain unapproved.
+MW-FUT-01 remains Discovery.
 October 20, 2026. The [canonical M2 policy](regional-card-proposal.md#m2-digital-offer-matching--proposed)
 owns the matching matrix M01–M20, decisions and evidence boundaries. This file
 defines the approved bounded task, not a parallel architecture or permission for
@@ -14,8 +15,9 @@ history, not authorization for M2.
 
 **First implementation slice: A/B-only direct associations and explanations.**
 C/D are deferred design constraints/forbidden-inference tests, not runtime
-engines, generated outcomes or a general relation graph. Preflight and live
-evaluation remain separately unapproved; the A/B implementation is authorized.
+engines, generated outcomes or a general relation graph. The A/B implementation
+and later public identity/card preflight are authorized; runtime catalogue/live
+discovery evaluation are not.
 
 ## 1. Context
 
@@ -75,6 +77,9 @@ No live requests by implementation agent; no new sources, arbitrary film/card
 search, destination resolution, redirect broadening, parser debugging, MEGOGO
 changes, commercial-offer coalescing, LLM, scoring, authenticated workers, cache,
 database/browser persistence, production writes or new hosting/dependencies.
+This implementation non-goal does not erase the later, separately authorized
+public-document identity/card preflight recorded in the canonical ledger; it
+still gives no permission for four-film discovery or runtime catalogue changes.
 No source characteristic repair from owner observations. No changes to R1/R2,
 older request bodies, security controls or owner demo. No implementation of a
 ranking algorithm: recommendation ordering remains requirement-level only.
@@ -227,19 +232,23 @@ future owner session; do not add a separate Safari or SSH-disconnect cycle.
 
 Only after separate approval/readiness, use the canonical four-film plan:
 Kingdom of Heaven and Parasite **require Kinobaza** with exact source film-card
-URLs independently checked in the approved preflight; The Thing1982/2011 use
-TMDb+MOTN. No new URL/ID is asserted now. Preflight card failure blocks readiness
-for that localization-source evaluation, not permission to drop Kinobaza or
-substitute old films. Risk/hypothesis, source combinations, semantic behavior and
-possible positive/ambiguous/conflicting outcomes are in the canonical table.
+URLs now independently checked in the [completed bounded preflight](regional-card-proposal.md#held-out-preflight-checkpoint--october-20-2026);
+The Thing1982/2011 use TMDb+MOTN and have distinct verified documentary IDs.
+No runtime catalogue entries have been added. Direct TMDb versus indexed IMDb
+evidence and unknown API/availability/localization facts are explicitly separated.
+Failure/empty coverage in future evaluation is not permission to drop Kinobaza
+or substitute old films. Risk/hypothesis, source combinations, semantic behavior
+and possible positive/ambiguous/conflicting outcomes are in the canonical table.
 
 Keep [phase budgets](regional-card-proposal.md#separate-proposed-request-budgets--no-requests-authorized-now)
-separate: identity preflight max8 GETs, two Kinobaza source cards max2/conditional4,
-optional current rules/notices max9; **preflight total max21**. Four-film discovery
-is **14 without hops /16 maximum** (TMDb8+MOTN4+Kinobaza2+at most2 exact canonical
-hops). Count actual attempts/redirects; no retries, extra searches or provider
-GETs. Matching adds0. Each phase needs separate evaluation authorization; these
-are proposed caps, not requests to execute. One short Termius →
+separate: completed preflight **17 controlled GETs =identity7 +cards4 +rules6**
+within the8/4/9 phase ceilings, plus15 public search queries with unexposed backend
+traffic. Do not label that a measured all-network GET count. Four-film discovery
+remains unapproved: **next ceiling14** (TMDb8+MOTN4+Kinobaza2), direct verified
+canonical cards, no hop allowance. This supersedes the generic14/16 estimate for
+this new set, not existing two-film budgets. No retries or provider GETs; matching,
+report and draft add0. Catalogue/evaluation approval and source-use readiness
+remain necessary. One short Termius →
 iPhone/Safari summary session, one discovery per film and one draft flow;
 old observations are dated controls, not rerun requirements. Stop criteria from
 canonical plan apply; no compulsory second synthetic/SSH-disconnect or app tour.
@@ -255,8 +264,9 @@ is unchanged. No full responses/HTML, evaluation screenshots or production notes
 
 ## 13. Git workflow
 
-Bounded A/B-only implementation is approved; held-out catalogue/preflight/live
-evaluation still needs separate approval. Fetch/reinspect instructions/HEAD/base
+Bounded A/B-only implementation and identity/card preflight are approved;
+held-out runtime catalogue/live evaluation still need separate approval.
+Fetch/reinspect instructions/HEAD/base
 and local changes. #184 was open at9208e50: create a separate stacked implementation
 branch/PR on its actual HEAD, not repeated develop/design diffs. If merged before
 starting, use actual develop after reviewing intervening changes. Preserve owner demo and
@@ -267,6 +277,7 @@ integration. No approval is inherited merely from M1's completed merge.
 
 Implementation is recorded once in the
 [canonical checkpoint](regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only).
-The four-film catalogue is **not** configured; no ID/source-card preflight or
-new owner/live requests were performed. Runtime report commit is explicitly
+The four-film catalogue is **not** configured. The subsequent public-document
+preflight is in the canonical ledger; no new discovery/owner evaluation ran.
+Runtime report commit is explicitly
 unknown unless a future trusted provenance mechanism is separately established.

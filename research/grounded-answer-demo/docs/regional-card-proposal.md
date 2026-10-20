@@ -4,8 +4,9 @@
 
 **MW-FUT-01-M2: bounded A/B-only isolated research implementation authorized.**
 The implementation record below supersedes the initial Proposed status only for
-that narrow slice and explicit-copy summary. C/D and held-out preflight/live
-evaluation remain deferred/unapproved; no production/persistence authorization.
+that narrow slice and explicit-copy summary. The subsequent bounded held-out
+identity/card preflight is authorized and recorded below; discovery/evaluation,
+C/D and production/persistence remain unapproved.
 Repository inspection on October 20, 2026, after fetching refs, confirms
 `origin/develop` **`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. #175–#183
 were consolidated through merge commits; launcher fix
@@ -28,7 +29,9 @@ implementation checks, not rerun for this Markdown-only M2 task**, not general
 accuracy or entitlement. Earlier stack tables and “open/conditional/no merge”
 statements below are dated historical snapshots superseded by this baseline.
 Owner observations remain separately attributed in the owner ledger; no new
-owner/source checks or raw evidence archive are introduced.
+owner checks or raw evidence archive are introduced. The separately authorized
+[held-out preflight](#held-out-preflight-checkpoint--october-20-2026) adds only
+public identity/card/rules reads, not availability discovery.
 
 <a id="current-decision-checkpoint--proposed-not-implementation-approval"></a>
 
@@ -1935,7 +1938,8 @@ implementation and authored checks only, **not preflight or live evaluation**.
 This documentation-only narrowing continues open #184 after
 `d8b24719fbe2a6de41a8c25858ac9890e714c2a0`, on the same verified develop base.
 That amendment was documentation-only. The later implementation record below
-records the separately authorized work; preflight/evaluation remain unperformed.
+records the separately authorized work. Subsequent identity/card preflight is
+recorded below; discovery/evaluation remain unperformed.
 
 ### Inspected implementation and evidence boundary
 
@@ -2244,7 +2248,8 @@ fixtures/tests. Future first-slice coverage must also include:
 | Lineage/time | JustWatch shared origin not independent; unknown upstream not invented; receipt versus source time; possible temporal discrepancy not automatic latest-wins. |
 | Draft/mobile/security | Only selected-row fields, exact URL/R1 acknowledgement toggle, R2 no selection, excluded tracks/video/prices, review/confirm/edit/cancel, text-only/no storage; no extra requests or changes to auth/budgets. |
 
-**Proposed held-out set, not configured or run:** four catalogue candidates
+**Held-out set: identity/card preflight completed below; not runtime-configured
+or discovery-evaluated.** Four catalogue candidates
 selected by risk **before knowing provider results**, not viewing recommendations:
 
 | Candidate / hypothesis or risk | Required sources and source-card precondition | Expected semantic behavior, not factual results | Outcomes the case can reveal |
@@ -2254,39 +2259,187 @@ selected by risk **before knowing provider results**, not viewing recommendation
 | The Thing (2011): paired counterexample | TMDb + MOTN; Kinobaza off for this case. | Keep separate from1982 despite names; preserve independent gates and access rows. | Positive links within2011; insufficient B without direct key; explicit ID/card conflict. A difference across films is not a source defect. |
 | Parasite (2019): localized title versus offered tracks | TMDb + MOTN + **Kinobaza required**; exact film source-card URL and any permitted canonical pair verified in preflight before configuration. | Keep catalogue localization, own-block audio/subtitles and explicit country claims separate; compare supported pointers without moving tracks into MOTN offers. | Positive A/B with supported IDs/pointers; related claim but B unresolved for tracking/iTunes cross-ID/missing key; conflict from explicit ID/card disagreement. No assumed UA tracks/results. |
 
-**URL/ID readiness now: pending for all four films.** No new source-card URLs,
-stable IDs or provider results are asserted/fetched in this documentation task.
-The two required Kinobaza URLs must be exact **source film cards**, not search
-pages/provider destinations, identity-checked before the future session. Do not
-invent slugs, substitute old Coherence/Dune cards or silently disable Kinobaza.
-Failure to establish either card makes this plan not ready for localization-source
-matching evaluation. Arbitrary-card discovery is not solved. Empty live coverage
-remains a finding; do not replace samples after seeing results. Missing block
-claims mean that aspect was not observed, not a passed localization-match test.
-Authored guards cover cases absent live; do not hunt for successful results.
+**Documentary identity/card readiness:** see the completed preflight below.
+Verified source cards are not provider destinations or evidence of offers;
+runtime catalogue/configuration and discovery remain unauthorized. Do not
+substitute old Coherence/Dune cards or silently disable Kinobaza. Arbitrary-card
+discovery is not solved. Empty future coverage remains a finding; do not replace
+samples after seeing results. Missing block claims mean that aspect was not
+observed, not a passed localization-match test. Authored guards cover cases
+absent live; do not hunt for successful results.
 
-#### Separate proposed request budgets — no requests authorized now
+#### Held-out preflight checkpoint — October 20, 2026
+
+Separate owner authorization covers only four identity checks and two exact
+Kinobaza source cards, with public rules reads. Inspected open #184 at
+`9208e507f8282f2499655dead0c12381b4a20566`, base develop
+`014014337ef5d2eb9ab95db09c334cef42d4b2fa`, and open #185 at
+`6c9d782f5d3d9e0ef881a83f7f2538abb978eea2`, base #184. Work continues as a
+Markdown-only checkpoint on #185; no runtime/catalogue, owner demo or parent
+branch modification.
+
+**Evidence method:** no verified held-out IDs/cards existed in the tracked
+repository. Public search located candidate documents; this additional operation
+was explained before use. Search candidates, including ID hypotheses, were not
+accepted until compared with primary identity evidence. Direct TMDb public pages
+establish TMDb ID, year and director. Indexed **IMDb-owned title documents**
+establish the corresponding IMDb ID, title/year/director; their crawler dates
+are not today's direct page retrieval. Agreement of these identity dimensions
+supports the documentary crosswalk below, **not an API `external_ids` result**.
+No IMDb live-page GET or authenticated TMDb API validation is claimed. Secondary
+search hits were navigational leads only, not identity authority. Parasite's
+Korean original title is additionally visible on its directly read Kinobaza card.
+
+| Film / original title, year, director | Verified documentary IDs / identity basis | Kinobaza source card / status | Matching risk and planned semantic check |
+| --- | --- | --- | --- |
+| **Kingdom of Heaven**, 2005; Ridley Scott | TMDb **1495**: [direct TMDb identity page](https://www.themoviedb.org/movie/1495-kingdom-of-heaven); IMDb **tt0320661**: [IMDb title document, indexed](https://www.imdb.com/title/tt0320661/). Concordant title/year/director. | [Exact canonical card](https://kinobazaua.com/titles/kingdom-of-heaven), HTTP200, self-canonical; main headings Kingdom of Heaven / Царство небесне (2005), director Рідлі Скотт. Found by search, not a guessed slug. | Positive A only for agreeing stable IDs; B only for a supported matching regional native-card pointer. A general card/film-level Director's Cut mention or runtime does **not** identify a provider's cut. Unknown access/version prevents enrichment; explicit conflicting IDs/card keys must remain conflicting. |
+| **The Thing**, 1982; John Carpenter | TMDb **1091**: [direct TMDb identity page](https://www.themoviedb.org/movie/1091-the-thing); IMDb **tt0084787**: [IMDb title document, indexed](https://www.imdb.com/title/tt0084787/). TMDb Щось (1982), director Джон Карпентер; IMDb same subject. | Not configured/requested: Kinobaza off by the risk-selected plan, not because of coverage. | **1091 / tt0084787 differ from 60935 / tt0905372**. Never A-match on “The Thing” alone. A source returning the 2011 IDs for this case is an identity conflict; positive A/B may still exist within the correct film. No source is expected to fail in reality. |
+| **The Thing**, 2011; Matthijs van Heijningen Jr. | TMDb **60935**: [direct TMDb identity page](https://www.themoviedb.org/movie/60935-the-thing); IMDb **tt0905372**: [IMDb title document, indexed](https://www.imdb.com/title/tt0905372/). TMDb Дещо (2011), same director; IMDb same subject. | Not configured/requested; Kinobaza off as planned. | Paired counterexample, not a substitute for 1982. Correct-film A is possible; missing/unsupported/region-ambiguous pointers leave B insufficient. An explicit 1982 ID/card mismatch cannot be repaired by a shared English name. |
+| **기생충** (Gisaengchung; international title **Parasite**), 2019; Bong Joon Ho | TMDb **496243**: [direct TMDb identity page](https://www.themoviedb.org/movie/496243); IMDb **tt6751668**: [IMDb title document, indexed original-title evidence](https://www.imdb.com/title/tt6751668/?bypassRefViewPref=1). TMDb Паразити, director Пон Джун-Хо; IMDb Gisaengchung / Bong Joon Ho; Kinobaza original heading 기생충 / Пон Чун Хо. | [Exact canonical card](https://kinobazaua.com/titles/parasite-2019), HTTP200, self-canonical, Parasite / Паразити (2019), matching director. The `-2019` slug was discovered, not invented. | Localized names must not become provider tracks. Positive B needs the supported regional card key; tracking destination, cross-ID or missing territory stays unresolved. Block-local localization stays beside its own source row even if A/B aligns with MOTN. |
+
+**What this establishes:** all four film identities and distinct Thing IDs have
+documentary primary-source support, with the direct/indexed distinction above;
+both required Kinobaza source cards are reachable and self-canonical in the
+agent environment. This does not attest to a current API payload, parser support
+for new cards, source independence, source completeness or the owner's network.
+
+**Still unknown for every film:** actual future `results.UA`/MOTN coverage,
+provider/native card pointers returned by those APIs, access/package/cut,
+provider-specific audio/subtitles/video/prices, and account entitlement. This
+task neither extracts nor validates those values. Fetching a whole source card
+incidentally retrieves other text; it is not an authorized offer inventory or
+localization evaluation. No destination was followed or provider URL recorded.
+For Kingdom of Heaven, a film-card cut description is not provider-cut evidence.
+
+Future evaluation can expose useful/missing/false **A/B** links on these four
+cases and keep unmatched localization claims visible. Empty coverage, absent
+blocks or only tracking links may leave B untested/insufficient; report this
+without replacing films. It cannot establish general accuracy, C/D compatibility,
+tracks shared between access types, entitlement, complete coverage or superiority
+of one source. TMDb/JustWatch-derived Kinobaza sections are not independent votes.
+
+##### Factual request ledger and rules readiness
+
+**Direct HTTP ledger: 17 GETs = identity7/8 +source-card4/4 +rules6/9**, all
+in memory, no automatic redirects/retries/assets/cookies or response archive.
+The three identity hops below were separately inspected same-host HTTPS paths
+from actual Location headers; source-card GETs followed no redirect.
+
+| Order | Phase / exact requested URL | Result / purpose |
+| --- | --- | --- |
+| 1 | Rules: https://kinobazaua.com/terms | 200; current public-user agreement. |
+| 2 | Rules: https://kinobazaua.com/privacy | 200; account/privacy notice, no account used. |
+| 3 | Rules: https://kinobazaua.com/robots.txt | 200; inspect applicable public path rules. |
+| 4 | Card: https://kinobazaua.com/titles/kingdom-of-heaven | 200; identity/headings/self-canonical. |
+| 5 | Card: https://kinobazaua.com/titles/parasite-2019 | 200; identity/headings/self-canonical. |
+| 6 | Identity: https://www.themoviedb.org/movie/1495 | 301, Location `/movie/1495-kingdom-of-heaven`; no automatic follow. |
+| 7 | Identity: https://www.themoviedb.org/movie/1091 | 301, Location `/movie/1091-the-thing`; no automatic follow. |
+| 8 | Identity: https://www.themoviedb.org/movie/60935 | 301, Location `/movie/60935-the-thing`; no automatic follow. |
+| 9 | Identity: https://www.themoviedb.org/movie/496243 | 200; identity/director. |
+| 10 | Identity: https://www.themoviedb.org/movie/1495-kingdom-of-heaven | 200; reviewed exact Location target. |
+| 11 | Identity: https://www.themoviedb.org/movie/1091-the-thing | 200; reviewed exact Location target. |
+| 12 | Identity: https://www.themoviedb.org/movie/60935-the-thing | 200; reviewed exact Location target. |
+| 13 | Card: https://kinobazaua.com/titles/kingdom-of-heaven | 200; second, narrower structural identity extraction; not a redirect or discovery run. |
+| 14 | Card: https://kinobazaua.com/titles/parasite-2019 | 200; same narrower extraction. No further card GET authorized by the remaining cap. |
+| 15 | Rules: https://developer.themoviedb.org/docs/faq | 200; attribution/non-commercial category. |
+| 16 | Rules: https://www.themoviedb.org/api-terms-of-use | 200; full current public agreement now accessible. |
+| 17 | Rules: https://www.themoviedb.org/api-terms-of-use | 200; focused reading of conditions clipped in the first extraction; not a retry. |
+
+The repeated card reads were needed because the first extraction did not isolate
+the intended embedded identity fields; neither pass yielded a retained embedded
+stable-ID crosswalk. Do not claim JSON-LD `sameAs`/IMDb was successfully verified
+on those cards. The existing 4-card cap was respected, but its spare capacity was
+spent on narrowing extraction rather than canonical hops; there is no need for
+another card read now. The current documentary crosswalk instead uses the named
+TMDb and indexed IMDb evidence.
+
+**Search accounting, separate from direct GETs:** 15 public search queries in
+five batches: 4 title/director TMDb-location queries; 2 Kinobaza-card-location
+queries; 4 candidate-ID crosswalk queries; 1 narrower Thing2011 TMDb query; 4
+IMDb-domain identity queries. First searches were insufficient; later queries
+targeted missing identity authority, not availability. The narrower TMDb search
+reported a robots refusal; no attempt to bypass that search-reader refusal.
+Direct public-document GETs used the separately described ordinary HTTP path,
+not a retry of that reader. Search snippets are indexed evidence, not live GETs
+by this client. The search service does **not** expose its internal fetch/cache
+traffic: 17 is the exact controlled direct-GET count, **not a claim about total
+search-backend origin GETs**. No `open`/`click` page fetches were made through the
+web reader. There were 0 API/discovery/provider/tracking/LLM requests. The 21 cap
+can be audited for controlled GETs, not undocumented search-infrastructure work;
+no additional preflight traffic is planned. This distinction limits any claim
+of a strict all-network upper bound.
+
+Rules checked October20,2026:
+
+- [Kinobaza Terms](https://kinobazaua.com/terms) §§1–4 cover public users,
+  prohibited user conduct, user responsibility for third-party information and
+  revisions. No direct conflict with this two-card, no-account, transient identity
+  read was identified; **absence of a found prohibition is not a grant of
+  extraction/redistribution/integration rights**. The page's erroneous canonical
+  points to `/privacy`; its actual requested content is the user agreement,
+  not evidence that film-card canonicals may be rewritten. [Privacy](https://kinobazaua.com/privacy)
+  does not establish an extraction API or licence. [Robots](https://kinobazaua.com/robots.txt)
+  generic rules do not exclude the two exact title roots; search/subresource
+  exclusions and the separate meta-externalagent group are not bypassed.
+  Robots are not a licence; regular/commercial reuse, attribution and retention
+  beyond this metadata record remain unresolved.
+- [TMDb FAQ](https://developer.themoviedb.org/docs/faq) describes a conditional
+  non-commercial category and requires attribution. **The current [API Terms](https://www.themoviedb.org/api-terms-of-use)
+  are now directly accessible, HTTP200**, unlike the historical reader-denied
+  records elsewhere in this document. Displayed agreement update date:
+  October20,2023; read date October20,2026, not a new revision claim. §§1A/1C
+  reserve derivative rights and prohibit derivatives and AI/ML-based application
+  use; §2 requires a commercial agreement for commercial use; §3 requires logo
+  and notice; §1C limits cache duration. This non-LLM task does not train/evaluate
+  an AI or forward data to a provider. Nevertheless the application of derivative
+  restrictions to a future combined A/B projection/draft is **not resolved by
+  the FAQ or this identity read**. Preserve the scoped applicable-agreement gate;
+  do not claim blanket permission or extend the AI restriction into an invented
+  ban on every non-LLM comparison. No cache policy/licence chosen here.
+- MOTN was not called; the existing [contract review](#current-contract-and-rules-recheck)
+  is reused for this unchanged non-LLM design, not newly reverified or treated as
+  full live-readiness clearance. No plan/subscription is selected or purchased.
+
+`TMDB_READ_ACCESS_TOKEN` is **absent** in this agent process (presence check only;
+no credential value/file read). It did not block public-document preflight. It
+does block an authenticated API crosswalk check **in this environment** if one
+is later required; no such extra API request was made or added to the budget.
+Future owner discovery requires their configured TMDb/MOTN credentials, not
+extraction of production secrets. Remaining gates: explicit evaluation/runtime
+catalogue approval, reviewed fixed configuration/parser support for these new
+cards, source-use applicability above, and actual environment credentials. No
+new owner session is requested now.
+
+Markdown-only verification:10 existing demo documents,299 local references and
+197 anchor-reference occurrences, zero missing targets/anchors; all13 M2 handoff
+sections retained. Whitespace and the three-file documentation scope checked.
+Runtime/HTTP/browser/Windows suites are not rerun: runtime, helpers, key routing
+and catalogue are unchanged. No owner/iPhone/disconnect test is requested.
+
+<a id="separate-proposed-request-budgets--no-requests-authorized-now"></a>
+
+#### Separate completed preflight and proposed evaluation budgets
 
 | Phase | Bounded work, after its own approval | Ceiling |
 | --- | --- | --- |
-| Identity preflight | At most2 public authoritative identity-document GETs per film for TMDb/IMDb/director crosswalk; no unlisted endpoint fan-out. Stop if unresolved. | 8 GETs for4 films. |
-| Kinobaza source-card preflight | Only the2 proposed exact source-card URLs; at most1 GET each plus1 strictly validated canonical hop each. No provider/tracking requests. | 2 without hops;4 maximum with2 permitted hops. |
-| Source-use readiness preflight, if needed | Up to3 relevant public rules/notices/robots documents per source (TMDb/MOTN/Kinobaza); not catalogue extraction or a licence inferred from robots. | 9 document GETs maximum; actual0 if no fresh read needed. |
-| **Preflight total** | Separate from discovery/owner time; failed attempts and redirects count; no retries or unbudgeted searches. | **At most21 GETs** (8 identity +4 source-card +9 conditional rules); stop if evidence cannot be established within caps. |
+| Identity preflight, completed | Direct public TMDb documents, including3 counted manual canonical hops; paired with explicitly indexed IMDb evidence, not API external_ids. | **7/8 controlled GETs**; documentary crosswalk, no API call. |
+| Kinobaza source-card preflight, completed | Two direct canonical cards, each read twice for narrower identity extraction; no hop or destination. | **4/4 GETs**; cap exhausted, no further card read now. |
+| Source-use readiness preflight | Kinobaza Terms/privacy/robots3; TMDb FAQ1/current agreement2; prior MOTN review reused. | **6/9 GETs**; full TMDb agreement accessible, scope applicability still conditional. |
+| **Preflight actual** | Exact controlled client ledger above; search queries/backend limits separately disclosed, not silently counted as source GETs. | **17/21 controlled GETs** (7+4+6), plus15 indexed-search queries with unexposed internal traffic. No strict all-network bound asserted. |
 | Discovery, Kinobaza-off cases | The Thing1982/2011: TMDb A+B max2 plus independent MOTN1 each. | 3 each;6 total. |
-| Discovery, Kinobaza-required cases | Kingdom of Heaven/Parasite: TMDb2 +MOTN1 +Kinobaza1, plus at most1 configured exact canonical hop per case. | 4 each without hop;5 each maximum. |
-| **Four-film discovery total** | One explicit discovery per film; no retries, new endpoints or destination requests. | **14 without hops;16 maximum**:12 +K +H, K=2 configured cards, 0≤H≤2 actual permitted hops. |
+| Discovery, Kinobaza-required cases | Kingdom of Heaven/Parasite: TMDb2 +MOTN1 +Kinobaza1 at the verified direct canonical URL. No hop allowance in this proposed new configuration. | **4 each;8 total**. |
+| **Next four-film evaluation ceiling** | Only after separate catalogue/evaluation approval: one discovery per film; exact canonical cards, no retries, new endpoints or destinations. | **14 HTTP requests total = TMDb8 +MOTN4 +Kinobaza2**. Matching/copy/draft add0. |
 
-Preflight is a separate bounded future operation, not hidden inside discovery or
-a request to the owner now. Candidate source URLs must be supplied for review
-before GETs; unknown URLs needing additional search/navigation require a separately
-approved bounded plan, not fabricated paths/invisible requests. Count every actual
-GET, including redirect/refusal responses, against its phase cap. Preflight has
-no automatic redirect following: only a validated exact old→canonical same-title
-pair may consume the one additional GET. Configure the verified pair or direct
-canonical card before evaluation; unknown targets stop the path, no generic
-redirect expansion. Preflight metadata can record IDs, exact configured source
-URL and verification basis, not HTML/response archives.
+Preflight is completed as recorded, not hidden inside discovery or a request to
+the owner now. The earlier generic **14/conditional16** estimate assumed up to2
+Kinobaza canonical hops. Both new cards were verified at their direct canonical
+addresses; the next proposed configuration therefore uses those addresses and
+has **14**, not16, as its ceiling. Redirects/refusals count and stop that source;
+do not spend spare capacity on retries, old-host experiments or destinations.
+Supporting a new hop would require reviewed configuration and an explicit budget
+change, not automatic expansion. Existing Coherence/Dune redirect behavior and
+budgets are unchanged. Only metadata, URLs and verification basis are recorded;
+no HTML/response archives.
 
 After separate implementation/sample approval and source-use readiness, retain
 the original two films as dated controls, not compulsory new runs. Identity or
@@ -2327,12 +2480,14 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | M2 matching matrix/handoff | Full A–D design remains canonical; narrow A/B implementation approved and recorded below, C/D deferred. |
 | M2 implementation on existing fixed Coherence/Dune | **Authorized for isolated research; implemented on stacked child, authored/offline/browser checks only.** A/B direct explanations and safe-copy summary; not merged, no graph/full pairwise/C/D engine. |
 | C/D commercial identity/field applicability | Deferred long-term rules/forbidden-inference tests only, not required runtime in the first slice. |
-| Held-out four-film session | **Proposed, not authorized**;2 required preverified Kinobaza cards. Separate preflight cap21 and discovery14/conditional16. Approval/readiness/configuration needed before any live work. |
+| Held-out identity/source-card preflight | **Authorized/completed**, documentary identity/canonical evidence only; controlled GET17, search queries15 separately disclosed. Runtime catalogue unchanged. |
+| Held-out four-film discovery/evaluation | **Proposed, not authorized**;2 now verified direct canonical Kinobaza cards. Next ceiling14 HTTP requests; approval/readiness/configuration still needed. |
 | Arbitrary Kinobaza cards/MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
 The first scope approval has been provided for A/B implementation; the remaining
-product approval is the held-out sample/preflight/evaluation with its explicit
-phase caps. No such requests or catalogue additions are authorized now. Rule mechanics,
+product approval is the held-out runtime catalogue/evaluation with its explicit
+14-request ceiling and source-use gates. Preflight approval does not authorize
+that execution or catalogue additions. Rule mechanics,
 unknown preservation and safety are proposed engineering defaults, not a request
 for the owner to pick a confidence threshold. No need to choose an aggregator,
 subscription, storage TTL or new hosting to review M2. The separate

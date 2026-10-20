@@ -10,8 +10,9 @@ supersedes older open-stack/conditional-merge statements retained below as histo
 
 **MW-FUT-01-M2 A/B-only implementation is approved for isolated research and is
 implemented on this stacked child of #184, not merged into develop.** Actual
-parent HEAD9208e50 includes the agreed clipboard design after aefb166. No live
-preflight/evaluation or production integration is approved. See the
+parent HEAD9208e50 includes the agreed clipboard design after aefb166. Subsequent
+bounded identity/card preflight is recorded below; discovery/evaluation and
+production integration are not approved. See the
 [implementation checkpoint and count reconciliation](docs/regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only).
 The [canonical matching matrix M01–M20](docs/regional-card-proposal.md#matching-rules-matrix)
 separates same film (A), same declared regional provider-card pointer (B), same
@@ -42,13 +43,19 @@ copy exports to the OS clipboard; its lifetime is not controlled by page memory.
 
 The [M2 13-section handoff](docs/m2-offer-matching-handoff.md) records the bounded
 implementation approval. Its [held-out four-film evaluation plan](docs/regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films)
-is also unexecuted/unapproved: Kingdom of Heaven and Parasite require Kinobaza
-with preflight-verified exact source film-card URLs; The Thing1982/2011 use
-TMDb+MOTN. No new IDs/card URLs/results are asserted or fetched now. Separate
-proposed budgets: **preflight max21 GETs** (IDs8 +source cards up to4 +conditional
-rules9); **discovery14 without hops /16 maximum**.
-One future short owner session, no repeated streaming-app tour; authorization
-comes separately. Existing setup/iPhone commands are unchanged.
+has a completed, separately authorized [identity/card preflight and factual ledger](docs/regional-card-proposal.md#held-out-preflight-checkpoint--october-20-2026).
+All four documentary TMDb/IMDb identities and the exact self-canonical Kinobaza
+cards for Kingdom of Heaven/Parasite are recorded with direct versus indexed
+evidence distinguished; The Thing1982/2011 have different IDs. **17 controlled
+GETs** (identity7 +cards4 +rules6), plus15 public search queries whose internal
+traffic is not exposed. No API/discovery/owner evaluation ran; no new runtime
+IDs/cards are configured. TMDb full terms are now accessible, but applicability
+to the future combined projection/draft remains conditional; agent research
+token is absent, public-document checks did not require it.
+The **next proposed evaluation ceiling is14 HTTP requests** (TMDb8 +MOTN4
++Kinobaza2), using verified direct canonical cards, no hops/retries. Runtime
+catalogue changes and one short future owner session need separate approval;
+no repeated streaming-app tour. Existing two-film setup/iPhone commands are unchanged.
 This implementation has authored offline/HTTP/browser checks, not live validation.
 Existing two-film commands, keys and request budgets are unchanged. Copy does
 not rerun discovery or alter the draft. Report excludes raw payloads/URLs/secrets/
