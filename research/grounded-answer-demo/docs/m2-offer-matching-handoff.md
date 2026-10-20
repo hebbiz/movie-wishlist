@@ -1,0 +1,215 @@
+# MW-FUT-01-M2 handoff: digital-offer matching
+
+**Proposed / not authorized for implementation. Milestone: Proposed.**
+Only this design-only preparation is approved. MW-FUT-01 remains Discovery.
+October 20, 2026. The [canonical M2 policy](regional-card-proposal.md#m2-digital-offer-matching--proposed)
+owns the matching matrix M01–M20, decisions and evidence boundaries. This file
+defines a reviewable future task, not a parallel architecture or permission to
+start coding/live testing. [M1 handoff](consolidated-poc-handoff.md) is implemented
+history, not authorization for M2.
+
+## 1. Context
+
+Fetched research baseline: develop `014014337ef5d2eb9ab95db09c334cef42d4b2fa`,
+merged #175–#183. Launcher fix and final R1/R2 tip are ancestors; main/production
+were not promoted. Reinspect instructions/refs/local changes before any future
+implementation. Preserve owner demo and unrelated `research/media-discovery/`.
+The [verified baseline record](regional-card-proposal.md#verified-baseline-and-m2-design-status)
+separates repository history, prior agent tests and owner observations. No fresh
+source/entitlement/accuracy validation is supplied by this design.
+
+## 2. Objective
+
+Make a useful, explainable distinction between the same film, same declared
+regional provider-card pointer, same commercial offer and applicability of one
+field to an offer. Relate observations without manufacturing a verified merged
+offer. Preserve source claims, unknowns and conflicts for manual choice of a
+digital medium; no LLM required.
+
+## 3. Current implementation
+
+`ua-discovery` has fixed Coherence/Dune, independently gated TMDb A+B, MOTN and
+optional fixed Kinobaza. Projected source rows group by platform for display only;
+no card-native key extraction or cross-source commercial-offer matching exists.
+Kinobaza localization attaches to its own parser block/anchor, not MOTN offers.
+TMDb UA signals have no provider deep link; MOTN links/characteristics are literal
+source values, not independently verified. Current peer quality/price warnings
+are not proof of common offer scope.
+
+R1 acknowledgement covers supported Apple routes with decoded `at` presence,
+including empty/bare/repeated keys; exact href/query preserved. R2 quarantines a
+namespaced provider ID with incompatible platform labels. Local draft is one-row,
+review/confirm/edit/cancel, page memory only; track/video/price fields excluded.
+Source identity gates, request bodies and Windows key routing already exist.
+
+## 4. Scope
+
+If separately approved: small in-memory relation layer over **existing two-film
+projections**, plus compact explanatory UI/details and authored regressions.
+TMDb+MOTN and optional already configured Kinobaza only. Preserve current picker,
+platform groups and separate rows, partial source results and original request
+budgets. Add no new source request or expected provider result.
+
+Implement M01–M20 as scoped relation outcomes, not an automatic enrichment engine.
+The four-film held-out plan is [separate proposed evaluation scope](regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films),
+not a requirement to add new catalogue entries/endpoints/live calls to this slice.
+
+## 5. Non-goals
+
+No live requests by implementation agent; no new sources, arbitrary film/card
+search, destination resolution, redirect broadening, parser debugging, MEGOGO
+changes, commercial-offer coalescing, LLM, scoring, authenticated workers, cache,
+database/browser persistence, production writes or new hosting/dependencies.
+No source characteristic repair from owner observations. No changes to R1/R2,
+older request bodies, security controls or owner demo. No implementation of a
+ranking algorithm: recommendation ordering remains requirement-level only.
+
+## 6. Functional requirements
+
+- Keep source observations immutable. Produce pairwise relation records with
+  original row/field refs, level A/B/C/D, outcome, reason/evidence refs, tested
+  scope, missing dimensions, lineage and receipt/source-time basis. Use only
+  `compatible`, `conflicting`, `insufficient-evidence`; no numeric confidence.
+- Enforce [M01–M20](regional-card-proposal.md#matching-rules-matrix). A/B do not
+  imply C/D; compatible C requires positive provider-offer binding and agreeing
+  scope. Current projections lacking that evidence must say insufficient, not
+  invent provider offer IDs or infer equality from identical tuples.
+- Preserve exact source identity basis: TMDb primary versus IMDb crosswalk,
+  MOTN stable match/year warning, Kinobaza structural gate. Never relabel a
+  structural identity as a returned stable-ID match. Conflicting IDs or R2
+  mapping block affected relations, not independent correct rows.
+- Derive a comparison-only card pointer, if possible, **after existing safety
+  classification**, from already supported provider-specific route grammar.
+  Include provider-native namespace, routing region and material qualifiers.
+  Preserve original URL byte spelling separately; no serialization/rewrite.
+  Unknown/ambiguous qualifiers or cross-ID Apple iTunes/TV mapping stay
+  insufficient. Only the reviewed Apple `at` difference may be ignored for
+  comparison; it still requires transfer acknowledgement. No new URL allowlist.
+- Same opaque tracking string means repeated candidate, not same destination.
+  Search/relative/unsafe/watch/unknown links never become exact card/offer keys
+  or substitute purchase_url. Existing navigation versus transfer controls apply.
+- Do not propagate by shared provider name, card, country panel or graph
+  connectivity. Provider-block tracks retain own territory/access/cut scope and
+  completeness; general localization/original language remain film metadata.
+- Preserve source fields literally, with scoped conflict versus possible
+  conflict distinguished. Time receipt is not freshness; shared JustWatch
+  lineage is not independent corroboration. No newest-source winner.
+- Compact related-claim labels and collapsed why/missing-scope details under
+  platform groups; no unified verified offer or mandatory best option. Preserve
+  attribution and visible material warnings. Ordering requirements:
+  UA availability → UA audio → UA subtitles → video → price; unknown not negative.
+- Selection stays on one original selectable row. Relations do not fill fields
+  from peers. Existing six fields only, exact candidate URL/acknowledgement,
+  excluded characteristics sidecar-only; review→confirm→edit/cancel unchanged.
+  R2 unresolved entries cannot supply canonical media/access/draft selection.
+
+## 7. Technical constraints
+
+Matching adds **0 HTTP requests**. Two-film discovery remains TMDb max2 +MOTN1
++optional Kinobaza1 plus its single exact canonical hop: max4 without/max5 with
+hop, max3 Kinobaza-off. No fallback/retries/polling or hidden diagnostic fetch.
+Retain source time/size bounds, overall cancellation, independent failure gates,
+fixed-source allowlist/SSRF protection, server-side keys, LAN Basic/Host/Origin,
+one-shot-before-await, no-store/CSP and text-only output.
+
+No raw/projected/draft logs, browser storage, archive or automatic provider
+navigation. Source use/attribution remains governed by the existing
+[dated rights review and open gates](regional-card-proposal.md#source-rights-persistence-and-privacy-boundary);
+this task establishes no new permission. If future applicability conflicts with
+matching/display, identify the exact source clause and retain permissible parts;
+no inferred blanket ban/grant or email prerequisite. No data forwarding to LLM.
+No migrations or runtime shared schema. Supabase PostgreSQL/jsonb remains future
+design only if separately approved; no MongoDB/Redis/queue.
+
+## 8. Approach
+
+Reinspect projected shapes; add a small pure, dependency-injected relation
+component only if implementation is approved. Reuse observations, reviewed
+provider mappings and existing URL classification; do not duplicate transport
+or parser logic. Give diagnostics references into projected fields, not raw body
+excerpts. Build pairwise reasons with explicit scope tests, never union-find
+equivalence/auto-enrichment. Unknown fields stay unknown.
+
+Validate contract-level authored positive C/D cases separately from adapter
+shapes: provider-offer IDs/scope in fictional logical examples are **not a claim
+TMDb/MOTN/Kinobaza return them**. With actual current projections, useful A/B or
+related-lead labels and insufficient C/D are an acceptable result. Add UI details
+without changing one-row draft/link/ack behavior or existing source outputs.
+
+## 9. Verified components
+
+Inspected in the design baseline; recheck before editing:
+
+| Component | Actual responsibility / future inspection target |
+| --- | --- |
+| [discovery.mjs](../discovery.mjs) | `composeDiscovery`, `mapProvider`, `conflictingProviderIds`, `classifyLink`, independent bounded `runDiscovery`; no offer join. |
+| [tmdb.mjs](../tmdb.mjs) | `projectTmdbIdentity`, `projectTmdbProviders`; stable-ID gate, catalogue versus UA buckets, actual states/lineage. |
+| [motn.mjs](../motn.mjs) | `normalizeMotn`; stable match/year warning, per-option access/link/addon/fields, incomplete lists, literal prices. |
+| [html-source.mjs](../html-source.mjs), [kinobaza-localization.mjs](../kinobaza-localization.mjs) | Structural identity, exact source href, independent country panel and own block associations; no arbitrary URL discovery. Inspect only, no parser refactor. |
+| [discovery client](../public/discovery-client.mjs) | `groupProviderRows`, `linkPresentation`, `needsLinkAcknowledgement`, `prepareDraft`, one-row select/confirm/cancel. |
+| [server](../server.mjs), [network](../network.mjs), [config](../config.mjs) | Fixed configuration/token/Host/Origin/auth/bounds; no new transport needed. |
+| [provider regressions](../test/provider-grouping.test.mjs), [composition tests](../test/discovery.test.mjs), [localization tests](../test/kinobaza-localization.test.mjs) | Authored R1/R2/link/block/failure/budget guards; extend, not replace. |
+| [discovery browser tests](../test/discovery-browser.test.mjs) | Compact mobile rows/provenance, row selection/ack/draft/cancel; external traffic mocked. |
+| [Windows tests](../test/windows.test.ps1), [Start](../windows/Start-Demo.ps1), [Common](../windows/Common.ps1) | Multi-key/detached lifecycle controls; launcher fix included in baseline. Rerun only if relevant changes; owner copy untouched. |
+
+No new runtime filenames are mandated by this design. Production app remains
+context only; do not import it, Supabase or an old research harness into matching.
+
+## 10. Acceptance criteria
+
+Every matrix rule has authored positive and negative/ambiguous outcomes/reasons
+and forbidden-inference assertions. A/B compatible never silently yields C/D.
+Year variance alone does not defeat exact stable match; supplied stable/R2
+conflicts remain quarantined; independent rows survive. Known URL native key is
+declared-pointer evidence only. Unknown territory/access/package/cut and opaque
+tracking do not become offer identity; no transitive field borrowing.
+
+Useful partial relation display keeps source rows/attribution and explains why
+stronger matching is insufficient. Draft takes only original selected-row fields,
+R1/R2 and exact URL preserved; excluded fields/cancel remain correct. No increased
+requests, storage, key exposure, production access or changes to older modes.
+Mock coverage is not real coverage/accuracy; no requirement that current sources
+produce a compatible C/D relation to pass implementation correctness.
+
+## 11. Test plan
+
+Implement all [canonical authored regression families](regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films):
+false/missed joins, partial states, stable/namespace conflicts, alias/rent-buy,
+regional/native/tracking/search/unsafe keys, Apple Store/TV+/channel, unknown
+package/cut, literal audio/quality/currency, incomplete lists, shared lineage,
+receipt versus source time and non-transitive relations. No live archives.
+
+Run full offline/HTTP suites and existing request-body/security/budget goldens.
+Browser/mobile mocks: labels/details, separate rows, why-insufficient/conflict,
+exact candidate navigation, ack check/uncheck, review/confirm/edit/cancel,
+one-row default exclusions, no storage/extra requests. Installed browser only;
+record unavailable WebKit/LAN skips, not real iPhone validation. Windows temp-copy
+multi-key/safe-start/status/stop/restart only for relevant helper/lifecycle changes.
+No live API/source/destination request by implementation agent.
+
+Only after separate approval/readiness, use the canonical four-film plan:
+preverify IDs under an explicit preflight scope, max12 source requests for the
+four new films, Kinobaza unconfigured for them, no retries. One short Termius →
+iPhone/Safari summary session, one discovery per film and one draft flow;
+old observations are dated controls, not rerun requirements. Stop criteria from
+canonical plan apply; no compulsory second synthetic/SSH-disconnect or app tour.
+
+## 12. Documentation updates
+
+Update existing canonical policy/README and this handoff with implemented versus
+proposed states, actual checks/skips/limits. Owner ledger only if new owner
+observations exist, attributed with no invented date/account facts. iPhone guide
+only if workflow changes. Do not publish new commands before implementation;
+existing [Termius/Safari workflow](iphone-windows.md#consolidated-discovery-owner-workflow)
+is unchanged. No full responses/HTML, evaluation screenshots or production notes.
+
+## 13. Git workflow
+
+This handoff is **not authorized for implementation**. First obtain approval
+for the bounded M2 slice, separately for held-out catalogue/live evaluation scope.
+Then fetch/reinspect instructions/current develop/local changes; create feature
+branch from actual develop, review intervening changes. Preserve owner demo and
+untracked files. Small research-only commits/PR into develop, exact validation
+evidence and remaining source-use/live gates; stop review-ready. No force/history
+rewrite, merge/retarget, tags/releases, deployment, system changes or production
+integration. No approval is inherited merely from M1's completed merge.

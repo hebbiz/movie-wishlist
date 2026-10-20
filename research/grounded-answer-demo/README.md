@@ -1,10 +1,39 @@
 # MW-FUT-01: isolated grounded-answer demo
 
+## Current baseline and proposed M2 design
+
+Fetched `develop` on October 20, 2026:
+**`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. Research #175–#183 are
+merged, including launcher fix #176 and R1/R2. Main/production were not promoted.
+The [canonical verified baseline](docs/regional-card-proposal.md#verified-baseline-and-m2-design-status)
+supersedes older open-stack/conditional-merge statements retained below as history.
+
+**MW-FUT-01-M2 is Proposed; only design is approved. No M2 runtime exists.**
+The [canonical matching matrix M01–M20](docs/regional-card-proposal.md#matching-rules-matrix)
+separates same film (A), same declared regional provider-card pointer (B), same
+commercial offer (C), and applicability of one field to that offer (D). Compatible
+A/B is not C/D or entitlement. Proposed outcomes are compatible / conflicting /
+insufficient-evidence, with reasons and source scope, not numeric confidence.
+
+Recommended next slice: explain related claims beside existing independent rows;
+no automatic enriched/verified offer. Provider-name/card matches do not transfer
+Kinobaza localization into MOTN offers. Unknown territory/access/package/cut stays
+unknown; shared JustWatch lineage is not independent corroboration. Exact links,
+Apple `at`/tracking acknowledgement, R2 quarantine and one-row memory-only draft
+remain unchanged. Price/video/tracks stay excluded from draft fields.
+
+The [M2 13-section handoff](docs/m2-offer-matching-handoff.md) is **Proposed / not
+authorized**. Its [held-out four-film evaluation plan](docs/regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films)
+is also unexecuted/unapproved: no new IDs/card URLs/results assumed, no requests
+in this documentation task. Existing setup/iPhone commands are unchanged.
+No runtime suites are rerun for these Markdown-only changes. MW-FUT-01 remains Discovery.
+
 ## Consolidated architecture checkpoint
 
-**R1/R2 approved fixes after #183 `868032969dd737c96c11613ec532b79caac428ca`: both
+**Historical pre-consolidation checkpoint (superseded by the baseline above).**
+R1/R2 approved fixes after #183 `868032969dd737c96c11613ec532b79caac428ca`: both
 code blockers resolved in offline/browser checks; research merge is CONDITIONAL on review, branch
-policy and separate consolidation approval, not production approval.**
+policy and separate consolidation approval at that checkpoint, not production approval.
 R1 now gates the exact decoded Apple affiliate key `at` on both already supported
 iTunes/tv.apple.com card routes. Presence alone requires acknowledgement, including
 empty/bare/repeated `at`; decoded `%61t` is the same key. Query values/order/encoding
