@@ -19,7 +19,7 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
-    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs','film-workflow.mjs','film-workflow-synthetic.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
+    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs','film-workflow.mjs','film-workflow-synthetic.mjs','assisted-kinobaza.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
         $null = New-Item -ItemType Directory -Path (Join-Path $copy 'node_modules')
@@ -236,8 +236,9 @@ try {
             # M3.1 uses the same detached process, separately bounded mock-only case.
             $dynamic = $afterRestart.dynamic
             $searchReply = $null; $previewReply = $null
-            foreach ($action in @('search','preview','confirm','discover')) {
-                $body = if ($action -eq 'search') { @{query='Authored Windows case'} } elseif ($action -eq 'preview') { @{candidate=$searchReply.candidates[0].ref} } elseif ($action -eq 'confirm') { @{preview=$previewReply.preview.ref} } else { @{} }
+            $cardReply = $null
+            foreach ($action in @('search','preview','confirm','discover','admit-card','read-card')) {
+                $body = if ($action -eq 'search') { @{query='Authored Windows case'} } elseif ($action -eq 'preview') { @{candidate=$searchReply.candidates[0].ref} } elseif ($action -eq 'confirm') { @{preview=$previewReply.preview.ref} } elseif ($action -eq 'admit-card') { @{sourceURL='https://kinobazaua.com/titles/authored-windows'} } elseif ($action -eq 'read-card') { @{card=$cardReply.card.ref} } else { @{} }
                 $client.DefaultRequestHeaders.Remove('x-demo-workflow') | Out-Null
                 $client.DefaultRequestHeaders.Remove('x-demo-action') | Out-Null
                 $client.DefaultRequestHeaders.Remove('Origin') | Out-Null
@@ -253,6 +254,8 @@ try {
                     $dynamic = $payload.workflow
                     if ($action -eq 'search') { $searchReply = $payload }
                     if ($action -eq 'preview') { $previewReply = $payload }
+                    if ($action -eq 'admit-card') { $cardReply = $payload; Assert ($dynamic.counters.kinobaza -eq 0) 'Admission made a GET.' }
+                    if ($action -eq 'read-card') { Assert ($payload.result.assisted -and $payload.result.assistedContribution.identity -eq 'matched' -and $dynamic.counters.kinobaza -eq 1 -and $dynamic.cap -eq 7) 'Detached assisted route failed.' }
                     if ($action -eq 'discover') { Assert ($payload.result.dynamic -and $payload.result.rows.Count -eq 2 -and $dynamic.counters.search -eq 1 -and $dynamic.counters.preview -eq 1 -and $dynamic.counters.discovery -eq 2) 'Detached M3.1 counters/key routing failed.' }
                 } finally { $reply.Dispose(); $content.Dispose() }
             }

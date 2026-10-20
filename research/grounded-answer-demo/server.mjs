@@ -83,7 +83,7 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
       return send(401, { error: 'Authentication required.' });
     }
     try {
-      if (composed && req.method === 'POST' && /^\/dynamic\/(?:search|preview|confirm|discover|invalidate|new-case)$/.test(req.url)) {
+      if (composed && req.method === 'POST' && /^\/dynamic\/(?:search|preview|confirm|discover|invalidate|new-case|admit-card|read-card)$/.test(req.url)) {
         if (req.headers.origin !== origin || req.headers['sec-fetch-site'] === 'cross-site') { req.resume(); return send(403, { status: 'same-origin-required' }); }
         if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '')) { req.resume(); return send(400, { status: 'json-required' }); }
         const page = req.headers['x-demo-workflow'];

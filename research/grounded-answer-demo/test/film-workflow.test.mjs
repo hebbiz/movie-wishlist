@@ -137,11 +137,12 @@ test('HTTP auth/origin/Host/assets and opaque page controls; old fixed token inv
       const chunks = []; res.on('data', c => chunks.push(c)); res.on('end', () => resolve(new Response(Buffer.concat(chunks), { status: res.statusCode, headers: res.headers })));
     }); req.on('error', reject); req.end(body);
   });
-  for (const path of ['/film-search.mjs', '/session', '/dynamic/search', '/dynamic/invalidate']) assert.equal((await request(path)).status, 401);
+  for (const path of ['/film-search.mjs', '/session', '/dynamic/search', '/dynamic/invalidate', '/dynamic/admit-card', '/dynamic/read-card']) assert.equal((await request(path)).status, 401);
   const session = await (await request('/session', { Authorization: auth })).json();
   const headers = { Authorization: auth, Origin: origin, 'Content-Type': 'application/json', 'x-demo-workflow': session.dynamic.id, 'x-demo-action': session.dynamic.actionToken };
   for (const bad of [{ Authorization: 'Basic bad' }, { Host: 'evil.invalid' }, { Origin: 'https://evil.invalid' }]) {
     assert.equal((await request('/dynamic/search', { ...headers, ...bad }, '{"query":"Authored"}', 'POST')).status, bad.Authorization ? 401 : 403);
+    for (const path of ['/dynamic/admit-card', '/dynamic/read-card']) assert.equal((await request(path, { ...headers, ...bad }, '{}', 'POST')).status, bad.Authorization ? 401 : 403);
   }
   const good = await request('/dynamic/search', headers, '{"query":"Authored"}', 'POST'); assert.equal(good.status, 200);
   assert.equal((await request('/dynamic/preview', headers, 'x'.repeat(5000), 'POST')).status, 502);

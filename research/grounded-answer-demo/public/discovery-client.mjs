@@ -358,9 +358,16 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
       picker.value = ''; syncChoice();
     },
     presentDynamic(data) {
+      // Assisted response can only append to the current film. Cancel pending
+      // review, not the confirmed/edited draft DOM or its memory-only contents.
+      if (data.assisted && result?.film?.id !== data.film.id) return;
+      hideReview();
       workflowReport = null;
       session = { ...session, dynamicSelection: true, film: data.film, kinobaza: 'off — not evaluated for dynamic selections', sources: ['TMDb', 'Movie of the Night'],
         requestBudget: 6, baseRequestBudget: 6, plannedRequests: [], conditionalRequests: [], operation: 'M3.1: explicit search max2, preview max2, discovery max2; Details preview reused; Kinobaza not evaluated. No LLM, retries, destinations or storage.' };
+      if (data.assisted) session = { ...session, kinobaza: 'assisted — one card', sources: ['TMDb', 'Movie of the Night', 'Kinobaza HTML'], requestBudget: 7, baseRequestBudget: 7,
+        operation: 'Assisted M3.2: one admitted canonical source card GET; no redirects/retries/destinations. Selected-film identity gate; independent source rows, not offer enrichment.' };
+      else if (data.accounting?.cap === 7) session = { ...session, kinobaza: 'assisted address admitted — no GET yet', requestBudget: 7, baseRequestBudget: 7 };
       result = data; reportFailed = false; receivedAt = new Date().toISOString(); render(data); el('result').hidden = false;
       reportReady = true; copy.disabled = false; syncChoice();
     },

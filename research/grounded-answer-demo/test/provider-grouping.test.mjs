@@ -7,6 +7,22 @@ import { linkPresentation, groupProviderRows, providerSummary, prepareDraft } fr
 import { localizedMarkup, paragraphBlock, tableBlock } from './kinobaza-localization.fixture.mjs';
 
 const config = selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence' });
+
+test('unmapped platform audit retains names/source and original projected stages without canonical selection', async () => {
+  const base = await runDiscovery(config, { fetchImpl: () => assert.fail('No network') });
+  const stages = base.stages;
+  const p = stages.tmdb.result.providers.buckets.flatMap(b => b.providers.items ?? [])[0];
+  p.id = { state: 'reported', value: 999901 }; p.name = { state: 'reported', value: 'Plex' };
+  const option = stages.motn.result.options[0];
+  option.service = { id: { state: 'reported', value: 'mubi' }, name: { state: 'reported', value: 'MUBI' } };
+  stages.kinobaza.result.candidates.push({ provider: 'Plex', territory: { code: 'UA' }, href: 'https://example.com/authored-card' });
+  const r = composeDiscovery(FILMS.coherence, stages, { synthetic: true, metrics: base.metrics });
+  for (const [source, name] of [['tmdb', 'Plex'], ['motn', 'MUBI'], ['kinobaza', 'Plex']]) {
+    assert.ok(r.unmapped.some(o => o.source === source && o.name === name && o.reason === 'provider-mapping-unresolved'));
+  }
+  assert.equal(r.stages.motn.result.options[0].link.value, option.link.value);
+  assert.ok(r.rows.every(row => !['Plex', 'MUBI'].includes(row.provider.name)));
+});
 async function projected(markup) {
   const base = await runDiscovery(config, { fetchImpl: () => assert.fail('No network') });
   base.stages.kinobaza.result = await extractHtml(markup, FILMS.coherence);
