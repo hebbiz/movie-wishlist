@@ -1,17 +1,21 @@
 # MW-FUT-01-M2 handoff: digital-offer matching
 
-**Proposed / not authorized for implementation. Milestone: Proposed.**
-Only this design-only preparation is approved. MW-FUT-01 remains Discovery.
+**Approved for bounded isolated A/B-only research implementation.**
+The owner subsequently approved the scope below including the clipboard design
+at actual #184 HEAD `9208e507f8282f2499655dead0c12381b4a20566` (approval cited
+earlier `aefb166`). Implementation/checks are recorded in the canonical checkpoint;
+held-out preflight/live evaluation, C/D engines, persistence and production remain
+unapproved. MW-FUT-01 remains Discovery.
 October 20, 2026. The [canonical M2 policy](regional-card-proposal.md#m2-digital-offer-matching--proposed)
 owns the matching matrix M01–M20, decisions and evidence boundaries. This file
-defines a reviewable future task, not a parallel architecture or permission to
-start coding/live testing. [M1 handoff](consolidated-poc-handoff.md) is implemented
+defines the approved bounded task, not a parallel architecture or permission for
+live testing. [M1 handoff](consolidated-poc-handoff.md) is implemented
 history, not authorization for M2.
 
 **First implementation slice: A/B-only direct associations and explanations.**
 C/D are deferred design constraints/forbidden-inference tests, not runtime
-engines, generated outcomes or a general relation graph. Implementation,
-preflight and live evaluation remain separately unapproved.
+engines, generated outcomes or a general relation graph. Preflight and live
+evaluation remain separately unapproved; the A/B implementation is authorized.
 
 ## 1. Context
 
@@ -33,6 +37,9 @@ separate source rows, unknowns and conflicts; no LLM required.
 
 ## 3. Current implementation
 
+The following describes the runtime inherited from design parent #184; the
+child's completed A/B/report addition is in the implementation record below.
+
 `ua-discovery` has fixed Coherence/Dune, independently gated TMDb A+B, MOTN and
 optional fixed Kinobaza. Projected source rows group by platform for display only;
 no card-native key extraction or cross-source commercial-offer matching exists.
@@ -49,7 +56,7 @@ Source identity gates, request bodies and Windows key routing already exist.
 
 ## 4. Scope
 
-If separately approved: small direct A/B associations over **existing two-film
+Approved slice: small direct A/B associations over **existing two-film
 projections**, plus compact explanatory UI/details and authored regressions.
 TMDb+MOTN and optional already configured Kinobaza only. Preserve current picker,
 platform groups and separate rows, partial source results and original request
@@ -144,8 +151,7 @@ design only if separately approved; no MongoDB/Redis/queue.
 
 ## 8. Approach
 
-Reinspect projected shapes; add small pure direct A/B helpers only if
-implementation is approved. Reuse observations, reviewed
+Reinspect projected shapes; use small pure direct A/B helpers. Reuse observations, reviewed
 provider mappings and existing URL classification; do not duplicate transport
 or parser logic. Give diagnostics references into projected fields, not raw body
 excerpts. Reuse source identity gates for direct fixed-film association (A),
@@ -249,11 +255,18 @@ is unchanged. No full responses/HTML, evaluation screenshots or production notes
 
 ## 13. Git workflow
 
-This handoff is **not authorized for implementation**. First obtain approval
-for the bounded A/B-only M2 slice, separately for held-out catalogue/preflight/live evaluation scope.
-Then fetch/reinspect instructions/current develop/local changes; create feature
-branch from actual develop, review intervening changes. Preserve owner demo and
+Bounded A/B-only implementation is approved; held-out catalogue/preflight/live
+evaluation still needs separate approval. Fetch/reinspect instructions/HEAD/base
+and local changes. #184 was open at9208e50: create a separate stacked implementation
+branch/PR on its actual HEAD, not repeated develop/design diffs. If merged before
+starting, use actual develop after reviewing intervening changes. Preserve owner demo and
 untracked files. Small research-only commits/PR into develop, exact validation
 evidence and remaining source-use/live gates; stop review-ready. No force/history
 rewrite, merge/retarget, tags/releases, deployment, system changes or production
 integration. No approval is inherited merely from M1's completed merge.
+
+Implementation is recorded once in the
+[canonical checkpoint](regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only).
+The four-film catalogue is **not** configured; no ID/source-card preflight or
+new owner/live requests were performed. Runtime report commit is explicitly
+unknown unless a future trusted provenance mechanism is separately established.

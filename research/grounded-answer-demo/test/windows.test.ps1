@@ -19,7 +19,7 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
-    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
+    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
         $null = New-Item -ItemType Directory -Path (Join-Path $copy 'node_modules')

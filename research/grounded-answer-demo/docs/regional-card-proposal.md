@@ -2,7 +2,10 @@
 
 ## Verified baseline and M2 design status
 
-**MW-FUT-01-M2: Proposed. Design only is authorized; implementation is not.**
+**MW-FUT-01-M2: bounded A/B-only isolated research implementation authorized.**
+The implementation record below supersedes the initial Proposed status only for
+that narrow slice and explicit-copy summary. C/D and held-out preflight/live
+evaluation remain deferred/unapproved; no production/persistence authorization.
 Repository inspection on October 20, 2026, after fetching refs, confirms
 `origin/develop` **`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. #175–#183
 were consolidated through merge commits; launcher fix
@@ -12,9 +15,10 @@ matches that tip. Main remains `e92392856038e40e6d98c6c8744eed04c4e8dff9`;
 this is repository evidence, not a new production/deployment validation.
 
 The [M2 matching policy](#m2-digital-offer-matching--proposed) below is the
-canonical design extension of the shared observation contract, **not current
-runtime behavior**. Its [13-section handoff](m2-offer-matching-handoff.md) is
-Proposed / not authorized. The older [consolidated handoff](consolidated-poc-handoff.md)
+canonical design extension of the shared observation contract; its bounded A/B
+subset is now implemented on the stacked child, not merged develop. Its
+[13-section handoff](m2-offer-matching-handoff.md) records that authorization and
+remaining gates. The older [consolidated handoff](consolidated-poc-handoff.md)
 records the implemented M1 slice. No separate ADR convention exists here;
 proposed decisions remain in this document rather than a parallel architecture.
 
@@ -1918,19 +1922,20 @@ conditions are established; do not retrofit current adapters now.
 
 ## M2 digital offer matching — Proposed
 
-**Design decision M2-D1, Proposed / not authorized for implementation.** The
+**Design decision M2-D1, A/B subset approved for isolated implementation.** The
 first implementation slice is **A/B-only**: same-film association and comparison
 of supported regional provider-card pointers, with direct evidence/reason links
 between existing source rows. No general relation graph, exhaustive pairwise
 engine or merged “verified offer”. Preserve all M1 row/link/draft controls.
 C/D remain long-term design constraints and forbidden-inference tests, **not
 runtime engines or required runtime outcomes in this slice**. M2 needs no LLM,
-new source, destination fetch or storage. Only documentation is authorized now;
-implementation, preflight and live evaluation all need separate authorization.
+new source, destination fetch or storage. The owner's later approval covers
+implementation and authored checks only, **not preflight or live evaluation**.
 
 This documentation-only narrowing continues open #184 after
 `d8b24719fbe2a6de41a8c25858ac9890e714c2a0`, on the same verified develop base.
-No runtime or preflight/evaluation work has been performed for this amendment.
+That amendment was documentation-only. The later implementation record below
+records the separately authorized work; preflight/evaluation remain unperformed.
 
 ### Inspected implementation and evidence boundary
 
@@ -2067,8 +2072,9 @@ and field applicability remain explicitly deferred.
 
 #### Copy short test summary — proposed UI requirement
 
-Documentation-only addition approved after #184 `aefb166`; implementation is
-still **Proposed / not authorized**. Add a **Copy short report** action after a
+Documentation-only addition approved after #184 `aefb166`, recorded in `9208e50`;
+subsequently included in the narrow implementation authorization below.
+The **Copy short report** action appears after a
 discovery operation finishes, including partial/error results. Its purpose is
 the owner's short acceptance summary, not raw evidence export or accuracy scoring.
 
@@ -2108,13 +2114,92 @@ browser refuses clipboard access. Page data stays memory-only, but an explicit
 copy exports text to the **OS clipboard**, which can outlive the page or be
 managed/synced by the device; do not promise clipboard erasure on reload.
 
-Future checks: mocked successful/denied/unavailable writes; exact allowlisted
+Required checks (implemented in the checkpoint below): mocked successful/denied/unavailable writes; exact allowlisted
 summary, synthetic/partial/error labels, no secrets/raw/draft contents; stale-film
 guard, repeated copy without requests, no mutation of edited draft. Browser/mobile
 tests verify success feedback and fallback selection; actual Safari behavior
 remains unverified until the separately approved acceptance session. Fold this
 into that one session, not an extra owner test cycle or mandatory repeat of old
 platform/synthetic/SSH-disconnect checks.
+
+### M2 A/B implementation checkpoint — authored checks only
+
+Inspected #184 open at **`9208e507f8282f2499655dead0c12381b4a20566`**, not just
+the approval's earlier `aefb166` pointer; base remains develop `014014337e…`.
+`9208e50` contains the already agreed clipboard design, not unrelated work.
+Implementation is a separate stacked branch/PR with only the new diff. Owner
+checkout/assets/process and unrelated untracked files are unchanged.
+
+- [matching.mjs](../matching.mjs) reads existing projections: three direct source
+  identity associations (A), R2 mapping validation and a small regional-pointer
+  lookup with at most one explicit peer comparison per row (B). No graph,
+  all-pairs engine, C/D records, source joins, mutated rows or added requests.
+  Supplied stable IDs are checked, not blindly replaced by a matched flag;
+  Kinobaza remains explicitly structural, year variance remains labelled.
+- Exact-key comparison reuses the existing navigation classifier, then narrows
+  to supported route/native-ID or exact Rakuten path-pointer context. iTunes
+  numeric and Apple UMC namespaces stay distinct. Unknown query/fragment/locale
+  semantics, regionless pointers without explicit source market, unsafe/search/
+  relative/watch/tracking references cannot produce a supported B match.
+  Apple `at` is ignored only for comparison; original URL and R1 acknowledgement
+  remain intact. Generic Prime/Netflix route prefixes are deliberately unresolved.
+- UI adds short source-labelled A/B explanations and collapsed reasons/scope.
+  Same pointer never means common cut/access/territory/tracks. Source rows and
+  original selection/draft exclusions are retained; R2 conflicts stay unresolved.
+- [Safe-report module](../public/discovery-report.mjs) emits fixed labels/enums
+  and up to12 short rows, marking omissions. No source value serialization,
+  full URLs/queries, draft inputs, credentials or account data. Browser receipt
+  time is labelled; **runtime commit is unknown**, because no trusted build
+  attestation exists. Source error details are not copied; request failure has
+  unknown call count, not an invented zero. Copy waits for success; denial or
+  missing capability yields read-only selectable text, no exception text leak.
+  Film changes clear stale copy state, repeated copies cause no request, cancel
+  preserves manual edits. Explicit OS clipboard export is the only export;
+  no storage/download/logging or clipboard reads.
+- Existing config/catalogue, adapters/request bodies/budgets, R1/R2 classifier,
+  auth/Host/Origin/no-store/CSP remain unchanged. Server adds a protected local
+  report-module asset and matching metadata to composed responses only; no new
+  provider endpoint. Windows helpers/key routing unchanged; test temp-copy list
+  includes the new server dependency. No new dependencies.
+
+Authored tests: [matching](../test/matching.test.mjs),
+[report/HTTP](../test/discovery-report.test.mjs),
+[mobile browser](../test/m2-browser.test.mjs), plus retained full regressions.
+Verification: **309 offline/HTTP passed;134 installed-Edge browser passed /9
+skips**, zero failures. Skips:8 absent-WebKit checks and optional same-host LAN
+unset; no browser download, not real iPhone. Windows Search and multi-key Discovery
+temp-copy lifecycle both passed, including parent-exit survival, duplicate-start,
+forged-PID refusal, safe stop/restart and mock multi-key routing. Other six Windows
+mode combinations were not rerun: helpers/key routing unchanged; all modes retain
+offline/browser regressions. New local server dependency loading was covered by
+the two Windows cases. No actual SSH-disconnect/iPhone assertion.
+After the final identity/provider selection guard, the discovery/M2 browser
+subset was repeated: **28 passed /2 WebKit skips**, zero failures. Current
+documentation: **295 local links /193 anchor references**, same10 documents;
+the M2 handoff retains all13 standard sections. Scope/whitespace and unchanged
+source requests/catalogue/security helpers were checked independently.
+Initial fixture mutation attempted to edit the frozen film catalogue and was
+corrected to an authored copy, not a runtime/security relaxation. No live source,
+destination/API request, new owner session or held-out configuration was performed.
+Safari/iPhone clipboard availability is still unverified; fallback is implemented
+and mock-tested, not a promise of one-click access on every HTTP browser.
+
+#### Documentation count reconciliation
+
+Recomputed from committed Git objects using the same Markdown-link/fence/anchor
+algorithm and the **same10 README/docs files**; no change of validation scope:
+
+| Documentation checkpoint | Local link occurrences | Anchor references checked | Actual difference |
+| --- | --- | --- | --- |
+| `d8b2471` | 284 | 187 | Initial M2 design. |
+| `aefb166` | 285 | 188 | Handoff added one link to the separate budget section. |
+| `9208e50` | 287 | 190 | README and handoff each added the clipboard-section link. |
+
+All three have zero missing targets/anchors. Counts are reference occurrences,
+**not unique anchors or total headings**. New implementation documentation links
+increase the current total again; report the fresh result separately, not as a
+retroactive correction to a historical commit. Runtime tests and these Markdown
+checks are separate evidence classes.
 
 ### Localization, recommendations and local draft
 
@@ -2239,13 +2324,15 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | Phase | Status / decision |
 | --- | --- |
 | M1 isolated probes/composition | Merged into research develop; bounded owner observations, not production. |
-| M2 matching matrix/handoff | **Proposed, design-only**; this document is canonical. |
-| M2 implementation on existing fixed Coherence/Dune | **Not authorized**. A/B-only direct explanations, no graph/full pairwise or C/D engine; preserve separate rows and one-row draft/default exclusions. |
+| M2 matching matrix/handoff | Full A–D design remains canonical; narrow A/B implementation approved and recorded below, C/D deferred. |
+| M2 implementation on existing fixed Coherence/Dune | **Authorized for isolated research; implemented on stacked child, authored/offline/browser checks only.** A/B direct explanations and safe-copy summary; not merged, no graph/full pairwise/C/D engine. |
 | C/D commercial identity/field applicability | Deferred long-term rules/forbidden-inference tests only, not required runtime in the first slice. |
 | Held-out four-film session | **Proposed, not authorized**;2 required preverified Kinobaza cards. Separate preflight cap21 and discovery14/conditional16. Approval/readiness/configuration needed before any live work. |
 | Arbitrary Kinobaza cards/MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
-These two scope approvals are the actual product decisions. Rule mechanics,
+The first scope approval has been provided for A/B implementation; the remaining
+product approval is the held-out sample/preflight/evaluation with its explicit
+phase caps. No such requests or catalogue additions are authorized now. Rule mechanics,
 unknown preservation and safety are proposed engineering defaults, not a request
 for the owner to pick a confidence threshold. No need to choose an aggregator,
 subscription, storage TTL or new hosting to review M2. The separate

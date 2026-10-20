@@ -50,7 +50,7 @@ async function start(t, overrides = {}) {
 
 test('all routes/assets require auth; unauthorized requests cannot allocate sessions or spend a token', async t => {
   const { request, origin, calls } = await start(t);
-  for (const path of ['/', '/client.mjs', '/display.mjs', '/style.css', '/session', '/answer', '/missing']) {
+  for (const path of ['/', '/client.mjs', '/display.mjs', '/discovery-report.mjs', '/style.css', '/session', '/answer', '/missing']) {
     const response = await request(path);
     assert.equal(response.status, 401);
     assert.match(response.headers.get('www-authenticate'), /^Basic /);

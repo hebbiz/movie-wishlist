@@ -8,17 +8,21 @@ merged, including launcher fix #176 and R1/R2. Main/production were not promoted
 The [canonical verified baseline](docs/regional-card-proposal.md#verified-baseline-and-m2-design-status)
 supersedes older open-stack/conditional-merge statements retained below as history.
 
-**MW-FUT-01-M2 is Proposed; only design is approved. No M2 runtime exists.**
+**MW-FUT-01-M2 A/B-only implementation is approved for isolated research and is
+implemented on this stacked child of #184, not merged into develop.** Actual
+parent HEAD9208e50 includes the agreed clipboard design after aefb166. No live
+preflight/evaluation or production integration is approved. See the
+[implementation checkpoint and count reconciliation](docs/regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only).
 The [canonical matching matrix M01–M20](docs/regional-card-proposal.md#matching-rules-matrix)
 separates same film (A), same declared regional provider-card pointer (B), same
 commercial offer (C), and applicability of one field to that offer (D). The
-**first proposed implementation is A/B-only**, not a general relation graph or
+**first implementation is A/B-only**, not a general relation graph or
 full pairwise engine. C/D stay deferred constraints/forbidden-inference tests,
-not runtime engines. A/B is not C/D or entitlement. Proposed A/B outcomes are
+not runtime engines. A/B is not C/D or entitlement. A/B outcomes are
 compatible / conflicting / insufficient-evidence, with evidence/reasons,
 not numeric confidence.
 
-Recommended next slice: direct source-labelled A/B explanations beside separate rows:
+Implemented: direct source-labelled A/B explanations beside separate rows:
 same supported regional card pointer; related film/provider claim with exact
 card unresolved; insufficient territory/access/version for enrichment; conflicting
 identity/card evidence. Long technical reasons remain in details;
@@ -28,16 +32,16 @@ unknown; shared JustWatch lineage is not independent corroboration. Exact links,
 Apple `at`/tracking acknowledgement, R2 quarantine and one-row memory-only draft
 remain unchanged. Price/video/tracks stay excluded from draft fields.
 
-Proposed UI also includes [Copy short report](docs/regional-card-proposal.md#copy-short-test-summary--proposed-ui-requirement):
+UI also includes [Copy short report](docs/regional-card-proposal.md#copy-short-test-summary--proposed-ui-requirement):
 explicit-click plain-text summary of the current film/run, source statuses, A/B
 reasons/unknowns/conflicts and draft interactions, not raw JSON/HTML, credentials
 or draft contents. No extra requests/autosave. Show an honest selectable-text
 fallback if clipboard writing is unavailable/denied; Safari LAN HTTP behavior
-must be checked during implementation/approved acceptance, not assumed. Explicit
+remains unverified on a real iPhone; mocked checks do not establish it. Explicit
 copy exports to the OS clipboard; its lifetime is not controlled by page memory.
 
-The [M2 13-section handoff](docs/m2-offer-matching-handoff.md) is **Proposed / not
-authorized**. Its [held-out four-film evaluation plan](docs/regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films)
+The [M2 13-section handoff](docs/m2-offer-matching-handoff.md) records the bounded
+implementation approval. Its [held-out four-film evaluation plan](docs/regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films)
 is also unexecuted/unapproved: Kingdom of Heaven and Parasite require Kinobaza
 with preflight-verified exact source film-card URLs; The Thing1982/2011 use
 TMDb+MOTN. No new IDs/card URLs/results are asserted or fetched now. Separate
@@ -45,7 +49,11 @@ proposed budgets: **preflight max21 GETs** (IDs8 +source cards up to4 +condition
 rules9); **discovery14 without hops /16 maximum**.
 One future short owner session, no repeated streaming-app tour; authorization
 comes separately. Existing setup/iPhone commands are unchanged.
-No runtime suites are rerun for these Markdown-only changes. MW-FUT-01 remains Discovery.
+This implementation has authored offline/HTTP/browser checks, not live validation.
+Existing two-film commands, keys and request budgets are unchanged. Copy does
+not rerun discovery or alter the draft. Report excludes raw payloads/URLs/secrets/
+draft inputs and reports **Commit: unknown** rather than guessing a Git SHA.
+MW-FUT-01 remains Discovery.
 
 ## Consolidated architecture checkpoint
 

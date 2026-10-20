@@ -1,4 +1,5 @@
 // Page memory only. Never stores, submits, resolves URLs or rewrites source data.
+import { buildShortReport, writeShortReport, relationText, sourceLabel } from './discovery-report.mjs';
 const value = f => f?.state === 'reported' ? String(f.value) : `[${f?.state ?? 'unknown'}]`;
 export function accessLabel(field) {
   const raw = field?.state === 'reported' ? field.value : undefined;
@@ -83,6 +84,9 @@ export function prepareDraft(result, row, trackingAcknowledged = false) {
 export async function mountDiscovery(document, initial, { signal, fetchImpl = fetch } = {}) {
   const el = id => document.getElementById(id), button = el('run');
   let session = initial, result = null, reviewRow = null, loading = false;
+  let generation = 0, reportReady = false, reportFailed = false, receivedAt = null;
+  const emptyDraftState = () => ({ present: false, confirmed: false, edited: false, selectionCancelled: false, cleared: false });
+  let draftState = emptyDraftState();
   const used = new Set();
   const add = (host, tag, text) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; host.append(n); return n; };
   el('film').textContent = 'UA discovery — two fixed films';
@@ -109,18 +113,41 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   const panes = add(el('result'), 'div'); panes.className = 'discovery-ui';
   const review = add(panes, 'section'); review.id = 'draft-review'; review.hidden = true;
   const draft = add(panes, 'section'); draft.id = 'local-draft'; draft.hidden = true;
+  const report = add(panes, 'section'); report.id = 'short-report';
+  const copy = add(report, 'button', 'Copy short report'); copy.id = 'report-copy'; copy.type = 'button'; copy.disabled = true;
+  const reportStatus = add(report, 'p'); reportStatus.id = 'report-status'; reportStatus.setAttribute('role', 'status');
+  const fallback = add(report, 'div'); fallback.id = 'report-fallback'; fallback.hidden = true;
+  const label = add(fallback, 'label', 'Short report — select and copy manually');
+  const reportText = add(label, 'textarea'); reportText.id = 'report-text'; reportText.readOnly = true; reportText.rows = 12;
+  const selectText = add(fallback, 'button', 'Select report text'); selectText.type = 'button';
+  selectText.addEventListener('click', () => { reportText.focus(); reportText.select(); });
+  add(report, 'p', 'Explicit copy exports to your device clipboard, which may outlive this page. No raw responses, secrets or draft contents.');
+  const resetReport = () => { generation++; reportReady = false; copy.disabled = true; reportStatus.textContent = ''; reportText.value = ''; fallback.hidden = true; };
+  copy.addEventListener('click', async () => {
+    if (!reportReady || loading || copy.disabled) return;
+    const at = generation;
+    const text = buildShortReport({ filmId: session.film.id, mode: session.mode, receivedAt, result, failed: reportFailed, draft: draftState });
+    copy.disabled = true; reportStatus.textContent = 'Copying…'; fallback.hidden = true;
+    const outcome = await writeShortReport(text, document.defaultView.navigator);
+    if (at !== generation || signal?.aborted) return;
+    copy.disabled = false;
+    if (outcome === 'copied') { reportStatus.textContent = 'Copied short report.'; reportText.value = ''; }
+    else { reportText.value = text; fallback.hidden = false; reportStatus.textContent = 'Clipboard unavailable or denied. Select the text and copy manually.'; }
+  });
   const hideReview = () => { review.replaceChildren(); review.hidden = true; reviewRow = null; };
   const showDraft = prepared => {
     draft.replaceChildren(); draft.hidden = false;
+    draftState = { ...emptyDraftState(), present: true, confirmed: true };
     add(draft, 'h3', 'Editable local draft — NOT production MW; page memory only');
     const form = add(draft, 'form'); form.addEventListener('submit', e => e.preventDefault());
+    form.addEventListener('input', () => { draftState.edited = true; });
     for (const [name, text] of Object.entries(prepared.fields)) {
       const label = add(form, 'label', name); const input = add(label, 'input'); input.name = name; input.value = text;
       if (name === 'status') input.readOnly = true;
     }
     const details = add(draft, 'details'); add(details, 'summary', 'Research evidence sidecar / excluded fields (not MW schema)'); add(details, 'pre', JSON.stringify(prepared.sidecar, null, 2));
     const clear = add(draft, 'button', 'Clear local draft'); clear.type = 'button'; clear.id = 'draft-clear';
-    clear.addEventListener('click', () => { draft.replaceChildren(); draft.hidden = true; });
+    clear.addEventListener('click', () => { draft.replaceChildren(); draft.hidden = true; draftState = { ...emptyDraftState(), cleared: true }; });
   };
   const select = row => {
     hideReview(); reviewRow = row; review.hidden = false;
@@ -139,7 +166,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     add(review, 'p', `${linkStatus.summary} · ${linkStatus.navigation} · ${linkStatus.draft}. ${row.link.transferable ? 'Exact URL/type/provenance retained.' : 'purchase_url stays empty; no substitute URL.'}`);
     const confirm = add(review, 'button', 'Confirm to local draft'); confirm.id = 'draft-confirm'; confirm.type = 'button';
     confirm.addEventListener('click', () => { const prepared = prepareDraft(result, reviewRow, tracking?.checked ?? false); showDraft(prepared); hideReview(); });
-    const cancel = add(review, 'button', 'Cancel selection'); cancel.type = 'button'; cancel.id = 'draft-review-cancel'; cancel.addEventListener('click', hideReview);
+    const cancel = add(review, 'button', 'Cancel selection'); cancel.type = 'button'; cancel.id = 'draft-review-cancel'; cancel.addEventListener('click', () => { draftState.selectionCancelled = true; hideReview(); });
   };
   const render = data => {
     const host = el('answer'); host.replaceChildren();
@@ -148,6 +175,9 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
     add(host, 'p', `HTTP calls: ${data.metrics.requestsMade}/${data.metrics.requestBudget} · elapsed ${data.metrics.elapsedMs}ms (not a cost estimate)`);
     const sourceSummary = add(host, 'p'); sourceSummary.id = 'discovery-source-status';
     sourceSummary.textContent = data.sources.map(s => `${s.source}: ${s.status} · identity ${s.identity}`).join(' | ');
+    const subjects = add(host, 'details'); subjects.id = 'matching-subjects'; add(subjects, 'summary', 'A — source film identity evidence');
+    for (const s of data.matching?.subjects ?? []) add(subjects, 'p', `${sourceLabel(s.source)}: ${relationText(s)}${s.yearVariance ? ' · Year variance retained; reason not inferred.' : ''}`);
+    const matches = new Map((data.matching?.rows ?? []).map(m => [m.rowId, m]));
     if (data.filmLocalization?.ukrainianAudio?.state === 'reported-positive') add(host, 'p', 'Kinobaza film-level UA audio claim — not provider tracks.');
     if (!data.rows.length) add(host, 'p', 'No usable rows from selected sources. This is not proof of unavailability.');
     const grouped = groupProviderRows(data.rows);
@@ -166,9 +196,19 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
         add(card, 'p', `Unknown: ${fields.unknown.join(', ') || 'no missing summary fields'}${row.conflicts.length ? ' · CONFLICT — inspect details' : ''}`);
         const status = linkPresentation(row.link);
         add(card, 'p', `${status.summary} · ${status.navigation} · ${status.draft}`);
+        const match = matches.get(row.id);
+        if (match) {
+          const summary = add(card, 'div'); summary.className = 'matching-summary';
+          add(summary, 'span', `${row.provenance.source} · A: ${relationText(match.A)}.`);
+          add(summary, 'span', `${row.provenance.source}${match.B.peer ? ` ↔ ${sourceLabel(match.B.peer.source)} (${match.B.peer.rowId})` : ''} · B: ${relationText(match.B)}.`);
+          add(summary, 'span', 'Territory/access/version insufficient for enrichment. Separate rows; no localization transfer.');
+          const why = add(card, 'details'); add(why, 'summary', 'A/B reasons and missing scope'); add(why, 'pre', JSON.stringify(match, null, 2));
+        }
         if (status.canOpen) { const link = add(card, 'a', 'Open candidate explicitly (not verified)'); link.href = row.link.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.referrerPolicy = 'no-referrer'; }
         const details = add(card, 'details'); add(details, 'summary', 'Field provenance, unknowns and conflicts'); add(details, 'pre', JSON.stringify(row, null, 2));
-        const button = add(card, 'button', 'Select and review'); button.type = 'button'; button.addEventListener('click', () => select(row));
+        const button = add(card, 'button', 'Select and review'); button.type = 'button';
+        button.disabled = Boolean(match && (match.A.outcome !== 'compatible' || ['provider-id-conflict', 'provider-mapping-unresolved'].includes(match.B.reason)));
+        button.addEventListener('click', () => select(row));
       }
     }
     if (data.unmapped.length || grouped.unmapped.length) {
@@ -186,10 +226,12 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   const terms = add(kino, 'a', 'Kinobaza terms'); terms.href = 'https://kinobaza.com.ua/terms'; terms.rel = 'noreferrer';
   picker.addEventListener('change', async () => {
     if (loading) return; loading = true; syncChoice(); picker.disabled = true;
+    resetReport();
     try {
       const response = await fetchImpl(`/session?film=${encodeURIComponent(picker.value)}`, { cache: 'no-store', signal });
       if (!response.ok) throw new Error('Fixed-film session unavailable.');
       session = await response.json(); result = null; hideReview(); draft.replaceChildren(); draft.hidden = true;
+      draftState = emptyDraftState();
       el('answer').replaceChildren(); el('result').hidden = true;
     } catch { el('status').textContent = 'Film session failed. Reload; no source request was made.'; button.disabled = true; return; }
     finally { loading = false; picker.disabled = false; }
@@ -198,6 +240,7 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
   button.addEventListener('click', async () => {
     if (loading || used.has(session.film.id)) return;
     used.add(session.film.id); loading = true; picker.disabled = true; syncChoice();
+    resetReport(); reportFailed = false;
     el('status').textContent = 'Discovering fixed film once; no retries or destination requests.';
     try {
       const response = await fetchImpl('/answer', { method: 'POST', headers: { 'x-demo-session': session.token }, cache: 'no-store', signal });
@@ -205,9 +248,9 @@ export async function mountDiscovery(document, initial, { signal, fetchImpl = fe
       if (signal?.aborted) return;
       result = payload.result; render(result); el('result').hidden = false;
       el('status').textContent = 'Finished; inspect source claims/unknowns. Select another film in the same server; no automatic rerun.';
-    } catch { if (!signal?.aborted) el('status').textContent = 'Discovery failed/invalid response. No automatic retry.'; }
-    finally { loading = false; picker.disabled = false; syncChoice(); }
+    } catch { if (!signal?.aborted) { result = null; reportFailed = true; el('answer').replaceChildren(); el('result').hidden = false; el('status').textContent = 'Discovery failed/invalid response. No automatic retry.'; } }
+    finally { loading = false; picker.disabled = false; if (!signal?.aborted) { receivedAt = new Date().toISOString(); reportReady = true; copy.disabled = false; } syncChoice(); }
   });
-  document.defaultView.addEventListener('pagehide', () => { result = null; reviewRow = null; panes.replaceChildren(); pickerHost.remove(); }, { once: true });
+  document.defaultView.addEventListener('pagehide', () => { resetReport(); result = null; reviewRow = null; draftState = emptyDraftState(); panes.replaceChildren(); pickerHost.remove(); }, { once: true });
   syncChoice();
 }

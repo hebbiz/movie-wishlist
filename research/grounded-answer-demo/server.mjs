@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { MODEL, MAX_OUTPUT_TOKENS, FILMS, selectRequest, requestBody } from './config.mjs';
 import { runDiscovery, DISCOVERY_IDS } from './discovery.mjs';
+import { describeDiscovery } from './matching.mjs';
 import { syntheticResponse, syntheticHtml } from './synthetic.mjs';
 import { extractHtml, fetchHtmlCandidates, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS, canonicalKinobazaURL } from './html-source.mjs';
 import { networkConfig } from './network.mjs';
@@ -22,6 +23,7 @@ const assets = new Map([
   ['/tmdb-display.mjs', ['public/tmdb-display.mjs', 'text/javascript; charset=utf-8']],
   ['/megogo-display.mjs', ['public/megogo-display.mjs', 'text/javascript; charset=utf-8']],
   ['/discovery-client.mjs', ['public/discovery-client.mjs', 'text/javascript; charset=utf-8']],
+  ['/discovery-report.mjs', ['public/discovery-report.mjs', 'text/javascript; charset=utf-8']],
   ['/tmdb-logo.svg', ['public/tmdb-logo.svg', 'image/svg+xml']],
   ['/style.css', ['public/style.css', 'text/css; charset=utf-8']],
 ]);
@@ -108,7 +110,7 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
         if (composed) {
           const chosen = selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: session.filmId, kinobaza: selection.kinobaza });
           const result = await runDiscovery(chosen, { mode, tmdbToken, motnKey, fetchImpl });
-          return send(200, { mode, result });
+          return send(200, { mode, result: { ...result, matching: describeDiscovery(result) } });
         }
         if (megogoOnly) {
           const result = mode === 'synthetic' ? await extractMegogo(syntheticMegogo()) : await fetchMegogo(selection, fetchImpl);
