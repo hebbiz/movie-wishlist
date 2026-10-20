@@ -1,9 +1,13 @@
-// M3.1 only: page-scoped projected request state, never raw bodies or cross-run cache.
+// M3.1 + assisted M3.2: page-scoped projections, never raw bodies or cross-run cache.
 import { randomBytes, createHash } from 'node:crypto';
 import { readTmdbJson, projectTmdbIdentityFor, projectTmdbProvidersFor } from './tmdb.mjs';
 import { fetchMotnFor } from './motn.mjs';
 import { composeDiscovery } from './discovery.mjs';
 import { describeDiscovery } from './matching.mjs';
+import { admitKinobazaURL, fetchAssistedKinobaza } from './assisted-kinobaza.mjs';
+import { authoredAssistedHtml } from './film-workflow-synthetic.mjs';
+import { extractHtml } from './html-source.mjs';
+import { assistedIdentity } from './assisted-kinobaza.mjs';
 import { authoredFilmSearch, authoredFilmDetails, authoredFilmProviders, authoredFilmMotn } from './film-workflow-synthetic.mjs';
 
 const nonce = () => randomBytes(32).toString('hex');
@@ -34,11 +38,11 @@ export function projectFilmSearch(data) {
 export function createFilmWorkflows({ mode = 'synthetic', tmdbToken = '', motnKey = '', fetchImpl = globalThis.fetch,
   timeoutMs = 20_000, maxBytes = 2 * 1024 * 1024, now = Date.now } = {}) {
   const pages = new Map();
-  const retire = p => { clearTimeout(p.expiryTimer); p.controller?.abort(); p.revision++; p.candidates.clear(); p.selected = null; p.queries.clear(); p.inspected.clear(); p.calls = []; pages.delete(p.id); };
+  const retire = p => { clearTimeout(p.expiryTimer); p.controller?.abort(); p.revision++; p.candidates.clear(); p.selected = null; p.snapshot = null; p.card = null; p.queries.clear(); p.inspected.clear(); p.calls = []; pages.delete(p.id); };
   const get = id => { const p = pages.get(id); if (!p || p.expires <= now()) { if (p) retire(p); return null; } return p; };
-  const view = p => ({ id: p.id, actionToken: p.actionToken, counters: { ...p.counters }, uses: { ...p.uses }, cap: 6,
+  const view = p => ({ id: p.id, actionToken: p.actionToken, counters: { ...p.counters }, uses: { ...p.uses }, cap: p.assisted ? 7 : 6,
     elapsedMs: p.start === null ? 0 : Math.round(performance.now() - p.start), phaseElapsedMs: { ...p.phaseElapsedMs } });
-  const clear = p => { p.controller?.abort(); p.revision++; p.busy = false; p.candidates.clear(); p.selected = null; p.confirmed = false; p.done = false; p.actionToken = nonce(); };
+  const clear = p => { p.controller?.abort(); p.revision++; p.busy = false; p.candidates.clear(); p.selected = null; p.snapshot = null; p.card = null; p.confirmed = false; p.done = false; p.actionToken = nonce(); };
   const expire = () => { for (const [id] of pages) get(id); };
   function issue() {
     expire(); if (pages.size >= 100) return null;
@@ -53,20 +57,63 @@ export function createFilmWorkflows({ mode = 'synthetic', tmdbToken = '', motnKe
   const invalidate = id => { const p = get(id); if (!p) return null; clear(p); return view(p); };
   async function execute(id, action, token, input = {}) {
     const p = get(id);
-    if (!p || p.busy || token !== p.actionToken || !['search', 'preview', 'confirm', 'discover', 'new-case'].includes(action)) return { status: 409, payload: { status: 'expired-or-used-action' } };
+    if (!p || p.busy || token !== p.actionToken || !['search', 'preview', 'confirm', 'discover', 'new-case', 'admit-card', 'read-card'].includes(action)) return { status: 409, payload: { status: 'expired-or-used-action' } };
     p.actionToken = nonce(); // Consume synchronously before validation/await.
     const fail = status => ({ status: 400, payload: { status, workflow: view(p) } });
     if (!object(input)) return fail('invalid-input');
-    const fields = { search: ['query', 'year'], preview: ['candidate'], confirm: ['preview'], discover: [], 'new-case': [] }[action];
+    const fields = { search: ['query', 'year'], preview: ['candidate'], confirm: ['preview'], discover: [], 'new-case': [], 'admit-card': ['sourceURL'], 'read-card': ['card'] }[action];
     if (Object.keys(input).some(k => !fields.includes(k))) return fail('unsupported-input');
     if (action === 'new-case') {
-      clear(p); p.counters = empty(); p.uses = empty(); p.phaseElapsedMs = empty(); p.calls = []; p.queries.clear(); p.inspected.clear(); p.start = null;
+      clear(p); p.assisted = false; p.counters = empty(); p.uses = empty(); p.phaseElapsedMs = empty(); p.calls = []; p.queries.clear(); p.inspected.clear(); p.start = null;
       return { status: 200, payload: { status: 'new-case', workflow: view(p) } };
     }
     if (action === 'confirm') {
       if (!p.selected || input.preview !== p.selected.ref || p.confirmed || p.done) return fail('preview-required');
       p.confirmed = true;
       return { status: 200, payload: { status: 'confirmed', film: p.selected.film, workflow: view(p) } };
+    }
+    if (action === 'admit-card' || action === 'read-card') {
+      if (!p.snapshot || !p.confirmed || !p.done || p.uses.kinobaza >= 1) return fail('discovery-required-or-card-used');
+      if (action === 'admit-card') {
+        p.card = null; // A failed replacement cannot leave an older admitted URL usable.
+        const sourceURL = admitKinobazaURL(input.sourceURL);
+        if (!sourceURL) return fail('unsupported-kinobaza-url');
+        p.assisted = true; p.counters.kinobaza ??= 0; p.uses.kinobaza ??= 0; p.phaseElapsedMs.kinobaza ??= 0;
+        p.card = { ref: nonce(), sourceURL, filmId: p.selected.film.id };
+        return { status: 200, payload: { status: 'card-admitted', card: { ...p.card }, workflow: view(p) } };
+      }
+      const card = p.card;
+      if (!card || input.card !== card.ref || card.filmId !== p.selected.film.id || !admitKinobazaURL(card.sourceURL)) return fail('card-reference-unavailable');
+      p.card = null; p.uses.kinobaza = 1; p.busy = true;
+      const revision = p.revision, started = performance.now(), controller = new AbortController(); p.controller = controller;
+      const snapshot = p.snapshot; let called = false;
+      try {
+        const boundedFetch = async (target, init) => {
+          if (called || controller.signal.aborted || p.revision !== revision || target !== card.sourceURL || !admitKinobazaURL(target) ||
+              Object.values(p.counters).reduce((a, b) => a + b, 0) >= 7 || init.method !== 'GET' || init.redirect !== 'manual' || init.credentials !== 'omit' ||
+              Object.keys(init.headers).some(h => /authorization|cookie|key/i.test(h))) throw Error('Assisted request boundary');
+          called = true; p.counters.kinobaza++; const call = { phase: 'kinobaza', stage: 'kinobaza', method: 'GET' }; p.calls.push(call);
+          const r = await fetchImpl(target, init); call.httpStatus = r.status; return r;
+        };
+        let kino = mode === 'synthetic'
+          ? await extractHtml(authoredAssistedHtml(snapshot.film, card.sourceURL), snapshot.film, { identityCheck: all => assistedIdentity(all, snapshot.film, card.sourceURL) })
+          : await fetchAssistedKinobaza(card.sourceURL, snapshot.film, boundedFetch, { signal: controller.signal, timeoutMs: Math.min(timeoutMs, 15_000), maxBytes: Math.min(maxBytes, 2 * 1024 * 1024) });
+        if (p.revision !== revision) return { status: 409, payload: { status: 'superseded' } };
+        if ([tmdbToken, motnKey].filter(Boolean).some(s => JSON.stringify(kino).includes(s))) kino = { status: 'unsafe-response-withheld', candidates: [] };
+        kino.sourceURL = card.sourceURL; kino.receivedAt ??= new Date().toISOString();
+        if (kino.localization) kino.localization.provenance ??= { source: 'Kinobaza HTML', sourceURL: card.sourceURL, receivedAt: kino.receivedAt,
+          method: 'authored synthetic assisted-card blocks; not a read page', upstream: 'not-established' };
+        const elapsedMs = Math.round(performance.now() - started); p.phaseElapsedMs.kinobaza += elapsedMs;
+        const stages = { ...snapshot.stages, kinobaza: { status: kino.status, result: kino, elapsedMs } };
+        const result = composeDiscovery(snapshot.film, stages, { synthetic: mode === 'synthetic', sourceURLs: snapshot.sourceURLs,
+          metrics: { requestsMade: Object.values(p.counters).reduce((a, b) => a + b, 0), requestBudget: 7, elapsedMs: Math.round(performance.now() - p.start), calls: p.calls.map(c => ({ ...c })) } });
+        result.dynamic = true; result.assisted = true; result.matching = describeDiscovery(result, snapshot.expected);
+        result.assistedContribution = { status: kino.status, identity: kino.identity?.status ?? 'unresolved', reason: kino.identity?.reason ?? kino.issues?.[0] ?? null,
+          candidates: kino.identity?.status === 'matched' ? kino.candidates?.length ?? 0 : 0, rowsAdded: result.rows.filter(r => r.id.startsWith('kinobaza:')).length,
+          blocks: kino.identity?.status === 'matched' ? kino.localization?.blocks?.length ?? 0 : 0 };
+        return { status: 200, payload: { status: 'card-complete', result, workflow: view(p) } };
+      } catch { return p.revision !== revision ? { status: 409, payload: { status: 'superseded' } } : { status: 502, payload: { status: 'action-failed-no-retry', workflow: view(p) } }; }
+      finally { if (p.revision === revision) p.busy = false; }
     }
     let url, selected;
     if (action === 'search') {
@@ -151,6 +198,7 @@ export function createFilmWorkflows({ mode = 'synthetic', tmdbToken = '', motnKe
         const result = composeDiscovery(film, stages, { synthetic: mode === 'synthetic', sourceURLs: { tmdb: url, motn: motnURL },
           metrics: { requestsMade: Object.values(p.counters).reduce((a, b) => a + b, 0), requestBudget: 6, elapsedMs: Math.round(performance.now() - started), calls: p.calls.map(c => ({ ...c })) } });
         result.matching = describeDiscovery(result, expected); result.dynamic = true;
+        p.snapshot = { film, stages, expected, sourceURLs: { tmdb: url, motn: motnURL } };
         payload = { status: 'complete', result };
       }
       p.phaseElapsedMs[action === 'discover' ? 'discovery' : action] += Math.round(performance.now() - started);

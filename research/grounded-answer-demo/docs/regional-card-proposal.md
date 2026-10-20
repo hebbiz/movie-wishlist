@@ -19,7 +19,8 @@ unreadable (403), not assumed absent; ordinary GitHub merges succeeded without
 bypass. These are historical implementation checks, **not rerun for M3 docs**.
 
 **M3.1 subsequently approved/implemented for bounded isolated research after
-#187 eb21427. M3.2 and all new live preflight/evaluation remain unapproved.**
+#187 eb21427. Assisted M3.2 is subsequently approved/implemented below;
+all new live preflight/evaluation, merge and production remain unapproved.**
 The [M3 decision and feasibility](#m3-arbitrary-film-discovery--proposed-design-only)
 and [13-section handoff](m3-arbitrary-film-handoff.md) are the current next-step
 design, not a second architecture. Six fixed controls remain alongside the new
@@ -2876,7 +2877,7 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | P3 short-report release-event `date` | Technical debt, non-blocking; not an established cause of owner-run partial. No runtime fix in this task. |
 | Deterministic Mykola viewing answer | Implemented in #186, merged via #185/#184; separate source claims, no LLM/production. Authored checks only. |
 | M3.1 arbitrary TMDb selection + MOTN | **Subsequently approved/implemented, authored checks only**; explicit phase counters/cap6, six controls retained. Live preflight/evaluation and merge unapproved. |
-| M3.2 Kinobaza card resolution | **Proposed / design-only**, assisted public-UI card selection recommended pending product approval; native automated search conflicts with current robots exclusions. No automatic resolver capability established. |
+| M3.2 Kinobaza card resolution | **Assisted bounded implementation, live-unvalidated**: human-found canonical root card, one identity-gated GET. Native automated search remains deferred under robots exclusions; no automatic resolver capability established. |
 | MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
 The earlier scope approval covered A/B implementation, not indefinite engine
@@ -3483,16 +3484,133 @@ to manufacture successful outcomes. Source rights remain separate from metrics.
 1. **M3.1 implementation was subsequently approved and implemented** below;
    review/merge remains separate. No new source/plan, poster infrastructure,
    hosting, DB/cache/queue or numerical matching score.
-2. Choose **assisted M3.2** as a bounded intermediate step, or defer it if the
-   product requires automatic card discovery. Native automated search is not
+2. **Assisted M3.2 was subsequently approved/implemented** as a bounded intermediate step. Native automated search is not
    ready under current access rules; do not claim this fallback solves it.
 3. Separately authorize bounded preflight and then evaluation, including the
    eight nominations, usefulness thresholds and max3 manual opens/time window.
 
 All implementation details and standard13 sections are in the linked
 [M3 handoff](m3-arbitrary-film-handoff.md), **M3.1 approved/implemented;
-M3.2/evaluation not authorized**.
+assisted M3.2 approved/implemented; evaluation not authorized**.
 MW-FUT-01 remains Discovery; no production write/integration or new owner cycle.
+
+### M3.2 assisted card implementation — authored checks only
+
+Owner authorized bounded assisted M3.2 on October20,2026. Verified parent #188
+is open at `a88bfba58946ad333084224b1c18d5723b5f6f41`, base open #187
+`eb21427a325c8331bddfb1dd05c17d4db5c96cac`; isolated clean child branch, no parent
+rewrite/merge or owner-process changes. This record supersedes earlier M3.2
+approval-pending language **only for assisted card selection**, not automated
+resolution, live preflight/evaluation, general scraping or production.
+
+**Actual components and flow**
+
+- [assisted-kinobaza.mjs](../assisted-kinobaza.mjs) admits original spelling
+  `https://kinobazaua.com/titles/[a-z0-9]+(-[a-z0-9]+)*`, max512 characters.
+  No normalization/repair, default/other port, userinfo, alternate host, query,
+  fragment, subpage, encoded slash/dot/double encoding, backslash or whitespace.
+  Unsupported spelling is explicit; no guessed slug/redirect/native search.
+- [film-workflow.mjs](../film-workflow.mjs) adds protected local `admit-card`
+  (0 source calls) and `read-card` actions after confirmed dynamic discovery.
+  Admission issues a random opaque page/case/selected-film reference, not fetch
+  authority from browser IDs. A failed replacement revokes older admission.
+  Reference and original URL revalidated before GET, consumed before await.
+  Wrong reference never fetches; failed GET still consumes the single attempt.
+  Same100-context/30min expiry/abort/close purge, bounded JSON/Host/Origin/LAN
+  auth/no-store/CSP and server-side credential controls apply to both routes.
+- Source transport: one GET, initial UTF-8 HTML, **15s/2MiB**, manual redirect
+  refusal, no retry/credentials/cookies/assets/JS/login/destination request.
+  Block/challenge/timeout/oversize/unsupported MIME/markup are explicit. Existing
+  fixed-card canonical hop policy and other adapters/request bodies unchanged.
+- Dynamic identity callback to [html-source.mjs](../html-source.mjs) reuses its
+  bounded parse5 tree and extraction after a separate gate. Require one source
+  H1 title/year, an exact returned original/title alias in H2, a canonical link
+  agreeing with the admitted URL, and explicit labelled director evidence.
+  Normalize NFC/case/whitespace only. Aliases come solely from selected TMDb
+  preview; no per-film or generated transliteration aliases. Missing evidence,
+  multiple headings or unestablished cross-script director spelling is
+  **unresolved**. Explicit different title/year/canonical/same-script director
+  or stable ID is **mismatch**, not overridable by a click. Unrecognized same-
+  script names conservatively refuse; this may miss real aliases, never proves
+  a different actual person. IDs are optional evidence only from labelled
+  IMDb/TMDb film-metadata rows with supported exact links; all returned IDs
+  must agree with one another and known selected IDs. Malformed IDs unresolved.
+  An exact agreed stable ID permits year variance, but does not erase title/
+  director/canonical conflict. No ID is assumed present in real HTML.
+- Existing localization extractor preserves film badge / own provider block /
+  country signal / exact candidate separately. Unknown territory does not become
+  UA; global badge does not fill offered tracks; original audio is not an offered
+  locale. Generic stereo/Dolby remain literal, completeness unknown. Shared
+  JustWatch lineage stays labelled. No provider-name join into MOTN offers,
+  price/video repair, new B/C/D capability or unified verified offer.
+- Existing TMDb/MOTN projected stages retained only within active RAM case,
+  recomposed after Kinobaza without refetch. Original row IDs and values stay
+  stable. Incremental rendering closes pending review but preserves confirmed/
+  edited draft DOM/state; new query/film/fixed selection/new case revokes refs,
+  aborts work and clears old draft/report. Late replies/copy callbacks cannot
+  restore stale state. Select/review/confirm/cancel still targets one source row;
+  exact URLs, R1 `at`/tracking acknowledgement, R2 quarantine/exclusions remain.
+- UI shows admitted URL and budget before the separate read button. Contribution
+  summary distinguishes all extracted candidates, displayed separate rows and
+  localization blocks; counts are source output, not usable/verified offers.
+  Safe short report adds only bounded counts, identity/status/reason codes and
+  elapsed/cap; no URLs, tracking, token, secret, raw body or manual draft values.
+  Phase elapsed excludes manual lookup; overall case wall time includes human
+  interaction and is not provider latency or a benchmark. Lost local response
+  makes accounting/outcome unknown, not a false claim of0 calls/not evaluated.
+  Runtime commit remains unknown. Clipboard unavailable/denied fallback retained.
+  Synthetic produces unmistakably invented film/card text, never a live page.
+
+**Accounting / future session (not executed)**
+
+M3.1 normal4/max6; assisted normal5/max7 =search≤2 +preview≤2 +independent
+discovery≤2 +Kinobaza≤1. Invalid admission/confirm/invalidate/render/copy/select/
+draft add0 source calls. HTTP failure counts; synthetic source counts0 with
+separate consumed-action counters. One final source GET requires a completed
+confirmed case; a source failure does not suppress good peers.
+
+One future combined session retains the eight risk-selected nominations in the
+[evaluation matrix](#eight-film-evaluation-matrix-and-measurable-acceptance),
+no new IDs/URLs or live preflight performed. Baseline TMDb/MOTN usefulness is
+recorded **before** addition; then record manual card lookup time/outcome, added
+eligible links, separately scoped localization hints, conflicts/unknowns and
+help choosing compared with manual navigation. Missing/ambiguous/not found
+cards stay in denominator. No automatic resolver success claim. Eight cases
+normal32/max48 baseline; with8 admitted cards normal40/max56 (max8 extra GETs).
+Existing separate future preflight ceiling28 is **not** consumed/authorized by
+implementation. Human public-UI searches/max3 preselected link opens are separate
+unmeasured traffic. One short15min session/stop criteria, no replacement films,
+repeat streaming-app sweep or mandatory synthetic/SSH-disconnect cycle.
+0 false identity assignments mandatory; usefulness ratios remain hypotheses.
+
+**Scoped rights applicability — reuse dated evidence, not fresh permission**
+
+Reviewed existing October20 first-party evidence above; **0 new public rules,
+title, API, provider or destination requests in this implementation task**.
+[Terms §§1–4](https://kinobazaua.com/terms) public-user/conduct/third-party/change
+scope applies beyond two fixed cards. No direct clause prohibiting this precise
+bounded human-selected root-card transient read was identified in that dated
+review; **not** a licence or proof rights are established. The broader catalogue/
+localization/third-party reuse, arbitrary-card scale/retention/commercial rights
+and §2 language wording remain unresolved. Owner approval authorizes this PoC,
+not third-party rights. No email prerequisite/legal acknowledgement switch added.
+[Robots](https://kinobazaua.com/robots.txt) excludes automated search/query paths;
+the machine never submits search or uses hidden endpoints, and only admits root
+title paths distinct from those exclusions. Robots is not a licence. Fixed-card
+approval is **not blanket permission** for arbitrary/regular/commercial scraping.
+Specific prohibition/block stops the affected path; unknown rights are disclosed,
+not turned into invented blanket ban/clearance. No raw HTML/cache/archive or LLM
+transfer. TMDb derivative/Application and MOTN account/quota/attribution/third-
+party limits remain as in the existing [source-use assessment](#official-tmdb-capabilities-and-source-use-limits),
+not resolved by assisted card selection. **Live-unvalidated**, separate evaluation
+authorization/source readiness still required; production/persistence unapproved.
+
+Authored offline/HTTP/mobile tests cover admission, identity/aliases/ID conflict,
+partial peers, bounds/block/redirect, one-shot/cap7 and stale replies, exact links/
+ack/draft preservation/cancel/copy/no-storage. Windows temporary-copy lifecycle
+also exercises new module inheritance and one admitted mock source GET with no
+API credential on that request. These are implementation checks, not live HTML
+shape, real iPhone/SSH-disconnect, coverage, accuracy or entitlement validation.
 
 ### M3.1 bounded implementation — authored checks only
 
@@ -3521,7 +3639,7 @@ All six fixed controls, prior modes and fixed request bodies/budgets remain.
   Watch Providers and one verified-IMDb MOTN call, independently gated/parallel.
   No crosswalk → MOTN not evaluated,0 calls; provider failure after a valid
   preview does not suppress independent MOTN. Dynamic Kinobaza is always not
-  evaluated, not a resolver failure. No Google Search, LLM or provider destinations.
+  evaluated until the separately approved assisted M3.2 step above, not a resolver failure. No Google Search, LLM or provider destinations.
 - **Actual HTTP counters** search≤2 +preview≤2 +discovery≤2 =cap6; usual1+1+2=4.
   At most one discovery action/case. Attempted errors/redirects count, missing
   credentials do not create fake calls. Content-free phase/source/status call

@@ -1,15 +1,17 @@
 # MW-FUT-01-M3 handoff: arbitrary-film discovery
 
 **M3.1 subsequently approved/implemented for bounded isolated research** after
-#187 `eb21427a325c8331bddfb1dd05c17d4db5c96cac`. **M3.2, live preflight/evaluation,
-merge and production remain Proposed / not authorized.** The13 sections retain
+#187 `eb21427a325c8331bddfb1dd05c17d4db5c96cac`. **Assisted M3.2 subsequently
+approved/implemented in a child of #188 a88bfba; live preflight/evaluation,
+merge and production remain not authorized.** The13 sections retain
 the design; the [implementation record](regional-card-proposal.md#m31-bounded-implementation--authored-checks-only)
 states the actual M3.1 boundary and authored verification. No new owner cycle.
 October20,2026. MW-FUT-01 remains Discovery. The
 [canonical M3 decision](regional-card-proposal.md#m3-arbitrary-film-discovery--proposed-design-only)
 owns architecture, source-use evidence, metrics and trade-offs; this file is the
 reviewable task boundary, not a parallel specification. M3.1 is implemented in
-a separate child PR; M3.2 still requires approval. Automatic Kinobaza search
+a separate child PR; the [assisted M3.2 record](regional-card-proposal.md#m32-assisted-card-implementation--authored-checks-only)
+states the bounded implementation, rights limitations and future evaluation. Automatic Kinobaza search
 is not a verified dependency.
 
 ## 1. Context
@@ -51,7 +53,7 @@ not imports/proxies or M3 behavioral templates. Never call production endpoints.
   confirmation, validated dynamic identity/crosswalk context, TMDb UA/MOTN
   discovery, existing separate-row answer/draft/report. Kinobaza not evaluated
   for dynamic selections. Six fixed controls and all older modes preserved.
-- **M3.2 separate PR, product choice pending:** assisted ordinary public-UI
+- **M3.2 separately approved bounded PR:** assisted ordinary public-UI
   selection of one exact canonical Kinobaza source card, controlled server
   admission, identity gate, then existing extraction from the same HTML.
   No per-film catalogue registration/provider-link entry. Automated native
@@ -132,7 +134,7 @@ the browser sends only opaque selection/candidate references, not URLs to fetch.
 
 M3.2 adds at most one run-bound one-shot stage to the same identity/counters,
 even if selected later; do not repeat TMDb/MOTN or overwrite a same-film draft.
-M3.2 requires a separate admission/identity policy review. Reuse `parse5` and
+M3.2 admission/identity policy is documented in the linked implementation record. Reuse `parse5` and
 localization extraction only after identity; no per-film alias patches or nearby
 text inference. Unestablished director transliteration remains ambiguous.
 Native public search UI exists, but request/result protocol not established and
@@ -224,8 +226,7 @@ After separate approval, fetch/instructions/dirty-tree check and create M3.1
 feature branch from actual develop, isolated from owner demo/untracked files.
 Actual M3.1 implementation is stacked on still-open #187, with only the new
 implementation diff, per subsequent owner authorization. Review-only path;
-M3.2 separate child PR only after its scope is
-approved, use actual stack/base without duplicate diffs. Pin reviewed/tested SHA
+M3.2 is a separate child of the actual open #188, without duplicate parent diffs. Pin reviewed/tested SHA
 and report checks/skips, scope, source rights and pending evaluation separately.
 No history rewrite/force, merge/retarget/tag/release/deployment/system changes.
 Stop review-ready; neither this proposed task nor future implementation consent

@@ -4,7 +4,8 @@
 
 M3.1 is implemented for isolated research; **live preflight/evaluation is not
 authorized and is not requested here**. [Implementation/source-use boundaries](regional-card-proposal.md#m31-bounded-implementation--authored-checks-only)
-and [handoff](m3-arbitrary-film-handoff.md) retain M3.2/production deferral.
+and [handoff](m3-arbitrary-film-handoff.md) retain automatic resolver/production deferral;
+assisted M3.2 is implemented below, live-unvalidated.
 Windows helpers, LAN username `demo`, exact printed Safari URL, hidden source
 key/password prompts and detached lifecycle are unchanged; agent temp-copy
 lifecycle/module-copy checks cover this iteration. No mandatory repeated owner
@@ -15,8 +16,9 @@ Only after future evaluation approval:
 1. Use the correct reviewed PoC copy/branch and existing safe-update/start/status
    workflow below, preserving local/untracked files. Same `ua-discovery` +
    `digital-ua` setup and TMDb/MOTN credentials; no new switch/provider/key.
-   `DEMO_FILM` still selects an initial fixed control. Dynamic Kinobaza stays
-   not evaluated even if fixed controls use `DEMO_KINOBAZA=on`.
+   `DEMO_FILM` still selects an initial fixed control. Dynamic Kinobaza initially
+   stays not evaluated even if fixed controls use `DEMO_KINOBAZA=on`; use the
+   separate assisted step below only after future evaluation approval.
 2. In Safari choose **«Знайти інший фільм»**, type title/optional year and explicitly
    press **«Шукати в TMDb»**. Select the intended candidate (not automatically
    first), review original/title/year/directors and IMDb crosswalk. Confirm
@@ -35,6 +37,43 @@ Only after future evaluation approval:
    Do not open provider links beyond the separately agreed small evaluation
    sample or repeat already completed platform checks. Stop at cap, wrong identity,
    access block or stale state; short new/missing/conflicting summary only.
+
+## M3.2 assisted Kinobaza — future combined session only
+
+**Implemented/offline-tested, live-unvalidated; do not run a new evaluation now.**
+The [canonical implementation/rights record](regional-card-proposal.md#m32-assisted-card-implementation--authored-checks-only)
+owns the limits. Same server/start/status/stop, hidden LAN/TMDb/MOTN prompts,
+Safari `http://<actual-Windows-IPv4>:4317`, username `demo`; no additional key or
+environment switch, no mandatory repeat synthetic/SSH-disconnect.
+
+For the single future separately approved eight-case M3.1/M3.2 session:
+
+1. Perform the M3.1 search/preview/confirm/discovery above, not the fixed control
+   shortcut. Record its source results independently (normal4/max6 calls).
+2. Optional **«Додати дані Кінобази»**: manually find the exact public film card.
+   Record approximate human lookup time, or not found/ambiguous; do not replace
+   inconvenient films or invent slugs. No automatic search is provided.
+3. Paste canonical `https://kinobazaua.com/titles/<slug>` and press
+   **«Перевірити адресу»**. Admission makes0 source calls. Check the displayed
+   accepted URL and budget, then separately press **«Прочитати одну картку»**.
+   One GET, no redirects/retries; unsupported old host/query/subpage is not repaired.
+4. Read added rows/localization and identity reason alongside existing M3.1
+   rows. Unresolved/mismatch/block keeps independent results usable. Source
+   labels are not entitlement or track transfer. A failed GET spends the attempt.
+   A same-film confirmed/edited draft survives; any pending selection review
+   closes. New film/new case clears all stale references/results/report/draft.
+5. Copy the short report or selectable fallback. Add only short human lookup
+   time/useful-new-links/localization/missing/conflicting/usefulness notes,
+   not full URLs/HTML/JSON. No repeat of the six-platform/app tour. One meaningful
+   draft check at most; only preapproved limited explicit link opens.
+
+Eight nominated cases remain in denominator even if no card is found. M3.1
+normal32/max48 source calls across8 cases; with one admitted Kinobaza card per
+case normal40/max56 (at most8 added source GETs). Missing crosswalk/card reduces
+actual calls, not denominator. Manual browser lookup/explicit link opens have
+separate unmeasured traffic. Search≤2 +preview≤2 +discovery≤2 +card≤1 =case cap7.
+Stop on wrong identity, unsafe fetch/leak/stale draft, source block, cap or the
+agreed short-session time limit; no retries/replacements or new owner cycle.
 
 Current [consolidated proposal](regional-card-proposal.md#current-decision-checkpoint--proposed-not-implementation-approval)
 and [handoff](consolidated-poc-handoff.md) now have bounded research implementation
