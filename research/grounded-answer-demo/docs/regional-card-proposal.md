@@ -2,6 +2,32 @@
 
 ## Verified baseline and M2 design status
 
+**Current research baseline, October 20, 2026:** fetched `origin/develop`
+`09c9482694b37f16fb0371f6d2fca790167a31b0`, tree
+`81f08f63033ae7f5cb612e42cc6eb7e9fe281e99`. The authorized merge-commit
+sequence completed: #186 `23dfb04b0bbe620bdf2c89902437865c768a5327` →
+#185 `b2042ca4e75db4047dfb9ab51f47be0e1edef39e` → #184/develop
+`09c9482694b37f16fb0371f6d2fca790167a31b0`. Launcher fix and R1/R2 remain
+ancestors; all34 changed files were within this research directory. Main stays
+`e92392856038e40e6d98c6c8744eed04c4e8dff9`; no production promotion inferred.
+Fresh checks ran separately on assembled #184 and final develop: each334
+offline/HTTP passed,144 browser/mobile passed,11 skipped (10 unavailable WebKit,
+1 optional LAN unset),0 failures. Windows lifecycle was not rerun because its
+helpers/key routing/dependencies were unchanged. New #184 preview succeeded;
+final develop had0 remote statuses/check-runs. Effective required policy was
+unreadable (403), not assumed absent; ordinary GitHub merges succeeded without
+bypass. These are historical implementation checks, **not rerun for M3 docs**.
+
+**M3 is Proposed / design-only; implementation and evaluation are not authorized.**
+The [M3 decision and feasibility](#m3-arbitrary-film-discovery--proposed-design-only)
+and [13-section handoff](m3-arbitrary-film-handoff.md) are the current next-step
+design, not a second architecture. Six fixed controls remain the actual runtime.
+M2 is closed, B auxiliary/deferred, C/D/enrichment absent; MW-FUT-01 remains
+Discovery. Earlier open-stack/no-merge statements below are dated history,
+superseded by this verified consolidation record, not new instructions.
+
+**Historical M2 preparation baseline follows.**
+
 **MW-FUT-01-M2: bounded A/B-only isolated research implementation authorized.**
 The implementation record below supersedes the initial Proposed status only for
 that narrow slice and explicit-copy summary. The subsequent bounded held-out
@@ -309,7 +335,8 @@ no-referrer/noopener; search/relative links remain text diagnostics.
 | D3: writes/retention | Explicit local draft only; future persistence in existing Supabase subject to rights/RLS/mapping review. | Research draft implemented; no schema/write/cache authorization. |
 | D4: LLM | Optional later explanation/research path, not truth source or AI-training/evaluation pipeline. | Deferred; no restricted-source forwarding. |
 
-Roadmap: source probes/owner observations **completed with limits**; MEGOGO
+Historical M1 roadmap (current M3 statuses are in the table near the M2 closeout):
+source probes/owner observations **completed with limits**; MEGOGO
 **unresolved/frozen**; consolidated design/handoff **approved for research**;
 composition/draft **implemented/offline-tested, owner functionally validated**;
 compact-UI/cancel correction **offline/browser-tested, not live-revalidated**;
@@ -2837,19 +2864,22 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | --- | --- |
 | M1 isolated probes/composition | Merged into research develop; bounded owner observations, not production. |
 | M2 matching matrix/handoff | Bounded research checkpoint **closed**, not the whole initiative. Full A–D constraints retained; C/D/enrichment not implemented. |
-| M2 A/B implementation | Implemented on open stacked #185; A explains existing gates, no positive cross-source B benefit demonstrated. B remains auxiliary diagnostics; further development deferred. Not merged. |
+| M2 A/B implementation | Merged via #185/#184 into09c9482; A explains existing gates, no positive cross-source B benefit demonstrated. B remains auxiliary diagnostics; further development deferred. |
 | C/D commercial identity/field applicability | Deferred long-term rules/forbidden-inference tests only, not required runtime in the first slice. |
 | Held-out identity/source-card preflight | **Authorized/completed**, documentary identity/canonical evidence only; controlled GET17, search queries15 separately disclosed. |
 | Held-out runtime catalogue/preparation | **Authorized/implemented**, authored offline/browser/Windows checks; no factual availability results or live owner requests. |
 | Held-out four-film discovery/evaluation | **Owner reports completed**,14 calls, all shown B insufficient, all TMDb A partial/B ok; no draft test/runtime attestation/general accuracy. No agent repetition/new session requested; source-use limits remain. |
 | Two-request Dune pointer probe | Deferred, not authorized; dormant design only, not a prerequisite for a useful answer. |
 | P3 short-report release-event `date` | Technical debt, non-blocking; not an established cause of owner-run partial. No runtime fix in this task. |
-| Deterministic Mykola viewing answer | **Separately approved / implemented in stacked child of #185**; presentation of existing separate claims, no LLM or production. Authored checks only. |
-| Arbitrary Kinobaza cards/MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
+| Deterministic Mykola viewing answer | Implemented in #186, merged via #185/#184; separate source claims, no LLM/production. Authored checks only. |
+| M3.1 arbitrary TMDb selection + MOTN | **Proposed / design-only**; explicit search/identity/discovery budgets, six controls retained. Separate implementation/evaluation approval required. |
+| M3.2 Kinobaza card resolution | **Proposed / design-only**, assisted public-UI card selection recommended pending product approval; native automated search conflicts with current robots exclusions. No automatic resolver capability established. |
+| MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
 The earlier scope approval covered A/B implementation, not indefinite engine
-development. Further B/probe work is deferred; the next proposed product choice
-is the deterministic presentation below, with separate implementation approval.
+development. Further B/probe work is deferred. The deterministic presentation
+below was subsequently approved/implemented/merged; the next proposed scope is
+M3, not another approval request for that existing UX.
 Runtime preparation and a completed owner-reported session are recorded;
 neither passing tests nor that session clears source-use limits. Rule mechanics,
 unknown preservation and safety are proposed engineering defaults, not a request
@@ -2922,6 +2952,10 @@ its own13 labelled sections. Four Markdown files changed, no runtime/dependency
 diff; scope and whitespace clean. No full responses, reports or HTML archived.
 
 #### Eventual merge plan — no authorization or operations now
+
+Historical plan: subsequently authorized and completed, including child #186;
+actual merge SHAs/check baselines are recorded at the top of this document.
+This retained sequence is not authorization for any M3 merge.
 
 1. After explicit merge approval, refetch and pin **H185, H184, D** to actual
    head/base SHAs; inspect new/unreviewed commits and local files. Read available
@@ -3135,6 +3169,323 @@ across the existing10 Markdown documents, zero broken references. Historical
 M1/M2 and approved successor retain13 sections each; scope/whitespace clean.
 
 <a id="megogo-one-card-adapter-proposal--not-implemented"></a>
+
+<a id="m3-arbitrary-film-discovery--proposed-design-only"></a>
+
+## M3 arbitrary-film discovery — Proposed / design-only
+
+### Decision and verified implementation gap
+
+**M3-D1:** recommend two separately reviewable implementation PRs, M3.1 then
+M3.2, each requiring separate approval. Neither runtime work nor live evaluation
+is authorized by this design. Do not expand B/C/D, introduce LLM, add sources,
+or restart MEGOGO work. This extends the existing observation contract and
+deterministic answer; it does not replace them with an offer-merge engine.
+
+**M3.1** removes per-film code registration for TMDb/MOTN: explicit title search
+→ user-selected TMDb candidate → bounded identity preview/crosswalk → explicit
+confirmation → independent UA provider/MOTN results → existing one-row draft.
+**M3.2** adds controlled Kinobaza source-card resolution, its own identity gate,
+then existing links/localization extraction. It may fail without suppressing
+M3.1. Automatic arbitrary Kinobaza lookup is **not a verified capability**.
+
+Inspection at09c9482 establishes the actual work, not just a new search box:
+
+| Existing component | Verified behavior | Proposed narrow reuse/change, not implemented |
+| --- | --- | --- |
+| [config.mjs](../config.mjs), [held-out.mjs](../held-out.mjs) | Fixed switch/catalogue, six composed films; other demo modes have their own scope. | Preserve fixed controls and existing request goldens; add a separate server-validated selected-film context, not arbitrary URL/config overrides. |
+| [server.mjs](../server.mjs) | `/session?film=` accepts only fixed IDs; token stores filmId, expires30min, consumed before await at `/answer`. | Bind opaque tokens to one search generation, selected TMDb ID and immutable projected identity; invalidate prior selection on change. Existing modes unchanged. New local route names are intentionally not specified before implementation review. |
+| [tmdb.mjs](../tmdb.mjs) | `TMDB_FILMS`, fixed URL equality, root/returned-ID checks, five appended resources, independent `results.UA` projection. | Parameterize expected identity from validated selected root; preview Details once and reuse that transient projection for discovery. Do not relax response validation. |
+| [motn.mjs](../motn.mjs) | `MOTN_FILMS`, exact IMDb required, conflicts quarantine results, year variance alone allowed. | Accept only the validated TMDb crosswalk snapshot; missing/invalid IMDb means not evaluated,0 MOTN calls, not guessed search. |
+| [html-source.mjs](../html-source.mjs), [kinobaza-localization.mjs](../kinobaza-localization.mjs) | Fixed cards; explicit title/year/director aliases; strict old-to-canonical hop only for original controls; distinct film/block/country/link layers. | Separate candidate admission from structural identity and extraction. Dynamic director aliases cannot be hardcoded per film; unsupported transliteration remains ambiguous, never guessed. |
+| [discovery.mjs](../discovery.mjs), [matching.mjs](../matching.mjs) | Exact per-run allowed URLs/seen set/deadline, independent source gates, R1/R2; matching also uses the fixed expected catalogue. | Construct the allowlist only from the validated context; carry it through projections/composition/auxiliary A. No new B policy or offer enrichment. |
+| [client](../public/discovery-client.mjs), [report](../public/discovery-report.mjs) | Six-option picker; stale generation protection; fixed-label film report; draft/selection remains original-row and memory-only. | Replace fixed lookup assumptions throughout display/report/draft with bounded projected identity. Do not let an arbitrary title or query become report instructions/raw payload. |
+| [Windows helpers](../windows/Start-Demo.ps1), [lifecycle checks](../test/windows.test.ps1) | Hidden server credentials, detached owner workflow and explicit module-copy list. | Reuse unchanged lifecycle; update isolated test-copy list only if implementation adds modules. No owner process/system changes. |
+
+Production [movie-search.js](../../../netlify/functions/movie-search.js) is
+context only: it uses TMDb text search, slices8 candidates, then fans out an
+external-ID request per result; [movie-lookup.js](../../../netlify/functions/movie-lookup.js)
+uses IMDb find and takes the first movie. **Do not call/import these proxies,
+copy query-string credentials, inherit the fan-out, or auto-select the first
+result.** M3 stays within this research process and server-side credentials.
+
+### Proposed search, selection and independent gates
+
+1. Explicit Search button, not per-keystroke calls; trimmed query2–160 Unicode
+   characters, optional four-digit year, movie media only, `include_adult=false`,
+   `language=uk-UA`, page1. One results page, display at most8 safe projected
+   candidates. An empty page means no result for this query, not no film exists.
+   No automatic pagination, alias retry, external-ID fan-out or popularity winner.
+2. Show title/original title and release year (unknown if absent). An explicit
+   candidate preview gets Details with the existing five appended resources;
+   display directors if returned. Search does not promise director fields.
+   Posters are optional/deferred in the first slice: no new image/asset fetches;
+   absence of a poster must not prevent disambiguation. Show names/years, then
+   preview/confirm, not a misleading universal director/poster list.
+3. Server verifies positive safe TMDb root ID against the selected candidate,
+   movie type/context, and any supplied stable IDs. Root `imdb_id` and appended
+   external IMDb must agree when present; invalid/conflicting data cannot mint
+   a MOTN capability. Conflicting supplied stable IDs also prevent confirming
+   that TMDb identity context; do not drop the conflict and retain a clean gate.
+   A well-formed single reported IMDb is usable with its
+   provenance; missing/null stays missing. User selection is not authority to
+   override a conflict. Other aliases/dates/directors remain source metadata,
+   never invented crosswalks, Director's Cut or offered tracks.
+4. Explicit confirmation freezes a small, bounded projected identity snapshot
+   for this run only (TMDb ID, validated IMDb if any, safe titles/date/directors,
+   alias metadata/basis). No raw response or cross-run cache. Details metadata
+   may be partial without invalidating an independently valid root/crosswalk.
+   If root validation fails, preview is unresolved and discovery cannot start.
+5. Discovery consumes one film-bound token synchronously before network work.
+   Watch Providers uses selected TMDb ID; MOTN uses only the checked IMDb.
+   TMDb provider/transport failure after successful preview does not suppress
+   independent MOTN; absent IMDb skips it explicitly. Each returned source
+   rechecks its own IDs; conflict quarantines only that source, not good peers.
+   If preview transport fails before any crosswalk exists, there is no justified
+   MOTN fallback. No production secret/proxy recovery or invented common identity.
+6. New query/candidate/confirmation invalidates old selection tokens, aborts
+   in-flight work, increments generation and clears rows/review/draft/report
+   immediately. Late search/preview/clipboard/network completions cannot restore
+   old content. Confirmed draft is cleared on film change; cancel within the
+   same film preserves manual edits. New film needs no server restart.
+
+The source host allowlist is not widened: exact TMDb API origin and generated
+numeric paths, exact MOTN API origin and validated IMDb path, exact canonical
+Kinobaza host plus admitted title path only. No browser-supplied URL is passed
+to generic fetch. No userinfo/explicit ports/IP literals/encoded separators,
+query/fragment, dot-segment, scheme downgrade or redirect following for new
+Kinobaza candidates. Existing controls' narrow canonical hop remains unchanged.
+Candidate admission is **not** identity approval. Preserve no-store, exact
+Host/Origin, LAN auth, bounds/timeouts/abort, no logging/storage and text rendering.
+Session-scoped projected selection is necessary request state, not a reusable
+response cache; expire with the existing30min ceiling and bounded session count.
+One active workflow; at most8 result entries and2 identity previews retained,
+discarded on replacement/expiry. Enforce budgets server-side, not only a button.
+
+### Kinobaza search feasibility and resolver decision
+
+Public documentation/UI review **October20,2026**, not title evaluation:
+
+| First-party source | Current observation | Evidence boundary |
+| --- | --- | --- |
+| [Canonical homepage](https://kinobazaua.com/) | Public input for film/person names and a title/person selector are visible. | Establishes a human-facing search UI, not a GET contract, public API, HTML search-result shape or ID-search support. No form submission/account/endpoint experiment was performed. |
+| [Terms](https://kinobazaua.com/terms) §§1–4 | Applies to all users, restricts conduct, assigns user/third-party responsibility, may change. §2 also broadly mentions non-Ukrainian language; applicability to original-title search is not clarified here. | No documented search/extraction licence, retention rule or integration tariff established. No direct Terms clause banning this precise design identified; silence is not permission, nor an exemption for every proposed query. Native automated-search exclusion below is a separate access signal. |
+| [robots.txt](https://kinobazaua.com/robots.txt) | Direct read200: generic group disallows `/search`, `/search/`, `/search?*`, `/titles?*`, `/movies?*`, `/series?*`; `Allow: /*?page=*$` also exists. | Do not automate the disallowed search/query-listing path, rename user agent, use pagination as an escape or reverse-engineer an XHR route. Robots is neither a copyright licence nor proof of a Terms breach. Exact root title cards differ from search/listing paths. |
+| [Homepage-linked API forum topic](https://kinobazaua.com/forum/threads/tepze) | Topic title visible; direct web-reader fetch returned cache miss. Site-scoped search did not establish developer documentation. | A user asking about API is not an official supported catalogue/search API. Such an interface was **not found**, not proven nonexistent. No private/undocumented API tested. |
+
+Read ledger: first-party web reads of homepage/Terms and official TMDb docs;
+robots web-reader attempts failed, followed by one successful direct rules GET
+(sandbox connection refusal before escalation is not a successful source read).
+Two public indexed-search batches:5 queries total, rules/interface documentation
+only; internal search-service traffic unmeasured. Forum cache miss and TMDb
+Terms robots denial are recorded limitations, not successful page reads. MOTN
+Terms portal was shell-only in this reader; prior scoped review is reused,
+not falsely revalidated. **0 title-card, native search submission, authenticated
+API, discovery, provider/destination or evaluation requests.** No body archive.
+
+| Resolver option | Complexity/reliability and budget | Decision / source-use boundary |
+| --- | --- | --- |
+| Native automated public search HTML | Would need verified method/result/card shapes; one search GET plus selected-card GET could be small, but none is verified. Current robots expressly excludes search/query routes. | Do not implement/fetch this path under current design. No browser automation/XHR substitution to bypass exclusion. |
+| Documented supported API/export | Potentially stable IDs/candidates; protocol, quota, price and coverage unknown because documentation was not found. | Not an implementation dependency. Reassess only if actual supported documentation becomes available; no email prerequisite merely for unknown rights. |
+| External web-search service, domain-restricted | Could return candidate cards but stale/missing/wrong-year results still need identity check; extra credential, request, cost and attribution contract. | Outside no-new-aggregator scope. No provider selected, endpoint/shape assumed or search API purchase proposed. Would require separate source authorization. |
+| **Assisted public UI selection + controlled card admission** | User uses ordinary public site UI in Safari, supplies one exact source-card candidate; server validates canonical host/path then makes one card GET for identity/extraction. No per-film code entry, no hand-entered provider URLs. Human effort and uncertain cross-language identity limit coverage. | **Recommended M3.2 fallback for explicit product approval**, not automatic arbitrary-card discovery. Public UI selection is not an automatic-search workaround. No account/cookies transferred; machine card read remains conditional on applicable rules/rights. |
+| Guess slug/title transliteration or accept arbitrary URL | Cheap but unverifiable; wrong-year/remake/SSRF risk. | Rejected. Not a fallback for any other option. |
+
+M3.2 state model: **matched** only after unambiguous selected-film/card identity;
+**ambiguous** for multiple plausible identities, unresolved director alias/year,
+or conflicting canonical/identity signs; **not found** only for a valid scoped
+zero-result lookup (or clearly labelled owner-reported manual no-card outcome,
+not a machine claim of absence); **unsupported** for non-title route/markup or
+unconfigured supported resolver; **unavailable** for403/429/CAPTCHA/timeout/network.
+Also retain disabled/not-evaluated, pending candidate and explicit identity-mismatch
+reason; no candidate is not silently labelled not found. Never use any as “no UA
+offers.” Do not fetch multiple competing cards to break ambiguity automatically.
+
+For assisted mode, candidate input is an **untrusted source-card proposal** only.
+Server parses it, admits exact HTTPS `kinobazaua.com` and one `/titles/<single-slug>`
+root path with no suffix subpage, slash tricks, credentials, ports, query/fragment
+or redirects; it issues a run-bound opaque candidate reference before fetch.
+Canonical link/response path must agree. An old-host candidate is unsupported,
+not followed/repaired. This is a new controlled resolver policy needing review,
+not reuse of arbitrary browser input as fetch authority or broadening old modes.
+On the admitted page, require original/title alias + release-year context and
+labelled director corroboration; any returned stable IDs must agree. Limited
+normalization (Unicode/case/whitespace) is not transliteration. If original or
+director has only an unestablished alias, return ambiguous; do not reinstate
+per-film hardcoded alias patches. Stable-ID agreement may tolerate date-year
+variance with warning; structural-only ambiguous year cannot. Identity never
+establishes cut, regional entitlement or provider-track applicability.
+
+After matched, parse the same already-fetched HTML: general film UA badge,
+own-block audio/subtitles, country/provider/access and exact href remain separate.
+No second fetch for extraction, provider resolve, tracking decode or automatic
+MOTN enrichment. A source-only localization claim is still useful beside the
+platform without B/C/D match; preserve R1/R2, candidate kind/provenance and ack.
+If the candidate is supplied after M3.1 has finished, one separate run-bound,
+one-shot resolver action adds this stage without repeating TMDb/MOTN. Keep the
+same immutable identity and cumulative counters; exact source-row references
+remain stable. It must not overwrite an existing same-film draft or borrow
+fields from the new rows. A film change revokes this capability too.
+
+### Official TMDb capabilities and source-use limits
+
+Checked October20,2026: [Movie Search](https://developer.themoviedb.org/reference/search-movie)
+documents title/alias search, query/year/language/page parameters;
+[search then Details](https://developer.themoviedb.org/docs/search-and-query-for-details)
+documents returned candidate IDs and selected-ID details;
+[Details](https://developer.themoviedb.org/reference/movie-details) supports
+append resources. This supports the proposed bounded workflow, **not proof of
+correct results for the eight nominations**. No authenticated API was called.
+Use current server-side Read Access Token, selected-ID validation and existing
+five appended resources. Localized titles/catalogue text/languages remain
+identity/search metadata, not offered Ukrainian audio/subtitles.
+
+Prior [scoped source-use review](#held-out-runtime-preparation--authored-checks-only)
+remains material: TMDb Terms were actually read in full in that checkpoint;
+today's web-reader robots refusal does not make that text nonexistent or globally
+unavailable. Derivative/Application interpretation for transient projection/draft
+is unresolved, especially with legacy isolated Gemini modes; M3 adds no LLM/data
+forwarding. MOTN prior private non-LLM display interpretation is not clearance
+for a public competing service; key plan/quota and attribution remain applicable.
+Kinobaza fixed-card approvals do not authorize recurring arbitrary search/crawl.
+No new persistent cache, archive, raw report or licence inferred. Refresh actual
+applicable terms/account scope before future live work; concrete affected-path
+conflict stops that path, not independent permitted synthetic/partial work.
+
+### Separate request budgets — proposals, not executed
+
+Count attempted external HTTP requests, including errors/redirect responses.
+No retries, pagination, automatic query reformulation, candidate fan-out,
+destination reads or assets. Explicit changed query is a new counted search,
+not a hidden retry; at most2 submissions and2 selected previews per workflow.
+After an error, that action is consumed; no automatic same-query resubmission.
+
+| Phase per film | Normal path | Hard workflow cap | What consumes it |
+| --- | --- | --- | --- |
+| Search | 1 | 2 | TMDb `/3/search/movie`, page1 only. Up to8 displayed candidates,0 per-result calls. |
+| Identity/preview | 1 | 2 | Selected `/3/movie/{id}?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations`. Reuse one confirmed snapshot; other inspected candidate discarded. |
+| Resolver M3.1 | 0 | 0 | Kinobaza not evaluated for dynamic films; existing fixed controls retain their policy. |
+| Resolver M3.2 assisted | 1 | 1 | One admitted direct canonical source-card GET, extraction from same body; no hop/retry. Human site UI traffic is separate/unmeasured, not hidden in this API count. |
+| Discovery | 2 | 2 | One `/movie/{id}/watch/providers` +one MOTN `/v4/shows/{verifiedIMDb}?country=ua`. Missing crosswalk reduces to1. Details is not fetched twice. |
+| **M3.1 total** | **4** | **6** | 1+1+0+2 normally;2+2+0+2 cap. |
+| **M3.2 total including M3.1** | **5** | **7** | Adds at most1 card GET, not another Details/discovery run. |
+
+Eight-film evaluation: **M3.1 planned32 /cap48** (search8/16,
+identity8/16, discovery16); **with assisted M3.2 planned40 /cap56**
+(resolver8 added). The40 assumes a supplied admissible candidate for each,
+not guaranteed card availability. Skip/refusal reduces usage; never replace a
+film to exhaust a budget. Report actuals by phase, unknowns, errors and elapsed;
+these are ceilings, not cost/latency estimates or an authorization to run.
+
+**Separate preflight proposal, no execution now:** after approval, one TMDb search
+GET per nomination to locate candidate IDs, max8, then one explicitly selected
+Details GET per nominated film to attest intended TMDb/IMDb identity, max8;
+at most one owner-nominated canonical Kinobaza card per film, max8, only where
+available; rules refresh up to4 documents (TMDb Terms, MOTN Terms, Kinobaza Terms,
+robots), max4 GETs: **max28 controlled GETs = search8 +identity8 +cards8 +rules4**.
+Preflight search has no second-query allowance; an unresolved candidate is a
+finding, not an uncounted lookup. No native Kinobaza search request, destination,
+IMDb scrape or second-hop budget. Candidate locations come from ordinary human
+UI, not guessed slugs; if unavailable, record it. Manual UI traffic is separately
+unmeasured. Never re-fetch an already sufficient document within preflight;
+later evaluation is a distinct fresh run, not persistent caching of preflight.
+If an automatic-interface experiment becomes necessary, first propose its exact
+supported endpoint/method/cap after resolving the access exclusion; **no dormant
+native-search GET budget is granted**. Missing token is an explicit blocker;
+do not extract production secrets. Preflight and evaluation need separate consent.
+
+### Eight-film evaluation matrix and measurable acceptance
+
+Nominations are fixed **before any M3 title/search/preflight evaluation**;
+names/years below identify intended cases, not verified runtime IDs/cards or
+predicted coverage. Do not add them to runtime or replace a difficult result.
+Input strings are test queries, not assertions of exact TMDb localization.
+
+| Nomination / planned query | Risk / source combination | Semantic check and potential finding |
+| --- | --- | --- |
+| The Lives of Others (2006), query «Життя інших» | Localized vs original title; TMDb+MOTN, optional Kinobaza. | User-selected identity must trace to original/title aliases; no first-hit auto-selection. Missing catalogue alias or absent card is a finding, not proof of no film/offers. |
+| The Girl with the Dragon Tattoo (2009), query shared English title | Same-title/remake pair; TMDb+MOTN, optional Kinobaza. | Keep selected year/director and returned stable IDs separate from2011; insufficient alias evidence remains ambiguous. |
+| The Girl with the Dragon Tattoo (2011), same query | Adversarial counterpart, not another successful-title pick. | No old selection token/report/draft or2009 crosswalk reused; conflicting IDs quarantine source even if titles agree. |
+| Perfect Days (2023) | International title, multilingual director names; same three sources when candidate supplied. | Unestablished transliteration must not falsely match a card; expose unresolved corroboration instead of per-film hardcode. |
+| The Man from Earth (2007) | Less-mainstream catalogue/coverage; same sources. | No UA rows or no IMDb is a measured partial/not-evaluated result; not universal unavailable or permission to substitute a film. |
+| The Fall (2006), query «The Fall» | Film vs similarly named series/year; movie search+MOTN. Optional Kinobaza. | Do not fetch series routes; user confirmation and stable IDs gate correct film. Zero/ambiguous cards are valid findings. |
+| Anatomy of a Fall (2023), original/localized query as explicit second submission if needed | Accents/alias differences, not fuzzy title-only equivalence; same sources. | Two-submission cap includes correction; original language/catalogue Ukrainian text never fills provider tracks. |
+| All We Imagine as Light (2024) | Potential absent/ambiguous source card; not assumed absent in advance; same sources. | Keep matched/ambiguous/not found/unsupported/unavailable distinct. No guessed slug or hidden alternate-card crawl. |
+
+Evaluation register separates source assertions from independent checks:
+
+| Metric | Record / denominator | Proposed acceptance, not a current result |
+| --- | --- | --- |
+| Identity correctness |8 intended identities; selected root/crosswalk versus separately attested identity; unresolved counts separately. |0 wrong automatic assignments/ID-conflict bypasses;8 cases accounted for. At least6/8 usable confirmed selections for product usefulness; remainder explicit failure, not silently dropped. |
+| Kinobaza resolution | Outcome/basis for all8; automatic vs owner-assisted and attempted vs skipped separately. |0 falsely matched cards; at least4/8 matched for assisted M3.2 usefulness, otherwise defer resolver investment. No API/SLA/automated coverage claim. |
+| Useful links | Per film/source: safe exact/tracking candidates, search/unsafe/missing excluded; source labels/ack retained. | At least4/8 films offer one navigable candidate. This is utility, not independently verified working-link rate. |
+| Provider-specific UA localization | Number of films/blocks with explicit audio/subtitle claims and unknown territory/completeness; film badges separate. | All reported claims stay scoped;0 propagated/unsubstantiated tracks. A zero yield is a finding, not a security failure; usefulness separately judged. |
+| Manually checked link correctness | Predefined max3 links below; identity/card/territory outcome, inaccessible/unresolved separate. |0 wrong-film link presented as confirmed; report numerator/attempts, not “accuracy” across unvisited links. A mismatch stops affected resolver use pending review. |
+| Calls/latency | Actual phase counts/attempts, per-phase and total elapsed from search click and confirmed discovery separately. | Every run within6/7 cap, aggregate48/56; no per-keystroke/destination/retry traffic. Median/range may describe8 runs, never promised SLA/cost. No zero-price inference. |
+| Help with choosing | Owner yes/partial/no per film: could choose or open a candidate without another provider search? Assisted Kinobaza lookup time recorded separately. | At least4/8 yes for M3.1 utility; assisted M3.2 must add a useful scoped link/localization hint for at least2 cases, else defer. Not mandatory “best” recommendation. |
+
+Thresholds are proposed product acceptance, not arbitrary confidence scores.
+Passing the identity/safety invariants is mandatory even if usefulness targets
+fail. Source outage/missing cards remain in denominators. Threshold changes
+require product agreement before evaluation, not after seeing results.
+
+### Future tests, short owner session and stop criteria
+
+Implementation agent owns authored offline/HTTP/browser/mobile tests: search
+escaping/bounds/no fan-out; remake pairs; arbitrary Unicode/control text; root and
+crosswalk conflict/missing; year variance with matching stable IDs; partial
+resources versus optional fields; independent failures; run-bound tokens and
+server budgets; candidate URL admission/SSRF/redirect refusal; unknown director
+aliases; hostile HTML; scoped localization; R1/R2/exact links/tracking ack;
+unchanged draft exclusions/cancel; rapid query/film/copy transitions and stale
+report/late response clearing. Fixed six-film/request goldens remain controls.
+Dynamic report accepts only explicitly selected, bounded text/IDs/reason codes;
+never query history, raw URLs/HTML, tracking strings, secrets or free-text draft.
+Commit stays unknown without trustworthy runtime attestation. No evaluation
+requests for authored tests. Windows lifecycle only if key/module routing changes,
+in temporary copies; do not demand owner SSH-disconnect/synthetic repetition.
+
+One future short Termius→Safari session, only after implementation/readiness and
+separate evaluation approval: start once using existing hidden-key/LAN workflow;
+search/select/confirm one run for each nominated film, no restart/repeats/platform
+tour; copy short phase-count/outcome/useful/missing/conflicting summaries. One
+draft flow for a newly selected film only if needed to establish dynamic identity
+and clear-on-change; agent tests cover ordinary cancel/edit. Manual assisted card
+selection is optional and limited to one candidate per film; owner need not seek
+another if missing. If this exceeds a pre-agreed15-minute review window, stop,
+record incomplete cases and do not start another automatic owner cycle.
+
+Independent link sample fixed before results: first eligible candidate, in UI
+source-row order (not ranking), from (1)2009 remake, (2)The Man from Earth,
+(3)All We Imagine as Light; **max3 opens**, no replacements for missing links,
+no mandatory login/playback/purchase or other platform tour. Keep source row,
+candidate kind, account/geography context known/unknown and observed identity;
+no tokens/URLs/screenshots in copied summary. Human browser navigation may
+redirect/load assets; its traffic is not counted as bounded server source GETs,
+nor falsely claimed to be zero. Identity anomalies found in the ordinary
+selection UI are recorded without additional network diagnostics.
+
+Stop immediately on credential exposure, unsafe/destination request, unexpected
+fan-out, wrong-film match/stable-ID bypass, stale film draft/report, source access
+block or concrete applicable prohibition. A403/429 consumes that action, no retry;
+disable affected path, retain independently valid partials. Exhausted budget,
+unclear identity, inaccessible card or time limit ends the case honestly. Eight
+cases cannot establish general coverage/accuracy; do not resume B/C/D/enrichment
+to manufacture successful outcomes. Source rights remain separate from metrics.
+
+### Approvals actually needed
+
+1. Approve/revise **M3.1 implementation** independently; no new source/plan,
+   poster infrastructure, hosting, DB/cache/queue or numerical matching score.
+2. Choose **assisted M3.2** as a bounded intermediate step, or defer it if the
+   product requires automatic card discovery. Native automated search is not
+   ready under current access rules; do not claim this fallback solves it.
+3. Separately authorize bounded preflight and then evaluation, including the
+   eight nominations, usefulness thresholds and max3 manual opens/time window.
+
+All implementation details and standard13 sections are in the linked
+[M3 handoff](m3-arbitrary-film-handoff.md), **Proposed / not authorized**.
+MW-FUT-01 remains Discovery; no production write/integration or new owner cycle.
 
 ## MEGOGO one-card HTML PoC
 

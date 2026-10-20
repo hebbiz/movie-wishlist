@@ -1,5 +1,44 @@
 # MW-FUT-01: isolated grounded-answer demo
 
+## M3 arbitrary-film discovery — design only
+
+**Proposed / not authorized for implementation or live evaluation.** Research
+develop is now `09c9482694b37f16fb0371f6d2fca790167a31b0`; #186→#185→#184
+were merged through merge commits. Main was not promoted. The actual runtime
+still uses six fixed films, not an arbitrary-title search.
+
+The [canonical M3 decision](docs/regional-card-proposal.md#m3-arbitrary-film-discovery--proposed-design-only)
+recommends two separately approved PRs:
+
+- **M3.1:** explicit TMDb search → user-selected identity preview/confirmation
+  → independently gated TMDb/MOTN results → existing original-row local draft.
+  No first-result selection, per-result lookup fan-out or restart for each film;
+  absent IMDb crosswalk means MOTN not evaluated, never a guessed ID.
+- **M3.2:** controlled Kinobaza source-card resolution/identity/extraction.
+  Current public search UI is visible, but robots excludes automated search
+  and a supported API was not found. Recommended intermediate option is
+  **owner-assisted source-card selection**, subject to product approval;
+  automatic arbitrary-card discovery remains unresolved. This selects a source
+  card, not manually supplied provider URLs; links/localization still require
+  bounded identity-gated extraction. Failure does not block M3.1.
+
+See [feasibility/access limits](docs/regional-card-proposal.md#kinobaza-search-feasibility-and-resolver-decision),
+[phase budgets](docs/regional-card-proposal.md#separate-request-budgets--proposals-not-executed),
+[eight preselected risk cases and metrics](docs/regional-card-proposal.md#eight-film-evaluation-matrix-and-measurable-acceptance)
+and the [13-section implementation handoff](docs/m3-arbitrary-film-handoff.md).
+Per film, M3.1 normally4/max6 external requests; assisted M3.2 normally5/max7.
+Eight cases:32/max48 or40/max56 respectively, separate from proposed preflight
+max28 (search8 +identity8 +cards8 +rules4). Manual public-UI/link navigation
+traffic is separate/unmeasured, not hidden
+inside these server GET counts. No new search/provider capability or test result
+is implied by these proposed ceilings. No runtime command enables M3 today.
+
+R1/R2, exact URLs/acknowledgement, independent source gates, unknowns, source-only
+localization, memory-only draft/cancel and safe-copy/stale-report boundaries
+remain mandatory. B expansion/probe and C/D/enrichment remain deferred. No LLM,
+persistence, new aggregator, production integration or new owner cycle approved.
+MW-FUT-01 remains Discovery.
+
 ## Current baseline, M2 closeout and deterministic Mykola answer
 
 **M2 bounded research checkpoint is closed; MW-FUT-01 remains Discovery.**
@@ -11,10 +50,11 @@ technical debt, not an established owner-partial cause.
 
 The [final review and conditional merge readiness](docs/regional-card-proposal.md#m2-closeout-and-final-stack-review)
 separate scoped code findings, live-use/source-rights limits and production
-blockers. #184/#185 remain open; merge is not authorized. The
+blockers. #184–#186 are now merged; the
 [eventual child-to-parent-to-develop plan](docs/regional-card-proposal.md#eventual-merge-plan--no-authorization-or-operations-now)
-requires fresh expected HEADs, parent-advance diff/checks and actual final-tip
-validation without bypassing unknown protections. No main/release change.
+was completed with fresh expected HEADs, parent-advance diff/checks and actual
+final-tip validation without bypassing unknown protections. It is retained as
+history, not permission for another merge. No main/release change.
 
 **Separately approved / implemented bounded research UX:** a compact
 [deterministic Ukrainian Mykola viewing answer](docs/regional-card-proposal.md#mykola-viewing-answer--proposed-deterministic-presentation),
@@ -27,8 +67,8 @@ in details; attribution/material warnings stay visible. Five authored examples
 and acceptance criteria are canonical, not live results. The
 [13-section successor handoff](docs/m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
 records the owner's subsequent implementation approval at #185474a335.
-Implemented on a separate stacked child of still-open #185; not production or
-merged. Natural Ukrainian actions: **«Знайти варіанти»**, **«Відкрити посилання»**,
+Implemented in #186 and merged into research develop, not production.
+Natural Ukrainian actions: **«Знайти варіанти»**, **«Відкрити посилання»**,
 **«Обрати»**. Summary is at most two sentences; source labels/unknowns/material
 warnings visible, technical A/B/binding/account diagnostics in details.
 For an unbound block: «Кінобаза вказує українське аудіо; для цієї пропозиції ще
@@ -41,14 +81,14 @@ screenshots are synthetic only and kept outside Git. See the
 No live probe, merge or new owner cycle is authorized/requested.
 
 Fetched `develop` on October 20, 2026:
-**`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. Research #175–#183 are
+**`09c9482694b37f16fb0371f6d2fca790167a31b0`**. Research #175–#186 are
 merged, including launcher fix #176 and R1/R2. Main/production were not promoted.
 The [canonical verified baseline](docs/regional-card-proposal.md#verified-baseline-and-m2-design-status)
 supersedes older open-stack/conditional-merge statements retained below as history.
 
 **MW-FUT-01-M2 A/B-only implementation is approved for isolated research and is
-implemented on this stacked child of #184, not merged into develop.** Actual
-parent HEAD9208e50 includes the agreed clipboard design after aefb166. Subsequent
+implemented and merged into research develop.** Historical
+parent HEAD9208e50 included the agreed clipboard design after aefb166. Subsequent
 bounded identity/card preflight is recorded below; production integration is
 not approved. A subsequent
 [owner-reported held-out checkpoint and bounded audit](docs/regional-card-proposal.md#held-out-owner-checkpoint-and-ab-usefulness-audit)
