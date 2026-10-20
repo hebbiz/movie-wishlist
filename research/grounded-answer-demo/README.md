@@ -1,6 +1,6 @@
 # MW-FUT-01: isolated grounded-answer demo
 
-## Current baseline, M2 closeout and proposed Mykola answer
+## Current baseline, M2 closeout and deterministic Mykola answer
 
 **M2 bounded research checkpoint is closed; MW-FUT-01 remains Discovery.**
 A explains existing identity gates, not a newly validated crosswalk. Positive
@@ -16,7 +16,7 @@ blockers. #184/#185 remain open; merge is not authorized. The
 requires fresh expected HEADs, parent-advance diff/checks and actual final-tip
 validation without bypassing unknown protections. No main/release change.
 
-**Next UX — Proposed / not authorized for implementation:** a compact
+**Separately approved / implemented bounded research UX:** a compact
 [deterministic Ukrainian Mykola viewing answer](docs/regional-card-proposal.md#mykola-viewing-answer--proposed-deterministic-presentation),
 without LLM or production integration. Short summary → platform groups with
 source-labelled access/localization/link rows → explicit candidate open or
@@ -25,9 +25,20 @@ B is insufficient; no offer/field merging, best badge, source price/format
 repair or historical controls substituted as facts. Full projected provenance
 in details; attribution/material warnings stay visible. Five authored examples
 and acceptance criteria are canonical, not live results. The
-[proposed 13-section successor handoff](docs/m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
-is appended to the existing M2 task record, not a parallel architecture.
-Runtime, live probe and merge require separate approval; no new owner session.
+[13-section successor handoff](docs/m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
+records the owner's subsequent implementation approval at #185474a335.
+Implemented on a separate stacked child of still-open #185; not production or
+merged. Natural Ukrainian actions: **«Знайти варіанти»**, **«Відкрити посилання»**,
+**«Обрати»**. Summary is at most two sentences; source labels/unknowns/material
+warnings visible, technical A/B/binding/account diagnostics in details.
+For an unbound block: «Кінобаза вказує українське аудіо; для цієї пропозиції ще
+не перевірено». Original source rows, exact URLs/R1/R2/ack, draft/cancel/exclusions
+and safe-report controls are unchanged; no new ranking or requests. The report's
+safe fixed-label content remains unchanged, with Ukrainian copy/fallback controls.
+Five authored states and mobile/browser checks are not live validation;
+screenshots are synthetic only and kept outside Git. See the
+[implementation/check record](docs/regional-card-proposal.md#mykola-answer-implementation--authored-validation-only).
+No live probe, merge or new owner cycle is authorized/requested.
 
 Fetched `develop` on October 20, 2026:
 **`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. Research #175–#183 are

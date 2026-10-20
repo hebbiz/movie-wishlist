@@ -7,9 +7,10 @@ in that baseline; #175's original standalone HEAD was not a corrected launcher.
 The subsequent [M2 task handoff](m2-offer-matching-handoff.md) records its
 separately approved implementation and now-closed research checkpoint, governed by the same
 [canonical architecture](regional-card-proposal.md#m2-digital-offer-matching--proposed).
-B/probe expansion and C/D remain deferred. The proposed Mykola presentation
-successor in that existing handoff is **not authorized for implementation**.
-Do not extend historical M1/M2 approval to successor runtime, new films or live runs.
+B/probe expansion and C/D remain deferred. The Mykola presentation successor in
+that existing handoff was subsequently **separately approved for bounded isolated
+implementation**, not by historical M1/M2 approval. No new films/live runs,
+production integration or merge are authorized by that presentation approval.
 
 **Approved for isolated research implementation only. MW-FUT-01 remains Discovery.**
 Authorization follows checkpoint `e978e72389ec5fae7e2be141062b5606fd862f75`;

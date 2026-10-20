@@ -14,25 +14,38 @@ the [single short acceptance plan](regional-card-proposal.md#acceptance-and-one-
 limits owner work to the new end-to-end flow/material discrepancies. No source
 probe/card tour/parser-debugging cycle is restarted.
 
-## M2 A/B and short-report UI — no new owner run requested
+## Deterministic Mykola answer — no new owner run requested
+
+The [separately approved presentation child](regional-card-proposal.md#mykola-answer-implementation--authored-validation-only)
+uses natural Ukrainian labels: «Знайти варіанти», «Відкрити посилання», «Обрати».
+Source claims stay separate; unbound localization is a hint, not a track added
+to another offer. A/B/technical diagnostics are collapsed, material warnings
+visible. Review/confirm/edit/cancel still targets one original source row;
+«Скасувати вибір» preserves the confirmed/manual draft. Exact URL/acknowledgement
+and excluded fields remain. Source requests/budgets, six-film picker, keys and
+Windows helpers are unchanged; no restart/SSH-disconnect or owner live test cycle
+is requested for these automatically checked presentation changes.
+
+## M2 A/B and short-report UI — historical implementation, M2 now closed
 
 The [bounded implementation](regional-card-proposal.md#m2-ab-implementation-checkpoint--authored-checks-only)
 is on a separate child of #184. Existing Coherence/Dune, keys, launcher and network
 budgets are unchanged. Subsequent held-out preflight and runtime preparation
-are authorized/completed; **live evaluation is not requested yet**. Do not run
+are authorized/completed; the owner-reported held-out session is now complete.
+B development/probe is deferred; **no new live evaluation is requested**. Do not run
 older live commands merely to test this change.
 No repeat synthetic/SSH-disconnect/platform session is requested.
 
 When a later explicitly approved session uses this implementation: inspect short
 source-labelled A/B reasons beside separate rows; they are not offer equality,
 localization enrichment or entitlement. Select/review/confirm/edit/cancel still
-targets one original row. After a completed/partial/failed discovery, **Copy short
-report** copies the current film's allowlisted text only, with unknown runtime
+targets one original row. After a completed/partial/failed discovery,
+**«Скопіювати короткий звіт»** copies the current film's allowlisted text only, with unknown runtime
 commit and no raw payloads, URLs, credentials or manual draft values. Copying
 again does not rerun discovery. Film change/reload clears the old report.
 
 If Safari allows the clipboard write, the page reports success after it completes.
-If unavailable/denied, use **Select report text** in the read-only fallback and
+If unavailable/denied, use **«Виділити текст звіту»** in the read-only fallback and
 Safari's manual Copy action. Capability is not assumed for LAN HTTP; no auth/TLS/
 firewall/system change or extra source request is needed for fallback. The device
 clipboard can outlive/sync beyond page memory after explicit copying. Browser

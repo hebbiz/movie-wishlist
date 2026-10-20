@@ -2844,7 +2844,7 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | Held-out four-film discovery/evaluation | **Owner reports completed**,14 calls, all shown B insufficient, all TMDb A partial/B ok; no draft test/runtime attestation/general accuracy. No agent repetition/new session requested; source-use limits remain. |
 | Two-request Dune pointer probe | Deferred, not authorized; dormant design only, not a prerequisite for a useful answer. |
 | P3 short-report release-event `date` | Technical debt, non-blocking; not an established cause of owner-run partial. No runtime fix in this task. |
-| Deterministic Mykola viewing answer | **Proposed / not authorized for implementation**; presentation of existing separate claims, no LLM or production. |
+| Deterministic Mykola viewing answer | **Separately approved / implemented in stacked child of #185**; presentation of existing separate claims, no LLM or production. Authored checks only. |
 | Arbitrary Kinobaza cards/MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
 The earlier scope approval covered A/B implementation, not indefinite engine
@@ -2957,12 +2957,14 @@ diff; scope and whitespace clean. No full responses, reports or HTML archived.
    report SHAs/results/skips. No main/tag/release/manual deployment. Later design
    approval is separate from this consolidation plan.
 
-### Mykola viewing answer — Proposed deterministic presentation
+<a id="mykola-viewing-answer--proposed-deterministic-presentation"></a>
 
-**Design only / not authorized for implementation.** One useful mobile-first
-answer over existing source observations, without LLM, new source or production
-integration. The existing grouping/control runtime is a substrate, not proof
-the proposed Ukrainian wording/layout already exists. The [successor handoff](m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
+### Mykola viewing answer — deterministic presentation
+
+**Subsequently approved / implemented for bounded isolated research.** The owner
+authorized the successor at #185 `474a335352341419c8a4fd4c22cbbe8cffc365bb`.
+One useful mobile-first answer over existing source observations, without LLM,
+new source or production integration. The [successor handoff](m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
 below the historical M2 task defines implementation boundaries; no new runtime
 file/API name is prescribed and no parallel offer architecture is introduced.
 
@@ -3057,12 +3059,80 @@ visible wording uses natural Ukrainian, e.g. «джерело повідомля
   no automatic retries, destinations or extra owner cycles. No fabricated
   localization, source currency repair, stable-ID match or provider mapping.
 
-**Only next product approval needed:** accept or revise this compact
-source-labelled UX/voice and separately authorize its bounded research
-implementation. Suggested default is all five states and subtle optional irony,
-no tone setting or new infrastructure. Merge approval is independent. B/probe,
+**The bounded UX implementation approval was subsequently received.** All five
+authored states are covered without a tone setting, forced irony or new
+infrastructure. Broader UX/discovery work and merge approval remain independent. B/probe,
 C/D, persistence/production remain deferred; no need to choose a new API,
 subscription, cache, data schema or hosting to proceed with this design review.
+
+#### Mykola answer implementation — authored validation only
+
+Implementation branch is stacked on still-open #185 at474a335; #184 remains
+9208e50 and develop014014337e. No newer parent changes at start. Reused the clean
+isolated research checkout, not the owner's56db620 working copy/process or its
+untracked `research/media-discovery/`. No merge/retarget/history rewrite.
+
+Only runtime edits are [public/discovery-client.mjs](../public/discovery-client.mjs)
+and [public/style.css](../public/style.css); no new runtime module, server asset,
+dependency, helper/key route, API, film, provider or request. Small pure Ukrainian
+view helpers consume existing projected states without mutating/reordering rows.
+Original grouping order, source requests/budgets/gates and R1/R2 remain. No LLM,
+ranking, offer/field merging, source price/quality repair or production writes.
+
+- Summary is two sentences maximum; uses platforms with source observations,
+  not verified offers. Visible partial/unresolved-source warning, scoped own-block
+  conflict and possible/non-comparable differences; technical source/identity/
+  A/B and literal properties stay in collapsed details. Source attribution stays
+  visible, including the TMDb-required notice and shared JustWatch lineage.
+- Actions are «Знайти варіанти», «Відкрити посилання», «Обрати». One original
+  source row remains selected. Exact href/query/referral/R1 ack, review/confirm,
+  default price/video/tracks exclusions, manual edit/cancel and memory-only draft
+  are unchanged. Neither a link nor a B comparison is labelled independently
+  verified or working. No platform-group selection.
+- Ukrainian audio/subtitles are separate. Positive Kinobaza block says
+  «Кінобаза вказує українське аудіо; для цієї пропозиції ще не перевірено»;
+  unknown territory/list completeness remain explicit. Negative/contradictory
+  labels stay scoped to the block; film badge is separate, never MOTN audio.
+- Short-report **content**/safe allowlist/unknown commit/P3 debt is unchanged;
+  Ukrainian copy/status/fallback buttons preserve stale completion guard and
+  selectable text. No added clipboard read, source call, storage or logging.
+
+Authored fixtures cover multiple useful platforms, unbound localization,
+conflicting block properties/possible MOTN discrepancies, candidates-only and
+partial source failure. They run through existing parsers/projections with mock
+responses, never copied live bodies or old owner controls. Browser tests reuse
+the real synthetic server's session/one-shot gate then display only authored
+projected results; no external transport. Their simulated call counters are not
+live requests/latency/accuracy. Local screenshots have explicit SYNTHETIC ONLY
+labels and remain outside Git; no live output/evidence archive is added.
+
+Initial screenshot setup had a default-Dune session with a Coherence fixture:
+corrected the authored server film and added picker/fixture equality assertion,
+not runtime catalogue changes. Unrelated deliberately unsupported examples were
+removed from **authored UI fixtures only**, not the source parser. Earlier
+browser regression used an ambiguous nested-summary selector; it now targets
+the parent summary and retains the same redirect/status assertion. Old browser
+labels were updated, not URL/security/draft checks weakened.
+
+Offline/HTTP: **334 passed**, zero failures/skips after final fixture cleanup.
+All10 `*browser.test.mjs` suites: **142 passed /9 absent-WebKit skips**,
+zero failures. Separate existing `mobile.test.mjs`: **2 passed /2 skips**
+(WebKit absent, optional same-host LAN unset). Combined browser/mobile144 passes,
+11 explicit skips; installed Edge, no browser download. New five-state browser
+checks cover390px and320px, exact navigation (prevented in mocks), tracking/affiliate
+ack, original-row review/confirm/edit/cancel, exclusions, copy/fallback/stale,
+unchanged six-film picker and zero extra/destination requests/browser storage.
+All five local screenshots were visually inspected; synthetic only, not iPhone
+or live source validation. Windows
+lifecycle is not rerun: helpers, module/dependency-copy list, key routing and
+server dependencies did not change. Mobile viewport/installed Edge are not real
+iPhone/Safari validation; no extra synthetic/SSH-disconnect/owner cycle requested.
+Six-film catalogue and request policies remain unchanged. Agent live API/source/
+destination calls0, owner tests0. Source-use/production limitations, unresolved
+MEGOGO, actual TMDb partial causes and P3 debt remain; B/probe/C/D are deferred.
+Documentation checks:343 local references/223 anchor-reference occurrences
+across the existing10 Markdown documents, zero broken references. Historical
+M1/M2 and approved successor retain13 sections each; scope/whitespace clean.
 
 <a id="megogo-one-card-adapter-proposal--not-implemented"></a>
 

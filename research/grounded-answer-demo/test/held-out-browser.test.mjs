@@ -48,7 +48,8 @@ test('held-out mobile picker/report/draft: four mocked discoveries, no stale res
       assert.equal(await page.locator('#report-copy').isDisabled(), true);
       assert.equal(await page.locator('#report-text').inputValue(), '');
       const chosen = await page.locator('#discovery-chosen').textContent();
-      assert.match(chosen, new RegExp(`Kinobaza ${kino ? 'on' : 'off'} · budget ${kino ? 4 : 3}`));
+      assert.match(chosen, new RegExp(`ліміт ${kino ? 4 : 3}`));
+      assert.match(await page.locator('#retrieval-mode').textContent(), new RegExp(`Kinobaza ${kino ? 'on' : 'off'}`));
       const before = calls.length;
       await page.locator('#run').click(); await page.waitForFunction(() => !document.querySelector('#report-copy').disabled);
       const shown = await page.locator('#answer').textContent();
@@ -59,13 +60,13 @@ test('held-out mobile picker/report/draft: four mocked discoveries, no stale res
       assert.ok(calls.length - before <= (kino ? 4 : 3));
       if (id === 'kingdom-of-heaven') {
         const row = page.locator('article[data-row-id^="motn:"]').first();
-        await row.getByRole('button', { name: 'Select and review' }).click();
+        await row.getByRole('button', { name: 'Обрати' }).click();
         const fields = JSON.parse(await page.locator('#draft-included').textContent());
         assert.equal(fields.year, '2005'); assert.equal(fields.title, 'Kingdom of Heaven');
         assert.doesNotMatch(JSON.stringify(fields), /Director's Cut|audio|subtitles/);
         await page.locator('#draft-confirm').click();
         await page.locator('#local-draft input[name="title"]').fill('private-edited-value');
-        await row.getByRole('button', { name: 'Select and review' }).click();
+        await row.getByRole('button', { name: 'Обрати' }).click();
         await page.locator('#draft-review-cancel').click();
         assert.equal(await page.locator('#local-draft input[name="title"]').inputValue(), 'private-edited-value');
       }
@@ -79,7 +80,7 @@ test('held-out mobile picker/report/draft: four mocked discoveries, no stale res
     }
     assert.equal(calls.length, partial ? 13 : 14);
     await page.locator('#discovery-film').selectOption('the-thing-1982');
-    await page.waitForFunction(() => document.querySelector('#run').textContent.includes('Used for this film'));
+    await page.waitForFunction(() => document.querySelector('#run').textContent.includes('Запит уже виконано'));
     assert.equal(await page.locator('#run').isDisabled(), true); assert.equal(await page.locator('#report-copy').isDisabled(), true);
     assert.deepEqual(external, []); assert.deepEqual(errors, []);
     assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);

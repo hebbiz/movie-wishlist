@@ -7,9 +7,11 @@ B remains auxiliary diagnostics; its expansion and the two-request probe are
 **deferred**. C/D and automatic enrichment are not implemented. P3 release-event
 `date` report omission is technical debt, not a known owner-partial cause.
 MW-FUT-01 remains Discovery. The
-[proposed successor task](#proposed-successor-handoff--mykola-viewing-answer)
-at the end is a distinct **Proposed / not authorized for implementation** handoff
-within this existing file; the [canonical closeout/UX](regional-card-proposal.md#m2-closeout-and-final-stack-review)
+[successor task](#proposed-successor-handoff--mykola-viewing-answer)
+at the end is **separately approved for bounded research implementation** after
+the owner's #185474a335 checkpoint; it does not reopen M2 matching or live work.
+The historical task is retained within this file, not a parallel architecture.
+The [canonical closeout/UX](regional-card-proposal.md#m2-closeout-and-final-stack-review)
 owns decisions, evidence, review/readiness and eventual merge sequence.
 
 **Approved for bounded isolated A/B-only research implementation.**
@@ -377,18 +379,25 @@ is an informative negative, not B success; fail closed on identity conflict,
 blocking/redirect/bounds/access error without chasing destinations or relaxing
 policy. No broader C/D, ranking/enrichment or implementation handoff is approved.
 
-## Proposed successor handoff — Mykola viewing answer
+<a id="proposed-successor-handoff--mykola-viewing-answer"></a>
 
-**Proposed / not authorized for implementation.** Only review/documentation of
-this task is approved. Historical M2 approval above does not authorize it or a
-live probe. This is a bounded presentation task, not a second architecture.
+## Successor handoff — Mykola viewing answer
+
+**Subsequently approved / implemented for bounded isolated research.** The owner
+authorized these13 sections at #185474a335, with natural Ukrainian actions
+«варіанти», «Відкрити посилання», «Обрати», a two-sentence summary and technical
+diagnostics in details. Approval is separate from historical M2 and does not
+authorize live probe/owner cycle, merge or production. The
+[canonical implementation record](regional-card-proposal.md#mykola-answer-implementation--authored-validation-only)
+owns actual validation/limits; the requirements below remain the task boundary.
 
 ### 1. Context
 
 M2 is closed as research: source-gate explanation A remains, useful cross-source
 B not demonstrated, B/probe deferred, C/D/enrichment absent. #184/#185 are still
 open at the [canonical review](regional-card-proposal.md#m2-closeout-and-final-stack-review);
-neither merge nor successor runtime is approved. Recheck repository instructions,
+merge remains unapproved; only the successor presentation runtime is approved.
+Recheck repository instructions,
 actual head/base/local changes and owner demo before any separately approved work.
 Owner observations are dated controls, not expected current facts/runtime SHA.
 
@@ -403,8 +412,8 @@ Useful source claims do not require B/C/D equality; no LLM or production write.
 
 `ua-discovery` supports six fixed films, independent TMDb/MOTN/Kinobaza gates,
 platform groups and source rows, safe link/ack/draft controls, M2 explanations,
-safe short report/fallback/stale reset. No Ukrainian Mykola answer template is
-implemented by this document. Kinobaza own-block claims remain separate from
+safe short report/fallback/stale reset. The bounded child now implements Ukrainian
+Mykola templates in the existing research client. Kinobaza own-block claims remain separate from
 offered tracks; TMDb has UA access signals but no deep links. P3 short-report
 `date` remains technical debt outside this proposed presentation-only scope.
 
@@ -493,7 +502,7 @@ wall required to understand limits; attribution remains available and visible.
 
 ### 11. Test plan
 
-If implementation is later approved, authored offline tests cover summary counts,
+The approved implementation's authored offline tests cover summary counts,
 source labels, separate audio/subtitles/film hint, unknown and scoped negative,
 one-block conflict vs possible/non-comparable rows, source failure/disabled,
 R2 unknown mappings/Store-channel distinction, no controls used as source truth,
@@ -515,7 +524,7 @@ explicitly authored, not evaluation results or new catalogue expectations.
 
 ### 13. Git workflow
 
-Separate implementation approval required. Then inspect actual #184/#185 stack:
+Separate implementation approval was received for the bounded scope. Inspect actual #184/#185 stack:
 if open, select explicitly approved stacked base and only incremental diff;
 if merged, current develop after review of intervening changes. Preserve owner
 checkout/process/untracked files. Small research feature commit/PR, actual
