@@ -114,6 +114,15 @@ A–D matrix is not a requirement to implement the entire conceptual contract.
   from peers. Existing six fields only, exact candidate URL/acknowledgement,
   excluded characteristics sidecar-only; review→confirm→edit/cancel unchanged.
   R2 unresolved entries cannot supply canonical media/access/draft selection.
+- Add the proposed [Copy short report action](regional-card-proposal.md#copy-short-test-summary--proposed-ui-requirement)
+  for the displayed film's completed result, including partial/error states.
+  Allowlisted plain text only: film/mode/time, source/identity status, calls/elapsed,
+  source-labelled A/B reasons/unknowns/conflicts and draft interaction summary,
+  not free-text draft contents, credentials, account data, URLs/queries or raw
+  JSON/HTML. No request/state change, auto-copy or clipboard read. Show success
+  only after a successful write; unavailable/denied writes use the same selectable
+  plain-text fallback. Do not assume Safari LAN HTTP clipboard capability or
+  change security/system settings. OS clipboard export can outlive page memory.
 
 ## 7. Technical constraints
 
@@ -203,6 +212,12 @@ one-row default exclusions, no storage/extra requests. Installed browser only;
 record unavailable WebKit/LAN skips, not real iPhone validation. Windows temp-copy
 multi-key/safe-start/status/stop/restart only for relevant helper/lifecycle changes.
 No live API/source/destination request by implementation agent.
+
+Clipboard mocks/browser checks: allowed summary versus excluded secrets/raw/free
+text, synthetic/partial/error labels, successful/denied/unavailable writes and
+fallback, stale-film reset, repeated copy without extra requests or draft changes.
+No clipboard reads/auto-copy. Include one copy-or-fallback check in the existing
+future owner session; do not add a separate Safari or SSH-disconnect cycle.
 
 Only after separate approval/readiness, use the canonical four-film plan:
 Kingdom of Heaven and Parasite **require Kinobaza** with exact source film-card

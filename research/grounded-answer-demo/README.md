@@ -28,6 +28,14 @@ unknown; shared JustWatch lineage is not independent corroboration. Exact links,
 Apple `at`/tracking acknowledgement, R2 quarantine and one-row memory-only draft
 remain unchanged. Price/video/tracks stay excluded from draft fields.
 
+Proposed UI also includes [Copy short report](docs/regional-card-proposal.md#copy-short-test-summary--proposed-ui-requirement):
+explicit-click plain-text summary of the current film/run, source statuses, A/B
+reasons/unknowns/conflicts and draft interactions, not raw JSON/HTML, credentials
+or draft contents. No extra requests/autosave. Show an honest selectable-text
+fallback if clipboard writing is unavailable/denied; Safari LAN HTTP behavior
+must be checked during implementation/approved acceptance, not assumed. Explicit
+copy exports to the OS clipboard; its lifetime is not controlled by page memory.
+
 The [M2 13-section handoff](docs/m2-offer-matching-handoff.md) is **Proposed / not
 authorized**. Its [held-out four-film evaluation plan](docs/regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films)
 is also unexecuted/unapproved: Kingdom of Heaven and Parasite require Kinobaza

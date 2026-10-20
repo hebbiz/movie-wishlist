@@ -2065,6 +2065,57 @@ badge, auto-open or merge-all action. Select/review/confirm always targets the
 original source row. Useful A/B explanations suffice; commercial offer identity
 and field applicability remain explicitly deferred.
 
+#### Copy short test summary — proposed UI requirement
+
+Documentation-only addition approved after #184 `aefb166`; implementation is
+still **Proposed / not authorized**. Add a **Copy short report** action after a
+discovery operation finishes, including partial/error results. Its purpose is
+the owner's short acceptance summary, not raw evidence export or accuracy scoring.
+
+Generate a bounded **plain-text** report from an explicit allowlist, not by
+serializing the result/stages/draft. Contents:
+
+- Film, retrieval/mode and actual run receipt time, clearly synthetic versus
+  live source claims; never automatically label a run owner-validated.
+- Source status/identity, requests made versus ceiling, elapsed time (one run,
+  not a benchmark/cost estimate).
+- Compact source-labelled leads/access/link kinds, A/B outcomes with short
+  evidence/reasons, important unknown/conflict markers. No C/D inference,
+  unified verified offer, entitlement or successful-test assertion.
+- Draft interaction summary, if used: actual present/confirmed/edited/cancelled
+  state only, not free-text draft values or an invented list of transferred
+  fields. Cancelling selection must not imply that the prior edited draft vanished.
+
+Do not copy credentials, headers/environment, account/device/local-path data,
+full JSON/HTML, raw responses, long technical diagnostics or full provider/
+tracking URLs/query parameters by default. Keep source names/attribution and
+uncertainty in the summary. Indicate omitted rows if the bounded summary cannot
+include all leads. This is not a new source-data licence or a response archive.
+
+Copy only on an explicit user gesture; repeated copies may reuse the current
+snapshot without another request/token/session. Do not read the clipboard,
+auto-copy, add analytics/storage/downloads or change draft/source state. Enable
+only for the displayed film's completed snapshot; clear stale success/report
+state on film change/reload. No API/destination requests or budget increase.
+
+Do not assume clipboard write capability/permission in the existing iPhone/
+Safari LAN HTTP workflow. Attempt copying only when supported and permitted;
+show success **only after the write succeeds**. If unavailable/denied/failing,
+show the same plain text in a selectable read-only fallback for manual copying,
+with honest status; do not weaken auth/Host/Origin/CSP or require HTTPS/system
+changes merely for this action. No guaranteed one-click success where the
+browser refuses clipboard access. Page data stays memory-only, but an explicit
+copy exports text to the **OS clipboard**, which can outlive the page or be
+managed/synced by the device; do not promise clipboard erasure on reload.
+
+Future checks: mocked successful/denied/unavailable writes; exact allowlisted
+summary, synthetic/partial/error labels, no secrets/raw/draft contents; stale-film
+guard, repeated copy without requests, no mutation of edited draft. Browser/mobile
+tests verify success feedback and fallback selection; actual Safari behavior
+remains unverified until the separately approved acceptance session. Fold this
+into that one session, not an extra owner test cycle or mandatory repeat of old
+platform/synthetic/SSH-disconnect checks.
+
 ### Localization, recommendations and local draft
 
 | Evidence use | Allowed in proposed comparison | Draft boundary |
