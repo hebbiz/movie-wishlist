@@ -1918,11 +1918,19 @@ conditions are established; do not retrofit current adapters now.
 
 ## M2 digital offer matching — Proposed
 
-**Design decision M2-D1, Proposed / not authorized for implementation.** Extend
-the existing contract with auditable **relations between immutable source
-observations**, not a merged “verified offer”. Preserve all M1 row/link/draft
-controls. M2 needs no LLM, new source, destination fetch or storage. Its purpose
-is useful comparison under uncertainty, not maximizing the number of joins.
+**Design decision M2-D1, Proposed / not authorized for implementation.** The
+first implementation slice is **A/B-only**: same-film association and comparison
+of supported regional provider-card pointers, with direct evidence/reason links
+between existing source rows. No general relation graph, exhaustive pairwise
+engine or merged “verified offer”. Preserve all M1 row/link/draft controls.
+C/D remain long-term design constraints and forbidden-inference tests, **not
+runtime engines or required runtime outcomes in this slice**. M2 needs no LLM,
+new source, destination fetch or storage. Only documentation is authorized now;
+implementation, preflight and live evaluation all need separate authorization.
+
+This documentation-only narrowing continues open #184 after
+`d8b24719fbe2a6de41a8c25858ac9890e714c2a0`, on the same verified develop base.
+No runtime or preflight/evaluation work has been performed for this amendment.
 
 ### Inspected implementation and evidence boundary
 
@@ -1970,18 +1978,20 @@ remain conditional, not a fresh licence for matching, forwarding or retention.
 | C — offer | Do these assertions refer to the same commercial proposition? | Positive explicit offer binding plus compatible known commercial scope. | Playback entitlement, independent corroboration, or application of every card-level field. |
 | D — field | Does this particular assertion apply to that particular offer? | Direct field-to-offer binding or explicit source statement covering that offer scope. | Applicability to sibling offers, complete track lists, or independent truth. |
 
-Return **`compatible` / `conflicting` / `insufficient-evidence` for each level**,
-with reason codes, supporting observation/field refs, tested scope and missing
-dimensions. `conflicting` requires explicit incompatible evidence, not missing
+The first slice returns **`compatible` / `conflicting` / `insufficient-evidence`
+for A/B only**, with reasons, supporting row/field refs and missing dimensions.
+The same vocabulary for C/D is a future design, not a request to implement it.
+`conflicting` requires explicit incompatible evidence, not missing
 data. A known difference (rent versus buy) is a C conflict **for a proposed join**,
 not an error in either source. Keep field disagreements separate from identity
 conflicts: C may be compatible while D has contradictory values.
 
 `compatible` is scoped support, never a global verified badge. Invalid/unsafe
 input is withheld with its existing reason, not converted into negative evidence.
-No numeric confidence, majority vote or latest-receipt-wins rule. Relations are
-pairwise: A↔B and B↔C do not authorize a transitive union, territory borrowing or
-field propagation. A conflict quarantines only affected relations/observations;
+No numeric confidence, majority vote or latest-receipt-wins rule. Direct A/B
+links do not authorize a transitive union, territory borrowing or field
+propagation; there is no general graph to traverse. A conflict quarantines only
+affected links/observations;
 independent correctly gated rows remain useful/selectable.
 
 ### Matching rules matrix
@@ -1990,6 +2000,12 @@ All examples below are **authored scenarios**, not assertions about current
 catalogues. `F`, `P`, `N`, `O` and times denote fictional film/provider/card/offer
 identifiers and contexts. “Same offer” examples with provider-issued offer IDs
 exercise the logical contract; current adapters do not establish such an ID.
+
+**Scope partition:** M01–M09 drive A/B checks and preserve existing provider/link
+controls. M10/M14/M19/M20 supply scope/lineage/time explanations where already
+available, not a broader matching engine. M11–M13 and M15–M18 remain C/D design
+constraints: first-slice tests assert **no commercial join/field propagation**,
+not positive C/D runtime matching. All20 rules remain canonical long-term design.
 
 | Rule / level | Required evidence | Positive authored example | Negative or ambiguous authored example | Permitted outcome; forbidden inference |
 | --- | --- | --- | --- | --- |
@@ -2016,32 +2032,45 @@ exercise the logical contract; current adapters do not establish such an ID.
 
 ### Relation contract and useful presentation
 
-Proposed in-memory relation: left/right observation refs; question A/B/C/D (for D,
-specific field/target offer); outcome/reason; evidence refs; tested dimensions;
-unresolved dimensions; lineage; receipt/source-time basis; limitations. Keep
-same-operation source indices distinct from durable IDs. This is a logical
-extension of the [shared contract](#shared-offer-observation-model--design-only),
-not a new database, cache, response archive or production schema.
+Proposed first-slice direct link: source row ref and fixed-film/related row ref;
+question **A or B**; outcome/reason; evidence refs; routing/identity basis and
+missing context; receipt/lineage already present on the rows. Keep operation-local
+indices distinct from durable IDs. No C/D record generation, generic graph schema,
+graph traversal, all-row Cartesian comparisons or production/persistence model.
+The [shared contract](#shared-offer-observation-model--design-only) remains the
+long-term field model, not a prerequisite to implement all of it.
 
-Evaluate source identity gates → provider-ID consistency → pairwise A/B/C → D
-**independently**, without increasing requests. A conflict prevents a claimed
-common film/card/offer; a failed source does not block independent sources. A
-stable-ID conflict cannot be “fixed” by URL similarity. Check all returned IDs,
-not just the convenient matching one. No broad graph/union-find equivalence.
+Use existing per-source identity gates for direct association with the fixed film
+(A), then R2 consistency and a small lookup of supported regional native-card keys
+(B). Attach explanatory references only for the explicit association/key tested.
+Unknown/unsupported keys yield a qualified related film/provider claim, not a
+fabricated B match. Stable-ID conflict cannot be “fixed” by URL similarity; check
+all returned IDs and keep independent good rows. Different supported pointers
+conflict only with a proposed same-card link, not necessarily with the film or
+either source's validity.
 
-UI remains platform groups with separate selectable source rows. Optional compact
-relation labels: “same declared card pointer; destination unverified”, “related
-UA rental signal; exact offer unestablished”, “block localization; territory/access
-unknown”, or “conflicting identity/provider mapping”. Show why and missing scope
-in details. No unified verified status, new auto-open or merge-all action. A
-useful result may have compatible A/B and insufficient C/D throughout.
+UI remains platform groups with separate selectable source rows. Use short
+**source-labelled** explanations; labels can coexist without pooling scope:
+
+| Short explanation | Evidence and visible limit |
+| --- | --- |
+| Same supported regional card pointer | Name both source rows and supported native-key/route basis; destination unverified, not commercial-offer equality. |
+| Related film/provider claim, exact card unresolved | A/source provider association exists; no comparable direct card key, e.g. TMDb signal, tracking or cross-ID Apple routes. |
+| Territory/access/version insufficient for enrichment | A/B may be useful, but block localization stays on its original row; no C/D evaluation or copying tracks to another offer. |
+| Conflicting identity/card evidence | Show affected sources and precise stable-ID/R2/different-pointer reason; independent valid rows survive. No platform-wide failure inferred. |
+
+Long technical reasons, compared refs, missing dimensions, exact hrefs and
+provenance stay in collapsed details. No unified verified offer, best-option
+badge, auto-open or merge-all action. Select/review/confirm always targets the
+original source row. Useful A/B explanations suffice; commercial offer identity
+and field applicability remain explicitly deferred.
 
 ### Localization, recommendations and local draft
 
 | Evidence use | Allowed in proposed comparison | Draft boundary |
 | --- | --- | --- |
 | Independently gated source UA availability/access | Compare as source-market signal; not account playback/new purchase entitlement. | Existing selected-row identity/medium only; access/provenance sidecar, no ownership. |
-| Direct applicable offer audio/subtitles/video | Source-scoped reason for choice when D established; explicit negatives retain narrow scope. | Still excluded from form fields: current MW-shaped draft has no track/video fields. Preserve sidecar only. |
+| Direct source-row audio/subtitles/video | Show only on the reporting row with its original scope; cross-source field applicability is deferred (D). Explicit negatives retain narrow scope. | Still excluded from form fields: current MW-shaped draft has no track/video fields. Preserve sidecar only. |
 | Provider block, unknown territory/access, catalogue localization | Show adjacent hint with its own basis, not an offer's rank/value; general film localization is search/identity context. | Never populate another row or recommended tracks; no cross-source URL borrowing. |
 | Price/quality/currency disputes; missing/empty metadata | Retain literal source claims/unknowns/conflicts, no conversion or repair. | Price/currency and unknown/conflicting/suspect fields remain excluded by default. |
 | Selected-row safe exact or opaque-tracking/referral candidate | Explicit navigation independent of transfer and matching result. | Exact href only; R1 `at` and existing tracking/referral acknowledgement required. Search/relative/unsafe/watch/unknown kinds leave purchase_url blank. |
@@ -2064,15 +2093,17 @@ remain unresolved, not selectable canonical media (R2); other good rows survive.
 
 ### Future regression design and evaluation outside two films
 
-Each matrix row M01–M20 is a required authored positive **and** negative/ambiguous
-regression pair with outcome/reason/forbidden-inference assertions. This task
-adds no executable fixtures or tests. Future coverage must also include:
+The full matrix retains authored positive and negative/ambiguous examples as
+long-term design. First-slice executable regressions cover A/B outcomes/reasons
+and forbidden-inference assertions for C/D; **no positive C/D runtime engine or
+commercial-offer fixture schema is required**. This task adds no executable
+fixtures/tests. Future first-slice coverage must also include:
 
 | Regression family | Required guard beyond the individual matrix rows |
 | --- | --- |
-| False joins | A/B positive with C/D insufficient; same URL rent/buy; missing scopes on both sides not equal; tracking versus direct; region variants; Apple Store/TV+/channel; no transitive propagation. |
+| False joins | A/B positive never yields a C/D conclusion; same URL rent/buy; missing scopes on both sides not equal; tracking versus direct; region variants; Apple Store/TV+/channel; no transitive propagation. |
 | Missed joins | Exact stable ID/year variance; compatible reviewed aliases; same accepted regional native-card key despite allowed referral difference, keeping both exact hrefs/ack gates. |
-| Conflicts | Supplied stable ID conflict; R2 per-namespace ID conflict; independent namespace unaffected; same offer with contradictory fields, not an invented winner. |
+| Conflicts | Supplied stable ID conflict; R2 per-namespace ID conflict; different supported card keys; independent namespace unaffected. Contradictory fields stay on their rows, with no new C/D winner engine. |
 | Partial/missing data | TMDb failure leaves MOTN; matched identity/partial A; absent deep link; missing/null/empty; malformed/unsafe withheld; no added fallback/fetch. |
 | Lineage/time | JustWatch shared origin not independent; unknown upstream not invented; receipt versus source time; possible temporal discrepancy not automatic latest-wins. |
 | Draft/mobile/security | Only selected-row fields, exact URL/R1 acknowledgement toggle, R2 no selection, excluded tracks/video/prices, review/confirm/edit/cancel, text-only/no storage; no extra requests or changes to auth/budgets. |
@@ -2080,29 +2111,52 @@ adds no executable fixtures or tests. Future coverage must also include:
 **Proposed held-out set, not configured or run:** four catalogue candidates
 selected by risk **before knowing provider results**, not viewing recommendations:
 
-| Candidate | Why include it / scenario to seek, not a claimed offer |
-| --- | --- |
-| Kingdom of Heaven (2005), target Director's Cut | Same film versus cut; unknown version must not become the requested cut. Its presence in any provider catalogue is not assumed. |
-| The Thing (1982) | Same-name collision, original versus newer film; stable-ID discrimination. |
-| The Thing (2011) | Deliberately paired collision with1982; no title-only join. |
-| Parasite (2019) | Localized/alternative titles and catalogue language versus offered tracks; no assumption of UA offers or language coverage. |
+| Candidate / hypothesis or risk | Required sources and source-card precondition | Expected semantic behavior, not factual results | Outcomes the case can reveal |
+| --- | --- | --- | --- |
+| Kingdom of Heaven (2005), target Director's Cut: film/card versus version | TMDb + MOTN + **Kinobaza required**; exact film source-card URL and any permitted canonical pair verified in preflight before configuration. | Relate accepted film identities and supported pointers; keep version unknown unless explicitly reported. Localization stays block-scoped even if B matches. No assumed provider/cut availability. | Positive A/B if evidence aligns; insufficient B/version for tracking/cross-ID/unreported cut; conflicting supplied stable IDs or supported card keys for the proposed link. |
+| The Thing (1982): same-name collision | TMDb + MOTN; Kinobaza off for this case. | Distinguish the1982 subject by stable IDs, never a shared title. B can match without a commercial join. | Positive A/B with agreeing evidence; insufficient card metadata/empty result; conflicting identity if a source returns the2011 subject. No expected live conflict asserted. |
+| The Thing (2011): paired counterexample | TMDb + MOTN; Kinobaza off for this case. | Keep separate from1982 despite names; preserve independent gates and access rows. | Positive links within2011; insufficient B without direct key; explicit ID/card conflict. A difference across films is not a source defect. |
+| Parasite (2019): localized title versus offered tracks | TMDb + MOTN + **Kinobaza required**; exact film source-card URL and any permitted canonical pair verified in preflight before configuration. | Keep catalogue localization, own-block audio/subtitles and explicit country claims separate; compare supported pointers without moving tracks into MOTN offers. | Positive A/B with supported IDs/pointers; related claim but B unresolved for tracking/iTunes cross-ID/missing key; conflict from explicit ID/card disagreement. No assumed UA tracks/results. |
 
-All new IDs/directors/crosswalks must be verified before catalogue configuration;
-none are asserted here. No card URLs or availability are guessed. Keep an empty
-UA result as a useful result, **do not replace a film because coverage failed**.
-Rent/buy same-card, packages, tracking and contradictory fields are covered by
-authored cases even if absent live; do not hunt for successful examples.
+**URL/ID readiness now: pending for all four films.** No new source-card URLs,
+stable IDs or provider results are asserted/fetched in this documentation task.
+The two required Kinobaza URLs must be exact **source film cards**, not search
+pages/provider destinations, identity-checked before the future session. Do not
+invent slugs, substitute old Coherence/Dune cards or silently disable Kinobaza.
+Failure to establish either card makes this plan not ready for localization-source
+matching evaluation. Arbitrary-card discovery is not solved. Empty live coverage
+remains a finding; do not replace samples after seeing results. Missing block
+claims mean that aspect was not observed, not a passed localization-match test.
+Authored guards cover cases absent live; do not hunt for successful results.
 
-After separate implementation/sample approval and source-use readiness: retain
-two original films as dated controls, not compulsory new runs. For four new
-films, TMDb A+B max2 plus independent MOTN max1 = **max12 source HTTP requests
-total**, one explicit discovery per film, no retries/extra identity endpoints.
-Expected IDs must be established in a separately disclosed preflight budget,
-not hidden inside those12; if verification needs live calls, obtain approval
-before that preflight. Identity failure may reduce actual calls. **Kinobaza for
-new films stays unconfigured/deferred**: arbitrary fixed-card discovery is not
-solved and this plan authorizes no new HTML GETs. Matching itself adds0 requests;
-existing two-film mode retains its max4/conditional5 budgets, unchanged.
+#### Separate proposed request budgets — no requests authorized now
+
+| Phase | Bounded work, after its own approval | Ceiling |
+| --- | --- | --- |
+| Identity preflight | At most2 public authoritative identity-document GETs per film for TMDb/IMDb/director crosswalk; no unlisted endpoint fan-out. Stop if unresolved. | 8 GETs for4 films. |
+| Kinobaza source-card preflight | Only the2 proposed exact source-card URLs; at most1 GET each plus1 strictly validated canonical hop each. No provider/tracking requests. | 2 without hops;4 maximum with2 permitted hops. |
+| Source-use readiness preflight, if needed | Up to3 relevant public rules/notices/robots documents per source (TMDb/MOTN/Kinobaza); not catalogue extraction or a licence inferred from robots. | 9 document GETs maximum; actual0 if no fresh read needed. |
+| **Preflight total** | Separate from discovery/owner time; failed attempts and redirects count; no retries or unbudgeted searches. | **At most21 GETs** (8 identity +4 source-card +9 conditional rules); stop if evidence cannot be established within caps. |
+| Discovery, Kinobaza-off cases | The Thing1982/2011: TMDb A+B max2 plus independent MOTN1 each. | 3 each;6 total. |
+| Discovery, Kinobaza-required cases | Kingdom of Heaven/Parasite: TMDb2 +MOTN1 +Kinobaza1, plus at most1 configured exact canonical hop per case. | 4 each without hop;5 each maximum. |
+| **Four-film discovery total** | One explicit discovery per film; no retries, new endpoints or destination requests. | **14 without hops;16 maximum**:12 +K +H, K=2 configured cards, 0≤H≤2 actual permitted hops. |
+
+Preflight is a separate bounded future operation, not hidden inside discovery or
+a request to the owner now. Candidate source URLs must be supplied for review
+before GETs; unknown URLs needing additional search/navigation require a separately
+approved bounded plan, not fabricated paths/invisible requests. Count every actual
+GET, including redirect/refusal responses, against its phase cap. Preflight has
+no automatic redirect following: only a validated exact old→canonical same-title
+pair may consume the one additional GET. Configure the verified pair or direct
+canonical card before evaluation; unknown targets stop the path, no generic
+redirect expansion. Preflight metadata can record IDs, exact configured source
+URL and verification basis, not HTML/response archives.
+
+After separate implementation/sample approval and source-use readiness, retain
+the original two films as dated controls, not compulsory new runs. Identity or
+transport failures may reduce actual calls; unused budget is not retry/new-source
+permission. Existing Coherence/Dune budgets stay unchanged (max4/conditional5 per
+film, Kinobaza-off max3). Matching adds0 requests.
 
 Agent would run authored/offline/HTTP/mobile/security checks first; Windows only
 if helper/key/lifecycle changes, preserving owner demo. One **future** short
@@ -2110,15 +2164,16 @@ Termius → iPhone/Safari acceptance session: correct branch/status/config/hidde
 credentials with existing workflow; one discovery per approved new film; inspect
 new relations/unknowns and one select/review/confirm/edit/cancel flow. No repeated
 streaming-app tour or old Coherence/Dune checks; no mandatory synthetic/SSH-disconnect
-repeat without relevant workflow changes. Summary only: useful links/relations,
+repeat without relevant workflow changes. Summary only: useful A/B links/explanations,
 false/missed joins, missing/conflicting fields, draft result, actual calls.
 No JSON/HTML/screenshots. Existing owner prices/settings are dated controls.
 
 Stop the affected source on403/429/CAPTCHA/terms conflict/identity mismatch; keep
 independent safe partials. Stop the session on security leak, extra/destination
 requests, false scope propagation or budget violation. No workaround, sample
-replacement, retry/second session by default. If C/D remain insufficient for all
-samples, report that limit, not a reason to weaken gates or gather more data.
+replacement, retry/second session by default. If supported B links cannot be
+established or localization blocks are absent, report that limit, not a reason
+to weaken gates or gather more data. C/D are deferred and need no runtime output.
 
 ### Trade-offs, approvals and roadmap
 
@@ -2134,8 +2189,9 @@ separate from implementation correctness; no cache/LLM/reuse permission inferred
 | --- | --- |
 | M1 isolated probes/composition | Merged into research develop; bounded owner observations, not production. |
 | M2 matching matrix/handoff | **Proposed, design-only**; this document is canonical. |
-| M2 implementation on existing fixed Coherence/Dune | **Not authorized**. Product approval needed for the proposed relation-label/no-auto-merge slice, preserving one-row draft/default exclusions. |
-| Held-out four-film session | **Proposed, not authorized**; approve sample/configuration and max12 probe budget plus explicit ID-preflight scope before live work. May follow M2 implementation review, not a prerequisite for this document. |
+| M2 implementation on existing fixed Coherence/Dune | **Not authorized**. A/B-only direct explanations, no graph/full pairwise or C/D engine; preserve separate rows and one-row draft/default exclusions. |
+| C/D commercial identity/field applicability | Deferred long-term rules/forbidden-inference tests only, not required runtime in the first slice. |
+| Held-out four-film session | **Proposed, not authorized**;2 required preverified Kinobaza cards. Separate preflight cap21 and discovery14/conditional16. Approval/readiness/configuration needed before any live work. |
 | Arbitrary Kinobaza cards/MEGOGO/LLM/workers/persistence/production | Deferred; no new authorization or infrastructure. |
 
 These two scope approvals are the actual product decisions. Rule mechanics,

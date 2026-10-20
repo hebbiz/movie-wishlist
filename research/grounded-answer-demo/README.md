@@ -11,11 +11,17 @@ supersedes older open-stack/conditional-merge statements retained below as histo
 **MW-FUT-01-M2 is Proposed; only design is approved. No M2 runtime exists.**
 The [canonical matching matrix M01–M20](docs/regional-card-proposal.md#matching-rules-matrix)
 separates same film (A), same declared regional provider-card pointer (B), same
-commercial offer (C), and applicability of one field to that offer (D). Compatible
-A/B is not C/D or entitlement. Proposed outcomes are compatible / conflicting /
-insufficient-evidence, with reasons and source scope, not numeric confidence.
+commercial offer (C), and applicability of one field to that offer (D). The
+**first proposed implementation is A/B-only**, not a general relation graph or
+full pairwise engine. C/D stay deferred constraints/forbidden-inference tests,
+not runtime engines. A/B is not C/D or entitlement. Proposed A/B outcomes are
+compatible / conflicting / insufficient-evidence, with evidence/reasons,
+not numeric confidence.
 
-Recommended next slice: explain related claims beside existing independent rows;
+Recommended next slice: direct source-labelled A/B explanations beside separate rows:
+same supported regional card pointer; related film/provider claim with exact
+card unresolved; insufficient territory/access/version for enrichment; conflicting
+identity/card evidence. Long technical reasons remain in details;
 no automatic enriched/verified offer. Provider-name/card matches do not transfer
 Kinobaza localization into MOTN offers. Unknown territory/access/package/cut stays
 unknown; shared JustWatch lineage is not independent corroboration. Exact links,
@@ -24,8 +30,13 @@ remain unchanged. Price/video/tracks stay excluded from draft fields.
 
 The [M2 13-section handoff](docs/m2-offer-matching-handoff.md) is **Proposed / not
 authorized**. Its [held-out four-film evaluation plan](docs/regional-card-proposal.md#future-regression-design-and-evaluation-outside-two-films)
-is also unexecuted/unapproved: no new IDs/card URLs/results assumed, no requests
-in this documentation task. Existing setup/iPhone commands are unchanged.
+is also unexecuted/unapproved: Kingdom of Heaven and Parasite require Kinobaza
+with preflight-verified exact source film-card URLs; The Thing1982/2011 use
+TMDb+MOTN. No new IDs/card URLs/results are asserted or fetched now. Separate
+proposed budgets: **preflight max21 GETs** (IDs8 +source cards up to4 +conditional
+rules9); **discovery14 without hops /16 maximum**.
+One future short owner session, no repeated streaming-app tour; authorization
+comes separately. Existing setup/iPhone commands are unchanged.
 No runtime suites are rerun for these Markdown-only changes. MW-FUT-01 remains Discovery.
 
 ## Consolidated architecture checkpoint
