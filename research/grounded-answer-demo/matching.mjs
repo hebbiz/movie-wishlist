@@ -11,7 +11,16 @@ function filmAssociation(source, expected) {
   const refs = { source: source.source, evidenceRefs: [`sources.${source.source}.evidence`] };
   const done = a => ({ ...a, ...refs });
   if (source.status === 'disabled-no-request') return done(answer('not-evaluated', 'disabled-by-scenario'));
-  if (source.identity === 'mismatch') return done(conflict('stable-id-conflict'));
+  if (source.status === 'not-evaluated-missing-crosswalk') return done(answer('not-evaluated', 'missing-imdb-crosswalk'));
+  if (source.identity === 'mismatch') {
+    if (source.source === 'kinobaza') {
+      const reason = source.evidence?.reason;
+      // A structural refusal is not evidence of conflicting stable IDs.
+      if (['source-year-conflict-without-stable-crosswalk', 'source-title-conflict', 'source-canonical-conflict'].includes(reason)) return done(conflict(reason));
+      if (reason !== 'source-stable-id-conflict') return done(conflict('source-identity-conflict'));
+    }
+    return done(conflict('stable-id-conflict'));
+  }
   if (source.identity !== 'matched') return done(insufficient('source-identity-unresolved'));
   const e = source.evidence;
   if (source.source === 'kinobaza') return done(e?.status === 'matched'
@@ -84,8 +93,8 @@ export function supportedPointer(row) {
     comparisonScope: JSON.stringify([row.provider.key, namespace, route]), destination: 'unverified' });
 }
 
-export function describeDiscovery(result) {
-  const expected = Object.hasOwn(MOTN_FILMS, result?.film?.id) ? MOTN_FILMS[result.film.id] : null;
+export function describeDiscovery(result, selectedIdentity) {
+  const expected = selectedIdentity ?? (Object.hasOwn(MOTN_FILMS, result?.film?.id) ? MOTN_FILMS[result.film.id] : null);
   if (!expected) return { subjects: [], rows: [], limitation: 'fixed-film-unresolved' };
   const subjects = ['tmdb', 'motn', 'kinobaza'].map(source => filmAssociation(
     result.sources?.find(s => s.source === source) ?? { source, identity: 'unresolved' }, expected));

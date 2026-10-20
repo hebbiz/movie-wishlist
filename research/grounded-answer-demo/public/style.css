@@ -34,4 +34,5 @@ a { color: #204fc6; }
 .discovery-card details { margin-top: 8px; }
 #mykola-summary { font-weight: 600; }
 #answer.discovery-ui { white-space: normal; }
+#film-search button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 @media (max-width: 600px) { main { margin: 20px auto; padding: 0 12px 24px; } header, #result { padding: 18px; } }

@@ -19,7 +19,12 @@ try {
   const session = await response.json();
   if (session.retrieval === 'ua-discovery') {
     const { mountDiscovery } = await import('./discovery-client.mjs');
-    await mountDiscovery(document, session, { signal: lifetime.signal });
+    let search;
+    const view = await mountDiscovery(document, session, { signal: lifetime.signal, onFixedChange: page => search?.leave(page) });
+    if (session.dynamic) {
+      const { mountFilmSearch } = await import('./film-search.mjs');
+      search = mountFilmSearch(document, session.dynamic, view, { signal: lifetime.signal });
+    }
   } else {
   const urlOnly = session.retrieval === 'url-context';
   const htmlOnly = session.retrieval === 'kinobaza-html';

@@ -1,12 +1,32 @@
 # MW-FUT-01-M3 handoff: arbitrary-film discovery
 
-**Proposed / not authorized for implementation or live evaluation.**
-October20,2026. Design-only approval does not authorize runtime/source probes,
-owner testing or merge. MW-FUT-01 remains Discovery. The
+**M3.1 subsequently approved/implemented for bounded isolated research** after
+#187 `eb21427a325c8331bddfb1dd05c17d4db5c96cac`. **Assisted M3.2 subsequently
+approved/implemented in a child of #188 a88bfba; live preflight/evaluation,
+merge and production remain not authorized.** The13 sections retain
+the design; the [implementation record](regional-card-proposal.md#m31-bounded-implementation--authored-checks-only)
+states the actual M3.1 boundary and authored verification. No new owner cycle.
+**Subsequent owner checkpoint:** the combined8-case risk-based session is now
+reported complete; [ledger and accounting](digital-ua-owner-validation.md#m31m32--completed-risk-based-owner-session)
+supersede the historical live-pending wording **for that session only**. Assisted
+workflow demonstrated practical value, not general utility/coverage.44 source
+calls include an owner-confirmed baseline repeat in case5 (9 for that nomination);
+this deviation does not revise the normal5/max7 one-pass contract. Runtime commit
+remains unknown. No new evaluation is requested/authorized. The
+[offline findings](regional-card-proposal.md#m3-owner-checkpoint--offline-findings-and-next-boundary)
+record diagnostic-only corrections, parser/other-platform UX proposals and the
+physical fallback backlog; none authorizes parser broadening or a new capability.
+
+October20,2026. MW-FUT-01 remains Discovery. The
+subsequent [original-title boundary review](regional-card-proposal.md#assisted-original-title-boundaries--fail-closed-review)
+narrows acceptance without changing source capabilities: no convenient H2 match
+or first duplicate boundary; positive deduplication awaits source-scope evidence.
+It does not establish the missing historical live HTML or authorize a new owner run. The
 [canonical M3 decision](regional-card-proposal.md#m3-arbitrary-film-discovery--proposed-design-only)
 owns architecture, source-use evidence, metrics and trade-offs; this file is the
-reviewable task boundary, not a parallel specification. Recommend separate M3.1
-and M3.2 PRs, each requiring implementation approval; automatic Kinobaza search
+reviewable task boundary, not a parallel specification. M3.1 is implemented in
+a separate child PR; the [assisted M3.2 record](regional-card-proposal.md#m32-assisted-card-implementation--authored-checks-only)
+states the bounded implementation, rights limitations and future evaluation. Automatic Kinobaza search
 is not a verified dependency.
 
 ## 1. Context
@@ -48,7 +68,7 @@ not imports/proxies or M3 behavioral templates. Never call production endpoints.
   confirmation, validated dynamic identity/crosswalk context, TMDb UA/MOTN
   discovery, existing separate-row answer/draft/report. Kinobaza not evaluated
   for dynamic selections. Six fixed controls and all older modes preserved.
-- **M3.2 separate PR, product choice pending:** assisted ordinary public-UI
+- **M3.2 separately approved bounded PR:** assisted ordinary public-UI
   selection of one exact canonical Kinobaza source card, controlled server
   admission, identity gate, then existing extraction from the same HTML.
   No per-film catalogue registration/provider-link entry. Automated native
@@ -129,7 +149,7 @@ the browser sends only opaque selection/candidate references, not URLs to fetch.
 
 M3.2 adds at most one run-bound one-shot stage to the same identity/counters,
 even if selected later; do not repeat TMDb/MOTN or overwrite a same-film draft.
-M3.2 requires a separate admission/identity policy review. Reuse `parse5` and
+M3.2 admission/identity policy is documented in the linked implementation record. Reuse `parse5` and
 localization extraction only after identity; no per-film alias patches or nearby
 text inference. Unestablished director transliteration remains ambiguous.
 Native public search UI exists, but request/result protocol not established and
@@ -170,11 +190,13 @@ and resolver actions consume their separate counted budgets. Kinobaza failure do
 TMDb/MOTN. No track/price/video repair, C/D join or best/verified badge.
 
 Future [evaluation matrix/metrics](regional-card-proposal.md#eight-film-evaluation-matrix-and-measurable-acceptance):
-8 nominated films,0 false assignments, at least6 usable identity selections;
-at least4 cases with eligible link and4 useful choices; assisted M3.2 at least4
+8 nominated films; **0 false assignments is mandatory**. Ratios of6 usable
+selections,4 cases with eligible links/choices, and assisted M3.2 at least4
 matched cards and2 added useful hints, otherwise defer. Unknown/missing cases
 stay in denominator. These product thresholds need approval before execution;
-they are not current coverage facts or confidence scores. Max3 independent
+they are usefulness hypotheses, not permission to repair data, replace failed
+cases or call absent offers an implementation defect. They are not current
+coverage facts or confidence scores. Max3 independent
 manual link checks, scoped source claims separate from verified correctness.
 
 ## 11. Test plan
@@ -217,8 +239,9 @@ acknowledgement switches or mandatory emails due only to unknown rights.
 
 After separate approval, fetch/instructions/dirty-tree check and create M3.1
 feature branch from actual develop, isolated from owner demo/untracked files.
-Review-only PR into develop; M3.2 separate child PR only after its scope is
-approved, use actual stack/base without duplicate diffs. Pin reviewed/tested SHA
+Actual M3.1 implementation is stacked on still-open #187, with only the new
+implementation diff, per subsequent owner authorization. Review-only path;
+M3.2 is a separate child of the actual open #188, without duplicate parent diffs. Pin reviewed/tested SHA
 and report checks/skips, scope, source rights and pending evaluation separately.
 No history rewrite/force, merge/retarget/tag/release/deployment/system changes.
 Stop review-ready; neither this proposed task nor future implementation consent

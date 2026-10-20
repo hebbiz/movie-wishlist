@@ -1,13 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { runDiscovery } from '../discovery.mjs';
+import { runDiscovery, tmdbShapeDiagnostics } from '../discovery.mjs';
+import { projectTmdbIdentity, syntheticTmdb } from '../tmdb.mjs';
 import { selectRequest } from '../config.mjs';
 import { describeDiscovery } from '../matching.mjs';
-import { buildShortReport, writeShortReport } from '../public/discovery-report.mjs';
+import { buildShortReport, writeShortReport, relationText } from '../public/discovery-report.mjs';
 import { createDemo } from '../server.mjs';
 
 const time = '2000-01-01T00:00:00.000Z'; // Authored clock, not a live execution timestamp.
+
+test('report diagnostic: year-only refusal and invalid release-event date are named without source content', async () => {
+  const r = await result();
+  r.sources[2].identity = 'mismatch'; r.sources[2].evidence = { status: 'mismatch', reason: 'source-year-conflict-without-stable-crosswalk' };
+  r.matching = describeDiscovery(r);
+  const a = r.matching.subjects[2];
+  assert.match(relationText(a), /Year differs.*stable-ID crosswalk unestablished/);
+  assert.doesNotMatch(relationText(a), /Conflicting stable/);
+  const data = syntheticTmdb('coherence').details;
+  data.release_dates = { results: [{ iso_3166_1: 'UA', release_dates: [{ release_date: { authored: 'not a string' }, type: 3, iso_639_1: '' }] }] };
+  const projection = projectTmdbIdentity(data, 'coherence');
+  assert.equal(projection.status, 'partial');
+  r.sources[0].diagnostics = tmdbShapeDiagnostics(projection);
+  r.sources[0].diagnostics.fields.push({ path: 'metadata.SECRET_BODY', state: 'invalid' });
+  const report = buildShortReport({ filmId: 'coherence', result: r });
+  assert.match(report, /metadata\.releaseDates\.items\.0\.dates\.items\.0\.date:invalid/);
+  assert.doesNotMatch(report, /SECRET_BODY|partial-cause-not-in-summary/);
+});
+
+test('report: extraction diagnostic allowlist never copies arbitrary source issue text', async () => {
+  const r = await result(); r.dynamic = true; r.assisted = true;
+  r.film = { ...r.film, dynamic: true };
+  r.assistedContribution = { identity: 'matched', candidates: 0, blocks: 0, reason: 'explicit-title-year-director-match',
+    extractionIssues: ['ambiguous-territory-panel', 'https://private.example/SECRET', 'SECRET_BODY'] };
+  const report = buildShortReport({ filmId: r.film.id, result: r });
+  assert.match(report, /Assisted extraction diagnostics: ambiguous-territory-panel/);
+  assert.doesNotMatch(report, /SECRET|https?:/);
+});
 async function result() {
   const r = await runDiscovery(selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence' }), { fetchImpl: () => assert.fail('No external calls') });
   r.matching = describeDiscovery(r); return r;

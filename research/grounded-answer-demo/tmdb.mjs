@@ -56,6 +56,11 @@ function appended(data, name, expectedId, issues) {
 export function projectTmdbIdentity(data, filmId, receivedAt = new Date().toISOString()) {
   const expected = Object.hasOwn(TMDB_FILMS, filmId) ? TMDB_FILMS[filmId] : undefined;
   if (!expected) throw new Error('Fixed TMDb film required.');
+  return projectTmdbIdentityFor(data, expected, receivedAt);
+}
+// Expected context is supplied by the server's selected-ID workflow, never HTTP input.
+export function projectTmdbIdentityFor(data, expected, receivedAt = new Date().toISOString()) {
+  if (!Number.isSafeInteger(expected?.tmdbId) || expected.tmdbId < 1) throw new Error('Validated TMDb identity required.');
   const base = { source: 'TMDB', receivedAt, issues: [] };
   if (!object(data)) return { ...base, status: 'invalid-response', identity: { status: 'unresolved' } };
   const issues = [];
@@ -66,7 +71,7 @@ export function projectTmdbIdentity(data, filmId, receivedAt = new Date().toISOS
   const hasImdb = v => v !== undefined && v !== null && v !== '';
   const idConflict = (Number.isSafeInteger(data.id) && data.id > 0 && data.id !== expected.tmdbId) ||
     APPEND.split(',').some(name => object(data[name]) && Number.isSafeInteger(data[name].id) && data[name].id > 0 && data[name].id !== expected.tmdbId) ||
-    imdbValues.some(v => imdbValid(v) && v !== expected.imdbId);
+    imdbValues.some(v => imdbValid(v) && expected.imdbId && v !== expected.imdbId) || new Set(imdbValues.filter(imdbValid)).size > 1;
   const status = idConflict ? 'mismatch' : data.id !== expected.tmdbId || imdbValues.some(v => hasImdb(v) && !imdbValid(v)) ? 'unresolved' : 'matched';
   const identity = { status, tmdbId: id(data.id), detailsImdb: scalar(data.imdb_id, imdbValid), externalImdb: scalar(ext?.imdb_id, imdbValid),
     crosswalk: imdbValues.some(imdbValid) ? 'reported-match' : 'unknown',
@@ -108,6 +113,10 @@ export function projectTmdbIdentity(data, filmId, receivedAt = new Date().toISOS
 export function projectTmdbProviders(data, filmId, receivedAt = new Date().toISOString()) {
   const expected = Object.hasOwn(TMDB_FILMS, filmId) ? TMDB_FILMS[filmId] : undefined;
   if (!expected) throw new Error('Fixed TMDb film required.');
+  return projectTmdbProvidersFor(data, expected, receivedAt);
+}
+export function projectTmdbProvidersFor(data, expected, receivedAt = new Date().toISOString()) {
+  if (!Number.isSafeInteger(expected?.tmdbId) || expected.tmdbId < 1) throw new Error('Validated TMDb identity required.');
   const base = { source: 'TMDB / JustWatch', receivedAt, country: 'UA', buckets: [] };
   if (!object(data) || data.id !== expected.tmdbId) return { ...base, status: 'invalid-response-or-id',
     identity: { status: object(data) && Number.isSafeInteger(data.id) && data.id > 0 ? 'mismatch' : 'unresolved',
@@ -133,14 +142,15 @@ export function projectTmdbProviders(data, filmId, receivedAt = new Date().toISO
 }
 
 // Bounded serial transport: exactly one attempt at each planned URL, at most two.
-async function readJson(url, token, fetchImpl, { timeoutMs, maxBytes }) {
+export async function readTmdbJson(url, token, fetchImpl, { timeoutMs = TMDB_TIMEOUT_MS, maxBytes = TMDB_LIMIT_BYTES, signal } = {}) {
   const controller = new AbortController(); let reader;
-  const aborted = new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true }));
+  const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  const aborted = new Promise((_, reject) => { if (combined.aborted) reject(new Error('aborted')); else combined.addEventListener('abort', () => reject(new Error('aborted')), { once: true }); });
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const bounded = p => Promise.race([p, aborted]);
   try {
     const response = await bounded(fetchImpl(url, { method: 'GET', redirect: 'manual', credentials: 'omit',
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` }, signal: controller.signal }));
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` }, signal: combined }));
     const stop = status => { void response.body?.cancel().catch(() => {}); return { status, httpStatus: response.status }; };
     if (response.status >= 300 && response.status < 400) return stop('redirect-not-followed');
     if (!response.ok) return stop(({ 401: 'api-auth-error', 403: 'api-access-denied', 404: 'title-not-returned', 429: 'quota-or-rate-limit' })[response.status] ?? 'api-http-error');
@@ -168,11 +178,11 @@ export async function fetchTmdb(selection, token, fetchImpl = globalThis.fetch, 
   if (selection.retrieval !== 'tmdb-data' || selection.country !== 'UA' || selection.sourceURL !== verified.sourceURL || selection.providersURL !== verified.providersURL || selection.locale !== verified.locale) throw new Error('Fixed TMDb request required.');
   const base = { source: 'TMDB', country: 'UA', locale: 'uk-UA', requestsMade: 0, providers: { status: 'not-requested', reason: 'A did not pass identity.' } };
   if (!token || !safeText(token, 4096) || /\s/u.test(token)) return { ...base, identity: { status: !token ? 'missing-token-no-request' : 'invalid-token-no-request' } };
-  const a = await readJson(verified.sourceURL, token, fetchImpl, { timeoutMs, maxBytes });
+  const a = await readTmdbJson(verified.sourceURL, token, fetchImpl, { timeoutMs, maxBytes });
   const receivedAt = new Date().toISOString();
   const identity = a.status === 'ok' ? { ...projectTmdbIdentity(a.data, selection.film.id, receivedAt), httpStatus: a.httpStatus } : { ...a, receivedAt, source: 'TMDB' };
   if (identity.identity?.status !== 'matched') return { ...base, requestsMade: 1, identity };
-  const b = await readJson(verified.providersURL, token, fetchImpl, { timeoutMs, maxBytes });
+  const b = await readTmdbJson(verified.providersURL, token, fetchImpl, { timeoutMs, maxBytes });
   const providersAt = new Date().toISOString();
   const providers = b.status === 'ok' ? { ...projectTmdbProviders(b.data, selection.film.id, providersAt), httpStatus: b.httpStatus } : { ...b, receivedAt: providersAt, source: 'TMDB / JustWatch', country: 'UA' };
   return { ...base, requestsMade: 2, identity, providers };

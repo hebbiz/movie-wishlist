@@ -125,7 +125,7 @@ function candidate(a, territory, html, provider) {
 }
 
 // parse5 is lazy: existing Gemini modes still run without installing this parser.
-export async function extractHtml(html, film) {
+export async function extractHtml(html, film, { identityCheck } = {}) {
   if (typeof html !== 'string' || Buffer.byteLength(html) > HTML_LIMIT_BYTES) return { status: 'unsupported-markup', candidates: [], issues: ['html-size-limit'] };
   let parse;
   try { ({ parse } = await import('parse5')); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['Run npm ci --prefix research/grounded-answer-demo --ignore-scripts'] }; }
@@ -134,9 +134,9 @@ export async function extractHtml(html, film) {
     const doc = parse(html, { sourceCodeLocationInfo: true, onParseError: e => { if (errors.length < 10) errors.push(e.code); } });
     // Recovery is fine for omitted doctype, not duplicate attributes / ambiguous tokenization.
     if (errors.some(e => e !== 'missing-doctype')) return { status: 'unsupported-markup', candidates: [], issues: ['html-parse-errors'] };
-    const all = nodes(doc); const checked = identity(all, film);
+    const all = nodes(doc); const checked = identityCheck ? identityCheck(all) : identity(all, film);
     const fail = issue => ({ status: 'unsupported-markup', identity: checked, candidates: [], issues: [issue] });
-    if (checked.status !== 'matched') return { status: 'identity-unresolved', identity: checked, candidates: [], issues: ['title-year-director-not-unambiguous'] };
+    if (checked.status !== 'matched') return { status: checked.status === 'mismatch' ? 'identity-mismatch' : 'identity-unresolved', identity: checked, candidates: [], issues: [checked.reason ?? 'title-year-director-not-unambiguous'] };
     const accordions = all.filter(n => attr(n, 'id') === 'availabilityAccordion');
     if (accordions.length !== 1) return fail('missing-or-duplicate-availabilityAccordion');
     const accordion = accordions[0];

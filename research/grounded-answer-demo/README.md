@@ -1,23 +1,60 @@
 # MW-FUT-01: isolated grounded-answer demo
 
-## M3 arbitrary-film discovery — design only
+## M3.1 arbitrary-film discovery — isolated implementation
 
-**Proposed / not authorized for implementation or live evaluation.** Research
+**M3.1 and assisted M3.2 approved/implemented for bounded research. One combined
+owner evaluation is now reported complete; further live evaluation, merge and
+production remain unapproved.** Research
 develop is now `09c9482694b37f16fb0371f6d2fca790167a31b0`; #186→#185→#184
 were merged through merge commits. Main was not promoted. The actual runtime
-still uses six fixed films, not an arbitrary-title search.
+retains all six fixed controls and now adds an explicit arbitrary-film search
+inside `DEMO_RETRIEVAL=ua-discovery`, without another environment switch.
+
+Use **«Знайти інший фільм»**: type title/optional year, explicitly search,
+select one candidate for preview, review identity/directors/crosswalk and confirm,
+then explicitly request viewing options. No first-result choice, per-result
+lookups or Details refetch. No poster/asset fetches. Missing IMDb skips MOTN;
+Watch Providers/MOTN errors remain independent after a valid preview. Dynamic
+Kinobaza initially is not evaluated, not a resolver failure, regardless of the fixed
+controls' `DEMO_KINOBAZA` value. Existing six-film and older-mode bodies/budgets
+are unchanged. No source data goes to LLM.
+TMDb receives the entered title/optional year and selected IDs; MOTN receives
+only the validated IMDb ID and country UA. LAN password and page capability
+tokens are never forwarded to sources. No query/response logs or analytics.
+
+Separate **actual HTTP counters** show search/preview/discovery plus phase elapsed
+(not cost/benchmark). A case permits2 explicit searches,2 different previews,
+one discovery action with at most2 HTTP calls: **max6**, normally4. A repeated
+identical query or preview is not retried. After a completed case use
+**«Новий випадок — очистити попередній»**, not server restart. Typing a changed
+query clears prior rows/report/draft immediately and invalidates server state;
+late responses/copy callbacks cannot restore them. Invalidation is a local
+control request, **0 source requests**, not search on each keystroke. Synthetic
+always returns2 explicitly invented identities, not real matches to the query;
+its source counters are0 and action-use counters are separate.
+
+Search/preview failures also have an explicit safe short report without a false
+selected identity; full discovery reuses the existing original-row draft/cancel,
+exact URL/affiliate acknowledgement and clipboard fallback. Report excludes
+queries, tokens, source URLs/bodies and manual draft text; runtime commit remains
+unknown. Server retains only bounded projected context in RAM, purged on new
+case/30min expiry/process close; no persistent response cache.
+If the local action response is lost, counters/report say unknown rather than
+reuse old numbers; reload manually, no automatic source retry.
+See [implemented boundary/source-use/check record](docs/regional-card-proposal.md#m31-bounded-implementation--authored-checks-only)
+and [future iPhone UI workflow](docs/iphone-windows.md#m31-arbitrary-film-search--no-owner-run-requested).
 
 The [canonical M3 decision](docs/regional-card-proposal.md#m3-arbitrary-film-discovery--proposed-design-only)
-recommends two separately approved PRs:
+records the two-increment design:
 
 - **M3.1:** explicit TMDb search → user-selected identity preview/confirmation
   → independently gated TMDb/MOTN results → existing original-row local draft.
   No first-result selection, per-result lookup fan-out or restart for each film;
   absent IMDb crosswalk means MOTN not evaluated, never a guessed ID.
-- **M3.2:** controlled Kinobaza source-card resolution/identity/extraction.
+- **M3.2 (assisted implementation):** controlled Kinobaza source-card admission/identity/extraction.
   Current public search UI is visible, but robots excludes automated search
   and a supported API was not found. Recommended intermediate option is
-  **owner-assisted source-card selection**, subject to product approval;
+  **owner-assisted source-card selection**, approved only for bounded research;
   automatic arbitrary-card discovery remains unresolved. This selects a source
   card, not manually supplied provider URLs; links/localization still require
   bounded identity-gated extraction. Failure does not block M3.1.
@@ -26,18 +63,64 @@ See [feasibility/access limits](docs/regional-card-proposal.md#kinobaza-search-f
 [phase budgets](docs/regional-card-proposal.md#separate-request-budgets--proposals-not-executed),
 [eight preselected risk cases and metrics](docs/regional-card-proposal.md#eight-film-evaluation-matrix-and-measurable-acceptance)
 and the [13-section implementation handoff](docs/m3-arbitrary-film-handoff.md).
-Per film, M3.1 normally4/max6 external requests; assisted M3.2 normally5/max7.
+Per film, implemented M3.1 normally4/max6 external requests; assisted M3.2 normally5/max7.
 Eight cases:32/max48 or40/max56 respectively, separate from proposed preflight
 max28 (search8 +identity8 +cards8 +rules4). Manual public-UI/link navigation
 traffic is separate/unmeasured, not hidden
 inside these server GET counts. No new search/provider capability or test result
-is implied by these proposed ceilings. No runtime command enables M3 today.
+is implied by these ceilings. M3.1 reuses the existing server startup/keys;
+M3.2 uses the same running server and credentials, no new environment switch.
+
+After dynamic discovery, optionally use **«Додати дані Кінобази»**: find a card
+yourself, paste its exact canonical URL, then **«Перевірити адресу»** (0 source
+calls). The admitted address and one-GET/case-cap7 budget appear before the
+separate **«Прочитати одну картку»** action. Only exact
+`https://kinobazaua.com/titles/<lowercase-ascii-slug>` is admitted; no alternate
+host, port, query, fragment, subpage, encoding/dot trick or guessed repair.
+One opaque run-bound reference; server revalidates it. One15s/2MiB GET,
+no redirects/retries, cookies, credentials or destinations. Failed GET consumes
+the attempt. Unestablished director spelling in any script stays unresolved;
+same-script differences/diacritics are not proved person conflicts. Unknown or
+multi-director scope also stays unresolved without heuristic splitting. Exact
+film ID does not bypass this gate; independent stable-ID conflict stays mismatch.
+The [original-title boundary review](docs/regional-card-proposal.md#assisted-original-title-boundaries--fail-closed-review)
+also refuses competing candidate H2s instead of picking one alias match and
+requires a unique viewing boundary. Repeated headings remain unresolved for
+unestablished metadata scope, not a proved title conflict; no positive
+deduplication/guessed source selector is added. Historical owner1/2/8 causes
+remain unknown and are not declared fixed.
+Claims are withheld in either case; identity cannot be user-overridden.
+Film-level, own provider-block and country/link
+claims stay separate. The new contribution summary reports identity, source
+candidates, displayed rows and localization blocks, not enriched verified offers.
+Same-film addition preserves the confirmed/manual draft; a pending review is
+cancelled. New film/new case clears card references/results/report/draft; late
+replies cannot restore them. Render/copy/select/draft add0 requests.
+
+See the [assisted implementation and scoped source-use assessment](docs/regional-card-proposal.md#m32-assisted-card-implementation--authored-checks-only)
+and [future iPhone workflow](docs/iphone-windows.md#m32-assisted-kinobaza--future-combined-session-only).
+Synthetic card output is explicitly invented, not a page read. The
+[8-case owner checkpoint](docs/digital-ua-owner-validation.md#m31m32--completed-risk-based-owner-session)
+reports44 source calls (including one repeated baseline),4/8 matched Kinobaza
+identities,2/8 data-returning extractions and a preserved manually edited draft.
+These deliberately difficult cases are pipeline outcomes, **not accuracy or
+representative coverage**. Practical assisted value was demonstrated in case3;
+unreported usefulness is unknown. See the
+[offline findings and proposed next boundary](docs/regional-card-proposal.md#m3-owner-checkpoint--offline-findings-and-next-boundary):
+year-only refusal wording, bounded extraction reason codes and the release-event
+date report allowlist are corrected without relaxing identity/parser rules.
+The causes of historical original-title/extraction refusals and TMDb partials
+remain unknown; no new owner cycle requested. Physical fallback is backlog/design
+only, and “Other platforms” is proposed, not implemented.
 
 R1/R2, exact URLs/acknowledgement, independent source gates, unknowns, source-only
 localization, memory-only draft/cancel and safe-copy/stale-report boundaries
 remain mandatory. B expansion/probe and C/D/enrichment remain deferred. No LLM,
 persistence, new aggregator, production integration or new owner cycle approved.
 MW-FUT-01 remains Discovery.
+
+M3.1 usefulness thresholds remain hypotheses;0 false identity assignments is
+mandatory, but absent offers is not by itself an implementation defect.
 
 ## Current baseline, M2 closeout and deterministic Mykola answer
 
