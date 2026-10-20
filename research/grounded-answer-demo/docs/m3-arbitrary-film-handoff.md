@@ -18,6 +18,10 @@ record diagnostic-only corrections, parser/other-platform UX proposals and the
 physical fallback backlog; none authorizes parser broadening or a new capability.
 
 October20,2026. MW-FUT-01 remains Discovery. The
+subsequent [original-title boundary review](regional-card-proposal.md#assisted-original-title-boundaries--fail-closed-review)
+narrows acceptance without changing source capabilities: no convenient H2 match
+or first duplicate boundary; positive deduplication awaits source-scope evidence.
+It does not establish the missing historical live HTML or authorize a new owner run. The
 [canonical M3 decision](regional-card-proposal.md#m3-arbitrary-film-discovery--proposed-design-only)
 owns architecture, source-use evidence, metrics and trade-offs; this file is the
 reviewable task boundary, not a parallel specification. M3.1 is implemented in

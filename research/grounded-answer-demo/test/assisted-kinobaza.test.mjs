@@ -7,21 +7,31 @@ import { prepareDraft } from '../public/discovery-client.mjs';
 import { buildShortReport, buildWorkflowReport } from '../public/discovery-report.mjs';
 import { mockTransport } from './film-workflow.fixture.mjs';
 import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
+import { titleBoundaryCases } from './assisted-title-boundaries.fixture.mjs';
 const film = { dynamic: true, id: 'tmdb:999900001', tmdbId: 999900001, imdbId: 'tt999900001', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: [], directorAliases: ['Authored director'], directorCount: 1 };
 const response = html => new Response(html, { headers: { 'content-type': 'text/html; charset=UTF-8' } });
 
+for (const c of titleBoundaryCases) test(`metadata boundary contract: ${c.name}`, async () => {
+  let calls = 0;
+  const r = await fetchAssistedKinobaza(CARD, film, async (url, init) => {
+    calls++; assert.equal(url, CARD); assert.equal(init.redirect, 'manual'); return response(c.html);
+  });
+  assert.equal(r.identity.status, c.status); assert.equal(r.identity.reason, c.reason); assert.equal(calls, 1);
+  if (c.status !== 'matched') { assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined); }
+});
+
 // Boundary probes are authored, not reconstructed owner HTML or evidence of coverage.
-for (const [name, transform, expected, count] of [
+for (const [name, transform, expected, count, reason = 'source-original-title-unestablished'] of [
   ['single exact original H2', h => h, 'matched', 1],
   ['nested formatting preserves title text', h => h.replace('<h2>Authored original</h2>', '<h2><span>Authored original</span></h2>'), 'matched', 1],
-  ['two agreeing H2s conservatively withheld', h => h.replace('<h2>Authored original</h2>', '<h2>Authored original</h2><h2>Authored original</h2>'), 'unresolved', 2],
-  ['original plus matching localized H2 conservatively withheld', h => h.replace('<h2>Authored original</h2>', '<h2>Authored original</h2><h2>Вигаданий фільм</h2>'), 'unresolved', 2],
+  ['two agreeing H2s conservatively withheld', h => h.replace('<h2>Authored original</h2>', '<h2>Authored original</h2><h2>Authored original</h2>'), 'unresolved', 2, 'source-original-title-scope-unestablished'],
+  ['original plus matching localized H2 conservatively withheld', h => h.replace('<h2>Authored original</h2>', '<h2>Authored original</h2><h2>Вигаданий фільм</h2>'), 'unresolved', 2, 'source-original-title-scope-unestablished'],
   ['unestablished title annotation is not stripped', h => h.replace('<h2>Authored original</h2>', '<h2>Authored original (alias)</h2>'), 'unresolved', 1],
   ['matching H2 beyond accordion cannot corroborate', h => h.replace('<h2>Authored original</h2>', '<h2>Unestablished original</h2>') + '<h2>Authored original</h2>', 'unresolved', 1],
 ]) test(`original-title boundary audit: ${name}`, async () => {
   const r = await fetchAssistedKinobaza(CARD, film, async () => response(transform(markup())));
   assert.equal(r.identity.status, expected); assert.equal(r.identity.observed.originalTitleCount, count);
-  if (expected === 'unresolved') { assert.equal(r.identity.reason, 'source-original-title-unestablished'); assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined); }
+  if (expected === 'unresolved') { assert.equal(r.identity.reason, reason); assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined); }
 });
 
 for (const [name, transform, issue] of [
@@ -141,6 +151,23 @@ for (const [name, html, status] of [
   const h = harness({ html }); await h.setup(); const r = await h.read();
   assert.equal(r.payload.result.assistedContribution.identity, status); assert.equal(h.calls.length, 5);
   if (status !== 'matched') { assert.equal(r.payload.result.rows.length, 2); assert.equal(r.payload.result.filmLocalization, null); }
+});
+
+test('metadata-scope refusal keeps independent rows/draft, safe reason and consumed one-shot', async () => {
+  for (const original of ['Other authored original', 'Authored original']) {
+    const h = harness({ html: markup().replace('<h2>Authored original</h2>', `<h2>Authored original</h2><h2>${original}</h2>`) });
+    const before = (await h.setup()).payload.result, row = before.rows.find(r => r.id.startsWith('motn:'));
+    const draft = prepareDraft(before, row, true), r = await h.read(), data = r.payload.result;
+    assert.equal(data.assistedContribution.identity, 'unresolved'); assert.equal(data.assistedContribution.reason, 'source-original-title-scope-unestablished');
+    assert.deepEqual(data.rows, before.rows); assert.equal(data.filmLocalization, null); assert.equal(data.assistedContribution.blocks, 0);
+    assert.deepEqual(prepareDraft(data, data.rows.find(r => r.id === row.id), true), draft);
+    data.accounting = r.payload.workflow;
+    const report = buildShortReport({ filmId: film.id, mode: 'live', result: data });
+    assert.match(report, /reason source-original-title-scope-unestablished/);
+    assert.doesNotMatch(report, /https?:|Other authored original|author-tmdb-key|author-motn-key/);
+    assert.deepEqual(r.payload.workflow.counters, { search: 1, preview: 1, discovery: 2, kinobaza: 1 });
+    assert.equal((await h.read()).status, 400); assert.equal(h.calls.length, 5); h.flows.dispose();
+  }
 });
 test('missing selected metadata cannot be repaired by user/source names or film-level badge', async () => {
   const r = await fetchAssistedKinobaza(CARD, { ...film, year: null, directorAliases: [] }, async () => response(markup()));

@@ -9,7 +9,7 @@ import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
 test('assisted mobile card addition: admission, source gate, incremental draft preservation and stale protection', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href);
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) }); t.after(() => browser.close());
-  for (const kind of ['normal', 'unresolved-director', 'multiple-directors', 'mismatch', 'extraction-refusal', 'redirect', 'stale', 'response-lost']) await t.test(kind, async t => {
+  for (const kind of ['normal', 'unresolved-director', 'multiple-directors', 'title-scope', 'duplicate-title', 'mismatch', 'extraction-refusal', 'redirect', 'stale', 'response-lost']) await t.test(kind, async t => {
     const transport = mockTransport({ mutate(data, phase) { if (kind === 'multiple-directors' && phase === 'preview') data.credits.crew.push({ id: 999998, job: 'Director', name: 'Other authored director' }); } }), kinoCalls = []; let release, ready;
     const held = new Promise(r => { ready = r; });
     const server = createDemo({ mode: 'live', retrieval: 'ua-discovery', discovery: 'digital-ua', tmdbToken: 'author-tmdb-key', motnKey: 'author-motn-key',
@@ -17,6 +17,7 @@ test('assisted mobile card addition: admission, source gate, incremental draft p
         if (url !== CARD) return transport.fetchImpl(url, init);
         kinoCalls.push(url); assert.equal(init.redirect, 'manual'); assert.equal(init.headers.Authorization, undefined);
         let body = markup(kind === 'mismatch' ? { year: 2011 } : kind === 'unresolved-director' ? { director: 'Áuthored director', stable: '<tr><td>IMDb:</td><td>tt999900001</td></tr>' } : {});
+        if (['title-scope', 'duplicate-title'].includes(kind)) body = body.replace('<h2>Authored original</h2>', `<h2>Authored original</h2><h2>${kind === 'title-scope' ? 'Other authored original' : 'Authored original'}</h2>`);
         if (kind === 'extraction-refusal') body = body.replace('<div id="availabilityAccordion">', '<div id="availabilityAccordion"><p>Unsupported authored child</p>');
         return kind === 'redirect' ? new Response('', { status: 301, headers: { location: CARD + '-redirect' } }) : new Response(body, { headers: { 'content-type': 'text/html' } });
       } });
@@ -59,10 +60,10 @@ test('assisted mobile card addition: admission, source gate, incremental draft p
       await page.waitForFunction(() => document.querySelector('#kinobaza-status').textContent.includes('Повтору немає'));
       assert.match(await page.locator('#film-counters').innerText(), /разом 5\/7/); assert.equal(kinoCalls.length, 1); assert.equal(transport.calls.length, 4);
       assert.equal(await page.locator('#local-draft input[name="title"]').inputValue(), 'PRIVATE EDIT');
-      const status = await page.locator('#kinobaza-status').innerText(); assert.match(status, ['normal', 'extraction-refusal'].includes(kind) ? /identity matched/ : kind === 'mismatch' ? /identity mismatch/ : kind === 'unresolved-director' || kind === 'multiple-directors' ? /identity unresolved/ : /redirect-not-followed/);
-      if (['unresolved-director', 'multiple-directors'].includes(kind)) {
+      const status = await page.locator('#kinobaza-status').innerText(); assert.match(status, ['normal', 'extraction-refusal'].includes(kind) ? /identity matched/ : kind === 'mismatch' ? /identity mismatch/ : ['unresolved-director', 'multiple-directors', 'title-scope', 'duplicate-title'].includes(kind) ? /identity unresolved/ : /redirect-not-followed/);
+      if (['unresolved-director', 'multiple-directors', 'title-scope', 'duplicate-title'].includes(kind)) {
         assert.equal(await page.locator('article.discovery-card').count(), 2);
-        assert.match(status, kind === 'unresolved-director' ? /director-alias-unestablished/ : /director-scope-unestablished/);
+        assert.match(status, kind === 'unresolved-director' ? /director-alias-unestablished/ : kind === 'multiple-directors' ? /director-scope-unestablished/ : /source-original-title-scope-unestablished/);
         assert.match(status, /Показано окремих рядків: 0/);
       }
       if (kind === 'normal') {
@@ -82,7 +83,7 @@ test('assisted mobile card addition: admission, source gate, incremental draft p
         assert.doesNotMatch(report, /Conflicting stable identity evidence/);
         assert.match(await page.locator('#matching-subjects').textContent(), /Year differs/);
       }
-      if (['unresolved-director', 'multiple-directors'].includes(kind)) { assert.match(report, /Assisted addition: identity unresolved; candidates 0; localization blocks 0/); assert.match(report, kind === 'unresolved-director' ? /reason director-alias-unestablished/ : /reason director-scope-unestablished/); }
+      if (['unresolved-director', 'multiple-directors', 'title-scope', 'duplicate-title'].includes(kind)) { assert.match(report, /Assisted addition: identity unresolved; candidates 0; localization blocks 0/); assert.match(report, kind === 'unresolved-director' ? /reason director-alias-unestablished/ : kind === 'multiple-directors' ? /reason director-scope-unestablished/ : /reason source-original-title-scope-unestablished/); }
       assert.equal(kinoCalls.length, 1); await page.locator('#film-new-case').click();
       await page.waitForFunction(() => document.querySelector('#film-counters').textContent.includes('разом 0/6'));
       assert.equal(await page.locator('#assisted-kinobaza').isHidden(), true); assert.equal(await page.locator('#report-copy').isDisabled(), true);

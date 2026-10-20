@@ -3647,7 +3647,10 @@ live verification, general accuracy or representative product evaluation.
 Assisted workflow demonstrated practical value, especially case3's added links/
 scoped localization and preserved edit. No new owner cycle is requested.
 
-**A — original-title refusals (1/2/8):** `assistedIdentity` examines active H2s
+**A — original-title refusals (1/2/8), audit at78cba:** the subsequent
+[fail-closed boundary review](#assisted-original-title-boundaries--fail-closed-review)
+supersedes the algorithm description below, not the historical owner findings.
+At this checkpoint `assistedIdentity` examines active H2s
 whose source offsets lie after the first H1 and before the first
 `availabilityAccordion`; nav/aside/footer/template/noscript/iframe ancestry is
 excluded. It requires exactly one H1, at least one such H2 and one matching
@@ -3740,6 +3743,72 @@ relaxed, live/API/source/rules/destination calls, owner tests, body archives,
 owner-checkout/demo changes or production writes. Old owner output is not
 retroactively assigned newly available reason codes. Further parser or “Other
 platforms” implementation needs its own bounded approval, not another owner run.
+
+### Assisted original-title boundaries — fail-closed review
+
+Reviewed open #189 at78cba on unchanged #188 a88bfba. **No live/source/rules GET,
+owner test or HTML archive.** The original responses for owner1/2/8 are absent;
+their exact original-title refusal causes remain unknown. Authored structures
+below are deliberately invented, not reconstructed source pages or coverage.
+
+**Proved defects:** the old `originals.filter(aliasMatch).length === 1` discarded
+nonmatching H2s. One matching H2 plus a different H2 could produce matched in
+either order, including an unrecognized recommendations/availability heading
+inside the broad offset range. Also `active.find(availabilityAccordion)` could
+select the first of multiple boundary elements and report identity matched
+before extraction refused the duplicate. The narrow fix **only removes these
+acceptances**, never creates a newly matched shape. Eight initial authored tests
+failed: five incorrect matches and three expectations for the clearer scope
+reason (those three were already unresolved, not false conflicts).
+
+**Supported boundary contract, not a newly inferred source schema:** active H2
+candidates still use source offsets after the one H1 and before the **one unique**
+active `availabilityAccordion`. Existing excluded nav/aside/footer/inert ancestry
+stays excluded; accordion contents/later headings cannot corroborate identity.
+This interval is only a candidate range, **not proof of a dedicated original-title
+metadata container**. No new class, parent/sibling adjacency, section label or
+per-film selector is guessed. All candidate values are considered, rather than
+choosing the first or the convenient matching one. Empty/missing candidate or
+missing/duplicate/reversed boundaries withhold identity. Unchanged stable-ID/
+canonical conflict checks run before these refusals.
+
+| Authored case | Outcome / reason | Evidence and forbidden inference |
+| --- | --- | --- |
+| One exact alias H2 in the existing supported interval | matched / `explicit-title-year-director-match`, if all other gates pass | Continues the existing single-candidate contract; not account entitlement or proof of tracks. |
+| Same value repeated, including inside an explicitly *authored* metadata wrapper | unresolved / `source-original-title-scope-unestablished` | The wrapper's meaning is not documented for the real source. Repetition is **not conflicting title evidence**; it does not establish a safe multi-node scope. |
+| Two different title values, including two already-known selected aliases | unresolved / `source-original-title-scope-unestablished` | Cannot establish which H2 has original-title role. Do not invent aliases or call this proved different-film mismatch. |
+| Matching H2 plus other recommendation/availability H2 inside interval | unresolved / `source-original-title-scope-unestablished` | Unrecognized structural roles must not disappear because another value matches. |
+| Correct title only before H1/in excluded navigation/after accordion; one unestablished H2 inside interval | unresolved / `source-original-title-unestablished` | Outside evidence cannot repair the in-range value. If no in-range H2 exists, structure is incomplete instead. |
+| Missing H1/H2/viewing boundary, duplicate viewing boundary or no forward interval | unresolved / `source-identity-structure-incomplete` | No first-boundary choice or alternate-container fallback. |
+| One H2 with inline/neutral nesting, or director table before it; valid title still in the existing interval | matched under the same other gates | No new adjacency requirement; nested formatting does not create a new title value. Known accordion H2s and unrelated headings after it stay outside the interval. |
+| Same title/year/director but contradictory stable ID, also with ambiguous/missing metadata | mismatch / `source-stable-id-conflict` | Stable-ID priority and withheld claims remain unchanged; exact agreeing film ID does not erase unresolved title/director scope. |
+
+**Deduplication conclusion:** evidence is insufficient to admit repeated H2s as
+one original-title field. No positive deduplication rule is implemented. Different
+values never become aliases; agreeing repeats stay unresolved for **scope**, not
+mismatch merely for count. A future positive rule needs source-backed semantic
+scope evidence and all-value agreement/conflict tests. In particular, a sole H2
+inside an unrecognized recommendations container can still resemble the existing
+single-candidate shape: this residual limitation is **not claimed solved** by
+the narrow fail-closed correction. No acceptance expansion without that evidence.
+
+The new reason is included in the safe report allowlist. Workflow/browser
+regressions assert zero Kinobaza candidates/localization on refusal, independent
+rows and exact draft transfer unchanged, manual edit preservation, one consumed
+GET/no retry, report safety and stale controls. Director unknowns remain
+unresolved; stable-ID mismatch remains higher priority. Fixed-card parser,
+transport/admission/bounds/budgets/R1/R2/source scopes and timeouts are unchanged.
+No unsupported-markup, other-platform or physical-backlog work is included.
+Historical1/2/8 are **not declared fixed**; MW-FUT-01 remains Discovery.
+
+Verification:25 authored boundary fixtures;153 targeted identity/extraction/
+workflow/report passes;463 full offline/HTTP passes;29 relevant Edge mobile/
+browser passes,2 absent-WebKit skips,0 failures.407 local links/257 anchor
+references and all13 M3 handoff sections checked; whitespace/research-only scope
+checked. No timeout/assertion relaxation. Windows lifecycle not repeated because
+runtime imports/dependencies, helpers and key routing are unchanged; only the
+existing assisted identity callback/report reason changes. No live source/API/
+rules/destination requests, owner tests, checkout/demo changes or production writes.
 
 ### M3.1 bounded implementation — authored checks only
 

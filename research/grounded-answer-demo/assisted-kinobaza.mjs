@@ -20,7 +20,8 @@ export function assistedIdentity(all, film, sourceURL) {
     observed: { headingCount: headings.length, originalTitleCount: originals.length, directorCount: directors.size, canonicalCount: canonicals.length, stableIdCount: stable.length } });
   const headings = active.filter(n => n.tagName === 'h1').map(text);
   const headingNode = active.find(n => n.tagName === 'h1');
-  const accordion = active.find(n => attr(n, 'id') === 'availabilityAccordion');
+  const accordions = active.filter(n => attr(n, 'id') === 'availabilityAccordion');
+  const accordion = accordions.length === 1 ? accordions[0] : null;
   const originals = active.filter(n => n.tagName === 'h2' && n.sourceCodeLocation?.startOffset > headingNode?.sourceCodeLocation?.startOffset &&
     n.sourceCodeLocation?.startOffset < accordion?.sourceCodeLocation?.startOffset).map(text).filter(Boolean);
   const directors = new Set(), stable = [];
@@ -63,7 +64,12 @@ export function assistedIdentity(all, film, sourceURL) {
   const heading = /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]);
   if (!heading) return outcome('unresolved', 'source-title-year-missing');
   if (!aliases.has(normalize(heading[1]))) return outcome('mismatch', 'source-title-conflict');
-  if (originals.filter(t => aliases.has(normalize(t))).length !== 1) return outcome('unresolved', 'source-original-title-unestablished');
+  // Offsets only bound candidate H2s, not a proven semantic metadata container.
+  // Never discard competing H2s just because one matches. Repeated identical
+  // values are not a title conflict, but cannot justify a new multi-node scope
+  // or deduplication rule without source evidence. Do not guess selectors.
+  if (originals.length !== 1) return outcome('unresolved', 'source-original-title-scope-unestablished');
+  if (!aliases.has(normalize(originals[0]))) return outcome('unresolved', 'source-original-title-unestablished');
   const stableMatch = stable.some(s => expected[s.namespace] && s.id === expected[s.namespace]);
   if (!film.year) return outcome('unresolved', 'selected-year-missing');
   if (Number(heading[2]) !== film.year && !stableMatch) return outcome('mismatch', 'source-year-conflict-without-stable-crosswalk');

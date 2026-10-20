@@ -83,6 +83,12 @@ the attempt. Unestablished director spelling in any script stays unresolved;
 same-script differences/diacritics are not proved person conflicts. Unknown or
 multi-director scope also stays unresolved without heuristic splitting. Exact
 film ID does not bypass this gate; independent stable-ID conflict stays mismatch.
+The [original-title boundary review](docs/regional-card-proposal.md#assisted-original-title-boundaries--fail-closed-review)
+also refuses competing candidate H2s instead of picking one alias match and
+requires a unique viewing boundary. Repeated headings remain unresolved for
+unestablished metadata scope, not a proved title conflict; no positive
+deduplication/guessed source selector is added. Historical owner1/2/8 causes
+remain unknown and are not declared fixed.
 Claims are withheld in either case; identity cannot be user-overridden.
 Film-level, own provider-block and country/link
 claims stay separate. The new contribution summary reports identity, source
