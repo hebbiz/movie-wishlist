@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { MODEL, MAX_OUTPUT_TOKENS, FILMS, selectRequest, requestBody } from './config.mjs';
 import { runDiscovery, DISCOVERY_IDS } from './discovery.mjs';
 import { describeDiscovery } from './matching.mjs';
+import { createFilmWorkflows } from './film-workflow.mjs';
 import { HELD_OUT_FILMS } from './held-out.mjs';
 import { syntheticResponse, syntheticHtml } from './synthetic.mjs';
 import { extractHtml, fetchHtmlCandidates, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS, canonicalKinobazaURL, htmlScenario } from './html-source.mjs';
@@ -25,10 +26,22 @@ const assets = new Map([
   ['/megogo-display.mjs', ['public/megogo-display.mjs', 'text/javascript; charset=utf-8']],
   ['/discovery-client.mjs', ['public/discovery-client.mjs', 'text/javascript; charset=utf-8']],
   ['/discovery-report.mjs', ['public/discovery-report.mjs', 'text/javascript; charset=utf-8']],
+  ['/film-search.mjs', ['public/film-search.mjs', 'text/javascript; charset=utf-8']],
   ['/tmdb-logo.svg', ['public/tmdb-logo.svg', 'image/svg+xml']],
   ['/style.css', ['public/style.css', 'text/css; charset=utf-8']],
 ]);
 const csp = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src https: data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+function localJSON(req) {
+  return new Promise((resolve, reject) => {
+    let size = 0; const chunks = [];
+    const finish = (err, data) => { clearTimeout(timer); req.removeListener('data', onData); req.removeListener('end', onEnd); req.removeListener('error', onError); req.removeListener('aborted', onError); err ? reject(new Error('Invalid bounded local input')) : resolve(data); };
+    const onError = () => finish(true);
+    const onData = b => { size += b.length; if (size > 4096) { finish(true); req.resume(); } else chunks.push(b); };
+    const onEnd = () => { try { const data = JSON.parse(Buffer.concat(chunks).toString('utf8')); if (!data || typeof data !== 'object' || Array.isArray(data)) return finish(true); finish(false, data); } catch { finish(true); } };
+    const timer = setTimeout(() => { finish(true); req.resume(); }, 2000);
+    req.on('data', onData); req.on('end', onEnd); req.on('error', onError); req.on('aborted', onError);
+  });
+}
 
 // Dependency injection is for offline tests; the executable uses only built-in fetch.
 export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, discovery, amazonRegion, retrieval, urlSource, kinobaza, apiKey = '', motnKey = '', tmdbToken = '', fetchImpl = globalThis.fetch, ...networkOptions } = {}) {
@@ -49,6 +62,8 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
   if (!syntheticCases.includes(scenario)) throw new Error('Unknown synthetic scenario.');
   // Tokens contain no content. Never retain prompts/responses in session state.
   const sessions = new Map();
+  const filmWorkflows = createFilmWorkflows({ mode, tmdbToken, motnKey, fetchImpl });
+  const fixedWork = new Map();
   const server = createServer(async (req, res) => {
     const origin = `http://${network.bindAddress}:${server.address().port}`;
     res.setHeader('Cache-Control', 'no-store');
@@ -68,6 +83,23 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
       return send(401, { error: 'Authentication required.' });
     }
     try {
+      if (composed && req.method === 'POST' && /^\/dynamic\/(?:search|preview|confirm|discover|invalidate|new-case|admit-card|read-card)$/.test(req.url)) {
+        if (req.headers.origin !== origin || req.headers['sec-fetch-site'] === 'cross-site') { req.resume(); return send(403, { status: 'same-origin-required' }); }
+        if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '')) { req.resume(); return send(400, { status: 'json-required' }); }
+        const page = req.headers['x-demo-workflow'];
+        if (typeof page !== 'string' || !filmWorkflows.inspect(page)) { req.resume(); return send(409, { status: 'expired-workflow' }); }
+        const input = await localJSON(req);
+        fixedWork.get(page)?.abort();
+        // No previous fixed-film capability survives a dynamic selection action.
+        for (const [token, session] of sessions) if (session.page === page) sessions.delete(token);
+        const action = req.url.slice('/dynamic/'.length);
+        if (action === 'invalidate') {
+          if (Object.keys(input).length) return send(400, { status: 'unsupported-input' });
+          return send(200, { status: 'invalidated', workflow: filmWorkflows.invalidate(page) });
+        }
+        const answer = await filmWorkflows.execute(page, action, req.headers['x-demo-action'], input);
+        return send(answer.status, { ...answer.payload, mode });
+      }
       if (req.method === 'GET' && assets.has(req.url)) {
         const [file, type] = assets.get(req.url);
         const content = await readFile(new URL(file, import.meta.url));
@@ -85,8 +117,19 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
         const now = Date.now();
         for (const [token, session] of sessions) if (session.expires < now) sessions.delete(token);
         if (sessions.size >= 100) return send(429, { error: 'Too many open pages. Restart the demo.' });
+        let dynamic;
+        if (composed) {
+          const page = req.headers['x-demo-page'];
+          if (page !== undefined) {
+            if (typeof page !== 'string' || !filmWorkflows.inspect(page)) return send(409, { error: 'Page expired. Reload.' });
+            dynamic = filmWorkflows.invalidate(page);
+            fixedWork.get(page)?.abort();
+            for (const [old, session] of sessions) if (session.page === page) sessions.delete(old);
+          } else dynamic = filmWorkflows.issue();
+          if (!dynamic) return send(429, { error: 'Too many open pages. Restart the demo.' });
+        }
         const token = randomBytes(32).toString('hex');
-        sessions.set(token, { expires: now + 30 * 60 * 1000, filmId: selectedFilm.id });
+        sessions.set(token, { expires: now + 30 * 60 * 1000, filmId: selectedFilm.id, ...(composed ? { page: dynamic.id } : {}) });
         const selected = composed ? selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: selectedFilm.id, kinobaza: configuredKinobaza }) : selection;
         const planned = composed ? [tmdbScenario, motnScenario, ...(selected.kinobaza === 'on' ? [htmlScenario] : [])].flatMap(build => {
           const s = build(selectedFilm, { discovery: 'digital-ua' });
@@ -96,7 +139,7 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
           country: 'UA', kinobaza: selected.kinobaza, requestBudget: selected.requestBudget, baseRequestBudget: selected.baseRequestBudget, operation: selected.operation,
           plannedRequests: planned,
           conditionalRequests: !selected.heldOut && selected.kinobaza === 'on' ? [canonicalKinobazaURL(selectedFilm.id)] : [],
-          sources: ['TMDb', 'Movie of the Night', ...(selected.kinobaza === 'on' ? ['Kinobaza HTML'] : [])] });
+          sources: ['TMDb', 'Movie of the Night', ...(selected.kinobaza === 'on' ? ['Kinobaza HTML'] : [])], dynamic });
         return send(200, { token, mode, model: nonGemini ? null : MODEL, maxOutputTokens: nonGemini ? null : MAX_OUTPUT_TOKENS, film, discovery: selection.discovery, amazonRegion: selection.amazonRegion, retrieval: selection.retrieval, urlSource: selection.urlSource ?? null, sourceURL: selection.sourceURL, prompt: selection.prompt,
           ...(htmlOnly ? { operation: selection.operation, htmlLimitBytes: HTML_LIMIT_BYTES, htmlTimeoutMs: HTML_TIMEOUT_MS } : {}),
           ...(megogoOnly ? { operation: selection.operation, expectedIds: MEGOGO_IDS, requestBudget: 1, htmlLimitBytes: MEGOGO_LIMIT_BYTES, htmlTimeoutMs: MEGOGO_TIMEOUT_MS, fetcherGeography: 'unknown' } : {}),
@@ -112,8 +155,11 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
         if (!session || session.expires < Date.now()) return send(409, { error: 'Request already used or session expired. Reload the page.' });
         if (composed) {
           const chosen = selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: session.filmId, kinobaza: configuredKinobaza });
-          const result = await runDiscovery(chosen, { mode, tmdbToken, motnKey, fetchImpl });
-          return send(200, { mode, result: { ...result, matching: describeDiscovery(result) } });
+          const controller = new AbortController(); fixedWork.set(session.page, controller);
+          try {
+            const result = await runDiscovery(chosen, { mode, tmdbToken, motnKey, fetchImpl, signal: controller.signal });
+            return send(200, { mode, result: { ...result, matching: describeDiscovery(result) } });
+          } finally { if (fixedWork.get(session.page) === controller) fixedWork.delete(session.page); }
         }
         if (megogoOnly) {
           const result = mode === 'synthetic' ? await extractMegogo(syntheticMegogo()) : await fetchMegogo(selection, fetchImpl);
@@ -156,6 +202,7 @@ export function createDemo({ mode = 'synthetic', scenario = 'grounded', filmId, 
       else res.end();
     }
   });
+  server.once('close', () => filmWorkflows.dispose());
   return server;
 }
 

@@ -69,6 +69,10 @@ function priceField(value) {
 export function normalizeMotn(data, filmId, receivedAt = new Date().toISOString()) {
   const expected = Object.hasOwn(MOTN_FILMS, filmId) ? MOTN_FILMS[filmId] : undefined;
   if (!expected) throw new Error('Fixed Movie of the Night film required.');
+  return normalizeMotnFor(data, expected, receivedAt);
+}
+export function normalizeMotnFor(data, expected, receivedAt = new Date().toISOString()) {
+  if (!/^tt\d+$/.test(expected?.imdbId ?? '') || !/^[1-9]\d*$/.test(String(expected.tmdbId))) throw new Error('Validated IMDb crosswalk required.');
   const base = { source: MOTN_SOURCE, receivedAt, country: 'ua', options: [], issues: [] };
   if (!record(data)) return { ...base, status: 'invalid-response' };
   const title = data.originalTitle ?? data.title;
@@ -120,17 +124,23 @@ export function normalizeMotn(data, filmId, receivedAt = new Date().toISOString(
 export async function fetchMotn(selection, apiKey, fetchImpl = globalThis.fetch, { timeoutMs = MOTN_TIMEOUT_MS, maxBytes = MOTN_LIMIT_BYTES } = {}) {
   const verified = motnScenario(selection.film, { discovery: selection.discovery });
   if (selection.retrieval !== 'motn-api' || selection.country !== 'ua' || selection.sourceURL !== verified.sourceURL) throw new Error('Fixed UA API request required.');
+  return fetchMotnFor(MOTN_FILMS[selection.film.id], apiKey, fetchImpl, { timeoutMs, maxBytes });
+}
+export async function fetchMotnFor(expected, apiKey, fetchImpl = globalThis.fetch, { timeoutMs = MOTN_TIMEOUT_MS, maxBytes = MOTN_LIMIT_BYTES, signal } = {}) {
+  if (!/^tt\d+$/.test(expected?.imdbId ?? '') || !/^[1-9]\d*$/.test(String(expected.tmdbId))) throw new Error('Validated IMDb crosswalk required.');
+  const sourceURL = `https://api.movieofthenight.com/v4/shows/${expected.imdbId}?country=ua`;
   const failure = (status, httpStatus) => ({ source: MOTN_SOURCE, receivedAt: new Date().toISOString(), country: 'ua', status,
     ...(httpStatus ? { httpStatus } : {}), options: [] });
   if (!apiKey) return failure('missing-key-no-request');
   if (!text(apiKey, 4096) || /\s/.test(apiKey)) return failure('invalid-key-no-request');
   const controller = new AbortController(); let reader;
-  const aborted = new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true }));
+  const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  const aborted = new Promise((_, reject) => { if (combined.aborted) reject(new Error('aborted')); else combined.addEventListener('abort', () => reject(new Error('aborted')), { once: true }); });
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const bounded = promise => Promise.race([promise, aborted]);
   try {
-    const response = await bounded(fetchImpl(verified.sourceURL, { method: 'GET', redirect: 'manual', credentials: 'omit',
-      headers: { Accept: 'application/json', 'X-API-Key': apiKey }, signal: controller.signal }));
+    const response = await bounded(fetchImpl(sourceURL, { method: 'GET', redirect: 'manual', credentials: 'omit',
+      headers: { Accept: 'application/json', 'X-API-Key': apiKey }, signal: combined }));
     const stop = status => { void response.body?.cancel().catch(() => {}); return failure(status, response.status); };
     if (response.status >= 300 && response.status < 400) return stop('redirect-not-followed');
     if (!response.ok) return stop(({ 401: 'api-auth-error', 403: 'api-access-denied', 404: 'title-not-returned', 429: 'quota-or-rate-limit' })[response.status] ?? 'api-http-error');
@@ -147,7 +157,7 @@ export async function fetchMotn(selection, apiKey, fetchImpl = globalThis.fetch,
     const data = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, size)));
     // Even an unexpected upstream echo must not send the credential to the browser.
     if (JSON.stringify(data).includes(apiKey)) return failure('unsafe-response-withheld', response.status);
-    return { ...normalizeMotn(data, selection.film.id), httpStatus: response.status };
+    return { ...normalizeMotnFor(data, expected), httpStatus: response.status };
   } catch {
     if (reader) void reader.cancel().catch(() => {});
     return failure(controller.signal.aborted ? 'timeout-no-retry' : 'invalid-or-network-response-no-retry');

@@ -41,6 +41,20 @@ test('A: false matched flags cannot override supplied stable IDs, wrong film, ma
   r.sources[2].evidence.status = 'unresolved'; assert.equal(describeDiscovery(r).subjects[2].outcome, 'insufficient-evidence');
 });
 
+test('A diagnostic: year-only and other structural refusals are not stable-ID conflicts', async () => {
+  const r = await fixture(), kino = r.sources.find(s => s.source === 'kinobaza');
+  for (const reason of ['source-year-conflict-without-stable-crosswalk', 'source-title-conflict', 'source-canonical-conflict']) {
+    kino.identity = 'mismatch'; kino.evidence = { status: 'mismatch', reason };
+    const a = describeDiscovery(r).subjects.find(s => s.source === 'kinobaza');
+    assert.equal(a.outcome, 'conflicting'); assert.equal(a.reason, reason);
+  }
+  kino.evidence.reason = 'source-stable-id-conflict';
+  assert.equal(describeDiscovery(r).subjects[2].reason, 'stable-id-conflict');
+  kino.evidence.reason = 'unknown-source-reason';
+  assert.equal(describeDiscovery(r).subjects[2].reason, 'source-identity-conflict');
+  assert.equal(describeDiscovery(r).subjects[0].outcome, 'compatible');
+});
+
 test('B: same supported regional key links sources without moving territory/localization/access or changing draft', async () => {
   const r = await fixture(), snapshot = JSON.stringify(r), before = prepareDraft(r, r.rows[0]);
   const m = describeDiscovery(r);

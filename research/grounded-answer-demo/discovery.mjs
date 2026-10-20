@@ -121,7 +121,9 @@ function rowBase(source, film, provider, index, provenance) {
     link: classifyLink(null), provenance, conflicts: [], comparisons: [], comparisonsOmitted: 0, choiceBasis: [], identityStatus: 'matched' };
 }
 
-export function composeDiscovery(film, stages, { synthetic = false, metrics = {} } = {}) {
+export function composeDiscovery(film, stages, { synthetic = false, metrics = {}, sourceURLs } = {}) {
+  const tmdbURL = () => sourceURLs?.tmdb ?? tmdbScenario(film, { discovery: 'digital-ua' }).providersURL;
+  const motnURL = () => sourceURLs?.motn ?? motnScenario(film, { discovery: 'digital-ua' }).sourceURL;
   const rows = [], unmapped = []; const add = r => { r.choiceBasis = [r.country === 'UA' ? `${r.availability.state}; UA source context` : 'Territory unknown',
     'Audio/subtitles/video/price remain source-scoped; unknown is not absent.']; rows.push(r); };
   const tmdb = stages.tmdb.result, motn = stages.motn.result, kino = stages.kinobaza.result;
@@ -143,13 +145,13 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
       if (providerConflicts.has(sourceId)) {
         unmapped.push({ source: 'tmdb', id: val(p.id), name: val(p.name), sourceId, sourceBucket: b.name,
           reason: 'provider-id-conflict', conflictingPlatforms: providerConflicts.get(sourceId), observation: p,
-          provenance: { source: 'TMDB / JustWatch', upstream: 'JustWatch', method: 'API results.UA', country: 'UA', sourceURL: tmdbScenario(film, { discovery: 'digital-ua' }).providersURL, receivedAt: tmdb.providers.receivedAt } });
+          provenance: { source: 'TMDB / JustWatch', upstream: 'JustWatch', method: 'API results.UA', country: 'UA', sourceURL: tmdbURL(), receivedAt: tmdb.providers.receivedAt } });
         continue; // No canonical platform/access/availability row or draft medium.
       }
       const provider = mapProvider('tmdb', val(p.id), val(p.name));
       if (!provider) { unmapped.push({ source: 'tmdb', id: val(p.id) ?? null, name: val(p.name) ?? null, access: b.access, reason: 'provider-mapping-unresolved' }); continue; }
       const r = rowBase('tmdb', film, provider, rows.length, { source: 'TMDB / JustWatch', upstream: 'JustWatch', method: 'API results.UA',
-        sourceURL: tmdbScenario(film, { discovery: 'digital-ua' }).providersURL, receivedAt: tmdb.providers.receivedAt, observationTime: null });
+        sourceURL: tmdbURL(), receivedAt: tmdb.providers.receivedAt, observationTime: null });
       r.access = { state: 'reported', value: b.access, sourceBucket: b.name };
       r.watchPage = val(tmdb.providers.watchLink) ?? null; // Not a provider URL.
       add(r);
@@ -160,13 +162,13 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
     if (providerConflicts.has(sourceId)) {
       unmapped.push({ source: 'motn', id: val(o.service.id), name: val(o.service.name), sourceId,
         reason: 'provider-id-conflict', conflictingPlatforms: providerConflicts.get(sourceId), observation: o,
-        provenance: { source: 'Movie of the Night', upstream: 'not-established', method: 'API streamingOptions.ua', country: 'UA', sourceURL: motnScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: motn.receivedAt } });
+        provenance: { source: 'Movie of the Night', upstream: 'not-established', method: 'API streamingOptions.ua', country: 'UA', sourceURL: motnURL(), receivedAt: motn.receivedAt } });
       continue;
     }
     const provider = mapProvider('motn', val(o.service.id), val(o.service.name), val(o.access));
     if (!provider) { unmapped.push({ source: 'motn', id: val(o.service.id) ?? null, name: val(o.service.name) ?? null, access: o.access, reason: 'provider-mapping-unresolved' }); continue; }
     const r = rowBase('motn', film, provider, i, { source: 'Movie of the Night', upstream: 'not-established', method: 'API streamingOptions.ua',
-      sourceURL: motnScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: motn.receivedAt, observationTime: null });
+      sourceURL: motnURL(), receivedAt: motn.receivedAt, observationTime: null });
     r.access = { ...o.access }; r.package = { ...o.addon }; r.audio = o.ukrainianAudio; r.subtitles = o.ukrainianSubtitles;
     r.quality = o.quality; r.price = o.price; r.link = classifyLink(val(o.link), provider);
     add(r);
@@ -255,7 +257,7 @@ export function authoredDiscoveryData(film) {
 }
 
 export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = '', motnKey = '', fetchImpl = globalThis.fetch,
-  deadlineMs = DISCOVERY_DEADLINE_MS } = {}) {
+  deadlineMs = DISCOVERY_DEADLINE_MS, signal } = {}) {
   const { film, kinobaza } = selection;
   const verified = discoveryScenario(film, { discovery: selection.discovery, kinobaza });
   if (selection.retrieval !== 'ua-discovery' || selection.requestBudget !== verified.requestBudget || kinobaza !== verified.kinobaza) throw new Error('Fixed discovery configuration required.');
@@ -263,6 +265,7 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
   const start = performance.now(), stages = {}; const controller = new AbortController();
   const allowHop = !isHeldOut(film.id) && kinobaza === 'on';
   const metrics = { requestsMade: 0, requestBudget: selection.requestBudget, elapsedMs: 0, calls: [] };
+  const cancel = () => controller.abort(); if (signal?.aborted) cancel(); else signal?.addEventListener('abort', cancel, { once: true });
   const timer = setTimeout(() => controller.abort(), deadlineMs);
   const allowed = new Set([tmdbScenario(film, { discovery: 'digital-ua' }).sourceURL, tmdbScenario(film, { discovery: 'digital-ua' }).providersURL,
     motnScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(kinobaza === 'on' ? [htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, ...(allowHop ? [canonicalKinobazaURL(film.id)] : [])] : [])]);
@@ -312,5 +315,5 @@ export async function runDiscovery(selection, { mode = 'synthetic', tmdbToken = 
     stages.kinobaza ??= { status: 'disabled-no-request', result: null, elapsedMs: 0 };
     metrics.elapsedMs = Math.round(performance.now() - start);
     return composeDiscovery(film, stages, { synthetic: mode === 'synthetic', metrics });
-  } finally { clearTimeout(timer); }
+  } finally { clearTimeout(timer); signal?.removeEventListener('abort', cancel); }
 }

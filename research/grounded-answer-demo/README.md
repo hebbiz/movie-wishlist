@@ -1,5 +1,127 @@
 # MW-FUT-01: isolated grounded-answer demo
 
+## M3.1 arbitrary-film discovery — isolated implementation
+
+**M3.1 and assisted M3.2 approved/implemented for bounded research. One combined
+owner evaluation is now reported complete; further live evaluation, merge and
+production remain unapproved.** Research
+develop is now `09c9482694b37f16fb0371f6d2fca790167a31b0`; #186→#185→#184
+were merged through merge commits. Main was not promoted. The actual runtime
+retains all six fixed controls and now adds an explicit arbitrary-film search
+inside `DEMO_RETRIEVAL=ua-discovery`, without another environment switch.
+
+Use **«Знайти інший фільм»**: type title/optional year, explicitly search,
+select one candidate for preview, review identity/directors/crosswalk and confirm,
+then explicitly request viewing options. No first-result choice, per-result
+lookups or Details refetch. No poster/asset fetches. Missing IMDb skips MOTN;
+Watch Providers/MOTN errors remain independent after a valid preview. Dynamic
+Kinobaza initially is not evaluated, not a resolver failure, regardless of the fixed
+controls' `DEMO_KINOBAZA` value. Existing six-film and older-mode bodies/budgets
+are unchanged. No source data goes to LLM.
+TMDb receives the entered title/optional year and selected IDs; MOTN receives
+only the validated IMDb ID and country UA. LAN password and page capability
+tokens are never forwarded to sources. No query/response logs or analytics.
+
+Separate **actual HTTP counters** show search/preview/discovery plus phase elapsed
+(not cost/benchmark). A case permits2 explicit searches,2 different previews,
+one discovery action with at most2 HTTP calls: **max6**, normally4. A repeated
+identical query or preview is not retried. After a completed case use
+**«Новий випадок — очистити попередній»**, not server restart. Typing a changed
+query clears prior rows/report/draft immediately and invalidates server state;
+late responses/copy callbacks cannot restore them. Invalidation is a local
+control request, **0 source requests**, not search on each keystroke. Synthetic
+always returns2 explicitly invented identities, not real matches to the query;
+its source counters are0 and action-use counters are separate.
+
+Search/preview failures also have an explicit safe short report without a false
+selected identity; full discovery reuses the existing original-row draft/cancel,
+exact URL/affiliate acknowledgement and clipboard fallback. Report excludes
+queries, tokens, source URLs/bodies and manual draft text; runtime commit remains
+unknown. Server retains only bounded projected context in RAM, purged on new
+case/30min expiry/process close; no persistent response cache.
+If the local action response is lost, counters/report say unknown rather than
+reuse old numbers; reload manually, no automatic source retry.
+See [implemented boundary/source-use/check record](docs/regional-card-proposal.md#m31-bounded-implementation--authored-checks-only)
+and [future iPhone UI workflow](docs/iphone-windows.md#m31-arbitrary-film-search--no-owner-run-requested).
+
+The [canonical M3 decision](docs/regional-card-proposal.md#m3-arbitrary-film-discovery--proposed-design-only)
+records the two-increment design:
+
+- **M3.1:** explicit TMDb search → user-selected identity preview/confirmation
+  → independently gated TMDb/MOTN results → existing original-row local draft.
+  No first-result selection, per-result lookup fan-out or restart for each film;
+  absent IMDb crosswalk means MOTN not evaluated, never a guessed ID.
+- **M3.2 (assisted implementation):** controlled Kinobaza source-card admission/identity/extraction.
+  Current public search UI is visible, but robots excludes automated search
+  and a supported API was not found. Recommended intermediate option is
+  **owner-assisted source-card selection**, approved only for bounded research;
+  automatic arbitrary-card discovery remains unresolved. This selects a source
+  card, not manually supplied provider URLs; links/localization still require
+  bounded identity-gated extraction. Failure does not block M3.1.
+
+See [feasibility/access limits](docs/regional-card-proposal.md#kinobaza-search-feasibility-and-resolver-decision),
+[phase budgets](docs/regional-card-proposal.md#separate-request-budgets--proposals-not-executed),
+[eight preselected risk cases and metrics](docs/regional-card-proposal.md#eight-film-evaluation-matrix-and-measurable-acceptance)
+and the [13-section implementation handoff](docs/m3-arbitrary-film-handoff.md).
+Per film, implemented M3.1 normally4/max6 external requests; assisted M3.2 normally5/max7.
+Eight cases:32/max48 or40/max56 respectively, separate from proposed preflight
+max28 (search8 +identity8 +cards8 +rules4). Manual public-UI/link navigation
+traffic is separate/unmeasured, not hidden
+inside these server GET counts. No new search/provider capability or test result
+is implied by these ceilings. M3.1 reuses the existing server startup/keys;
+M3.2 uses the same running server and credentials, no new environment switch.
+
+After dynamic discovery, optionally use **«Додати дані Кінобази»**: find a card
+yourself, paste its exact canonical URL, then **«Перевірити адресу»** (0 source
+calls). The admitted address and one-GET/case-cap7 budget appear before the
+separate **«Прочитати одну картку»** action. Only exact
+`https://kinobazaua.com/titles/<lowercase-ascii-slug>` is admitted; no alternate
+host, port, query, fragment, subpage, encoding/dot trick or guessed repair.
+One opaque run-bound reference; server revalidates it. One15s/2MiB GET,
+no redirects/retries, cookies, credentials or destinations. Failed GET consumes
+the attempt. Unestablished director spelling in any script stays unresolved;
+same-script differences/diacritics are not proved person conflicts. Unknown or
+multi-director scope also stays unresolved without heuristic splitting. Exact
+film ID does not bypass this gate; independent stable-ID conflict stays mismatch.
+The [original-title boundary review](docs/regional-card-proposal.md#assisted-original-title-boundaries--fail-closed-review)
+also refuses competing candidate H2s instead of picking one alias match and
+requires a unique viewing boundary. Repeated headings remain unresolved for
+unestablished metadata scope, not a proved title conflict; no positive
+deduplication/guessed source selector is added. Historical owner1/2/8 causes
+remain unknown and are not declared fixed.
+Claims are withheld in either case; identity cannot be user-overridden.
+Film-level, own provider-block and country/link
+claims stay separate. The new contribution summary reports identity, source
+candidates, displayed rows and localization blocks, not enriched verified offers.
+Same-film addition preserves the confirmed/manual draft; a pending review is
+cancelled. New film/new case clears card references/results/report/draft; late
+replies cannot restore them. Render/copy/select/draft add0 requests.
+
+See the [assisted implementation and scoped source-use assessment](docs/regional-card-proposal.md#m32-assisted-card-implementation--authored-checks-only)
+and [future iPhone workflow](docs/iphone-windows.md#m32-assisted-kinobaza--future-combined-session-only).
+Synthetic card output is explicitly invented, not a page read. The
+[8-case owner checkpoint](docs/digital-ua-owner-validation.md#m31m32--completed-risk-based-owner-session)
+reports44 source calls (including one repeated baseline),4/8 matched Kinobaza
+identities,2/8 data-returning extractions and a preserved manually edited draft.
+These deliberately difficult cases are pipeline outcomes, **not accuracy or
+representative coverage**. Practical assisted value was demonstrated in case3;
+unreported usefulness is unknown. See the
+[offline findings and proposed next boundary](docs/regional-card-proposal.md#m3-owner-checkpoint--offline-findings-and-next-boundary):
+year-only refusal wording, bounded extraction reason codes and the release-event
+date report allowlist are corrected without relaxing identity/parser rules.
+The causes of historical original-title/extraction refusals and TMDb partials
+remain unknown; no new owner cycle requested. Physical fallback is backlog/design
+only, and “Other platforms” is proposed, not implemented.
+
+R1/R2, exact URLs/acknowledgement, independent source gates, unknowns, source-only
+localization, memory-only draft/cancel and safe-copy/stale-report boundaries
+remain mandatory. B expansion/probe and C/D/enrichment remain deferred. No LLM,
+persistence, new aggregator, production integration or new owner cycle approved.
+MW-FUT-01 remains Discovery.
+
+M3.1 usefulness thresholds remain hypotheses;0 false identity assignments is
+mandatory, but absent offers is not by itself an implementation defect.
+
 ## Current baseline, M2 closeout and deterministic Mykola answer
 
 **M2 bounded research checkpoint is closed; MW-FUT-01 remains Discovery.**
@@ -11,10 +133,11 @@ technical debt, not an established owner-partial cause.
 
 The [final review and conditional merge readiness](docs/regional-card-proposal.md#m2-closeout-and-final-stack-review)
 separate scoped code findings, live-use/source-rights limits and production
-blockers. #184/#185 remain open; merge is not authorized. The
+blockers. #184–#186 are now merged; the
 [eventual child-to-parent-to-develop plan](docs/regional-card-proposal.md#eventual-merge-plan--no-authorization-or-operations-now)
-requires fresh expected HEADs, parent-advance diff/checks and actual final-tip
-validation without bypassing unknown protections. No main/release change.
+was completed with fresh expected HEADs, parent-advance diff/checks and actual
+final-tip validation without bypassing unknown protections. It is retained as
+history, not permission for another merge. No main/release change.
 
 **Separately approved / implemented bounded research UX:** a compact
 [deterministic Ukrainian Mykola viewing answer](docs/regional-card-proposal.md#mykola-viewing-answer--proposed-deterministic-presentation),
@@ -27,8 +150,8 @@ in details; attribution/material warnings stay visible. Five authored examples
 and acceptance criteria are canonical, not live results. The
 [13-section successor handoff](docs/m2-offer-matching-handoff.md#proposed-successor-handoff--mykola-viewing-answer)
 records the owner's subsequent implementation approval at #185474a335.
-Implemented on a separate stacked child of still-open #185; not production or
-merged. Natural Ukrainian actions: **«Знайти варіанти»**, **«Відкрити посилання»**,
+Implemented in #186 and merged into research develop, not production.
+Natural Ukrainian actions: **«Знайти варіанти»**, **«Відкрити посилання»**,
 **«Обрати»**. Summary is at most two sentences; source labels/unknowns/material
 warnings visible, technical A/B/binding/account diagnostics in details.
 For an unbound block: «Кінобаза вказує українське аудіо; для цієї пропозиції ще
@@ -41,14 +164,14 @@ screenshots are synthetic only and kept outside Git. See the
 No live probe, merge or new owner cycle is authorized/requested.
 
 Fetched `develop` on October 20, 2026:
-**`014014337ef5d2eb9ab95db09c334cef42d4b2fa`**. Research #175–#183 are
+**`09c9482694b37f16fb0371f6d2fca790167a31b0`**. Research #175–#186 are
 merged, including launcher fix #176 and R1/R2. Main/production were not promoted.
 The [canonical verified baseline](docs/regional-card-proposal.md#verified-baseline-and-m2-design-status)
 supersedes older open-stack/conditional-merge statements retained below as history.
 
 **MW-FUT-01-M2 A/B-only implementation is approved for isolated research and is
-implemented on this stacked child of #184, not merged into develop.** Actual
-parent HEAD9208e50 includes the agreed clipboard design after aefb166. Subsequent
+implemented and merged into research develop.** Historical
+parent HEAD9208e50 included the agreed clipboard design after aefb166. Subsequent
 bounded identity/card preflight is recorded below; production integration is
 not approved. A subsequent
 [owner-reported held-out checkpoint and bounded audit](docs/regional-card-proposal.md#held-out-owner-checkpoint-and-ab-usefulness-audit)

@@ -8,6 +8,80 @@ current entitlement or complete platform coverage is inferred. MEGOGO remains
 unresolved; no new MEGOGO cycle. The [approved research handoff](consolidated-poc-handoff.md)
 now records separately approved research implementation, not production authorization.
 
+## M3.1/M3.2 — completed risk-based owner session
+
+Recorded October20,2026 from the owner's summary; **no independent repetition**.
+Owner reports checkout **`b93014b84b46fab2665feba559353b04c43556cc`**; copied
+reports retained **runtime commit unknown**, not attested by this checkout fact.
+Execution timestamps were not supplied. These eight deliberately difficult
+identity/workflow nominations are **not representative of ordinary Wishlist use**.
+They cannot estimate general accuracy/coverage. No raw reports, HTML, JSON or
+screenshots are archived; IDs below are owner-reported selected projections,
+not a new agent preflight or runtime catalogue addition.
+
+Each completed pass used search1 +preview1 +discovery2; each nomination received
+one assisted Kinobaza GET. Keep baseline, admission/retrieval, identity, extraction,
+added source claims and practical value separate. Missing results do not mean
+unavailable; no useful addition is not automatically a parser defect.
+
+| # / selected film / reported IDs | Baseline machine result | Assisted machine result | Source HTTP calls |
+| --- | --- | --- | --- |
+|1 The Lives of Others / Життя інших; TMDb582 / IMDbtt0405094|TMDb A/B ok; MOTN no-ua-options; mapped rows0.|Identity unresolved: `source-original-title-unestablished`; claims withheld.|5|
+|2 The Girl with the Dragon Tattoo (2009); TMDb15472 / IMDbtt1132620|TMDb A/B ok; MOTN no-ua-options; mapped rows0.|Identity unresolved: `source-original-title-unestablished`; claims withheld.|5|
+|3 The Girl with the Dragon Tattoo (2011); TMDb65754 / IMDbtt1568346|TMDb Apple/Rakuten rent/buy without provider links; MOTN Prime rent/buy and Apple buy/rent with candidate links. Apple buy observations show possible price/quality discrepancy, **not a confirmed equivalent-offer conflict**.|Matched / `explicit-title-year-director-match`; partial;26 candidates,4 localization blocks. Film-level UA audio positive. Shown Apple own block: audio positive/subtitles negative, territory unknown. Three omitted rows' content not reconstructed.|5|
+|4 Perfect Days / Ідеальні дні (2023); TMDb976893 / IMDbtt27503384|TMDb A partial/B ok; `partial-cause-not-in-summary`; MOTN no-ua-options; mapped rows0.|Identity matched; extraction `unsupported-markup`; candidates0/blocks0. Refusal, not established absence of offers.|5|
+|5 The Man from Earth (2007); TMDb13363 / IMDbtt0756683|TMDb A/B ok; MOTN no-ua-options; unmapped1.|Matched; ok;7 candidates/0 blocks; film-level UA audio positive. Combined unmapped2; no mapped rows in supplied short report.|**9**: initial baseline4, then owner-confirmed repeated baseline4 +Kinobaza1|
+|6 The Fall / Позамежжя; nomination2006, selected projection2008; TMDb14784 / IMDbtt0460791|TMDb A/B ok; MOTN ok; unmapped2.|Mismatch / `source-year-conflict-without-stable-crosswalk`; claims withheld. A summary incorrectly called it “Conflicting stable identity evidence”; diagnostic correction below does not relax the gate.|5|
+|7 Anatomy of a Fall (2023); TMDb915935 / IMDbtt17009710|TMDb A/B ok; MOTN no-ua-options; mapped rows0.|Identity matched; extraction `unsupported-markup`; candidates0/blocks0. No inference of absent offers.|5|
+|8 All We Imagine as Light (2024); TMDb927547 / IMDbtt32086077|TMDb A partial/B ok; `partial-cause-not-in-summary`; MOTN no-ua-options; mapped rows0.|Identity unresolved: `source-original-title-unestablished`; claims withheld.|5|
+
+### Owner observations versus source outputs
+
+- For1/2 the owner manually reports Kinobaza/JustWatch showed no UA offers with
+  a provider and claimed Ukrainian track. This neither validates the identity
+  refusals nor proves universal unavailability.
+- For3 the owner reports **5–10 seconds** to find the card and confirms the
+  manually edited “— тест” suffix survived assisted addition to the confirmed
+  draft. This demonstrated useful links/localization contribution and draft
+  preservation, **not offer merging, track applicability or entitlement**.
+- For5 the owner reports Plex on JustWatch/Kinobaza, without a Ukrainian-track
+  claim. Do not identify every unmapped observation as Plex without its details;
+  the film-level UA badge is not Plex audio.
+- For6 the owner reports MUBI availability in Ukraine, without Ukrainian audio.
+  Do not equate unmapped2 with MUBI. Year variance alone does not prove a
+  different film; the historical source stable crosswalk is not established.
+- Across this sample the owner observed that Kinobaza mostly did not show
+  availability where JustWatch/MOTN did not. This is a bounded owner observation,
+  not a general comparison or independent-source validation. Shared JustWatch
+  lineage remains relevant. Kinobaza value is not limited to *new platforms*.
+
+### Accounting, interpretation and next boundary
+
+**8/8 nominations executed;44 application-accounted source HTTP calls:**
+TMDb27 +MOTN9 +Kinobaza8. Initial plan was one pass/normal5/max7 per nomination;
+case5's9 calls are an explicit **one-pass/per-nomination budget deviation**.
+Aggregate44 is below56 but does not erase that deviation. This summary does not
+establish a runtime one-shot bypass: repeated workflow context is not retained.
+Human browser traffic is separate/unmeasured. Provider-link openings are **not
+confirmed**, not counted as executed. Search time is measured only for3; all
+other times are unknown, not zero. Assisted elapsed includes manual pauses and
+must not be called source latency/benchmark.
+
+Machine outcomes: Kinobaza identity matched4/8; extraction returned data2/8,
+matched/unsupported-markup2/8; original-title unresolved3/8; year-based mismatch1/8.
+These are pipeline outcomes, **not accuracy rates**. One assisted GET per case
+is reported; exact admission/retrieval structural details beyond the supplied
+outcomes are not reconstructed. Unreported usefulness is unknown, not “no”.
+
+**Product checkpoint:** assisted workflow demonstrated practical value, notably3;
+this hard sample does not establish general utility or coverage. Preserve all8
+in denominators and assess baseline value separately from the assisted delta.
+Next product evaluation should use actual Wishlist needs, **not another automatic
+run of this sample**. No further owner requests now. The
+[offline audit and bounded proposals](regional-card-proposal.md#m3-owner-checkpoint--offline-findings-and-next-boundary)
+separate proved diagnostic defects from unknown live causes. MW-FUT-01 remains
+Discovery; production/merge/new evaluation remain unapproved.
+
 ## M2 held-out — completed owner-reported session
 
 Recorded October20,2026 from the owner's summary, **not independently repeated**.
