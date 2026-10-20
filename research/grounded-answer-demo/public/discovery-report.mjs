@@ -8,6 +8,10 @@ const outcomes = new Set(['compatible', 'conflicting', 'insufficient-evidence', 
 const reasons = {
   'tmdb-primary-gate': 'TMDb primary ID gate; crosswalk separate', 'imdb-film-gate': 'Exact IMDb gate; supplied stable IDs agree',
   'structural-film-gate': 'Source title/year/director gate; no stable-ID crosswalk', 'stable-id-conflict': 'Conflicting stable identity evidence',
+  'source-year-conflict-without-stable-crosswalk': 'Year differs; stable-ID crosswalk unestablished; source claims withheld',
+  'source-title-conflict': 'Source title conflicts with selected aliases; source claims withheld',
+  'source-canonical-conflict': 'Source canonical conflicts with admitted card; source claims withheld',
+  'source-identity-conflict': 'Source identity gate refused; conflict basis unresolved',
   'row-film-conflict': 'Row film differs from selected fixed film', 'source-identity-unresolved': 'Source identity unresolved',
   'provider-id-conflict': 'Namespaced provider-ID conflict', 'provider-mapping-unresolved': 'Provider mapping unresolved',
   'same-supported-regional-pointer': 'Same supported regional card pointer; destination unverified',
@@ -47,7 +51,7 @@ function diagnosticSummary(d) {
     const state = d?.resources?.[key]?.state;
     if (['missing', 'null', 'invalid'].includes(state)) parts.push(`resource.${key}:${state}`);
   }
-  const path = /^metadata(?:\.(?:originalTitle|requestedTitle|releaseDate|originalLanguage|spokenLanguages|externalIds|alternativeTitles|directors|releaseDates|translations|items|country|title|type|language|name|id|originalName|dates|overview|tagline|[0-9]{1,4}))+$/;
+  const path = /^metadata(?:\.(?:originalTitle|requestedTitle|releaseDate|originalLanguage|spokenLanguages|externalIds|alternativeTitles|directors|releaseDates|translations|items|country|title|type|language|name|id|originalName|dates|date|overview|tagline|[0-9]{1,4}))+$/;
   for (const field of (Array.isArray(d?.fields) ? d.fields : []).slice(0, 32)) {
     if (field.state === 'invalid' && typeof field.path === 'string' && field.path.length <= 180 && path.test(field.path)) parts.push(`${field.path}:invalid`);
   }
@@ -92,6 +96,11 @@ export function buildShortReport({ filmId, mode, receivedAt, result, failed = fa
         const reasons = new Set(['source-canonical-conflict', 'source-canonical-ambiguous', 'malformed-source-stable-id', 'source-stable-id-conflict', 'source-identity-structure-incomplete', 'source-identity-structure-limit', 'source-title-year-missing',
           'source-title-conflict', 'source-original-title-unestablished', 'selected-year-missing', 'source-year-conflict-without-stable-crosswalk', 'source-or-selected-director-missing', 'director-scope-unestablished', 'director-alias-unestablished', 'explicit-stable-and-structural-match', 'explicit-title-year-director-match', 'html-parse-errors']);
         lines.push(`Assisted addition: identity ${identity(c.identity)}; candidates ${count(c.candidates)}; localization blocks ${count(c.blocks)}; reason ${reasons.has(c.reason) ? c.reason : 'unresolved-or-inspect-page'}.`);
+        const extractionCodes = new Set(['html-size-limit', 'html-parse-errors', 'missing-or-duplicate-availabilityAccordion', 'unsupported-accordion-items',
+          'ambiguous-territory-heading', 'ambiguous-territory-control', 'unsupported-or-conflicting-territory', 'ambiguous-territory-panel',
+          'missing-explicit-ukraine-section', 'candidate-count-limit', 'unresolved-parser-or-structure']);
+        const extraction = (Array.isArray(c.extractionIssues) ? c.extractionIssues : []).filter(code => extractionCodes.has(code)).slice(0, 8);
+        if (extraction.length) lines.push(`Assisted extraction diagnostics: ${extraction.join(', ')}; not evidence of absent offers.`);
       }
     }
   }

@@ -9,6 +9,42 @@ import { mockTransport } from './film-workflow.fixture.mjs';
 import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
 const film = { dynamic: true, id: 'tmdb:999900001', tmdbId: 999900001, imdbId: 'tt999900001', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: [], directorAliases: ['Authored director'], directorCount: 1 };
 const response = html => new Response(html, { headers: { 'content-type': 'text/html; charset=UTF-8' } });
+
+// Boundary probes are authored, not reconstructed owner HTML or evidence of coverage.
+for (const [name, transform, expected, count] of [
+  ['single exact original H2', h => h, 'matched', 1],
+  ['nested formatting preserves title text', h => h.replace('<h2>Authored original</h2>', '<h2><span>Authored original</span></h2>'), 'matched', 1],
+  ['two agreeing H2s conservatively withheld', h => h.replace('<h2>Authored original</h2>', '<h2>Authored original</h2><h2>Authored original</h2>'), 'unresolved', 2],
+  ['original plus matching localized H2 conservatively withheld', h => h.replace('<h2>Authored original</h2>', '<h2>Authored original</h2><h2>Вигаданий фільм</h2>'), 'unresolved', 2],
+  ['unestablished title annotation is not stripped', h => h.replace('<h2>Authored original</h2>', '<h2>Authored original (alias)</h2>'), 'unresolved', 1],
+  ['matching H2 beyond accordion cannot corroborate', h => h.replace('<h2>Authored original</h2>', '<h2>Unestablished original</h2>') + '<h2>Authored original</h2>', 'unresolved', 1],
+]) test(`original-title boundary audit: ${name}`, async () => {
+  const r = await fetchAssistedKinobaza(CARD, film, async () => response(transform(markup())));
+  assert.equal(r.identity.status, expected); assert.equal(r.identity.observed.originalTitleCount, count);
+  if (expected === 'unresolved') { assert.equal(r.identity.reason, 'source-original-title-unestablished'); assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined); }
+});
+
+for (const [name, transform, issue] of [
+  ['no Ukrainian section', h => h.replaceAll('collapseUA', 'collapsePL').replace('Доступно в Україні', 'Доступно в Польщі'), 'missing-explicit-ukraine-section'],
+  ['unsupported direct accordion child', h => h.replace('<div id="availabilityAccordion">', '<div id="availabilityAccordion"><p>Authored unsupported child</p>'), 'unsupported-accordion-items'],
+  ['ambiguous territory control', h => h.replace('Доступно в Україні</button>', 'Доступно в Україні</button><button>Authored other control</button>'), 'ambiguous-territory-control'],
+]) test(`matched identity versus extraction refusal: ${name}`, async () => {
+  const h = harness({ html: transform(markup()) }); await h.setup(); const r = await h.read(), data = r.payload.result;
+  assert.equal(data.assistedContribution.identity, 'matched'); assert.equal(data.assistedContribution.status, 'unsupported-markup');
+  assert.ok(data.assistedContribution.extractionIssues.includes(issue)); assert.equal(data.assistedContribution.candidates, 0);
+  data.accounting = r.payload.workflow;
+  const report = buildShortReport({ filmId: film.id, mode: 'live', result: data });
+  assert.ok(report.includes(`Assisted extraction diagnostics: ${issue}`)); assert.match(report, /not evidence of absent offers/);
+  assert.doesNotMatch(report, /https?:|author-tmdb|author-motn|Authored unsupported|Authored other/);
+  assert.equal(h.calls.length, 5); assert.equal((await h.read()).status, 400);
+});
+
+test('missing viewing boundary stops original-title establishment before extraction, not evidence of absent offers', async () => {
+  const r = await fetchAssistedKinobaza(CARD, film, async () => response(markup().replace('id="availabilityAccordion"', 'id="unsupported-viewing"')));
+  assert.equal(r.identity.status, 'unresolved'); assert.equal(r.identity.reason, 'source-identity-structure-incomplete');
+  assert.deepEqual(r.candidates, []);
+});
+
 // Author-written spelling/grouping cases, not live pages or person aliases.
 for (const [name, expectedAliases, observed, directorCount, stable, status, reason] of [
   ['exact returned alias', ['Denis Villeneuve'], 'Denis Villeneuve', 1, 'tt999900001', 'matched', 'explicit-stable-and-structural-match'],

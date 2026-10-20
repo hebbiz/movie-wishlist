@@ -111,6 +111,7 @@ export function createFilmWorkflows({ mode = 'synthetic', tmdbToken = '', motnKe
           metrics: { requestsMade: Object.values(p.counters).reduce((a, b) => a + b, 0), requestBudget: 7, elapsedMs: Math.round(performance.now() - p.start), calls: p.calls.map(c => ({ ...c })) } });
         result.dynamic = true; result.assisted = true; result.matching = describeDiscovery(result, snapshot.expected);
         result.assistedContribution = { status: kino.status, identity: kino.identity?.status ?? 'unresolved', reason: kino.identity?.reason ?? kino.issues?.[0] ?? null,
+          extractionIssues: kino.issues ?? [], // Existing parser reason codes, separate from identity; report allowlists them.
           candidates: kino.identity?.status === 'matched' ? kino.candidates?.length ?? 0 : 0, rowsAdded: result.rows.filter(r => r.id.startsWith('kinobaza:')).length,
           blocks: kino.identity?.status === 'matched' ? kino.localization?.blocks?.length ?? 0 : 0 };
         return { status: 200, payload: { status: 'card-complete', result, workflow: view(p) } };

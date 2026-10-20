@@ -6,6 +6,17 @@ approved/implemented in a child of #188 a88bfba; live preflight/evaluation,
 merge and production remain not authorized.** The13 sections retain
 the design; the [implementation record](regional-card-proposal.md#m31-bounded-implementation--authored-checks-only)
 states the actual M3.1 boundary and authored verification. No new owner cycle.
+**Subsequent owner checkpoint:** the combined8-case risk-based session is now
+reported complete; [ledger and accounting](digital-ua-owner-validation.md#m31m32--completed-risk-based-owner-session)
+supersede the historical live-pending wording **for that session only**. Assisted
+workflow demonstrated practical value, not general utility/coverage.44 source
+calls include an owner-confirmed baseline repeat in case5 (9 for that nomination);
+this deviation does not revise the normal5/max7 one-pass contract. Runtime commit
+remains unknown. No new evaluation is requested/authorized. The
+[offline findings](regional-card-proposal.md#m3-owner-checkpoint--offline-findings-and-next-boundary)
+record diagnostic-only corrections, parser/other-platform UX proposals and the
+physical fallback backlog; none authorizes parser broadening or a new capability.
+
 October20,2026. MW-FUT-01 remains Discovery. The
 [canonical M3 decision](regional-card-proposal.md#m3-arbitrary-film-discovery--proposed-design-only)
 owns architecture, source-use evidence, metrics and trade-offs; this file is the

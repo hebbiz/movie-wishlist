@@ -3637,6 +3637,110 @@ stale protection. No live/source/rules request, owner session, new alias or
 matching capability. Launcher/imports/dependencies/key routing are unchanged,
 so Windows lifecycle is not repeated for this classification-only correction.
 
+### M3 owner checkpoint — offline findings and next boundary
+
+The [owner ledger](digital-ua-owner-validation.md#m31m32--completed-risk-based-owner-session)
+records all8 difficult nominations, checkout b93014b/runtime unknown,44 source
+calls including case5's repeated baseline, and the independently attributed
+manual observations. This is an executed bounded owner session, not new agent
+live verification, general accuracy or representative product evaluation.
+Assisted workflow demonstrated practical value, especially case3's added links/
+scoped localization and preserved edit. No new owner cycle is requested.
+
+**A — original-title refusals (1/2/8):** `assistedIdentity` examines active H2s
+whose source offsets lie after the first H1 and before the first
+`availabilityAccordion`; nav/aside/footer/template/noscript/iframe ancestry is
+excluded. It requires exactly one H1, at least one such H2 and one matching
+canonical before comparing H1 title/year. H2 text must have **exactly one match**
+against the union of selected requested/original/title aliases after NFC/case/
+whitespace normalization. It is not restricted to `original_title` alone, and
+does not identify a dedicated original-title element inside that offset range.
+No fuzzy, punctuation, diacritic or transliteration repair. Authored cases show
+one H2/nested span matches; two agreeing H2s or an original plus another matching
+localized H2 are conservatively unresolved, as are an annotated/unestablished
+title and corroboration outside the boundary. A missing accordion prevents
+original-title establishment earlier (`source-identity-structure-incomplete`).
+These are reproducible acceptance limitations/possible false-negative shapes,
+**not reconstructed live markup or a proved cause of1/2/8**. No parser/identity
+change is made. Any later fix needs a bounded, uniquely attributable metadata
+scope plus agreement/conflict tests; not “accept any matching H2” or guessed aliases.
+
+**B — matched then unsupported extraction (4/7):** the existing extractor has
+separate issue codes for missing/duplicate viewing accordion, unsupported direct
+items, ambiguous heading/control/panel, unsupported/conflicting territory and
+missing explicit UA section. It does not have a trusted “no offers” outcome from
+arbitrary missing markup. A well-formed empty UA panel can give unresolved with
+zero candidates; unsupported structure refuses extraction. Identity may match
+before a later structural refusal. The old contribution reason preferred the
+identity success reason, hiding extraction issue codes in the copied summary.
+The narrow correction passes **existing parser issues** separately into an
+allowlisted, bounded report line. Authored no-UA/unsupported-child/ambiguous-control
+cases preserve matched identity, refuse extraction and report distinct reasons.
+No markup acceptance rule changes; historical4/7 issue codes remain unknown.
+
+**C — year-only wording defect proved/fixed:** `filmAssociation` previously
+mapped every source mismatch to `stable-id-conflict`. Authored year-only refusal
+reproduced the misleading “Conflicting stable identity evidence”. Kinobaza year,
+title and canonical reasons now keep distinct explanations; unknown mismatch
+basis stays generic and only an explicit source stable-ID reason gets that label.
+`conflicting` still means a refused A relation, not independently proved different
+film. Gate, withholding and source independence are unchanged. No crosswalk for
+The Fall is inferred; selected2008 versus nomination2006 is not resolved here.
+
+**D — Plex/MUBI/unmapped audit; UX proposed only:** ordinary unmapped projections
+retain source/name and limited fields (TMDb access; MOTN access; Kinobaza
+territory/extraction issue), while retained projected stages supply fuller source
+context/receipt time and original candidate/option evidence. Unlike R2 conflict
+objects, ordinary unmapped entries **do not carry complete per-row provenance,
+links or track claims**. Existing UI details show names and projected diagnostics;
+short report only counts unmapped entries. Authored Plex/MUBI cases verify name/
+source retention and no canonical/draft row, not which historical rows these were.
+Minimal future **«Інші платформи»**: read-only source-labelled names, literal
+access/territory and reason; scoped claims/link/provenance only from their own
+retained observation, with existing URL safety. No invented canonical medium,
+selection/draft eligibility, six-platform membership or name-based enrichment.
+Do not infer source rows from owner observations. This UX/projection extension
+is **not implemented or authorized** by this diagnostic task.
+
+**E — TMDb partial:** missing/null/invalid appended resource objects or invalid
+projected metadata make A partial; valid resource objects with missing optional
+fields do not by themselves. Resource states and bounded invalid-field paths
+are retained; the report only emits safe allowlisted codes. Existing P3 debt:
+projected release-event leaf `.date` was absent from that path allowlist, so an
+available diagnostic could fall through to `partial-cause-not-in-summary`. The
+leaf is now allowlisted and authored invalid-date paths report without values.
+The32-field/8-summary limits can still omit a cause and remain explicit. Neither
+P3 nor any particular missing/invalid path is established as the live cause for
+4/8; no response reconstruction or new diagnostic GET. The prior M2 partial
+history also is not retrospectively explained by this fix.
+
+**Next narrow step, proposed:** review the original-title metadata-scope contract
+and the read-only “Other platforms” projection as separate bounded changes,
+using authored evidence first. Do not expand parser policy just to produce ok/
+matched. Future product utility evaluation uses real Wishlist films, not automatic
+repetition of these8. Preserve partials and source lineage; Kinobaza can add
+useful links/localization on already-known platforms, not only new platforms.
+
+**Future fallback requirement — backlog/design only:** when no useful digital-UA
+option is found, Mykola should offer a physical-edition search: HMV, Rarewaves,
+Amazon US/UK/DE/IT; priority availability → English audio → UHD/Blu-ray/DVD.
+No digital unknown means universally unavailable; physical search is a separate
+explicit future action. No fallback implementation, source call, new ranking,
+production integration or change to existing physical modes is included now.
+
+**Verification for this checkpoint:**105 targeted offline/HTTP passes;437 full
+offline/HTTP passes;27 relevant Edge browser/mobile passes,2 absent-WebKit skips,
+0 failures. The final report-only test refinement also passes8/8. These are
+authored/loopback implementation checks, not independent source validation or
+real iPhone checks. Two initial regressions reproduced the old misleading
+year/stable-ID mapping before correction. Local Markdown links/anchors,13-section
+handoff, research-only diff and whitespace checked. Windows lifecycle not repeated:
+launcher, imports/dependencies and credential routing are unchanged. No timeouts
+relaxed, live/API/source/rules/destination calls, owner tests, body archives,
+owner-checkout/demo changes or production writes. Old owner output is not
+retroactively assigned newly available reason codes. Further parser or “Other
+platforms” implementation needs its own bounded approval, not another owner run.
+
 ### M3.1 bounded implementation — authored checks only
 
 Owner approval cites #187 eb21427; implementation branch is separately stacked

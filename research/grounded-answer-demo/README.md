@@ -2,8 +2,9 @@
 
 ## M3.1 arbitrary-film discovery — isolated implementation
 
-**M3.1 and assisted M3.2 approved/implemented for bounded research; live
-preflight/evaluation, merge and production remain unapproved.** Research
+**M3.1 and assisted M3.2 approved/implemented for bounded research. One combined
+owner evaluation is now reported complete; further live evaluation, merge and
+production remain unapproved.** Research
 develop is now `09c9482694b37f16fb0371f6d2fca790167a31b0`; #186→#185→#184
 were merged through merge commits. Main was not promoted. The actual runtime
 retains all six fixed controls and now adds an explicit arbitrary-film search
@@ -92,8 +93,19 @@ replies cannot restore them. Render/copy/select/draft add0 requests.
 
 See the [assisted implementation and scoped source-use assessment](docs/regional-card-proposal.md#m32-assisted-card-implementation--authored-checks-only)
 and [future iPhone workflow](docs/iphone-windows.md#m32-assisted-kinobaza--future-combined-session-only).
-Synthetic card output is explicitly invented, not a page read. All new live
-identity/extraction usefulness is **unvalidated**; no owner cycle requested.
+Synthetic card output is explicitly invented, not a page read. The
+[8-case owner checkpoint](docs/digital-ua-owner-validation.md#m31m32--completed-risk-based-owner-session)
+reports44 source calls (including one repeated baseline),4/8 matched Kinobaza
+identities,2/8 data-returning extractions and a preserved manually edited draft.
+These deliberately difficult cases are pipeline outcomes, **not accuracy or
+representative coverage**. Practical assisted value was demonstrated in case3;
+unreported usefulness is unknown. See the
+[offline findings and proposed next boundary](docs/regional-card-proposal.md#m3-owner-checkpoint--offline-findings-and-next-boundary):
+year-only refusal wording, bounded extraction reason codes and the release-event
+date report allowlist are corrected without relaxing identity/parser rules.
+The causes of historical original-title/extraction refusals and TMDb partials
+remain unknown; no new owner cycle requested. Physical fallback is backlog/design
+only, and “Other platforms” is proposed, not implemented.
 
 R1/R2, exact URLs/acknowledgement, independent source gates, unknowns, source-only
 localization, memory-only draft/cancel and safe-copy/stale-report boundaries
