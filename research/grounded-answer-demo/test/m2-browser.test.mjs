@@ -66,19 +66,19 @@ test('M2 direct A/B + copy report mobile browser (authored mocks only)', { skip:
       } else if (kind === 'audit-diagnostics') assert.match(shown, /Possible discrepancy/);
       else assert.match(shown, /Same supported regional card pointer/);
       const row = page.locator('article[data-row-id^="motn:"]').first();
-      await row.getByRole('button', { name: 'Select and review' }).click();
+      await row.getByRole('button', { name: 'Обрати' }).click();
       const included = async () => JSON.parse(await page.locator('#draft-included').textContent());
       assert.equal((await included()).purchase_url, '');
       await page.locator('#draft-tracking-ack').check(); assert.ok((await included()).purchase_url.includes('at=&at=TEST%2fCODE'));
       await page.locator('#draft-confirm').click();
       await page.locator('#local-draft input[name="title"]').fill('PRIVATE_MANUAL_DRAFT');
-      await row.getByRole('button', { name: 'Select and review' }).click(); await page.locator('#draft-review-cancel').click();
+      await row.getByRole('button', { name: 'Обрати' }).click(); await page.locator('#draft-review-cancel').click();
       assert.equal(await page.locator('#local-draft input[name="title"]').inputValue(), 'PRIVATE_MANUAL_DRAFT');
     }
     assert.deepEqual(await page.evaluate(() => window.__writes), []);
     await page.locator('#report-copy').click();
     if (kind === 'stale-copy') {
-      assert.equal(await page.locator('#report-status').textContent(), 'Copying…');
+      assert.equal(await page.locator('#report-status').textContent(), 'Копіюю…');
       await page.locator('#discovery-film').selectOption('dune-part-two');
       await page.waitForFunction(() => document.querySelector('#discovery-chosen').textContent.includes('Dune: Part Two'));
       await page.evaluate(() => window.__finishCopy()); await page.waitForTimeout(30);
@@ -88,7 +88,7 @@ test('M2 direct A/B + copy report mobile browser (authored mocks only)', { skip:
       await page.waitForFunction(() => !document.querySelector('#report-copy').disabled);
       const fallback = ['denied', 'unavailable', 'audit-diagnostics'].includes(kind);
       assert.equal(await page.locator('#report-fallback').isVisible(), fallback);
-      assert.match(await page.locator('#report-status').textContent(), fallback ? /copy manually/ : /Copied short report/);
+      assert.match(await page.locator('#report-status').textContent(), fallback ? /скопіюйте вручну/ : /звіт скопійовано/);
       const text = fallback ? await page.locator('#report-text').inputValue() : await page.evaluate(() => window.__writes.at(-1));
       assert.match(text, /Commit: unknown/); assert.match(text, /Coherence/);
       assert.doesNotMatch(text, /PRIVATE_MANUAL_DRAFT|SECRET_|offline-m2|https?:|Authorization|TEST%2fCODE/);
@@ -101,7 +101,7 @@ test('M2 direct A/B + copy report mobile browser (authored mocks only)', { skip:
       else assert.match(text, /HTTP-call count unknown/);
       if (fallback) {
         assert.equal(await page.locator('#report-text').evaluate(n => n.readOnly), true);
-        await page.getByRole('button', { name: 'Select report text', exact: true }).click();
+        await page.getByRole('button', { name: 'Виділити текст звіту', exact: true }).click();
         assert.equal(await page.locator('#report-text').evaluate(n => n.selectionEnd - n.selectionStart === n.value.length), true);
       }
       await page.locator('#report-copy').click(); await page.waitForFunction(() => !document.querySelector('#report-copy').disabled);
