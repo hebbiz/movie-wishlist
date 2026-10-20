@@ -10,8 +10,9 @@ if ($Megogo -and ($Tmdb -or $Motn -or $Html -or $UrlContext -or $Kinobaza)) { th
 if ($Discovery -and ($Megogo -or $Tmdb -or $Motn -or $Html -or $UrlContext -or $Kinobaza)) { throw '-Discovery is a separate composition mode.' }
 $source = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
-$copy = Join-Path $tempBase ('mw-grounded-test-' + [Guid]::NewGuid().ToString('D'))
-$null = New-Item -ItemType Directory -Path $copy
+$copyRoot = Join-Path $tempBase ('mw-grounded-test-' + [Guid]::NewGuid().ToString('D'))
+$copy = Join-Path $copyRoot 'research/grounded-answer-demo'
+$null = New-Item -ItemType Directory -Path $copy -Force
 $sentinel = $null
 function Assert($condition, $message) { if (-not $condition) { throw $message } }
 function Free-Port {
@@ -19,6 +20,9 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
+    # Preserve the production/research shared pure URL-policy module boundary.
+    $null = New-Item -ItemType Directory -Path (Join-Path $copyRoot 'shared')
+    Copy-Item -LiteralPath (Join-Path $source '../../shared/media-link-policy.mjs') -Destination (Join-Path $copyRoot 'shared/media-link-policy.mjs')
     foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs','film-workflow.mjs','film-workflow-synthetic.mjs','assisted-kinobaza.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
@@ -267,7 +271,7 @@ try {
 } finally {
     if (Test-Path -LiteralPath (Join-Path $copy '.run/instance.json')) { & (Join-Path $copy 'windows/Stop-Demo.ps1') }
     if ($sentinel) { try { if (-not $sentinel.HasExited) { $sentinel.Kill(); $null = $sentinel.WaitForExit(3000) } } finally { $sentinel.Dispose() } }
-    $resolved = [IO.Path]::GetFullPath($copy)
+    $resolved = [IO.Path]::GetFullPath($copyRoot)
     if (-not $resolved.StartsWith($tempBase.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolved) -notmatch '^mw-grounded-test-[0-9a-f-]{36}$') { throw 'Unsafe test cleanup path.' }
     Remove-Item -LiteralPath $resolved -Recurse -Force
 }

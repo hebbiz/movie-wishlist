@@ -1,9 +1,12 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
+import { safeMediaReport } from './media-advice-report.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
 const value = f => f?.state === 'reported' ? f.value : null;
+const accessLabel = f => ({ rent: 'оренда', rental: 'оренда', buy: 'купівля', purchase: 'купівля', subscription: 'передплата', flatrate: 'передплата', addon: 'пакет', free: 'безкоштовний доступ', 'ad-supported': 'з рекламою' })[value(f)] ?? 'тип доступу не встановлено';
+const localizationLabel = f => ({ 'reported-positive': '«+» у блоці', 'reported-negative': '«−» у блоці', conflicting: 'суперечливі позначки' })[f?.state] ?? 'невідомо';
 export function transferFor(row, acknowledged = false) {
-  if (row?.identityStatus !== 'matched' || row?.providerConflict || !media[row?.provider?.key]) return null;
+  if (row?.identityStatus !== 'matched' || row?.providerConflict || !Object.hasOwn(media, row?.provider?.key)) return null;
   const link = classifyLink(row.link?.href, row.provider);
   const needsAck = link.kind === 'tracking-redirect' || link.acknowledgementRequired;
   return { medium: media[row.provider.key], url: link.transferable && (!needsAck || acknowledged) ? link.href : null,
@@ -41,15 +44,38 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   function render(message) {
     dialog.replaceChildren(node('h2', 'Поради Миколи'), button('← До картки', close));
     dialog.append(node('p', 'Це повідомлення джерел, не гарантія доступності чи придбання. Невідоме — не «немає».'));
+    if (session.result?.rows?.length) dialog.append(node('p', 'Є варіанти для вашого вибору. Де джерела мовчать, Микола фактів не домальовує.'));
     if (message) { const status = node('p', message); status.setAttribute('role', 'status'); dialog.append(status); }
     const search = button('Знайти варіанти', run); search.disabled = session.used; dialog.append(search);
     for (const s of session.result?.sources ?? []) dialog.append(node('p', `${s.source}: ${s.status}; identity: ${s.identity}`));
     if (session.result?.film) dialog.append(node('h3', session.result.film.title));
-    if (session.result?.metrics) dialog.append(node('p', `Джерельні HTTP-спроби: ${session.result.metrics.requestsMade} / ${session.result.metrics.requestBudget}. Повторних запитів немає.`));
-    for (const row of session.result?.rows ?? []) {
+    if (session.result?.metrics) dialog.append(node('p', `Джерельні HTTP-спроби: ${session.result.metrics.requestsMade} / ${session.result.metrics.requestBudget}; зарезервовано в ledger: ${session.result.metrics.ledgerReservations ?? 'невідомо'}. Повторних запитів немає.`));
+    if (session.result?.metrics) {
+      const counts = node('details'); counts.append(node('summary', 'Облік запитів'),
+        node('pre', JSON.stringify(session.result.metrics, null, 2))); dialog.append(counts);
+    }
+    if (session.choice) dialog.append(node('p', `Обрана source-картка Кінобази: ${session.choice.sourceURL}. Identity matched; це не entitlement.`));
+    if (session.result?.resolver) {
+      const info = node('details'); info.append(node('summary', 'Пошук картки Кінобази'),
+        node('pre', JSON.stringify(session.result.resolver, null, 2))); dialog.append(info);
+    }
+    for (const choice of session.result?.cardChoices ?? []) dialog.append(button(`Використати підтверджену картку ${choice.id}`, () => {
+      if (!valid()) return invalidate();
+      session.choice = choice; render('Обрана картка Кінобази. Це не підтвердження характеристик інших пропозицій.');
+    }));
+    const filmLocalization = session.choice?.filmLocalization ?? session.result?.filmLocalization;
+    if (filmLocalization?.ukrainianAudio?.state === 'reported-positive') dialog.append(node('p', 'Кінобаза вказує українську локалізацію фільму загалом. Це не підтвердження доріжки на кожній платформі.'));
+    const rows = [...(session.result?.rows ?? []), ...(session.choice?.rows ?? [])], groups = new Map();
+    for (const row of rows) {
+      const groupKey = row.provider?.key ?? 'unmapped';
+      if (!groups.has(groupKey)) { const group = node('section'); group.append(node('h3', row.provider?.name ?? 'Інша платформа')); groups.set(groupKey, group); dialog.append(group); }
       const card = node('section'); card.className = 'media-advice-row';
-      card.append(node('h3', row.provider?.name ?? 'Інша платформа'), node('p', `${row.provenance?.source ?? 'Джерело не зазначено'} · ${value(row.access) ?? 'тип доступу невідомий'} · ${row.country ?? 'територія невідома'}`));
-      if (row.kinobazaLocalization) card.append(node('p', `Кінобаза: аудіо ${row.kinobazaLocalization.audio?.state ?? 'unknown'}, субтитри ${row.kinobazaLocalization.subtitles?.state ?? 'unknown'}; для конкретної пропозиції не перевірено.`));
+      card.append(node('p', `${row.provenance?.source ?? 'Джерело не зазначено'} · ${accessLabel(row.access)} · ${row.country ?? 'територія невідома'}`));
+      if (row.kind === 'candidate-link') card.append(node('p', 'Посилання-кандидат, не підтверджена пропозиція.'));
+      if (row.conflicts?.length) card.append(node('p', 'Суперечливі дані джерела; ці характеристики не переносяться до форми.'));
+      if (row.comparisons?.some(c => c.outcome === 'possible-discrepancy')) card.append(node('p', 'Можлива розбіжність; еквівалентність пропозицій не встановлена.'));
+      if (row.provenance?.source === 'Movie of the Night') card.append(node('p', 'MOTN: мовні списки, якість і ціни потребують перевірки; порожній список не означає відсутність.'));
+      if (row.kinobazaLocalization) card.append(node('p', `Кінобаза: українське аудіо — ${localizationLabel(row.kinobazaLocalization.audio)}, субтитри — ${localizationLabel(row.kinobazaLocalization.subtitles)}; для конкретної пропозиції ще не перевірено.`));
       const details = node('details'); details.append(node('summary', 'Джерело й обмеження'), node('pre', JSON.stringify({ provenance: row.provenance, audio: row.audio, subtitles: row.subtitles, quality: row.quality, price: row.price, conflicts: row.conflicts, comparisons: row.comparisons }, null, 2))); card.append(details);
       const transfer = transferFor(row); let acknowledged = false;
       if (transfer?.needsAck) {
@@ -60,9 +86,9 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         if (!valid() || transfer.needsAck && !acknowledged) { render('Спочатку підтвердьте tracking/affiliate-перехід.'); return; }
         doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
       }));
-      const select = button('Обрати', () => review(row, acknowledged)); select.disabled = !transfer; card.append(select); dialog.append(card);
+      const select = button('Обрати', () => review(row, acknowledged)); select.disabled = !transfer; card.append(select); groups.get(groupKey).append(card);
     }
-    for (const row of session.result?.unmapped ?? []) {
+    for (const row of [...(session.result?.unmapped ?? []), ...(session.choice?.unmapped ?? [])]) {
       const details = node('details'); details.append(node('summary', `Інші платформи — ${row.name ?? 'назву не встановлено'} (${row.source}): лише для перегляду`),
         node('pre', JSON.stringify({ access: row.access, reason: row.reason, provenance: row.provenance, observations: row.observations ?? row.observation }, null, 2))); dialog.append(details);
     }
@@ -71,6 +97,20 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const a = node('a', text); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; attribution.append(a, doc.createTextNode(' · '));
     }
     dialog.append(attribution);
+    dialog.append(node('p', 'Країнові секції Кінобази й TMDb можуть походити з JustWatch — це не незалежні підтвердження.'));
+    const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; dialog.append(logo);
+    if (session.result) dialog.append(button('Скопіювати короткий звіт', async () => {
+      const epoch = generation, report = safeMediaReport({ ...session.result, rows, filmLocalization }, { applied: session.applied });
+      try {
+        if (!doc.defaultView.navigator.clipboard?.writeText) throw Error();
+        await doc.defaultView.navigator.clipboard.writeText(report);
+        if (epoch === generation && valid()) { const notice = node('p', 'Короткий звіт скопійовано.'); notice.setAttribute('role', 'status'); dialog.append(notice); }
+      } catch {
+        if (epoch !== generation || !valid()) return;
+        const fallback = node('textarea'); fallback.readOnly = true; fallback.value = report; fallback.setAttribute('aria-label', 'Короткий звіт для копіювання');
+        dialog.append(node('p', 'Буфер недоступний. Виділіть і скопіюйте текст.'), fallback); fallback.focus(); fallback.select();
+      }
+    }));
     if (session.result && !session.result.rows?.length) dialog.append(node('p', 'Придатних варіантів джерела не повернули. Це не означає, що фільм недоступний.'));
   }
   function review(row, acknowledged) {
@@ -88,7 +128,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const p = makePreview(row, before, { acknowledged, clearMissing }), changes = applyPreview(p, readForm());
       if (!permitted) { invalidate(); return; }
       if (!changes) { render('Поля змінилися або очищення не підтверджено. Оберіть варіант повторно.'); return; }
-      writeForm(changes); close();
+      writeForm(changes); session.applied = true; close();
     }); preview.append(apply, button('Скасувати вибір', () => render())); dialog.replaceChildren(preview);
   }
   async function run() {

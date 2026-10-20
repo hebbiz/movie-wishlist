@@ -12,13 +12,13 @@ exists. Group owner/member may edit; visitors may not. Migration files 001–016
 are historical evidence, not proof of their deployed state. Owner checkout is
 excluded from implementation.
 
-1. **M4.1** isolated accessible form dialog, source-row selection, explicit
+1. **M4.1 — implemented, offline/browser-tested, live-unvalidated** isolated accessible form dialog, source-row selection, explicit
    medium/URL diff and local-only transfer. Capability fails closed until M4.2.
    Authored fixtures exist only in tests. No social-chat controller reuse.
-2. **M4.2** authenticated Netlify boundary, backend-only per-user assignment,
+2. **M4.2 — implemented, isolated SQL/mock-tested, live-unvalidated** authenticated Netlify boundary, backend-only per-user assignment,
    independently gated TMDb/MOTN and atomic technical ledger. New SQL only;
    migration application/production flags/secrets require separate authorization.
-3. **M4.3** replaceable Brave Web Search resolver, ≤2 queries and ≤2 sequential
+3. **M4.3 — implemented, mock/browser-tested, live-unvalidated** replaceable Brave Web Search resolver, ≤2 queries and ≤2 sequential
    admitted Kinobaza card GETs; no redirect/retry/destination resolution.
 
 Each stage has a separate stacked PR; no merge/deployment in this task.
@@ -81,6 +81,10 @@ within the action for localization/resolver, without additional fan-out.
 Global source deadline 55s; individual existing transport bounds still apply.
 This is an operational bound, not a measured latency target. Hosting duration
 must support it before activation; timeout consumes reservations, no refetch.
+The response distinguishes dispatched source attempts from the finish RPC's
+durable reservation count. If a reservation reply is lost, no HTTP dispatch is
+authorized by that reply; the ledger may still have consumed the slot. If the
+whole action reply is lost, accounting is unknown to the client, not zero.
 
 Migration `20261020205122_media_advice_access_ledger.sql` was created using
 Supabase CLI 2.121.0. It creates only a new private schema, default-off permission
@@ -111,3 +115,101 @@ M4.3 additionally `BRAVE_SEARCH_API_KEY`. Secrets are not arguments/URLs/UI data
 No configuration is changed by these PRs. Approved TMDb logo/complete current
 attribution and applicable commercial/source-use terms must be checked during
 activation preflight; text attribution and source links remain visible now.
+
+## M4.3 automatic resolver and UI
+
+No manual card field is required. The swappable search interface uses ordinary
+Brave Web Search `GET https://api.search.brave.com/res/v1/web/search`, with
+server-only `X-Subscription-Token`. A verified original title/alias, year and
+director form a domain-limited query. Snippets/rank never establish identity or
+claims and are not returned or persisted. At most one alternative known title
+query is allowed **only when the first successful search yields no admitted
+URLs**, not after transport/auth/quota errors or merely to seek a nicer result.
+Read at most two distinct admitted candidates sequentially. More candidates are
+reported unexamined, not declared absent. Provider-internal traffic is unknown.
+
+Admission reuses the strict assisted policy:
+`https://kinobazaua.com/titles/<lowercase-ascii-slug>` only; no query, fragment,
+credentials, port (including explicit 443), alternative host, subpage, encoded
+slash/dot path, normalization repair or guessed slug. Revalidate before every
+GET; redirects/retries are refused. Search ≤15s/512KiB, source card ≤15s/2MiB,
+within the overall 55s deadline. No cookies/login/scripts/assets/destinations.
+
+Identity reuses the existing independent canonical/title/original-title/year/
+director/stable-ID gates, including unresolved director spellings/composition,
+original-title scope refusal and stable-ID conflict priority. These parser
+limitations are preserved, not fixed by finding a URL. Refusals withhold claims.
+One matched card can contribute source rows automatically even when extraction
+is partial. Two matched cards require an explicit choice of already checked
+cards; selection adds **zero** requests and cannot override a refused identity.
+An identity match is not extraction success, offer identity or account entitlement.
+
+The dialog groups supported platforms for presentation only, keeps each source
+row selectable independently, and retains unknown/unmapped observations read-only.
+It shows source warnings, literal characteristics in details, localization scope,
+shared JustWatch lineage, exact-link acknowledgement and a safe copyable report.
+Report content is allowlisted counts/status/scopes; no raw URLs, tracking query,
+source body, secret or manually edited draft. Commit remains unknown without
+attestation. Clipboard denied/unavailable has selectable text fallback.
+Default field exclusions remain price/currency, audio/subtitles/video, status,
+owned medium, identity/title/year and added_by. No form write until explicit
+transfer; no DB write until ordinary Save. No source request from rendering,
+card selection, copy, review, transfer or cancel.
+
+The ledger retains rate rows across list/group deletion: new contexts cannot
+erase prior rolling-window usage. Historical foreign-key/RLS issues are not
+modified. New accounting stores group/list IDs as technical bindings, checked
+against fresh membership/list identity on each RPC, not cascading rate resets.
+
+## Activation / operation plan (not executed)
+
+1. Review #190 → #191 → successor M4.3 dependency diffs; do not merge/deploy as
+   part of this task. Confirm production migration history separately; apply
+   only the new migration later under explicit authorization.
+2. Complete source-use/Brave pricing and attribution preflight, including the
+   existing TMDb logo asset used by the dialog. No terms/rules/source retrieval
+   was performed in this implementation task. Remaining rights are unresolved,
+   not blanket permission or an invented ban.
+3. In the provider dashboard obtain a **Web Search API** key, not Answers;
+   review current plan/quota/price before any purchase. No account, subscription
+   or credits were created here. Set `BRAVE_SEARCH_API_KEY` only server-side.
+   TMDb Read Access Token and MOTN key remain separate.
+4. Confirm hosting supports the synchronous bounded action and reconciliation
+   of timeout/lost response; configure daily privileged 24h cleanup. Validate
+   native PostgreSQL multi-connection behavior in an isolated environment.
+5. Backend administrator may assign a small per-user, expiring permission using
+   the private permissions table via a trusted server/admin path. No default
+   grant, client toggle, user metadata claim or new legal acknowledgement switch.
+   Keep feature off until these prerequisites and pilot authorization.
+6. Five real Wishlist films, selected before requests; record titles/IDs privately
+   for the pilot, not invented in this document. One form/discovery action each;
+   maximum 40 dispatched source attempts (5 × 8), normally fewer. Search-provider
+   internal traffic and manual browser navigation are separate/unknown.
+   No full responses or platform sweep. Measure added useful claims as well as
+   successful URL resolution; missing offers do not mean resolver failure.
+   Stop for any false identity acceptance, unauthorized access, extra requests,
+   unexpected writes or lost/manual field propagation. Review brief summaries.
+
+## Verification record
+
+Authored fixtures are not source HTML archives or live coverage evidence.
+Real-form Edge browser covers desktop, 375×812 (iPhone X-sized) and 820×1180
+(Air-sized), not real iPhone/WebKit validation. It checks social-state isolation,
+local transfer, no write before Save, explicit clearing, affiliate acknowledgement,
+manual edits, same-session reuse, late replies and clipboard fallback.
+Local PostgreSQL/WASM validates only the new migration against minimal authored
+prerequisites. Existing research offline/HTTP/security suites protect unchanged
+requests, R1/R2 and old modes. No assertion/timeout is weakened.
+Launcher/key-routing components are unchanged, but the pure shared URL-policy
+import adds a copy-layout dependency. The Windows isolated test fixture now
+preserves repository-relative paths; lifecycle is rerun for this concrete risk.
+Native DB concurrency, WebKit and live source/resolver behavior remain unvalidated.
+
+Recorded checks on the assembled implementation:
+M4 authored offline/HTTP/SQL + Edge form suite passed; research offline/HTTP
+**463/463** passed; Windows `windows.test.ps1 -Discovery` passed parent-exit
+survival, duplicate start, inherited mock-key routing, safe stop and restart in
+a disposable copy. No actual SSH disconnect was repeated. WebKit executable is
+absent. Local links/anchors: 13 Markdown documents, 416 links / 257 anchors,
+zero errors; whitespace clean. Exact final counts/remote statuses are recorded
+in the implementation PR description rather than guessed here.

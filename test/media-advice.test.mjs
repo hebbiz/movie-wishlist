@@ -28,5 +28,6 @@ test('unresolved, conflicting provider, unknown platform and unsafe href cannot 
   assert.equal(transferFor({ ...authoredRow(), identityStatus: 'unresolved' }), null);
   assert.equal(transferFor({ ...authoredRow(), providerConflict: true }), null);
   assert.equal(transferFor({ ...authoredRow(), provider: { key: 'plex' } }), null);
+  assert.equal(transferFor({ ...authoredRow(), provider: { key: '__proto__' } }), null);
   for (const href of ['javascript:alert(1)', 'https://x@tv.apple.com/ua/movie/x/umc.cmc.a', 'https://tv.apple.com:444/ua/movie/x/umc.cmc.a', '/relative', 'https://netflix.com/search?q=x']) assert.equal(transferFor(authoredRow(href)).url, null);
 });
