@@ -44,6 +44,8 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     if (message) { const status = node('p', message); status.setAttribute('role', 'status'); dialog.append(status); }
     const search = button('Знайти варіанти', run); search.disabled = session.used; dialog.append(search);
     for (const s of session.result?.sources ?? []) dialog.append(node('p', `${s.source}: ${s.status}; identity: ${s.identity}`));
+    if (session.result?.film) dialog.append(node('h3', session.result.film.title));
+    if (session.result?.metrics) dialog.append(node('p', `Джерельні HTTP-спроби: ${session.result.metrics.requestsMade} / ${session.result.metrics.requestBudget}. Повторних запитів немає.`));
     for (const row of session.result?.rows ?? []) {
       const card = node('section'); card.className = 'media-advice-row';
       card.append(node('h3', row.provider?.name ?? 'Інша платформа'), node('p', `${row.provenance?.source ?? 'Джерело не зазначено'} · ${value(row.access) ?? 'тип доступу невідомий'} · ${row.country ?? 'територія невідома'}`));
@@ -60,7 +62,15 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       }));
       const select = button('Обрати', () => review(row, acknowledged)); select.disabled = !transfer; card.append(select); dialog.append(card);
     }
-    for (const row of session.result?.unmapped ?? []) dialog.append(node('p', `Інші платформи — ${row.name ?? 'назву не встановлено'} (${row.source}): лише для перегляду; ${row.reason ?? 'mapping unresolved'}`));
+    for (const row of session.result?.unmapped ?? []) {
+      const details = node('details'); details.append(node('summary', `Інші платформи — ${row.name ?? 'назву не встановлено'} (${row.source}): лише для перегляду`),
+        node('pre', JSON.stringify({ access: row.access, reason: row.reason, provenance: row.provenance, observations: row.observations ?? row.observation }, null, 2))); dialog.append(details);
+    }
+    const attribution = node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB. ');
+    for (const [text, href] of [['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'], ['Streaming Availability API by Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/']]) {
+      const a = node('a', text); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; attribution.append(a, doc.createTextNode(' · '));
+    }
+    dialog.append(attribution);
     if (session.result && !session.result.rows?.length) dialog.append(node('p', 'Придатних варіантів джерела не повернули. Це не означає, що фільм недоступний.'));
   }
   function review(row, acknowledged) {

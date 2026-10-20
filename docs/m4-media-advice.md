@@ -60,3 +60,54 @@ dialog, stale response and preview, exact URLs/acknowledgement, missing URL and
 transfer-only fields. M4.2/M4.3 add server authz/concurrency/resolver tests.
 Windows launcher components are unchanged and are outside this integration.
 MW-FUT-01 remains Discovery; production readiness is a separate decision.
+
+## M4.2 server and migration contract
+
+Implemented, mock/offline tested; live-unvalidated. The server verifies a Supabase
+Auth user (not user metadata), then calls service-role-only
+`media_advice_action`. Every capability/start/reserve/finish checks backend
+permission, fresh owner/member membership and (edit only) list/group/IMDb relation.
+Add accepts an established IMDb selection without requiring an existing list row;
+the server resolves/validates the crosswalk itself. No client result/role/counter
+is accepted. Failed capability leaves normal editing usable.
+
+No trusted TMDb preview is retained by the existing form lookup. Therefore the
+full M4 ceiling is **8 source HTTP attempts**: IMDb Find 1 + Details 1 + UA
+providers 1 + MOTN title 1 + Brave search ≤2 + Kinobaza cards ≤2. M4.2 alone ≤4.
+Missing/ambiguous crosswalk skips MOTN, never guesses an ID. Details/providers
+failure does not suppress an independent MOTN attempt with established crosswalk;
+its own metadata/ID gate may still withhold claims. Identity Details are reused
+within the action for localization/resolver, without additional fan-out.
+Global source deadline 55s; individual existing transport bounds still apply.
+This is an operational bound, not a measured latency target. Hosting duration
+must support it before activation; timeout consumes reservations, no refetch.
+
+Migration `20261020205122_media_advice_access_ledger.sql` was created using
+Supabase CLI 2.121.0. It creates only a new private schema, default-off permission
+assignments, technical sessions and restricted RPCs. New tables have RLS and no
+anon/authenticated privileges; RPCs are service-role only. An advisory transaction
+lock serializes a user's new sessions and reservations; no lock spans source I/O.
+Per form session: one action; fixed stage names each reserved at most once,
+maximum eight. Per user: twenty sessions per rolling 24h (including expired
+30-minute sessions). Errors/lost responses consume reservations. No response,
+HTML, credential or chat persistence. No session replay/result recovery.
+
+Retention: delete technical rows after 24h via daily service-only
+`media_advice_cleanup()`; same-user opportunistic cleanup also runs on actions.
+Daily cleanup scheduling is an **activation prerequisite**, not an installed
+production job; without it idle rows can remain longer. Permission assignments
+persist until an authorized administrator revokes/removes them. No assignment
+is seeded. No global historical RLS repairs or production migration commands.
+
+Local validation uses PGlite 0.5.10 (test-only PostgreSQL/WASM), minimal authored
+prerequisites, and this new SQL only. It proves SQL execution/privileges/replay,
+not production migration history or native multi-connection/load behavior.
+Docker/native PostgreSQL are unavailable here; native isolated multi-connection
+validation and actual migration-baseline reconciliation remain pre-activation work.
+
+Server configuration (no values in Git): `SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `TMDB_READ_ACCESS_TOKEN`, `MOTN_API_KEY`;
+M4.3 additionally `BRAVE_SEARCH_API_KEY`. Secrets are not arguments/URLs/UI data.
+No configuration is changed by these PRs. Approved TMDb logo/complete current
+attribution and applicable commercial/source-use terms must be checked during
+activation preflight; text attribution and source links remain visible now.

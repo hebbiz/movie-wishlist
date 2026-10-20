@@ -8908,7 +8908,7 @@ sublistOptions.addEventListener("click", (event) => {
     document.getElementById("title").value = data.title || "";
     document.getElementById("year").value = data.year || "";
     invalidateMediaAdvice();
-    establishMediaAdvice();
+    if (normalizeImdbIdFromUrl(document.getElementById("imdb_url").value) === imdbId) establishMediaAdvice();
 
     alert("Дані фільму заповнено.");
   } catch (error) {
@@ -9476,8 +9476,8 @@ wireMykolaActionButtons();
 
 initApp();
 
-supabaseClient.auth.onAuthStateChange(() => {
-  invalidateMediaAdvice();
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT" || currentUser?.id !== session?.user?.id) invalidateMediaAdvice();
   if (appHasInitialized && !isLoggingOut) {
     initApp();
   }
