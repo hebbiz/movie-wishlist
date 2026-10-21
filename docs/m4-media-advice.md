@@ -227,8 +227,130 @@ Supabase `mttkectgdqqmejpenkrn`, not a fresh DB. Denys is the deployment/backend
 operator. Owner checkout/demo is excluded. Every mutating step below requires
 the next explicit authorization; do not run commands merely because documented.
 The five pilot films are **not selected**.
+**Execution hold:** the [recovery checkpoint](#recovery-checkpoint--2026-10-22-blocked)
+below is blocked. Do not begin consolidation/auto-deploy or migrations on the
+strength of a prepared runbook alone.
 
-Read-only findings:
+### Recovery checkpoint — 2026-10-22 (blocked)
+
+**NOT recovery ready. No backup artifact or restored database was created.**
+Inspection time **2026-10-21T21:24:28Z** (2026-10-22 local Kyiv).
+PR #195 remained at `c2d38f6740ec4fd6ae7d6615d1e963c3ce9d1740`,
+base #194 `bdca14f9a06a6e84297f75917c5b009dbf41fa66` before this
+ordinary documentation follow-up. This timestamp is an access check, **not**
+a backup/snapshot time; artifact path, size, SHA256 and restore comparisons
+are **not available**, not inferred.
+
+Evidence / exact blocker:
+
+- No `pg_dump`, `pg_restore`, `psql`, Supabase CLI or Docker on PATH.
+  The existing isolated native PG bundle supplies `postgres --version=17.6`,
+  but no dump/restore/psql executables were found in that bundle.
+- No PG connection/password/service environment configuration, default Windows
+  pgpass or service file was present (presence-only checks, no values read).
+  No login/export attempt, empty dump or invented checksum was produced.
+- Read-only SQL connector reports role `postgres`, server17.6. This is SQL
+  authorization, **not an exportable password/connection or secure streaming
+  file channel**. Do not extract it, expose source rows through tool/chat output,
+  use server-side files/OS commands, or substitute the Netlify service-role key.
+- Catalog-only inspection: public plus auth/storage/realtime and
+  cron/extensions/graphql/graphql_public/net/vault schemas exist. Extensions:
+  pg_cron1.6.4, pg_net0.20.4, pg_stat_statements1.11, pgcrypto1.3, plpgsql1.0,
+  supabase_vault0.3.1, uuid-ossp1.1. M4 schema/history table still absent.
+  No user rows, role-password hashes, decrypted Vault values or Storage files
+  were fetched. Core PG17.6 presence does not prove Supabase extension parity.
+
+**Required access, no password in chat:** in this project's Supabase Dashboard
+→ **Connect → Session pooler**, configure the displayed host, port **5432**,
+database **postgres**, user **postgres.mttkectgdqqmejpenkrn** and TLS. Use the
+existing DB password via a hidden local prompt or owner-restricted Windows
+`%APPDATA%\postgresql\pgpass.conf` / `PGPASSFILE`, not command arguments,
+source files, chat or public artifacts. Do not guess the regional pooler host.
+Direct connection from Connect is an alternative only when network access is
+established. Do not use transaction pooling (6543) for coordinated snapshots.
+Do not reset the production password, create roles or change grants under
+this authorization. Existing privileged read/export access is needed; a
+limited account must fail rather than silently omit RLS-protected tables.
+Portable PG17 client tools are also required before export can begin.
+
+#### Backup coverage contract — planned, none captured yet
+
+| Area | Intended protected artifact / explicit exclusion |
+| --- | --- |
+| Application schemas/data | Logical structure and data for public and every inventoried application schema: tables, sequences, constraints, indexes, functions, triggers, RLS policies and object grants. Inventory explicit exclusions and unreadable objects; no automatic public-only or CLI-default claim of completeness. |
+| Auth | Include auth schema/rows and cross-schema references only in encrypted backup; sensitive account/session/password-hash data never enters Git/report. OAuth/SMTP settings, JWT/API secrets and external Auth service configuration are separate, not proven recoverable by SQL restore. |
+| Roles/grants | Separate role definitions/memberships without role passwords, plus object ownership/ACL/default privileges. Managed-role permissions may restrict capture/restore: record that gap, do not invent equivalent grants or alter production. |
+| Extensions / managed schemas | Archive definitions and exact version/schema inventory; extension binaries, provider-managed services and Vault decryption keys are not supplied by a logical dump. No decrypted Vault export. Core PG cannot automatically reproduce all Supabase internals. |
+| Storage metadata | Capture storage schema/rows, buckets/object metadata and policies explicitly, or mark excluded. Metadata is not file bytes. |
+| Storage files | Separate authorized object export with private per-object checksums/count/size verification; **not part of pg_dump**. No files copied or empty-bucket claim established in this checkpoint. |
+| Project configuration | Netlify/Edge deployments, secrets, DNS, Auth-provider settings, service keys and other external configuration are excluded from this DB checkpoint. A database dump is **not a full Supabase-project backup**. |
+
+Proposed destination, **not created or security-verified yet**:
+`%LOCALAPPDATA%\MovieWishlist\Recovery\mttkectgdqqmejpenkrn\<UTC-checkpoint-id>`,
+outside Git, owner checkout, visualization/preview roots, OneDrive and published
+directories. Before writing data, require owner/SYSTEM-only ACL and encrypted
+staging storage (or a validated direct-to-encryption stream) with a separately
+secured, tested recovery key. Retained portable artifacts must also be encrypted.
+No plaintext
+staging in repo/TEMP, transcripts or public CI artifacts. Do not call filesystem
+placement or compression encryption. Protected local test data/logs need the
+same protection; do not broadly delete user files during cleanup.
+
+#### Resume procedure — only backup and isolated local restore authorized
+
+1. Establish the above private connection and PG17 tools. Recheck database/
+   project identity and effective read permissions; no DDL on production.
+   Record UTC start/end and a consistent snapshot boundary privately. Use a
+   held read-only repeatable-read exported snapshot for the database dump and
+   its validation counts so concurrent legitimate writes do not manufacture
+   mismatches; keep its control connection open until exports finish.
+2. Write the logical DB archive directly to the protected location, explicitly
+   inventorying managed/application schemas; export roles without passwords
+   separately. Inspect exit status/warnings and archive table-of-contents in
+   protected files, never stdout/chat. Do not ignore unreadable relations or
+   use schema-only/public-only output as a full DB success. Role/global metadata
+   is separate from the data snapshot; detect/reconcile concurrent role changes.
+3. Record SHA256, byte sizes, exact coverage/exclusions, dump-tool/server
+   versions and snapshot UTC time in a protected manifest. Export Storage bytes
+   separately if full Storage recovery is required; otherwise retain an explicit
+   file-exclusion gap. Verify encrypted artifacts can be decrypted locally.
+   Public documentation may record hashes/status, never bodies or credentials.
+4. Initialize a disposable **local** PG17.6-compatible target, separate directory/
+   cluster and local-only endpoint, no production connection string. Review the
+   archive as executable SQL. Block outbound network; keep cron/pg_net, webhooks,
+   subscriptions and Supabase services from executing external actions.
+   Prepare matching extension/service prerequisites locally before restoring.
+   Restore role prerequisites, then schema/pre-data, data/sequence state and
+   post-data constraints/indexes/ACLs, using stop-on-error and no production
+   `--clean`/restore commands. Never apply the M4 migrations as part of this test.
+5. Compare captured and restored schema object inventories/definitions, RLS/
+   grants/ownership, sequence state and **per-table snapshot row counts**,
+   including Auth and Storage metadata. Check validated FKs and explicit orphan
+   checks for group_members→users/groups, movie_group_lists→movies/groups and
+   any other inventoried key relationships. Record only aggregate pass/fail in
+   Git, keeping counts/identifiers/details protected. Historical violations,
+   if any, must remain distinguished from restore-created differences; do not
+   repair historical RLS/data under this task.
+6. If a Supabase extension/managed schema cannot restore on plain PG, report
+   that exact dependency and any separately tested application subset. Do not
+   replace it with a mock/stub or suppress errors and claim full recovery.
+   Native SQL restore cannot validate OAuth/email, object bytes, Realtime,
+   provider-hosted Vault or live Supabase services. Save verified hashes and
+   local comparison evidence before declaring **scope-qualified recovery ready**.
+   Stop/securely remove only the verified disposable target afterward; preserve
+   the encrypted backup. **No production restore is authorized**.
+
+Until export and restore actually pass, Step2's recovery prerequisite remains
+**blocked**, not satisfied by provider backups, old fixture tests or `--version`.
+No backup time/location/checksum or successful restore is attested here.
+Relevant official references (checked 2026-10-22):
+[Supabase backup/restore](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore),
+[DB backup limitations](https://supabase.com/docs/guides/platform/backups),
+[PostgreSQL17 pg_dump](https://www.postgresql.org/docs/17/app-pgdump.html),
+[roles/global objects](https://www.postgresql.org/docs/17/app-pg-dumpall.html),
+[private password file](https://www.postgresql.org/docs/17/libpq-pgpass.html).
+
+Original preparation findings (2026-10-21; retained, not new restore evidence):
 
 - PRs #190–#194 are open/mergeable, each head descends from its stated base;
   develop `acbdadf8efa2d180a12ed3fc85aa7784bb681782`;
