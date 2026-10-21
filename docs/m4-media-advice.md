@@ -3,9 +3,11 @@
 Status: M4.1–M4.3 implemented; narrow #192 blocker fixes validated locally;
 default off; no live activation authorized. Pilot preparation is conditional on
 independent review and the activation prerequisites below, not a pilot approval.
-Requested Gemini-primary resolver replacement: **blocked by an explicit Google
-Search Grounding use restriction**, not implemented or silently substituted with
-Brave. See [dated API/source-use decision](#gemini-primary-resolver-feasibility-2026-10-21).
+Pilot search-provider decision: **Brave Web Search approved**, candidate URLs
+only, quality live-unvalidated; no activation authorized by this record.
+Gemini Google Search Grounding remains excluded from URL → HTML extraction.
+See [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
+and the preserved [Gemini finding](#gemini-primary-resolver-feasibility-2026-10-21).
 Canonical implementation record, not a second research architecture. Evidence and
 source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
 
@@ -47,10 +49,12 @@ context/field snapshot must still match before the two local fields can change.
 ## Source use and activation
 
 Implementation/offline checks are not live validation or rights clearance.
-No source/rules GET is authorized here. Existing dated research reviews do not
+No live source-body/API calls are authorized here. Existing dated research reviews do not
 grant blanket production or arbitrary-card permission. Before live activation,
-a separately authorized preflight must check current TMDb, MOTN, Kinobaza and
-Brave terms, attribution, transient projection/transfer and permitted access.
+a separately authorized preflight must reconcile current TMDb, MOTN, Kinobaza
+scope and account-specific Brave plan/terms, attribution, transient transfer and
+permitted access. The public Brave terms review below is complete for this
+bounded candidate-search decision, not a blanket rights clearance.
 Brave search does not license destination content. No LLM or full-body archive.
 No current production feature assignment, secret or migration is changed.
 
@@ -218,16 +222,17 @@ against fresh membership/list identity on each RPC, not cascading rate resets.
 1. Review #190 → #191 → successor M4.3 dependency diffs; do not merge/deploy as
    part of this task. Confirm production migration history separately; apply
    only the new migration later under explicit authorization.
-2. Complete source-use/Brave pricing and attribution preflight, including the
-   existing TMDb logo asset used by the dialog. No terms/rules/source retrieval
-   was performed in this implementation task. Remaining rights are unresolved,
-   not blanket permission or an invented ban.
-3. Resolve the requested Gemini-primary provider blocker documented below before
-   activating a resolver pilot. Brave is not an authorized automatic fallback.
-   Its existing ordinary Web Search adapter/key is retained as an inactive
-   alternative for a separate explicit provider decision, not auto-selected by
-   Gemini failure. No account/subscription/credits or server keys are created or
-   changed here; TMDb and MOTN configuration stays separate.
+2. Complete remaining source-use/account/attribution checks, including the
+   existing TMDb logo and automatic arbitrary-card Kinobaza scope. The dated
+   Brave public-terms finding below is not permission for Kinobaza content or
+   proof of the owner's actual Order Form, quota or Netlify logging settings.
+3. Brave ordinary **Web Search** is the approved pilot provider, not Answers/LLM
+   and not a Gemini fallback. Verify the actual API plan/quota and provision
+   `BRAVE_SEARCH_API_KEY` server-side in Netlify Functions for the intended
+   develop branch-deploy context under separate activation authorization.
+   Owner account/key possession does not establish Netlify configuration. No
+   `GEMINI_API_KEY` is needed in this M4 path. No secrets, flags, account,
+   subscription or credits are changed by this documentation decision.
 4. Reconcile the actual migration baseline before applying the two new M4
    migrations. Review the entry-based hosting deadline and lost-outcome behavior.
    Authorize/configure daily cleanup separately; verify timezone, activation,
@@ -239,7 +244,8 @@ against fresh membership/list identity on each RPC, not cascading rate resets.
    Keep feature off until these prerequisites and pilot authorization.
 6. Five real Wishlist films, selected before requests; record titles/IDs privately
    for the pilot, not invented in this document. One form/discovery action each;
-   maximum 40 dispatched source attempts (5 × 8), normally fewer. Search-provider
+   maximum **10 Brave calls** inside **40 dispatched source attempts** (5 × 8),
+   normally fewer. No Gemini/other-provider fallback. Search-provider
    internal traffic and manual browser navigation are separate/unknown.
    No full responses or platform sweep. Measure added useful claims as well as
    successful URL resolution; missing offers do not mean resolver failure.
@@ -312,13 +318,19 @@ in the implementation PR description rather than guessed here.
 
 ## Gemini-primary resolver feasibility (2026-10-21)
 
+Historical Gemini proposal, retained for its explicit blocker. The later
+[Brave pilot decision](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
+supersedes provider selection, not this finding or the unchanged runtime gates.
+
 ### Decision and verified code baseline
 
 **Outcome: concrete API-use blocker; documentation-only successor, no adapter
 activation.** Current #192 HEAD `c5a09298903957b16360147b3363b8d4db90f195`,
 base #191 `e0817151f73da0f742ee72b77bc23bb709457d7b`; fetched develop remains
 `acbdadf8efa2d180a12ed3fc85aa7784bb681782`. All three #192 fixes are ancestors.
-The requested provider is Gemini; Brave is not a substitute if it cannot run.
+At that checkpoint the request was Gemini-only, so Brave was not silently
+substituted. Its later explicit pilot approval below is a new provider decision,
+not fallback behavior.
 
 Inspection: `netlify/lib/kinobaza-resolver.mjs` exposes a replaceable
 `searchFactory(apiKey, boundedFetch)` with `accepts` and `search`; its current
@@ -416,15 +428,16 @@ to LLM for extraction, recommendations, localization or enrichment.
 
 `GEMINI_API_KEY` would have to be separately provisioned in Netlify Functions
 scope; an existing owner/demo key proves neither presence nor entitlement there.
-Model/provider choice must be server-side and explicitly Gemini, never inferred
-from whichever key exists. No env var, credential copy, provider-selection switch
+That unimplemented proposal required server-side explicit Gemini selection, never
+inference from whichever key exists. No env var, credential copy, provider-selection switch
 or new dependency is installed by this blocked change. Existing
 `BRAVE_SEARCH_API_KEY` is not invoked as Gemini fallback; baseline wiring is
 unchanged as stated above. Do not provision keys to bypass this decision.
 
-The future five-real-Wishlist-film pilot is **not ready for the requested
-Gemini resolver** until this blocker is resolved. No owner evaluation or new
-risk-based study is requested. Required future authored tests remain: direct
+The five-real-Wishlist-film pilot must **not use the requested Gemini resolver**.
+Provider choice is now resolved by the Brave decision below; no Gemini exception
+is assumed. No owner evaluation or new risk-based study is requested. Tests for
+any future, separately permitted Gemini adapter would still need: direct
 grounded candidate; text-only/wrong-host/opaque URL; invalid/empty grounding;
 ambiguous candidates; timeout/quota/no fallback; second-call strategy, ≤8 cap,
 independent gates, R1/R2, exact URL/acknowledgement and form safeguards.
@@ -436,3 +449,110 @@ Documentation-only verification: 13 documents / 420 local links / 259 anchors,
 zero reference errors; whitespace clean. Runtime/security/ledger/research paths
 are byte-for-byte unchanged from #192 `c5a0929`; no runtime tests are newly
 claimed. Actual Gemini/Search/card requests in this task: **0**.
+
+## Brave pilot provider decision and data-flow audit (2026-10-21)
+
+**Approved provider: Brave ordinary Web Search**, solely to find candidate
+Kinobaza URLs. Current handler wiring already selects it; no runtime change or
+provider switch is necessary. Gemini Grounding is not used for URL → HTML
+extraction and is not a fallback. No other automatic fallback exists. Finding a
+URL is not acceptance of film identity, extraction success or availability.
+Search rank/snippets do not satisfy any identity gate or fill any offer field.
+Resolver quality remains **live-unvalidated**, not established by authored mocks.
+
+### Dated terms finding and boundaries
+
+[Brave Search API Terms of Use](https://api-dashboard.search.brave.com/documentation/resources/terms-of-service),
+last updated September 1, 2026, checked October 21: §3(a) permits application use;
+§3(b)(i) restricts Search Results persistence while excepting operational transient
+storage. No direct equivalent of Google's Link-collection restriction was found
+for this bounded candidate-only flow. This is not blanket permission or a legal
+guarantee. §9(d) preserves third-party content rights; Brave grants no Kinobaza
+content rights. Other §3(b) limits, including redistribution/AI-improvement,
+remain; no Search Results are sent to an LLM or used for AI training/evaluation.
+§4(c) end-user/privacy obligations and actual account/Order Form still require
+operator confirmation. §4(d) attribution is optional but has requirements if
+elected; this change adds no Brave branding or endorsement claim.
+
+### Verified repository data path (no live traffic)
+
+Reviewed #193 `e412c0374bc99279b8eaecbfacaf78bef44081d3` on #192
+`c5a09298903957b16360147b3363b8d4db90f195`; both remain open, develop unchanged.
+This is a code/mock audit, not an inspection of deployed databases, browser
+extensions, log drains/APM or provider-side retention. No persistence or leak of
+the specified Search Results was found in the application path; no fix required.
+
+| Stage / inspected component | What exists transiently | What leaves/persists |
+| --- | --- | --- |
+| Brave response: `netlify/lib/kinobaza-resolver.mjs`, `braveWebSearch` | Bounded response bytes/JSON only in the current invocation (≤512KiB). | `web.results[].url` only through `admittedCandidates`; title, description/snippet, result envelope and numeric rank are not projected/logged/saved. Exact URL dedup/order preserves a bounded candidate list, not identity evidence. |
+| Resolver: same module, `createKinobazaResolver` | Admitted URLs, ≤2 fetched card results, independently checked identity/extraction. | Only status/count/reason summary; matched card projections/choices. Rejected/unexamined raw search entries are not returned. No query/search response cache, disk, log or database call. |
+| Projection: `netlify/lib/media-advice-service.mjs`, research `discovery.mjs` | Card `sourceURL` in provenance/film-localization or matched `cardChoices`, separate provider hrefs parsed from HTML. | Projected response only; `stages` removed. No raw Search Results or HTML archive. A source-card URL can reach the client as temporary provenance; it is not falsely claimed to be absent from the response. |
+| HTTP boundary: `netlify/functions/media-advice.mjs` | Result/serialized response in invocation memory; secret-echo suppression. | `Cache-Control: no-store`; generic errors, no body/URL/error-object logging. RPC arguments are fixed context, operation, session ID and stage only, never search result/card URL/snippet. |
+| UI: `assets/media-advice.mjs`; `app.js` media-advice bridge | Controller closure/session and text-only DOM; same-form reopening reuses memory. A chosen source-card URL may be shown. Invalidation clears session/DOM and rejects stale replies. | No localStorage/sessionStorage/IndexedDB, telemetry, chat-history snapshot or automatic navigation of search/card URLs. Requests use `cache: no-store`. `service-worker.js` has no fetch/cache handler. Closing retains appropriate current-session memory, not persistent storage. |
+| Short report: `assets/media-advice-report.mjs` | Allowlisted counters, statuses/reason codes and localization scopes, copied only on explicit action; selectable-text fallback. | No search queries, result text/rank/snippets, raw source-card/provider URLs or credentials. Clipboard is an explicit user export of that safe summary, not a source archive. |
+| Ledger/cleanup: both new M4 migration files | Private context bindings and attempt stages; cleanup health timestamp/count. | Technical session accounting only; no result/body/snippet/query/card URL columns or writes. Retention/permissions remain as above; no migrations executed in this task. |
+
+The repository M4 path has no custom analytics/telemetry emitter, response logger
+or Search Results storage. Existing unrelated app localStorage keys (group,
+invite, conversation-finished boolean) and main-chat HTML state do not receive
+this controller's results. Hosting instrumentation settings were not queried:
+before activation, verify that function log drains/APM, replay or browser
+telemetry do not capture request/response bodies or source URLs. This is a
+remaining operational check, not a claim that remote logging was inspected.
+
+### Separate origin and lifecycle of provider links
+
+For Kinobaza source rows, provider hrefs in `row.link`/`rawHref` come from a
+**separate Kinobaza HTML GET**, not from Brave's result URLs. MOTN links keep
+their own API provenance. HTML links retain provenance and link classification;
+tracking/affiliate transfer needs acknowledgement. `transferFor`/`makePreview`
+pass only the chosen medium and eligible provider href, never card `sourceURL`,
+search response, provenance object or snippet. Same-film/provider observations
+do not merge, and film badges do not become provider tracks.
+
+The controller changes only local form fields after explicit review/confirm.
+Ordinary `getMovieFormData` → `getMovieGroupListData` → Save can later persist
+that chosen **provider link** as `purchase_url`; no automatic save occurs.
+Existing app form/movie debug logging can also contain saved/selected provider
+URLs. Thus this audit does **not** claim that all URLs everywhere in MW are
+nonpersistent/unlogged; the confirmed boundary concerns Brave Search Results
+and search-discovered source-card URLs. Existing form logs do not receive the
+Search Results, source-card provenance or M4 result object. No unrelated logging
+refactor is introduced under a documentation-only provider decision.
+
+### Pilot cap and remaining activation conditions
+
+Exactly five actual Wishlist films, chosen before execution, not a new risk-set
+substitution. One explicit action per form/case, no retries. Per film: TMDb/MOTN
+≤4 + Brave ≤2 + card GET ≤2 = **8 application source HTTP attempts**. Across the
+pilot: Brave **≤10**, card GETs ≤10, all sources **≤40**; these are ceilings, not
+targets. Brave alternate query only after a successful first search with no
+admitted candidate, never after timeout/auth/quota/transport error. Internal
+provider traffic remains unknown and is not counted as known network traffic.
+The entry deadline, atomic reservations, unknown accounting on lost responses,
+independent gates, R1/R2 and form/draft controls are unchanged.
+
+Provider selection is resolved; remaining preparation is the existing M4 review,
+separate merge/develop branch-deploy authorization and verification of actual
+Netlify context/functions/key mapping, source-use/account checks, reconciled
+migration baseline, authorized cleanup/monitoring and backend-only pilot access.
+No secrets/flags/migrations/deployment are changed here. The five-film pilot
+and owner evaluation still require their separate activation step, not a new
+research cycle or another provider-selection approval.
+
+### Audit checks
+
+No runtime defect found, so only canonical documentation/README change. Existing
+resolver/report/HTTP authored regressions: **14/14 passed**. A separate in-memory
+authored canary exercise traversed handler → resolver → projection → report/RPC:
+2 Brave + 2 card + 4 baseline mock attempts, 8 reservations; no search
+title/snippet/envelope/key in client output, no URL/result in RPC or report,
+0 application log calls. Matched source-card URLs appeared only as transient
+provenance/choices; a separately extracted HTML provider link kept exact href
+and acknowledgement. The exercise disabled real fetch, saved no fixture/body
+archive, and is not live validation. Static review additionally covered storage,
+service worker, normal Save and existing app logging. Full browser/native/Windows
+suites are not rerun for unchanged runtime; prior evidence is not relabelled.
+Current documentation verification: 13 Markdown documents / 422 local links /
+261 anchors, zero errors; scope and whitespace clean. The prior Gemini-only
+checkpoint's 420/259 counts above are historical, not this audit's scope/count.

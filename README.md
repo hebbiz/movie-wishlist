@@ -114,6 +114,6 @@ implemented or documented v1.3.1 scope.
 M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
 locally verified, including native PostgreSQL 17.6 concurrency. Cleanup is
 prepared inactive; pilot activation and source-use review remain separate.
-The requested Gemini Search-primary replacement has a documented
-[specific source-use blocker](docs/m4-media-advice.md#gemini-primary-resolver-feasibility-2026-10-21);
-it is not installed or silently replaced with a Brave fallback.
+Brave Web Search is the [approved M4 pilot provider](docs/m4-media-advice.md#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
+for candidate URLs only; quality remains live-unvalidated. Gemini Grounding
+stays excluded from URL → HTML extraction; no provider fallback or activation.
