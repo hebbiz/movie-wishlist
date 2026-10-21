@@ -61,11 +61,10 @@ No current production feature assignment, secret or migration is changed.
 
 ## Pilot (future, not executed)
 
-Choose five actual owner Wishlist films before running; record their identities,
-not a replacement exotic risk set. One trigger per film, no retries. Record
-resolver candidate acceptance, identity outcome, extracted claims, useful links,
-calls/time, intervention, transfer and preservation of manual edits. Missing
-offers are not resolver failure. One brief owner session; no platform sweep.
+No concrete pilot films selected. The single
+[execution runbook](#activation--operation-plan-not-executed) defines selection,
+activation gates, owner-only access, source-free smoke and the later five-film
+pilot; do not substitute research fixtures.
 
 ## Validation and remaining work
 
@@ -220,42 +219,356 @@ against fresh membership/list identity on each RPC, not cascading rate resets.
 
 ## Activation / operation plan (not executed)
 
-1. Review #190 → #191 → successor M4.3 dependency diffs; do not merge/deploy as
-   part of this task. Confirm production migration history separately; apply
-   only the new migration later under explicit authorization.
-2. Complete remaining source-use/account/attribution checks, including the
-   existing TMDb logo and automatic arbitrary-card Kinobaza scope. The dated
-   search-provider public-terms finding below is not permission for Kinobaza content or
-   proof of the owner's actual Order Form, quota or Netlify logging settings.
-3. Tavily **basic Search** replaces Brave; no Brave/Gemini fallback. Reconcile
-   the [Tavily account/end-user conditions](#tavily-search-replacement-2026-10-21)
-   before activation. Owner reports `TAVILY_API_KEY`, `TMDB_READ_ACCESS_TOKEN`
-   and `MOTN_API_KEY` are Secret / Functions / Production + Branch deploys;
-   Supabase URL/service-role configuration is also present. This is
-   owner-reported configuration, not agent inspection of values or runtime
-   attestation. PR Deploy previews lack the new keys: mock-only checks there,
-   not a live-readiness failure or reason to copy secrets. No Brave/Gemini key
-   is needed by this path. Check intended develop branch/function mapping
-   after separately authorized deployment; do not print credentials or make
-   discovery requests merely to test configuration.
-4. Reconcile the actual migration baseline before applying the two new M4
-   migrations. Review the entry-based hosting deadline and lost-outcome behavior.
-   Authorize/configure daily cleanup separately; verify timezone, activation,
-   heartbeat and independent monitor ownership. Native PostgreSQL 17.6 concurrency
-   has passed locally; deployment/provider runtime behavior is not established.
-5. Backend administrator may assign a small per-user, expiring permission using
-   the private permissions table via a trusted server/admin path. No default
-   grant, client toggle, user metadata claim or new legal acknowledgement switch.
-   Keep feature off until these prerequisites and pilot authorization.
-6. Five real Wishlist films, selected before requests; record titles/IDs privately
-   for the pilot, not invented in this document. One form/discovery action each;
-   maximum **10 Tavily calls** inside **40 dispatched source attempts** (5 × 8),
-   normally fewer. No Gemini/other-provider fallback. Search-provider
-   internal traffic and manual browser navigation are separate/unknown.
-   No full responses or platform sweep. Measure added useful claims as well as
-   successful URL resolution; missing offers do not mean resolver failure.
-   Stop for any false identity acceptance, unauthorized access, extra requests,
-   unexpected writes or lost/manual field propagation. Review brief summaries.
+### Execution runbook — preparation checkpoint 2026-10-21
+
+**Prepared, not authorized to execute.** One operational runbook; design remains
+above. Target: Netlify **develop branch deploy** with existing production
+Supabase `mttkectgdqqmejpenkrn`, not a fresh DB. Denys is the deployment/backend
+operator. Owner checkout/demo is excluded. Every mutating step below requires
+the next explicit authorization; do not run commands merely because documented.
+The five pilot films are **not selected**.
+
+Read-only findings:
+
+- PRs #190–#194 are open/mergeable, each head descends from its stated base;
+  develop `acbdadf8efa2d180a12ed3fc85aa7784bb681782`;
+  main `e92392856038e40e6d98c6c8744eed04c4e8dff9`.
+- At exact heads, #190 has Netlify Deploy Preview success, three neutral
+  Netlify checks and skipped Supabase Preview. #191–#194 have skipped Supabase
+  Preview, no commit statuses; no approvals reported on any PR. These are not
+  passing required tests. Rulesets list is empty; branch-protection read is
+  **403**, so effective required checks/approvals/merge policy are **unknown**.
+- Supabase: PostgreSQL **17.6**, UTC; no M4 schema or function-name collisions;
+  migration list empty and history **table absent**, not proof of a blank DB.
+  Required UUID/text columns match. `auth.users`, UUID generation and required
+  roles exist. `pg_cron 1.6.4` is installed, `cron.timezone=GMT`; named M4 job
+  is absent. No DDL/DML or function invocation performed in this review.
+- Netlify site `e4d5295a-0794-40dc-abfa-6e346b04c142`,
+  `denyslisovyi-movies-list`: published production deploy
+  `6ad3ad799a970e3fc942b516` is ready, branch main at the main SHA above.
+  This does not prove configured develop builds. Project tool does not expose
+  build/branch settings, env scopes, APM or log drains. Values were not requested.
+
+### Step 0 — pre-merge operator gates
+
+In the [Netlify project dashboard](https://app.netlify.com/projects/denyslisovyi-movies-list):
+
+| Dashboard location | Required evidence before execution |
+| --- | --- |
+| Project configuration → Developer settings → Continuous deployment → Branches and deploy contexts | Production branch **main**; branch deploy explicitly enables **develop**; record auto-publish/build behavior. A merge into develop may immediately deploy. If not confirmed, stop before final merge; do not change settings silently. |
+| Same area → Build settings; Functions settings | Repository/base/publish directory, Functions directory `netlify/functions`, dependency install and Node **22+**, function bundler, supported synchronous limit. Repo has no `netlify.toml`/build command. Preserve existing settings until reviewed. |
+| Project configuration → Environment variables | Owner reports Tavily/TMDb/MOTN keys Secret, Functions, Production + Branch deploys; Supabase URL/service-role present. Confirm **metadata/context only** (including develop overrides/shared-var precedence); no values/export. New source keys intentionally absent from PR previews. |
+| Analytics & metrics → Log Drains; Extensions / installed APM integrations; Cloud compute → Functions → media-advice (branch filter develop) | Inspect destinations, body/header capture and retention/redaction; never capture bearer/API keys, source bodies/results, query snippets or card/tracking URLs. Tool cannot attest these. Built-in observability extension in published deploy is not proof of third-party APM capture or its absence. |
+
+Check GitHub Settings → Rules → Rulesets / Branches and each PR merge box for
+effective required checks, approvals and merge-commit support. Missing API
+permission is not permission to bypass. If requirements cannot be established,
+pause execution for owner confirmation, not policy changes.
+
+Function/import review: `media-advice.mjs` imports three local libraries, then
+existing research transports/projections/identity and shared URL policy; package
+dependencies include Supabase JS and parse5. Offline import with networking
+disabled and stubbed empty configuration succeeded. No runtime file-read asset
+is needed by this handler. This is **not a Netlify bundle/deploy test**; local
+Netlify bundler is unavailable. Branch build must include the complete import
+closure/dependencies and list `media-advice` alongside existing functions.
+Inspect publish output for secret/server-only artifacts; no env values may be
+inlined. Keep 45s sources / 53s finish margins; no timeout/cap change.
+
+### Step 1 — consolidate with merge commits
+
+Pinned starting refs (full SHAs, not mutable labels):
+
+| PR → base branch | Initial head | Initial base |
+| --- | --- | --- |
+| #194 → codex/m4-gemini-resolver-feasibility | bdca14f9a06a6e84297f75917c5b009dbf41fa66 | 0db059a710bff801e5c455dcc396f06914c156cc |
+| #193 → codex/m4-3-kinobaza-discovery | 0db059a710bff801e5c455dcc396f06914c156cc | c5a09298903957b16360147b3363b8d4db90f195 |
+| #192 → codex/m4-2-media-advice-server | c5a09298903957b16360147b3363b8d4db90f195 | e0817151f73da0f742ee72b77bc23bb709457d7b |
+| #191 → codex/m4-1-media-advice-form | e0817151f73da0f742ee72b77bc23bb709457d7b | bd43cc83319888ff82c7763e48cd9adb36cb453a |
+| #190 → develop | bd43cc83319888ff82c7763e48cd9adb36cb453a | acbdadf8efa2d180a12ed3fc85aa7784bb681782 |
+
+Starting #194 tree: `6ddf25db140829951da748404a9244d6717308e5`.
+This documentation successor is not silently part of that tree: if incorporated
+into #194 first under later approval, repin its head/tree and review that docs
+diff before executing this sequence.
+
+| Merge | Expected source head | Expected target head immediately before merge | Record |
+| --- | --- | --- | --- |
+| #194 → #193 branch | H194 above | H193 above | M1 |
+| #193 → #192 branch | M1 | H192 above | M2 |
+| #192 → #191 branch | M2 | H191 above | M3 |
+| #191 → #190 branch | M3 | H190 above | M4 |
+| #190 → develop | M4 | pinned develop above, re-read immediately | M5 |
+
+Before **each** operation: fetch refs; re-read source **and base** SHA, diff,
+mergeability, reviews and checks at that exact head. Use GitHub merge method
+`merge` with expected source `sha`; no admin/bypass/force/retarget/squash.
+Expected head does not lock base: serialize operators, check base immediately
+before merge and verify returned commit's first parent equals that base and
+second parent equals expected source. After every parent advance, fetch and
+record its new SHA, both parents, tree, ancestry and updated PR diff/checks.
+Tree must equal the starting reviewed tip tree (or explicitly repinned docs
+successor); do not copy old checks to the new SHA.
+
+Before M5, verify the combined develop diff is M4 research-approved integration
+only; both M4 migrations, Tavily selection and #192 fixes are present. Confirm
+ancestry of all pinned heads plus launcher fix
+`e596341f2fdc1203b52b9abae840f7090cef30c0` and R1/R2
+`16461b22f001499720193d6b72df745dc8890a20`; no deletion/reversion of their tests/controls.
+Run full M4 offline/HTTP/Edge suites on assembled M4; native PG17.6 evidence
+can be reused only if SQL/ledger unchanged. After M5 record actual develop SHA,
+tree/parents/ancestry, rerun relevant final checks and read fresh statuses.
+Confirm main SHA and published production deploy unchanged.
+
+**Stop** for any unexpected head/base/tree/diff, conflict, rejected merge,
+missing required approval or failing required check. No automatic restacking.
+M5 also authorizes an auto branch deploy **only if explicitly included in the
+next approval**; do not invoke a manual deploy or build hook here.
+
+### Step 2 — apply only the two M4 migrations (future privileged action)
+
+| File under supabase/migrations | Dependency / SHA256 of reviewed bytes |
+| --- | --- |
+| `20261020205122_media_advice_access_ledger.sql` | Existing auth.users(id), public group_members/movies/movie_group_lists, standard roles and UUID function; creates private schema/two tables/index and two service-only public RPCs. `08b6ecfa102bb3d34d994a29d76412dfb6ad0546c65b4579c2408bd7f4fa825c` |
+| `20261021072002_media_advice_review_fixes.sql` | Requires first file; replaces those RPCs, adds private cleanup_health. `39ab043e86072efe25db55e042945e11fa8cfe7f39d1977e5d55eab65b2cd1b7` |
+
+No dependency on executing 001–016, no existing-row updates or historical
+RLS changes. Recheck object collisions before applying, including **any**
+same-name function signature; these are not idempotent replay scripts.
+Verify hashes against Git blobs/assembled tip (line-ending conversion changes
+byte hashes: establish the reviewed execution-file hash before running).
+Confirm backup/PITR recovery availability privately; no restore is invoked.
+
+Use a **new disposable Supabase CLI work directory containing only these two
+unchanged migration files**, outside owner checkout. Current machine has no
+Supabase CLI/psql in PATH: executing operator must pin/install an approved CLI
+and first inspect `--version` and command `--help`. Planned commands below
+are from the [official CLI reference](https://supabase.com/docs/reference/cli/supabase-migration-up)
+(checked 2026-10-21), not executed here:
+
+```powershell
+supabase migration up --help
+supabase migration list --help
+supabase migration repair --help
+supabase --workdir "$m4Stage" init
+# Copy ONLY the two reviewed files into $m4Stage/supabase/migrations.
+supabase --workdir "$m4Stage" link --project-ref mttkectgdqqmejpenkrn
+supabase --workdir "$m4Stage" migration list --linked
+# STOP unless exactly these two pending versions and no unexpected remote history.
+supabase --workdir "$m4Stage" migration up --linked
+supabase --workdir "$m4Stage" migration list --linked
+```
+
+`$m4Stage` must be a new unique temporary directory, not the repo or an existing
+linked workspace. Authenticate interactively with hidden password input; no
+password-bearing URI/arguments, debug logs or credentials in the runbook/Git.
+Confirm project identity independently before writes. CLI creates its own
+history metadata and applies only pending files in that isolated directory.
+Expected history: **only 20261020205122 and 20261021072002**, reflecting actual
+execution. Do not use general `db push`, `--include-all`, historical replay,
+blanket repair or automatic GitHub/Supabase production migration integration.
+
+Both files contain transaction boundaries. On any error/lost reply **stop**:
+an earlier file may have committed even if history recording failed. Inspect
+actual catalogs/function definitions and history; never blindly rerun.
+Only after proving which exact file executed may an operator use targeted
+`migration repair <that-version> --status applied --linked` in the same
+isolated directory. Do not mark 001–016 applied. Partial execution/history
+reconciliation needs review, not an automatic retry.
+
+Post-checks, with access still off:
+
+- Exactly permissions/sessions/cleanup_health in private schema; RLS enabled,
+  no anon/authenticated schema/table access. No permissions or sessions inserted.
+- Two public RPCs have expected signatures/definitions, SECURITY DEFINER and
+  empty search_path; service_role EXECUTE true, anon/authenticated false,
+  including PUBLIC/inherited grants. Verify pg_proc/proacl and
+  `has_function_privilege`; table grants match migration, cleanup_health is
+  service-role SELECT only. Do not execute start/reserve as a smoke test.
+- Record pre/post definitions/policies of the three existing public tables
+  and private aggregate row counts/fingerprints, not row bodies; compare.
+  Concurrent legitimate app writes require reconciliation, not a claim that
+  counts prove no changes. Static SQL writes only new M4 objects. No lock or
+  owner-demo interruption to manufacture identical snapshots.
+- Check actual two history entries and no new automated cleanup job; capability
+  without assignment must fail closed. Missing RPC/schema-cache visibility is
+  an operations issue to investigate, not permission to replay migrations.
+
+Copyable post-checks (privileged read-only connection, **after** migrations):
+
+```sql
+select version from supabase_migrations.schema_migrations order by version;
+select c.relname,c.relrowsecurity,
+  has_table_privilege('anon',c.oid,'SELECT,INSERT,UPDATE,DELETE') as anon_access,
+  has_table_privilege('authenticated',c.oid,'SELECT,INSERT,UPDATE,DELETE') as user_access
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='media_advice_private' and c.relkind='r';
+select p.proname,pg_get_function_identity_arguments(p.oid),p.prosecdef,p.proconfig,
+  has_function_privilege('service_role',p.oid,'EXECUTE') as server_execute,
+  has_function_privilege('anon',p.oid,'EXECUTE') as anon_execute,
+  has_function_privilege('authenticated',p.oid,'EXECUTE') as user_execute
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.proname in ('media_advice_action','media_advice_cleanup');
+select (select count(*) from media_advice_private.permissions) as assignments,
+       (select count(*) from media_advice_private.sessions) as sessions;
+```
+
+### Step 3 — daily cleanup and independent control
+
+Operator **Denys** owns activation and daily operations. After both migrations,
+review/run [prepared schedule SQL](../supabase/operations/media-advice-cleanup.schedule.sql)
+only with separate authorization: it creates the named job **inactive** and
+refuses an existing name/non-UTC-equivalent timezone. Then inspect its single
+jobid, command, database/user, `15 2 * * *` and GMT/UTC; activate that exact job
+with `cron.alter_job(<verified-jobid>, active := true)`. No second job or
+extension installation is needed by the observed baseline.
+
+Retention origin is session **created_at**, eligibility after age24h **and**
+expires_at elapsed (normal TTL30min), including unfinished/error sessions.
+Still-active rows are retained and become an overdue finding if anomalously
+old. Daily healthy scheduling expects deletion at age24–48h, **not a guaranteed
+48h bound on scheduler/DB failure**. No movies/Wishlist or permission deletion.
+
+Concrete pilot monitoring: Denys checks **daily at 09:00 UTC**, independently of
+pg_cron, in Supabase SQL Editor using
+[existing health SQL](../supabase/operations/media-advice-cleanup.sql), then
+these read-only checks:
+
+```sql
+select jobid,schedule,active from cron.job
+where jobname='mykola-media-advice-cleanup';
+select status,start_time,end_time from cron.job_run_details
+where jobid in (select jobid from cron.job
+               where jobname='mykola-media-advice-cleanup')
+order by start_time desc limit 3;
+```
+
+Require exactly one correctly configured job and today's scheduled
+run succeeded and heartbeat advanced after02:15UTC; the health query's missing/
+>26h success or age≥48h backlog is actionable too. Record only UTC check time,
+success/overdue count privately. Initial missing heartbeat is expected before
+first run, not permission to skip monitoring. Verify first scheduled success
+before live access; alternatively a separately authorized one-time cleanup
+can test the function but **does not validate scheduler firing**.
+
+This is a **manual control, not automatic alerting**. Denys must explicitly
+accept the duty before pilot, continuing after flag expiry until the final
+session has been cleaned; without coverage postpone access. For a missed/
+failed run, unexpected active job/TTL or overdue records: revoke pilot flag,
+inspect scheduler/DB, perform only authorized cleanup recovery, recheck; no
+source replay or accounting reset. Unattended alerting needs a separate
+approved independent monitor/notification design; none is added or activated
+implicitly. Scheduler cannot report its own complete outage.
+
+### Step 4 — branch deploy verification and source-free smoke
+
+Follow the automatic develop deploy from M5; record deploy ID, context
+`branch-deploy`, branch develop, commit exactly M5 and its HTTPS URL
+(expected convention `https://develop--denyslisovyi-movies-list.netlify.app`;
+use dashboard-reported URL, not an unverified address as evidence).
+Build/functions list must include media-advice with imports/dependencies and
+no secret exposure; check diagnostics without bodies/keys. Published main
+deploy must still be the recorded production one. Failure stops activation,
+not a reason for manual prod publish or policy/secret-scanning bypass.
+
+Future smoke, **no discovery/source calls**:
+
+1. GET media-advice →405; cross-origin POST →403; valid-context POST without
+   bearer →401, malformed context →400; all JSON/no-store, no secrets.
+2. With actual browser login, only `action: capability` for an established
+   film and eligible test group. Before assignment expect denial/hidden entry;
+   ordinary form editing still works. Do not click Find; no start/reserve.
+3. After separately authorized owner assignment, capability true only for
+   that UUID/eligible group; unassigned user/visitor/foreign group denied.
+   Open/close isolated advice without Find: no source requests or form writes.
+   Do not create/delete/modify production group membership for smoke.
+
+Capability uses Auth/RPC, not Tavily/TMDb/MOTN/Kinobaza. It does **not** validate
+source keys or live resolver quality. Do not use existing movie-search as a
+configuration probe. Ordinary read requests and later pilot Save are distinct.
+
+### Step 5 — owner-only, expiring backend assignment
+
+Owner UUID is **not established in this preparation**. Resolve it privately from
+the owner's authenticated Supabase `getUser()` id, corroborate in Authentication
+→ Users and eligible test-group membership. Never infer from display name or
+choose the first auth user. Do not print access tokens or publish email/UUID.
+Also establish the test group/list/film binding; current flag is per-user, not
+a new per-group restriction.
+
+Once all gates pass and activation is authorized: require no other enabled
+M4 permission rows; replace `<VERIFIED_OWNER_UUID>` with that exact UUID and assign
+**2 hours** through privileged SQL/admin, not editable user_metadata:
+
+```sql
+insert into media_advice_private.permissions(user_id,feature_key,enabled,expires_at)
+values ('<VERIFIED_OWNER_UUID>'::uuid,'mykola_media_advice',true,
+        clock_timestamp() + interval '2 hours')
+on conflict(user_id,feature_key) do update
+set enabled=true, expires_at=excluded.expires_at;
+```
+
+Emergency stop / end of pilot — a separate action, same verified UUID:
+
+```sql
+update media_advice_private.permissions
+set enabled=false, expires_at=clock_timestamp()
+where user_id='<VERIFIED_OWNER_UUID>'::uuid and feature_key='mykola_media_advice';
+```
+
+These are **future actions**. Confirm one exact active user/expiry after
+assignment; all others default-off. Revocation
+denies subsequent capability/reserve/finish/apply authorization; an already
+dispatched source request may still have spent its attempt. It does not undo
+earlier user Save or erase already displayed results. No retries/refund.
+
+### Step 6 — pilot, only under subsequent authorization
+
+Select **five concrete real Wishlist films first**; currently none selected.
+Record their real IDs and test-group card bindings privately, not research
+fixtures. One explicit discovery per film, ≤2 Tavily + ≤2 card + ≤4 baseline
+= ≤8 attempts/case, **≤10 Tavily within ≤40 total**. No retries/fallback/
+redirects/destination probes or platform sweep; internal search traffic unknown.
+One select → preview → transfer → ordinary **Save in the test group**, checking
+manual edits and exact acknowledged URL. This one Save is a later authorized
+Wishlist write, not part of preparation/smoke. No claim/track propagation.
+
+Record separately: search URL candidate acceptance; identity matched/refused;
+extraction useful/partial/refused; source-labelled links/localization and
+practical help; application calls/time and intervention; transfer/Save outcome.
+No offers is not resolver failure or evidence of unavailability. Stop for
+false identity, cap/access bypass, unexpected writes, lost edits or unsafe URL.
+No raw responses/HTML/snippets/secrets archive.
+
+### Unresolved prerequisites and evidence boundary
+
+Execution remains **conditional**, not deployment/pilot-ready approval:
+
+1. Effective branch policy/required approvals (403), fresh assembled-tip checks;
+   explicit merge + possible automatic develop deploy authorization.
+2. Dashboard develop/base/publish/functions/bundler/Node configuration and
+   APM/log-drain/body-capture verification; env context metadata confirmation.
+3. Approved CLI/privileged connection/recovery readiness for only two new
+   migrations/history; live privileges/default-off/post-data checks not yet run.
+4. Explicit cleanup activation/first-run evidence and Denys's independent
+   daily monitoring commitment (no automatic alerting exists).
+5. Exact owner UUID/test group and later bounded backend assignment.
+6. Five real pilot films, still unselected, and separate pilot/Save authorization.
+7. Account/source-use conditions: Tavily §§2/3.5 end-user scope versus an
+   owner-only pilot, actual plan/quota and AUP obligations; Kinobaza automatic
+   arbitrary-card content rights not supplied by Search; existing TMDb/MOTN
+   attribution/commercial/retention requirements. See dated findings below;
+   no blanket clearance, no new runtime legal switch.
+
+Read-only catalog/project/PR review and offline import check passed. No runtime,
+SQL, flag, secret or scheduler change here; prior #194 45-pass/1-skip browser/
+offline and #192 native17.6 evidence stay pinned, not a new run on these docs.
+Markdown-only: verify links/anchors, consistency, scope and whitespace; no
+reason to repeat runtime/Windows suites. Reference docs checked 2026-10-21:
+[Cron](https://supabase.com/docs/guides/cron),
+[migration history repair](https://supabase.com/docs/reference/cli/supabase-migration-repair),
+[function logs](https://docs.netlify.com/build/functions/logs/),
+[log drains](https://docs.netlify.com/manage/monitoring/log-drains/).
 
 ## Verification record
 
@@ -648,38 +961,14 @@ authorized activation preflight. No new legal toggle/acknowledgement is added.
 
 ### Five-Wishlist-film live plan (prepared, not authorized/executed)
 
-Use the five owner-agreed **actual Wishlist films**, not a new exotic sample
-or the old eight-case research set. Their names/IDs are not in this task's
-provided manifest; do not invent them or fetch the production DB to fill them.
-Freeze those five existing identities privately as P1–P5 before the session;
-this is pilot bookkeeping, not permission to add an evaluation round.
-
-| Case | Private existing Wishlist identity | One action and required brief record |
-| --- | --- | --- |
-| P1 | Owner's agreed film 1 | Open its established form identity; Find once; candidate/identity/extraction outcomes, useful source-scoped claims, calls/time/intervention. One selection → preview → transfer; check exact URL, acknowledgement if needed and retained manual edits. Ordinary Save only if separately authorized. |
-| P2 | Owner's agreed film 2 | Same single discovery; brief outcomes/benefit/unknowns; no repeated transfer drill. |
-| P3 | Owner's agreed film 3 | Same single discovery; keep no-result/refusal in the denominator. |
-| P4 | Owner's agreed film 4 | Same single discovery; record bounded ambiguity/unexamined candidates honestly. |
-| P5 | Owner's agreed film 5 | Same single discovery; final short practical-use summary. |
-
-Per case: TMDb/MOTN ≤4 + Tavily ≤2 + card GET ≤2 = **8** application external
-source attempts. Five cases: **Tavily ≤10**, cards ≤10, baseline ≤20, **total
-≤40**, usually fewer. Account billing/credits are distinct from application
-attempts; actual plan/quota must be confirmed, not assumed free. Provider's
-internal search/network operations are unknown; manual browser traffic is
-separate. Timeout/error spends its reserved attempt; lost responses are not
-permission to rerun. One action per case, no manual retry or platform sweep.
-
-Activation remains separate: review/merge and develop branch deploy approval,
-source-use/account prerequisites above, migration-baseline reconciliation,
-backend-only expiring access and authorized cleanup/monitoring. None executed
-here. During the future session stop on false identity acceptance, access/cap
-bypass, unexpected writes, lost manual edits or unsafe transfer. Auth/quota
-failure stops affected search work without fallback; empty search/refused
-identity/extraction absence is recorded, not repaired by repeating requests.
-Record automatic correct-card finding, matched identity, useful extracted
-claims, application calls/time, user intervention and local-transfer correctness.
-No full HTML/JSON, search snippets or tracking-token archive.
+**Correction:** no five-film manifest has been selected or agreed. Earlier
+P1–P5 labels were placeholders, not agreed films. The
+[execution runbook](#activation--operation-plan-not-executed) is the only
+current operation/pilot sequence: select real Wishlist films before activation,
+≤10 Tavily calls within ≤40 application source attempts, one ordinary Save
+check in the test group. No pilot, preflight discovery or automatic retries
+are authorized here; billing/actual quota and provider internal traffic are
+not established by application counters.
 
 ### Replacement verification
 
