@@ -54,7 +54,7 @@ function Get-RecoveryVerifiedRoot {
     try {
         $connect = $tcp.ConnectAsync('aws-1-eu-north-1.pooler.supabase.com', 5432)
         if (-not $connect.Wait(15000)) { throw 'Pooler TCP connection timed out.' }
-        $connect.GetAwaiter().GetResult()
+        $connect.GetAwaiter().GetResult() | Out-Null
         $stream = $tcp.GetStream()
         $stream.ReadTimeout = 15000
         $stream.WriteTimeout = 15000
@@ -67,14 +67,14 @@ function Get-RecoveryVerifiedRoot {
         $options.EnabledSslProtocols = [Security.Authentication.SslProtocols]::Tls12 -bor [Security.Authentication.SslProtocols]::Tls13
         $policy = [Security.Cryptography.X509Certificates.X509ChainPolicy]::new()
         $policy.TrustMode = [Security.Cryptography.X509Certificates.X509ChainTrustMode]::CustomRootTrust
-        $policy.CustomTrustStore.Add($trustedRoot)
+        $policy.CustomTrustStore.Add($trustedRoot) | Out-Null
         $policy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
         # Same boundary as libpq verify-full without a separately supplied CRL:
         # CA chain + validity + hostname verified; revocation is not attested.
         $policy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
         $options.CertificateChainPolicy = $policy
         $deadline = [Threading.CancellationTokenSource]::new(20000)
-        try { $tls.AuthenticateAsClientAsync($options, $deadline.Token).GetAwaiter().GetResult() }
+        try { $tls.AuthenticateAsClientAsync($options, $deadline.Token).GetAwaiter().GetResult() | Out-Null }
         finally { $deadline.Dispose() }
         if (-not $tls.IsEncrypted -or -not $tls.IsAuthenticated) { throw 'TLS validation failed.' }
         [IO.File]::WriteAllText($Destination, $trustedRoot.ExportCertificatePem(), [Text.UTF8Encoding]::new($false))
