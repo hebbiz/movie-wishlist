@@ -273,6 +273,74 @@ this authorization. Existing privileged read/export access is needed; a
 limited account must fail rather than silently omit RLS-protected tables.
 Portable PG17 client tools are also required before export can begin.
 
+#### Local tools / hidden password handoff — prepared 2026-10-22
+
+The earlier access-check findings above are historical, not current tool status.
+Owner confirmed Session pooler host
+`aws-1-eu-north-1.pooler.supabase.com`, port5432, database`postgres`,
+user`postgres.mttkectgdqqmejpenkrn`. PR #195/base #194 were rechecked before
+this follow-up; no owner-checkout or production changes.
+
+- Official EDB portable archive `postgresql-17.11-5-windows-x64-binaries.zip`
+  installed under `%LOCALAPPDATA%\MovieWishlist\RecoveryTools\pg17.11\pgsql`.
+  `pg_dump`, `pg_restore`, `psql` report **17.11**, same major as source17.6.
+  No installer, system service or PATH change. Download SHA256:
+  `80379B2C04D51C30225532E0AE04509899141E9957ED096FE749D7FD9DF8F82F`.
+  This is a local integrity hash of an official HTTPS download, not an
+  independently published vendor checksum or a database-backup checksum.
+- The initial Windows-root-only TLS probe refused the Supabase private CA;
+  no password or SQL was sent. The CA download URL was then verified against
+  [Supabase dashboard source](https://github.com/supabase/supabase/blob/master/apps/studio/hooks/custom-content/custom-content.json).
+  Public `prod-ca-2021.crt` file SHA256:
+  `700723581420DD1AC98FD7E9AC529F0EF210EADCAF87FC868A3AD7D114C2F3B7`.
+  The helper pins that downloaded CA file for this operation. No machine-wide
+  trust-store modification or permissive certificate callback.
+- TLS preflight passed with the explicit Supabase CA, chain/validity and exact
+  pooler-hostname verification. Native PG17 `sslmode=verify-full` also reached
+  `fe_sendauth: no password supplied`, the expected password-free stop before
+  authentication/SQL. This proves TLS setup, **not privileged DB access**.
+  CRL/OCSP revocation is not attested; no CRL is configured. Do not silently
+  downgrade to `require`/`verify-ca` to work around future errors.
+- [Local password prompt](../supabase/operations/recovery-password-prompt.ps1):
+  Windows PowerShell7+, `Read-Host -AsSecureString`; fixed pooler only;
+  no password in argv, parent environment, Git, console or plaintext file.
+  A bounded read-only `psql -X -w` check verifies database/role/major before
+  saving a **DPAPI CurrentUser-encrypted** credential handoff under
+  `%LOCALAPPDATA%\MovieWishlist\Recovery\mttkectgdqqmejpenkrn\pending`.
+  The directory has protected owner/SYSTEM-only DACL; reparse-point ancestors
+  are refused. A pending handoff is never overwritten. Brief plaintext copies
+  in the local child-process environment/memory are unavoidable; they are not
+  protected from a compromised same-user/admin process. Do not run with a
+  terminal transcript/session recording or in CI.
+- This is a two-stage local handoff, **not an automatic backup runner**.
+  The operator enters the password locally and reports only completion.
+  The next authorized recovery operation must check `pending.json` project,
+  successful read-only/TLS evidence and `expiresAt` before importing
+  `credential.pending.clixml` under the same Windows user/machine. Expiry is
+  two hours after creation, not a scheduled deletion: refuse expired use and
+  remove the exact credential file on consumption/failure/abandonment; do not
+  retain it with backups. Never print/decrypt it into tool arguments or logs.
+  DPAPI depends on this Windows profile/machine and is **not** a portable
+  disaster-recovery key. The eventual backup needs its own protected/tested
+  encryption and recovery-key procedure under the contract below.
+
+Launch in an ordinary, non-recorded PowerShell terminal using the prepared
+isolated checkout (no update/switch of the owner's working copy):
+
+```powershell
+& 'C:\Users\DenysLis\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe' -NoProfile -File 'C:\Users\DenysLis\.codex\visualizations\2026\09\28\01a0e7c4-3dc8-75e0-a3ed-84a709483b8d\mw-m2-ab-implementation\supabase\operations\recovery-password-prompt.ps1'
+```
+
+Offline authored regression passed: private/reapplied DACL, child-only secret
+with no argv exposure, fixed verify-full/read-only configuration, DPAPI
+round-trip, bounded-expiry metadata, refusal to overwrite and explicit
+`backupCreated=false` / `restoreVerified=false`. Real-password entry, backup,
+snapshot/count capture and local restore are **still pending**, not attested.
+The prompt itself performs no production writes/migrations or restore.
+Official references: [EDB portable binaries](https://www.enterprisedb.com/download-postgresql-binaries),
+[Supabase psql TLS](https://supabase.com/docs/guides/database/psql),
+[PostgreSQL17 SSL verification](https://www.postgresql.org/docs/17/libpq-ssl.html).
+
 #### Backup coverage contract — planned, none captured yet
 
 | Area | Intended protected artifact / explicit exclusion |
