@@ -341,6 +341,33 @@ Official references: [EDB portable binaries](https://www.enterprisedb.com/downlo
 [Supabase psql TLS](https://supabase.com/docs/guides/database/psql),
 [PostgreSQL17 SSL verification](https://www.postgresql.org/docs/17/libpq-ssl.html).
 
+Owner prompt follow-up (2026-10-22): the screenshot reports an earlier psql
+exit2 and a later successful psql execution followed by the generic
+`Unexpected database identity, server major, or read-only setting` refusal.
+The later refusal establishes neither a wrong password nor which metadata
+check failed: those values were deliberately not retained. No credential
+handoff exists (filename-only inspection), backup/restore remain pending.
+
+Narrow helper correction: the access query now explicitly runs
+`BEGIN READ ONLY; SET LOCAL statement_timeout = '15s'; ...; ROLLBACK;`,
+rather than relying solely on startup `PGOPTIONS` for transaction mode.
+Wrong database, unexpected role, non-PG17 and a non-read-only transaction
+still refuse credential capture. Refusals now use fixed allowlisted codes:
+`database-not-expected`, `role-not-expected`, `server-major-not-17`,
+`transaction-not-read-only`, `malformed-metadata`; no raw JSON, stderr,
+role names or other server-returned text is echoed. Client-side startup
+options not reaching the server is a possible explanation, **not an attested
+root cause for this owner's pooler connection**. PostgreSQL's explicit
+[read-only transaction mode](https://www.postgresql.org/docs/17/sql-begin.html)
+does not depend on that explanation. Reuse the same local launch command;
+no checkout switch/update or password reset is needed.
+Authored offline diagnostics/DPAPI/DACL tests passed. A fresh isolated native
+PostgreSQL17.11 test also reproduced the old refusal when the session default
+is read-write, then accepted the explicit read-only query with unchanged
+database/role/major checks. This is a controlled local reproduction, not proof
+that the pooler dropped the owner's startup options. The local fixture cluster
+was stopped; no production connection or real password was used in these tests.
+
 #### Backup coverage contract — planned, none captured yet
 
 | Area | Intended protected artifact / explicit exclusion |

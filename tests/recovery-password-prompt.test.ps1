@@ -28,8 +28,33 @@ try {
         Assert-RecoveryTest ($start.Environment['PGPASSWORD'] -eq 'AUTHORED-fixture-only-42') 'Password only in child environment.'
         Assert-RecoveryTest (($start.ArgumentList -join ' ') -notmatch 'AUTHORED|PGPASSWORD|password=') 'Secret must not appear in argv.'
         Assert-RecoveryTest ($start.ArgumentList.Contains('-X') -and $start.ArgumentList.Contains('-w')) 'No psqlrc or secondary prompt.'
+        $sql = $start.ArgumentList[$start.ArgumentList.Count - 1]
+        Assert-RecoveryTest ($sql.StartsWith('BEGIN READ ONLY;') -and $sql.EndsWith('ROLLBACK;')) 'Read-only transaction must be explicit, not depend on startup options.'
     }
     finally { $start.Environment.Remove('PGPASSWORD') | Out-Null }
+    $validMetadata = @{database='postgres';user='postgres';version_num='170006';read_only='on'}
+    $accepted = ConvertFrom-RecoveryAccessCheck ($validMetadata | ConvertTo-Json -Compress)
+    Assert-RecoveryTest ($accepted.readOnly -and $accepted.serverVersionNum -eq '170006') 'Valid metadata accepted.'
+    $cases = @(
+        @{key='database';value='PRIVATE-do-not-echo';reason='database-not-expected'},
+        @{key='user';value='PRIVATE-do-not-echo';reason='role-not-expected'},
+        @{key='version_num';value='180000';reason='server-major-not-17'},
+        @{key='version_num';value='PRIVATE-do-not-echo';reason='server-major-not-17'},
+        @{key='read_only';value='off';reason='transaction-not-read-only'},
+        @{key='read_only';value=$null;reason='transaction-not-read-only'}
+    )
+    foreach ($case in $cases) {
+        $bad = $validMetadata.Clone()
+        $bad[$case.key] = $case.value
+        $message = ''
+        try { ConvertFrom-RecoveryAccessCheck ($bad | ConvertTo-Json -Compress) | Out-Null } catch { $message = $_.Exception.Message }
+        Assert-RecoveryTest ($message.Contains($case.reason) -and -not $message.Contains('PRIVATE')) 'Fixed safe reason, no raw metadata.'
+    }
+    foreach ($badJson in @('PRIVATE-invalid-json','[]','null','{"database":"postgres"}')) {
+        $refused = $false
+        try { ConvertFrom-RecoveryAccessCheck $badJson | Out-Null } catch { $refused = -not $_.Exception.Message.Contains('PRIVATE') }
+        Assert-RecoveryTest $refused 'Malformed/incomplete metadata must be refused without raw content.'
+    }
     $before = [DateTimeOffset]::UtcNow
     Save-RecoveryCredentialHandoff $private $secret @{hostnameVerified=$true} @{readOnly=$true}
     Assert-RecoveryTest (-not ([IO.File]::ReadAllText($credentialFile).Contains('AUTHORED-fixture-only-42'))) 'No plaintext credential file.'
@@ -47,7 +72,7 @@ try {
     $refused = $false
     try { Save-RecoveryCredentialHandoff $private $secret @{} @{} } catch { $refused = $true }
     Assert-RecoveryTest ($refused -and (Get-FileHash -LiteralPath $credentialFile).Hash -eq $hashBefore) 'Pending credentials must not be overwritten.'
-    'PASS: private ACL/reapply, child-only password/no argv, verify-full/read-only config, DPAPI round-trip, expiry metadata, no overwrite, honest status.'
+    'PASS: private ACL/reapply, child-only password/no argv, explicit read-only SQL, safe metadata reasons, DPAPI round-trip, expiry metadata, no overwrite, honest status.'
 }
 finally {
     $secret.Dispose()

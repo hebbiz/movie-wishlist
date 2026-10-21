@@ -116,10 +116,38 @@ function New-RecoveryPgStartInfo {
     try { $start.Environment['PGPASSWORD'] = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($secretPtr) }
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($secretPtr) }
     foreach ($arg in @('-X', '-w', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', '-c',
-        "SELECT json_build_object('database',current_database(),'user',session_user,'version_num',current_setting('server_version_num'),'read_only',current_setting('transaction_read_only'))::text")) {
+        (Get-RecoveryAccessCheckSql))) {
         $start.ArgumentList.Add($arg)
     }
     return $start
+}
+
+function Get-RecoveryAccessCheckSql {
+    # Pooler startup options alone are not evidence of the actual transaction mode.
+    # Explicit transaction control is read-only; no database objects/data are changed.
+    return "BEGIN READ ONLY; SET LOCAL statement_timeout = '15s'; SELECT json_build_object('database',current_database(),'user',session_user,'version_num',current_setting('server_version_num'),'read_only',current_setting('transaction_read_only'))::text; ROLLBACK;"
+}
+
+function ConvertFrom-RecoveryAccessCheck {
+    param([string]$OutputText)
+    try { $result = ConvertFrom-Json -InputObject $OutputText -AsHashtable -ErrorAction Stop }
+    catch { throw 'Recovery check refused: malformed-metadata. No credential handoff saved.' }
+    if ($result -isnot [Collections.IDictionary]) {
+        throw 'Recovery check refused: malformed-metadata. No credential handoff saved.'
+    }
+    $reasons = [Collections.Generic.List[string]]::new()
+    if ($result['database'] -isnot [string] -or $result['database'] -cne 'postgres') { $reasons.Add('database-not-expected') }
+    if ($result['user'] -isnot [string] -or $result['user'] -cne 'postgres') { $reasons.Add('role-not-expected') }
+    $version = 0
+    $validVersion = $result['version_num'] -is [string] -and $result['version_num'] -cmatch '^[0-9]{6}$' -and
+        [int]::TryParse($result['version_num'], [ref]$version)
+    if (-not $validVersion -or $version -lt 170000 -or $version -ge 180000) { $reasons.Add('server-major-not-17') }
+    if ($result['read_only'] -isnot [string] -or $result['read_only'] -cne 'on') { $reasons.Add('transaction-not-read-only') }
+    if ($reasons.Count -gt 0) {
+        # Only fixed reason codes: never echo server text, names, JSON or stderr.
+        throw "Recovery check refused: $($reasons -join ', '). No credential handoff saved."
+    }
+    return [ordered]@{ database = 'postgres'; user = 'postgres'; serverVersionNum = $version.ToString(); readOnly = $true }
 }
 
 function Test-RecoveryDatabaseAccess {
@@ -142,14 +170,9 @@ function Test-RecoveryDatabaseAccess {
             # Do not echo uncontrolled libpq error content into the terminal/transcript.
             throw "Read-only connection check failed (psql exit $($process.ExitCode)); no credential handoff saved."
         }
-        $result = $stdout.GetAwaiter().GetResult().Trim() | ConvertFrom-Json
+        $outputText = $stdout.GetAwaiter().GetResult().Trim()
         $stderr.GetAwaiter().GetResult() | Out-Null
-        if ($result.database -ne 'postgres' -or $result.user -ne 'postgres' -or
-            [int]$result.version_num -lt 170000 -or [int]$result.version_num -ge 180000 -or
-            $result.read_only -ne 'on') {
-            throw 'Unexpected database identity, server major, or read-only setting; refusing.'
-        }
-        return [ordered]@{ database = 'postgres'; user = 'postgres'; serverVersionNum = $result.version_num; readOnly = $true }
+        return ConvertFrom-RecoveryAccessCheck $outputText
     }
     finally { $start.Environment.Remove('PGPASSWORD') | Out-Null; $process.Dispose() }
 }
