@@ -3,10 +3,11 @@
 Status: M4.1–M4.3 implemented; narrow #192 blocker fixes validated locally;
 default off; no live activation authorized. Pilot preparation is conditional on
 independent review and the activation prerequisites below, not a pilot approval.
-Pilot search-provider decision: **Brave Web Search approved**, candidate URLs
-only, quality live-unvalidated; no activation authorized by this record.
+Current search provider: **Tavily basic Search**, candidate URLs only,
+offline-tested/live-unvalidated; no activation authorized by this record.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
-See [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
+See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
+the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
 and the preserved [Gemini finding](#gemini-primary-resolver-feasibility-2026-10-21).
 Canonical implementation record, not a second research architecture. Evidence and
 source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
@@ -25,7 +26,7 @@ excluded from implementation.
 2. **M4.2 — implemented, isolated SQL/mock-tested, live-unvalidated** authenticated Netlify boundary, backend-only per-user assignment,
    independently gated TMDb/MOTN and atomic technical ledger. New SQL only;
    migration application/production flags/secrets require separate authorization.
-3. **M4.3 — implemented, mock/browser-tested, live-unvalidated** replaceable Brave Web Search resolver, ≤2 queries and ≤2 sequential
+3. **M4.3 — implemented, mock/browser-tested, live-unvalidated** replaceable Tavily Search resolver, ≤2 queries and ≤2 sequential
    admitted Kinobaza card GETs; no redirect/retry/destination resolution.
 
 Each stage has a separate stacked PR; no merge/deployment in this task.
@@ -52,10 +53,10 @@ Implementation/offline checks are not live validation or rights clearance.
 No live source-body/API calls are authorized here. Existing dated research reviews do not
 grant blanket production or arbitrary-card permission. Before live activation,
 a separately authorized preflight must reconcile current TMDb, MOTN, Kinobaza
-scope and account-specific Brave plan/terms, attribution, transient transfer and
-permitted access. The public Brave terms review below is complete for this
-bounded candidate-search decision, not a blanket rights clearance.
-Brave search does not license destination content. No LLM or full-body archive.
+scope and account-specific Tavily plan/terms, attribution, transient transfer and
+permitted access. The dated Tavily review below distinguishes the supported API
+path from unresolved end-user licensing. Search does not license destination
+content. No application LLM call or full-body archive.
 No current production feature assignment, secret or migration is changed.
 
 ## Pilot (future, not executed)
@@ -86,7 +87,7 @@ is accepted. Failed capability leaves normal editing usable.
 
 No trusted TMDb preview is retained by the existing form lookup. Therefore the
 full M4 ceiling is **8 source HTTP attempts**: IMDb Find 1 + Details 1 + UA
-providers 1 + MOTN title 1 + Brave search ≤2 + Kinobaza cards ≤2. M4.2 alone ≤4.
+providers 1 + MOTN title 1 + Tavily search ≤2 + Kinobaza cards ≤2. M4.2 alone ≤4.
 Missing/ambiguous crosswalk skips MOTN, never guesses an ID. Details/providers
 failure does not suppress an independent MOTN attempt with established crosswalk;
 its own metadata/ID gate may still withhold claims. Identity Details are reused
@@ -165,16 +166,16 @@ history/baseline reconciliation remains pre-activation work. No old SQL replay.
 
 Server configuration (no values in Git): `SUPABASE_URL`,
 `SUPABASE_SERVICE_ROLE_KEY`, `TMDB_READ_ACCESS_TOKEN`, `MOTN_API_KEY`;
-M4.3 additionally `BRAVE_SEARCH_API_KEY`. Secrets are not arguments/URLs/UI data.
+M4.3 additionally `TAVILY_API_KEY`. Secrets are not arguments/URLs/UI data.
 No configuration is changed by these PRs. Approved TMDb logo/complete current
 attribution and applicable commercial/source-use terms must be checked during
 activation preflight; text attribution and source links remain visible now.
 
 ## M4.3 automatic resolver and UI
 
-No manual card field is required. The swappable search interface uses ordinary
-Brave Web Search `GET https://api.search.brave.com/res/v1/web/search`, with
-server-only `X-Subscription-Token`. A verified original title/alias, year and
+No manual card field is required. The swappable search interface uses
+Tavily basic Search `POST https://api.tavily.com/search`, with
+server-only Bearer authentication. A verified original title/alias, year and
 director form a domain-limited query. Snippets/rank never establish identity or
 claims and are not returned or persisted. At most one alternative known title
 query is allowed **only when the first successful search yields no admitted
@@ -224,15 +225,19 @@ against fresh membership/list identity on each RPC, not cascading rate resets.
    only the new migration later under explicit authorization.
 2. Complete remaining source-use/account/attribution checks, including the
    existing TMDb logo and automatic arbitrary-card Kinobaza scope. The dated
-   Brave public-terms finding below is not permission for Kinobaza content or
+   search-provider public-terms finding below is not permission for Kinobaza content or
    proof of the owner's actual Order Form, quota or Netlify logging settings.
-3. Brave ordinary **Web Search** is the approved pilot provider, not Answers/LLM
-   and not a Gemini fallback. Verify the actual API plan/quota and provision
-   `BRAVE_SEARCH_API_KEY` server-side in Netlify Functions for the intended
-   develop branch-deploy context under separate activation authorization.
-   Owner account/key possession does not establish Netlify configuration. No
-   `GEMINI_API_KEY` is needed in this M4 path. No secrets, flags, account,
-   subscription or credits are changed by this documentation decision.
+3. Tavily **basic Search** replaces Brave; no Brave/Gemini fallback. Reconcile
+   the [Tavily account/end-user conditions](#tavily-search-replacement-2026-10-21)
+   before activation. Owner reports `TAVILY_API_KEY`, `TMDB_READ_ACCESS_TOKEN`
+   and `MOTN_API_KEY` are Secret / Functions / Production + Branch deploys;
+   Supabase URL/service-role configuration is also present. This is
+   owner-reported configuration, not agent inspection of values or runtime
+   attestation. PR Deploy previews lack the new keys: mock-only checks there,
+   not a live-readiness failure or reason to copy secrets. No Brave/Gemini key
+   is needed by this path. Check intended develop branch/function mapping
+   after separately authorized deployment; do not print credentials or make
+   discovery requests merely to test configuration.
 4. Reconcile the actual migration baseline before applying the two new M4
    migrations. Review the entry-based hosting deadline and lost-outcome behavior.
    Authorize/configure daily cleanup separately; verify timezone, activation,
@@ -244,7 +249,7 @@ against fresh membership/list identity on each RPC, not cascading rate resets.
    Keep feature off until these prerequisites and pilot authorization.
 6. Five real Wishlist films, selected before requests; record titles/IDs privately
    for the pilot, not invented in this document. One form/discovery action each;
-   maximum **10 Brave calls** inside **40 dispatched source attempts** (5 × 8),
+   maximum **10 Tavily calls** inside **40 dispatched source attempts** (5 × 8),
    normally fewer. No Gemini/other-provider fallback. Search-provider
    internal traffic and manual browser navigation are separate/unknown.
    No full responses or platform sweep. Measure added useful claims as well as
@@ -452,6 +457,11 @@ claimed. Actual Gemini/Search/card requests in this task: **0**.
 
 ## Brave pilot provider decision and data-flow audit (2026-10-21)
 
+**Historical checkpoint, superseded by the Tavily replacement below.** Brave is
+no longer selected because of practical access/payment difficulties reported by
+the owner. The dated review, observations and counts below remain historical
+evidence, not current production adapter/configuration instructions.
+
 **Approved provider: Brave ordinary Web Search**, solely to find candidate
 Kinobaza URLs. Current handler wiring already selects it; no runtime change or
 provider switch is necessary. Gemini Grounding is not used for URL → HTML
@@ -556,3 +566,134 @@ suites are not rerun for unchanged runtime; prior evidence is not relabelled.
 Current documentation verification: 13 Markdown documents / 422 local links /
 261 anchors, zero errors; scope and whitespace clean. The prior Gemini-only
 checkpoint's 420/259 counts above are historical, not this audit's scope/count.
+
+## Tavily Search replacement (2026-10-21)
+
+**Implemented/offline-tested; live-unvalidated, default-off.** Narrow successor
+to #193 `0db059a710bff801e5c455dcc396f06914c156cc`, base #192
+`c5a09298903957b16360147b3363b8d4db90f195`. #190/#191 and develop
+`acbdadf8efa2d180a12ed3fc85aa7784bb681782` were unchanged at inspection.
+No migrations, ledger stages, client/state/form-transfer logic, dependency,
+cleanup configuration or research adapter changed. All three #192 fixes remain.
+Brave is removed from the active M4 path; Gemini's established API-use blocker
+is unchanged. There is no alternate-provider fallback.
+
+### Contract and data boundary
+
+[Official Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search),
+checked 2026-10-21: POST `https://api.tavily.com/search`, Bearer header;
+`search_depth: basic`, `topic: general`, `max_results: 5`,
+`auto_parameters: false`, `include_answer: false`,
+`include_raw_content: false`, `include_images: false`,
+`include_favicon: false`, `include_usage: false`,
+`include_domains: ["kinobazaua.com"]`, `include_domains_mode: restrict`.
+The explicit request avoids automatic parameter/depth changes and generated
+answers. Only `results[].url` is used; content/score/title/answer are discarded.
+Missing/malformed results is an error, not an empty success; `results: []` is
+empty. Responses exceeding five results are refused, unsafe URLs filtered and
+exact admitted URLs deduplicated. No Extract/Crawl/Research endpoint or SDK.
+
+The existing `searchFactory(apiKey, boundedFetch)` interface remains injectable.
+Only exact Tavily endpoint POSTs are accepted; redirects/cookies are refused.
+The 15s/512KiB response bound is inside the existing entry-based 45s source
+deadline, leaving the finish phase until 53s. Durable reservation precedes each
+attempt; a post-reservation deadline prevents dispatch without refund/retry.
+At most two searches: the second uses an already established alternate title
+only after successful search with zero admitted candidates. HTTP/auth/quota,
+malformed/oversize, transport and timeout errors do not trigger another query.
+401/403/429/432/433 and other HTTP errors use content-free status codes.
+
+The audited path remains response → URL admission → bounded card GET →
+independent identity/extraction → projected source rows → transient client.
+Neither Search Results nor snippets/scores/envelopes enter ledger, form,
+short report, browser storage or application logging. Matched card addresses
+can appear as transient card provenance/choices, not a search archive.
+The automated canary regression covers handler → projection → report/RPC and
+zero application log calls. Hosting-side telemetry/log-drain configuration
+remains uninspected and must not capture request/response bodies or secrets.
+Separately extracted HTML provider links retain their own provenance and
+R1/R2/navigation/transfer/acknowledgement rules. Ordinary explicit Save may
+persist that chosen provider URL; this is not persistence of Search Results.
+The existing app's form logging caveat in the historical audit still applies.
+
+### Dated source-use findings, not legal approval
+
+[Platform Terms](https://www.tavily.com/terms) (May 4, 2026; checked October 21):
+§§1.2–1.3 define Customer Applications/inputs, including end-user queries.
+§2 permits documented API integration but limits it to internal business
+purposes and expressly restricts third-party API use without prior written
+consent. §3.5 nevertheless addresses external application end users and
+requires appropriate user agreements without shifting liability to Tavily.
+Account/Order Form scope must reconcile this before unrelated group-user
+activation; protected keys alone do not establish rights. §§7/9.2 permit
+provider-side input sharing/retention/improvement: application no-storage is
+not a provider zero-retention guarantee. §17.8 requires usage/audit records;
+check actual account obligations without archiving result bodies. This is
+neither blanket app prohibition nor clearance.
+
+[AUP](https://www.tavily.com/acceptable-use-policy) (May 5, 2026; checked
+October 21), §2 allows expressly supported automated access while preserving
+third-party rights/obligations; no specific Google-style ban on candidate
+URL → independent HTML fetch was found in these reviewed texts. §4 requires
+downstream-user compliance/enforcement; §5 requires output vetting. Those are
+conditions, not a Kinobaza content license. Query input here is public film
+identity only, never user/group/draft/source offers. Application code requests
+no LLM answer; this does not claim Tavily has no internal AI processing.
+
+**Assessment:** documented search capability is compatible with the narrow
+technical pipeline; customer-app/end-user license scope remains **unresolved**,
+not cleared by this implementation. Kinobaza automatic arbitrary-card
+extraction and existing TMDb/MOTN conditions still need the separately
+authorized activation preflight. No new legal toggle/acknowledgement is added.
+
+### Five-Wishlist-film live plan (prepared, not authorized/executed)
+
+Use the five owner-agreed **actual Wishlist films**, not a new exotic sample
+or the old eight-case research set. Their names/IDs are not in this task's
+provided manifest; do not invent them or fetch the production DB to fill them.
+Freeze those five existing identities privately as P1–P5 before the session;
+this is pilot bookkeeping, not permission to add an evaluation round.
+
+| Case | Private existing Wishlist identity | One action and required brief record |
+| --- | --- | --- |
+| P1 | Owner's agreed film 1 | Open its established form identity; Find once; candidate/identity/extraction outcomes, useful source-scoped claims, calls/time/intervention. One selection → preview → transfer; check exact URL, acknowledgement if needed and retained manual edits. Ordinary Save only if separately authorized. |
+| P2 | Owner's agreed film 2 | Same single discovery; brief outcomes/benefit/unknowns; no repeated transfer drill. |
+| P3 | Owner's agreed film 3 | Same single discovery; keep no-result/refusal in the denominator. |
+| P4 | Owner's agreed film 4 | Same single discovery; record bounded ambiguity/unexamined candidates honestly. |
+| P5 | Owner's agreed film 5 | Same single discovery; final short practical-use summary. |
+
+Per case: TMDb/MOTN ≤4 + Tavily ≤2 + card GET ≤2 = **8** application external
+source attempts. Five cases: **Tavily ≤10**, cards ≤10, baseline ≤20, **total
+≤40**, usually fewer. Account billing/credits are distinct from application
+attempts; actual plan/quota must be confirmed, not assumed free. Provider's
+internal search/network operations are unknown; manual browser traffic is
+separate. Timeout/error spends its reserved attempt; lost responses are not
+permission to rerun. One action per case, no manual retry or platform sweep.
+
+Activation remains separate: review/merge and develop branch deploy approval,
+source-use/account prerequisites above, migration-baseline reconciliation,
+backend-only expiring access and authorized cleanup/monitoring. None executed
+here. During the future session stop on false identity acceptance, access/cap
+bypass, unexpected writes, lost manual edits or unsafe transfer. Auth/quota
+failure stops affected search work without fallback; empty search/refused
+identity/extraction absence is recorded, not repaired by repeating requests.
+Record automatic correct-card finding, matched identity, useful extracted
+claims, application calls/time, user intervention and local-transfer correctness.
+No full HTML/JSON, search snippets or tracking-token archive.
+
+### Replacement verification
+
+Authored fixtures only, not live Tavily/Kinobaza validation. Final M4
+offline/mock-HTTP/isolated SQL/Edge suite: **45 passed, 1 native test skipped,
+0 failures**. Edge covers desktop 1280×900, mobile 375×812 and 820×1180,
+including pending apply/cancel/stale/manual-edit controls and safe clipboard
+fallback. Separate research provider-grouping/matching/R1/R2 regressions:
+**29/29 passed**. Ledger SQL, #192 queued access/
+pending-apply fixes and launchers are unchanged: no new migration or native
+PostgreSQL/Windows lifecycle execution is required for this adapter change.
+Previous PostgreSQL **17.6** concurrency evidence is reused, not relabelled as
+a Tavily run. No WebKit/device claim; Edge mobile viewport checks are separate.
+Local Markdown verification covers the root README, this canonical record and
+the existing research README/docs: **13 documents, 424 local links / 263
+anchors**, zero errors. Historical counts above remain pinned to their own
+checkpoints, not silently reused.

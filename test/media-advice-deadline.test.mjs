@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDeadline, HandlerDeadline } from '../netlify/lib/media-advice-deadline.mjs';
 import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs';
+import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 
 function clock() {
   let time = 0, id = 0; const timers = new Map();
@@ -55,4 +56,25 @@ test('real SDK Auth body wait is deadline bounded and aborts even after HTTP hea
   })(request());
   await drain(); assert.equal(calls, 1); c.advance(8000); await drain();
   assert.equal((await pending).status, 504); assert.equal(networkSignal.aborted, true); assert.equal(calls, 1);
+});
+
+test('Tavily search inherits the handler entry deadline and still leaves one bounded finish', async () => {
+  const c = clock(), ops = []; let sourceSignal, searches = 0;
+  const client = { auth: { getUser: async () => { c.advance(7000); return { data: { user: { id: 'authored' } } }; } },
+    rpc: async (_, args) => { ops.push(args.p_op); if (args.p_op === 'start') c.advance(7000); return { data: { id: 'authored' } }; } };
+  const resolver = createKinobazaResolver({ apiKey: 'AUTHORED_TAVILY_KEY' });
+  const pending = createMediaAdviceHandler({ client, env: () => '', deadlineOptions: c.options,
+    run: async ({ signal, reserve, fetchImpl }) => resolver({ originalTitle: 'Authored film', year: 2001 },
+      { signal, reserve, fetchImpl, calls: [] }),
+    fetchImpl: async (url, init) => {
+      searches++; assert.equal(url, 'https://api.tavily.com/search'); sourceSignal = init.signal;
+      return new Promise(() => {});
+    },
+  })(request());
+  await drain(); assert.equal(searches, 1); assert.equal(c.now(), 14000);
+  c.advance(31000); await drain();
+  const response = await pending;
+  assert.equal(response.status, 504); assert.equal(sourceSignal.aborted, true);
+  assert.deepEqual(ops, ['start', 'reserve', 'finish']); assert.equal(searches, 1);
+  assert.equal(c.count(), 0);
 });

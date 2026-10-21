@@ -114,6 +114,7 @@ implemented or documented v1.3.1 scope.
 M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
 locally verified, including native PostgreSQL 17.6 concurrency. Cleanup is
 prepared inactive; pilot activation and source-use review remain separate.
-Brave Web Search is the [approved M4 pilot provider](docs/m4-media-advice.md#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
-for candidate URLs only; quality remains live-unvalidated. Gemini Grounding
-stays excluded from URL → HTML extraction; no provider fallback or activation.
+Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
+for candidate URLs only; quality remains live-unvalidated and customer-app
+source-use conditions remain explicit. Brave research is preserved historically.
+Gemini Grounding stays excluded from URL → HTML extraction; no provider fallback or activation.

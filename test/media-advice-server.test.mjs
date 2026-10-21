@@ -61,8 +61,11 @@ test('no unverified IMDb→TMDb crosswalk means no MOTN; unreadable response is 
 });
 test('unexpected source secret echo is withheld; bounded request rejects oversize and ignores client source data', async () => {
   const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) }, rpc: async () => ({ data: { id: form, attempts: [] } }) };
-  const handler = createMediaAdviceHandler({ client, env: k => k === 'MOTN_API_KEY' ? 'AUTHORED_SECRET' : '', run: async () => ({ rows: [{ text: 'AUTHORED_SECRET' }] }) });
-  const r = await handler(request()); assert.equal(r.status, 502); assert.doesNotMatch(await r.text(), /AUTHORED_SECRET/);
+  for (const key of ['MOTN_API_KEY', 'TAVILY_API_KEY']) {
+    const handler = createMediaAdviceHandler({ client, env: k => k === key ? 'AUTHORED_SECRET' : '', run: async () => ({ rows: [{ text: 'AUTHORED_SECRET' }] }) });
+    const r = await handler(request()); assert.equal(r.status, 502); assert.doesNotMatch(await r.text(), /AUTHORED_SECRET/);
+  }
+  const handler = createMediaAdviceHandler({ client, env: () => '', run: async () => ({ rows: [] }) });
   assert.equal((await handler(request({ ...input, arbitrary: 'x'.repeat(5000) }))).status, 400);
 });
 test('unmapped Plex/MUBI literal claims retained read-only, no invented medium or track propagation', async () => {
