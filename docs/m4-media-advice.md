@@ -3,6 +3,9 @@
 Status: M4.1–M4.3 implemented; narrow #192 blocker fixes validated locally;
 default off; no live activation authorized. Pilot preparation is conditional on
 independent review and the activation prerequisites below, not a pilot approval.
+Requested Gemini-primary resolver replacement: **blocked by an explicit Google
+Search Grounding use restriction**, not implemented or silently substituted with
+Brave. See [dated API/source-use decision](#gemini-primary-resolver-feasibility-2026-10-21).
 Canonical implementation record, not a second research architecture. Evidence and
 source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
 
@@ -219,10 +222,12 @@ against fresh membership/list identity on each RPC, not cascading rate resets.
    existing TMDb logo asset used by the dialog. No terms/rules/source retrieval
    was performed in this implementation task. Remaining rights are unresolved,
    not blanket permission or an invented ban.
-3. In the provider dashboard obtain a **Web Search API** key, not Answers;
-   review current plan/quota/price before any purchase. No account, subscription
-   or credits were created here. Set `BRAVE_SEARCH_API_KEY` only server-side.
-   TMDb Read Access Token and MOTN key remain separate.
+3. Resolve the requested Gemini-primary provider blocker documented below before
+   activating a resolver pilot. Brave is not an authorized automatic fallback.
+   Its existing ordinary Web Search adapter/key is retained as an inactive
+   alternative for a separate explicit provider decision, not auto-selected by
+   Gemini failure. No account/subscription/credits or server keys are created or
+   changed here; TMDb and MOTN configuration stays separate.
 4. Reconcile the actual migration baseline before applying the two new M4
    migrations. Review the entry-based hosting deadline and lost-outcome behavior.
    Authorize/configure daily cleanup separately; verify timezone, activation,
@@ -304,3 +309,130 @@ a disposable copy. No actual SSH disconnect was repeated. WebKit executable is
 absent. Local links/anchors: 13 Markdown documents, 416 links / 257 anchors,
 zero errors; whitespace clean. Exact final counts/remote statuses are recorded
 in the implementation PR description rather than guessed here.
+
+## Gemini-primary resolver feasibility (2026-10-21)
+
+### Decision and verified code baseline
+
+**Outcome: concrete API-use blocker; documentation-only successor, no adapter
+activation.** Current #192 HEAD `c5a09298903957b16360147b3363b8d4db90f195`,
+base #191 `e0817151f73da0f742ee72b77bc23bb709457d7b`; fetched develop remains
+`acbdadf8efa2d180a12ed3fc85aa7784bb681782`. All three #192 fixes are ancestors.
+The requested provider is Gemini; Brave is not a substitute if it cannot run.
+
+Inspection: `netlify/lib/kinobaza-resolver.mjs` exposes a replaceable
+`searchFactory(apiKey, boundedFetch)` with `accepts` and `search`; its current
+handler wiring in `netlify/functions/media-advice.mjs` still instantiates Brave.
+**This documentation change does not switch that existing wiring off or claim
+Gemini is installed.** M4 remains default-off, no activation or fallback is
+performed. A deployment of the unchanged baseline with its old Brave key would
+still select Brave; it must not be presented as the requested Gemini pilot.
+
+Research `config.mjs`/`server.mjs` currently use `gemini-3.8-flash`, REST
+`generateContent`, `googleSearch: {}`, low thinking, 4096 output tokens and a
+server-side `x-goog-api-key`. `public/display.mjs` checks UTF-8 support offsets,
+chunk indices and Search Suggestions to display the original answer/citations.
+That display contract is not a reusable license for automated URL collection.
+No secret values, owner configuration or live responses were inspected/copied.
+
+### Source-use blocker: explicit, not missing permission documentation
+
+The [Gemini Additional Terms, Grounding with Google Search → Use Restrictions](https://ai.google.dev/gemini-api/terms#grounding-with-google-search)
+(effective March 23, 2026; checked October 21) explicitly include these examples:
+“using programmatic or automated means to collect Links” and
+“using Links to identify destination pages for crawling or scraping”.
+They restrict separating components for another purpose and require combined
+grounded-answer/Search Suggestions display. The proposed machine URL resolver
+followed by Kinobaza HTML extraction directly conflicts with that stated use
+restriction. Transient memory, metadata-only URLs, fewer calls or adding display
+do not remove this purpose conflict. No claim of a general ban on Gemini or
+Kinobaza integration is made; this is the specific requested Grounding path.
+No applicable written exception is established. Without one or a different
+explicitly approved source route, do not activate this path. This is an
+engineering source-use assessment, not a legal guarantee.
+
+### Technical capability is present, but does not clear that blocker
+
+| Question | Official contract / consequence |
+| --- | --- |
+| Supported model | [Stable model page](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash) explicitly lists Search grounding for `gemini-3.8-flash`. Old model choice is still documented, not assumed valid merely because it exists in research. Account availability is not tested. |
+| API variants | [Generate Content Search guide](https://ai.google.dev/gemini-api/docs/generate-content/google-search) documents `POST /v1beta/models/gemini-3.8-flash:generateContent` with Google Search tool and header key. The [current main Search guide](https://ai.google.dev/gemini-api/docs/google-search) instead demonstrates Interactions. Do not mix their response shapes or assume an API migration fixes use restrictions. |
+| Generate Content evidence | [GroundingMetadata / GroundingSupport reference](https://ai.google.dev/api/generate-content#GroundingMetadata): `groundingChunks[].web.uri`, support `groundingChunkIndices`, `segment`/part byte offsets, `webSearchQueries`, `searchEntryPoint`. Generated text alone is not metadata evidence; citation attribution is not film identity. |
+| Interactions evidence | Main guide shows `google_search_call`, `google_search_result`/Suggestions and text `annotations` of type `url_citation`, with URL and segment indices. This is not the old `groundingMetadata` envelope. |
+| Opaque URLs | Generate Content guide itself illustrates `vertexaisearch.cloud.google.com` source URIs. A `web` chunk has URI/title, not a guaranteed separate canonical-destination field. A generated canonical URL plus an opaque citation does not establish their equivalence. |
+
+Any later permitted implementation must accept a URL only from a structurally
+valid, actually grounded source reference, linked to the cited response segment,
+then apply unchanged exact Kinobaza admission and independent identity/extraction.
+Do not use citation title/snippet as a destination mapping or identity proof.
+Wrong host, generated-text-only URL, empty/malformed grounding, or unsupported
+opaque reference must return a precise non-candidate outcome, not absence of a
+film/card. No redirect following, slug reconstruction, URL Context substitution,
+provider fetch or hidden resolution request is permitted.
+
+An opaque-reference-only result would require a **separately scoped proposal**
+for one tightly bounded reference-resolution operation, with validated host/path,
+target re-admission, accounting and terms review, before any implementation.
+It is not approved here and would not itself solve the explicit use restriction.
+
+### Accounting recorded before any implementation (proposed, not live-ready)
+
+The API exposes a single application request that can cause multiple internal
+Google Search queries. Keep these units separate:
+
+| Unit | Ceiling / accounting rule |
+| --- | --- |
+| TMDb / MOTN HTTP attempts | Existing ≤4, unchanged independent gates and identity reuse. |
+| Gemini API POST attempts | ≤2, each atomically reserved before dispatch using the two search slots. A lost response/timeout still consumes its reservation. |
+| Google Search operations | Unknown unless a documented response exposes them; declared query metadata is diagnostic, not an attested billing total or guaranteed complete internal count. Never label two Gemini calls as two Google searches. |
+| Kinobaza card GETs | ≤2, sequential; no redirects/retries/destination requests. |
+| Application HTTP total | ≤8 = 4 + 2 + 2, not a total-network-traffic or cost cap. No extra opaque-reference hop fits this definition without a separately reviewed budget. |
+| Time | Entry clock preserved: source work ends by 45s, finish by 53s, response/platform margin unchanged. No deadline reset or increased request cap. |
+
+Second-call strategy, only if the use blocker is cleared: after a successful,
+well-formed **grounded** first response with no admitted direct candidate, use
+one different already-known title alias plus existing year/director to
+disambiguate. No second call for auth/quota/transport/timeout, missing/malformed
+grounding or opaque-reference-only output. Multiple direct candidates go through
+the existing ≤2 card gates/choice, not a new LLM identity decision. This is not
+implemented and is not permission to run a probe.
+
+The [pricing page](https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash)
+currently lists Standard paid input/output at $0.75/$3.75 per million tokens
+through December 31, 2026, then $1.50/$7.50 from January 1, 2027. Grounding is
+not on the API Free tier for this model: 5,000 monthly search requests shared
+across Gemini 3+ precede $14/1,000 search requests; each model-executed search
+query is chargeable under its billing rules. No remaining quota, zero cost or
+per-film price is inferred. The [rate-limit guide](https://ai.google.dev/gemini-api/docs/rate-limits)
+uses model/project/tier limits (not per-key); actual owner limits are unknown.
+
+### Data/configuration and pilot boundary
+
+If later allowed, the outgoing input is explicitly projected public film
+identity only: title/known aliases, year, director and optional IMDb. Never
+serialize the whole film/source object: no user/group/form IDs, draft, TMDb/MOTN
+offers, card HTML, full responses or owner control observations. No source data
+to LLM for extraction, recommendations, localization or enrichment.
+
+`GEMINI_API_KEY` would have to be separately provisioned in Netlify Functions
+scope; an existing owner/demo key proves neither presence nor entitlement there.
+Model/provider choice must be server-side and explicitly Gemini, never inferred
+from whichever key exists. No env var, credential copy, provider-selection switch
+or new dependency is installed by this blocked change. Existing
+`BRAVE_SEARCH_API_KEY` is not invoked as Gemini fallback; baseline wiring is
+unchanged as stated above. Do not provision keys to bypass this decision.
+
+The future five-real-Wishlist-film pilot is **not ready for the requested
+Gemini resolver** until this blocker is resolved. No owner evaluation or new
+risk-based study is requested. Required future authored tests remain: direct
+grounded candidate; text-only/wrong-host/opaque URL; invalid/empty grounding;
+ambiguous candidates; timeout/quota/no fallback; second-call strategy, ≤8 cap,
+independent gates, R1/R2, exact URL/acknowledgement and form safeguards.
+No placeholder adapter or synthetic pass is claimed as implementation. This
+successor changes only Markdown, so runtime/browser/native suites are not rerun;
+their #192 results remain pinned historical evidence, not a test of Gemini.
+Verify local links/anchors, whitespace, scope and unchanged runtime tree only.
+Documentation-only verification: 13 documents / 420 local links / 259 anchors,
+zero reference errors; whitespace clean. Runtime/security/ledger/research paths
+are byte-for-byte unchanged from #192 `c5a0929`; no runtime tests are newly
+claimed. Actual Gemini/Search/card requests in this task: **0**.
