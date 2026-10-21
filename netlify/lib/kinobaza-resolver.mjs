@@ -55,7 +55,8 @@ export function createKinobazaResolver({ apiKey, searchFactory = braveWebSearch 
     const searchFetch = async (url, init) => {
       const stage = `search-${summary.searchCalls + 1}`;
       if (summary.searchCalls >= 2 || signal?.aborted || provider.accepts?.(url, init) !== true) throw Error('search-boundary');
-      await reserve(stage); summary.searchCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
+      await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
+      summary.searchCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
       try { const r = await fetchImpl(url, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('search-transport'); }
     };
     const provider = searchFactory(apiKey, searchFetch); let urls = [];
@@ -73,7 +74,8 @@ export function createKinobazaResolver({ apiKey, searchFactory = braveWebSearch 
       const stage = `kinobaza-${summary.cardCalls + 1}`;
       const cardFetch = async (target, init) => {
         if (target !== url || !admitKinobazaURL(target) || signal?.aborted || init.method !== 'GET' || init.redirect !== 'manual' || calls.some(c => c.stage === stage)) throw Error('card-boundary');
-        await reserve(stage); summary.cardCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
+        await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
+        summary.cardCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
         try { const r = await fetchImpl(target, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('card-transport'); }
       };
       const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal });

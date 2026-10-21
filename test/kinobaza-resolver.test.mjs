@@ -86,3 +86,14 @@ test('full action max8 attempts; baseline independence and candidate selection d
   assert.ok(result.cardChoices.every(c => c.rows.every(r => r.id.startsWith(c.id + ':kinobaza:'))));
   assert.equal(result.stages, undefined); assert.doesNotMatch(JSON.stringify(result), /Untrusted snippet|NO IDENTITY PROOF|AUTHORED_BRAVE_KEY/);
 });
+
+test('deadline expires during durable reservation: no later search/card dispatch or retry', async () => {
+  for (const stop of ['search-1', 'kinobaza-1']) {
+    const controller = new AbortController(), reserved = [], calls = [], m = mock();
+    await createKinobazaResolver({ apiKey: 'AUTHORED_BRAVE_KEY' })(film, { signal: controller.signal, calls,
+      reserve: async stage => { reserved.push(stage); if (stage === stop) controller.abort(); }, fetchImpl: m.fetchImpl });
+    assert.deepEqual(reserved, stop === 'search-1' ? ['search-1'] : ['search-1', 'kinobaza-1']);
+    assert.equal(m.calls.length, stop === 'search-1' ? 0 : 1);
+    assert.equal(calls.some(c => c.stage === stop), false);
+  }
+});

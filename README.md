@@ -110,3 +110,7 @@ process.
 `MW-FUT-01` and `MW-FUT-02` remain Discovery items. They are not part of the
 implemented or documented v1.3.1 scope.
 - [M4 media advice implementation and activation boundaries](docs/m4-media-advice.md)
+
+M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
+locally verified, including native PostgreSQL 17.6 concurrency. Cleanup is
+prepared inactive; pilot activation and source-use review remain separate.

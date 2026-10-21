@@ -18,6 +18,7 @@ export async function ledgerDb() {
     insert into public.group_members values('${user}','${group}','member');
     insert into public.movies values('${list}','tt1234567'); insert into public.movie_group_lists values('${list}','${list}','${group}');`);
   await db.exec(await readFile(new URL('../supabase/migrations/20261020205122_media_advice_access_ledger.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/20261021072002_media_advice_review_fixes.sql', import.meta.url), 'utf8'));
   const rpc = async (op, { session = null, stage = null, n = 1, targetList = list, targetGroup = group, imdb = 'tt1234567' } = {}) =>
     (await db.query('select public.media_advice_action($1,$2,$3,$4,$5,$6,$7,$8) as result', [user, targetGroup, imdb, targetList, form(n), op, session, stage])).rows[0].result;
   return { db, rpc };
@@ -64,4 +65,41 @@ test('atomic replay/rate/TTL cap and reservations survive error/lost result, no 
   await db.exec("update media_advice_private.sessions set created_at=now()-interval '25 hours'");
   await db.query('select public.media_advice_cleanup()');
   assert.equal((await db.query('select count(*)::int n from media_advice_private.sessions')).rows[0].n, 0);
+  assert.equal((await db.query('select deleted_sessions::int n from media_advice_private.cleanup_health')).rows[0].n, 20);
+});
+
+test('retention is based on creation, keeps younger/active rows, has content-free success heartbeat', async t => {
+  const { db, rpc } = await ledgerDb(); t.after(() => db.close());
+  await db.exec(`insert into media_advice_private.permissions values('${user}','mykola_media_advice',true,null)`);
+  for (let n = 1; n <= 4; n++) await rpc('start', { n });
+  await db.exec(`update media_advice_private.sessions set created_at=now()-interval '25 hours', expires_at=now()-interval '1 hour' where form_session='${form(1)}';
+    update media_advice_private.sessions set created_at=now()-interval '23 hours', expires_at=now()-interval '1 hour', finished=true where form_session='${form(2)}';
+    update media_advice_private.sessions set created_at=now()-interval '25 hours', expires_at=now()+interval '1 minute' where form_session='${form(3)}';`);
+  assert.equal((await db.query('select public.media_advice_cleanup() n')).rows[0].n, 1);
+  assert.equal((await db.query('select count(*)::int n from media_advice_private.sessions')).rows[0].n, 3);
+  assert.equal((await db.query('select count(*)::int n from public.movie_group_lists')).rows[0].n, 1);
+  assert.equal((await db.query('select count(*)::int n from public.movies')).rows[0].n, 1);
+  assert.equal((await db.query('select public.media_advice_cleanup() n')).rows[0].n, 0);
+  await db.exec('set role authenticated');
+  await assert.rejects(db.query('select public.media_advice_cleanup()'), /permission denied/);
+  await assert.rejects(db.query('select * from media_advice_private.cleanup_health'), /permission denied/);
+});
+
+test('prepared cleanup schedule is inactive/UTC/no-overwrite; authored cron stub is not scheduler validation', async t => {
+  const { db } = await ledgerDb(); t.after(() => db.close());
+  // Only verifies configuration transaction/control flow, not real pg_cron.
+  await db.exec(`create schema cron;
+    create table cron.job(jobid bigint generated always as identity, jobname text, schedule text, command text, active boolean default true);
+    create function cron.schedule(n text,s text,c text) returns bigint language sql as $$
+      insert into cron.job(jobname,schedule,command) values(n,s,c) returning jobid $$;
+    create function cron.alter_job(job_id bigint, active boolean) returns void language sql as $$
+      update cron.job set active=$2 where jobid=$1 $$;`);
+  const config = await readFile(new URL('../supabase/operations/media-advice-cleanup.schedule.sql', import.meta.url), 'utf8');
+  await db.exec("set cron.timezone='Europe/Kyiv'");
+  await assert.rejects(db.exec(config), /verify-cron-timezone/); await db.exec('rollback');
+  await db.exec("set cron.timezone='UTC'"); await db.exec(config);
+  const job = (await db.query('select * from cron.job')).rows[0];
+  assert.equal(job.active, false); assert.equal(job.schedule, '15 2 * * *'); assert.equal(job.command, 'select public.media_advice_cleanup();');
+  await assert.rejects(db.exec(config), /review-existing-cleanup-job/); await db.exec('rollback');
+  assert.equal((await db.query('select count(*)::int n from cron.job')).rows[0].n, 1);
 });

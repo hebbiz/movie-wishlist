@@ -26,13 +26,13 @@ export function applyPreview(preview, current) {
 export function createMediaAdvice({ document: doc, entry, context, readForm, writeForm, capability, discover, validateApply = capability }) {
   const dialog = doc.createElement('dialog'); dialog.className = 'media-advice-dialog';
   dialog.setAttribute('aria-label', 'Поради носіїв від Миколи'); doc.body.append(dialog);
-  let session = null, generation = 0, controller = null, capabilityGeneration = 0, returnFocus, scrollY = 0;
+  let session = null, generation = 0, controller = null, capabilityGeneration = 0, selectionToken = null, returnFocus, scrollY = 0;
   const key = c => c && JSON.stringify([c.userId, c.groupId, c.imdbId, c.listId ?? null, c.formSession]);
   const valid = () => session && key(context()) === session.key;
   const node = (tag, text) => { const e = doc.createElement(tag); if (text !== undefined) e.textContent = text; return e; };
   function button(text, action) { const e = node('button', text); e.type = 'button'; e.addEventListener('click', action); return e; }
-  function close() { dialog.close(); if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true }); doc.defaultView.scrollTo(0, scrollY); }
-  function invalidate() { generation++; capabilityGeneration++; controller?.abort(); controller = null; session = null; entry.hidden = true; if (dialog.open) dialog.close(); dialog.replaceChildren(); }
+  function close() { selectionToken = null; dialog.close(); if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true }); doc.defaultView.scrollTo(0, scrollY); }
+  function invalidate() { selectionToken = null; generation++; capabilityGeneration++; controller?.abort(); controller = null; session = null; entry.hidden = true; if (dialog.open) dialog.close(); dialog.replaceChildren(); }
   async function refresh() {
     const c = context(), epoch = ++capabilityGeneration; entry.hidden = true;
     if (!c?.userId || !c.groupId || !/^tt\d{7,10}$/.test(c.imdbId ?? '') || !c.formSession) { invalidate(); return; }
@@ -42,6 +42,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     catch { if (epoch === capabilityGeneration) entry.hidden = true; }
   }
   function render(message) {
+    selectionToken = null;
     dialog.replaceChildren(node('h2', 'Поради Миколи'), button('← До картки', close));
     dialog.append(node('p', 'Це повідомлення джерел, не гарантія доступності чи придбання. Невідоме — не «немає».'));
     if (session.result?.rows?.length) dialog.append(node('p', 'Є варіанти для вашого вибору. Де джерела мовчать, Микола фактів не домальовує.'));
@@ -114,6 +115,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     if (session.result && !session.result.rows?.length) dialog.append(node('p', 'Придатних варіантів джерела не повернули. Це не означає, що фільм недоступний.'));
   }
   function review(row, acknowledged) {
+    const token = selectionToken = {}; // Separate from cached discovery/form generation.
     if (!valid()) return invalidate();
     const before = readForm(), transfer = transferFor(row, acknowledged);
     if (!transfer || transfer.blocked) return render('Потрібне підтвердження tracking/affiliate-переходу.');
@@ -124,7 +126,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const apply = button('Перенести в картку', async () => {
       const epoch = generation; apply.disabled = true;
       let permitted = false; try { permitted = await validateApply(context()); } catch {}
-      if (epoch !== generation || !valid()) return;
+      if (epoch !== generation || token !== selectionToken || !dialog.open || !valid()) return;
       const p = makePreview(row, before, { acknowledged, clearMissing }), changes = applyPreview(p, readForm());
       if (!permitted) { invalidate(); return; }
       if (!changes) { render('Поля змінилися або очищення не підтверджено. Оберіть варіант повторно.'); return; }
@@ -147,5 +149,6 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     returnFocus = doc.activeElement; scrollY = doc.defaultView.scrollY; render(); dialog.showModal();
   });
   dialog.addEventListener('cancel', e => { e.preventDefault(); close(); });
+  dialog.addEventListener('close', () => { selectionToken = null; });
   return { refresh, invalidate, dialog };
 }
