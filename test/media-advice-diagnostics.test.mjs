@@ -96,3 +96,27 @@ test('local failed identity attempts consume count, never trigger provider searc
   const r=await runControlDiagnostic({tmdbToken:'AUTHORED_TMDB_KEY',tavilyKey:'AUTHORED_TAVILY_KEY',fetchImpl:async()=>{calls++;throw Error('PRIVATE_TRANSPORT');}});
   assert.equal(calls,2);assert.deepEqual(r.counts,{tmdb:2,search:0,cards:0,total:2});assert.ok(r.cases.every(c=>c.counts.total===1));assert.doesNotMatch(JSON.stringify(r),/PRIVATE_TRANSPORT|AUTHORED_TMDB_KEY|AUTHORED_TAVILY_KEY/);
 });
+test('local controls count each Tavily 401 once; unknown search counts are not an empty/rejected search',async()=>{
+  const calls=[];
+  const result=await runControlDiagnostic({tmdbToken:'AUTHORED_TMDB_KEY',tavilyKey:'AUTHORED_TAVILY_KEY',fetchImpl:async(url,init)=>{
+    calls.push(url);const u=new URL(url);
+    if(u.pathname==='/3/search/movie'){
+      const second=u.searchParams.get('query')==='Mortal Kombat';
+      return Response.json({results:[{id:IDS[second?1:0],original_title:second?'Mortal Kombat':'Blade Runner 2049',release_date:second?'2021-01-01':'2001-01-01'}]});
+    }
+    if(u.hostname==='api.themoviedb.org'){
+      const second=u.pathname.includes(String(IDS[1])),data=detailsData(IDS[second?1:0]);
+      data.original_title=second?'Mortal Kombat':'Blade Runner 2049';data.release_date=second?'2021-01-01':'2001-01-01';
+      return Response.json(data);
+    }
+    assert.equal(url,'https://api.tavily.com/search');assert.equal(init.headers.Authorization,'Bearer AUTHORED_TAVILY_KEY');
+    return new Response('PRIVATE_ERROR AUTHORED_TAVILY_KEY',{status:401});
+  }});
+  assert.equal(calls.length,6);assert.deepEqual(result.counts,{tmdb:4,search:2,cards:0,total:6});
+  for(const item of result.cases){
+    assert.equal(item.status,'search-auth-error');assert.deepEqual(item.counts,{tmdb:2,search:1,cards:0,total:3});
+    assert.equal(item.resolver.searchCalls,1);assert.equal(item.resolver.cardCalls,0);assert.deepEqual(item.cards,[]);
+    assert.deepEqual(item.resolver.searches,[{status:'search-auth-error',outcome:'provider-error',returned:null,admitted:null,rejected:null,duplicates:null,rejectionCategories:{}}]);
+  }
+  assert.doesNotMatch(JSON.stringify(result),/PRIVATE_ERROR|AUTHORED_TAVILY_KEY|AUTHORED_TMDB_KEY/);
+});

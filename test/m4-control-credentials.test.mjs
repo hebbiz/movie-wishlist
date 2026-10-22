@@ -55,6 +55,8 @@ test('hidden Windows prompt parses and uses stdin/CurrentUserOnly IPC, not a dis
   assert.equal((source.match(/Read-Host .*?-AsSecureString/g)??[]).length,2);
   assert.match(source,/StandardInput\.Write\(\$payload\)/);
   assert.match(source,/StandardInput\.Close\(\)/);
+  assert.match(source,/StandardOutputEncoding = \[Text.UTF8Encoding\]::new\(\$false\)/);
+  assert.match(source,/StandardErrorEncoding = \[Text.UTF8Encoding\]::new\(\$false\)/);
   assert.match(source,/PipeOptions\]::CurrentUserOnly/);
   assert.match(source,/WriteAsync\(\$reportBytes, 0, \$reportBytes.Length, \$deadline.Token\)/);
   assert.doesNotMatch(source,/Set-Content|Out-File|WriteAll|Write-Output|SetEnvironmentVariable|Start-Transcript|ConvertFrom-SecureString|\$env:|HttpListener|TcpListener/);
@@ -79,4 +81,26 @@ test('native Windows current-user-only named pipe hands off authored safe JSON w
     });
     assert.equal(await exited,0,stderr);assert.equal(stderr,'');assert.deepEqual(JSON.parse(text),expected);
   }finally{socket?.destroy();if(child.exitCode===null)child.kill();}
+});
+test('same-SSH safe-result reader parses, bounds result and cannot rerun sources or read credentials',{skip:nativeSkip},async()=>{
+  const helper=fileURLToPath(new URL('../scripts/m4-read-control-result.ps1',import.meta.url));
+  const source=await readFile(helper,'utf8');
+  const code=`$tokens=$null; $errors=$null; [void][Management.Automation.Language.Parser]::ParseFile('${helper.replaceAll("'","''")}',[ref]$tokens,[ref]$errors); if($errors.Count){exit 1}`;
+  const parse=spawnSync(pwsh,['-NoProfile','-EncodedCommand',Buffer.from(code,'utf16le').toString('base64')],{encoding:'utf8',timeout:10_000});
+  assert.equal(parse.status,0,parse.stderr);
+  assert.match(source,/PipeDirection\]::In/);assert.match(source,/131072/);
+  assert.match(source,/completed-controls-not-historical-reconstruction/);
+  assert.match(source,/ConvertTo-Json -Depth 30 -EscapeHandling EscapeNonAscii/);
+  assert.doesNotMatch(source,/Read-Host|TMDB_READ_ACCESS_TOKEN|TAVILY_API_KEY|m4-control-diagnostic|node\.exe|https?:|Invoke-WebRequest|Invoke-RestMethod|Set-Content|Out-File|WriteAll|SetAccessControl|SetEnvironmentVariable|\$env:/);
+});
+test('UTF-8 child JSON and ASCII reader output preserve authored aliases under legacy CP866',{skip:nativeSkip},async()=>{
+  const source=await readFile(new URL('../scripts/m4-control-password-prompt.ps1',import.meta.url),'utf8');
+  const outputEncoding=source.match(/^\s*\$start\.StandardOutputEncoding = .*$/m)?.[0];
+  assert.ok(outputEncoding,'helper must explicitly decode Node UTF-8 output');
+  const authoredText='Authored Дені Вільнев — тест',node=process.execPath.replaceAll("'","''");
+  // Process-local console code page only; no chcp/system setting, network or real keys.
+  const code=`$ErrorActionPreference='Stop'; $previous=[Console]::OutputEncoding; try { [Console]::OutputEncoding=[Text.Encoding]::GetEncoding(866); $start=[Diagnostics.ProcessStartInfo]::new(); $start.FileName='${node}'; $start.UseShellExecute=$false; $start.RedirectStandardOutput=$true; ${outputEncoding}; $start.ArgumentList.Add('-e'); $start.ArgumentList.Add('process.stdout.write(JSON.stringify(${JSON.stringify(authoredText)}))'); $child=[Diagnostics.Process]::Start($start); try { $text=$child.StandardOutput.ReadToEnd();$child.WaitForExit();if($child.ExitCode -ne 0){throw 'authored child failure'}; $decoded=ConvertFrom-Json -InputObject $text; ConvertTo-Json -InputObject $decoded -EscapeHandling EscapeNonAscii } finally { $child.Dispose() } } finally { [Console]::OutputEncoding=$previous }`;
+  const result=spawnSync(pwsh,['-NoProfile','-EncodedCommand',Buffer.from(code,'utf16le').toString('base64')],{encoding:'utf8',timeout:10_000});
+  assert.equal(result.status,0,result.stderr);assert.equal(JSON.parse(result.stdout),authoredText);
+  assert.match(result.stdout,/\\u[0-9a-f]{4}/i);assert.doesNotMatch(result.stdout,/[^\x00-\x7f]/);
 });

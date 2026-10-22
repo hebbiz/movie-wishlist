@@ -62,6 +62,8 @@ try {
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
     $start.StandardInputEncoding = [Text.UTF8Encoding]::new($false)
+    $start.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
+    $start.StandardErrorEncoding = [Text.UTF8Encoding]::new($false)
     $start.ArgumentList.Add($runnerPath)
     $start.ArgumentList.Add('--live-control')
     $start.ArgumentList.Add('--credentials-stdin')

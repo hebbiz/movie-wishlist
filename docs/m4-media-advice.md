@@ -106,7 +106,7 @@ errors, at most6 per case.45s per-case source deadline; no retries/redirects,
 MOTN, Watch Providers, production proxy, destination fetch, DB or Wishlist write.
 This local bounded harness is not a replacement for the deployed atomic ledger.
 
-**Actual control attempt:** blocked before dispatch, both
+**Earlier credential-free preflight:** blocked before dispatch, both
 `TMDB_READ_ACCESS_TOKEN` and `TAVILY_API_KEY` absent in the local process. Both
 cases not-run; TMDb0 / Tavily0 / Kinobaza0, total0/12. No identity/result or new
 historical root cause is claimed. Existing Netlify Functions-only Secret values
@@ -114,7 +114,7 @@ are not an exportable local credential handoff; no value read, printed, copied
 or changed. This zero-attempt result predates the owner's authorization of
 one-time local hidden input; it is not an executed live control.
 
-**Hidden local continuation prepared:** `scripts/m4-control-password-prompt.ps1`
+**Hidden local continuation implemented:** `scripts/m4-control-password-prompt.ps1`
 requires PowerShell7, the installed Node22+ and an exact `-ExpectedCommit` checkout
 with no tracked modifications. Two `Read-Host -AsSecureString` inputs immediately
 start the existing controls, once; do not restart after an uncertain/interrupted
@@ -130,17 +130,87 @@ After completion the helper clears credential references and keeps only the
 minimal safe diagnostic result in a single current-user-only **local named pipe**
 `mw-m4-controls-198`, for up to15 minutes including transfer. No TCP listener or
 result archive. Leave the prompt window open and notify Codex immediately;
-Codex retrieves the result from that pipe and records only needed findings in
-this section/PR. Receiver failure does not authorize another source run. Local
+the result can be received in the same Windows token context, with only needed
+findings recorded in this section/PR. Receiver failure does not authorize another source run. Local
 checkout SHA is reported separately, never as deployed runtime attestation.
 The final copyable CMD/Termius command must pin the actual helper commit SHA
 with `-ExpectedCommit`; no source credential value belongs in that command.
-Hidden entry/control execution remains pending until the owner runs it.
+The owner executed the authorized hidden-input controls; evidence follows below.
 No owner movie retest or Netlify secret export is requested.
-Prompt continuation checks: **14/14** targeted tests passed (strict stdin/EOF,
-malformed/oversize/cancelled input, no env fallback, authored child errors with
-zero network traffic, PowerShell7 AST and native current-user-only named-pipe
-round trip, existing diagnostics/cap12/withholding). This is not live validation.
+
+**Result-handoff limitation:** owner subsequently reported `local prompt
+completed`; reading the existing pipe from the agent returned `Access denied`,
+including outside the sandbox and with a standard read-only pipe client.
+Windows `CurrentUserOnly` checks account **and elevation level**. Different
+SSH/desktop token contexts are a plausible explanation, not an independently
+proven exact token diagnosis. Same-context native authored IPC tests did not
+cover this boundary. Server ACL is not loosened, no process-memory dump/debugger
+attachment and no source rerun. `scripts/m4-read-control-result.ps1` is a bounded
+read-only receiver for a **second terminal in the same SSH context** while the
+original helper still waits; it prints only the already-sanitized diagnostic
+JSON for handoff, with no credential prompt, HTTP call or file write. The owner
+successfully used it and pasted a safe result excerpt; the excerpt is truncated
+in the second case, not an independently captured/complete machine JSON artifact.
+No ACL change or source rerun was used to recover it. Expiry/lost results would
+not authorize repeating the controls.
+
+**Executed control result — 2026-10-23:** local checkout
+`62c4a9a401899e29cd319af6f055bbd12661297b`, run
+`3d9890e2-ca7b-4132-baa0-5586f719da11`, `execution=local-diagnostic`,
+`buildSha=null`. This is owner-executed local diagnostic evidence, not deployed
+runtime attestation or a reconstruction of historical pilot responses.
+
+| Control | TMDb attempts | Tavily attempts | Kinobaza GET | Stop / evidence |
+| --- | ---: | ---: | ---: | --- |
+| Blade Runner 2049 | 2 | 1 | 0 | Both TMDb responses HTTP200; Tavily HTTP401 / `search-auth-error`. Explicit identity: TMDb335984, IMDbtt1856101, original title Blade Runner 2049,2017, English director alias Denis Villeneuve. |
+| Mortal Kombat (2021 control) | 2* | 1 | 0 | Resolver fragment shows `search-auth-error`, one search/no cards. Its per-case attempts/IDs/year were omitted in the pasted excerpt. |
+| Total | 4 | 2 | 0 | **6/12 attempts**; failed search attempts counted. |
+
+\* Mortal's TMDb2 (and total3) is arithmetic from the aggregate minus the fully
+shown Blade Runner case, not a directly pasted per-case counter. Its visible
+`search-auth-error` maps only to HTTP401 in the adapter; the actual HTTP status
+entry is omitted. Reaching search implies the harness's preceding TMDb gates
+passed, but omitted identity values are not reconstructed or added to catalogue.
+
+**Established stop:** Tavily authentication rejection, before successful search
+results, URL admission or any Kinobaza identity/extraction. The request uses
+`Authorization: Bearer <key>`; the existing adapter maps HTTP401 to
+`search-auth-error` and immediately stops without an alternative query, retry,
+Brave/Gemini fallback or card GET. Exact credential/account reason is unknown;
+the error body is intentionally discarded. A syntactically admitted local key
+is not evidence of a working Tavily credential. This result does **not** establish
+that the Netlify credential has the same problem; no configured secret is read
+or changed. Search `returned/admitted/rejected/duplicates=null` means provider
+counts unavailable, **not** an empty response/all URLs rejected. Resolver
+`candidates=0` is not proof there are no cards. Historical Blade Runner admission
+and Mortal title-refusal causes therefore remain unknown. No observed/expected
+Kinobaza title/director comparison was possible because card GETs were zero.
+
+**Local diagnostic encoding fix:** Node emits UTF-8, but the original PowerShell
+wrapper did not set child stdout decoding. The reported Cyrillic garbling is
+reproducible by decoding authored UTF-8 as CP866; this is a supported local
+handoff defect, not evidence of malformed upstream director aliases. The wrapper
+now explicitly uses UTF-8 for redirected stdout/stderr, and the read-only reader
+emits ASCII-escaped JSON to survive legacy CMD/SSH code pages. The exact point(s)
+of historical display corruption are not fully attested. Node's in-process
+matching/search data and HTTP authorization policy are unchanged; output encoding
+does not explain the Tavily401. No attempt is made to repair pasted names into
+new aliases. No new source calls were made for this fix.
+
+Next prerequisite is a valid Tavily credential/account check by its holder, not
+a parser/search-policy change. No key is requested in chat and no automatic
+source repeat is authorized by the unused part of the cap. No new owner pilot
+or additional paste is needed to establish this stop; any further live
+continuation must explicitly account for the six spent attempts and its scope.
+
+Final continuation checks: **32/32** targeted credential/diagnostics/resolver
+tests passed. They include strict stdin/EOF, malformed/oversize/cancelled input,
+no env fallback, authored child errors with zero network traffic, PowerShell7 AST,
+native same-context current-user-only named-pipe round trip, read-only receiver,
+Unicode preservation under process-local CP866, exact6 accounting for two mocked
+401 controls with unknown provider counts/no retries/cards, existing cap12,
+withholding, admission and source isolation. These are not live validation or
+proof of SSH/desktop cross-token IPC compatibility.
 Source adapters, resolver policy, serverless ledger and application lifecycle
 remain unchanged; no new full browser/Windows-demo lifecycle run is needed for
 this isolated credential wrapper.
