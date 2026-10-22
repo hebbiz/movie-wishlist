@@ -111,6 +111,10 @@ process.
 implemented or documented v1.3.1 scope.
 - [M4 media advice implementation and activation boundaries](docs/m4-media-advice.md)
 - [M4 same-document return state and expiry boundaries](docs/m4-media-advice.md#same-document-m4-return-state--2026-10-23)
+- [M4 pilot diagnostic corrections and bounded controls](docs/m4-media-advice.md#pilot-diagnostics-and-bounded-controls--2026-10-23)
+  — historical MOTN `unknown` reports do not prove missing API language data.
+  New diagnostics are offline-tested; local live controls require a secure
+  credential handoff and have made zero source requests so far.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   prepared only; five pilot films still unselected.
 

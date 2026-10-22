@@ -2,11 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import { discoverMedia } from '../lib/media-advice-service.mjs';
 import { createKinobazaResolver } from '../lib/kinobaza-resolver.mjs';
 import { createDeadline, HandlerDeadline } from '../lib/media-advice-deadline.mjs';
+import { mediaRuntime } from '../lib/media-advice-runtime.mjs';
 const uuid = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 const reply = (status, payload) => new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
 
 export function createMediaAdviceHandler({ client, env, run = discoverMedia, fetchImpl = fetch, resolver, deadlineOptions } = {}) {
-  return async request => {
+  return async (request, context) => {
     const deadline = createDeadline(deadlineOptions);
     if (request.method !== 'POST') return reply(405, { status: 'method-not-allowed' });
     const origin = request.headers.get('origin');
@@ -58,6 +59,7 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
       const receipt = await finish(); // Revocation suppresses late results too.
       result.metrics ??= {};
       result.metrics.ledgerReservations = Array.isArray(receipt.attempts) ? receipt.attempts.length : null;
+      result.runtime = mediaRuntime(context); // Never read build/run identity from browser JSON.
       const serialized = JSON.stringify(result);
       if (['SUPABASE_SERVICE_ROLE_KEY', 'TMDB_READ_ACCESS_TOKEN', 'MOTN_API_KEY', 'TAVILY_API_KEY'].map(env).filter(Boolean).some(secret => serialized.includes(secret))) return reply(502, { status: 'unsafe-source-content-withheld' });
       return reply(200, { result });

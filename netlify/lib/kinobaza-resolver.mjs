@@ -1,4 +1,5 @@
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { safeSearchDiagnostic, safeIdentityDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
 export function resolverQueries(film) {
@@ -7,8 +8,26 @@ export function resolverQueries(film) {
   return names.map(name => [quote(name), Number.isInteger(film.year) ? film.year : '', text(film.directorAliases?.[0]) ? quote(text(film.directorAliases[0])) : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' '));
 }
 export function admittedCandidates(items) {
+  return candidateDiagnostics(items)?.urls ?? null;
+}
+export function candidateDiagnostics(items) {
   if (!Array.isArray(items) || items.length > 20) return null;
-  return [...new Set(items.map(item => admitKinobazaURL(item?.url)).filter(Boolean))];
+  const urls = [], seen = new Set(), diagnostics = { returned: items.length, admitted: 0, rejected: 0, duplicates: 0, rejectionCategories: {} };
+  for (const item of items) {
+    const accepted = admitKinobazaURL(item?.url);
+    if (accepted) { if (seen.has(accepted)) diagnostics.duplicates++; else { seen.add(accepted); urls.push(accepted); diagnostics.admitted++; } continue; }
+    let reason = 'invalid-url'; const original = item?.url;
+    if (typeof original !== 'string') reason = 'non-string';
+    else if (original.length <= 512) try {
+      const u = new URL(original);
+      reason = u.protocol !== 'https:' ? 'unsafe-scheme' : u.username || u.password ? 'credentials' :
+        /^https:\/\/[^/]*:\d/.test(original) ? 'port' : u.hostname !== 'kinobazaua.com' ? 'foreign-host' :
+        u.search || original.includes('?') ? 'query' : u.hash || original.includes('#') ? 'fragment' :
+        !/^\/titles\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.pathname) ? 'unsupported-path' : 'unsupported-spelling';
+    } catch {}
+    diagnostics.rejected++; diagnostics.rejectionCategories[reason] = (diagnostics.rejectionCategories[reason] ?? 0) + 1;
+  }
+  return { urls, diagnostics };
 }
 // Replaceable ordinary Web Search interface: candidate URLs only. Snippet/rank
 // never enter identity, availability, localization, reports or draft.
@@ -47,19 +66,19 @@ export function tavilySearch(apiKey, fetchImpl = fetch) {
         // results is not a successful empty search. Content/score are discarded.
         const valid = data && !Array.isArray(data) && Array.isArray(data.results) && data.results.length <= 5 &&
           data.results.every(item => item && typeof item === 'object' && !Array.isArray(item) && typeof item.url === 'string');
-        const urls = valid ? admittedCandidates(data.results) : null;
-        return urls ? { status: 'ok', urls } : { status: 'search-invalid-response', urls: [] };
+        const accepted = valid ? candidateDiagnostics(data.results) : null;
+        return accepted ? { status: 'ok', urls: accepted.urls, diagnostics: accepted.diagnostics } : { status: 'search-invalid-response', urls: [] };
       } catch { if (reader) void reader.cancel().catch(() => {}); return { status: combined.aborted ? 'search-timeout-no-retry' : 'search-transport-or-json-error', urls: [] }; }
       finally { clearTimeout(timer); }
     },
   };
 }
 
-export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch } = {}) {
+export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, onIdentityDiagnostic } = {}) {
   return async (film, { reserve, fetchImpl, calls, signal }) => {
     const queries = resolverQueries(film), cards = [];
-    const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, cards: [] };
-    const done = (status, result = null, choices = []) => ({ status, result, choices, resolver: summary });
+    const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
+    const done = (status, result = null, choices = []) => { summary.status = resolverStatuses.has(status) ? status : 'unknown'; return { status, result, choices, resolver: summary }; };
     if (!apiKey) return done('not-evaluated-missing-search-key');
     if (!queries.length) return done('not-evaluated-no-established-title');
     const searchFetch = async (url, init) => {
@@ -73,6 +92,7 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch } 
     for (let i = 0; i < queries.length; i++) {
       if (signal?.aborted) return done('resolver-deadline-bounded');
       const found = await provider.search(queries[i], { signal });
+      summary.searches.push(safeSearchDiagnostic(found.status, found.diagnostics));
       if (found.status !== 'ok') return done(found.status); // No alternate for errors.
       urls = [...new Set((found.urls ?? []).map(admitKinobazaURL).filter(Boolean))];
       if (urls.length) break; // Alternate only after empty admitted result.
@@ -88,9 +108,10 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch } 
         summary.cardCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
         try { const r = await fetchImpl(target, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('card-transport'); }
       };
-      const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal });
+      const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic });
       cards.push(result);
-      summary.cards.push({ identity: result.identity?.status ?? 'unresolved', reason: result.identity?.reason ?? null, extraction: result.status, candidates: result.candidates?.length ?? 0 });
+      summary.cards.push({ identity: result.identity?.status ?? 'unresolved', reason: result.identity?.reason ?? null, extraction: result.status, candidates: result.candidates?.length ?? 0,
+        diagnostics: safeIdentityDiagnostic(result.identity?.diagnostics) });
     }
     const confirmed = cards.filter(c => c.identity?.status === 'matched');
     if (confirmed.length > 1) return done('multiple-confirmed-cards-choose', null, confirmed);
