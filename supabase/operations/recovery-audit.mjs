@@ -42,6 +42,13 @@ try {
     } else if(!tables.has(pointer)||(table.relkind==='r'&&!data.has(pointer))) notArchived.push(pointer);
   }
   const storageObjects = inventory.counts.find(c=>c.schema==='storage'&&c.name==='objects');
+  const fk=(table,target)=>inventory.constraints.some(c=>c.schema==='public'&&c.table_name===table&&c.contype==='f'&&target.test(c.definition));
+  const users=/REFERENCES (?:auth\.)?users\(/;
+  const groups=/REFERENCES (?:public\.)?groups\(/;
+  const movies=/REFERENCES (?:public\.)?movies\(/;
+  const profiles=/REFERENCES (?:public\.)?profiles\(/;
+  const profileToUsers=fk('profiles',users);
+  const capturedKeyRelationships={groupMembershipToGroups:fk('group_members',groups),groupMembershipToUsers:fk('group_members',users)||(fk('group_members',profiles)&&profileToUsers),movieGroupListToGroups:fk('movie_group_lists',groups),movieGroupListToMovies:fk('movie_group_lists',movies)};
   let nativeExportsNoWarnings=true;
   for(const name of ['database','roles-before','roles-after']) {
     const diagnostic=JSON.parse((await decryptSmallArtifact(file(name+'-diagnostics.aesgcm'),key)).toString('utf8'));
@@ -53,16 +60,28 @@ try {
     rolesStableDuringExport:status.rolesStableDuringExport,
     applicationAndManagedNonExtensionTablesAccountedFor:notArchived.length===0&&ambiguous.length===0,
     allSnapshotCountsReadable:unreadable.length===0,
+    capturedKeyRelationships,
     authSchemaAndDataRepresented:toc.includes('TABLE DATA auth '),
     storageSchemaAndDataRepresented:toc.includes('TABLE DATA storage '),
     extensionOwnedTablesOutsideArchive:extensionTableExclusions.length>0,
     extensionOwnedTableExclusions:extensionTableExclusions,
-    localMissingExtensionBinaries:missingExtensions,
+    windowsClientBundleMissingExtensionBinaries:missingExtensions,
     storageObjectFiles:'not exported; SQL metadata does not establish object-store completeness',
-    localDataRestore:'not attempted; protected encrypted staging not verified',
-    sourceCountComparisonToRestore:'not performed; no restored target',
+    localDataRestore:'no dated restore evidence found',
+    sourceCountComparisonToRestore:'not established by archive authentication alone',
     scopeQualifiedRecoveryReady:false
   };
+  const restored=(await readdir(config.directory)).filter(x=>/^restore-\d{4}-\d{2}-\d{2}T.*\.status\.json$/.test(x)).sort().at(-1);
+  if(restored){
+    const r=JSON.parse(await readFile(file(restored),'utf8'));
+    Object.assign(summary,{restoreEvidence:restored,localDataRestore:r.actualRestore?'executed in isolated PG17; see comparison boundaries':'not completed in this dated attempt',
+      sourceCountComparisonToRestore:r.rowCounts===true?'passed captured snapshot counts':'not verified',restoredCopyDataMatches:r.copyData===true,
+      restoredRolesMatch:r.roles===true,restoredAclMatches:r.aclEffective===true,restoredSchemaSqlMatches:r.schemaSql===true,
+      restoredForeignKeysValidated:r.relationships===true&&r.catalog?.constraints===true,
+      restoredTargetNativeDependenciesVerified:r.nativeDependencies===true,scopeQualifiedRecoveryReady:r.verified===true});
+  }
+  const cleaned=(await readdir(config.directory)).filter(x=>/^restore-cleanup-.*\.status\.json$/.test(x)).sort().at(-1);
+  if(cleaned){const c=JSON.parse(await readFile(file(cleaned),'utf8'));summary.temporaryEnvironmentRemoved=c.temporaryEnvironmentRemoved===true;summary.originalEncryptedBackupPreserved=c.encryptedBackupPreserved===true;}
   const auditName='audit-'+new Date().toISOString().replaceAll(/[^0-9TZ]/g,'')+'-'+randomUUID().slice(0,8);
   const auditFile=file(auditName+'.aesgcm');
   await encryptBytes(Buffer.from(JSON.stringify({summary,notArchived,ambiguous,extensionTableExclusions,unreadable,storageObjects},null,2)),auditFile,key);
