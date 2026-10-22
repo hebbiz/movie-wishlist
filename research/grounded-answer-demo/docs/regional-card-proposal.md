@@ -4284,4 +4284,13 @@ MEGOGO remains an optional unresolved direct-characteristics research source,
 not a prerequisite to define source/field provenance, unknowns/conflicts and
 manual account evidence in the [design-only shared model](#shared-offer-observation-model--design-only).
 No automatic adapter, aggregation/runtime model, discovery→fetch pipeline or
-implementation handoff is authorized by that conclusion. MW-FUT-01 remains Discovery.
+implementation handoff was authorized by that historical conclusion. MW-FUT-01 remains Discovery.
+
+## M4 application integration status
+
+The authorized application integration is recorded once in
+[M4 implementation and activation plan](../../../docs/m4-media-advice.md).
+M4.1/M4.2/M4.3 are default-off, offline/mock-tested implementation work, not
+production activation or completion of MW-FUT-01. Research source boundaries
+and historical observations above are unchanged. The automatic resolver does
+not resolve the historical original-title/markup refusals.
