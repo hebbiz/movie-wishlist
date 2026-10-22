@@ -59,7 +59,7 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
       result.metrics ??= {};
       result.metrics.ledgerReservations = Array.isArray(receipt.attempts) ? receipt.attempts.length : null;
       const serialized = JSON.stringify(result);
-      if (['SUPABASE_SERVICE_ROLE_KEY', 'TMDB_READ_ACCESS_TOKEN', 'MOTN_API_KEY', 'BRAVE_SEARCH_API_KEY'].map(env).filter(Boolean).some(secret => serialized.includes(secret))) return reply(502, { status: 'unsafe-source-content-withheld' });
+      if (['SUPABASE_SERVICE_ROLE_KEY', 'TMDB_READ_ACCESS_TOKEN', 'MOTN_API_KEY', 'TAVILY_API_KEY'].map(env).filter(Boolean).some(secret => serialized.includes(secret))) return reply(502, { status: 'unsafe-source-content-withheld' });
       return reply(200, { result });
     } catch (error) {
       // One best-effort finish, never a retry/refund. A lost RPC reply may still
@@ -70,4 +70,4 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
   };
 }
 const env = key => globalThis.Netlify?.env.get(key) ?? process.env[key] ?? '';
-export default createMediaAdviceHandler({ env, resolver: createKinobazaResolver({ apiKey: env('BRAVE_SEARCH_API_KEY') }) });
+export default createMediaAdviceHandler({ env, resolver: createKinobazaResolver({ apiKey: env('TAVILY_API_KEY') }) });
