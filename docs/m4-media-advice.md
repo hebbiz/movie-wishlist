@@ -19,7 +19,7 @@ source boundaries remain in [research proposal](../research/grounded-answer-demo
 **Completed:** #190–#195 consolidated through merge commits; develop branch
 deploy ready; exactly the two reviewed migrations applied to the existing shared
 Supabase database, with history and post-checks verified. **Not completed:**
-real-user authenticated Netlify capability smoke and feature assignment.
+real-user authenticated Netlify capability smoke success and feature assignment.
 The owner explicitly authorized those operations; no repeat general approval is
 required. The authorized new M4 DDL/history writes are recorded below; no
 historical SQL/RLS, flag, cleanup, secret or Wishlist write was performed.
@@ -152,15 +152,40 @@ sessions0, assignments0, sessions0, scheduled-run records0. No Wishlist/movie
 or permission data was deleted. This verifies the cleanup function, **not the
 scheduler firing**. First scheduled run is due **2026-10-23T02:15Z** (05:15 Kyiv).
 
-**Authenticated smoke availability:** the available browser session opened the
-actual develop `app.html` and showed only the Google login screen. No existing
-authenticated tab was available, and no password/bearer was requested in chat,
-extracted or fabricated. A dedicated develop tab was handed to the owner for
-normal sign-in; no discovery or form/Wishlist writes. This is a concrete
-authentication-context blocker, not missing authorization for smoke.
+**Authenticated smoke — 2026-10-22:** the initially signed-out develop tab was
+handed off; the owner then completed normal sign-in. The authenticated app/list
+loaded. Opening one existing card for edit (no field changes/Save) triggered its
+normal capability request at **20:16:15.934Z**. Netlify request observability
+confirmed one POST to the develop `media-advice` function, HTTP **401**, not the
+expected post-authentication/default-off denial403. The entry stayed hidden.
+
+A narrowly filtered Supabase log query established **GET `/auth/v1/user`,401,
+`UNAUTHORIZED_UNREGISTERED_API_KEY`**; comparing only the subject to the exact
+authorized UUID returned true. Thus the user's sign-in/identity is not the
+blocker: the upstream gateway rejected the server API key. No bearer, key value,
+raw log/header/body or extra personal field was read/exported. Current handler
+supplies that API key from `SUPABASE_SERVICE_ROLE_KEY`. Wrong/stale/revoked value
+or deployed context/configuration is **not distinguished** by this evidence.
+Do not claim that an environment variable's presence proves its validity.
+
+Next configuration action, **not executed**: backend operator privately checks
+Netlify Project configuration → Environment variables →
+`SUPABASE_SERVICE_ROLE_KEY`, Functions scope, Branch deploys/develop context,
+against the intended Supabase project. If corrected, redeploy **develop only**
+and repeat only source-free capability smoke. No secret in chat/argv/Git, no
+automatic copying of keys or production/main deployment. This needs no repeat
+user login while the existing session remains valid. No code workaround or
+weaker Auth check is proposed.
+
+The form was cancelled back to the list with no Save. Code path returns401
+before any ledger/source action; read-only post-check20:18:51Z confirmed0
+permissions/0sessions, job still active/0scheduled runs. No Find/source request,
+film lookup, start/reserve/finish or Wishlist write was performed. This is a
+**failed authenticated smoke with a concrete API-key blocker**, not a passed
+default-off test or successful Netlify→RPC connectivity.
 
 **Activation holds, not missing authorization:** existing first-scheduled-run
-and authenticated smoke gates remain unfulfilled; independent ongoing monitoring
+and successful authenticated smoke gates remain unfulfilled; independent ongoing monitoring
 arrangement remains unestablished and no person/duty/time is assigned. Do not
 silently count the direct call as a scheduled run or create an enabled flag.
 Current Tavily customer-application/account scope, Kinobaza arbitrary-card rights
@@ -1329,9 +1354,11 @@ Activation remains **conditional**, not pilot-ready approval:
    APM/log-drain/body-capture verification; env context metadata confirmation.
 3. MW recovery scope-qualified; both exact migrations/history and live DB
    privileges/default-off/post-data checks completed as recorded above.
-   Real-user authenticated Netlify capability smoke remains unperformed because
-   the available browser has no signed-in session; direct service-role SQL
-   smoke is not a substitute for that Auth path. Normal sign-in tab is handed off.
+   Real-user Netlify capability smoke was attempted after successful sign-in,
+   but failed401: upstream Auth `UNAUTHORIZED_UNREGISTERED_API_KEY`. Privately
+   reconcile the deployed server key/context and repeat source-free smoke after
+   an authorized develop-only redeploy. Direct service-role SQL is not a
+   substitute for this Auth path. No secret/config/deploy change made here.
 4. Cleanup job activated under the subsequent explicit approval; one direct
    function check passed/heartbeat advanced. First scheduled run is pending,
    independent ongoing monitoring unspecified (no automated alerting or assigned
