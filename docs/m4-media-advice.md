@@ -197,8 +197,8 @@ matching/search data and HTTP authorization policy are unchanged; output encodin
 does not explain the Tavily401. No attempt is made to repair pasted names into
 new aliases. No new source calls were made for this fix.
 
-Next prerequisite is a valid Tavily credential/account check by its holder, not
-a parser/search-policy change. No key is requested in chat and no automatic
+At that stage, the next prerequisite was a valid Tavily credential/account check
+by its holder, not a parser/search-policy change. No key is requested in chat and no automatic
 source repeat is authorized by the unused part of the cap. No new owner pilot
 or additional paste is needed to establish this stop; any further live
 continuation must explicitly account for the six spent attempts and its scope.
@@ -214,6 +214,79 @@ proof of SSH/desktop cross-token IPC compatibility.
 Source adapters, resolver policy, serverless ledger and application lifecycle
 remain unchanged; no new full browser/Windows-demo lifecycle run is needed for
 this isolated credential wrapper.
+
+**Separately authorised repeat — 2026-10-23:** after suspecting incorrect local
+Tavily input, the owner explicitly approved one new run of the same controls,
+with its own cap12 and no automatic retries/policy change. Owner-forwarded safe
+excerpt: run`5a481f68-1e0f-4b73-83ea-732fa143a4e9`, local checkout
+`20ed54c527ec953b2fa63812225f360d16148a14`, `execution=local-diagnostic`,
+`buildSha=null`. Its Mortal fragment is again truncated and one escaped director
+string is broken by the pasted line wrap; this is not a complete parseable JSON
+artifact. Only visible facts and explicitly identified code-path deductions are
+recorded. No omitted identity/URLs or historical source responses reconstructed.
+
+| Control | TMDb | Tavily | Kinobaza GET | Visible search result / stop |
+| --- | ---: | ---: | ---: | --- |
+| Blade Runner 2049 | 2 | 2 | 0 | All four attempt entries HTTP200. Each search `ok/all-rejected`, returned1/admitted0/rejected1/duplicates0, `unsupported-path:1`. Final `no-admitted-search-candidates`. |
+| Mortal Kombat (2021 control) | 2 | 2 | 0 | Per-case counters visible. Two TMDb200 and first search200 visible; first diagnostic fragment rejected5/duplicates0, `query:1`, `unsupported-path:4`. Second diagnostic complete: `ok/all-rejected`, returned5/admitted0/rejected5/duplicates0, `unsupported-path:5`. Final `no-admitted-search-candidates`. |
+| Repeat total | 4 | 4 | 0 | **8/12 attempts**; no card, MOTN, Watch Providers or destination requests. |
+
+The exact second Mortal HTTP status and its identity values are not visible;
+`ok` establishes a successful 2xx provider result, not an independently pasted
+HTTP200 entry. Dispatching the alternative requires the first search's `ok`
+status with zero admitted URLs; that first outcome/returned count are code-path
+deductions, not restored missing report fields. Blade identity is again explicitly
+TMDb335984 / IMDbtt1856101 / original title Blade Runner 2049 /2017, with English
+director alias Denis Villeneuve. Mortal's stable IDs are not invented.
+
+**What this establishes:** the local Tavily credential/request was accepted in
+this run. Search was non-empty where shown, but **URL admission rejected every
+candidate before HTML retrieval**. It is no longer an auth stop. This does not
+identify the precise cause of the earlier401 or attest Netlify configuration.
+The previous run remains6 attempts; the new run8, so **14 source HTTP attempts
+across two separately authorised runs** (TMDb8/Tavily6/Kinobaza0). They are not
+one run with an enlarged production budget. Unused cap does not authorise a third
+run or more search calls. The historical five-film owner pilot is separate.
+
+**Offline rule audit:** `admitKinobazaURL` accepts only the original exact
+`https://kinobazaua.com/titles/<lowercase-ascii-hyphenated-slug>` spelling, no
+query/fragment, trailing slash, subpage, credentials, explicit port, alternate
+host or encoded/path-normalisation tricks. Diagnostic classification uses the
+first applicable category: scheme → credentials → port → host → query → fragment
+→ normalised pathname shape → spelling. `unsupported-path` proves a failed path
+shape test, **not specifically a trailing slash**, and `query` can mask another
+path problem. Authored examples show trailing slash, subpage, root path,
+underscore/uppercase slug all produce the same broad path category; query on a
+bad subpage is still labelled `query`. None reconstructs a live search URL.
+`duplicates=0` counts no repeated **accepted** URLs, not uniqueness of rejected
+URLs within/across searches. Do not describe these responses as distinct cards.
+
+**Limits / proposed next narrow step:** actual rejected URLs/path components are
+not in this report and were not archived. No evidence yet distinguishes a valid
+card shape rejected too narrowly from a genuinely irrelevant/non-card result;
+admission broadening, slash/query stripping, redirect resolution, alternate
+host support or matching fixes are not justified. No Kinobaza H1/H2/year/director
+comparison ran. Historical Mortal title refusal and the exact historical Blade
+search result remain unknown; this current run is not their reconstruction.
+
+If separately authorised, the smallest next probe is **Blade Runner 2049 only**:
+up to2 TMDb identity calls + **one** Tavily basic call using the same established
+identity/query builder, total≤3; **zero Kinobaza/provider GET**, no alternate
+query/retry/redirect. Inspect rejected URLs only in trusted invocation memory;
+emit bounded allowlisted path-shape facts (title-path vs other, segment count,
+trailing slash, slug grammar/encoding flags, query-present), not query values,
+tokens, snippets, raw responses or a URL archive. Stop on identity ambiguity,
+auth/transport/quota error or no response URLs. That proposal is not executed or
+authorised here; it tests URL-shape admission only, not card identity/extraction.
+No owner pilot repeat or source-policy change is proposed as a substitute for
+the missing evidence.
+
+This checkpoint is **documentation-only**, with8 focused authored offline
+admission/category cases (zero HTTP), local links/anchors and whitespace
+checks. No runtime test-suite rerun for Markdown-only changes; preceding32/32
+targeted checks belong to the unchanged implementation tip, not a new live
+validation. Request bodies/budgets, admission/identity gates, R1/R2, exact URLs,
+acknowledgement, TTL/storage, draft/stale controls and owner checkout unchanged.
 
 Controls keep field comparisons only in invocation memory and emit only minimal
 public identity differences needed to explain a failed gate, not raw bodies,
