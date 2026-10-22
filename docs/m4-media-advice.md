@@ -61,11 +61,10 @@ No current production feature assignment, secret or migration is changed.
 
 ## Pilot (future, not executed)
 
-Choose five actual owner Wishlist films before running; record their identities,
-not a replacement exotic risk set. One trigger per film, no retries. Record
-resolver candidate acceptance, identity outcome, extracted claims, useful links,
-calls/time, intervention, transfer and preservation of manual edits. Missing
-offers are not resolver failure. One brief owner session; no platform sweep.
+No concrete pilot films selected. The single
+[execution runbook](#activation--operation-plan-not-executed) defines selection,
+activation gates, owner-only access, source-free smoke and the later five-film
+pilot; do not substitute research fixtures.
 
 ## Validation and remaining work
 
@@ -220,42 +219,950 @@ against fresh membership/list identity on each RPC, not cascading rate resets.
 
 ## Activation / operation plan (not executed)
 
-1. Review #190 → #191 → successor M4.3 dependency diffs; do not merge/deploy as
-   part of this task. Confirm production migration history separately; apply
-   only the new migration later under explicit authorization.
-2. Complete remaining source-use/account/attribution checks, including the
-   existing TMDb logo and automatic arbitrary-card Kinobaza scope. The dated
-   search-provider public-terms finding below is not permission for Kinobaza content or
-   proof of the owner's actual Order Form, quota or Netlify logging settings.
-3. Tavily **basic Search** replaces Brave; no Brave/Gemini fallback. Reconcile
-   the [Tavily account/end-user conditions](#tavily-search-replacement-2026-10-21)
-   before activation. Owner reports `TAVILY_API_KEY`, `TMDB_READ_ACCESS_TOKEN`
-   and `MOTN_API_KEY` are Secret / Functions / Production + Branch deploys;
-   Supabase URL/service-role configuration is also present. This is
-   owner-reported configuration, not agent inspection of values or runtime
-   attestation. PR Deploy previews lack the new keys: mock-only checks there,
-   not a live-readiness failure or reason to copy secrets. No Brave/Gemini key
-   is needed by this path. Check intended develop branch/function mapping
-   after separately authorized deployment; do not print credentials or make
-   discovery requests merely to test configuration.
-4. Reconcile the actual migration baseline before applying the two new M4
-   migrations. Review the entry-based hosting deadline and lost-outcome behavior.
-   Authorize/configure daily cleanup separately; verify timezone, activation,
-   heartbeat and independent monitor ownership. Native PostgreSQL 17.6 concurrency
-   has passed locally; deployment/provider runtime behavior is not established.
-5. Backend administrator may assign a small per-user, expiring permission using
-   the private permissions table via a trusted server/admin path. No default
-   grant, client toggle, user metadata claim or new legal acknowledgement switch.
-   Keep feature off until these prerequisites and pilot authorization.
-6. Five real Wishlist films, selected before requests; record titles/IDs privately
-   for the pilot, not invented in this document. One form/discovery action each;
-   maximum **10 Tavily calls** inside **40 dispatched source attempts** (5 × 8),
-   normally fewer. No Gemini/other-provider fallback. Search-provider
-   internal traffic and manual browser navigation are separate/unknown.
-   No full responses or platform sweep. Measure added useful claims as well as
-   successful URL resolution; missing offers do not mean resolver failure.
-   Stop for any false identity acceptance, unauthorized access, extra requests,
-   unexpected writes or lost/manual field propagation. Review brief summaries.
+### Execution runbook — preparation checkpoint 2026-10-21
+
+**Prepared, not authorized to execute.** One operational runbook; design remains
+above. Target: Netlify **develop branch deploy** with existing production
+Supabase `mttkectgdqqmejpenkrn`, not a fresh DB. Denys is the deployment/backend
+operator. Owner checkout/demo is excluded. Every mutating step below requires
+the next explicit authorization; do not run commands merely because documented.
+The five pilot films are **not selected**.
+**Execution hold:** the [focused recovery assessment](#focused-recovery-assessment--2026-10-22-m4-qualified)
+clears the MW recovery prerequisite for the two M4 migrations, with explicit
+limits; it does not authorize consolidation/auto-deploy or migrations. All other
+execution prerequisites and the next explicit authorization still apply.
+
+### Recovery checkpoint — 2026-10-22 (blocked)
+
+The heading retains its historical anchor. **Current verdict: recovery is
+sufficient for the two additive M4 migrations, not a full Supabase-project
+recovery guarantee.** The initial [data-pass/ACL-blocker result](#local-restore--2026-10-22-data-verified-acl-blocker)
+is superseded only to that scope by the
+[focused assessment](#focused-recovery-assessment--2026-10-22-m4-qualified).
+Disk encryption is explicitly waived, not a blocker. No production restore,
+migration, consolidation/deploy or activation is authorized by this evidence.
+
+Historical initial inspection time **2026-10-21T21:24:28Z** (2026-10-22 local Kyiv).
+PR #195 remained at `c2d38f6740ec4fd6ae7d6615d1e963c3ce9d1740`,
+base #194 `bdca14f9a06a6e84297f75917c5b009dbf41fa66` before this
+ordinary documentation follow-up. This timestamp is an access check, **not**
+a backup/snapshot time; **at that inspection** no artifact path, size, SHA256
+or restore comparison was available. It is superseded only by the explicitly
+dated evidence below, not by assumed success.
+
+Historical evidence / initial access blocker (subsequently resolved):
+
+- No `pg_dump`, `pg_restore`, `psql`, Supabase CLI or Docker on PATH.
+  The existing isolated native PG bundle supplies `postgres --version=17.6`,
+  but no dump/restore/psql executables were found in that bundle.
+- No PG connection/password/service environment configuration, default Windows
+  pgpass or service file was present (presence-only checks, no values read).
+  No login/export attempt, empty dump or invented checksum was produced.
+- Read-only SQL connector reports role `postgres`, server17.6. This is SQL
+  authorization, **not an exportable password/connection or secure streaming
+  file channel**. Do not extract it, expose source rows through tool/chat output,
+  use server-side files/OS commands, or substitute the Netlify service-role key.
+- Catalog-only inspection: public plus auth/storage/realtime and
+  cron/extensions/graphql/graphql_public/net/vault schemas exist. Extensions:
+  pg_cron1.6.4, pg_net0.20.4, pg_stat_statements1.11, pgcrypto1.3, plpgsql1.0,
+  supabase_vault0.3.1, uuid-ossp1.1. M4 schema/history table still absent.
+  No user rows, role-password hashes, decrypted Vault values or Storage files
+  were fetched. Core PG17.6 presence does not prove Supabase extension parity.
+
+**Required access, no password in chat:** in this project's Supabase Dashboard
+→ **Connect → Session pooler**, configure the displayed host, port **5432**,
+database **postgres**, user **postgres.mttkectgdqqmejpenkrn** and TLS. Use the
+existing DB password via a hidden local prompt or owner-restricted Windows
+`%APPDATA%\postgresql\pgpass.conf` / `PGPASSFILE`, not command arguments,
+source files, chat or public artifacts. Do not guess the regional pooler host.
+Direct connection from Connect is an alternative only when network access is
+established. Do not use transaction pooling (6543) for coordinated snapshots.
+Do not reset the production password, create roles or change grants under
+this authorization. Existing privileged read/export access is needed; a
+limited account must fail rather than silently omit RLS-protected tables.
+Portable PG17 client tools are also required before export can begin.
+
+#### Local tools / hidden password handoff — prepared 2026-10-22
+
+The earlier access-check findings above are historical, not current tool status.
+Owner confirmed Session pooler host
+`aws-1-eu-north-1.pooler.supabase.com`, port5432, database`postgres`,
+user`postgres.mttkectgdqqmejpenkrn`. PR #195/base #194 were rechecked before
+this follow-up; no owner-checkout or production changes.
+
+- Official EDB portable archive `postgresql-17.11-5-windows-x64-binaries.zip`
+  installed under `%LOCALAPPDATA%\MovieWishlist\RecoveryTools\pg17.11\pgsql`.
+  `pg_dump`, `pg_restore`, `psql` report **17.11**, same major as source17.6.
+  No installer, system service or PATH change. Download SHA256:
+  `80379B2C04D51C30225532E0AE04509899141E9957ED096FE749D7FD9DF8F82F`.
+  This is a local integrity hash of an official HTTPS download, not an
+  independently published vendor checksum or a database-backup checksum.
+- The initial Windows-root-only TLS probe refused the Supabase private CA;
+  no password or SQL was sent. The CA download URL was then verified against
+  [Supabase dashboard source](https://github.com/supabase/supabase/blob/master/apps/studio/hooks/custom-content/custom-content.json).
+  Public `prod-ca-2021.crt` file SHA256:
+  `700723581420DD1AC98FD7E9AC529F0EF210EADCAF87FC868A3AD7D114C2F3B7`.
+  The helper pins that downloaded CA file for this operation. No machine-wide
+  trust-store modification or permissive certificate callback.
+- TLS preflight passed with the explicit Supabase CA, chain/validity and exact
+  pooler-hostname verification. Native PG17 `sslmode=verify-full` also reached
+  `fe_sendauth: no password supplied`, the expected password-free stop before
+  authentication/SQL. This proves TLS setup, **not privileged DB access**.
+  CRL/OCSP revocation is not attested; no CRL is configured. Do not silently
+  downgrade to `require`/`verify-ca` to work around future errors.
+- [Local password prompt](../supabase/operations/recovery-password-prompt.ps1):
+  Windows PowerShell7+, `Read-Host -AsSecureString`; fixed pooler only;
+  no password in argv, parent environment, Git, console or plaintext file.
+  A bounded read-only `psql -X -w` check verifies database/role/major before
+  saving a **DPAPI CurrentUser-encrypted** credential handoff under
+  `%LOCALAPPDATA%\MovieWishlist\Recovery\mttkectgdqqmejpenkrn\pending`.
+  The directory has protected owner/SYSTEM-only DACL; reparse-point ancestors
+  are refused. A pending handoff is never overwritten. Brief plaintext copies
+  in the local child-process environment/memory are unavoidable; they are not
+  protected from a compromised same-user/admin process. Do not run with a
+  terminal transcript/session recording or in CI.
+- This is a two-stage local handoff, **not an automatic backup runner**.
+  The operator enters the password locally and reports only completion.
+  The next authorized recovery operation must check `pending.json` project,
+  successful read-only/TLS evidence and `expiresAt` before importing
+  `credential.pending.clixml` under the same Windows user/machine. Expiry is
+  two hours after creation, not a scheduled deletion: refuse expired use and
+  remove the exact credential file on consumption/failure/abandonment; do not
+  retain it with backups. Never print/decrypt it into tool arguments or logs.
+  DPAPI depends on this Windows profile/machine and is **not** a portable
+  disaster-recovery key. The eventual backup needs its own protected/tested
+  encryption and recovery-key procedure under the contract below.
+
+Launch in an ordinary, non-recorded PowerShell terminal using the prepared
+isolated checkout (no update/switch of the owner's working copy):
+
+```powershell
+& 'C:\Users\DenysLis\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe' -NoProfile -File 'C:\Users\DenysLis\.codex\visualizations\2026\09\28\01a0e7c4-3dc8-75e0-a3ed-84a709483b8d\mw-m2-ab-implementation\supabase\operations\recovery-password-prompt.ps1'
+```
+
+Offline authored regression passed: private/reapplied DACL, child-only secret
+with no argv exposure, fixed verify-full/read-only configuration, DPAPI
+round-trip, bounded-expiry metadata, refusal to overwrite and explicit
+`backupCreated=false` / `restoreVerified=false`. At that preparation stage,
+real-password entry, backup, snapshot/count capture and local restore were
+still pending; see the executed checkpoint below for subsequent evidence.
+The prompt itself performs no production writes/migrations or restore.
+Official references: [EDB portable binaries](https://www.enterprisedb.com/download-postgresql-binaries),
+[Supabase psql TLS](https://supabase.com/docs/guides/database/psql),
+[PostgreSQL17 SSL verification](https://www.postgresql.org/docs/17/libpq-ssl.html).
+
+Owner prompt follow-up (2026-10-22): the screenshot reports an earlier psql
+exit2 and a later successful psql execution followed by the generic
+`Unexpected database identity, server major, or read-only setting` refusal.
+The later refusal establishes neither a wrong password nor which metadata
+check failed: those values were deliberately not retained. At that failed-run
+inspection no credential handoff existed; no backup/restore had run.
+
+Narrow helper correction: the access query now explicitly runs
+`BEGIN READ ONLY; SET LOCAL statement_timeout = '15s'; ...; ROLLBACK;`,
+rather than relying solely on startup `PGOPTIONS` for transaction mode.
+Wrong database, unexpected role, non-PG17 and a non-read-only transaction
+still refuse credential capture. Refusals now use fixed allowlisted codes:
+`database-not-expected`, `role-not-expected`, `server-major-not-17`,
+`transaction-not-read-only`, `malformed-metadata`; no raw JSON, stderr,
+role names or other server-returned text is echoed. Client-side startup
+options not reaching the server is a possible explanation, **not an attested
+root cause for this owner's pooler connection**. PostgreSQL's explicit
+[read-only transaction mode](https://www.postgresql.org/docs/17/sql-begin.html)
+does not depend on that explanation. Reuse the same local launch command;
+no checkout switch/update or password reset is needed.
+Authored offline diagnostics/DPAPI/DACL tests passed. A fresh isolated native
+PostgreSQL17.11 test also reproduced the old refusal when the session default
+is read-write, then accepted the explicit read-only query with unchanged
+database/role/major checks. This is a controlled local reproduction, not proof
+that the pooler dropped the owner's startup options. The local fixture cluster
+was stopped; no production connection or real password was used in these tests.
+
+#### Executed backup — 2026-10-22 (local restore blocked)
+
+Owner subsequently completed the local prompt. The handoff's database/role/
+PG17/read-only evidence and two-hour expiry were checked privately. One TLS
+evidence object was validated explicitly (the older helper also emitted empty
+pipeline values; those are not accepted as verification). The helper now
+suppresses those non-secret extra outputs. The password was consumed via
+DPAPI/current-user memory and child environment only; the exact
+`credential.pending.clixml` was **deleted**, and non-secret handoff metadata
+was moved into the checkpoint. No password reset, grants or Netlify secrets.
+
+Actual checkpoint:
+
+- Source **PostgreSQL17.6**, clients **17.11**. Session pooler with verified
+  Supabase CA/hostname; explicit `REPEATABLE READ READ ONLY`, `row_security=off`
+  so unreadable/RLS-filtered counts cannot silently pass. Exported snapshot
+  held for dump and per-table counts; role/global definitions captured separately.
+- Snapshot UTC **2026-10-21T22:13:53.045Z** (Kyiv **2026-10-22 01:13:53**).
+  DB archive completed **2026-10-21T22:14:15.839Z**; snapshot released and
+  archive verification completed **22:14:17.980Z**. These are actual operation
+  times, not prior access-check timestamps.
+- Protected directory (outside Git/owner checkout/preview/OneDrive):
+  `C:\Users\DenysLis\AppData\Local\MovieWishlist\Recovery\mttkectgdqqmejpenkrn\checkpoint-20261021T221351Z-432dc0a6`.
+  Protected, inheritance-disabled DACL verified: current Windows owner + SYSTEM.
+  **AES-256-GCM** direct streaming, random nonce per file, authenticated header
+  and tag; no plaintext DB archive/staging file was created.
+- Separate key:
+  `%LOCALAPPDATA%\MovieWishlist\RecoveryKeys\checkpoint-20261021T221351Z-432dc0a6.key.dpapi`.
+  Owner/SYSTEM ACL verified. Independent reload/unprotect and archive
+  authentication passed under this Windows profile. **DPAPI is machine/profile
+  dependent**: this is not a portable/off-device disaster-recovery copy. Protect
+  that profile/key; moving ciphertext alone to another computer is insufficient.
+- Snapshot schema/table/constraint inventory and per-table counts are retained
+  **encrypted**, never in Git/report. All inventoried counts were readable.
+  Archive TOC accounts for every inventoried non-extension table, including Auth
+  and Storage data entries. This is coverage validation, **not** restored-row,
+  schema-definition, sequence, grant/RLS or FK/orphan comparison.
+- `pg_dump` custom archive and both `pg_dumpall --roles-only --no-role-passwords`
+  exports exited0 with empty stderr (no export warnings). Role definitions/
+  memberships were unchanged between exports
+  after removing pg_dumpall's random `\restrict` markers. All retained encrypted
+  artifacts authenticated; manifest hashes matched. `pg_restore --list` and
+  full `pg_restore --file=NUL` archive reading exited0, no SQL execution.
+  **Archive reading/decryption is not a database restore.**
+
+| Encrypted artifact | Bytes | SHA256 |
+| --- | ---: | --- |
+| `database.aesgcm` | 629292 | `a09a6d3079ebf22b42ff7b0af47406bff14bc8552005ebac6d0bf2fde99104f5` |
+| `roles-before.aesgcm` | 5701 | `5f5a77ed7b5f4a8d2fb24e952998ed9dcc08f9dab8caaa45dc724e7520b949ff` |
+| `source-inventory.aesgcm` | 58281 | `cd3235cc7a5902309783162e0b0689ad0f7b454d6061907ba3d6a77b01d899c7` |
+
+`status.json` and dated `audit-*.status.json` privately record all artifact
+names/sizes/hashes. Detailed TOC, diagnostics, source counts/constraints and
+coverage audit remain encrypted. Export completion is labelled `backupComplete`;
+it does **not** assert a complete Supabase-project backup or recovery readiness.
+Retain this checkpoint and its separate wrapped key until explicit owner-approved
+disposal; no automatic backup deletion/scheduler was introduced.
+
+**Historical local-restore prerequisites (subsequent authorization below):**
+
+1. EFS on the newly created empty test directory returned **"The request is not
+   supported"**. `manage-bde -status C:` was read-only but returned **access
+   denied / administrative rights required**. Therefore disk encryption is
+   **unknown**, not proven off or on. No real-data cluster or plaintext archive
+   was created under that earlier authorization. The owner subsequently
+   **explicitly authorized decryption/local restore without disk encryption**.
+   BitLocker/Device Encryption is no longer a prerequisite. Owner/SYSTEM-only
+   staging, network isolation and deletion of temporary plaintext remain required;
+   deletion is not a forensic-wipe guarantee (including SSD/pagefile remnants).
+2. Installed vanilla Windows PG17 lacks `pg_cron`, `pg_net`, `supabase_vault`
+   extension controls/binaries. This historical prerequisite was subsequently
+   addressed in an isolated Linux VM with real native modules; no stubs or
+   silently omitted extension errors. No Docker/system service was installed.
+
+The capture/audit stage above did not execute SQL restore. It is superseded by
+the dated test below, not retroactively relabelled as restore evidence. Another
+production connection/password is not needed to decrypt/test this immutable copy.
+Do not repeat the backup just to retry local restore. Auth/Storage service-level
+validation remains unperformed; production DDL/migrations, deployment,
+flags/scheduled cleanup and historical RLS remain untouched.
+
+#### Local restore — 2026-10-22 (data verified; ACL blocker)
+
+Actual final VM run started **2026-10-22T01:41:52.529Z**. The native driver
+completed and its first comparison was recorded at **01:43:58.716Z**. A final
+offline comparison of those outputs was recorded at **07:01:00.993Z**; that is
+**not a second SQL execution or a newer source snapshot**. The original source
+snapshot remains **2026-10-21T22:13:53.045Z**.
+
+Target/preparation, not a production Supabase restore:
+
+- Portable QEMU11.1/Alpine Linux VM, `-nic none`, no port forwarding/monitor/VNC;
+  PostgreSQL **17.6** listening only on a guest-local mode0700 Unix socket,
+  `listen_addresses=''`. No Docker entrypoint, Auth/Storage/Realtime services,
+  source-provider requests or new production connection. BitLocker is not required
+  under the owner's explicit waiver. All staging was owner/SYSTEM-only outside Git.
+- Official `supabase/postgres:17.6.1.054` amd64 image, pinned manifest
+  `sha256:e884cde9f5594ddb30ebec888bd236d128eaf9c9b48cc864d8fa3d27a6c6c6bc`.
+  The initial OCI unpack command reached its20min bound; no complete-container
+  image claim is made. Actual required PG/compiler/modules were inspected and
+  exercised, and the exact locale payload was recovered from verified layer50.
+- All seven extension versions matched the source inventory. Image pg_net0.19.5
+  was not presented as compatible with source0.20.4: real **pg_net0.20.4** was
+  built offline from official commit `698fb055f666366a78c112b0578b0a5652ddbcfa`.
+  Native dependencies for all seven modules were checked. PG17.11 Linux clients
+  were used for the final full-archive restore/schema/data redump, matching the
+  export's minor generator version (server remains17.6).
+- PostgreSQL17 initially rejected an exported `GRANTED BY` under the separately
+  named bootstrap. The final target uses the exported platform grantor as its
+  initial bootstrap, plus a distinct local operator role. Only the duplicate
+  `CREATE ROLE` for that pre-existing bootstrap is omitted from a private replay
+  copy; original encrypted roles/ALTER attributes/GRANT statements are unchanged.
+  Full role/membership redump matched after removing only the local operator and
+  client-version/random-restrict metadata. Source system OIDs were not captured.
+  This reconciles the local target, not proof of a source bootstrap OID.
+- Actual native pg_net0.20.4 requires preload. Its real, unmodified worker is
+  confined to untouched **template1**, **batch_size=0**, never the restored DB.
+  The worker is **present**, not falsely reported absent. Source code allows0
+  and consumes queue rows with that bound. Native checks confirmed isolation,
+  zero processing setting and an empty restored HTTP queue. Cron
+  `launch_active_jobs=off` throughout; no restored jobs ran. Import sessions use
+  `session_replication_role=replica` to prevent normal webhook/Vault triggers.
+  Independent no-NIC isolation prevents external HTTP even if an unexpected hook
+  exists. No playback, source API, webhook destination or production calls.
+
+| Native comparison | Actual result / boundary |
+| --- | --- |
+| Full archive SQL execution | Completed with stop-on-error; final run used unfiltered full `pg_restore17.11`, not a partial application-only restore. Earlier preparation failures are retained privately, not called successful restores. |
+| Snapshot table counts and data | PASS: every compared table count and sorted COPY-record fingerprint matched, including Auth and Storage SQL records. Only the two explicitly excluded net queue/cache tables are outside archived-data fidelity. No row counts/content in Git. |
+| Sequence state | PASS against captured archive `setval` state, not an assertion about later production changes or atomic MVCC sequence snapshots. |
+| Catalog structure | PASS for schema/table inventory, owners, RLS/force-RLS flags, extension membership/version inventory and constraint definitions/validation flags. This is not a blanket pass for all SQL serialization. |
+| Key relationships | PASS: all restored FKs checked for orphans. Captured FK coverage includes group membership→groups/users and movie-group-list→groups/movies; source/target constraint definitions match. No undeclared relationships or Auth service behavior are inferred. |
+| Roles/memberships | PASS for captured logical attributes/memberships, without role passwords. Source role/global definitions were stable during export. |
+| Object ACLs | **FAIL globally**: PostgreSQL `aclexplode`/`acldefault` comparison retains grantee, grantor, privilege and grant option, including NULL/default semantics. Later exact enumeration found **two schema mismatches and zero table mismatches**. The earlier statement about extension-owned table mismatches was an empty-set `every()` diagnostic, not evidence of any such mismatch. |
+| Full schema SQL | **FAIL**: normalized schema redump is not identical even with matched17.11 client. Remaining differences were not exhaustively classified; no blanket column/index/function/trigger/privilege fidelity claim. |
+| Auth/Storage/Vault services | Not tested; SQL rows restored, no service entrypoint, object bytes or project-root-key recovery. |
+
+**Historical blocker, subsequently scoped below:** permission/schema fidelity of the local Supabase-compatible
+target is not established. Different managed/extension initial privileges are a
+**hypothesis**, not an attested root cause. The source snapshot did not independently
+capture `pg_init_privs` or every extension-member function/column ACL baseline.
+Do not change/ignore ACL assertions, manually grant broader privileges, or call
+this checkpoint fully recovery-ready because data alone matched. A bounded next
+step is to compare the retained source/target ACL evidence against the relevant
+extension/bootstrap initialization, then test a supported, source-preserving
+reconciliation locally. Any additional privileged source-catalog capture requires
+separate approval; no password in chat. No new M4 research/owner evaluation is
+needed for this recovery issue.
+
+Evidence and cleanup:
+
+- Original ciphertext/key paths and hashes above are unchanged. Dated
+  `restore-*.status.json` plus authenticated `restore-*-details.aesgcm` and
+  `restore-*-comparisons.aesgcm` remain in that protected checkpoint directory.
+  They retain private catalog/count/ACL diagnostics and comparison fingerprints,
+  not public SQL/data or a Git archive. Original capture `status.json` remains
+  immutable historical evidence; the latest dated restore result supersedes its
+  old "not attempted" state. Updated offline audit reads both stages explicitly.
+- **2026-10-22T07:02:45.8977708Z**: stopped VM/PG, validated exact temporary
+  path/process/reparse boundaries, removed the entire disposable VM/software/
+  plaintext staging directory. Original AES archive SHA256 and separate wrapped
+  key preservation checked afterward; all retained AES-GCM artifacts authenticated
+  again. Logical deletion, **not forensic secure erase** of SSD/pagefile remnants.
+- Actual driver SHA256
+  `ff74facf85b6689f32ac1fa00fa6dab95e674a131b7fe89ac2965d4945dc1fce`
+  matched the normalized worktree helper before deletion. This is content
+  provenance for that native run, not an invented runtime Git-commit attestation.
+- [VM/operator helper](../supabase/operations/recovery-vm.mjs),
+  [private staging/comparison](../supabase/operations/recovery-local.ps1),
+  [native ACL queries](../supabase/operations/recovery-acl-checks.mjs) and
+  [exact cleanup](../supabase/operations/recovery-local-cleanup.ps1) are a pinned
+  operator test harness, **not a production restore/provisioning service**.
+  Authored helper tests are separate from the actual database evidence above:
+  **7 authored tests passed**, including console refusal after private staging,
+  GCM tamper/wrong-key handling, COPY comparison and native ACL-query generation.
+  JS/PowerShell syntax and local links/anchors checked (13docs/439links/267anchors,
+  no errors); whitespace/scope checked. Application/browser/Windows demo lifecycle
+  suites were not repeated: no application, launcher or deployment code changed.
+
+References: [official Supabase PG image](https://hub.docker.com/r/supabase/postgres),
+[pg_net0.20.4 preload/worker configuration](https://raw.githubusercontent.com/supabase/pg_net/698fb055f666366a78c112b0578b0a5652ddbcfa/src/worker.c),
+[queue consumption bound](https://raw.githubusercontent.com/supabase/pg_net/698fb055f666366a78c112b0578b0a5652ddbcfa/src/core.c),
+[PG17 role grantor/bootstrap rules](https://www.postgresql.org/docs/17/sql-grant.html),
+[initial privileges catalog](https://www.postgresql.org/docs/17/catalog-pg-init-privs.html).
+
+#### Focused recovery assessment — 2026-10-22 (M4 qualified)
+
+**Decision:** the existing copy demonstrates recovery of the MW objects/data
+needed before `20261020205122_media_advice_access_ledger.sql` and
+`20261021072002_media_advice_review_fixes.sql`. This is a **scope-qualified
+recovery checkpoint**, not permission to apply them. Original source inventory,
+archive and comparison failures remain unchanged; no expected ACL was weakened.
+No production connection, new snapshot, M4 SQL, flag or scheduler was executed.
+
+**Exact ACL differences, final full PG17.6 restore:** 66 native schema/table
+comparisons; 64 equal, the following two differ. All inventoried table ACLs
+match, including MW/public, Auth, Storage and extension-owned tables.
+
+| Object / ownership class | Captured source → restored target | Cause / MW impact |
+| --- | --- | --- |
+| `graphql`, Supabase-managed, owner `supabase_admin` | Source: owner `USAGE,CREATE`; `postgres` `USAGE WITH GRANT OPTION`; `anon`, `authenticated`, `service_role` `USAGE`, all granted by `supabase_admin`. Target: NULL ACL = owner defaults only; those four explicit grantee entries absent. | Inventory contains these grants, but the authenticated archive's schema SQL has **no SCHEMA ACL entry/grants for this schema**. A clean target cannot recreate omitted grants. This removes explicit schema access/grant option, not an RLS or MW-table change. |
+| `graphql_public`, same managed ownership (not proved extension membership) | Identical source grants and target omission as `graphql`. | Same archive omission. GraphQL callers need schema USAGE in addition to function EXECUTE; a function grant alone is insufficient. `BYPASSRLS` does not itself supply schema privileges. No M4 RPC/query uses either GraphQL schema. |
+
+The owner/default entry is unchanged; this is a real grant difference, not ACL
+array ordering. The missing direct `postgres` grant option is distinct from any
+power inherited through other roles. Managed ownership is **not** the same as
+current extension membership: `pg_graphql` is absent from the captured seven
+extensions. Why the exporter omitted these grants (for example an initial-
+privileges baseline) remains unknown: source `pg_init_privs` was not captured.
+That deeper cause is not asserted or needed to identify the omission.
+
+**Narrow procedure correction:** after an offline restore, use
+[the source-validated schema supplement](../supabase/operations/recovery-schema-supplement.mjs)
+for these two schemas only. It requires the exact captured source owner/ACL,
+allows only a default or already-identical target ACL, then grants precisely
+the missing USAGE/grant-option entries **as the original grantor**. Unexpected
+source or target rights cause refusal, not blanket grants/revokes. Re-run native
+`aclexplode` comparison afterward. This is an operator restore step, **not a
+production migration**, and is not imported by the application. Do not apply it
+to the still-live source or claim it repaired the already-deleted PG17.6 VM.
+
+**Targeted native repeat:** completed **2026-10-22T07:43:12.774Z**, Windows
+PostgreSQL **17.11** (same major; earlier full data/extension restore was real
+17.6). Only actual archived MW/public + Auth **schema** and logical roles were
+replayed here; no rows reimported and no M4 migrations. No extension stubs,
+cron/pg_net preload, event-trigger bootstrap, webhooks or source calls. The
+endpoint was **127.0.0.1 only**, random port, random private SCRAM credential,
+protected owner/SYSTEM directory; no LAN listener. This is distinct from the
+earlier no-NIC/socket-only VM. No Auth service or user-token behavior is claimed.
+
+- Both schema ACL omissions reproduced before the supplement; **44/44** scoped
+  schema/table ACL comparisons matched after it, without changing source ACLs.
+- MW/Auth table inventory/owners/RLS flags match independent of catalog ordering.
+- **476 source SQL object blocks** match the redump's object meaning: tables,
+  columns/defaults, indexes, constraints, functions/RPC definitions and archived
+  permissions, triggers, RLS policies and default grants. No changed function,
+  policy or constraint is silently normalized away. Authored tests ensure actual
+  DDL/grant/grant-option changes remain failures.
+- Exactly **two extra serialization blocks** are initdb's `public` schema and
+  its comment, owner `pg_database_owner`; source archive relies on that built-in
+  schema. Owner and effective ACL are checked separately, not inferred from the
+  missing CREATE statement.
+
+**Exact non-semantic SQL differences in that scoped repeat:**
+
+| Serialization difference | Evidence / interpretation |
+| --- | --- |
+| Block `public.sync_social_advice_discovery_for_movie(uuid,boolean,uuid)` | Two following dump-boundary statements, `SET default_tablespace = ''` and `SET default_table_access_method = heap`, occur at a different first-table boundary. They are not function statements. Exact global setting values match separately. |
+| Auth default ACLs for sequences/functions/tables, owner `supabase_auth_admin` | Same complete GRANT statements in a different order; no privilege/grantee/grant-option discarded. |
+| Public default ACLs for sequences/functions/tables, owner `supabase_admin` | Same statements/order-only serialization; the final block also carries the dump-complete comment. |
+| 29 FK `pg_get_constraintdef` strings | `REFERENCES auth.<table>` versus visible unqualified `REFERENCES <table>` under the different inspector/search-path context. Validation flags/actions unchanged; archived and redumped FK DDL explicitly agree on the actual target. Not evidence of a retargeted FK. |
+| Extension versions | All seven matched in the full17.6 restore; no version mismatch is being normalized into a pass. No extension members/binaries were exercised in the later schema-only repeat. |
+
+<details>
+<summary>Exact FK deparser-only differences (auth qualification removed; no other definition change)</summary>
+
+- `auth.users(id)`: auth FKs `identities_user_id_fkey`, `mfa_factors_user_id_fkey`,
+  `mfa_recovery_code_sets_user_id_fkey`, `oauth_authorizations_user_id_fkey`,
+  `oauth_consents_user_id_fkey`, `one_time_tokens_user_id_fkey`,
+  `scim_users_user_id_fkey`, `sessions_user_id_fkey`,
+  `webauthn_challenges_user_id_fkey`, `webauthn_credentials_user_id_fkey`;
+  public FKs `advice_room_participants_user_id_fkey`, `advice_rooms_created_by_fkey`,
+  `groups_created_by_fkey`, `profiles_id_fkey`, `push_subscriptions_user_id_fkey`.
+- `auth.sessions(id)`: `mfa_amr_claims_session_id_fkey`, `refresh_tokens_session_id_fkey`.
+- `auth.mfa_factors(id)`: `mfa_challenges_auth_factor_id_fkey`,
+  `mfa_recovery_code_sets_mfa_factor_id_fkey`.
+- `auth.mfa_recovery_code_sets(id)`: `mfa_recovery_codes_mfa_recovery_code_set_id_fkey`.
+- `auth.oauth_clients(id)`: `oauth_authorizations_client_id_fkey`,
+  `oauth_consents_client_id_fkey`, `sessions_oauth_client_id_fkey`.
+- `auth.sso_providers(id)`: `saml_providers_sso_provider_id_fkey`,
+  `saml_relay_states_sso_provider_id_fkey`, `scim_tokens_sso_provider_id_fkey`,
+  `scim_users_sso_provider_id_fkey`, `sso_domains_sso_provider_id_fkey`.
+- `auth.flow_state(id)`: `saml_relay_states_flow_state_id_fkey`.
+
+</details>
+
+**Dependency/access conclusion:** the two additive M4 migrations reference
+`auth.users(id)`, MW `group_members`, `movies`, `movie_group_lists` and PostgreSQL17
+built-ins (UUID/jsonb/time/advisory locks); none requires GraphQL, pg_net or Vault.
+The full17.6 test already verified snapshot data/COPY fingerprints, sequences,
+roles, all captured FKs and required membership/list/movie relationships. The
+scoped repeat verifies the MW/Auth DDL and archived RPC/RLS/grants, not historical
+RLS correctness (out of scope). Public/Auth schema/table access for `anon`,
+`authenticated`, `service_role` is unchanged from inventory. New M4 private
+tables/RPCs do not yet exist; their explicit service-role-only grants/default-off
+and post-migration checks remain future execution gates. Existing RPCs were not
+invoked; source-independent function/column ACL catalogs were not captured, so
+their proof is archive replay fidelity, not an independent whole-source ACL audit.
+
+**Remaining bounds, not an M4 recovery blocker:** full Supabase schema SQL hashes
+still differ. Target raw SQL from the deleted full17.6 VM was not retained, only
+fingerprints/catalogs; exact differences **outside** the scoped repeat cannot be
+reconstructed from those hashes. They are not relabelled formatting-only or
+asserted harmless for GraphQL/Auth/Storage/Vault service recovery. Requiring that
+entire text to be identical adds no demonstrated protection for the two additive
+M4 migrations after the MW/Auth checks above. Complete-project recovery still has
+the stated Storage bytes, secrets/service-config, managed-function/initial-ACL
+and portable/off-device key gaps. This verdict clears only the MW recovery gate.
+
+Protected evidence: `focused-1792654992781-details.aesgcm`, earlier scoped raw-
+difference proof, and dated authenticated `focused-assessment-*.aesgcm` beside
+the unchanged original backup. The [focused reader](../supabase/operations/recovery-focus.ps1)
+prints only structural evidence/flags, never rows or function bodies. All repeat
+clusters/open copies, including the stopped first harness attempt, were removed;
+original ciphertext and DPAPI key preserved. Logical deletion, not forensic
+erasure. A Windows child-pipe harness issue and missing schema prerequisite in a
+subset attempt were resolved locally, not misreported as backup/data failures.
+No application/browser/owner lifecycle test was needed: no application changed.
+Final checks: **12 authored recovery tests passed**, JS/PowerShell syntax passed,
+13 documentation files /442 local links /268 anchors checked without errors,
+whitespace/scope clean. Subsequent offline audit authenticated every retained
+AES-GCM artifact and original manifest hashes. It reports
+`m4MigrationRecoveryQualified:true` separately from the unchanged historical
+whole-round-trip `scopeQualifiedRecoveryReady:false`/`fullProjectRoundTripVerified:false`.
+
+#### Backup coverage contract — actual capture and exclusions
+
+| Area | Captured scope / explicit exclusion |
+| --- | --- |
+| Application schemas/data | Unfiltered native custom archive. Full17.6 data/counts/sequences/FKs pass plus scoped MW/Auth schema/archived-permission fidelity established above. Sufficient for the two additive M4 migrations, not a blanket Supabase definition/service/permission guarantee. |
+| Auth | Auth schema/data entries included only in encrypted archive, including sensitive account/session/hash records; no rows in Git/report. OAuth/SMTP settings, JWT/API secrets and external Auth service configuration excluded; project encryption-root keys not exported and service-level recoverability not established. |
+| Roles/grants | Separate role/membership exports **without role passwords**, stability/restored logical comparison passed. Exact two managed GraphQL schema ACL omissions identified and source-preserving supplement tested; all original table ACLs match. No independent complete function/column/initial-ACL capture; no production privilege changes. |
+| Extensions / managed schemas | Definitions/version inventory retained; source `pg_cron1.6.4`, `pg_net0.20.4`, `pg_stat_statements1.11`, `pgcrypto1.3`, `plpgsql1.0`, `supabase_vault0.3.1`, `uuid-ossp1.1`. Native logical dump omits non-config extension-owned table contents: specifically `net._http_response`, `net.http_request_queue` (HTTP cache/queue). No claim to preserve in-flight HTTP work. Extension binaries, managed services and Vault/project encryption-root keys excluded; no decrypted Vault export. |
+| Storage metadata | Storage SQL metadata rows/counts matched in native restore. Metadata is not object bytes; service behavior and object-store recovery remain untested. |
+| Storage files | Separate authorized object export with private per-object checksums/count/size verification; **not part of pg_dump**. No files copied or empty-bucket claim established in this checkpoint. |
+| Project configuration | Netlify/Edge deployments, secrets, DNS, Auth-provider settings, service keys and other external configuration are excluded from this DB checkpoint. A database dump is **not a full Supabase-project backup**. |
+
+This is a logical export of database`postgres` plus role definitions, not a
+physical/PITR backup: PostgreSQL system catalogs, WAL, replication-slot runtime
+state and server/OS configuration are not supplied. Object definitions/sequence
+state follow native pg_dump semantics; sequences are not MVCC snapshots of
+concurrent `nextval` activity. Do not infer external service recovery from SQL
+archive completeness.
+
+Actual destination and separate key are recorded above; both ACLs verified.
+The direct-to-encryption stream avoids needing plaintext dump staging.
+For this owner-authorized restore test, disk encryption is explicitly waived.
+Temporary plaintext is allowed only inside the protected disposable environment.
+The full restore used no NIC/TCP; the schema-only repeat used SCRAM loopback only,
+never LAN exposure or external service execution. No plaintext
+staging in Git/owner checkout/transcripts/public artifacts. Do not call private
+filesystem placement encryption. Stop the VM and remove its exact verified
+temporary directory afterward, preserving the original ciphertext and wrapped key;
+do not broadly delete user files or claim secure physical erasure.
+
+#### Resume procedure — only backup and isolated local restore authorized
+
+**Steps1–3 and native4–5 were executed with the boundaries above; step6 is now
+qualified for MW recovery before the two additive M4 migrations, not full-project
+recovery. Do not repeat export or infer execution permission.
+Disk encryption is not a prerequisite under the owner's explicit waiver.**
+Export is a one-use operator command,
+not a scheduled backup or migration tool. [Export wrapper](../supabase/operations/recovery-export.ps1)
+and [worker](../supabase/operations/recovery-export.mjs) use the already prepared
+local `pg` dependency; no product dependency or production code changed.
+
+To recheck the existing ciphertext **offline**, use the same Windows profile:
+
+```powershell
+& '<isolated-checkout>\supabase\operations\recovery-audit.ps1' -Checkpoint 'checkpoint-20261021T221351Z-432dc0a6'
+```
+
+The [audit](../supabase/operations/recovery-audit.ps1) unwraps the separate DPAPI
+key only in memory, passes it through child stdin, verifies original manifest
+hashes and all AES-GCM tags, emits only safe coverage flags, and creates a new
+dated private audit record. No source connection/password or SQL execution.
+The [archive module](../supabase/operations/recovery-archive.mjs) documents the
+format: magic`MWREC01\n` +12-byte nonce +ciphertext +16-byte GCM tag, with
+header as AAD. Authenticate the **whole** file with `verifyArtifact` before
+passing a second decrypt stream to any executing restore; streamed bytes are
+not authenticated until the final tag passes. Wrong key/tampering must stop.
+
+1. Establish the above private connection and PG17 tools. Recheck database/
+   project identity and effective read permissions; no DDL on production.
+   Record UTC start/end and a consistent snapshot boundary privately. Use a
+   held read-only repeatable-read exported snapshot for the database dump and
+   its validation counts so concurrent legitimate writes do not manufacture
+   mismatches; keep its control connection open until exports finish.
+2. Write the logical DB archive directly to the protected location, explicitly
+   inventorying managed/application schemas; export roles without passwords
+   separately. Inspect exit status/warnings and archive table-of-contents in
+   protected files, never stdout/chat. Do not ignore unreadable relations or
+   use schema-only/public-only output as a full DB success. Role/global metadata
+   is separate from the data snapshot; detect/reconcile concurrent role changes.
+3. Record SHA256, byte sizes, exact coverage/exclusions, dump-tool/server
+   versions and snapshot UTC time in a protected manifest. Export Storage bytes
+   separately if full Storage recovery is required; otherwise retain an explicit
+   file-exclusion gap. Verify encrypted artifacts can be decrypted locally.
+   Public documentation may record hashes/status, never bodies or credentials.
+4. Initialize a disposable **local** PG17.6-compatible target, separate directory/
+   cluster and local-only endpoint, no production connection string. Review the
+   archive as executable SQL. Block outbound network; keep cron/pg_net, webhooks,
+   subscriptions and Supabase services from executing external actions.
+   Prepare matching extension/service prerequisites locally before restoring.
+   Restore role prerequisites, then schema/pre-data, data/sequence state and
+   post-data constraints/indexes/ACLs, using stop-on-error and no production
+   `--clean`/restore commands. Never apply the M4 migrations as part of this test.
+   Concretely: authenticate archive +roles file using the saved key; on the
+   protected local target prepare compatible extension binaries with background
+   work/egress disabled; inspect decrypted schema/role SQL privately. Prefer a
+   **guest-local Unix socket, listen_addresses='' and a VM without a NIC**;
+   never use the pooler. Reconcile
+   the initial bootstrap/grantor with the role export (do not blindly replay
+   conflicting CREATE ROLE statements); restore roles/memberships with `psql -X`
+   and `ON_ERROR_STOP=1`. Use authenticated private staging and the matched17.11
+   restore client over the dedicated guest socket. The final actual run uses
+   full `pg_restore --create --exit-on-error` after dropping only initdb's empty
+   local DB **before** preload/worker startup; no production connection/clean.
+   `--create` is not combined with `--single-transaction`. Keep cron off and the
+   required pg_net preload worker in empty template1 with batch_size0/no NIC.
+   Reconcile the two omitted managed schema ACLs using the source-validated
+   supplement above and rerun exact native ACL checks; unexpected ACLs stop.
+   Any omitted/altered role or prerequisite must be recorded; a partial test is
+   not a full pass. This is a procedure, **not a command authorized for production**.
+5. Compare captured and restored schema object inventories/definitions, RLS/
+   grants/ownership, sequence state and **per-table snapshot row counts**,
+   including Auth and Storage metadata. Check validated FKs and explicit orphan
+   checks for group_members→users/groups, movie_group_lists→movies/groups and
+   any other inventoried key relationships. Record only aggregate pass/fail in
+   Git, keeping counts/identifiers/details protected. Historical violations,
+   if any, must remain distinguished from restore-created differences; do not
+   repair historical RLS/data under this task.
+6. If a Supabase extension/managed schema cannot restore on plain PG, report
+   that exact dependency and any separately tested application subset. Do not
+   replace it with a mock/stub or suppress errors and claim full recovery.
+   Native SQL restore cannot validate OAuth/email, object bytes, Realtime,
+   provider-hosted Vault or live Supabase services. Save verified hashes and
+   local comparison evidence before declaring **scope-qualified recovery ready**.
+   Stop/securely remove only the verified disposable target afterward; preserve
+   the encrypted backup. **No production restore is authorized**.
+
+Export/integrity, actual data/relationship checks and the focused MW/Auth
+schema/permission verification establish **scope-qualified recovery for Step2's
+two M4 migrations**, with the complete-project limitations above. This is not a
+claim that the old whole-dump `verified:false` result became `true`.
+No consolidation/deployment/migration/activation follows automatically.
+Relevant official references (checked 2026-10-22):
+[Supabase backup/restore](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore),
+[DB backup limitations](https://supabase.com/docs/guides/platform/backups),
+[PostgreSQL17 pg_dump](https://www.postgresql.org/docs/17/app-pgdump.html),
+[roles/global objects](https://www.postgresql.org/docs/17/app-pg-dumpall.html),
+[private password file](https://www.postgresql.org/docs/17/libpq-pgpass.html).
+
+Original preparation findings (2026-10-21; retained, not new restore evidence):
+
+- PRs #190–#194 are open/mergeable, each head descends from its stated base;
+  develop `acbdadf8efa2d180a12ed3fc85aa7784bb681782`;
+  main `e92392856038e40e6d98c6c8744eed04c4e8dff9`.
+- At exact heads, #190 has Netlify Deploy Preview success, three neutral
+  Netlify checks and skipped Supabase Preview. #191–#194 have skipped Supabase
+  Preview, no commit statuses; no approvals reported on any PR. These are not
+  passing required tests. Rulesets list is empty; branch-protection read is
+  **403**, so effective required checks/approvals/merge policy are **unknown**.
+- Supabase: PostgreSQL **17.6**, UTC; no M4 schema or function-name collisions;
+  migration list empty and history **table absent**, not proof of a blank DB.
+  Required UUID/text columns match. `auth.users`, UUID generation and required
+  roles exist. `pg_cron 1.6.4` is installed, `cron.timezone=GMT`; named M4 job
+  is absent. No DDL/DML or function invocation performed in this review.
+- Netlify site `e4d5295a-0794-40dc-abfa-6e346b04c142`,
+  `denyslisovyi-movies-list`: published production deploy
+  `6ad3ad799a970e3fc942b516` is ready, branch main at the main SHA above.
+  This does not prove configured develop builds. Project tool does not expose
+  build/branch settings, env scopes, APM or log drains. Values were not requested.
+
+### Step 0 — pre-merge operator gates
+
+In the [Netlify project dashboard](https://app.netlify.com/projects/denyslisovyi-movies-list):
+
+| Dashboard location | Required evidence before execution |
+| --- | --- |
+| Project configuration → Developer settings → Continuous deployment → Branches and deploy contexts | Production branch **main**; branch deploy explicitly enables **develop**; record auto-publish/build behavior. A merge into develop may immediately deploy. If not confirmed, stop before final merge; do not change settings silently. |
+| Same area → Build settings; Functions settings | Repository/base/publish directory, Functions directory `netlify/functions`, dependency install and Node **22+**, function bundler, supported synchronous limit. Repo has no `netlify.toml`/build command. Preserve existing settings until reviewed. |
+| Project configuration → Environment variables | Owner reports Tavily/TMDb/MOTN keys Secret, Functions, Production + Branch deploys; Supabase URL/service-role present. Confirm **metadata/context only** (including develop overrides/shared-var precedence); no values/export. New source keys intentionally absent from PR previews. |
+| Analytics & metrics → Log Drains; Extensions / installed APM integrations; Cloud compute → Functions → media-advice (branch filter develop) | Inspect destinations, body/header capture and retention/redaction; never capture bearer/API keys, source bodies/results, query snippets or card/tracking URLs. Tool cannot attest these. Built-in observability extension in published deploy is not proof of third-party APM capture or its absence. |
+
+Check GitHub Settings → Rules → Rulesets / Branches and each PR merge box for
+effective required checks, approvals and merge-commit support. Missing API
+permission is not permission to bypass. If requirements cannot be established,
+pause execution for owner confirmation, not policy changes.
+
+Function/import review: `media-advice.mjs` imports three local libraries, then
+existing research transports/projections/identity and shared URL policy; package
+dependencies include Supabase JS and parse5. Offline import with networking
+disabled and stubbed empty configuration succeeded. No runtime file-read asset
+is needed by this handler. This is **not a Netlify bundle/deploy test**; local
+Netlify bundler is unavailable. Branch build must include the complete import
+closure/dependencies and list `media-advice` alongside existing functions.
+Inspect publish output for secret/server-only artifacts; no env values may be
+inlined. Keep 45s sources / 53s finish margins; no timeout/cap change.
+
+### Step 1 — consolidate with merge commits
+
+Pinned starting refs (full SHAs, not mutable labels):
+
+| PR → base branch | Initial head | Initial base |
+| --- | --- | --- |
+| #194 → codex/m4-gemini-resolver-feasibility | bdca14f9a06a6e84297f75917c5b009dbf41fa66 | 0db059a710bff801e5c455dcc396f06914c156cc |
+| #193 → codex/m4-3-kinobaza-discovery | 0db059a710bff801e5c455dcc396f06914c156cc | c5a09298903957b16360147b3363b8d4db90f195 |
+| #192 → codex/m4-2-media-advice-server | c5a09298903957b16360147b3363b8d4db90f195 | e0817151f73da0f742ee72b77bc23bb709457d7b |
+| #191 → codex/m4-1-media-advice-form | e0817151f73da0f742ee72b77bc23bb709457d7b | bd43cc83319888ff82c7763e48cd9adb36cb453a |
+| #190 → develop | bd43cc83319888ff82c7763e48cd9adb36cb453a | acbdadf8efa2d180a12ed3fc85aa7784bb681782 |
+
+Starting #194 tree: `6ddf25db140829951da748404a9244d6717308e5`.
+This documentation successor is not silently part of that tree: if incorporated
+into #194 first under later approval, repin its head/tree and review that docs
+diff before executing this sequence.
+
+| Merge | Expected source head | Expected target head immediately before merge | Record |
+| --- | --- | --- | --- |
+| #194 → #193 branch | H194 above | H193 above | M1 |
+| #193 → #192 branch | M1 | H192 above | M2 |
+| #192 → #191 branch | M2 | H191 above | M3 |
+| #191 → #190 branch | M3 | H190 above | M4 |
+| #190 → develop | M4 | pinned develop above, re-read immediately | M5 |
+
+Before **each** operation: fetch refs; re-read source **and base** SHA, diff,
+mergeability, reviews and checks at that exact head. Use GitHub merge method
+`merge` with expected source `sha`; no admin/bypass/force/retarget/squash.
+Expected head does not lock base: serialize operators, check base immediately
+before merge and verify returned commit's first parent equals that base and
+second parent equals expected source. After every parent advance, fetch and
+record its new SHA, both parents, tree, ancestry and updated PR diff/checks.
+Tree must equal the starting reviewed tip tree (or explicitly repinned docs
+successor); do not copy old checks to the new SHA.
+
+Before M5, verify the combined develop diff is M4 research-approved integration
+only; both M4 migrations, Tavily selection and #192 fixes are present. Confirm
+ancestry of all pinned heads plus launcher fix
+`e596341f2fdc1203b52b9abae840f7090cef30c0` and R1/R2
+`16461b22f001499720193d6b72df745dc8890a20`; no deletion/reversion of their tests/controls.
+Run full M4 offline/HTTP/Edge suites on assembled M4; native PG17.6 evidence
+can be reused only if SQL/ledger unchanged. After M5 record actual develop SHA,
+tree/parents/ancestry, rerun relevant final checks and read fresh statuses.
+Confirm main SHA and published production deploy unchanged.
+
+**Stop** for any unexpected head/base/tree/diff, conflict, rejected merge,
+missing required approval or failing required check. No automatic restacking.
+M5 also authorizes an auto branch deploy **only if explicitly included in the
+next approval**; do not invoke a manual deploy or build hook here.
+
+### Step 2 — apply only the two M4 migrations (future privileged action)
+
+| File under supabase/migrations | Dependency / SHA256 of reviewed bytes |
+| --- | --- |
+| `20261020205122_media_advice_access_ledger.sql` | Existing auth.users(id), public group_members/movies/movie_group_lists, standard roles and UUID function; creates private schema/two tables/index and two service-only public RPCs. `08b6ecfa102bb3d34d994a29d76412dfb6ad0546c65b4579c2408bd7f4fa825c` |
+| `20261021072002_media_advice_review_fixes.sql` | Requires first file; replaces those RPCs, adds private cleanup_health. `39ab043e86072efe25db55e042945e11fa8cfe7f39d1977e5d55eab65b2cd1b7` |
+
+No dependency on executing 001–016, no existing-row updates or historical
+RLS changes. Recheck object collisions before applying, including **any**
+same-name function signature; these are not idempotent replay scripts.
+Verify hashes against Git blobs/assembled tip (line-ending conversion changes
+byte hashes: establish the reviewed execution-file hash before running).
+Confirm backup/PITR recovery availability privately; no restore is invoked.
+
+Use a **new disposable Supabase CLI work directory containing only these two
+unchanged migration files**, outside owner checkout. Current machine has no
+Supabase CLI/psql in PATH: executing operator must pin/install an approved CLI
+and first inspect `--version` and command `--help`. Planned commands below
+are from the [official CLI reference](https://supabase.com/docs/reference/cli/supabase-migration-up)
+(checked 2026-10-21), not executed here:
+
+```powershell
+supabase migration up --help
+supabase migration list --help
+supabase migration repair --help
+supabase --workdir "$m4Stage" init
+# Copy ONLY the two reviewed files into $m4Stage/supabase/migrations.
+supabase --workdir "$m4Stage" link --project-ref mttkectgdqqmejpenkrn
+supabase --workdir "$m4Stage" migration list --linked
+# STOP unless exactly these two pending versions and no unexpected remote history.
+supabase --workdir "$m4Stage" migration up --linked
+supabase --workdir "$m4Stage" migration list --linked
+```
+
+`$m4Stage` must be a new unique temporary directory, not the repo or an existing
+linked workspace. Authenticate interactively with hidden password input; no
+password-bearing URI/arguments, debug logs or credentials in the runbook/Git.
+Confirm project identity independently before writes. CLI creates its own
+history metadata and applies only pending files in that isolated directory.
+Expected history: **only 20261020205122 and 20261021072002**, reflecting actual
+execution. Do not use general `db push`, `--include-all`, historical replay,
+blanket repair or automatic GitHub/Supabase production migration integration.
+
+Both files contain transaction boundaries. On any error/lost reply **stop**:
+an earlier file may have committed even if history recording failed. Inspect
+actual catalogs/function definitions and history; never blindly rerun.
+Only after proving which exact file executed may an operator use targeted
+`migration repair <that-version> --status applied --linked` in the same
+isolated directory. Do not mark 001–016 applied. Partial execution/history
+reconciliation needs review, not an automatic retry.
+
+Post-checks, with access still off:
+
+- Exactly permissions/sessions/cleanup_health in private schema; RLS enabled,
+  no anon/authenticated schema/table access. No permissions or sessions inserted.
+- Two public RPCs have expected signatures/definitions, SECURITY DEFINER and
+  empty search_path; service_role EXECUTE true, anon/authenticated false,
+  including PUBLIC/inherited grants. Verify pg_proc/proacl and
+  `has_function_privilege`; table grants match migration, cleanup_health is
+  service-role SELECT only. Do not execute start/reserve as a smoke test.
+- Record pre/post definitions/policies of the three existing public tables
+  and private aggregate row counts/fingerprints, not row bodies; compare.
+  Concurrent legitimate app writes require reconciliation, not a claim that
+  counts prove no changes. Static SQL writes only new M4 objects. No lock or
+  owner-demo interruption to manufacture identical snapshots.
+- Check actual two history entries and no new automated cleanup job; capability
+  without assignment must fail closed. Missing RPC/schema-cache visibility is
+  an operations issue to investigate, not permission to replay migrations.
+
+Copyable post-checks (privileged read-only connection, **after** migrations):
+
+```sql
+select version from supabase_migrations.schema_migrations order by version;
+select c.relname,c.relrowsecurity,
+  has_table_privilege('anon',c.oid,'SELECT,INSERT,UPDATE,DELETE') as anon_access,
+  has_table_privilege('authenticated',c.oid,'SELECT,INSERT,UPDATE,DELETE') as user_access
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='media_advice_private' and c.relkind='r';
+select p.proname,pg_get_function_identity_arguments(p.oid),p.prosecdef,p.proconfig,
+  has_function_privilege('service_role',p.oid,'EXECUTE') as server_execute,
+  has_function_privilege('anon',p.oid,'EXECUTE') as anon_execute,
+  has_function_privilege('authenticated',p.oid,'EXECUTE') as user_execute
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.proname in ('media_advice_action','media_advice_cleanup');
+select (select count(*) from media_advice_private.permissions) as assignments,
+       (select count(*) from media_advice_private.sessions) as sessions;
+```
+
+### Step 3 — daily cleanup and independent control
+
+Operator **Denys** owns activation and daily operations. After both migrations,
+review/run [prepared schedule SQL](../supabase/operations/media-advice-cleanup.schedule.sql)
+only with separate authorization: it creates the named job **inactive** and
+refuses an existing name/non-UTC-equivalent timezone. Then inspect its single
+jobid, command, database/user, `15 2 * * *` and GMT/UTC; activate that exact job
+with `cron.alter_job(<verified-jobid>, active := true)`. No second job or
+extension installation is needed by the observed baseline.
+
+Retention origin is session **created_at**, eligibility after age24h **and**
+expires_at elapsed (normal TTL30min), including unfinished/error sessions.
+Still-active rows are retained and become an overdue finding if anomalously
+old. Daily healthy scheduling expects deletion at age24–48h, **not a guaranteed
+48h bound on scheduler/DB failure**. No movies/Wishlist or permission deletion.
+
+Concrete pilot monitoring: Denys checks **daily at 09:00 UTC**, independently of
+pg_cron, in Supabase SQL Editor using
+[existing health SQL](../supabase/operations/media-advice-cleanup.sql), then
+these read-only checks:
+
+```sql
+select jobid,schedule,active from cron.job
+where jobname='mykola-media-advice-cleanup';
+select status,start_time,end_time from cron.job_run_details
+where jobid in (select jobid from cron.job
+               where jobname='mykola-media-advice-cleanup')
+order by start_time desc limit 3;
+```
+
+Require exactly one correctly configured job and today's scheduled
+run succeeded and heartbeat advanced after02:15UTC; the health query's missing/
+>26h success or age≥48h backlog is actionable too. Record only UTC check time,
+success/overdue count privately. Initial missing heartbeat is expected before
+first run, not permission to skip monitoring. Verify first scheduled success
+before live access; alternatively a separately authorized one-time cleanup
+can test the function but **does not validate scheduler firing**.
+
+This is a **manual control, not automatic alerting**. Denys must explicitly
+accept the duty before pilot, continuing after flag expiry until the final
+session has been cleaned; without coverage postpone access. For a missed/
+failed run, unexpected active job/TTL or overdue records: revoke pilot flag,
+inspect scheduler/DB, perform only authorized cleanup recovery, recheck; no
+source replay or accounting reset. Unattended alerting needs a separate
+approved independent monitor/notification design; none is added or activated
+implicitly. Scheduler cannot report its own complete outage.
+
+### Step 4 — branch deploy verification and source-free smoke
+
+Follow the automatic develop deploy from M5; record deploy ID, context
+`branch-deploy`, branch develop, commit exactly M5 and its HTTPS URL
+(expected convention `https://develop--denyslisovyi-movies-list.netlify.app`;
+use dashboard-reported URL, not an unverified address as evidence).
+Build/functions list must include media-advice with imports/dependencies and
+no secret exposure; check diagnostics without bodies/keys. Published main
+deploy must still be the recorded production one. Failure stops activation,
+not a reason for manual prod publish or policy/secret-scanning bypass.
+
+Future smoke, **no discovery/source calls**:
+
+1. GET media-advice →405; cross-origin POST →403; valid-context POST without
+   bearer →401, malformed context →400; all JSON/no-store, no secrets.
+2. With actual browser login, only `action: capability` for an established
+   film and eligible test group. Before assignment expect denial/hidden entry;
+   ordinary form editing still works. Do not click Find; no start/reserve.
+3. After separately authorized owner assignment, capability true only for
+   that UUID/eligible group; unassigned user/visitor/foreign group denied.
+   Open/close isolated advice without Find: no source requests or form writes.
+   Do not create/delete/modify production group membership for smoke.
+
+Capability uses Auth/RPC, not Tavily/TMDb/MOTN/Kinobaza. It does **not** validate
+source keys or live resolver quality. Do not use existing movie-search as a
+configuration probe. Ordinary read requests and later pilot Save are distinct.
+
+### Step 5 — owner-only, expiring backend assignment
+
+Owner UUID is **not established in this preparation**. Resolve it privately from
+the owner's authenticated Supabase `getUser()` id, corroborate in Authentication
+→ Users and eligible test-group membership. Never infer from display name or
+choose the first auth user. Do not print access tokens or publish email/UUID.
+Also establish the test group/list/film binding; current flag is per-user, not
+a new per-group restriction.
+
+Once all gates pass and activation is authorized: require no other enabled
+M4 permission rows; replace `<VERIFIED_OWNER_UUID>` with that exact UUID and assign
+**2 hours** through privileged SQL/admin, not editable user_metadata:
+
+```sql
+insert into media_advice_private.permissions(user_id,feature_key,enabled,expires_at)
+values ('<VERIFIED_OWNER_UUID>'::uuid,'mykola_media_advice',true,
+        clock_timestamp() + interval '2 hours')
+on conflict(user_id,feature_key) do update
+set enabled=true, expires_at=excluded.expires_at;
+```
+
+Emergency stop / end of pilot — a separate action, same verified UUID:
+
+```sql
+update media_advice_private.permissions
+set enabled=false, expires_at=clock_timestamp()
+where user_id='<VERIFIED_OWNER_UUID>'::uuid and feature_key='mykola_media_advice';
+```
+
+These are **future actions**. Confirm one exact active user/expiry after
+assignment; all others default-off. Revocation
+denies subsequent capability/reserve/finish/apply authorization; an already
+dispatched source request may still have spent its attempt. It does not undo
+earlier user Save or erase already displayed results. No retries/refund.
+
+### Step 6 — pilot, only under subsequent authorization
+
+Select **five concrete real Wishlist films first**; currently none selected.
+Record their real IDs and test-group card bindings privately, not research
+fixtures. One explicit discovery per film, ≤2 Tavily + ≤2 card + ≤4 baseline
+= ≤8 attempts/case, **≤10 Tavily within ≤40 total**. No retries/fallback/
+redirects/destination probes or platform sweep; internal search traffic unknown.
+One select → preview → transfer → ordinary **Save in the test group**, checking
+manual edits and exact acknowledged URL. This one Save is a later authorized
+Wishlist write, not part of preparation/smoke. No claim/track propagation.
+
+Record separately: search URL candidate acceptance; identity matched/refused;
+extraction useful/partial/refused; source-labelled links/localization and
+practical help; application calls/time and intervention; transfer/Save outcome.
+No offers is not resolver failure or evidence of unavailability. Stop for
+false identity, cap/access bypass, unexpected writes, lost edits or unsafe URL.
+No raw responses/HTML/snippets/secrets archive.
+
+### Unresolved prerequisites and evidence boundary
+
+Execution remains **conditional**, not deployment/pilot-ready approval:
+
+1. Effective branch policy/required approvals (403), fresh assembled-tip checks;
+   explicit merge + possible automatic develop deploy authorization.
+2. Dashboard develop/base/publish/functions/bundler/Node configuration and
+   APM/log-drain/body-capture verification; env context metadata confirmation.
+3. MW recovery prerequisite now scope-qualified for only two new migrations;
+   explicit execution authorization, privileged connection/history procedure and
+   live privileges/default-off/post-data checks still required and not yet run.
+4. Explicit cleanup activation/first-run evidence and Denys's independent
+   daily monitoring commitment (no automatic alerting exists).
+5. Exact owner UUID/test group and later bounded backend assignment.
+6. Five real pilot films, still unselected, and separate pilot/Save authorization.
+7. Account/source-use conditions: Tavily §§2/3.5 end-user scope versus an
+   owner-only pilot, actual plan/quota and AUP obligations; Kinobaza automatic
+   arbitrary-card content rights not supplied by Search; existing TMDb/MOTN
+   attribution/commercial/retention requirements. See dated findings below;
+   no blanket clearance, no new runtime legal switch.
+
+Read-only catalog/project/PR review and offline import check passed. No runtime,
+SQL, flag, secret or scheduler change here; prior #194 45-pass/1-skip browser/
+offline and #192 native17.6 evidence stay pinned, not a new run on these docs.
+Markdown-only: verify links/anchors, consistency, scope and whitespace; no
+reason to repeat runtime/Windows suites. Reference docs checked 2026-10-21:
+[Cron](https://supabase.com/docs/guides/cron),
+[migration history repair](https://supabase.com/docs/reference/cli/supabase-migration-repair),
+[function logs](https://docs.netlify.com/build/functions/logs/),
+[log drains](https://docs.netlify.com/manage/monitoring/log-drains/).
 
 ## Verification record
 
@@ -648,38 +1555,14 @@ authorized activation preflight. No new legal toggle/acknowledgement is added.
 
 ### Five-Wishlist-film live plan (prepared, not authorized/executed)
 
-Use the five owner-agreed **actual Wishlist films**, not a new exotic sample
-or the old eight-case research set. Their names/IDs are not in this task's
-provided manifest; do not invent them or fetch the production DB to fill them.
-Freeze those five existing identities privately as P1–P5 before the session;
-this is pilot bookkeeping, not permission to add an evaluation round.
-
-| Case | Private existing Wishlist identity | One action and required brief record |
-| --- | --- | --- |
-| P1 | Owner's agreed film 1 | Open its established form identity; Find once; candidate/identity/extraction outcomes, useful source-scoped claims, calls/time/intervention. One selection → preview → transfer; check exact URL, acknowledgement if needed and retained manual edits. Ordinary Save only if separately authorized. |
-| P2 | Owner's agreed film 2 | Same single discovery; brief outcomes/benefit/unknowns; no repeated transfer drill. |
-| P3 | Owner's agreed film 3 | Same single discovery; keep no-result/refusal in the denominator. |
-| P4 | Owner's agreed film 4 | Same single discovery; record bounded ambiguity/unexamined candidates honestly. |
-| P5 | Owner's agreed film 5 | Same single discovery; final short practical-use summary. |
-
-Per case: TMDb/MOTN ≤4 + Tavily ≤2 + card GET ≤2 = **8** application external
-source attempts. Five cases: **Tavily ≤10**, cards ≤10, baseline ≤20, **total
-≤40**, usually fewer. Account billing/credits are distinct from application
-attempts; actual plan/quota must be confirmed, not assumed free. Provider's
-internal search/network operations are unknown; manual browser traffic is
-separate. Timeout/error spends its reserved attempt; lost responses are not
-permission to rerun. One action per case, no manual retry or platform sweep.
-
-Activation remains separate: review/merge and develop branch deploy approval,
-source-use/account prerequisites above, migration-baseline reconciliation,
-backend-only expiring access and authorized cleanup/monitoring. None executed
-here. During the future session stop on false identity acceptance, access/cap
-bypass, unexpected writes, lost manual edits or unsafe transfer. Auth/quota
-failure stops affected search work without fallback; empty search/refused
-identity/extraction absence is recorded, not repaired by repeating requests.
-Record automatic correct-card finding, matched identity, useful extracted
-claims, application calls/time, user intervention and local-transfer correctness.
-No full HTML/JSON, search snippets or tracking-token archive.
+**Correction:** no five-film manifest has been selected or agreed. Earlier
+P1–P5 labels were placeholders, not agreed films. The
+[execution runbook](#activation--operation-plan-not-executed) is the only
+current operation/pilot sequence: select real Wishlist films before activation,
+≤10 Tavily calls within ≤40 application source attempts, one ordinary Save
+check in the test group. No pilot, preflight discovery or automatic retries
+are authorized here; billing/actual quota and provider internal traffic are
+not established by application counters.
 
 ### Replacement verification
 
