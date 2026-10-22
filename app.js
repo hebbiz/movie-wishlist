@@ -296,6 +296,11 @@ import("./assets/media-advice.mjs").then(({ createMediaAdvice }) => {
     writeForm: fields => { for (const [key, value] of Object.entries(fields)) document.getElementById(key).value = value; },
     capability: async c => (await mediaAdviceRequest("capability", c)).mykola_media_advice === true,
     discover: async (c, { signal }) => (await mediaAdviceRequest("discover", c, signal)).result,
+    renewContext: () => {
+      if (!mediaAdviceContext()) return null;
+      mediaAdviceFormSession = newMediaAdviceFormSession();
+      return mediaAdviceContext();
+    },
   });
   mediaAdviceController.refresh();
 }).catch(() => {}); // Feature failure must not prevent ordinary editing.
@@ -2025,7 +2030,8 @@ const accessMessages = {
 };
 
 async function loadCurrentRole() {
-  invalidateMediaAdvice();
+  // M4-only hook: revalidate this context without discarding its live dialog.
+  mediaAdviceController?.refresh();
   if (!currentUser) {
     currentRole = null;
     return;
