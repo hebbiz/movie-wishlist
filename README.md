@@ -119,6 +119,10 @@ implemented or documented v1.3.1 scope.
   by URL admission (`unsupported-path`/`query`), not by HTML identity. Actual URL
   shapes and historical search/title-refusal causes remain unresolved;
   local checkout provenance is not deployed-runtime attestation.
+  A separately authorised Blade-only URL diagnostic is prepared (TMDb≤2,
+  Tavily≤1, Kinobaza0, total≤3; prior14 separate, cumulative≤17). Hidden entry
+  is pending; it compares safe original/parsed path values without broadening
+  admission or recording query/fragment values.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   prepared only; five pilot films still unselected.
 

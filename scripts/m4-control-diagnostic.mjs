@@ -3,26 +3,31 @@ import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
 import { admitKinobazaURL } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
-import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
+import { createKinobazaResolver, resolverQueries, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
+import { safeSearchDiagnostic } from '../shared/media-advice-diagnostics.mjs';
 import { readControlCredentials } from './m4-control-credentials.mjs';
+import { describeCandidateURL } from './m4-url-diagnostics.mjs';
 
 const controls = [{ title:'Blade Runner 2049' }, { title:'Mortal Kombat', year:2021 }];
 const api = 'https://api.themoviedb.org/3';
 const append = 'external_ids,alternative_titles,credits,release_dates,translations';
 const val = f => f?.state === 'reported' ? f.value : null;
 const normalized = s => typeof s === 'string' ? s.normalize('NFC').trim().toLowerCase() : '';
-export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = fetch } = {}) {
+export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = fetch, urlDiagnostic = false } = {}) {
   const totals = { tmdb:0, search:0, cards:0, total:0 }, cases = [];
-  const base = { execution:'local-diagnostic', buildSha:null, runId:randomUUID() };
+  const limits=urlDiagnostic?{tmdb:2,search:1,cards:0,total:3}:{tmdb:4,search:4,cards:4,total:12};
+  const selectedControls=urlDiagnostic?controls.slice(0,1):controls;
+  const base = { execution:'local-diagnostic', buildSha:null, runId:randomUUID(),mode:urlDiagnostic?'url-diagnostic':'identity-controls',limits,
+    ...(urlDiagnostic?{accounting:{priorAttempts:14,cumulativeMax:17}}:{}) };
   const missing = [['TMDB_READ_ACCESS_TOKEN',tmdbToken],['TAVILY_API_KEY',tavilyKey]].filter(([,v]) => typeof v !== 'string' || !v || /\s/.test(v)).map(([k])=>k);
-  if (missing.length) return { ...base, status:'blocked-missing-local-credentials', missing, counts:totals, cases:controls.map(c=>({film:c.title,status:'not-run',counts:{tmdb:0,search:0,cards:0,total:0}})) };
-  for (const control of controls) {
+  if (missing.length) return { ...base, status:'blocked-missing-local-credentials', missing, counts:totals, cases:selectedControls.map(c=>({film:c.title,status:'not-run',counts:{tmdb:0,search:0,cards:0,total:0}})) };
+  for (const control of selectedControls) {
     const count = { tmdb:0, search:0, cards:0, total:0 }, attempts = [], comparisons = [], seen = new Set();
     const signal = AbortSignal.timeout(45_000); let detailURL;
     const queryURL = `${api}/search/movie?query=${encodeURIComponent(control.title)}&language=uk-UA&include_adult=false&page=1${control.year ? `&year=${control.year}` : ''}`;
     const dispatch = async (url, init) => {
       const type = url === queryURL || url === detailURL ? 'tmdb' : url === 'https://api.tavily.com/search' ? 'search' : admitKinobazaURL(url) ? 'cards' : null;
-      if (!type || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (type === 'search' ? 'POST' : 'GET') || signal.aborted || count[type] >= 2 || totals[type] >= 4 || totals.total >= 12) throw Error('diagnostic-boundary');
+      if (!type || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (type === 'search' ? 'POST' : 'GET') || signal.aborted || count[type] >= 2 || totals[type] >= limits[type] || totals.total >= limits.total) throw Error('diagnostic-boundary');
       count[type]++; count.total++; totals[type]++; totals.total++;
       const attempt = {type,outcome:'dispatched'}; attempts.push(attempt);
       try { const r = await fetchImpl(url,{...init,signal:AbortSignal.any([signal,init.signal].filter(Boolean))}); attempt.httpStatus=r.status; attempt.outcome='response-received'; return r; }
@@ -46,6 +51,19 @@ export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = f
         directorAliases:directors.flatMap(d=>[val(d.name),val(d.originalName)]).filter(Boolean),
         titleAliases:[val(projection.metadata.requestedTitle),val(projection.metadata.originalTitle),...(projection.metadata.alternativeTitles.items??[]).map(a=>val(a.title))].filter(Boolean)};
       item.identity={tmdbId:film.tmdbId,imdbId:film.imdbId,originalTitle:film.originalTitle,year:film.year,directors:film.directorAliases};
+      if(urlDiagnostic){
+        item.urlDiagnostics=[];
+        const provider=tavilySearch(tavilyKey,dispatch,{onCandidateURLs:urls=>{
+          item.urlDiagnostics=urls.map((url,index)=>({index:index+1,...describeCandidateURL(url,{secrets:[tmdbToken,tavilyKey]})}));
+        }});
+        const query=resolverQueries(film)[0];
+        if(!query){item.status='not-evaluated-no-established-title';continue;}
+        const found=await provider.search(query,{signal});
+        item.search=safeSearchDiagnostic(found.status,found.diagnostics);
+        item.status=found.status!=='ok'?found.status:found.diagnostics.returned===0?'url-diagnostic-empty-response':'urls-inspected-no-html';
+        item.cardIdentity='not-evaluated-no-html-fetch';
+        continue;
+      }
       const resolver=createKinobazaResolver({apiKey:tavilyKey,onIdentityDiagnostic:d=>comparisons.push(d)});
       const result=await resolver(film,{fetchImpl:dispatch,signal,calls:[],reserve:async stage=>{if(seen.has(stage))throw Error('repeat');seen.add(stage);}});
       item.status=result.status;item.resolver=result.resolver;
@@ -68,7 +86,7 @@ if (process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   let credentials;
   try {
     credentials=process.argv.includes('--credentials-stdin') ? await readControlCredentials(process.stdin) : {tmdbToken:process.env.TMDB_READ_ACCESS_TOKEN,tavilyKey:process.env.TAVILY_API_KEY};
-    const result=await runControlDiagnostic(credentials);
+    const result=await runControlDiagnostic({...credentials,urlDiagnostic:process.argv.includes('--url-diagnostic')});
     process.stdout.write(JSON.stringify(result,null,2)+'\n');
     if(result.status==='blocked-missing-local-credentials') process.exitCode=2;
   } catch {

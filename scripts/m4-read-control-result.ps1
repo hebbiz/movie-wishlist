@@ -1,4 +1,7 @@
 #Requires -Version 7.0
+[CmdletBinding()]
+param([switch]$Compact)
+
 # Read ONLY the existing sanitized result in the same Windows/SSH token context.
 # No credentials, source calls, runner invocation, files or ACL changes.
 Set-StrictMode -Version Latest
@@ -17,8 +20,11 @@ try {
     }
     $m4Report = $m4Text.ToString() | ConvertFrom-Json -Depth 30
     if ($m4Report.localCheckoutSha -notmatch '^[a-f0-9]{40}$' -or $m4Report.result.execution -cne 'local-diagnostic' -or $m4Report.result.status -cne 'completed-controls-not-historical-reconstruction' -or $m4Report.result.counts.total -gt 12) { throw 'result-contract' }
+    if ($m4Report.result.PSObject.Properties.Name -contains 'mode' -and $m4Report.result.mode -ceq 'url-diagnostic') {
+        if ($m4Report.result.counts.total -gt 3 -or $m4Report.result.counts.tmdb -gt 2 -or $m4Report.result.counts.search -gt 1 -or $m4Report.result.counts.cards -ne 0 -or @($m4Report.result.cases).Count -ne 1 -or $m4Report.result.cases[0].film -cne 'Blade Runner 2049') { throw 'url-diagnostic-contract' }
+    }
     # ASCII JSON escapes preserve Unicode aliases across legacy CMD/SSH code pages.
-    $m4Report | ConvertTo-Json -Depth 30 -EscapeHandling EscapeNonAscii
+    $m4Report | ConvertTo-Json -Depth 30 -EscapeHandling EscapeNonAscii -Compress:$Compact
 } catch {
     Write-Host 'Existing safe result unavailable/expired or access denied. Do NOT rerun source controls.'
     exit 1

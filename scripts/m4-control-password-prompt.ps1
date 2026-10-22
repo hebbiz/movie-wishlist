@@ -2,7 +2,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][ValidatePattern('^[a-f0-9]{40}$')][string]$ExpectedCommit,
-    [switch]$CheckPrerequisites
+    [switch]$CheckPrerequisites,
+    [switch]$UrlDiagnostic
 )
 
 Set-StrictMode -Version Latest
@@ -43,7 +44,8 @@ try {
     # Creating it before prompts prevents a concurrent copy of this helper from dispatching.
     $options = [IO.Pipes.PipeOptions]::Asynchronous -bor [IO.Pipes.PipeOptions]::CurrentUserOnly
     $pipe = [IO.Pipes.NamedPipeServerStream]::new($pipeName, [IO.Pipes.PipeDirection]::Out, 1, [IO.Pipes.PipeTransmissionMode]::Byte, $options)
-    Write-Host 'Two hidden inputs; then ONE run: Blade Runner 2049 and Mortal Kombat (2021), max 12 source attempts.'
+    if ($UrlDiagnostic) { Write-Host 'ONE URL-diagnostic run: Blade Runner 2049 only; TMDb<=2 + Tavily<=1; card GET=0; max3 attempts (prior14 separate).' }
+    else { Write-Host 'Two hidden inputs; then ONE run: Blade Runner 2049 and Mortal Kombat (2021), max 12 source attempts.' }
     Write-Host 'Do not use a transcript/recorded terminal. Do not repeat after an interrupted or uncertain run.'
     $secureTmdb = Read-Host 'TMDB_READ_ACCESS_TOKEN (hidden)' -AsSecureString
     if ($secureTmdb.Length -eq 0 -or $secureTmdb.Length -gt 4096) { throw 'input' }
@@ -67,6 +69,7 @@ try {
     $start.ArgumentList.Add($runnerPath)
     $start.ArgumentList.Add('--live-control')
     $start.ArgumentList.Add('--credentials-stdin')
+    if ($UrlDiagnostic) { $start.ArgumentList.Add('--url-diagnostic') }
     # No inherited source credentials, Node preload/debug hooks or TLS bypass.
     foreach ($name in @('TMDB_READ_ACCESS_TOKEN','TAVILY_API_KEY','NODE_OPTIONS','NODE_PATH','NODE_INSPECT_RESUME_ON_START','NODE_EXTRA_CA_CERTS','NODE_TLS_REJECT_UNAUTHORIZED','NODE_DEBUG','NODE_DEBUG_NATIVE','NODE_V8_COVERAGE','SSLKEYLOGFILE')) { [void]$start.Environment.Remove($name) }
     $child = [Diagnostics.Process]::new()
@@ -79,7 +82,7 @@ try {
     $child.StandardInput.Write($payload)
     $child.StandardInput.Close()
     $payload = $null
-    Write-Host 'Running the two approved controls; no automatic retries.'
+    Write-Host 'Running the approved diagnostic; no automatic retries.'
     if (-not $child.WaitForExit(120000)) { $child.Kill($true); throw 'child-timeout' }
     $resultText = $stdoutTask.GetAwaiter().GetResult()
     # Never print child stderr/exception messages; they are not a safe report channel.
@@ -88,6 +91,7 @@ try {
     if ($child.ExitCode -ne 0 -or $resultText.Length -gt 131072 -or $resultText.Contains($tmdbText) -or $resultText.Contains($tavilyText)) { throw 'unsafe-or-failed-child' }
     $result = $resultText | ConvertFrom-Json -Depth 30
     if ($result.execution -cne 'local-diagnostic' -or $result.status -cne 'completed-controls-not-historical-reconstruction' -or $result.runId -notmatch '^[a-f0-9-]{36}$' -or $result.counts.total -gt 12) { throw 'result-contract' }
+    if ($UrlDiagnostic -and ($result.mode -cne 'url-diagnostic' -or $result.counts.total -gt 3 -or $result.counts.tmdb -gt 2 -or $result.counts.search -gt 1 -or $result.counts.cards -ne 0 -or @($result.cases).Count -ne 1 -or $result.cases[0].film -cne 'Blade Runner 2049')) { throw 'url-diagnostic-contract' }
     # Checkout is local provenance, NEVER deployed-runtime SHA attestation.
     $reportText = @{ localCheckoutSha = $ExpectedCommit; result = $result } | ConvertTo-Json -Depth 30 -Compress
     $result = $null

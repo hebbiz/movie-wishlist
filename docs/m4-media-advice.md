@@ -281,7 +281,76 @@ authorised here; it tests URL-shape admission only, not card identity/extraction
 No owner pilot repeat or source-policy change is proposed as a substitute for
 the missing evidence.
 
-This checkpoint is **documentation-only**, with8 focused authored offline
+**URL-only probe authorised and prepared — 2026-10-23:** the owner subsequently
+approved precisely that one Blade Runner run, with actual safe path evidence.
+`scripts/m4-control-password-prompt.ps1 -UrlDiagnostic -ExpectedCommit <pinned
+SHA>` reuses the hidden stdin credential handoff and immediately runs
+`scripts/m4-control-diagnostic.mjs --live-control --credentials-stdin
+--url-diagnostic`. This is a separate explicit mode, **not** the old two-film
+controls. Before each dispatch it enforces TMDb≤2, Tavily≤1, cardGET=0,total≤3;
+errors spend attempts, no alternative query/retry/redirect. Existing TMDb
+identity selection/crosswalk and the first result of the unchanged
+`resolverQueries` builder are reused; the real bounded Tavily basic adapter
+parses the search response. No second film, MOTN, Watch Providers, card/provider
+fetch or destination resolution. Both Windows helpers validate the cap3,
+Blade-only, card0 result contract. Prior14 attempts remain separate; cumulative
+maximum17. A fresh run UUID is generated on execution; actual run/counts pending
+hidden entry, not claimed as completed or successful.
+
+`tavilySearch` has an optional trusted `onCandidateURLs` callback, receiving only
+up to5 URL strings from a validated response in invocation memory. It is not an
+HTTP/browser parameter and receives no snippets/score/body; normal adapter output
+and admission are computed before it runs, and callback failure/mutation cannot
+alter that output. The ordinary resolver does not supply this hook, so detailed
+paths never enter its client projection, short report, ledger or logs.
+
+Local `scripts/m4-url-diagnostics.mjs` uses the **actual** `admitKinobazaURL`
+decision, with literal expected format, failed original-format check and specific
+differences (trailing slash, additional segments, uppercase/encoded path,
+query/fragment, authority spelling, parser normalization). Only a parsed exact
+`hostname=kinobazaua.com` permits path display. `originalPathname` is sliced from
+the original URL **before** parsing normalization and ends before query/fragment;
+`parsedPathname` is `URL.pathname`. Safe case, percent-escape spelling and final
+slash are preserved in each, with `pathChangedByParser` separately reported.
+This compares values, never rewrites/admits/fetches a normalized URL. Query and
+fragment values/names are absent; only presence flags, including empty`?`/`#`.
+Foreign hosts, userinfo/abnormal authority, oversized or unusual structures are
+withheld explicitly. Secret echoes (including encoded/cross-segment variants),
+token/credential-like labels, emails, UUID/JWT/long opaque or suspicious segments
+are `[withheld]` with a reason; following components are also withheld. Decoding
+is bounded and **detection-only**, never a displayed alias/canonicalization.
+Conservative diagnostic redaction does not change the actual admission decision.
+
+Authored output example only, not a live result: original and parsed path both
+`/titles/Authored-card/`, rejected by `exact-original-url-format`, with specific
+`trailing-slash-not-allowed` and `uppercase-path-not-allowed` differences. A dot
+path shows both the raw and parser-normalized paths instead of silently fixing
+it. Without HTML the result explicitly says `not-evaluated-no-html-fetch`; even
+an accepted pointer is **not** proof of the correct film or source claims.
+
+Use the existing second-terminal same-SSH reader within15 minutes after
+`Controls completed`; optional `-Compact` emits a single JSON line to reduce
+manual copy truncation. It reads only the safe in-memory result with ASCII JSON
+escaping; no key/file/clipboard persistence or archive is added. Keys enter only
+hidden prompts, not command arguments; no Netlify configuration/secrets read or
+changed. Record only minimum safe findings in this section/PR after execution,
+not full HTML/search responses. Existing application retention/TTL, request
+bodies/budgets, `initApp`, draft and production boundaries are unchanged.
+
+URL-mode preparation validation: **44/44** targeted offline/HTTP/helper tests
+passed, including real query-builder/admission reuse, cap3 with valid/empty/error
+results, identity-stop accounting, no card/alternative/destination request,
+literal vs parser-normalized path, empty query/fragment markers, foreign host/
+userinfo withholding, encoded and cross-segment key echoes, token/email/JWT/UUID/
+opaque components, hook mutation/error isolation and unchanged normal output,
+UTF-8/legacy-codepage handoff and mode-specific hidden-stdin CLI. Reviewer found
+initial encoded-label/cross-segment redaction gaps; hardened detection and authored
+regressions close those before any live execution. Local links/anchors and
+whitespace pass. No new browser/app-demo/SQL-concurrency/lifecycle suite: no UI,
+launcher, SQL or public endpoint contract changed. These checks are synthetic,
+not live validation of the returned URL shape, card identity or source coverage.
+
+The preceding checkpoint`12223ea` was **documentation-only**, with8 focused authored offline
 admission/category cases (zero HTTP), local links/anchors and whitespace
 checks. No runtime test-suite rerun for Markdown-only changes; preceding32/32
 targeted checks belong to the unchanged implementation tip, not a new live

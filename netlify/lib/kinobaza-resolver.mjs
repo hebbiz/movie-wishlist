@@ -31,7 +31,7 @@ export function candidateDiagnostics(items) {
 }
 // Replaceable ordinary Web Search interface: candidate URLs only. Snippet/rank
 // never enter identity, availability, localization, reports or draft.
-export function tavilySearch(apiKey, fetchImpl = fetch) {
+export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}) {
   return {
     accepts(url, init) {
       return url === ENDPOINT && init?.method === 'POST' && init.redirect === 'manual' && init.credentials === 'omit';
@@ -67,6 +67,12 @@ export function tavilySearch(apiKey, fetchImpl = fetch) {
         const valid = data && !Array.isArray(data) && Array.isArray(data.results) && data.results.length <= 5 &&
           data.results.every(item => item && typeof item === 'object' && !Array.isArray(item) && typeof item.url === 'string');
         const accepted = valid ? candidateDiagnostics(data.results) : null;
+        // Trusted local opt-in hook only, not a browser/request option. It gets
+        // URL strings alone in memory, never snippets/score or the response body.
+        // Admission/output are already computed; hook failure cannot change them.
+        if (accepted && typeof onCandidateURLs === 'function') {
+          try { onCandidateURLs(data.results.map(item => item.url)); } catch {}
+        }
         return accepted ? { status: 'ok', urls: accepted.urls, diagnostics: accepted.diagnostics } : { status: 'search-invalid-response', urls: [] };
       } catch { if (reader) void reader.cancel().catch(() => {}); return { status: combined.aborted ? 'search-timeout-no-retry' : 'search-transport-or-json-error', urls: [] }; }
       finally { clearTimeout(timer); }
