@@ -253,11 +253,14 @@ let pendingInviteRole = null;
 let isLoggingOut = false;
 let activeAdviceRoom = null;
 let mediaAdviceController = null;
-let mediaAdviceFormSession = crypto.randomUUID();
+function newMediaAdviceFormSession() {
+  try { return globalThis.crypto?.randomUUID?.() ?? null; } catch { return null; }
+}
+let mediaAdviceFormSession = newMediaAdviceFormSession();
 let mediaAdviceEstablished = null;
 
 function invalidateMediaAdvice() {
-  mediaAdviceFormSession = crypto.randomUUID();
+  mediaAdviceFormSession = newMediaAdviceFormSession();
   mediaAdviceEstablished = null;
   mediaAdviceController?.invalidate();
 }
@@ -276,7 +279,7 @@ function establishMediaAdvice() {
 
 async function mediaAdviceRequest(action, context, signal) {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session?.access_token || !context) throw new Error("Access unavailable");
+  if (!session?.access_token || !context || session.user?.id !== context.userId) throw new Error("Access unavailable");
   const response = await fetch("/.netlify/functions/media-advice", {
     method: "POST", credentials: "same-origin", cache: "no-store", signal,
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
@@ -5986,6 +5989,7 @@ moviesGrid.addEventListener("click", (event) => {
 
   formTitle.textContent = "Додати фільм";
   submitButton.textContent = "Додати";
+  establishMediaAdvice(); // A user-selected search identity, not a typed title.
 
   window.scrollTo({
     top: formPanel.offsetTop - 20,

@@ -52,6 +52,13 @@ export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetch
   const stages = { tmdb: { status: `A: ${detailsStatus}; B: ${providers.status}`, result: { identity: projection, providers } }, motn: { status: motn.status, result: motn }, kinobaza: { status: 'not-evaluated-resolver-deferred', result: null } };
   if (resolver && projection?.identity?.status === 'matched') stages.kinobaza = await resolver(film, { reserve, fetchImpl, calls, signal });
   const result = composeDiscovery(film, stages, { sourceURLs: { tmdb: providersURL, motn: motnURL }, metrics: { requestsMade: calls.length, requestBudget: resolver ? 8 : 4, calls } });
+  result.resolver = stages.kinobaza.resolver ?? null;
+  result.cardChoices = (stages.kinobaza.choices ?? []).map((card, index) => {
+    const projection = composeDiscovery(film, { ...stages, kinobaza: { status: card.status, result: card } }, { sourceURLs: { tmdb: providersURL, motn: motnURL } });
+    return { id: `card-${index + 1}`, sourceURL: card.sourceURL, status: card.status,
+      rows: projection.rows.filter(r => r.id.startsWith('kinobaza:')).map(r => ({ ...r, id: `card-${index + 1}:${r.id}` })),
+      unmapped: projection.unmapped.filter(r => r.source === 'kinobaza'), filmLocalization: projection.filmLocalization };
+  });
   // Keep projected unmapped observations rather than lose Plex/MUBI claims.
   for (const row of result.unmapped) {
     if (row.source === 'motn') row.observations = (motn.options ?? []).filter(o => val(o.service.id) === row.id && val(o.service.name) === row.name && (!row.access || JSON.stringify(o.access) === JSON.stringify(row.access)));
