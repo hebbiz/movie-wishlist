@@ -111,11 +111,14 @@ process.
 implemented or documented v1.3.1 scope.
 - [M4 media advice implementation and activation boundaries](docs/m4-media-advice.md)
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
-  prepared only; five pilot films still unselected.
+  [actual develop deployment checkpoint](docs/m4-media-advice.md#deployment-execution-checkpoint--2026-10-22).
+  Code merged/deployed; two authorized migrations await protected credentials.
 
 M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
 locally verified, including native PostgreSQL 17.6 concurrency. Cleanup is
-prepared inactive; pilot activation and source-use review remain separate.
+prepared inactive; access remains blocked by the recorded migration/smoke and
+cleanup gates. Indefinite per-user access is authorized, not yet assigned;
+five-film pilot and source-use conditions remain separate.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
 for candidate URLs only; quality remains live-unvalidated and customer-app
 source-use conditions remain explicit. Brave research is preserved historically.
