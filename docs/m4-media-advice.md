@@ -177,6 +177,21 @@ automatic copying of keys or production/main deployment. This needs no repeat
 user login while the existing session remains valid. No code workaround or
 weaker Auth check is proposed.
 
+**Redeploy request update — 2026-10-22T20:41Z:** the owner reports updating
+`SUPABASE_SERVICE_ROLE_KEY` for all Netlify environments and authorizes a
+**develop-only** redeploy, source-free authenticated smoke and the already
+authorized indefinite assignment after existing gates. No key value was read.
+Develop still points to `fbec4c291eda71bff3b3a8350dd30d905813a47f`.
+The available Netlify browser session is signed out; the deploy write connector
+does not offer a branch selector and no local CLI authentication is available.
+The exact develop deploy/login page is handed off for ordinary sign-in; no
+generic deploy action, production deploy or empty develop commit is used as a
+workaround. **Redeploy has not started; no smoke success or key-validity claim.**
+At20:41:26Z cleanup job2 is active, no scheduled-run records exist, assignments/
+sessions remain0. The first-scheduled-run gate still applies; manual heartbeat
+is not substituted. This is an operational authentication prerequisite, not
+another request to approve deployment or assignment.
+
 The form was cancelled back to the list with no Save. Code path returns401
 before any ledger/source action; read-only post-check20:18:51Z confirmed0
 permissions/0sessions, job still active/0scheduled runs. No Find/source request,
