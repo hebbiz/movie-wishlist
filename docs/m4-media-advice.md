@@ -33,6 +33,62 @@ Each stage has a separate stacked PR; no merge/deployment in this task.
 
 ## Contracts and invariants
 
+### Same-document M4 return state — 2026-10-23
+
+Owner reported loss of the open M4 window/results after switching apps on
+iPhone. The code establishes a loss path, not a recorded iPhone event sequence:
+the existing auth callback can invoke `initApp()` again; `initApp()` calls
+`loadCurrentRole()`, whose M4 hook previously called `invalidateMediaAdvice()`
+unconditionally. That rotated the form reference, erased the M4 controller
+session/DOM and closed its dialog, even for the same user/group/film/form.
+The visibility/pageshow resume path itself only refreshes movie data.
+
+Only that M4 hook now requests a capability refresh rather than invalidation.
+`initApp`, its callers/frequency, auth/lifecycle handlers and initialization order
+are unchanged. A same-context successful access refresh retains the original
+dialog, result objects, expanded details and scroll; it does not re-render or
+reopen an explicitly closed dialog. Capability checks use Auth/RPC, **zero
+source requests**. Failed/revoked access or changed context clears M4; ordinary
+form fields remain untouched. Pending selection authorization is revoked on
+revalidation; selection/review must be repeated, never applied by restoration.
+
+No persistence is added: no localStorage/sessionStorage/IndexedDB, snapshots,
+raw bodies, search snippets or server result recovery. This addresses a retained
+document/controller, **not iOS unloading the page or a full browser reload**.
+Those lose in-memory state; durable restoration would need a separately approved
+retention design. Explicit close, cancel/Save, logout and genuine user/group/
+film/list/form-session changes retain their invalidation/close behavior.
+
+The existing server session TTL remains 30 minutes and SQL/ledger retention is
+unchanged. The M4 view uses a conservative local bound of 30 minutes from explicit
+discovery dispatch (before server session creation), not from response/reopen.
+At expiry it drops projected results/choice/report DOM and pending apply, shows
+an expiry explanation and offers **Оновити вручну**. That explicit action checks
+access and renews only the M4 form reference; it makes zero source requests.
+The separate **Знайти варіанти** action starts a new metered search. Errors and
+lost replies remain spent/unknown; there is no retry or refund before expiry.
+Clock/deferred-timer expiry is also checked at access refresh, reopening and
+selection/navigation/copy/apply boundaries, including after async authorization.
+
+Authored browser regressions cover the actual unchanged auth callback → init →
+role load path with non-M4 data loaders mocked, retained DOM/details/scroll,
+in-flight discovery, explicit close, context changes, logout, revoked access,
+expiry and pending apply. No live source/DB/Save or real iPhone test is implied.
+After a separately authorized deployment: use one existing result, expand a
+detail and scroll; switch apps and return within TTL. Check the same window and
+position, unchanged source counter, no transfer/Save; explicitly close and return
+again to verify it stays closed. Real Safari/iOS suspension remains unvalidated.
+
+Local validation on this change: `npm run test:m4` with the explicit installed
+Playwright module/Edge: **60 passed, 1 skipped, 0 failed** (61 total). The skipped
+case is native PostgreSQL concurrency: no server/SQL/ledger changes; no claim of
+a new native run. Real-form browser viewports: 1280×900, 375×812, 820×1180.
+Windows launcher lifecycle and WebKit/device tests were not repeated/performed.
+Syntax, whitespace and local-reference checks passed (13 documents, 443 links,
+269 anchors). Byte-content comparison confirms the entire `initApp`/resume/auth
+tail, `updateAuthUI` and logout block are unchanged from develop `fbec4c2…`.
+No live discovery, Wishlist write, migration, flag/secret, merge or deployment.
+
 Form context: user + group + established IMDb identity + optional group-list ID
 + random form session. Typed title alone is insufficient. New film/group,
 cancel, successful Save or logout invalidates it. Late responses are discarded.

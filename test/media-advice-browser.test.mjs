@@ -28,7 +28,7 @@ test('real form isolated advice: desktop/iPhone X/Air, default off, apply/cancel
     const authored = { rows: [{ id: 'motn:1', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' }, country: 'UA', access: { state: 'reported', value: 'rental' }, provenance: { source: 'AUTHORED' }, link: { href: 'https://itunes.apple.com/ua/movie/id123?at=&x=%2F' } }], sources: [{ source: 'TMDb', status: 'partial', identity: 'matched' }], unmapped: [{ name: 'Plex', source: 'TMDb' }] };
     await context.route('**/*', async route => {
       const u = new URL(route.request().url());
-      if (u.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'text/javascript', body: `window.authoredDBWrites=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:window.authoredLogin?{access_token:'AUTHORED',user:{id:'user'}}:null}}),onAuthStateChange:()=>{}},from:name=>({update:fields=>{window.authoredDBWrites.push({name,fields});return{eq:async()=>({error:{message:'AUTHORED stop before ordinary save completion'}})}}})})}` });
+      if (u.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'text/javascript', body: `window.authoredDBWrites=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:window.authoredLogin?{access_token:'AUTHORED',user:{id:'user'}}:null}}),onAuthStateChange:fn=>{window.authoredAuthEvent=fn;}},from:name=>({select:()=>{const q={eq:()=>q,maybeSingle:async()=>({data:{role:'owner'}})};return q;},update:fields=>{window.authoredDBWrites.push({name,fields});return{eq:async()=>({error:{message:'AUTHORED stop before ordinary save completion'}})}}})})}` });
       if (u.origin !== origin) return route.abort();
       if (u.pathname === '/.netlify/functions/media-advice') {
         const body = route.request().postDataJSON(); calls.push(body);
@@ -51,6 +51,23 @@ test('real form isolated advice: desktop/iPhone X/Air, default off, apply/cancel
     allowed = true; await page.evaluate(() => mediaAdviceController.refresh());
     await page.locator('#mediaAdviceEntry').click(); await page.getByRole('button', { name: 'Знайти варіанти', exact: true }).click();
     await page.getByRole('button', { name: 'Обрати', exact: true }).waitFor();
+    // Real re-init path, with non-M4 data loaders isolated: unchanged auth
+    // handler -> unchanged initApp -> actual loadCurrentRole -> M4 access refresh.
+    await page.evaluate(() => {
+      const dialog = mediaAdviceController.dialog;
+      window.authoredDetail = dialog.querySelector('details'); authoredDetail.open = true;
+      dialog.scrollTop = 120; window.authoredScroll = dialog.scrollTop;
+      window.authoredLoaders = {}; window.authoredInitCalls = 0;
+      for (const name of ['updateAuthUI', 'ensureUserMembership', 'loadCurrentUserGroups', 'loadCurrentGroup', 'renderCurrentGroupInfo', 'loadMovies']) {
+        authoredLoaders[name] = window[name]; window[name] = async () => { if (name === 'loadMovies') authoredInitCalls++; };
+      }
+      authoredAuthEvent('TOKEN_REFRESHED', { user: { id: 'user' } });
+    });
+    await page.waitForFunction(() => !document.querySelector('#appLoader') || document.querySelector('#appLoader').style.display === 'none');
+    await page.evaluate(async () => { await mediaAdviceController.refresh(); Object.assign(window, authoredLoaders); });
+    assert.equal(await page.evaluate(() => authoredInitCalls), 1);
+    assert.deepEqual(await page.evaluate(() => [mediaAdviceController.dialog.open, authoredDetail.isConnected, authoredDetail.open, mediaAdviceController.dialog.scrollTop === authoredScroll]), [true, true, true, true]);
+    assert.equal(calls.filter(c => c.action === 'discover').length, 1);
     if (process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/authored-${width}.png` });
     await page.getByRole('button', { name: 'Обрати', exact: true }).click();
     assert.match(await page.locator('.media-advice-dialog').innerText(), /підтвердження/);
@@ -66,6 +83,8 @@ test('real form isolated advice: desktop/iPhone X/Air, default off, apply/cancel
     await page.locator('#purchase_url').fill('https://manual.example/');
     await page.locator('#mediaAdviceEntry').click(); assert.equal(await page.getByRole('button', { name: 'Знайти варіанти', exact: true }).isDisabled(), true);
     await page.getByRole('button', { name: '← До картки' }).click(); assert.equal(await page.locator('#purchase_url').inputValue(), 'https://manual.example/');
+    await page.evaluate(() => mediaAdviceController.refresh());
+    assert.equal(await page.evaluate(() => mediaAdviceController.dialog.open), false);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'mediaAdviceEntry');
     await page.locator('#mediaAdviceEntry').click();
     await page.getByRole('button', { name: 'Скопіювати короткий звіт' }).click();
