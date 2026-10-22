@@ -118,9 +118,10 @@ implemented or documented v1.3.1 scope.
 M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
 locally verified, including native PostgreSQL 17.6 concurrency. Daily02:15UTC
 cleanup is activated; a direct control call passed, first scheduled success is
-still pending. Authenticated smoke was attempted but upstream Supabase Auth
-rejected the deployed server API key; access remains blocked by this and recorded
-operational gates. Indefinite per-user access is authorized, not yet assigned;
+still pending. After the owner's key update, develop-only redeploy and
+pre-activation authenticated smoke passed (Auth200/service-role RPC403,
+expected default-off). Access remains blocked by recorded operational gates.
+Indefinite per-user access is authorized, not yet assigned;
 five-film pilot and source-use conditions remain separate.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
 for candidate URLs only; quality remains live-unvalidated and customer-app

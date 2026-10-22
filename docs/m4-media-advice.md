@@ -18,11 +18,14 @@ source boundaries remain in [research proposal](../research/grounded-answer-demo
 
 **Completed:** #190–#195 consolidated through merge commits; develop branch
 deploy ready; exactly the two reviewed migrations applied to the existing shared
-Supabase database, with history and post-checks verified. **Not completed:**
-real-user authenticated Netlify capability smoke success and feature assignment.
+Supabase database, with history and post-checks verified; develop-only redeploy
+after the owner's key update and real-user pre-activation Auth→RPC smoke passed.
+**Not completed:** first scheduled cleanup success, feature assignment and
+post-assignment capability-true smoke.
 The owner explicitly authorized those operations; no repeat general approval is
 required. The authorized new M4 DDL/history writes are recorded below; no
-historical SQL/RLS, flag, cleanup, secret or Wishlist write was performed.
+historical SQL/RLS, flag, secret or Wishlist write was performed by the agent.
+The subsequently authorized cleanup activation/control call is recorded below.
 Five-film discovery/pilot was not started.
 
 | Merge | Actual merge SHA (target's new head) |
@@ -51,7 +54,8 @@ unavailable, not a bypass. No required checks/approvals were reported active;
 reviews were empty. Supabase Preview was **skipped**, not success. #190 Netlify
 preview succeeded; absent intermediate/final commit statuses were not called pass.
 
-**Deployment:** [develop branch](https://develop--denyslisovyi-movies-list.netlify.app),
+**Original deployment (superseded by develop-only redeploy below):**
+[develop branch](https://develop--denyslisovyi-movies-list.netlify.app),
 [deploy details](https://app.netlify.com/projects/denyslisovyi-movies-list/deploys/6ada67e9790db665adf032fc),
 ID `6ada67e9790db665adf032fc`, state **ready**, context **branch-deploy**,
 branch **develop**, exact commit `fbec4c291eda71bff3b3a8350dd30d905813a47f`.
@@ -137,7 +141,7 @@ execution metadata/private aggregate audit remains under the protected local
 M4Deployment execution directory. A local date-deserialization issue was fixed
 before connecting/applying; no failed or repeated migration attempt occurred.
 No new backup/restore cycle, source discovery, owner test, secret update or
-deployment was performed in this continuation. Main/develop refs remain unchanged.
+deployment was performed in the migration step. Main/develop refs remain unchanged.
 
 **Cleanup authorization and execution update — 2026-10-22:** the owner subsequently
 explicitly authorized daily02:15UTC cleanup and one control check, without
@@ -168,14 +172,15 @@ supplies that API key from `SUPABASE_SERVICE_ROLE_KEY`. Wrong/stale/revoked valu
 or deployed context/configuration is **not distinguished** by this evidence.
 Do not claim that an environment variable's presence proves its validity.
 
-Next configuration action, **not executed**: backend operator privately checks
+Original configuration action (subsequently performed by the owner): privately check
 Netlify Project configuration → Environment variables →
 `SUPABASE_SERVICE_ROLE_KEY`, Functions scope, Branch deploys/develop context,
 against the intended Supabase project. If corrected, redeploy **develop only**
 and repeat only source-free capability smoke. No secret in chat/argv/Git, no
 automatic copying of keys or production/main deployment. This needs no repeat
 user login while the existing session remains valid. No code workaround or
-weaker Auth check is proposed.
+weaker Auth check is proposed. The later successful smoke below supersedes the
+API-key blocker; the old secret's exact defect remains unknown.
 
 **Redeploy request update — 2026-10-22T20:41Z:** the owner reports updating
 `SUPABASE_SERVICE_ROLE_KEY` for all Netlify environments and authorizes a
@@ -186,7 +191,8 @@ The available Netlify browser session is signed out; the deploy write connector
 does not offer a branch selector and no local CLI authentication is available.
 The exact develop deploy/login page is handed off for ordinary sign-in; no
 generic deploy action, production deploy or empty develop commit is used as a
-workaround. **Redeploy has not started; no smoke success or key-validity claim.**
+workaround. **At that preflight, redeploy had not started.** The subsequently
+completed redeploy/smoke are recorded below.
 At20:41:26Z cleanup job2 is active, no scheduled-run records exist, assignments/
 sessions remain0. The first-scheduled-run gate still applies; manual heartbeat
 is not substituted. This is an operational authentication prerequisite, not
@@ -197,16 +203,63 @@ before any ledger/source action; read-only post-check20:18:51Z confirmed0
 permissions/0sessions, job still active/0scheduled runs. No Find/source request,
 film lookup, start/reserve/finish or Wishlist write was performed. This is a
 **failed authenticated smoke with a concrete API-key blocker**, not a passed
-default-off test or successful Netlify→RPC connectivity.
+default-off test or successful Netlify→RPC connectivity. This paragraph refers
+only to the original20:16Z attempt.
 
-**Activation holds, not missing authorization:** existing first-scheduled-run
-and successful authenticated smoke gates remain unfulfilled; independent ongoing monitoring
+**Develop-only redeploy and successful pre-activation smoke — 2026-10-22:**
+after the owner signed into the existing Netlify account, the agent selected
+**Retry with latest branch commit** on the verified **Branch Deploy: develop**
+details page. It did not select Publish deploy, trigger main, upload a local
+tree or create an empty Git commit. The new deploy was created at
+**20:43:52.068Z**, became **ready**, and was independently verified via the
+site-scoped deploy API:
+
+- ID **`6ada7588f1f1ad73190ee4e2`**;
+  [deploy details](https://app.netlify.com/projects/denyslisovyi-movies-list/deploys/6ada7588f1f1ad73190ee4e2),
+  [develop URL](https://develop--denyslisovyi-movies-list.netlify.app).
+- Context **branch-deploy**, branch **develop**, exact deployed SHA
+  **`fbec4c291eda71bff3b3a8350dd30d905813a47f`**, unchanged source tree.
+- Four functions packaged, including `media-advice`, all nodejs22.x.
+  New function creation timestamps20:44:10–12Z; no secret values inspected.
+
+One existing edit form triggered only its normal capability request at
+**20:44:35.579Z**. The first attempted stale DOM click failed before opening
+the form; a fresh DOM observation selected the correct existing edit control,
+not a source retry. Netlify observability confirmed a single capability POST,
+HTTP **403**. Narrow Supabase log metadata independently showed:
+
+- Auth **GET `/auth/v1/user` →200**, exact authorized subject comparison true;
+- **POST `/rest/v1/rpc/media_advice_action` →403**, service_role claim true;
+- database log aggregation: **one `access-denied`, zero function-privilege
+  denials**. Thus this is the expected default-off permission refusal after
+  successful Auth/RPC connectivity, not the earlier unregistered-key401.
+
+The advice entry remained hidden; form returned to the list without changes
+or Save. No user token/key, raw log/header/body, source data or extra personal
+field was exported. No Find, discovery, TMDb/MOTN/Tavily/Kinobaza, movie-search,
+start/reserve/finish, ledger session or Wishlist write. This validates the
+**pre-activation** path, not capability-true/offer quality/source-key validity.
+
+At **20:45:48.447Z**, exact target effective flag **false**, assignments0,
+sessions0, job2 active, scheduled successes0; last heartbeat is still the manual
+20:11:46Z call. **No assignment was made** because the existing scheduled-first-run
+gate has not passed. Next scheduled run is2026-10-23T02:15Z (05:15 Kyiv); do not
+reschedule/create another job or count the manual call to manufacture success.
+Once all existing gates pass, the exact-user assignment with NULL expiry is
+already authorized; no group/film manifest or new general approval is required.
+Main ref remains `e92392856038e40e6d98c6c8744eed04c4e8dff9`; no production
+deployment was requested or triggered. The site API's current published
+production deploy remains **`6ad3ad799a970e3fc942b516`**, ready.
+
+**Activation holds, not missing authorization:** pre-activation authenticated
+smoke now passed; the existing first-scheduled-run gate remains unfulfilled.
+Independent ongoing monitoring
 arrangement remains unestablished and no person/duty/time is assigned. Do not
 silently count the direct call as a scheduled run or create an enabled flag.
 Current Tavily customer-application/account scope, Kinobaza arbitrary-card rights
 and TMDb/MOTN attribution/use conditions remain the dated Step0/source-use issues;
 merge/build/smoke do not clear them. No new source/rules research was performed.
-When these gates and real-user smoke pass, assignment is per supplied UUID,
+When remaining gates pass, assignment is per supplied UUID,
 `expires_at=NULL`; no group/film allowlist or two-hour feature window.
 
 **Validation:** assembled #190 and actual final develop each ran M4 offline/
@@ -1369,11 +1422,10 @@ Activation remains **conditional**, not pilot-ready approval:
    APM/log-drain/body-capture verification; env context metadata confirmation.
 3. MW recovery scope-qualified; both exact migrations/history and live DB
    privileges/default-off/post-data checks completed as recorded above.
-   Real-user Netlify capability smoke was attempted after successful sign-in,
-   but failed401: upstream Auth `UNAUTHORIZED_UNREGISTERED_API_KEY`. Privately
-   reconcile the deployed server key/context and repeat source-free smoke after
-   an authorized develop-only redeploy. Direct service-role SQL is not a
-   substitute for this Auth path. No secret/config/deploy change made here.
+   Real-user pre-activation capability smoke passed on the authorized
+   develop-only redeploy after the owner's key update: Auth200, service-role
+   RPC403 with expected access-denied/default-off. Post-assignment capability-true
+   smoke remains pending; neither source keys nor discovery were tested.
 4. Cleanup job activated under the subsequent explicit approval; one direct
    function check passed/heartbeat advanced. First scheduled run is pending,
    independent ongoing monitoring unspecified (no automated alerting or assigned
