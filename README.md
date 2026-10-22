@@ -115,14 +115,16 @@ implemented or documented v1.3.1 scope.
   Code merged/deployed; exactly the two authorized M4 migrations applied and
   history/privileges/default-off/existing-data checks verified.
 
-M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
+M4 is default-off for others; the exact owner has active indefinite pilot access.
+Narrow #192 apply/deadline/queued-reservation fixes are
 locally verified, including native PostgreSQL 17.6 concurrency. Daily02:15UTC
-cleanup is activated; a direct control call passed, first scheduled success is
-still pending. After the owner's key update, develop-only redeploy and
-pre-activation authenticated smoke passed (Auth200/service-role RPC403,
-expected default-off). Access remains blocked by recorded operational gates.
-Indefinite per-user access is authorized, not yet assigned;
-five-film pilot and source-use conditions remain separate.
+cleanup is activated; first scheduled cleanup remains unverified, and the owner
+explicitly deferred that check until after pilot start (not an activation gate
+for this user). After the owner's key update and develop-only redeploy,
+pre/post-activation Auth/RPC smoke passed; the isolated UI opens without discovery.
+Assignment uses NULL expiry; other enabled users0. The owner chooses group/films
+and starts the pilot; no agent discovery/Save, new deploy or manual cleanup.
+Source-use and monitoring limitations remain explicit.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
 for candidate URLs only; quality remains live-unvalidated and customer-app
 source-use conditions remain explicit. Brave research is preserved historically.
