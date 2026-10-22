@@ -139,10 +139,30 @@ before connecting/applying; no failed or repeated migration attempt occurred.
 No new backup/restore cycle, source discovery, owner test, secret update or
 deployment was performed in this continuation. Main/develop refs remain unchanged.
 
-**Activation holds, not missing authorization:** existing cleanup/first-run gate
-applies because real discovery creates retained technical sessions. Scheduler
-activation was expressly excluded; no first run exists and no monitoring person
-or time is assigned. Do not silently waive this gate or create an enabled flag.
+**Cleanup authorization and execution update — 2026-10-22:** the owner subsequently
+explicitly authorized daily02:15UTC cleanup and one control check, without
+assigning regular manual monitoring. The reviewed schedule template created
+exactly one inactive job; its identity/configuration were inspected before
+activating **jobid2**, `mykola-media-advice-cleanup`, `15 2 * * *`, database/role
+postgres, command `select public.media_advice_cleanup();`, cron timezone GMT.
+No other job or extension was modified/installed. At **20:11:46.399Z** the one
+authorized direct cleanup call succeeded, deleted **0** technical sessions and
+updated the single heartbeat. At20:11:48.901Z the job was active, eligible/overdue
+sessions0, assignments0, sessions0, scheduled-run records0. No Wishlist/movie
+or permission data was deleted. This verifies the cleanup function, **not the
+scheduler firing**. First scheduled run is due **2026-10-23T02:15Z** (05:15 Kyiv).
+
+**Authenticated smoke availability:** the available browser session opened the
+actual develop `app.html` and showed only the Google login screen. No existing
+authenticated tab was available, and no password/bearer was requested in chat,
+extracted or fabricated. A dedicated develop tab was handed to the owner for
+normal sign-in; no discovery or form/Wishlist writes. This is a concrete
+authentication-context blocker, not missing authorization for smoke.
+
+**Activation holds, not missing authorization:** existing first-scheduled-run
+and authenticated smoke gates remain unfulfilled; independent ongoing monitoring
+arrangement remains unestablished and no person/duty/time is assigned. Do not
+silently count the direct call as a scheduled run or create an enabled flag.
 Current Tavily customer-application/account scope, Kinobaza arbitrary-card rights
 and TMDb/MOTN attribution/use conditions remain the dated Step0/source-use issues;
 merge/build/smoke do not clear them. No new source/rules research was performed.
@@ -1166,11 +1186,12 @@ select (select count(*) from media_advice_private.permissions) as assignments,
 
 ### Step 3 — daily cleanup and independent control
 
-**Not activated; excluded from this execution authorization. No monitoring
-person, duty or time is assigned.** After both migrations and only under a later
-cleanup authorization,
-review/run [prepared schedule SQL](../supabase/operations/media-advice-cleanup.schedule.sql)
-only with separate authorization: it creates the named job **inactive** and
+**Authorized and activated in the subsequent owner approval; one direct control
+check passed. No monitoring person, duty or time is assigned.** Exact jobid,
+configuration, heartbeat and remaining scheduled-run boundary are in the
+[execution checkpoint](#deployment-execution-checkpoint--2026-10-22).
+The [schedule SQL](../supabase/operations/media-advice-cleanup.schedule.sql) is
+now an operator reference, **not a request to replay**: it creates the named job **inactive** and
 refuses an existing name/non-UTC-equivalent timezone. Then inspect its single
 jobid, command, database/user, `15 2 * * *` and GMT/UTC; activate that exact job
 with `cron.alter_job(<verified-jobid>, active := true)`. No second job or
@@ -1308,10 +1329,13 @@ Activation remains **conditional**, not pilot-ready approval:
    APM/log-drain/body-capture verification; env context metadata confirmation.
 3. MW recovery scope-qualified; both exact migrations/history and live DB
    privileges/default-off/post-data checks completed as recorded above.
-   Real-user authenticated Netlify capability smoke remains unperformed;
-   direct service-role SQL smoke is not a substitute for that Auth path.
-4. Cleanup activation is excluded, first-run evidence absent and independent
-   monitoring unspecified (no automated alerting or assigned user duty).
+   Real-user authenticated Netlify capability smoke remains unperformed because
+   the available browser has no signed-in session; direct service-role SQL
+   smoke is not a substitute for that Auth path. Normal sign-in tab is handed off.
+4. Cleanup job activated under the subsequent explicit approval; one direct
+   function check passed/heartbeat advanced. First scheduled run is pending,
+   independent ongoing monitoring unspecified (no automated alerting or assigned
+   user duty). No scheduled-success claim from a manual call.
 5. Exact supplied UUID existence confirmed; indefinite assignment authorized,
    but not executed until migration/smoke/activation gates pass. No group/film
    manifest requirement is added to this per-user assignment.
@@ -1325,7 +1349,8 @@ Activation remains **conditional**, not pilot-ready approval:
 
 Read-only catalog/project/PR review and offline import check passed in preparation;
 the two authorized new SQL migrations were subsequently executed as recorded
-above. No application runtime, flag, secret or scheduler change in this
+above. The subsequently authorized job activation/direct control check are also
+recorded above. No application runtime, flag or secret change in this
 continuation; prior #194 45-pass/1-skip browser/
 offline and #192 native17.6 evidence stay pinned, not a new run on these docs.
 Markdown-only: verify links/anchors, consistency, scope and whitespace; no

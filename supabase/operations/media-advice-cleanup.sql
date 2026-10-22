@@ -1,5 +1,6 @@
--- PREPARED ONLY. Not a migration; never run automatically by these PRs.
--- Owner: Denys (backend operator). Requires separate activation authorization,
+-- Operator health-query reference. Not a migration or an automatic monitor.
+-- Actual activation/control-check status: docs/m4-media-advice.md.
+-- No person/duty/time is assigned by this file. Requires activation authorization,
 -- reconciled M4 migrations and an available pg_cron extension. No extension
 -- installation, credentials, HTTP call, movie/Wishlist mutation or job here
 -- is executed during tests. Review an existing same-name job before scheduling.
@@ -7,7 +8,8 @@
 -- daily 02:15 UTC. Neither file is part of automatic migration scheduling.
 
 -- Read-only operations check, to be run independently of this cleanup job.
--- Denys must check/alert daily; scheduler cannot detect its own total outage.
+-- Independent operational monitoring remains to be arranged, not assigned here;
+-- the scheduler cannot detect its own total outage.
 -- Missing heartbeat on first run or >26h since success is actionable.
 select
   coalesce((select last_success_at < clock_timestamp() - interval '26 hours'
@@ -20,4 +22,4 @@ select
 -- an alert; do not install another job or reset accounting to hide failure.
 -- Authorized recovery: one manual media_advice_cleanup(), investigate, recheck
 -- heartbeat and backlog. Never rerun source requests. No 48h guarantee during
--- scheduler failure; close live activation until monitoring is assigned.
+-- scheduler failure; live activation still requires the runbook's operational gates.

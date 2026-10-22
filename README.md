@@ -116,9 +116,10 @@ implemented or documented v1.3.1 scope.
   history/privileges/default-off/existing-data checks verified.
 
 M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
-locally verified, including native PostgreSQL 17.6 concurrency. Cleanup is
-prepared inactive; access remains blocked by the recorded authenticated smoke and
-cleanup gates. Indefinite per-user access is authorized, not yet assigned;
+locally verified, including native PostgreSQL 17.6 concurrency. Daily02:15UTC
+cleanup is activated; a direct control call passed, first scheduled success is
+still pending. Access remains blocked by authenticated smoke and recorded
+operational gates. Indefinite per-user access is authorized, not yet assigned;
 five-film pilot and source-use conditions remain separate.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
 for candidate URLs only; quality remains live-unvalidated and customer-app
