@@ -1,16 +1,322 @@
 # M4 — Mykola media advice
 
-Status: M4.1–M4.3 implemented; narrow #192 blocker fixes validated locally;
-default off; no live activation authorized. Pilot preparation is conditional on
-independent review and the activation prerequisites below, not a pilot approval.
+Status: M4.1–M4.3 merged and deployed to **develop**, default off for others;
+the explicitly authorized owner has indefinite pilot access. The
+[execution checkpoint](#deployment-execution-checkpoint--2026-10-22)
+records completed consolidation/deployment and the two applied database migrations
+and verified exact-user activation, separately from deferred operational checks.
+The owner postponed first scheduled cleanup validation until after pilot start;
+it does not block this user's pilot. No agent-run discovery/pilot is authorized.
 Current search provider: **Tavily basic Search**, candidate URLs only,
-offline-tested/live-unvalidated; no activation authorized by this record.
+offline-tested/live-unvalidated; this record is not independent rights clearance.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
 and the preserved [Gemini finding](#gemini-primary-resolver-feasibility-2026-10-21).
 Canonical implementation record, not a second research architecture. Evidence and
 source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
+
+## Deployment execution checkpoint — 2026-10-22
+
+**Completed:** #190–#195 consolidated through merge commits; develop branch
+deploy ready; exactly the two reviewed migrations applied to the existing shared
+Supabase database, with history and post-checks verified; develop-only redeploy
+after the owner's key update; pre/post-activation real-user Auth→RPC smoke passed;
+exact-user indefinite assignment/effective flag true verified.
+**Deferred:** first scheduled cleanup validation after pilot start, explicitly
+not an activation blocker for this user. No discovery/Save/pilot executed by agent.
+The owner explicitly authorized those operations; no repeat general approval is
+required. The authorized new M4 DDL/history writes are recorded below; no
+historical SQL/RLS, secret or Wishlist write was performed by the agent.
+The authorized exact-user flag assignment and earlier cleanup activation/control
+call are recorded below.
+Five-film discovery/pilot was not started.
+
+| Merge | Actual merge SHA (target's new head) |
+| --- | --- |
+| #195 → #194 | `1cf7dd23e345f3ff284aa342b8ce0f10f3dd45e3` |
+| #194 → #193 | `f13e5abd1f130a2266b0818de38c12545bd39890` |
+| #193 → #192 | `71f524a4f42f79ad999fefe6d4ca43b16c79ced5` |
+| #192 → #191 | `87efa0f0e448cd91e04c2edfc8e342ad5bc6a61e` |
+| #191 → #190 | `8b20893e11c82745560c4bf5f1ed425550667d59` |
+| #190 → develop | `fbec4c291eda71bff3b3a8350dd30d905813a47f` |
+
+Every merge checked expected source **and base**, fresh checks/reviews and
+mergeability; afterward both parents, ancestry, updated diff and tree were
+checked. Expected/final tree: `0bee93e981e1703883a1db05ecd904f89f4c809d`.
+All original heads, launcher fix and R1/R2 are ancestors. No bypass/force/
+retarget/history rewrite. Transient mergeability calculation after parent advance
+was resolved by a fresh raw GitHub API `clean` result, not a conflict workaround.
+
+Effective-policy evidence at execution differs from the earlier preparation:
+all six target branches reported `protected:false`, required-status enforcement
+off with empty contexts; both repository rulesets and the API's protected-branch
+list were empty. The latter covers branch protections **and rulesets** per
+[GitHub's branch API](https://docs.github.com/en/rest/branches/branches).
+Admin protection-detail endpoint still returned403: its detailed settings remain
+unavailable, not a bypass. No required checks/approvals were reported active;
+reviews were empty. Supabase Preview was **skipped**, not success. #190 Netlify
+preview succeeded; absent intermediate/final commit statuses were not called pass.
+
+**Original deployment (superseded by develop-only redeploy below):**
+[develop branch](https://develop--denyslisovyi-movies-list.netlify.app),
+[deploy details](https://app.netlify.com/projects/denyslisovyi-movies-list/deploys/6ada67e9790db665adf032fc),
+ID `6ada67e9790db665adf032fc`, state **ready**, context **branch-deploy**,
+branch **develop**, exact commit `fbec4c291eda71bff3b3a8350dd30d905813a47f`.
+Netlify API lists `media-advice` plus the three existing functions, all
+`nodejs22.x`. Actual module-loaded response confirms import closure is usable;
+secret scan recorded228 files/zero matches (not a comprehensive secret audit).
+No manual upload/publish was used. Main stays
+`e92392856038e40e6d98c6c8744eed04c4e8dff9`; production deploy remains
+`6ad3ad799a970e3fc942b516` at that SHA.
+
+**Source-free smoke:** method GET405, foreign-origin POST403, malformed
+context400, valid-shaped capability without bearer401, invalid bearer401;
+expected content-free JSON codes and `Cache-Control:no-store` in every case.
+No discover/start/reserve/finish, source API, existing movie-search, group or
+Wishlist writes. This proves loading and rejection boundaries, **not** successful
+authenticated capability/RPC connectivity or valid source credentials.
+Credential names/scopes/contexts remain owner-confirmed configuration, not a
+new secret-value read. Authenticated dashboard env metadata/log drains/APM are
+not available through this connector/public dashboard; use the exact Step0
+dashboard checks, without revealing values, before activation.
+
+**Database preflight:** project healthy, PostgreSQL17.6, exact supplied user UUID
+exists (no personal fields fetched/published). At **2026-10-22T19:49:52.490964Z**:
+M4 schema/RPCs absent, history table absent/list empty, named cleanup job absent.
+This is an existing populated database, not a fresh one. Migration files' bytes
+match both reviewed SHA256 values in Step2. Existing verified encrypted recovery
+checkpoint authenticated again; no new backup/restore cycle.
+
+**Migration execution — 2026-10-22T20:02:28.505Z–20:02:32.041Z**
+(23:02 Kyiv): the owner completed the
+[hidden local prompt](../supabase/operations/m4-migration-password-prompt.ps1).
+Purpose/project/host/database/version/expiry, verified TLS root and read-only
+PG17 identity were revalidated. The purpose-bound DPAPI password was used only
+in child-process memory/environment, never argv, Git or output. Its two-hour
+credential TTL is unrelated to the authorized indefinite feature assignment.
+
+CLI **2.121.0** initialized a unique owner/SYSTEM-only directory outside the
+owner checkout containing **only the two unchanged, SHA256-verified files**.
+The documented `migration list` → `migration up` method used the CLI's supported
+**password-free `--db-url`** instead of `--linked`: the exact verified session
+pooler, `sslmode=verify-full`, verified CA path, bounded connection/statement/lock
+timeouts. This avoids a second Management API/PAT credential; it does not change
+the project or history semantics. No `db push`, `--include-all`, repair, old
+001–016 replay or generated substitute version. CLI exited zero; independent
+SQL and the migration-list API confirmed exactly:
+
+| Version | History name | Stored statement count |
+| --- | --- | --- |
+| `20261020205122` | `media_advice_access_ledger` | 19 |
+| `20261021072002` | `media_advice_review_fixes` | 12 |
+
+Post-checks at **20:03:21Z** and subsequent read-only structure checks:
+
+- Exactly `permissions`, `sessions`, `cleanup_health` in the private schema;
+  expected columns/defaults/checks/FKs/indexes, RLS enabled on all three.
+  `permissions.enabled` defaults false. No anon/authenticated schema/table
+  access or policies. Service role has intended DML on permissions/sessions and
+  SELECT only on cleanup_health; schema USAGE only, not CREATE.
+- Exactly the two expected public RPC signatures; SECURITY DEFINER with empty
+  search_path. EXECUTE is granted to service_role, not PUBLIC/anon/authenticated,
+  including effective/inherited checks. Both stored `prosrc` MD5 fingerprints
+  match the reviewed second migration's exact function bodies.
+- Repeatable-read, read-only pre/post snapshots of existing `group_members`,
+  `movies`, `movie_group_lists` matched structure/columns/constraints/policies/
+  ACL/indexes/triggers and aggregate counts/data fingerprints. No data bodies
+  were exported; private fingerprints are not published. This is an observed
+  preservation check, not a claim of full-database recovery/immutability.
+- Permission assignments **0**, sessions **0**, cleanup heartbeats **0**, named
+  cleanup jobs **0**. No start/reserve/finish or cleanup function was called.
+- Read-only SQL under `SET LOCAL ROLE service_role` reached the actual capability
+  RPC and received the expected exact `access-denied` without an assignment.
+  This proves service-role RPC/default-off behavior, **not** a real-user Auth →
+  Netlify → RPC success or a real group authorization check. Browser-authenticated
+  source-free smoke remains unperformed; no bearer was extracted or fabricated.
+- Supabase security advisor reported only INFO `rls_enabled_no_policy` for these
+  three intentionally service-only tables. No policy was added to silence the
+  [advisory](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+  Historical findings were not modified.
+
+The consumed DPAPI credential file was deleted immediately after execution;
+the original encrypted recovery checkpoint/key are preserved. Content-free
+execution metadata/private aggregate audit remains under the protected local
+M4Deployment execution directory. A local date-deserialization issue was fixed
+before connecting/applying; no failed or repeated migration attempt occurred.
+No new backup/restore cycle, source discovery, owner test, secret update or
+deployment was performed in the migration step. Main/develop refs remain unchanged.
+
+**Cleanup authorization and execution update — 2026-10-22:** the owner subsequently
+explicitly authorized daily02:15UTC cleanup and one control check, without
+assigning regular manual monitoring. The reviewed schedule template created
+exactly one inactive job; its identity/configuration were inspected before
+activating **jobid2**, `mykola-media-advice-cleanup`, `15 2 * * *`, database/role
+postgres, command `select public.media_advice_cleanup();`, cron timezone GMT.
+No other job or extension was modified/installed. At **20:11:46.399Z** the one
+authorized direct cleanup call succeeded, deleted **0** technical sessions and
+updated the single heartbeat. At20:11:48.901Z the job was active, eligible/overdue
+sessions0, assignments0, sessions0, scheduled-run records0. No Wishlist/movie
+or permission data was deleted. This verifies the cleanup function, **not the
+scheduler firing**. First scheduled run is due **2026-10-23T02:15Z** (05:15 Kyiv).
+
+**Authenticated smoke — 2026-10-22:** the initially signed-out develop tab was
+handed off; the owner then completed normal sign-in. The authenticated app/list
+loaded. Opening one existing card for edit (no field changes/Save) triggered its
+normal capability request at **20:16:15.934Z**. Netlify request observability
+confirmed one POST to the develop `media-advice` function, HTTP **401**, not the
+expected post-authentication/default-off denial403. The entry stayed hidden.
+
+A narrowly filtered Supabase log query established **GET `/auth/v1/user`,401,
+`UNAUTHORIZED_UNREGISTERED_API_KEY`**; comparing only the subject to the exact
+authorized UUID returned true. Thus the user's sign-in/identity is not the
+blocker: the upstream gateway rejected the server API key. No bearer, key value,
+raw log/header/body or extra personal field was read/exported. Current handler
+supplies that API key from `SUPABASE_SERVICE_ROLE_KEY`. Wrong/stale/revoked value
+or deployed context/configuration is **not distinguished** by this evidence.
+Do not claim that an environment variable's presence proves its validity.
+
+Original configuration action (subsequently performed by the owner): privately check
+Netlify Project configuration → Environment variables →
+`SUPABASE_SERVICE_ROLE_KEY`, Functions scope, Branch deploys/develop context,
+against the intended Supabase project. If corrected, redeploy **develop only**
+and repeat only source-free capability smoke. No secret in chat/argv/Git, no
+automatic copying of keys or production/main deployment. This needs no repeat
+user login while the existing session remains valid. No code workaround or
+weaker Auth check is proposed. The later successful smoke below supersedes the
+API-key blocker; the old secret's exact defect remains unknown.
+
+**Redeploy request update — 2026-10-22T20:41Z:** the owner reports updating
+`SUPABASE_SERVICE_ROLE_KEY` for all Netlify environments and authorizes a
+**develop-only** redeploy, source-free authenticated smoke and the already
+authorized indefinite assignment after existing gates. No key value was read.
+Develop still points to `fbec4c291eda71bff3b3a8350dd30d905813a47f`.
+The available Netlify browser session is signed out; the deploy write connector
+does not offer a branch selector and no local CLI authentication is available.
+The exact develop deploy/login page is handed off for ordinary sign-in; no
+generic deploy action, production deploy or empty develop commit is used as a
+workaround. **At that preflight, redeploy had not started.** The subsequently
+completed redeploy/smoke are recorded below.
+At20:41:26Z cleanup job2 is active, no scheduled-run records exist, assignments/
+sessions remain0. The first-scheduled-run gate still applies; manual heartbeat
+is not substituted. This is an operational authentication prerequisite, not
+another request to approve deployment or assignment.
+
+The form was cancelled back to the list with no Save. Code path returns401
+before any ledger/source action; read-only post-check20:18:51Z confirmed0
+permissions/0sessions, job still active/0scheduled runs. No Find/source request,
+film lookup, start/reserve/finish or Wishlist write was performed. This is a
+**failed authenticated smoke with a concrete API-key blocker**, not a passed
+default-off test or successful Netlify→RPC connectivity. This paragraph refers
+only to the original20:16Z attempt.
+
+**Develop-only redeploy and successful pre-activation smoke — 2026-10-22:**
+after the owner signed into the existing Netlify account, the agent selected
+**Retry with latest branch commit** on the verified **Branch Deploy: develop**
+details page. It did not select Publish deploy, trigger main, upload a local
+tree or create an empty Git commit. The new deploy was created at
+**20:43:52.068Z**, became **ready**, and was independently verified via the
+site-scoped deploy API:
+
+- ID **`6ada7588f1f1ad73190ee4e2`**;
+  [deploy details](https://app.netlify.com/projects/denyslisovyi-movies-list/deploys/6ada7588f1f1ad73190ee4e2),
+  [develop URL](https://develop--denyslisovyi-movies-list.netlify.app).
+- Context **branch-deploy**, branch **develop**, exact deployed SHA
+  **`fbec4c291eda71bff3b3a8350dd30d905813a47f`**, unchanged source tree.
+- Four functions packaged, including `media-advice`, all nodejs22.x.
+  New function creation timestamps20:44:10–12Z; no secret values inspected.
+
+One existing edit form triggered only its normal capability request at
+**20:44:35.579Z**. The first attempted stale DOM click failed before opening
+the form; a fresh DOM observation selected the correct existing edit control,
+not a source retry. Netlify observability confirmed a single capability POST,
+HTTP **403**. Narrow Supabase log metadata independently showed:
+
+- Auth **GET `/auth/v1/user` →200**, exact authorized subject comparison true;
+- **POST `/rest/v1/rpc/media_advice_action` →403**, service_role claim true;
+- database log aggregation: **one `access-denied`, zero function-privilege
+  denials**. Thus this is the expected default-off permission refusal after
+  successful Auth/RPC connectivity, not the earlier unregistered-key401.
+
+The advice entry remained hidden; form returned to the list without changes
+or Save. No user token/key, raw log/header/body, source data or extra personal
+field was exported. No Find, discovery, TMDb/MOTN/Tavily/Kinobaza, movie-search,
+start/reserve/finish, ledger session or Wishlist write. This validates the
+**pre-activation** path, not capability-true/offer quality/source-key validity.
+
+At **20:45:48.447Z**, exact target effective flag **false**, assignments0,
+sessions0, job2 active, scheduled successes0; last heartbeat is still the manual
+20:11:46Z call. **No assignment was made** because the existing scheduled-first-run
+gate has not passed. Next scheduled run is2026-10-23T02:15Z (05:15 Kyiv); do not
+reschedule/create another job or count the manual call to manufacture success.
+At that stage assignment remained authorized, but gated; the later explicit
+owner exception and completed assignment below supersede this activation hold.
+Main ref remains `e92392856038e40e6d98c6c8744eed04c4e8dff9`; no production
+deployment was requested or triggered. The site API's current published
+production deploy remains **`6ad3ad799a970e3fc942b516`**, ready.
+
+**Owner decision and completed activation — 2026-10-22 UTC:** the owner explicitly
+instructed activation now, deferring verification of the first scheduled cleanup
+until **after pilot start**, removing that check as a pre-activation condition
+for the specified user. This is an explicit, narrow pilot exception, not a
+scheduled-success claim or a general rollout waiver. Scheduler remains active;
+no new manual cleanup, alternative cron job or schedule change was performed.
+
+Using the existing private permission table, one guarded transaction assigned
+`mykola_media_advice` to the exact supplied UUID, **enabled=true, expires_at=NULL**.
+No identity was inferred from a name. Read-only check at **20:59:22.278Z**:
+target enabled/effective/indefinite all **true**, other enabled users **0**,
+sessions **0**, cleanup active, scheduled successes **0**. No user metadata,
+global flag, group membership, film or scope allowlist was changed.
+
+**Authenticated capability-true smoke:** the already signed-in develop session
+opened an existing edit form; **Поради Миколи** became visible. Opening that
+button displayed the isolated advice dialog with its warnings/attribution and
+**Знайти варіанти** action. The action was **not clicked**. Netlify observability
+confirmed the two expected capability POSTs (entry refresh and dialog-open
+reauthorization) at **20:59:41.277Z** and **20:59:56.071Z**, both **200**.
+Narrow Supabase metadata confirmed both Auth calls200 with the specified-subject
+comparison true, and both service-role RPC calls200. No token/key/header/body
+or personal data was exported. The dialog/form were closed back to the list,
+without field edits, discovery, transfer, Save or start/reserve/finish.
+
+Final read-only check **21:00:41.226Z** (00:00 Kyiv, **2026-10-23**): target
+effective **true**, indefinite **true**, other enabled users **0**, ledger
+sessions **0**, exactly the same active daily02:15UTC job2, scheduled successes0.
+The last cleanup heartbeat remains the earlier20:11:46Z manual call. First
+scheduled cleanup is **still unverified**, not passed; its later check does
+**not block this pilot** under the owner's decision. No extra cleanup was used
+as a substitute. Monitoring arrangement remains an explicit operational follow-up;
+no person/duty/time, automated alert or recurring agent task is silently assigned.
+
+No redeploy was needed: backend permission reads are fresh for each action.
+Develop continues to serve deploy **6ada7588f1f1ad73190ee4e2**, SHA
+**fbec4c291eda71bff3b3a8350dd30d905813a47f**. Main/production deployment, SQL/RLS,
+request caps, URL/identity gates, ordinary group access and source/draft controls
+were not changed. Group/film choices and starting the pilot belong to the owner;
+this smoke is not an agent-run pilot or Wishlist write.
+
+**Remaining limitations:** independent ongoing monitoring remains unestablished.
+This is not a new blocker overriding the explicit owner-pilot activation above.
+Current Tavily customer-application/account scope, Kinobaza arbitrary-card rights
+and TMDb/MOTN attribution/use conditions remain the dated Step0/source-use issues;
+merge/build/smoke do not clear them. No new source/rules research was performed.
+Assignment is per supplied UUID, `expires_at=NULL`; no group/film allowlist or
+two-hour feature window. All other users remain default-off.
+
+**Validation:** assembled #190 and actual final develop each ran M4 offline/
+mock-HTTP/SQL/Edge suites: **45 pass /1 native skip /0 fail**, desktop1280×900,
+375×812 and820×1180. Native17.6 concurrency evidence reused only because both
+SQL files/ledger are unchanged; no new native result is claimed. Earlier extra
+Edge run11/11 passed. No WebKit/device claim. Windows launcher lifecycle not
+repeated: no relevant change beyond the previously tested copy layout.
+Owner checkout remains detached at b93014b… with unrelated untracked files;
+owner demo untouched. This follow-up documentation/helper PR is not another
+deployment or an authorization to merge itself. MW-FUT-01 remains Discovery.
+Follow-up checks: PowerShell prompt syntax and the reused hidden-handoff
+authored regression passed (DACL, child-only password, read-only query, DPAPI,
+expiry/no-overwrite); 13 Markdown files /445 local links /270 anchors, no
+reference errors; whitespace/scope clean. No real password entered by the agent.
 
 ## Reviewed baseline and sequence
 
@@ -137,20 +443,21 @@ not deleted by cleanup. Permission assignments
 persist until an authorized administrator revokes/removes them. No assignment
 is seeded. No global historical RLS repairs or production migration commands.
 
-Prepared, **not installed/activated**:
+Prepared operator references (job subsequently activated; see execution record):
 [inactive pg_cron job configuration](../supabase/operations/media-advice-cleanup.schedule.sql)
 and [content-free health query](../supabase/operations/media-advice-cleanup.sql).
 The daily job is named `mykola-media-advice-cleanup`, 02:15 UTC; configuration
 refuses a non-UTC scheduler or an existing same-name job and creates it inactive
 in one transaction. There is no `cron.schedule` in an automatic migration.
-Enabling pg_cron/job requires later explicit authorization and baseline review.
-Denys, as backend operator, owns activation and daily independent monitoring:
+Job activation was separately authorized and executed; no extension installation.
+No regular manual monitoring person or duty is automatically assigned here:
 missing heartbeat, >26h since success, failed/inactive job or rows aged ≥48h
 require investigation. The private singleton heartbeat stores only last success
 and deletion count, atomically with deletion; a failed transaction cannot report
 success. Inspect `cron.job` / `cron.job_run_details`; recover via one authorized
-cleanup, never source replay or rate-counter reset. Before activation assign an
-independent daily check/alert outside this cleanup job; a stopped scheduler
+cleanup, never source replay or rate-counter reset. An independent daily
+check/alert outside this cleanup job remains an operational follow-up, not an
+implicitly assigned duty or completed monitor; a stopped scheduler
 cannot report its own total outage. Cleanup health is backend-only, not browser
 content. Cron history pruning remains an operator concern, not source archival.
 
@@ -217,7 +524,9 @@ erase prior rolling-window usage. Historical foreign-key/RLS issues are not
 modified. New accounting stores group/list IDs as technical bindings, checked
 against fresh membership/list identity on each RPC, not cascading rate resets.
 
-## Activation / operation plan (not executed)
+<a id="activation--operation-plan-not-executed"></a>
+
+## Activation / operation record and operator reference
 
 ### Execution runbook — preparation checkpoint 2026-10-21
 
@@ -870,6 +1179,12 @@ inlined. Keep 45s sources / 53s finish margins; no timeout/cap change.
 
 ### Step 1 — consolidate with merge commits
 
+**Completed via six merges #195 → #194 → #193 → #192 → #191 → #190 → develop.**
+See the execution checkpoint for actual parents/SHAs. The original five-step
+preparation pins below are historical, not operations to replay or permission
+for further changes. The final merge included the explicitly authorized automatic
+develop branch deploy; main/production deployment were not changed.
+
 Pinned starting refs (full SHAs, not mutable labels):
 
 | PR → base branch | Initial head | Initial base |
@@ -918,7 +1233,7 @@ missing required approval or failing required check. No automatic restacking.
 M5 also authorizes an auto branch deploy **only if explicitly included in the
 next approval**; do not invoke a manual deploy or build hook here.
 
-### Step 2 — apply only the two M4 migrations (future privileged action)
+### Step 2 — apply only the two M4 migrations (completed; do not replay)
 
 | File under supabase/migrations | Dependency / SHA256 of reviewed bytes |
 | --- | --- |
@@ -933,11 +1248,12 @@ byte hashes: establish the reviewed execution-file hash before running).
 Confirm backup/PITR recovery availability privately; no restore is invoked.
 
 Use a **new disposable Supabase CLI work directory containing only these two
-unchanged migration files**, outside owner checkout. Current machine has no
-Supabase CLI/psql in PATH: executing operator must pin/install an approved CLI
-and first inspect `--version` and command `--help`. Planned commands below
+unchanged migration files**, outside owner checkout. The original preparation
+found no CLI/psql in PATH; execution used the verified local CLI2.121.0 and
+PG17 tools by absolute path, after inspecting version/help. Reference commands
 are from the [official CLI reference](https://supabase.com/docs/reference/cli/supabase-migration-up)
-(checked 2026-10-21), not executed here:
+(checked 2026-10-21). Execution above used the supported password-free `--db-url`
+variant; commands below remain a procedure reference, **not a request to rerun**:
 
 ```powershell
 supabase migration up --help
@@ -1008,9 +1324,12 @@ select (select count(*) from media_advice_private.permissions) as assignments,
 
 ### Step 3 — daily cleanup and independent control
 
-Operator **Denys** owns activation and daily operations. After both migrations,
-review/run [prepared schedule SQL](../supabase/operations/media-advice-cleanup.schedule.sql)
-only with separate authorization: it creates the named job **inactive** and
+**Authorized and activated in the subsequent owner approval; one direct control
+check passed. No monitoring person, duty or time is assigned.** Exact jobid,
+configuration, heartbeat and remaining scheduled-run boundary are in the
+[execution checkpoint](#deployment-execution-checkpoint--2026-10-22).
+The [schedule SQL](../supabase/operations/media-advice-cleanup.schedule.sql) is
+now an operator reference, **not a request to replay**: it creates the named job **inactive** and
 refuses an existing name/non-UTC-equivalent timezone. Then inspect its single
 jobid, command, database/user, `15 2 * * *` and GMT/UTC; activate that exact job
 with `cron.alter_job(<verified-jobid>, active := true)`. No second job or
@@ -1022,8 +1341,8 @@ Still-active rows are retained and become an overdue finding if anomalously
 old. Daily healthy scheduling expects deletion at age24–48h, **not a guaranteed
 48h bound on scheduler/DB failure**. No movies/Wishlist or permission deletion.
 
-Concrete pilot monitoring: Denys checks **daily at 09:00 UTC**, independently of
-pg_cron, in Supabase SQL Editor using
+Prepared monitoring checks (not a scheduled monitor or an assigned obligation):
+independently of pg_cron, inspect in Supabase SQL Editor using
 [existing health SQL](../supabase/operations/media-advice-cleanup.sql), then
 these read-only checks:
 
@@ -1040,13 +1359,17 @@ Require exactly one correctly configured job and today's scheduled
 run succeeded and heartbeat advanced after02:15UTC; the health query's missing/
 >26h success or age≥48h backlog is actionable too. Record only UTC check time,
 success/overdue count privately. Initial missing heartbeat is expected before
-first run, not permission to skip monitoring. Verify first scheduled success
-before live access; alternatively a separately authorized one-time cleanup
-can test the function but **does not validate scheduler firing**.
+first run, not evidence of success. General rollout should verify scheduled
+success; for this exact owner pilot, the explicit subsequent decision in the
+execution record defers that verification until after pilot start and removes
+it as an activation gate. A direct call **does not validate scheduler firing**;
+no further manual call is authorized as a substitute in this activation step.
 
-This is a **manual control, not automatic alerting**. Denys must explicitly
-accept the duty before pilot, continuing after flag expiry until the final
-session has been cleaned; without coverage postpone access. For a missed/
+This is a **manual control, not automatic alerting**. No user has been assigned
+to perform it. An operational monitoring arrangement remains unestablished;
+do not infer consent or a schedule. Deployment permission alone does not waive
+operational checks; the explicit exact-user pilot exception above does defer
+the first scheduled check. For a missed/
 failed run, unexpected active job/TTL or overdue records: revoke pilot flag,
 inspect scheduler/DB, perform only authorized cleanup recovery, recheck; no
 source replay or accounting reset. Unattended alerting needs a separate
@@ -1080,23 +1403,25 @@ Capability uses Auth/RPC, not Tavily/TMDb/MOTN/Kinobaza. It does **not** validat
 source keys or live resolver quality. Do not use existing movie-search as a
 configuration probe. Ordinary read requests and later pilot Save are distinct.
 
-### Step 5 — owner-only, expiring backend assignment
+### Step 5 — exact-user indefinite backend assignment (completed)
 
-Owner UUID is **not established in this preparation**. Resolve it privately from
-the owner's authenticated Supabase `getUser()` id, corroborate in Authentication
-→ Users and eligible test-group membership. Never infer from display name or
-choose the first auth user. Do not print access tokens or publish email/UUID.
-Also establish the test group/list/film binding; current flag is per-user, not
-a new per-group restriction.
+The exact UUID supplied in the execution authorization was read-only verified in
+`auth.users`. Do not infer another user from display name, publish personal
+fields/UUID or create an auth account. This is a per-user flag; no test-group,
+film list or preset context is a prerequisite for assignment. Existing fresh
+group/list/film authorization still applies to every actual action.
 
-Once all gates pass and activation is authorized: require no other enabled
+The assignment below was executed after migrations/source-free Auth smoke,
+under the owner's explicit first-run deferral. It is an operator reference,
+**not a request to rerun**. Require no other unintentionally enabled
 M4 permission rows; replace `<VERIFIED_OWNER_UUID>` with that exact UUID and assign
-**2 hours** through privileged SQL/admin, not editable user_metadata:
+**without expiry**, using schema-supported NULL through privileged SQL/admin,
+not editable user_metadata. No additional approval or two-hour feature window:
 
 ```sql
 insert into media_advice_private.permissions(user_id,feature_key,enabled,expires_at)
 values ('<VERIFIED_OWNER_UUID>'::uuid,'mykola_media_advice',true,
-        clock_timestamp() + interval '2 hours')
+        NULL)
 on conflict(user_id,feature_key) do update
 set enabled=true, expires_at=excluded.expires_at;
 ```
@@ -1109,13 +1434,14 @@ set enabled=false, expires_at=clock_timestamp()
 where user_id='<VERIFIED_OWNER_UUID>'::uuid and feature_key='mykola_media_advice';
 ```
 
-These are **future actions**. Confirm one exact active user/expiry after
-assignment; all others default-off. Revocation
+Assignment is **executed and verified**: one exact active user, NULL expiry,
+effective flag true and authenticated UI access; all others default-off.
+The emergency-revocation example above is **not executed**. Revocation
 denies subsequent capability/reserve/finish/apply authorization; an already
 dispatched source request may still have spent its attempt. It does not undo
 earlier user Save or erase already displayed results. No retries/refund.
 
-### Step 6 — pilot, only under subsequent authorization
+### Step 6 — owner-run pilot plan (not started by the agent)
 
 Select **five concrete real Wishlist films first**; currently none selected.
 Record their real IDs and test-group card bindings privately, not research
@@ -1135,27 +1461,46 @@ No raw responses/HTML/snippets/secrets archive.
 
 ### Unresolved prerequisites and evidence boundary
 
-Execution remains **conditional**, not deployment/pilot-ready approval:
+Exact-user access is active under the explicit owner-pilot exception; these
+remaining limits are not a general production/readiness approval:
 
-1. Effective branch policy/required approvals (403), fresh assembled-tip checks;
-   explicit merge + possible automatic develop deploy authorization.
+1. Consolidation/develop deployment completed at the execution checkpoint;
+   no further merge/deploy or migration replay is needed for this checkpoint.
+   Administrative protection details403 remain unavailable; the execution's
+   effective unprotected-branch/rulesets evidence is recorded above.
 2. Dashboard develop/base/publish/functions/bundler/Node configuration and
    APM/log-drain/body-capture verification; env context metadata confirmation.
-3. MW recovery prerequisite now scope-qualified for only two new migrations;
-   explicit execution authorization, privileged connection/history procedure and
-   live privileges/default-off/post-data checks still required and not yet run.
-4. Explicit cleanup activation/first-run evidence and Denys's independent
-   daily monitoring commitment (no automatic alerting exists).
-5. Exact owner UUID/test group and later bounded backend assignment.
-6. Five real pilot films, still unselected, and separate pilot/Save authorization.
+3. MW recovery scope-qualified; both exact migrations/history and live DB
+   privileges/default-off/post-data checks completed as recorded above.
+   Real-user pre-activation capability smoke passed on the authorized
+   develop-only redeploy after the owner's key update: Auth200, service-role
+   RPC403 with expected access-denied/default-off. After assignment, both
+   capability checks returned200 and the isolated UI opened; source keys and
+   discovery were not tested.
+4. Cleanup job activated under the subsequent explicit approval; one direct
+   function check passed/heartbeat advanced. First scheduled run is unverified;
+   the owner explicitly deferred its check until after pilot start, so it does
+   not block this user's access. Scheduler remains active. Independent
+   ongoing monitoring unspecified (no automated alerting or assigned
+   user duty). No scheduled-success claim from a manual call.
+5. Exact supplied UUID existence confirmed; indefinite assignment completed,
+   effective true and other enabled users0. No group/film manifest requirement
+   is added to this per-user assignment; ordinary authorization still applies.
+6. The owner chooses the group/films and starts the pilot. The five-film plan
+   is not a runtime allowlist or access prerequisite. No agent-run discovery/
+   pilot/Save was performed or is authorized by this access-only task.
 7. Account/source-use conditions: Tavily §§2/3.5 end-user scope versus an
    owner-only pilot, actual plan/quota and AUP obligations; Kinobaza automatic
    arbitrary-card content rights not supplied by Search; existing TMDb/MOTN
    attribution/commercial/retention requirements. See dated findings below;
    no blanket clearance, no new runtime legal switch.
 
-Read-only catalog/project/PR review and offline import check passed. No runtime,
-SQL, flag, secret or scheduler change here; prior #194 45-pass/1-skip browser/
+Read-only catalog/project/PR review and offline import check passed in preparation;
+the two authorized new SQL migrations were subsequently executed as recorded
+above. The subsequently authorized job activation/direct control check are also
+recorded above. The subsequently authorized exact-user flag and live
+capability-only smoke are also recorded above; no application runtime or secret
+change. Prior #194 45-pass/1-skip browser/
 offline and #192 native17.6 evidence stay pinned, not a new run on these docs.
 Markdown-only: verify links/anchors, consistency, scope and whitespace; no
 reason to repeat runtime/Windows suites. Reference docs checked 2026-10-21:

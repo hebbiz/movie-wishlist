@@ -1,4 +1,5 @@
--- PREPARED ONLY, outside migrations. Not executed in this task/production.
+-- Operator configuration template, outside migrations; do not replay an existing job.
+-- Actual activation/control-check status: docs/m4-media-advice.md.
 -- Requires separate operator authorization and pg_cron availability. Installs
 -- INACTIVE, without replacing an existing job; enabling it is a separate action.
 begin;

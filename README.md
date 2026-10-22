@@ -111,11 +111,20 @@ process.
 implemented or documented v1.3.1 scope.
 - [M4 media advice implementation and activation boundaries](docs/m4-media-advice.md)
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
-  prepared only; five pilot films still unselected.
+  [actual develop deployment checkpoint](docs/m4-media-advice.md#deployment-execution-checkpoint--2026-10-22).
+  Code merged/deployed; exactly the two authorized M4 migrations applied and
+  history/privileges/default-off/existing-data checks verified.
 
-M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
-locally verified, including native PostgreSQL 17.6 concurrency. Cleanup is
-prepared inactive; pilot activation and source-use review remain separate.
+M4 is default-off for others; the exact owner has active indefinite pilot access.
+Narrow #192 apply/deadline/queued-reservation fixes are
+locally verified, including native PostgreSQL 17.6 concurrency. Daily02:15UTC
+cleanup is activated; first scheduled cleanup remains unverified, and the owner
+explicitly deferred that check until after pilot start (not an activation gate
+for this user). After the owner's key update and develop-only redeploy,
+pre/post-activation Auth/RPC smoke passed; the isolated UI opens without discovery.
+Assignment uses NULL expiry; other enabled users0. The owner chooses group/films
+and starts the pilot; no agent discovery/Save, new deploy or manual cleanup.
+Source-use and monitoring limitations remain explicit.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
 for candidate URLs only; quality remains live-unvalidated and customer-app
 source-use conditions remain explicit. Brave research is preserved historically.
