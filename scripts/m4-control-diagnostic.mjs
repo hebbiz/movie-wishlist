@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
 import { admitKinobazaURL } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
+import { readControlCredentials } from './m4-control-credentials.mjs';
 
 const controls = [{ title:'Blade Runner 2049' }, { title:'Mortal Kombat', year:2021 }];
 const api = 'https://api.themoviedb.org/3';
@@ -64,7 +65,16 @@ export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = f
 }
 if (process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   if (!process.argv.includes('--live-control')) throw Error('Explicit --live-control required; no requests made.');
-  const result=await runControlDiagnostic({tmdbToken:process.env.TMDB_READ_ACCESS_TOKEN,tavilyKey:process.env.TAVILY_API_KEY});
-  process.stdout.write(JSON.stringify(result,null,2)+'\n');
-  if(result.status==='blocked-missing-local-credentials') process.exitCode=2;
+  let credentials;
+  try {
+    credentials=process.argv.includes('--credentials-stdin') ? await readControlCredentials(process.stdin) : {tmdbToken:process.env.TMDB_READ_ACCESS_TOKEN,tavilyKey:process.env.TAVILY_API_KEY};
+    const result=await runControlDiagnostic(credentials);
+    process.stdout.write(JSON.stringify(result,null,2)+'\n');
+    if(result.status==='blocked-missing-local-credentials') process.exitCode=2;
+  } catch {
+    process.stdout.write('{"execution":"local-diagnostic","status":"local-run-failed-no-retry"}\n');
+    process.exitCode=2;
+  } finally {
+    if(credentials){ credentials.tmdbToken=null;credentials.tavilyKey=null; }
+  }
 }

@@ -111,13 +111,39 @@ This local bounded harness is not a replacement for the deployed atomic ledger.
 cases not-run; TMDb0 / Tavily0 / Kinobaza0, total0/12. No identity/result or new
 historical root cause is claimed. Existing Netlify Functions-only Secret values
 are not an exportable local credential handoff; no value read, printed, copied
-or changed. Live continuation needs these two existing credentials via an
-authorized hidden local process handoff, not chat/argv/Git/logs. No owner movie
-retest is requested. The command itself contains no credential values:
+or changed. This zero-attempt result predates the owner's authorization of
+one-time local hidden input; it is not an executed live control.
 
-```powershell
-node scripts/m4-control-diagnostic.mjs --live-control
-```
+**Hidden local continuation prepared:** `scripts/m4-control-password-prompt.ps1`
+requires PowerShell7, the installed Node22+ and an exact `-ExpectedCommit` checkout
+with no tracked modifications. Two `Read-Host -AsSecureString` inputs immediately
+start the existing controls, once; do not restart after an uncertain/interrupted
+run. Credentials go only through redirected child stdin (`--credentials-stdin`),
+not argv, environment assignments, files, DPAPI blobs, clipboard or logs. The
+strict bounded stdin contract accepts exactly the two credentials, with no env
+fallback for malformed/missing input. Inherited Node preload/debug/TLS-bypass
+settings are removed from this child. Never use a transcript/recorded terminal.
+Managed strings are released best-effort; perfect memory zeroization is not
+claimed, and this does not change OS paging/crash-dump policy.
+
+After completion the helper clears credential references and keeps only the
+minimal safe diagnostic result in a single current-user-only **local named pipe**
+`mw-m4-controls-198`, for up to15 minutes including transfer. No TCP listener or
+result archive. Leave the prompt window open and notify Codex immediately;
+Codex retrieves the result from that pipe and records only needed findings in
+this section/PR. Receiver failure does not authorize another source run. Local
+checkout SHA is reported separately, never as deployed runtime attestation.
+The final copyable CMD/Termius command must pin the actual helper commit SHA
+with `-ExpectedCommit`; no source credential value belongs in that command.
+Hidden entry/control execution remains pending until the owner runs it.
+No owner movie retest or Netlify secret export is requested.
+Prompt continuation checks: **14/14** targeted tests passed (strict stdin/EOF,
+malformed/oversize/cancelled input, no env fallback, authored child errors with
+zero network traffic, PowerShell7 AST and native current-user-only named-pipe
+round trip, existing diagnostics/cap12/withholding). This is not live validation.
+Source adapters, resolver policy, serverless ledger and application lifecycle
+remain unchanged; no new full browser/Windows-demo lifecycle run is needed for
+this isolated credential wrapper.
 
 Controls keep field comparisons only in invocation memory and emit only minimal
 public identity differences needed to explain a failed gate, not raw bodies,
