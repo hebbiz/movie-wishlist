@@ -112,11 +112,12 @@ implemented or documented v1.3.1 scope.
 - [M4 media advice implementation and activation boundaries](docs/m4-media-advice.md)
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   [actual develop deployment checkpoint](docs/m4-media-advice.md#deployment-execution-checkpoint--2026-10-22).
-  Code merged/deployed; two authorized migrations await protected credentials.
+  Code merged/deployed; exactly the two authorized M4 migrations applied and
+  history/privileges/default-off/existing-data checks verified.
 
 M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
 locally verified, including native PostgreSQL 17.6 concurrency. Cleanup is
-prepared inactive; access remains blocked by the recorded migration/smoke and
+prepared inactive; access remains blocked by the recorded authenticated smoke and
 cleanup gates. Indefinite per-user access is authorized, not yet assigned;
 five-film pilot and source-use conditions remain separate.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)

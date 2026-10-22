@@ -2,8 +2,8 @@
 
 Status: M4.1–M4.3 merged and deployed to **develop**, default off. The
 [execution checkpoint](#deployment-execution-checkpoint--2026-10-22)
-records completed consolidation/deployment separately from the still-blocked
-database/activation steps. The owner authorized the two migrations and permanent
+records completed consolidation/deployment and the two applied database migrations
+separately from the still-blocked activation steps. The owner authorized permanent
 per-user access; those approvals are not missing. No live pilot is authorized.
 Current search provider: **Tavily basic Search**, candidate URLs only,
 offline-tested/live-unvalidated; this record is not independent rights clearance.
@@ -17,11 +17,13 @@ source boundaries remain in [research proposal](../research/grounded-answer-demo
 ## Deployment execution checkpoint — 2026-10-22
 
 **Completed:** #190–#195 consolidated through merge commits; develop branch
-deploy ready. **Not completed:** production DB migrations (protected local DB
-credential handoff absent), authenticated capability/RPC smoke, feature assignment.
+deploy ready; exactly the two reviewed migrations applied to the existing shared
+Supabase database, with history and post-checks verified. **Not completed:**
+real-user authenticated Netlify capability smoke and feature assignment.
 The owner explicitly authorized those operations; no repeat general approval is
-required. No DDL, migration-history write, flag, cleanup, secrets or Wishlist
-write was performed. Five-film discovery/pilot was not started.
+required. The authorized new M4 DDL/history writes are recorded below; no
+historical SQL/RLS, flag, cleanup, secret or Wishlist write was performed.
+Five-film discovery/pilot was not started.
 
 | Merge | Actual merge SHA (target's new head) |
 | --- | --- |
@@ -78,16 +80,64 @@ This is an existing populated database, not a fresh one. Migration files' bytes
 match both reviewed SHA256 values in Step2. Existing verified encrypted recovery
 checkpoint authenticated again; no new backup/restore cycle.
 
-**Concrete resume requirement:** the old password handoff was consumed and is
-not reusable. [Hidden local prompt](../supabase/operations/m4-migration-password-prompt.ps1)
-uses the existing verified TLS/PG17 read-only check and private owner/SYSTEM
-DPAPI handoff, purpose-bound to exactly the two M4 versions. It performs no DDL.
-Its two-hour **credential** TTL is unrelated to the approved indefinite feature
-assignment. CLI2.121.0 is already available in the local npm cache; its version
-and migration-up/link help were verified. Do not request a password in chat,
-extract production/Netlify secrets or substitute MCP-generated migration versions
-for the exact reviewed history versions. On resume use Step2's isolated two-file
-CLI procedure, then post-checks and real authenticated source-free smoke.
+**Migration execution — 2026-10-22T20:02:28.505Z–20:02:32.041Z**
+(23:02 Kyiv): the owner completed the
+[hidden local prompt](../supabase/operations/m4-migration-password-prompt.ps1).
+Purpose/project/host/database/version/expiry, verified TLS root and read-only
+PG17 identity were revalidated. The purpose-bound DPAPI password was used only
+in child-process memory/environment, never argv, Git or output. Its two-hour
+credential TTL is unrelated to the authorized indefinite feature assignment.
+
+CLI **2.121.0** initialized a unique owner/SYSTEM-only directory outside the
+owner checkout containing **only the two unchanged, SHA256-verified files**.
+The documented `migration list` → `migration up` method used the CLI's supported
+**password-free `--db-url`** instead of `--linked`: the exact verified session
+pooler, `sslmode=verify-full`, verified CA path, bounded connection/statement/lock
+timeouts. This avoids a second Management API/PAT credential; it does not change
+the project or history semantics. No `db push`, `--include-all`, repair, old
+001–016 replay or generated substitute version. CLI exited zero; independent
+SQL and the migration-list API confirmed exactly:
+
+| Version | History name | Stored statement count |
+| --- | --- | --- |
+| `20261020205122` | `media_advice_access_ledger` | 19 |
+| `20261021072002` | `media_advice_review_fixes` | 12 |
+
+Post-checks at **20:03:21Z** and subsequent read-only structure checks:
+
+- Exactly `permissions`, `sessions`, `cleanup_health` in the private schema;
+  expected columns/defaults/checks/FKs/indexes, RLS enabled on all three.
+  `permissions.enabled` defaults false. No anon/authenticated schema/table
+  access or policies. Service role has intended DML on permissions/sessions and
+  SELECT only on cleanup_health; schema USAGE only, not CREATE.
+- Exactly the two expected public RPC signatures; SECURITY DEFINER with empty
+  search_path. EXECUTE is granted to service_role, not PUBLIC/anon/authenticated,
+  including effective/inherited checks. Both stored `prosrc` MD5 fingerprints
+  match the reviewed second migration's exact function bodies.
+- Repeatable-read, read-only pre/post snapshots of existing `group_members`,
+  `movies`, `movie_group_lists` matched structure/columns/constraints/policies/
+  ACL/indexes/triggers and aggregate counts/data fingerprints. No data bodies
+  were exported; private fingerprints are not published. This is an observed
+  preservation check, not a claim of full-database recovery/immutability.
+- Permission assignments **0**, sessions **0**, cleanup heartbeats **0**, named
+  cleanup jobs **0**. No start/reserve/finish or cleanup function was called.
+- Read-only SQL under `SET LOCAL ROLE service_role` reached the actual capability
+  RPC and received the expected exact `access-denied` without an assignment.
+  This proves service-role RPC/default-off behavior, **not** a real-user Auth →
+  Netlify → RPC success or a real group authorization check. Browser-authenticated
+  source-free smoke remains unperformed; no bearer was extracted or fabricated.
+- Supabase security advisor reported only INFO `rls_enabled_no_policy` for these
+  three intentionally service-only tables. No policy was added to silence the
+  [advisory](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+  Historical findings were not modified.
+
+The consumed DPAPI credential file was deleted immediately after execution;
+the original encrypted recovery checkpoint/key are preserved. Content-free
+execution metadata/private aggregate audit remains under the protected local
+M4Deployment execution directory. A local date-deserialization issue was fixed
+before connecting/applying; no failed or repeated migration attempt occurred.
+No new backup/restore cycle, source discovery, owner test, secret update or
+deployment was performed in this continuation. Main/develop refs remain unchanged.
 
 **Activation holds, not missing authorization:** existing cleanup/first-run gate
 applies because real discovery creates retained technical sessions. Scheduler
@@ -96,7 +146,7 @@ or time is assigned. Do not silently waive this gate or create an enabled flag.
 Current Tavily customer-application/account scope, Kinobaza arbitrary-card rights
 and TMDb/MOTN attribution/use conditions remain the dated Step0/source-use issues;
 merge/build/smoke do not clear them. No new source/rules research was performed.
-When these gates and migrations/smoke pass, assignment is per supplied UUID,
+When these gates and real-user smoke pass, assignment is per supplied UUID,
 `expires_at=NULL`; no group/film allowlist or two-hour feature window.
 
 **Validation:** assembled #190 and actual final develop each ran M4 offline/
@@ -1025,7 +1075,7 @@ missing required approval or failing required check. No automatic restacking.
 M5 also authorizes an auto branch deploy **only if explicitly included in the
 next approval**; do not invoke a manual deploy or build hook here.
 
-### Step 2 — apply only the two M4 migrations (authorized; credential pending)
+### Step 2 — apply only the two M4 migrations (completed; do not replay)
 
 | File under supabase/migrations | Dependency / SHA256 of reviewed bytes |
 | --- | --- |
@@ -1040,11 +1090,12 @@ byte hashes: establish the reviewed execution-file hash before running).
 Confirm backup/PITR recovery availability privately; no restore is invoked.
 
 Use a **new disposable Supabase CLI work directory containing only these two
-unchanged migration files**, outside owner checkout. Current machine has no
-Supabase CLI/psql in PATH: executing operator must pin/install an approved CLI
-and first inspect `--version` and command `--help`. Planned commands below
+unchanged migration files**, outside owner checkout. The original preparation
+found no CLI/psql in PATH; execution used the verified local CLI2.121.0 and
+PG17 tools by absolute path, after inspecting version/help. Reference commands
 are from the [official CLI reference](https://supabase.com/docs/reference/cli/supabase-migration-up)
-(checked 2026-10-21), not executed here:
+(checked 2026-10-21). Execution above used the supported password-free `--db-url`
+variant; commands below remain a procedure reference, **not a request to rerun**:
 
 ```powershell
 supabase migration up --help
@@ -1247,17 +1298,18 @@ No raw responses/HTML/snippets/secrets archive.
 
 ### Unresolved prerequisites and evidence boundary
 
-Execution remains **conditional**, not deployment/pilot-ready approval:
+Activation remains **conditional**, not pilot-ready approval:
 
 1. Consolidation/develop deployment completed at the execution checkpoint;
-   no further merge/deploy action is needed to resume the pending migration.
+   no further merge/deploy or migration replay is needed for this checkpoint.
    Administrative protection details403 remain unavailable; the execution's
    effective unprotected-branch/rulesets evidence is recorded above.
 2. Dashboard develop/base/publish/functions/bundler/Node configuration and
    APM/log-drain/body-capture verification; env context metadata confirmation.
-3. MW recovery scope-qualified and migration execution authorized; protected
-   local DB password handoff is missing. Two-version history application and
-   live privileges/default-off/post-data checks are not yet executed.
+3. MW recovery scope-qualified; both exact migrations/history and live DB
+   privileges/default-off/post-data checks completed as recorded above.
+   Real-user authenticated Netlify capability smoke remains unperformed;
+   direct service-role SQL smoke is not a substitute for that Auth path.
 4. Cleanup activation is excluded, first-run evidence absent and independent
    monitoring unspecified (no automated alerting or assigned user duty).
 5. Exact supplied UUID existence confirmed; indefinite assignment authorized,
@@ -1271,8 +1323,10 @@ Execution remains **conditional**, not deployment/pilot-ready approval:
    attribution/commercial/retention requirements. See dated findings below;
    no blanket clearance, no new runtime legal switch.
 
-Read-only catalog/project/PR review and offline import check passed. No runtime,
-SQL, flag, secret or scheduler change here; prior #194 45-pass/1-skip browser/
+Read-only catalog/project/PR review and offline import check passed in preparation;
+the two authorized new SQL migrations were subsequently executed as recorded
+above. No application runtime, flag, secret or scheduler change in this
+continuation; prior #194 45-pass/1-skip browser/
 offline and #192 native17.6 evidence stay pinned, not a new run on these docs.
 Markdown-only: verify links/anchors, consistency, scope and whitespace; no
 reason to repeat runtime/Windows suites. Reference docs checked 2026-10-21:
