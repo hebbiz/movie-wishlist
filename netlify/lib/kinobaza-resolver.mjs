@@ -1,5 +1,5 @@
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
-const ENDPOINT = 'https://api.search.brave.com/res/v1/web/search';
+const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
 export function resolverQueries(film) {
   const names = [...new Set([film.originalTitle, film.identityTitle, ...(film.titleAliases ?? [])].map(text).filter(Boolean))].slice(0, 2);
@@ -12,23 +12,30 @@ export function admittedCandidates(items) {
 }
 // Replaceable ordinary Web Search interface: candidate URLs only. Snippet/rank
 // never enter identity, availability, localization, reports or draft.
-export function braveWebSearch(apiKey, fetchImpl = fetch) {
+export function tavilySearch(apiKey, fetchImpl = fetch) {
   return {
     accepts(url, init) {
-      try { const u = new URL(url); return u.origin + u.pathname === ENDPOINT && !u.username && !u.password && !u.port && !u.hash && init.method === 'GET' && init.redirect === 'manual'; } catch { return false; }
+      return url === ENDPOINT && init?.method === 'POST' && init.redirect === 'manual' && init.credentials === 'omit';
     },
     async search(query, { signal } = {}) {
       if (!apiKey || /\s/.test(apiKey)) return { status: 'missing-or-invalid-search-key', urls: [] };
-      const url = new URL(ENDPOINT); url.searchParams.set('q', query); url.searchParams.set('count', '5');
+      if (signal?.aborted) return { status: 'search-timeout-no-retry', urls: [] };
+      const payload = { query, search_depth: 'basic', topic: 'general', max_results: 5,
+        auto_parameters: false, include_answer: false, include_raw_content: false,
+        include_images: false, include_favicon: false, include_usage: false,
+        include_domains: ['kinobazaua.com'], include_domains_mode: 'restrict' };
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15_000);
       const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
       const aborted = new Promise((_, reject) => { if (combined.aborted) reject(Error()); else combined.addEventListener('abort', () => reject(Error()), { once: true }); });
       const bounded = p => Promise.race([p, aborted]); let reader;
       try {
-        const r = await bounded(fetchImpl(url.href, { method: 'GET', redirect: 'manual', credentials: 'omit', headers: { Accept: 'application/json', 'X-Subscription-Token': apiKey }, signal: combined }));
+        const r = await bounded(fetchImpl(ENDPOINT, { method: 'POST', redirect: 'manual', credentials: 'omit',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify(payload), signal: combined }));
         const stop = status => { void r.body?.cancel().catch(() => {}); return { status, urls: [] }; };
         if (r.status >= 300 && r.status < 400) return stop('search-redirect-refused');
-        if (!r.ok) return stop(({ 401: 'search-auth-error', 403: 'search-access-denied', 429: 'search-rate-limit' })[r.status] ?? 'search-http-error');
+        if (!r.ok) return stop(({ 401: 'search-auth-error', 403: 'search-access-denied', 429: 'search-rate-limit',
+          432: 'search-quota-error', 433: 'search-quota-error' })[r.status] ?? 'search-http-error');
         if (!/^application\/json(?:\s*;|$)/i.test(r.headers.get('content-type') ?? '') || !r.body) return stop('search-invalid-response');
         if (Number(r.headers.get('content-length')) > 512 * 1024) return stop('search-response-too-large');
         reader = r.body.getReader(); let bytes = 0; const chunks = [];
@@ -36,8 +43,11 @@ export function braveWebSearch(apiKey, fetchImpl = fetch) {
         const body = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
         if (body.includes(apiKey)) return { status: 'unsafe-source-content-withheld', urls: [] };
         const data = JSON.parse(body);
-        // Missing web results is an empty search outcome, not absent film/card.
-        const urls = data.web === undefined ? [] : admittedCandidates(data.web?.results);
+        // Only results[].url crosses the provider boundary. Missing/malformed
+        // results is not a successful empty search. Content/score are discarded.
+        const valid = data && !Array.isArray(data) && Array.isArray(data.results) && data.results.length <= 5 &&
+          data.results.every(item => item && typeof item === 'object' && !Array.isArray(item) && typeof item.url === 'string');
+        const urls = valid ? admittedCandidates(data.results) : null;
         return urls ? { status: 'ok', urls } : { status: 'search-invalid-response', urls: [] };
       } catch { if (reader) void reader.cancel().catch(() => {}); return { status: combined.aborted ? 'search-timeout-no-retry' : 'search-transport-or-json-error', urls: [] }; }
       finally { clearTimeout(timer); }
@@ -45,7 +55,7 @@ export function braveWebSearch(apiKey, fetchImpl = fetch) {
   };
 }
 
-export function createKinobazaResolver({ apiKey, searchFactory = braveWebSearch } = {}) {
+export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch } = {}) {
   return async (film, { reserve, fetchImpl, calls, signal }) => {
     const queries = resolverQueries(film), cards = [];
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, cards: [] };
