@@ -227,15 +227,18 @@ Supabase `mttkectgdqqmejpenkrn`, not a fresh DB. Denys is the deployment/backend
 operator. Owner checkout/demo is excluded. Every mutating step below requires
 the next explicit authorization; do not run commands merely because documented.
 The five pilot films are **not selected**.
-**Execution hold:** the [recovery checkpoint](#recovery-checkpoint--2026-10-22-blocked)
-below is blocked. Do not begin consolidation/auto-deploy or migrations on the
-strength of a prepared runbook alone.
+**Execution hold:** the [focused recovery assessment](#focused-recovery-assessment--2026-10-22-m4-qualified)
+clears the MW recovery prerequisite for the two M4 migrations, with explicit
+limits; it does not authorize consolidation/auto-deploy or migrations. All other
+execution prerequisites and the next explicit authorization still apply.
 
 ### Recovery checkpoint — 2026-10-22 (blocked)
 
-**NOT recovery ready: actual isolated PG17 restore completed and snapshot data
-checks passed, but effective object ACLs and the schema-SQL round trip do not
-match.** See the [dated restore result](#local-restore--2026-10-22-data-verified-acl-blocker).
+The heading retains its historical anchor. **Current verdict: recovery is
+sufficient for the two additive M4 migrations, not a full Supabase-project
+recovery guarantee.** The initial [data-pass/ACL-blocker result](#local-restore--2026-10-22-data-verified-acl-blocker)
+is superseded only to that scope by the
+[focused assessment](#focused-recovery-assessment--2026-10-22-m4-qualified).
 Disk encryption is explicitly waived, not a blocker. No production restore,
 migration, consolidation/deploy or activation is authorized by this evidence.
 
@@ -508,11 +511,11 @@ Target/preparation, not a production Supabase restore:
 | Catalog structure | PASS for schema/table inventory, owners, RLS/force-RLS flags, extension membership/version inventory and constraint definitions/validation flags. This is not a blanket pass for all SQL serialization. |
 | Key relationships | PASS: all restored FKs checked for orphans. Captured FK coverage includes group membership→groups/users and movie-group-list→groups/movies; source/target constraint definitions match. No undeclared relationships or Auth service behavior are inferred. |
 | Roles/memberships | PASS for captured logical attributes/memberships, without role passwords. Source role/global definitions were stable during export. |
-| Object ACLs | **FAIL**: PostgreSQL `aclexplode`/`acldefault` comparison retains grantee, grantor, privilege and grant option, including NULL/default semantics. Thus this is not dismissed as ACL-array order or text formatting. Captured public-schema/table ACLs match; mismatched tables are extension-owned, with additional schema ACL differences. |
+| Object ACLs | **FAIL globally**: PostgreSQL `aclexplode`/`acldefault` comparison retains grantee, grantor, privilege and grant option, including NULL/default semantics. Later exact enumeration found **two schema mismatches and zero table mismatches**. The earlier statement about extension-owned table mismatches was an empty-set `every()` diagnostic, not evidence of any such mismatch. |
 | Full schema SQL | **FAIL**: normalized schema redump is not identical even with matched17.11 client. Remaining differences were not exhaustively classified; no blanket column/index/function/trigger/privilege fidelity claim. |
 | Auth/Storage/Vault services | Not tested; SQL rows restored, no service entrypoint, object bytes or project-root-key recovery. |
 
-**Current blocker:** permission/schema fidelity of the local Supabase-compatible
+**Historical blocker, subsequently scoped below:** permission/schema fidelity of the local Supabase-compatible
 target is not established. Different managed/extension initial privileges are a
 **hypothesis**, not an attested root cause. The source snapshot did not independently
 capture `pg_init_privs` or every extension-member function/column ACL baseline.
@@ -560,13 +563,143 @@ References: [official Supabase PG image](https://hub.docker.com/r/supabase/postg
 [PG17 role grantor/bootstrap rules](https://www.postgresql.org/docs/17/sql-grant.html),
 [initial privileges catalog](https://www.postgresql.org/docs/17/catalog-pg-init-privs.html).
 
+#### Focused recovery assessment — 2026-10-22 (M4 qualified)
+
+**Decision:** the existing copy demonstrates recovery of the MW objects/data
+needed before `20261020205122_media_advice_access_ledger.sql` and
+`20261021072002_media_advice_review_fixes.sql`. This is a **scope-qualified
+recovery checkpoint**, not permission to apply them. Original source inventory,
+archive and comparison failures remain unchanged; no expected ACL was weakened.
+No production connection, new snapshot, M4 SQL, flag or scheduler was executed.
+
+**Exact ACL differences, final full PG17.6 restore:** 66 native schema/table
+comparisons; 64 equal, the following two differ. All inventoried table ACLs
+match, including MW/public, Auth, Storage and extension-owned tables.
+
+| Object / ownership class | Captured source → restored target | Cause / MW impact |
+| --- | --- | --- |
+| `graphql`, Supabase-managed, owner `supabase_admin` | Source: owner `USAGE,CREATE`; `postgres` `USAGE WITH GRANT OPTION`; `anon`, `authenticated`, `service_role` `USAGE`, all granted by `supabase_admin`. Target: NULL ACL = owner defaults only; those four explicit grantee entries absent. | Inventory contains these grants, but the authenticated archive's schema SQL has **no SCHEMA ACL entry/grants for this schema**. A clean target cannot recreate omitted grants. This removes explicit schema access/grant option, not an RLS or MW-table change. |
+| `graphql_public`, same managed ownership (not proved extension membership) | Identical source grants and target omission as `graphql`. | Same archive omission. GraphQL callers need schema USAGE in addition to function EXECUTE; a function grant alone is insufficient. `BYPASSRLS` does not itself supply schema privileges. No M4 RPC/query uses either GraphQL schema. |
+
+The owner/default entry is unchanged; this is a real grant difference, not ACL
+array ordering. The missing direct `postgres` grant option is distinct from any
+power inherited through other roles. Managed ownership is **not** the same as
+current extension membership: `pg_graphql` is absent from the captured seven
+extensions. Why the exporter omitted these grants (for example an initial-
+privileges baseline) remains unknown: source `pg_init_privs` was not captured.
+That deeper cause is not asserted or needed to identify the omission.
+
+**Narrow procedure correction:** after an offline restore, use
+[the source-validated schema supplement](../supabase/operations/recovery-schema-supplement.mjs)
+for these two schemas only. It requires the exact captured source owner/ACL,
+allows only a default or already-identical target ACL, then grants precisely
+the missing USAGE/grant-option entries **as the original grantor**. Unexpected
+source or target rights cause refusal, not blanket grants/revokes. Re-run native
+`aclexplode` comparison afterward. This is an operator restore step, **not a
+production migration**, and is not imported by the application. Do not apply it
+to the still-live source or claim it repaired the already-deleted PG17.6 VM.
+
+**Targeted native repeat:** completed **2026-10-22T07:43:12.774Z**, Windows
+PostgreSQL **17.11** (same major; earlier full data/extension restore was real
+17.6). Only actual archived MW/public + Auth **schema** and logical roles were
+replayed here; no rows reimported and no M4 migrations. No extension stubs,
+cron/pg_net preload, event-trigger bootstrap, webhooks or source calls. The
+endpoint was **127.0.0.1 only**, random port, random private SCRAM credential,
+protected owner/SYSTEM directory; no LAN listener. This is distinct from the
+earlier no-NIC/socket-only VM. No Auth service or user-token behavior is claimed.
+
+- Both schema ACL omissions reproduced before the supplement; **44/44** scoped
+  schema/table ACL comparisons matched after it, without changing source ACLs.
+- MW/Auth table inventory/owners/RLS flags match independent of catalog ordering.
+- **476 source SQL object blocks** match the redump's object meaning: tables,
+  columns/defaults, indexes, constraints, functions/RPC definitions and archived
+  permissions, triggers, RLS policies and default grants. No changed function,
+  policy or constraint is silently normalized away. Authored tests ensure actual
+  DDL/grant/grant-option changes remain failures.
+- Exactly **two extra serialization blocks** are initdb's `public` schema and
+  its comment, owner `pg_database_owner`; source archive relies on that built-in
+  schema. Owner and effective ACL are checked separately, not inferred from the
+  missing CREATE statement.
+
+**Exact non-semantic SQL differences in that scoped repeat:**
+
+| Serialization difference | Evidence / interpretation |
+| --- | --- |
+| Block `public.sync_social_advice_discovery_for_movie(uuid,boolean,uuid)` | Two following dump-boundary statements, `SET default_tablespace = ''` and `SET default_table_access_method = heap`, occur at a different first-table boundary. They are not function statements. Exact global setting values match separately. |
+| Auth default ACLs for sequences/functions/tables, owner `supabase_auth_admin` | Same complete GRANT statements in a different order; no privilege/grantee/grant-option discarded. |
+| Public default ACLs for sequences/functions/tables, owner `supabase_admin` | Same statements/order-only serialization; the final block also carries the dump-complete comment. |
+| 29 FK `pg_get_constraintdef` strings | `REFERENCES auth.<table>` versus visible unqualified `REFERENCES <table>` under the different inspector/search-path context. Validation flags/actions unchanged; archived and redumped FK DDL explicitly agree on the actual target. Not evidence of a retargeted FK. |
+| Extension versions | All seven matched in the full17.6 restore; no version mismatch is being normalized into a pass. No extension members/binaries were exercised in the later schema-only repeat. |
+
+<details>
+<summary>Exact FK deparser-only differences (auth qualification removed; no other definition change)</summary>
+
+- `auth.users(id)`: auth FKs `identities_user_id_fkey`, `mfa_factors_user_id_fkey`,
+  `mfa_recovery_code_sets_user_id_fkey`, `oauth_authorizations_user_id_fkey`,
+  `oauth_consents_user_id_fkey`, `one_time_tokens_user_id_fkey`,
+  `scim_users_user_id_fkey`, `sessions_user_id_fkey`,
+  `webauthn_challenges_user_id_fkey`, `webauthn_credentials_user_id_fkey`;
+  public FKs `advice_room_participants_user_id_fkey`, `advice_rooms_created_by_fkey`,
+  `groups_created_by_fkey`, `profiles_id_fkey`, `push_subscriptions_user_id_fkey`.
+- `auth.sessions(id)`: `mfa_amr_claims_session_id_fkey`, `refresh_tokens_session_id_fkey`.
+- `auth.mfa_factors(id)`: `mfa_challenges_auth_factor_id_fkey`,
+  `mfa_recovery_code_sets_mfa_factor_id_fkey`.
+- `auth.mfa_recovery_code_sets(id)`: `mfa_recovery_codes_mfa_recovery_code_set_id_fkey`.
+- `auth.oauth_clients(id)`: `oauth_authorizations_client_id_fkey`,
+  `oauth_consents_client_id_fkey`, `sessions_oauth_client_id_fkey`.
+- `auth.sso_providers(id)`: `saml_providers_sso_provider_id_fkey`,
+  `saml_relay_states_sso_provider_id_fkey`, `scim_tokens_sso_provider_id_fkey`,
+  `scim_users_sso_provider_id_fkey`, `sso_domains_sso_provider_id_fkey`.
+- `auth.flow_state(id)`: `saml_relay_states_flow_state_id_fkey`.
+
+</details>
+
+**Dependency/access conclusion:** the two additive M4 migrations reference
+`auth.users(id)`, MW `group_members`, `movies`, `movie_group_lists` and PostgreSQL17
+built-ins (UUID/jsonb/time/advisory locks); none requires GraphQL, pg_net or Vault.
+The full17.6 test already verified snapshot data/COPY fingerprints, sequences,
+roles, all captured FKs and required membership/list/movie relationships. The
+scoped repeat verifies the MW/Auth DDL and archived RPC/RLS/grants, not historical
+RLS correctness (out of scope). Public/Auth schema/table access for `anon`,
+`authenticated`, `service_role` is unchanged from inventory. New M4 private
+tables/RPCs do not yet exist; their explicit service-role-only grants/default-off
+and post-migration checks remain future execution gates. Existing RPCs were not
+invoked; source-independent function/column ACL catalogs were not captured, so
+their proof is archive replay fidelity, not an independent whole-source ACL audit.
+
+**Remaining bounds, not an M4 recovery blocker:** full Supabase schema SQL hashes
+still differ. Target raw SQL from the deleted full17.6 VM was not retained, only
+fingerprints/catalogs; exact differences **outside** the scoped repeat cannot be
+reconstructed from those hashes. They are not relabelled formatting-only or
+asserted harmless for GraphQL/Auth/Storage/Vault service recovery. Requiring that
+entire text to be identical adds no demonstrated protection for the two additive
+M4 migrations after the MW/Auth checks above. Complete-project recovery still has
+the stated Storage bytes, secrets/service-config, managed-function/initial-ACL
+and portable/off-device key gaps. This verdict clears only the MW recovery gate.
+
+Protected evidence: `focused-1792654992781-details.aesgcm`, earlier scoped raw-
+difference proof, and dated authenticated `focused-assessment-*.aesgcm` beside
+the unchanged original backup. The [focused reader](../supabase/operations/recovery-focus.ps1)
+prints only structural evidence/flags, never rows or function bodies. All repeat
+clusters/open copies, including the stopped first harness attempt, were removed;
+original ciphertext and DPAPI key preserved. Logical deletion, not forensic
+erasure. A Windows child-pipe harness issue and missing schema prerequisite in a
+subset attempt were resolved locally, not misreported as backup/data failures.
+No application/browser/owner lifecycle test was needed: no application changed.
+Final checks: **12 authored recovery tests passed**, JS/PowerShell syntax passed,
+13 documentation files /442 local links /268 anchors checked without errors,
+whitespace/scope clean. Subsequent offline audit authenticated every retained
+AES-GCM artifact and original manifest hashes. It reports
+`m4MigrationRecoveryQualified:true` separately from the unchanged historical
+whole-round-trip `scopeQualifiedRecoveryReady:false`/`fullProjectRoundTripVerified:false`.
+
 #### Backup coverage contract — actual capture and exclusions
 
 | Area | Captured scope / explicit exclusion |
 | --- | --- |
-| Application schemas/data | Unfiltered native custom archive. Actual restored table counts/COPY contents, sequences, inventoried owners/RLS flags/constraints/FKs match; captured public schema/table effective ACLs match. Full schema-SQL/object-ACL fidelity remains blocked, not a blanket pass for every definition/permission. |
+| Application schemas/data | Unfiltered native custom archive. Full17.6 data/counts/sequences/FKs pass plus scoped MW/Auth schema/archived-permission fidelity established above. Sufficient for the two additive M4 migrations, not a blanket Supabase definition/service/permission guarantee. |
 | Auth | Auth schema/data entries included only in encrypted archive, including sensitive account/session/hash records; no rows in Git/report. OAuth/SMTP settings, JWT/API secrets and external Auth service configuration excluded; project encryption-root keys not exported and service-level recoverability not established. |
-| Roles/grants | Separate role/membership exports **without role passwords**, before/after stability and restored logical role comparison passed. Effective schema/table ACL comparisons identify unresolved differences; do not equate role-pass with object-grant-pass. No production privilege changes. |
+| Roles/grants | Separate role/membership exports **without role passwords**, stability/restored logical comparison passed. Exact two managed GraphQL schema ACL omissions identified and source-preserving supplement tested; all original table ACLs match. No independent complete function/column/initial-ACL capture; no production privilege changes. |
 | Extensions / managed schemas | Definitions/version inventory retained; source `pg_cron1.6.4`, `pg_net0.20.4`, `pg_stat_statements1.11`, `pgcrypto1.3`, `plpgsql1.0`, `supabase_vault0.3.1`, `uuid-ossp1.1`. Native logical dump omits non-config extension-owned table contents: specifically `net._http_response`, `net.http_request_queue` (HTTP cache/queue). No claim to preserve in-flight HTTP work. Extension binaries, managed services and Vault/project encryption-root keys excluded; no decrypted Vault export. |
 | Storage metadata | Storage SQL metadata rows/counts matched in native restore. Metadata is not object bytes; service behavior and object-store recovery remain untested. |
 | Storage files | Separate authorized object export with private per-object checksums/count/size verification; **not part of pg_dump**. No files copied or empty-bucket claim established in this checkpoint. |
@@ -582,8 +715,9 @@ archive completeness.
 Actual destination and separate key are recorded above; both ACLs verified.
 The direct-to-encryption stream avoids needing plaintext dump staging.
 For this owner-authorized restore test, disk encryption is explicitly waived.
-Temporary plaintext is allowed only inside the protected disposable environment,
-with no network device, no TCP listener or external service execution. No plaintext
+Temporary plaintext is allowed only inside the protected disposable environment.
+The full restore used no NIC/TCP; the schema-only repeat used SCRAM loopback only,
+never LAN exposure or external service execution. No plaintext
 staging in Git/owner checkout/transcripts/public artifacts. Do not call private
 filesystem placement encryption. Stop the VM and remove its exact verified
 temporary directory afterward, preserving the original ciphertext and wrapped key;
@@ -591,8 +725,9 @@ do not broadly delete user files or claim secure physical erasure.
 
 #### Resume procedure — only backup and isolated local restore authorized
 
-**Steps1–3 and native4–5 were executed with the failure boundaries above. Do not
-repeat export. Resolve the ACL/schema blocker before declaring step6 complete.
+**Steps1–3 and native4–5 were executed with the boundaries above; step6 is now
+qualified for MW recovery before the two additive M4 migrations, not full-project
+recovery. Do not repeat export or infer execution permission.
 Disk encryption is not a prerequisite under the owner's explicit waiver.**
 Export is a one-use operator command,
 not a scheduled backup or migration tool. [Export wrapper](../supabase/operations/recovery-export.ps1)
@@ -653,6 +788,8 @@ not authenticated until the final tag passes. Wrong key/tampering must stop.
    local DB **before** preload/worker startup; no production connection/clean.
    `--create` is not combined with `--single-transaction`. Keep cron off and the
    required pg_net preload worker in empty template1 with batch_size0/no NIC.
+   Reconcile the two omitted managed schema ACLs using the source-validated
+   supplement above and rerun exact native ACL checks; unexpected ACLs stop.
    Any omitted/altered role or prerequisite must be recorded; a partial test is
    not a full pass. This is a procedure, **not a command authorized for production**.
 5. Compare captured and restored schema object inventories/definitions, RLS/
@@ -672,9 +809,10 @@ not authenticated until the final tag passes. Wrong key/tampering must stop.
    Stop/securely remove only the verified disposable target afterward; preserve
    the encrypted backup. **No production restore is authorized**.
 
-Export/integrity and actual data/relationship checks passed, but unresolved
-object-ACL/schema fidelity keeps Step2's recovery prerequisite **blocked**.
-An executed SQL restore is not the same as a fully verified recovery checkpoint.
+Export/integrity, actual data/relationship checks and the focused MW/Auth
+schema/permission verification establish **scope-qualified recovery for Step2's
+two M4 migrations**, with the complete-project limitations above. This is not a
+claim that the old whole-dump `verified:false` result became `true`.
 No consolidation/deployment/migration/activation follows automatically.
 Relevant official references (checked 2026-10-22):
 [Supabase backup/restore](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore),
@@ -1003,8 +1141,9 @@ Execution remains **conditional**, not deployment/pilot-ready approval:
    explicit merge + possible automatic develop deploy authorization.
 2. Dashboard develop/base/publish/functions/bundler/Node configuration and
    APM/log-drain/body-capture verification; env context metadata confirmation.
-3. Approved CLI/privileged connection/recovery readiness for only two new
-   migrations/history; live privileges/default-off/post-data checks not yet run.
+3. MW recovery prerequisite now scope-qualified for only two new migrations;
+   explicit execution authorization, privileged connection/history procedure and
+   live privileges/default-off/post-data checks still required and not yet run.
 4. Explicit cleanup activation/first-run evidence and Denys's independent
    daily monitoring commitment (no automatic alerting exists).
 5. Exact owner UUID/test group and later bounded backend assignment.

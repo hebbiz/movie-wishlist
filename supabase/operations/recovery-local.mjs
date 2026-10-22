@@ -70,6 +70,12 @@ export function normalizeAcl(value){
  if(quoted||escaped)throw new Error('unterminated ACL array');items.push(current);
  return items.sort();
 }
+export function aclMismatchSummary(rows,inventory){
+ const bad=rows.filter(x=>x.matched!==true),tables=bad.filter(x=>x.scope==='tables');
+ return {aclMismatchCount:bad.length,schemaAclMismatchCount:bad.filter(x=>x.scope==='schemas').length,
+  tableAclMismatchCount:tables.length,
+  tableAclMismatchesExtensionOwned:tables.length?tables.every(x=>Boolean(inventory.tables.find(t=>t.schema===x.key[0]&&t.name===x.key[1])?.extension)):null};
+}
 async function verify(){
  let share=path.join(config.root,'share');
  try{const latest=JSON.parse(await readFile(path.join(config.root,'latest-restore.json'),'utf8'));if(!/^attempt-restore-\d+$/.test(latest.share))throw new Error('private path refused');share=path.join(config.root,latest.share)}catch(e){if(e.code!=='ENOENT')throw e}
@@ -108,7 +114,7 @@ async function verify(){
   evidence.aclEffective=aclRows.length===aclExpected.length&&aclMap.size===aclExpected.length&&aclExpected.every(k=>aclMap.get(k)===true);
   const badAcl=aclRows.filter(x=>x.matched!==true);
   evidence.publicSchemaAndTablesAclMatch=aclRows.some(x=>x.key[0]==='public')&&!badAcl.some(x=>x.key[0]==='public');
-  evidence.tableAclMismatchesExtensionOwned=badAcl.filter(x=>x.scope==='tables').every(x=>source.tables.find(t=>t.schema===x.key[0]&&t.name===x.key[1])?.extension);
+  Object.assign(evidence,aclMismatchSummary(aclRows,source));
   evidence.schemaAclMismatch=badAcl.some(x=>x.scope==='schemas');
   evidence.alignedClient=/\b17\.11\b/.test(privateFiles['aligned-client-version.txt']??'');
   evidence.catalog={};

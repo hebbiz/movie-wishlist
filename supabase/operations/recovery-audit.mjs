@@ -80,6 +80,15 @@ try {
       restoredForeignKeysValidated:r.relationships===true&&r.catalog?.constraints===true,
       restoredTargetNativeDependenciesVerified:r.nativeDependencies===true,scopeQualifiedRecoveryReady:r.verified===true});
   }
+  const assessed=(await readdir(config.directory)).filter(x=>/^focused-assessment-\d+\.aesgcm$/.test(x)).sort().at(-1);
+  if(assessed){
+    const a=JSON.parse((await decryptSmallArtifact(file(assessed),key)).toString());
+    summary.m4MigrationRecoveryQualified=a.m4MigrationRecoveryQualified===true;
+    summary.focusedAssessment=assessed;
+    // The older all-object round-trip verdict stays false, not overwritten by
+    // this narrower migration-safety assessment.
+    summary.fullProjectRoundTripVerified=a.fullProjectRoundTripVerified===true;
+  }
   const cleaned=(await readdir(config.directory)).filter(x=>/^restore-cleanup-.*\.status\.json$/.test(x)).sort().at(-1);
   if(cleaned){const c=JSON.parse(await readFile(file(cleaned),'utf8'));summary.temporaryEnvironmentRemoved=c.temporaryEnvironmentRemoved===true;summary.originalEncryptedBackupPreserved=c.encryptedBackupPreserved===true;}
   const auditName='audit-'+new Date().toISOString().replaceAll(/[^0-9TZ]/g,'')+'-'+randomUUID().slice(0,8);
