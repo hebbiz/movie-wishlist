@@ -573,6 +573,81 @@ different runtime. Local links/anchors, whitespace and documentation scope
 checked. No source call, parser/search-policy change, owner checkout/demo change,
 init/auth/lifecycle/retention change, DB/flag/secret/Save/merge/deployment action.
 
+### Person-level director alias crosswalk — 2026-10-23
+
+**Status: mechanism implemented/offline-tested; zero real aliases activated.**
+Separate stacked implementation above #199, pinned base
+`114afcfc58fd0b3fd109de8798df8bbd1ef41a94`; develop verified
+`5bd9f830eb665b2fa1ac4ad7eb2b384267bf37a7`. No merge/deployment or new live run.
+The preceding22 attempts remain the actual total, not a new test allowance.
+
+The TMDb credits projection already preserves validated `directors.items[].id`;
+M4 service/local-control film construction previously flattened names and lost
+their person association. `projectDirectorPeople` now retains
+`{namespace:'tmdb:person', personId, names}` from the **matched server-received
+projection**, separately per director. Missing/invalid IDs stay null; no ID is
+guessed from film IDs, names, slug or browser JSON. M4's HTTP handler still
+constructs server discovery inputs explicitly: additional browser person IDs,
+names, records or lookup options do not enter the resolver or ledger.
+
+`shared/director-alias-crosswalk.mjs` is statically imported compiled code, not
+a new database/service/file read, cache, client configuration or network lookup.
+Each reviewed record is keyed by namespace + person ID and contains literal
+aliases, `scope:'kinobaza-director-identity'`, and confirmation evidence with
+source/reference/recording date. This scope applies across films directed by
+that person, **only** to Kinobaza director identity; not title matching, MOTN
+values, tracks, offers, availability or entitlement. Record provenance is a
+review requirement, not self-proving evidence or legal permission. Malformed
+records fail compilation; duplicate person entries or shared alias spellings
+across different IDs yield ambiguous/no crosswalk aliases. Registry and lookup
+results are immutable snapshots; there is no runtime/browser registration.
+
+The identity gate can use the crosswalk only for one selected director/person,
+names attached to that same trusted credits record, and one source director
+value. Multiple/unknown group scope stays unresolved; no flat multi-person
+union, splitting, fuzzy matching, transliteration or diacritic removal. Existing
+NFC/whitespace/case normalization and exact equality remain. Original returned
+TMDb aliases still work without an extra crosswalk; absent person ID cannot
+enable new aliases. Canonical/stable-film-ID/title/year gates retain precedence,
+and unresolved/mismatch still withhold all Kinobaza claims. A match using a new
+confirmed person alias retains `identity.directorAliasEvidence` with record
+namespace/ID/scope/provenance; no extra UI/short-report or field propagation.
+Authored tests inject a separate lookup through an internal function option,
+never an HTTP/browser contract. Fixed-card parser/legacy film aliases unchanged.
+
+**Available evidence does not authorise a real entry:** the control established
+source spelling `Денні Вільньов` versus selected `Дені Вільнев / Denis Villeneuve`
+but recorded movie IDs, not an authoritative person-ID association. The older
+fixed Dune alias list is per-film configuration without independent person-level
+provenance. The person-shaped Tavily pointer was not fetched, and neither its
+slug, spelling similarity nor the studied film's title/year can prove this
+crosswalk. No TMDb person ID is invented from memory. Required missing evidence:
+an independent person-level record explicitly tying the observed spelling to
+the same authoritative namespaced TMDb person ID, with source/date/scope.
+Accordingly `CONFIRMED_DIRECTOR_ALIASES` is deliberately empty. **The specific
+Blade Runner2049 spelling remains unresolved under the shipped registry.**
+The mechanism is complete, but confirming/activating that real record is not.
+
+All positive crosswalk records in regressions are explicitly authored synthetic
+people and provenance, not reconstructed source responses. Offline identity/
+extraction success does not validate real offers/tracks. Tests cover exact
+confirmed spelling, different namespace/person, the same person across films,
+missing/invalid IDs, record ambiguity, multi-director refusal, stable-ID/title/
+year precedence, withholding and ignored browser injection. Validation passed:
+**31/31** new crosswalk regressions, **34/34** resolver/title-year/diagnostic
+regressions and **203/203** dependent TMDb/assisted/workflow/HTTP/report/transfer/
+credential/URL checks.13 Markdown documents/446 links/272 anchors, zero errors;
+diff/whitespace pass. Independent read-only code/evidence reviews found no code
+blocker and no adequate real-record evidence. Initial sandbox child spawning
+failed with EPERM; unchanged tests passed outside that restriction. No new
+browser/iPhone, Windows-demo lifecycle or PostgreSQL run: UI/launcher/SQL
+unchanged. The Netlify Functions skill informed the static import boundary
+(no runtime file reads/new endpoint/configuration), not a deploy. No new
+control/owner cycle, source/rules/API GET,
+DB/migration, flag/secret, init/auth/lifecycle, UI, retention or Wishlist action.
+Search text/admission/request budgets/deadlines/retries/redirect policy, R1/R2,
+exact URLs/acknowledgement and form-transfer safeguards remain unchanged.
+
 ### Same-document M4 return state — 2026-10-23
 
 Owner reported loss of the open M4 window/results after switching apps on

@@ -7,6 +7,7 @@ import { createKinobazaResolver, resolverQueries, tavilySearch } from '../netlif
 import { safeSearchDiagnostic } from '../shared/media-advice-diagnostics.mjs';
 import { readControlCredentials } from './m4-control-credentials.mjs';
 import { describeCandidateURL } from './m4-url-diagnostics.mjs';
+import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 
 const controls = [{ title:'Blade Runner 2049' }, { title:'Mortal Kombat', year:2021 }];
 const api = 'https://api.themoviedb.org/3';
@@ -49,6 +50,7 @@ export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = f
       const film={id:`imdb:${details.data.imdb_id}`,tmdbId:selected.id,imdbId:details.data.imdb_id,
         identityTitle:val(projection.metadata.requestedTitle),originalTitle:val(projection.metadata.originalTitle),year:Number(val(projection.metadata.releaseDate)?.slice(0,4)) || null,
         directorCount:projection.metadata.directors.state==='reported'?directors.length:null,
+        directorPeople:projectDirectorPeople(projection.metadata.directors),
         directorAliases:directors.flatMap(d=>[val(d.name),val(d.originalName)]).filter(Boolean),
         titleAliases:[val(projection.metadata.requestedTitle),val(projection.metadata.originalTitle),...(projection.metadata.alternativeTitles.items??[]).map(a=>val(a.title))].filter(Boolean)};
       item.identity={tmdbId:film.tmdbId,imdbId:film.imdbId,originalTitle:film.originalTitle,year:film.year,directors:film.directorAliases};

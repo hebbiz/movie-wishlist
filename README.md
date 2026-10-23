@@ -134,6 +134,11 @@ implemented or documented v1.3.1 scope.
   Villeneuve); the other visible card fields describe Blade Runner1982 and
   fail title matching. Claims withheld; no general-quality/causal conclusion or
   historical-pilot reconstruction. No automatic repeat or alias bypass.
+  [Person-level director crosswalk](docs/m4-media-advice.md#person-level-director-alias-crosswalk--2026-10-23)
+  preserves server TMDb person IDs and supports exact, provenance-scoped aliases
+  across films. Mechanism implemented/offline-tested; real registry empty because
+  independent person-ID evidence is missing. The observed Villeneuve spelling
+  remains unresolved; no live repeat, guessed ID or per-film exception.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   prepared only; five pilot films still unselected.
 
