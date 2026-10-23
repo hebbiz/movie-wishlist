@@ -381,7 +381,7 @@ correct film card, availability, localization or entitlement is verified.
 The visible film projection is TMDb335984 / IMDbtt1856101 / Blade Runner 2049 /
 2017; that film crosswalk does not validate the search URL.
 
-The current query builder already includes quoted film name, year, first known
+At that checkpoint the query builder included quoted film name, year, first known
 director alias and `site:kinobazaua.com/titles/`. Tavily `include_domains` is set
 to the hostname; the title-path hint exists in query text, not an enforced
 local admission decision. The exact provider-side reason for returning the
@@ -399,7 +399,7 @@ consistent with expected one-shot result consumption, not a failed source run,
 new source request or need to re-enter keys. No further reader/source run needed
 to establish this finding; exact missing wrapper fields stay unknown.
 
-**Separate query-policy proposal, not implemented:** try a title/year-oriented
+**Separate query-policy proposal at that checkpoint, not yet implemented:** try a title/year-oriented
 query without the director term, retaining the existing title-path hint,
 domain/admission checks and the director as independent HTML identity evidence.
 Existing query/card limits, alternate-query error rules and withholding must
@@ -438,8 +438,68 @@ concurrency claim; Windows lifecycle not repeated (unchanged launcher).
 Syntax/whitespace and local-reference checks pass. Application init/auth/lifecycle,
 M4 form controller, exact-link policy, source service/deadline and SQL unchanged.
 Source-use/account conditions remain separate; no merge/deploy, source key change,
-DB write, transfer/Save or pilot run. New matching/search-policy changes, including
-alternate search after identity refusal, remain proposals only.
+DB write, transfer/Save or pilot run. At that checkpoint new matching/search-policy
+changes remained proposals only; alternate search after identity refusal is still
+not implemented or authorised by the subsequent title/year-only change below.
+
+### Title/year-oriented Kinobaza search — 2026-10-23
+
+Implemented in a separate stacked branch above #198
+(`codex/m4-diagnostics`, pinned base
+`54e54a90e4ecedcbf627861bc25528f5231ccb5b`), not merged/deployed.
+The only application-path code change removes the director term from
+`resolverQueries`: quoted selected title + integer year (when established) +
+`site:kinobazaua.com/titles/`. Existing original/localised/known-alias ordering,
+two-name bound, escaping, input bounds and Tavily basic/domain settings remain.
+Director evidence is still required independently by HTML identity acceptance.
+No admission, parser/alias, withholding, R1/R2, form/report/retention, deadline or
+application-budget change. The second query still requires a successful first
+search with no admitted URLs; no alternate after identity refusal or error.
+
+**One authorised control, pending hidden local input:** the existing credential
+helper adds `-TitleYearControl` (Node `--title-year-control`), mutually exclusive
+with URL-only diagnostic mode. Only Blade Runner 2049 runs: TMDb identity <=2,
+Tavily <=2, sequential Kinobaza GET <=2, **total <=6 attempts**, errors included.
+The previous17 stay separate; cumulative ceiling23, not permission to retry.
+Identity is re-established by the same bounded TMDb search/Details functions;
+admitted cards continue through the actual resolver/admission/identity/extraction,
+not an alternate parser or a URL-only success check. No MOTN, Watch Providers,
+provider/destination request, redirect, retry or fallback.45s case deadline is
+unchanged. Normal deployed M4 cap8 is not replaced by this local control cap6.
+
+The existing local trusted hook compares bounded actual H1/H2/year/directors
+with the selected aliases and reports per-gate outcomes. This explicit control
+also exposes those minimal public identity fields for matched/refused cards,
+with exact admitted source-card URL, truncation and extraction status/counts;
+no raw HTML, snippets, offers, provider/tracking links, query/fragment values or
+credentials. Comparison/credential data stay in invocation memory; safe IPC
+result lifetime remains <=15 minutes. Do not archive the JSON or rerun after
+uncertain/lost output. `buildSha=null`; checkout SHA is local provenance only.
+The helper pins a clean tracked checkout and immediately runs once after two
+hidden inputs, without a credential file/environment/argv handoff. Retrieve
+the existing result once from a second Termius tab in the same SSH/elevation
+context using `m4-read-control-result.ps1 -Compact`; no source call or prompt
+occurs in that reader. Do not retry the reader after successful consumption.
+
+Offline validation and actual live counts are recorded separately. At preparation
+no new source request has run and no effect on search quality is established.
+The prior person-shaped pointer refusal remains correct; its director-term
+causation stays a hypothesis. A single new response cannot reconstruct earlier
+pilot results or demonstrate general resolver quality.
+
+Preparation validation: **9/9** new authored query/control regressions, **44/44**
+targeted resolver/diagnostic/credential/URL regressions and **94/94** dependent
+assisted-identity/extraction/workflow regressions passed. These cover exact
+director-free payloads, primary/alternate order/escaping/bounds, error stops,
+director/stable-ID refusals/withholding, actual mocked2+2+2 continuation to
+extraction, transient field comparisons and no snippet/key/raw HTML output.
+PowerShell7 parsing, stdin-only keys, native same-context IPC and codepage
+roundtrip ran.13 Markdown documents/445 local links/271 anchors, zero errors;
+whitespace and scope checked. Independent read-only diff review found no blocker.
+Sandbox initially refused test child spawning (`EPERM`); the same tests passed
+outside that restriction, not by weakening assertions/timeouts. No new browser,
+Windows-demo lifecycle, PostgreSQL or iPhone run: UI/lifecycle/SQL unchanged.
+No live-quality, deployment or rights-closure claim follows from these mocks.
 
 ### Same-document M4 return state — 2026-10-23
 
@@ -638,8 +698,9 @@ activation preflight; text attribution and source links remain visible now.
 
 No manual card field is required. The swappable search interface uses
 Tavily basic Search `POST https://api.tavily.com/search`, with
-server-only Bearer authentication. A verified original title/alias, year and
-director form a domain-limited query. Snippets/rank never establish identity or
+server-only Bearer authentication. A verified original title/alias and year form
+a title-path/domain-limited query; director remains in the HTML identity gate,
+not the search text. Snippets/rank never establish identity or
 claims and are not returned or persisted. At most one alternative known title
 query is allowed **only when the first successful search yields no admitted
 URLs**, not after transport/auth/quota errors or merely to seek a nicer result.

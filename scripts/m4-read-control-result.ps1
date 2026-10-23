@@ -23,6 +23,9 @@ try {
     if ($m4Report.result.PSObject.Properties.Name -contains 'mode' -and $m4Report.result.mode -ceq 'url-diagnostic') {
         if ($m4Report.result.counts.total -gt 3 -or $m4Report.result.counts.tmdb -gt 2 -or $m4Report.result.counts.search -gt 1 -or $m4Report.result.counts.cards -ne 0 -or @($m4Report.result.cases).Count -ne 1 -or $m4Report.result.cases[0].film -cne 'Blade Runner 2049') { throw 'url-diagnostic-contract' }
     }
+    if ($m4Report.result.PSObject.Properties.Name -contains 'mode' -and $m4Report.result.mode -ceq 'title-year-control') {
+        if ($m4Report.result.counts.total -gt 6 -or $m4Report.result.counts.tmdb -gt 2 -or $m4Report.result.counts.search -gt 2 -or $m4Report.result.counts.cards -gt 2 -or @($m4Report.result.cases).Count -ne 1 -or $m4Report.result.cases[0].film -cne 'Blade Runner 2049' -or $m4Report.result.accounting.priorAttempts -ne 17 -or $m4Report.result.accounting.cumulativeMax -ne 23) { throw 'title-year-control-contract' }
+    }
     # ASCII JSON escapes preserve Unicode aliases across legacy CMD/SSH code pages.
     $m4Report | ConvertTo-Json -Depth 30 -EscapeHandling EscapeNonAscii -Compress:$Compact
 } catch {
