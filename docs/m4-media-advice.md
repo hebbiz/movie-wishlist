@@ -294,8 +294,8 @@ identity selection/crosswalk and the first result of the unchanged
 parses the search response. No second film, MOTN, Watch Providers, card/provider
 fetch or destination resolution. Both Windows helpers validate the cap3,
 Blade-only, card0 result contract. Prior14 attempts remain separate; cumulative
-maximum17. A fresh run UUID is generated on execution; actual run/counts pending
-hidden entry, not claimed as completed or successful.
+maximum17. A fresh run UUID is generated on execution. Execution was initially
+pending hidden entry; the subsequent screenshot result is recorded below.
 
 `tavilySearch` has an optional trusted `onCandidateURLs` callback, receiving only
 up to5 URL strings from a validated response in invocation memory. It is not an
@@ -349,6 +349,71 @@ regressions close those before any live execution. Local links/anchors and
 whitespace pass. No new browser/app-demo/SQL-concurrency/lifecycle suite: no UI,
 launcher, SQL or public endpoint contract changed. These checks are synthetic,
 not live validation of the returned URL shape, card identity or source coverage.
+
+**URL-only result received — 2026-10-23 (owner screenshot):** the visible safe
+JSON records Blade Runner 2049, `TMDb2 / Tavily1 / Kinobaza0 / total3`, all three
+attempts `response-received / HTTP200`, status`urls-inspected-no-html` and card
+identity`not-evaluated-no-html-fetch`. The screenshot begins mid-envelope: run ID,
+mode/build header and `localCheckoutSha` are **not visible**. The prepared pin was
+`ea9a14b70eedef309b12590bee24a20d5c41ddd0`; it is not retroactively attested by
+this cropped image. This is owner-forwarded local diagnostic evidence, not an
+independent agent source request or deployed-runtime attestation. Only minimal
+visible comparisons are transcribed, not the screenshot/full response in Git.
+
+| Comparison | Visible value |
+| --- | --- |
+| Hostname | `kinobazaua.com` |
+| Expected admitted path | `/titles/<lowercase-ascii-hyphenated-slug>` |
+| Original pathname | `/persons/denis-villeneuve` |
+| `URL.pathname` | `/persons/denis-villeneuve` |
+| Parser changed path / query present / fragment present | false / false / false |
+| Admission / failed check | rejected / `exact-original-url-format` |
+| Specific differences | `original-path-shape-not-allowed`, `parsed-path-shape-not-allowed` |
+| Diagnostic redactions | none |
+| Search | `ok/all-rejected`, returned1/admitted0/rejected1/duplicates0, `unsupported-path:1` |
+
+**Established cause for this result:** Tavily returned a **person-shaped pointer
+under `/persons/`**, not a title-shaped pointer. This is not a trailing-slash,
+percent-encoding, query or parser-normalization mismatch. Admission correctly
+refused that path; no admission fix or `/persons/` allowance is justified. No
+HTML was read, so neither actual destination content/person identity nor a
+correct film card, availability, localization or entitlement is verified.
+The visible film projection is TMDb335984 / IMDbtt1856101 / Blade Runner 2049 /
+2017; that film crosswalk does not validate the search URL.
+
+The current query builder already includes quoted film name, year, first known
+director alias and `site:kinobazaua.com/titles/`. Tavily `include_domains` is set
+to the hostname; the title-path hint exists in query text, not an enforced
+local admission decision. The exact provider-side reason for returning the
+director pointer is unknown. The director term may influence it, but that is a
+**hypothesis**, not demonstrated causation or a provider-contract verdict.
+Historical Blade results and Mortal title refusals are not reconstructed from
+this new result. No source URL rewrite, second query or HTML GET was attempted.
+
+Accounting: this authorised URL probe spent3/3; prior6+8 remain separate, so
+**17 total source attempts across three authorised local runs** (TMDb10 /
+Tavily7 / Kinobaza0). No budget remains for an automatic repeat. The second
+reader invocation shown below the already-printed safe JSON reports unavailable:
+the helper serves one connection and disposes the pipe after transfer. This is
+consistent with expected one-shot result consumption, not a failed source run,
+new source request or need to re-enter keys. No further reader/source run needed
+to establish this finding; exact missing wrapper fields stay unknown.
+
+**Separate query-policy proposal, not implemented:** try a title/year-oriented
+query without the director term, retaining the existing title-path hint,
+domain/admission checks and the director as independent HTML identity evidence.
+Existing query/card limits, alternate-query error rules and withholding must
+stay unchanged. Whether this yields useful film candidates is unvalidated; no
+new live test is authorised by this result. Do not broaden admission to person
+routes or change identity to manufacture success.
+
+This result checkpoint changes only README/canonical documentation. Focused
+authored offline checks confirm the same person-route rejection and the current
+query composition (zero HTTP); no live URL copied into a fixture. Links/anchors,
+whitespace and scope checked. No runtime-suite rerun for Markdown-only changes;
+the44/44 preparation evidence remains tied to unchanged implementation. Owner
+checkout/demo, unrelated files, init/auth/lifecycle, source request policy/budgets,
+TTL/retention, R1/R2 and draft controls preserved; no merge/deployment.
 
 The preceding checkpoint`12223ea` was **documentation-only**, with8 focused authored offline
 admission/category cases (zero HTTP), local links/anchors and whitespace
