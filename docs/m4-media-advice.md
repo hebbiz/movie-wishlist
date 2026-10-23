@@ -648,6 +648,66 @@ DB/migration, flag/secret, init/auth/lifecycle, UI, retention or Wishlist action
 Search text/admission/request budgets/deadlines/retries/redirect policy, R1/R2,
 exact URLs/acknowledgement and form-transfer safeguards remain unchanged.
 
+#### Authorised one-time person verification — 2026-10-23
+
+Prepared in the same #200; real registry stays empty until sufficient live
+person-level evidence is received/reviewed. **No new request at preparation.**
+The owner authorised <=3 total HTTP attempts, prior22 separate/cumulative<=25:
+one TMDb movie335984 credits GET, one details GET for its validated director
+person ID, and only if needed one exact
+`https://kinobazaua.com/persons/denis-villeneuve` GET. No reliably saved person
+ID evidence exists, so credits are not skipped or replaced by a guessed ID.
+No film search/title-card/Tavily/watch-provider/platform/destination request.
+Errors spend attempts; no retries, redirect follow, alternative or auto-repeat.
+This person path is a local diagnostic exception, **not runtime card admission**.
+
+`scripts/m4-director-person-diagnostic.mjs` requires explicit CLI opt-in and
+strict one-key stdin. Existing hidden helper adds `-DirectorPersonCheck`:
+exact clean ExpectedCommit, only TMDB_READ_ACCESS_TOKEN SecureString prompt,
+no Tavily input or credential argv/env/disk/log handoff. The Node child removes
+inherited source credentials/preload/debug/TLS-log settings, uses the existing
+bounded TMDb reader, a45s overall source deadline and15s per-read bounds.
+Fixed source origin/path/stage/counters are validated before every dispatch;
+TMDb Authorization is never forwarded to Kinobaza. Only initial HTML in memory,
+no scripts/assets/JSON-LD context/linked IDs are fetched. Reader uses
+`-DirectorPersonCheck -Compact` in a second same-SSH/elevation terminal; separate
+current-user-only pipe `mw-m4-director-person-200`, one handoff, <=15min, no file.
+Retrieval failure/unused cap never authorises another run.
+
+Evidence chain: credits must identify movie335984 and one valid Director person
+ID; requested person response ID must match, including any appended ID. Exact
+target spelling in the valid TMDb person name/aliases can directly confirm and
+**skips the optional third GET**. Otherwise shared IMDb **person** nm-ID may
+link TMDb to an explicitly bound Kinobaza Person profile: canonical/H1/Person
+names and stable IDs must be consistent. No requirement that Kinobaza itself
+expose a TMDb ID. Root/appended IMDb conflicts, unrelated or ambiguous Person
+objects, foreign profile ownership or unclear markup do not auto-confirm.
+Plain person links are bounded observations with ownership unestablished for
+review, not a convenient page-wide same-ID proof. No slug/name/filmography/year
+similarity inference. Profiles lacking adequate linkage remain unresolved.
+
+Safe output contains source references, validated person IDs, only matching
+TMDb aliases/counts, bounded profile identity fields/person links, structural
+uncertainties, actual attempt statuses/counts and a new local run ID. No raw
+HTML/JSON response, biography, search snippets, credentials or tracking data.
+Local checkout SHA is distinct from unknown deployed-runtime attestation.
+After input the approved check runs immediately, once; no additional consent
+needed. Only sufficient reviewed proof permits a real registry entry; mocks
+must not be promoted to evidence. No repeated discovery or offer/track claim.
+
+Preparation checks: **54/54** targeted offline regressions passed (15 authored
+person-diagnostic,8 credential/helper,31 person-crosswalk). They cover direct
+TMDb alias proof/skipped third read, common IMDb person-ID proof, wrong or
+ambiguous IDs/profile ownership, appended-ID conflicts, exact spelling, counted
+HTTP/transport/body failures, manual redirects/no destinations, strict one-key
+stdin/no env fallback, secret/body filtering, native PowerShell parsing/IPC and
+unchanged crosswalk withholding. Review found/fixed missing profile-ownership and
+appended-person-ID guards before any source dispatch; bounded name output also
+checked.13 docs/446 links/272 anchors, no errors; whitespace/scope checked.
+These are mocks, not real alias confirmation. No browser/Windows-demo/SQL rerun:
+only local diagnostic/credential helpers and docs changed; app/runtime registry,
+admission, query, budgets, lifecycle/auth, UI and retention are unchanged.
+
 ### Same-document M4 return state — 2026-10-23
 
 Owner reported loss of the open M4 window/results after switching apps on

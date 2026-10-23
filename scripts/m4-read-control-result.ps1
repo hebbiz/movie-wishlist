@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 [CmdletBinding()]
-param([switch]$Compact)
+param([switch]$Compact, [switch]$DirectorPersonCheck)
 
 # Read ONLY the existing sanitized result in the same Windows/SSH token context.
 # No credentials, source calls, runner invocation, files or ACL changes.
@@ -9,7 +9,8 @@ $ErrorActionPreference = 'Stop'
 $m4Pipe = $null
 $m4Reader = $null
 try {
-    $m4Pipe = [IO.Pipes.NamedPipeClientStream]::new('.', 'mw-m4-controls-198', [IO.Pipes.PipeDirection]::In)
+    $m4PipeName = if ($DirectorPersonCheck) { 'mw-m4-director-person-200' } else { 'mw-m4-controls-198' }
+    $m4Pipe = [IO.Pipes.NamedPipeClientStream]::new('.', $m4PipeName, [IO.Pipes.PipeDirection]::In)
     $m4Pipe.Connect(3000)
     $m4Reader = [IO.StreamReader]::new($m4Pipe, [Text.UTF8Encoding]::new($false), $false, 4096, $true)
     $m4Buffer = [char[]]::new(4096)
@@ -25,6 +26,9 @@ try {
     }
     if ($m4Report.result.PSObject.Properties.Name -contains 'mode' -and $m4Report.result.mode -ceq 'title-year-control') {
         if ($m4Report.result.counts.total -gt 6 -or $m4Report.result.counts.tmdb -gt 2 -or $m4Report.result.counts.search -gt 2 -or $m4Report.result.counts.cards -gt 2 -or @($m4Report.result.cases).Count -ne 1 -or $m4Report.result.cases[0].film -cne 'Blade Runner 2049' -or $m4Report.result.accounting.priorAttempts -ne 17 -or $m4Report.result.accounting.cumulativeMax -ne 23) { throw 'title-year-control-contract' }
+    }
+    if ($DirectorPersonCheck) {
+        if ($m4Report.result.mode -cne 'director-person-check' -or $m4Report.result.counts.total -gt 3 -or $m4Report.result.counts.tmdb -gt 2 -or $m4Report.result.counts.personPages -gt 1 -or $m4Report.result.accounting.priorAttempts -ne 22 -or $m4Report.result.accounting.cumulativeMax -ne 25) { throw 'director-person-check-contract' }
     }
     # ASCII JSON escapes preserve Unicode aliases across legacy CMD/SSH code pages.
     $m4Report | ConvertTo-Json -Depth 30 -EscapeHandling EscapeNonAscii -Compress:$Compact
