@@ -1,10 +1,13 @@
-// Native Windows authorization only. Synthetic NETWORK membership is not an SSH handshake.
+// Native Windows authorization and full fake-key local IPC lifecycle. No HTTP;
+// synthetic NETWORK membership/fake sessions are not a real SSH handshake.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const helper = fileURLToPath(new URL('../scripts/m4-practical-session.ps1', import.meta.url));
@@ -179,4 +182,102 @@ try {
   assert.equal(report.workerStatusRoundTrip, true);
   assert.equal(report.sourceRequests, 0);
   assert.equal(report.credentialPrompts, 0);
+});
+
+test('full fake-key broker reconnects after two status requests and an abandoned client, then stops', { skip: nativeSkip, timeout: 60_000 }, async () => {
+  const commit = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8', timeout: 10_000 });
+  assert.ifError(commit.error);
+  assert.equal(commit.status, 0, commit.stderr);
+  const sha = commit.stdout.trim();
+  assert.match(sha, /^[a-f0-9]{40}$/);
+  const pipeName = `mw-m4-lifecycle-${randomUUID().replaceAll('-', '')}`;
+  const psString = value => `'${value.replaceAll("'", "''")}'`;
+  const replaceOnce = (source, from, to) => {
+    assert.equal(source.split(from).length, 2, `one replacement required: ${from}`);
+    return source.replace(from, to);
+  };
+  let serverSource = readFileSync(helper, 'utf8');
+  serverSource = replaceOnce(serverSource, '$repoPath = Split-Path -Parent $PSScriptRoot', `$repoPath = ${psString(repo)}`);
+  serverSource = replaceOnce(serverSource, "$runnerPath = Join-Path $PSScriptRoot 'm4-practical-series.mjs'", `$runnerPath = ${psString(join(repo, 'scripts/m4-practical-series.mjs'))}`);
+  serverSource = replaceOnce(serverSource, "'mw-m4-practical-series-v1'", psString(pipeName));
+  serverSource = replaceOnce(serverSource, 'if ([Console]::IsInputRedirected)', 'if ($false)');
+  serverSource = replaceOnce(serverSource, "Read-Host 'TMDB_READ_ACCESS_TOKEN (hidden)' -AsSecureString", "ConvertTo-SecureString 'AUTHORED_FAKE_TMDB_TOKEN' -AsPlainText -Force");
+  serverSource = replaceOnce(serverSource, "Read-Host 'TAVILY_API_KEY (hidden)' -AsSecureString", "ConvertTo-SecureString 'AUTHORED_FAKE_TAVILY_KEY' -AsPlainText -Force");
+  const clientPath = fileURLToPath(new URL('../scripts/m4-practical-request.ps1', import.meta.url));
+  const clientSource = replaceOnce(readFileSync(clientPath, 'utf8'), "'mw-m4-practical-series-v1'", psString(pipeName));
+  // Source stays in memory. Compression avoids Windows' command-line length limit;
+  // dot-sourcing preserves the production script's $script: state across requests.
+  const encodedSource = (source, args) => {
+    const data = gzipSync(Buffer.from(source, 'utf8')).toString('base64');
+    const wrapper = `$memory=[IO.MemoryStream]::new([Convert]::FromBase64String('${data}'));$gzip=[IO.Compression.GZipStream]::new($memory,[IO.Compression.CompressionMode]::Decompress);$reader=[IO.StreamReader]::new($gzip);$source=$reader.ReadToEnd();$reader.Dispose();. ([ScriptBlock]::Create($source)) ${args}`;
+    return Buffer.from(wrapper, 'utf16le').toString('base64');
+  };
+  const psArgs = encoded => ['-NoProfile', '-NonInteractive', '-OutputFormat', 'Text', '-EncodedCommand', encoded];
+  const server = spawn(pwsh, psArgs(encodedSource(serverSource, `-ExpectedCommit ${sha}`)), { cwd: repo, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  let stdout = '';
+  let stderr = '';
+  server.stdout.setEncoding('utf8').on('data', text => { stdout += text; });
+  server.stderr.setEncoding('utf8').on('data', text => { stderr += text; });
+  const exited = new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.once('close', (code, signal) => resolve({ code, signal }));
+  });
+  const client = action => {
+    const checked = spawnSync(pwsh, psArgs(encodedSource(clientSource, `-Action ${action}`)), { cwd: repo, encoding: 'utf8', timeout: 16_000, windowsHide: true });
+    assert.ifError(checked.error);
+    assert.equal(checked.status, 0, checked.stderr || checked.stdout);
+    assert.equal(checked.stderr, '');
+    const report = JSON.parse(checked.stdout);
+    assert.equal(report.execution, 'local-diagnostic');
+    assert.equal(report.acknowledgementSent, true);
+    assert.equal(report.localCheckoutSha, sha);
+    assert.equal(report.session.sourceCounts.total, 0);
+    assert.equal(report.session.countsIncomplete, false);
+    return report;
+  };
+  try {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => finish(new Error(`fake broker readiness timed out: ${stdout} ${stderr}`)), 15_000);
+      const check = () => {
+        if (stdout.includes('Session ready for Codex.')) finish();
+        else if (stdout.includes('session-not-started')) finish(new Error(stdout));
+      };
+      const onExit = () => finish(new Error(`fake broker exited before readiness: ${stdout} ${stderr}`));
+      const finish = error => {
+        clearTimeout(timer);
+        server.stdout.off('data', check);
+        server.off('exit', onExit);
+        if (error) reject(error); else resolve();
+      };
+      server.stdout.on('data', check);
+      server.once('exit', onExit);
+      check();
+    });
+    for (const expectedOperations of [1, 2]) {
+      const report = client('status');
+      assert.equal(report.result.status, 'ready');
+      assert.equal(report.result.counts.total, 0);
+      assert.equal(report.session.completedOperations, expectedOperations);
+    }
+    const abandonCode = `$pipe=[IO.Pipes.NamedPipeClientStream]::new('.',${psString(pipeName)},[IO.Pipes.PipeDirection]::InOut,[IO.Pipes.PipeOptions]::Asynchronous);try {$pipe.Connect(5000)} finally {$pipe.Dispose()}`;
+    const abandoned = spawnSync(pwsh, psArgs(Buffer.from(abandonCode, 'utf16le').toString('base64')), { cwd: repo, encoding: 'utf8', timeout: 10_000, windowsHide: true });
+    assert.ifError(abandoned.error);
+    assert.equal(abandoned.status, 0, abandoned.stderr);
+    assert.equal(abandoned.stderr, '');
+    const recovered = client('status');
+    assert.equal(recovered.result.status, 'ready');
+    assert.equal(recovered.result.counts.total, 0);
+    assert.equal(recovered.session.completedOperations, 3);
+    const stopped = client('stop');
+    assert.equal(stopped.result.status, 'session-stopped');
+    assert.equal(stopped.result.sourceRequests, 0);
+    assert.equal(stopped.session.completedOperations, 3);
+    const exit = await Promise.race([exited, new Promise((_, reject) => { const timer = setTimeout(() => reject(new Error('fake broker did not exit after stop')), 5000); timer.unref(); })]);
+    assert.equal(exit.code, 0, stderr || stdout);
+    assert.equal(stderr, '');
+    assert.match(stdout, /Local series session ended/);
+  } finally {
+    if (server.exitCode === null && server.signalCode === null) server.kill();
+    await exited;
+  }
 });

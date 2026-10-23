@@ -307,9 +307,11 @@ try {
         $waiting = [Threading.CancellationTokenSource]::new($expiresAt - [DateTimeOffset]::UtcNow)
         $replyText = $null
         $operation = $null
+        $acceptedConnection = $false
         $failureCode = 'invalid-request'
         try {
             [void]$pipe.WaitForConnectionAsync($waiting.Token).GetAwaiter().GetResult()
+            $acceptedConnection = $true
             $requestText = Read-M4Frame $pipe $maximumRequest 5000
             $operation = ConvertTo-M4Operation (ConvertFrom-Json -InputObject $requestText -AsHashtable -Depth 10)
             $requestText = $null
@@ -335,22 +337,35 @@ try {
             $replyText = $reply | ConvertTo-Json -Depth 40 -Compress -EscapeHandling EscapeNonAscii
             $failureCode = 'response-handoff-failed-operation-may-have-completed'
             Write-M4Frame $pipe $replyText
+            # FlushAsync is not a pipe drain. Disconnect discards unread bytes;
+            # wait for a bounded acknowledgement of the complete safe response.
+            if ((Read-M4Frame $pipe 4096 5000) -cne '{"received":true}') { throw 'response-acknowledgement' }
         } catch {
             if ($waiting.IsCancellationRequested) { $stop = $true }
             else {
                 if ($failureCode -cne 'invalid-request') { $countsIncomplete = $true }
                 $safeError = @{ execution = 'local-diagnostic'; status = 'request-failed'; reason = $failureCode; session = (Get-M4SessionSummary) } | ConvertTo-Json -Depth 10 -Compress
-                if ($pipe.IsConnected) { try { Write-M4Frame $pipe $safeError } catch {} }
+                if ($pipe.IsConnected) {
+                    try { Write-M4Frame $pipe $safeError; [void](Read-M4Frame $pipe 4096 5000) } catch {}
+                }
             }
         } finally {
             $waiting.Dispose()
-            if ($pipe.IsConnected) { try { $pipe.Disconnect() } catch {} }
+            # EOF can mark the stream Broken/IsConnected=false. It still needs
+            # Disconnect before another WaitForConnectionAsync; otherwise a
+            # single abandoned client wedges the entire credential session.
+            if ($acceptedConnection) {
+                try { $pipe.Disconnect() }
+                catch { $pipe.Dispose(); $pipe = New-M4Pipe $pipeName }
+            }
             $replyText = $null; $reply = $null; $result = $null; $operation = $null; $requestText = $null
         }
     }
     Write-Host 'Local series session ended. No credential or diagnostic file was created.'
 } catch {
-    @{ execution = 'local-diagnostic'; status = 'session-not-started'; reason = $failureCode; preflight=$preflightError; sourceRequests = 0 } | ConvertTo-Json -Depth 5 -Compress
+    $knownTotal = if ($countsIncomplete) { $null } else { $sourceCounts.total }
+    @{ execution = 'local-diagnostic'; status = $(if ($completedOperations) { 'session-interrupted' } else { 'session-not-started' });
+        reason = $failureCode; preflight=$preflightError; sourceRequests=$knownTotal; session=(Get-M4SessionSummary) } | ConvertTo-Json -Depth 6 -Compress
     exit 1
 } finally {
     if ($pipe) { $pipe.Dispose() }

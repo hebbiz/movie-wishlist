@@ -2520,3 +2520,60 @@ preflight. Targeted checks: native pipe regression1/1 and local series worker
 regressions3/3; no full runtime/browser/demo/SQL repetition for this local
 helper-only repair. Actual five-film source work resumes after the hidden
 entry, without new authorization or a repeat of already completed source runs.
+
+#### Full local-session recovery — 2026-10-24
+
+The owner entered the keys at `a79e94f`. The agent could connect locally, so
+the earlier SSH ACL barrier no longer prevented transport. Initial client
+errors were generic and do not establish their exact branch. A subsequent
+diagnostic connection closed without sending a frame; later connects timed
+out. No identify/resolve/inspection operation was dispatched: **zero source
+attempts** in this credential session, not a repeat of the earlier controls.
+
+Code review found a second local-wrapper defect: client EOF can change the
+stream to Broken / `IsConnected=false`; the conditional Disconnect was then
+skipped and subsequent WaitForConnection calls could not recover the still
+allocated pipe. Cleanup now tracks an accepted connection and disconnects it
+even after EOF, recreating the same protected local pipe if necessary. That
+does not repeat a source action or clear credentials/context/counters. The
+client adds typed `-Action` / `-Film` / `-SourceURL` parameters, constructing JSON
+internally instead of relying on nested Windows shell quoting, and emits safe
+error phase/type/HResult only. Remaining outer errors preserve known counters
+or explicitly unknown counts instead of always claiming zero after prior work.
+These are local task-tool repairs, not application search, TTL or budget changes.
+
+The complete fake-key session also reproduced a first-response loss: the
+server disconnected immediately after writing, while PipeStream Flush is not
+a drain and Disconnect discards unread pipe data. The corrected client sends
+a framed receipt only after receiving/validating the entire safe JSON reply;
+the server waits at most5s for that receipt before disconnecting (including
+safe error replies). There is no unbounded WaitForPipeDrain or source retry.
+If sending a receipt fails, the client still preserves the already received
+guarded result/known counts and marks `acknowledgementSent=false`. References:
+[Microsoft pipe disconnection](https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-disconnectnamedpipe),
+[PipeStream Flush semantics](https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.pipestream.flush).
+
+The already-running owner process has the older functions loaded; editing the
+files cannot hot-patch its broken connection state. Restart that helper only,
+not the owner demo/application, and enter the keys hidden again. No credential
+is recovered from process memory, copied to disk or requested in chat. After
+that necessary wrapper restart, the authorized autonomous five-film work
+continues; no source rerun or new per-iteration consent is requested here.
+
+A new native full-loop regression executes the real helper/client code in
+isolated processes with a random pipe and authored fake keys, never the
+owner's pipe. It verifies status twice, an abandoned connection, another
+status with retained counters, receipt acknowledgements, stop and complete
+process/stdout closure. It passes without changing timeouts/assertions; the
+test waits for child `close` (stdio drained), not just `exit`. This closes the
+coverage gap in the older separate pipe/worker preflight. No five-film search
+result is claimed from this local regression.
+
+Final targeted run: **5/5 passed**, no failures/skips or loosened timeouts:
+native Authz/preflight + complete fake-key lifecycle +3 worker regressions.
+The first incomplete protocol tests failed and motivated the actual fixes;
+they are not described as passing evidence.13 docs/447 local links/273 anchor
+references and whitespace/scope checks pass. No live source attempt added;
+no app/runtime/UI/launcher/SQL suite rerun is warranted for these helper-only
+changes. The actual five-film resolver outcome remains pending the corrected
+credential-session start, not declared blocked by an external service.
