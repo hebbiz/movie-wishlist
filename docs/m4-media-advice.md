@@ -2370,3 +2370,107 @@ Local Markdown verification covers the root README, this canonical record and
 the existing research README/docs: **13 documents, 424 local links / 263
 anchors**, zero errors. Historical counts above remain pinned to their own
 checkpoints, not silently reused.
+
+## Autonomous five-film resolver iteration — 2026-10-23
+
+**Authorized implementation and live source investigation; no merge/deploy.**
+This subsequent owner decision supersedes the numerical caps of the earlier
+individual diagnostic controls, not application limits or service conditions.
+Lock the five cases before testing: Blade Runner 2049 (2017), Mortal Kombat
+(2021), Alien (1979), Oppenheimer (2023), Dune: Part Two (2024). The first four
+retain difficult owner-pilot cases; do not replace failures with easier films.
+Control URLs are independently established comparison evidence, never inputs
+to `createKinobazaResolver` or film-specific runtime exceptions. Automatic
+discovery, identity acceptance and extraction are separate outcomes; five
+successful controls would not establish whole-catalogue accuracy or rights.
+
+### Reviewed person record, not a film exception
+
+The earlier three-attempt person check stopped at a local 512KiB bound. Under
+the expanded authorization, the canonical Kinobaza person page was successfully
+read with an 8MiB **local inspection** bound: actual HTML 807,749 bytes, HTTP200.
+This does not change runtime title-card admission or its 2MiB body limit.
+Its unique H1 is `Денні Вільньов`; the same profile header explicitly names
+`Denis Villeneuve`, gives `3 жовтня 1967`, and lists director as a role.
+The canonical is the requested
+[Kinobaza person profile](https://kinobazaua.com/persons/denis-villeneuve).
+The existing trusted
+[TMDb movie credits](https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA)
+identified one Director, person137427 (`Дені Вільнев` / `Denis Villeneuve`);
+the already-read
+[TMDb person record](https://api.themoviedb.org/3/person/137427?language=uk-UA&append_to_response=external_ids)
+gave the exact English name and full birth date `1967-10-03`.
+
+Manual person-level review of the exact English full name + full birth date +
+director role, attached to the same canonical profile/H1, establishes the
+literal alias for `tmdb:person:137427`. This is not the older diagnostic's
+automatic exact-alias/shared-ID confirmation: the Kinobaza page exposed neither
+a shared IMDb/TMDb person link nor a JSON-LD Person object. Birthplace values
+differ (TMDb Gentilly versus Kinobaza Trois-Rivières); no matching-birthplace or
+shared-person-ID claim is made. Slug similarity and any studied film title/year
+are not the linkage basis. An independent read-only evidence review agreed
+that this distinctive person-profile composite is adequate for this one
+reviewed record, with those explicit limitations.
+
+The registry now contains exactly one real record: `Денні Вільньов`, namespace
+`tmdb:person`, ID137427, scope `kinobaza-director-identity`, reviewed 2026-10-23.
+Exact NFC/whitespace/case equality only; no transliteration/fuzzy matching or
+director-gate bypass. It applies across this person's films, not other people,
+titles, offers or tracks. Unknown/ambiguous directors remain unresolved;
+explicit film-ID conflicts retain priority and claims remain withheld.
+Authored regressions exercise the actual record with two invented films,
+another person and conflicting film evidence: **31/31 passed**, not live
+availability or extraction validation.
+
+### Practical resolver work and one-entry local session
+
+General discovery changes under this authorization retain two search stages
+and two card stages. Normalize duplicate title-query spellings; use a genuinely
+different established title or an unquoted version when only one exists.
+Promote exact established ASCII title/optional-year slug matches as discovery
+hints, never create a URL or use its slug as identity proof. After a completed
+first-card identity refusal, use the remaining alternate search before the
+second card slot; merge/deduplicate actual returned URLs and rank unseen
+candidates. Search errors are not retried and do not trigger alternatives.
+Admission, actual HTML identity/extraction, no redirects, R1/R2, exact links,
+acknowledgement and form controls remain independent. The normal application
+budget remains **8 = baseline4 + search<=2 + cards<=2**, with unchanged ledger
+stages/deadlines. No migration or broader network destination is added.
+
+`scripts/m4-practical-session.ps1` is an opt-in local task tool, not deployed
+code. Enter TMDB_READ_ACCESS_TOKEN and TAVILY_API_KEY once each, hidden, and
+leave that SSH terminal open for the series (up to four hours). The helper
+keeps credentials and minimal trusted projected identities only in process
+memory; fresh fixed Node workers load edited resolver code for each requested
+operation. No key argv/environment/file/clipboard/console handoff, raw source
+archive or search snippet persistence. Reusing trusted identity prevents
+unnecessary repeat TMDb reads. A local-only named pipe permits the current
+Windows SID explicitly and denies network access; it avoids the older
+CurrentUserOnly elevation comparison. Same-SID desktop/SSH connectivity still
+needs an actual session handshake; a failed handshake is not permission to
+rerun source tests blindly. Worker calls are separately bounded (60s and<=6
+attempts per invocation); the broader task can perform further deliberate
+iterations, with cumulative accounting, not automatic retries.
+
+At preparation, **3 new HTTP attempts**: Kinobaza person2 + title-card1, all200;
+TMDb0/Tavily0. The second profile read obtained the additional co-located
+English-name/birth-date fields not projected by the first inspection. The card
+read confirmed the previously observed Blade Runner2049 H1/H2/year/director
+shape. Historical25 attempts remain separate (**28 combined to this point**).
+No five-film automatic success is claimed yet. Full live resolver evaluation
+continues after the one credential entry; no new per-iteration authorization
+is needed. No MOTN/watch-provider/destination fetch, Wishlist write, owner
+demo change, initApp/lifecycle/auth/UI/retention/SQL/flag change or deployment.
+
+Preparation validation on the edited tree: **72/72 targeted offline/mock tests**
+(crosswalk, resolver, title/year, safe diagnostics and local series worker).
+Native PowerShell7 prerequisite check passed explicit-SID pipe request/response
+and the actual fixed Node worker `status` operation with authored placeholders:
+zero credential prompts/source requests. This exposed/fixed a missing worker
+opt-in argument and .NET async-void return leakage before any real key entry.
+An independent local-worker review also removed a too-broad H1-parent text
+projection: profile diagnostics now expose bounded headings, not biographies.
+13 Markdown docs/447 links/273 anchors, zero errors; whitespace/scope checked.
+No new browser/iPhone, Windows-demo lifecycle or SQL run yet: UI, form transfer,
+launcher and ledger are unchanged. Relevant final regression scope will be
+reassessed after the actual five-film iterations, not claimed from mocks.

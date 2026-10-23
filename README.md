@@ -136,14 +136,15 @@ implemented or documented v1.3.1 scope.
   historical-pilot reconstruction. No automatic repeat or alias bypass.
   [Person-level director crosswalk](docs/m4-media-advice.md#person-level-director-alias-crosswalk--2026-10-23)
   preserves server TMDb person IDs and supports exact, provenance-scoped aliases
-  across films. Mechanism implemented/offline-tested; real registry empty because
-  independent person-ID evidence is missing. The observed Villeneuve spelling
-  remains unresolved; no live repeat, guessed ID or per-film exception.
+  across films. At the mechanism checkpoint the real registry was empty; the
+  [autonomous five-film iteration](docs/m4-media-advice.md#autonomous-five-film-resolver-iteration--2026-10-23)
+  now records independent person-profile evidence for the literal Villeneuve
+  spelling, without guessed IDs or per-film exceptions.
   The separately authorised person check used3/3 reads (2TMDb +1person page;
   cumulative25). TMDb confirms person137427/IMDbnm0898288 but no exact target
   alias among3 examined aliases. Kinobaza HTTP200 was size-refused at the512KiB
-  bound before parsing. Real entry remains unconfirmed/inactive; no retry or
-  bound increase authorised.
+  bound before parsing. That historical run did not confirm the entry; the
+  subsequent expanded owner authorization and new evidence are recorded separately.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   prepared only; five pilot films still unselected.
 

@@ -2,10 +2,28 @@ import { admitKinobazaURL, fetchAssistedKinobaza } from '../../research/grounded
 import { safeSearchDiagnostic, safeIdentityDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
+const titleNames = film => {
+  const seen = new Set();
+  return [film.originalTitle, film.identityTitle, ...(film.titleAliases ?? [])].map(text).filter(name => {
+    const key = name.normalize('NFC').replace(/\s+/gu, ' ').toLocaleLowerCase('uk-UA');
+    if (!key || seen.has(key)) return false; seen.add(key); return true;
+  });
+};
 export function resolverQueries(film) {
-  const names = [...new Set([film.originalTitle, film.identityTitle, ...(film.titleAliases ?? [])].map(text).filter(Boolean))].slice(0, 2);
-  const quote = s => '"' + s.replace(/["\\]/g, ' ') + '"';
-  return names.map(name => [quote(name), Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' '));
+  const names = titleNames(film).slice(0, 2), clean = s => s.replace(/["\\]/g, ' ');
+  const query = name => [name, Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
+  return names.length ? [query('"' + clean(names[0]) + '"'), query(names.length > 1 ? '"' + clean(names[1]) + '"' : clean(names[0]))] : [];
+}
+// Existing admitted pointers only: a matching slug changes read order, never
+// supplies identity evidence or a generated URL. Ties retain search order.
+function rankedCandidates(urls, film) {
+  const slugs = titleNames(film).filter(name => /^[\x20-\x7e]+$/.test(name))
+    .map(name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')).filter(Boolean);
+  const score = url => {
+    const slug = url.slice('https://kinobazaua.com/titles/'.length);
+    return slugs.some(title => Number.isInteger(film.year) && slug === `${title}-${film.year}`) ? 2 : slugs.includes(slug) ? 1 : 0;
+  };
+  return [...urls].sort((a, b) => score(b) - score(a));
 }
 export function admittedCandidates(items) {
   return candidateDiagnostics(items)?.urls ?? null;
@@ -82,9 +100,12 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
 
 export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, onIdentityDiagnostic } = {}) {
   return async (film, { reserve, fetchImpl, calls, signal }) => {
-    const queries = resolverQueries(film), cards = [];
+    const queries = resolverQueries(film), cards = [], urls = new Set(), examined = new Set();
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
-    const done = (status, result = null, choices = []) => { summary.status = resolverStatuses.has(status) ? status : 'unknown'; return { status, result, choices, resolver: summary }; };
+    const done = (status, result = null, choices = []) => {
+      summary.candidates = urls.size; summary.unexamined = urls.size - examined.size;
+      summary.status = resolverStatuses.has(status) ? status : 'unknown'; return { status, result, choices, resolver: summary };
+    };
     if (!apiKey) return done('not-evaluated-missing-search-key');
     if (!queries.length) return done('not-evaluated-no-established-title');
     const searchFetch = async (url, init) => {
@@ -94,31 +115,43 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
       summary.searchCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
       try { const r = await fetchImpl(url, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('search-transport'); }
     };
-    const provider = searchFactory(apiKey, searchFetch); let urls = [];
-    for (let i = 0; i < queries.length; i++) {
-      if (signal?.aborted) return done('resolver-deadline-bounded');
-      const found = await provider.search(queries[i], { signal });
+    const provider = searchFactory(apiKey, searchFetch); let nextQuery = 0;
+    const searchNext = async () => {
+      const found = await provider.search(queries[nextQuery++], { signal });
       summary.searches.push(safeSearchDiagnostic(found.status, found.diagnostics));
-      if (found.status !== 'ok') return done(found.status); // No alternate for errors.
-      urls = [...new Set((found.urls ?? []).map(admitKinobazaURL).filter(Boolean))];
-      if (urls.length) break; // Alternate only after empty admitted result.
+      if (found.status === 'ok') for (const url of (found.urls ?? []).map(admitKinobazaURL).filter(Boolean)) urls.add(url);
+      return found.status;
+    };
+    while (!urls.size && nextQuery < queries.length) {
+      if (signal?.aborted) return done('resolver-deadline-bounded');
+      const status = await searchNext();
+      if (status !== 'ok') return done(status); // No alternate for errors.
     }
-    summary.candidates = urls.length; summary.unexamined = Math.max(0, urls.length - 2);
-    if (!urls.length) return done('no-admitted-search-candidates');
-    for (const url of urls.slice(0, 2)) {
-      if (signal?.aborted) { summary.unexamined += Math.min(2, urls.length) - cards.length; break; }
+    if (!urls.size) return done('no-admitted-search-candidates');
+    for (let i = 0; i < 2; i++) {
+      if (signal?.aborted) break;
+      const url = rankedCandidates(urls, film).find(candidate => !examined.has(candidate));
+      if (!url) break;
       const stage = `kinobaza-${summary.cardCalls + 1}`;
+      const priorCardCalls = summary.cardCalls;
       const cardFetch = async (target, init) => {
         if (target !== url || !admitKinobazaURL(target) || signal?.aborted || init.method !== 'GET' || init.redirect !== 'manual' || calls.some(c => c.stage === stage)) throw Error('card-boundary');
         await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
-        summary.cardCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
+        summary.cardCalls++; examined.add(url); const call = { stage, status: 'attempt-reserved' }; calls.push(call);
         try { const r = await fetchImpl(target, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('card-transport'); }
       };
       const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic });
       cards.push(result);
       summary.cards.push({ identity: result.identity?.status ?? 'unresolved', reason: result.identity?.reason ?? null, extraction: result.status, candidates: result.candidates?.length ?? 0,
         diagnostics: safeIdentityDiagnostic(result.identity?.diagnostics) });
+      if (summary.cardCalls === priorCardCalls) break; // A denied reservation is not a retry opportunity.
+      if (i === 0 && ['mismatch', 'unresolved'].includes(result.identity?.status) && nextQuery < queries.length) {
+        if (signal?.aborted) break;
+        const status = await searchNext();
+        if (status !== 'ok') return done(status);
+      }
     }
+    summary.unexamined = urls.size - examined.size;
     const confirmed = cards.filter(c => c.identity?.status === 'matched');
     if (confirmed.length > 1) return done('multiple-confirmed-cards-choose', null, confirmed);
     if (confirmed.length === 1) return done(summary.unexamined ? 'one-confirmed-bounded-not-exhaustive' : confirmed[0].status, confirmed[0]);

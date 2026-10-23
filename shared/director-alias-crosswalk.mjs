@@ -1,7 +1,15 @@
 // Reviewed person-level identity evidence only. No film keys, browser loading,
-// network calls or runtime registration. An empty registry is intentional:
-// existing materials do not establish a real namespaced person/alias crosswalk.
-export const CONFIRMED_DIRECTOR_ALIASES = Object.freeze([]);
+// network calls or runtime registration. Reviewed person profiles, not film
+// title/year/slug similarity, establish each literal cross-source alias.
+export const CONFIRMED_DIRECTOR_ALIASES = Object.freeze([Object.freeze({
+  namespace: 'tmdb:person', personId: 137427, aliases: Object.freeze(['Денні Вільньов']),
+  scope: 'kinobaza-director-identity',
+  evidence: Object.freeze({
+    source: 'Reviewed person profiles: exact English name Denis Villeneuve, full birth date 1967-10-03 and director role. Birthplace values differ; no shared external person ID observed.',
+    reference: 'https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA | https://api.themoviedb.org/3/person/137427?language=uk-UA&append_to_response=external_ids | https://kinobazaua.com/persons/denis-villeneuve',
+    verifiedAt: '2026-10-23',
+  }),
+})]);
 const namespace = 'tmdb:person';
 const scope = 'kinobaza-director-identity';
 const validId = id => Number.isSafeInteger(id) && id > 0;

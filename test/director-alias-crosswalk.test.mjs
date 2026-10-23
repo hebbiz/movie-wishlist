@@ -1,5 +1,6 @@
-// Authored person records and markup only. No reconstructed source HTML,
-// live identity claim, real person crosswalk or availability/track assertion.
+// Authored markup/films, not reconstructed source HTML or live coverage. One
+// test exercises the independently reviewed production person record below;
+// other records are authored. No availability/track assertion.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -34,13 +35,23 @@ async function identity({ selected = film, html = markup({ director: 'Vérified 
   return result;
 }
 
-test('real registry is immutable and empty: no unsupported live director spelling is activated', async () => {
-  assert.deepEqual(CONFIRMED_DIRECTOR_ALIASES, []); assert.equal(Object.isFrozen(CONFIRMED_DIRECTOR_ALIASES), true);
+test('reviewed real alias is immutable and person-scoped; authored films are not live coverage evidence', async () => {
+  assert.equal(CONFIRMED_DIRECTOR_ALIASES.length, 1); assert.equal(Object.isFrozen(CONFIRMED_DIRECTOR_ALIASES), true);
+  assert.deepEqual(CONFIRMED_DIRECTOR_ALIASES[0].aliases, ['Денні Вільньов']);
   const selected = { ...film, directorAliases: ['Дені Вільнев', 'Denis Villeneuve'],
-    directorPeople: [person({ names: ['Дені Вільнев', 'Denis Villeneuve'] })] };
-  const result = await fetchAssistedKinobaza(CARD, selected, async () => htmlResponse(markup({ director: 'Денні Вільньов' })));
-  assert.equal(result.identity.status, 'unresolved'); assert.equal(result.identity.reason, 'director-alias-unestablished');
-  assert.deepEqual(result.candidates, []); assert.equal(result.localization, undefined);
+    directorPeople: [person({ personId:137427, names: ['Дені Вільнев', 'Denis Villeneuve'] })] };
+  for (const [index, personId] of [137427,137427,PERSON].entries()) {
+    const movie = { ...selected, identityTitle:`Вигаданий приклад ${index}`, originalTitle:`Authored example ${index}`, year:2001+index,
+      directorPeople:[person({personId,names:selected.directorAliases})] };
+    const result = await fetchAssistedKinobaza(CARD, movie, async () => htmlResponse(markup({ title:movie.identityTitle,original:movie.originalTitle,year:movie.year,director:'Денні Вільньов' })));
+    assert.equal(result.identity.status, personId === 137427 ? 'matched' : 'unresolved');
+    if(personId === 137427) assert.equal(result.identity.directorAliasEvidence.personId,137427);
+    else { assert.equal(result.identity.reason,'director-alias-unestablished'); assert.deepEqual(result.candidates,[]); assert.equal(result.localization,undefined); }
+  }
+  for(const change of [{stable:`<tr><td>IMDb:</td><td>tt${IDS[1]}</td></tr>`},{title:'Unrelated authored film'},{year:1999}]) {
+    const result = await fetchAssistedKinobaza(CARD, selected, async () => htmlResponse(markup({director:'Денні Вільньов',...change})));
+    assert.equal(result.identity.status,'mismatch'); assert.deepEqual(result.candidates,[]); assert.equal(result.localization,undefined);
+  }
 });
 
 test('lookup is exact, namespaced, scoped and carries authored confirmation provenance', () => {

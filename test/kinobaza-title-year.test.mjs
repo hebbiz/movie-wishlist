@@ -33,14 +33,20 @@ test('title/year search omits the added director, preserving primary/alternate t
     '"A film about Authored director" 2001 site:kinobazaua.com/titles/');
 });
 
-test('existing title deduplication, escaping and bounds do not change with director removal', () => {
+test('query aliases deduplicate case and whitespace, retain escaping/bounds, and relax a single established name', () => {
   assert.deepEqual(resolverQueries({ ...film, originalTitle: '  Same  ', identityTitle: 'Same', titleAliases: ['Other', 'Third'] }), [
     '"Same" 2001 site:kinobazaua.com/titles/', '"Other" 2001 site:kinobazaua.com/titles/',
   ]);
   assert.equal(resolverQueries({ ...film, originalTitle: 'A "quoted" \\ title', year: null })[0],
     '"A  quoted    title" site:kinobazaua.com/titles/');
   assert.deepEqual(resolverQueries({ ...film, originalTitle: 'x'.repeat(501), identityTitle: 'bad\nname', titleAliases: ['Allowed'] }), [
-    '"Allowed" 2001 site:kinobazaua.com/titles/',
+    '"Allowed" 2001 site:kinobazaua.com/titles/', 'Allowed 2001 site:kinobazaua.com/titles/',
+  ]);
+  assert.deepEqual(resolverQueries({ ...film, originalTitle: 'Same Name', identityTitle: ' SAME   NAME ', titleAliases: ['same name'] }), [
+    '"Same Name" 2001 site:kinobazaua.com/titles/', 'Same Name 2001 site:kinobazaua.com/titles/',
+  ]);
+  assert.deepEqual(resolverQueries({ ...film, originalTitle: 'Same Name', identityTitle: ' SAME   NAME ', titleAliases: ['same name', 'Distinct alias'] }), [
+    '"Same Name" 2001 site:kinobazaua.com/titles/', '"Distinct alias" 2001 site:kinobazaua.com/titles/',
   ]);
   assert.equal(resolverQueries({ ...film, originalTitle: 'x'.repeat(500) })[0],
     `"${'x'.repeat(500)}" 2001 site:kinobazaua.com/titles/`);
@@ -82,15 +88,16 @@ test('removing director from query does not bypass source director, title or sta
       cards++; assert.equal(url, urls[0]);
       return new Response(markup({ url, ...change }), { headers: { 'content-type': 'text/html' } });
     });
-    assert.equal(searches, 1); assert.equal(cards, 1);
-    assert.deepEqual(reserved, ['search-1', 'kinobaza-1']);
+    assert.equal(searches, identity === 'matched' ? 1 : 2); assert.equal(cards, 1);
+    assert.deepEqual(reserved, identity === 'matched' ? ['search-1', 'kinobaza-1'] : ['search-1', 'kinobaza-1', 'search-2']);
+    assert.equal(out.resolver.candidates, 1); assert.equal(out.resolver.unexamined, 0);
     assert.equal(out.resolver.cards[0].identity, identity); assert.equal(out.resolver.cards[0].reason, reason);
     if (identity === 'matched') assert.equal(out.result.identity.status, 'matched');
     else { assert.equal(out.result, null); assert.deepEqual(out.choices, []); }
   }
 });
 
-test('alternative search remains only after successful zero admitted URLs, including rejected person pointer', async () => {
+test('alternative search still follows successful zero admitted URLs, including rejected person pointer', async () => {
   for (const firstResults of [[], [{ url: 'https://kinobazaua.com/persons/authored-director' }]]) {
     const queries = [];
     const { out, reserved } = await resolveWith(async (url, init) => {

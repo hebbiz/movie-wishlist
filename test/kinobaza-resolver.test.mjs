@@ -16,7 +16,7 @@ function mock({ emptyFirst = false, status, mismatch = false, sameConfirmed = fa
     if (url === 'https://api.tavily.com/search') {
       search++; assert.equal(init.headers.Authorization, 'Bearer AUTHORED_TAVILY_KEY');
       assert.equal(init.method, 'POST');
-      assert.deepEqual(JSON.parse(init.body), { query: resolverQueries(film)[emptyFirst && search > 1 ? 1 : 0],
+      assert.deepEqual(JSON.parse(init.body), { query: resolverQueries(film)[search - 1],
         search_depth: 'basic', topic: 'general', max_results: 5, auto_parameters: false,
         include_answer: false, include_raw_content: false, include_images: false,
         include_favicon: false, include_usage: false, include_domains: ['kinobazaua.com'], include_domains_mode: 'restrict' });
@@ -60,6 +60,77 @@ test('multiple confirmed cards are choices; unresolved/mismatch cannot become se
   const { out } = await run(mock({ sameConfirmed: true }));
   assert.equal(out.status, 'multiple-confirmed-cards-choose'); assert.equal(out.result, null); assert.equal(out.choices.length, 2);
   const mismatch = await run(mock({ mismatch: true })); assert.equal(mismatch.out.result, null); assert.equal(mismatch.out.choices.length, 0);
+});
+test('completed identity refusal uses the alternate before card two and ranks the unseen candidate union', async () => {
+  const next = 'https://kinobazaua.com/titles/authored-original-2001';
+  for (const change of [{ title: 'Wrong film' }, { director: 'Unknown spelling' }]) {
+    let searches = 0;
+    const sent = [];
+    const { out, reserved } = await run({ fetchImpl: async (url, init) => {
+      sent.push(url);
+      if (url === 'https://api.tavily.com/search') {
+        assert.equal(JSON.parse(init.body).query, resolverQueries(film)[searches]);
+        return Response.json({ results: (++searches === 1 ? urls : [urls[0], next, next]).map(url => ({ url })) });
+      }
+      assert.ok([urls[0], next].includes(url), 'only discovered and ranked pointers can be read');
+      return new Response(markup({ url, ...(url === urls[0] ? change : {}) }), { headers: { 'content-type': 'text/html' } });
+    } });
+    assert.deepEqual(reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
+    assert.deepEqual(sent, ['https://api.tavily.com/search', urls[0], 'https://api.tavily.com/search', next]);
+    assert.equal(out.result.sourceURL, next); assert.equal(out.result.identity.status, 'matched');
+    assert.equal(out.resolver.searchCalls, 2); assert.equal(out.resolver.cardCalls, 2);
+    assert.equal(out.resolver.candidates, 4); assert.equal(out.resolver.unexamined, 2);
+    assert.equal(out.status, 'one-confirmed-bounded-not-exhaustive');
+  }
+});
+test('duplicate-only or empty alternate keeps remaining first-search candidates without refetching', async () => {
+  for (const alternate of [[], [urls[0], urls[0]], [urls[1], urls[0], urls[1]]]) {
+    let searches = 0;
+    const sent = [];
+    const { out, reserved } = await run({ fetchImpl: async url => {
+      sent.push(url);
+      if (url === 'https://api.tavily.com/search') return Response.json({ results: (++searches === 1 ? urls : alternate).map(url => ({ url })) });
+      return new Response(markup({ url, ...(url === urls[0] ? { title: 'Wrong film' } : {}) }), { headers: { 'content-type': 'text/html' } });
+    } });
+    assert.deepEqual(reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
+    assert.deepEqual(sent.filter(url => url !== 'https://api.tavily.com/search'), urls.slice(0, 2));
+    assert.equal(out.result.sourceURL, urls[1]);
+    assert.equal(out.resolver.candidates, 3); assert.equal(out.resolver.unexamined, 1);
+  }
+});
+test('slug rank preserves title digits and punctuation but matching-looking pointers never prove identity', async () => {
+  const numbered = { ...film, originalTitle: 'Authored: 2049', titleAliases: [...film.titleAliases, 'Authored: 2049'] };
+  const ranked = ['unrelated', 'authored-2049-2001', 'authored-2049', 'authored-2049-1999'].map(slug => `https://kinobazaua.com/titles/${slug}`);
+  const sent = [], reserved = []; let searches = 0;
+  const out = await createKinobazaResolver({ apiKey: 'AUTHORED_TAVILY_KEY' })(numbered, {
+    calls: [], reserve: async stage => reserved.push(stage), fetchImpl: async url => {
+      sent.push(url);
+      if (url === 'https://api.tavily.com/search') return Response.json({ results: ++searches === 1 ? ranked.map(url => ({ url })) : [] });
+      return new Response(markup({ url, original: numbered.originalTitle, ...(url === ranked[1] ? { title: 'Wrong film' } : {}) }), { headers: { 'content-type': 'text/html' } });
+    },
+  });
+  assert.deepEqual(sent.filter(url => url !== 'https://api.tavily.com/search'), [ranked[1], ranked[2]]);
+  assert.equal(out.resolver.cards[0].identity, 'mismatch'); assert.equal(out.result.sourceURL, ranked[2]);
+  assert.equal(out.resolver.candidates, 4); assert.equal(out.resolver.unexamined, 2);
+  assert.deepEqual(reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
+});
+test('alternate search errors stay provider errors and do not consume a second card or lose candidate accounting', async () => {
+  for (const [kind, status] of [[401, 'search-auth-error'], [429, 'search-rate-limit'], ['transport', 'search-transport-or-json-error'], ['malformed', 'search-invalid-response']]) {
+    let searches = 0;
+    const { out, reserved } = await run({ fetchImpl: async url => {
+      if (url === 'https://api.tavily.com/search') {
+        if (++searches === 1) return Response.json({ results: urls.map(url => ({ url })) });
+        if (kind === 'transport') throw Error('PRIVATE_ERROR');
+        return kind === 'malformed' ? Response.json({ results: null }) : new Response('PRIVATE_ERROR', { status: kind });
+      }
+      assert.equal(url, urls[0]);
+      return new Response(markup({ url, title: 'Wrong film' }), { headers: { 'content-type': 'text/html' } });
+    } });
+    assert.equal(out.status, status); assert.equal(out.result, null);
+    assert.deepEqual(reserved, ['search-1', 'kinobaza-1', 'search-2']);
+    assert.equal(out.resolver.candidates, 3); assert.equal(out.resolver.unexamined, 2);
+    assert.doesNotMatch(JSON.stringify(out), /PRIVATE_ERROR/);
+  }
 });
 test('redirect/403/429/CAPTCHA/malformed HTML do not trigger retries/destination requests', async () => {
   for (const kind of ['redirect', '403', '429', 'captcha', 'malformed']) {
