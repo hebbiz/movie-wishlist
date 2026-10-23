@@ -456,7 +456,7 @@ No admission, parser/alias, withholding, R1/R2, form/report/retention, deadline 
 application-budget change. The second query still requires a successful first
 search with no admitted URLs; no alternate after identity refusal or error.
 
-**One authorised control, pending hidden local input:** the existing credential
+**One authorised control, prepared then executed as recorded below:** the existing credential
 helper adds `-TitleYearControl` (Node `--title-year-control`), mutually exclusive
 with URL-only diagnostic mode. Only Blade Runner 2049 runs: TMDb identity <=2,
 Tavily <=2, sequential Kinobaza GET <=2, **total <=6 attempts**, errors included.
@@ -500,6 +500,78 @@ Sandbox initially refused test child spawning (`EPERM`); the same tests passed
 outside that restriction, not by weakening assertions/timeouts. No new browser,
 Windows-demo lifecycle, PostgreSQL or iPhone run: UI/lifecycle/SQL unchanged.
 No live-quality, deployment or rights-closure claim follows from these mocks.
+
+**Executed title/year control — 2026-10-23:** owner-forwarded safe local result,
+run `5923b78a-f889-49b0-a6b4-c0d842dd1768`, checkout
+`e8ff58b8a5f0790db330dd5fbf5ea6f012da2a85`, mode `title-year-control`,
+`execution=local-diagnostic`, `buildSha=null`. This is local checkout provenance,
+not deployed-runtime attestation, independent agent source capture or a
+reconstruction of the earlier pilot. The pasted excerpt is truncated between
+the first card's expected fields and the second card's diagnostics; it is not a
+complete parseable machine artifact. Missing fields/URLs are not reconstructed.
+
+| Stage | Actual attempts | Visible result |
+| --- | ---: | --- |
+| TMDb identity | 2 | Both HTTP200; selected TMDb335984 / IMDbtt1856101, Blade Runner 2049,2017; director aliases Дені Вільнев / Denis Villeneuve. |
+| Tavily basic Search | 1 | HTTP200; returned5, admitted3, rejected2 (query1 / unsupported-path1), duplicates0. |
+| Kinobaza cards | 2 | Both HTTP200; first unresolved at director alias, second mismatch at heading alias. One admitted candidate unexamined. |
+| New control total | **5/6** | `bounded-unresolved`; no second search/retry/redirect or provider request. |
+
+**First card:** exact visible admitted pointer
+`https://kinobazaua.com/titles/blade-runner-2049`. Extracted H1
+`Той, хто біжить по лезу 2049 ( 2017 )`, H2 `Blade Runner 2049`, year2017;
+title/original-title/year gates pass. One canonical/heading/original-title/
+director value, no explicit stable IDs (`stableIdCount=0`). Source director is
+**Денні Вільньов**, versus selected aliases **Дені Вільнев / Denis Villeneuve**.
+Those selected aliases are visible in the top-level identity and the later
+expected-field fragment; the cut-off first expected block is not reconstructed.
+The only failed gate is `director-alias`, reason `director-alias-unestablished`.
+NFC/whitespace/case normalization does not equate these spellings; the exact
+alias check correctly leaves unresolved rather than asserting different people.
+This establishes a missing **verified alias relationship**, not a malformed
+director extraction or proof of a different person. No alias is added by this
+result and no per-film/fuzzy/transliteration exception is introduced.
+
+**Second card:** visible H1 `Той, хто біжить по лезу ( 1982 )`, H2 `Blade Runner`,
+year1982, director `Рідлі Скотт`. These are concrete source-declared title/year
+differences from the selected2049/2017 projection; the first refusing gate is
+`heading-alias` / `source-title-conflict`. Later gates remain not evaluated,
+not additional independent failures merely because comparison flags are false.
+The exact second URL is absent from the excerpt and is not guessed. No
+independent stable-ID crosswalk for this card was established.
+
+Both refusals withheld claims before viewing/localization extraction
+(`identity-unresolved` / `identity-mismatch`), not `unsupported-markup` or evidence
+of no offers/tracks. The third admitted URL/identity is unknown and unexamined.
+First successful search already had admitted candidates, so the unchanged
+policy correctly did not use an alternate query after card refusals. Rejected
+URL categories alone do not reveal their exact paths/query values. No new URL
+admission change or additional control is warranted by these data.
+
+Accounting stays separate: previous17 + this5 = **22 actual attempts**
+(TMDb12 / Tavily8 / Kinobaza2), within the cumulative ceiling23. The unused
+ceiling does not authorise another request/run. No new live requests were made
+to analyse or record this owner-forwarded result.
+
+**Bounded conclusion / next proposal:** title/year search produced usable
+title-card pointers in this invocation, unlike the preceding person-pointer
+result, but no identity-confirmed extracted claims. One run does not prove
+general quality or that removing the director caused the difference. Historical
+pilot responses stay unknown. A separate narrow follow-up could establish a
+trusted **person-level** alias crosswalk with explicit provenance and a
+regression for this spelling pair; do not silently add aliases or bypass the
+director gate. No new live run is required to explain the now-visible stop.
+
+This result commit changes only README/canonical documentation. Three authored
+in-memory checks using the existing extractor/identity functions passed: the
+observed spelling remains unresolved/withheld, an existing exact alias matches
+when other gates pass, and a stable-ID conflict still overrides unknown director
+spelling. These are algorithm checks, not reconstructed source HTML or a parser
+fix. No runtime-suite rerun for Markdown-only changes; the prior147 regressions
+remain evidence of executed implementation `e8ff58b`, not newly attested on a
+different runtime. Local links/anchors, whitespace and documentation scope
+checked. No source call, parser/search-policy change, owner checkout/demo change,
+init/auth/lifecycle/retention change, DB/flag/secret/Save/merge/deployment action.
 
 ### Same-document M4 return state — 2026-10-23
 
