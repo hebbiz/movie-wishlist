@@ -2445,7 +2445,7 @@ memory; fresh fixed Node workers load edited resolver code for each requested
 operation. No key argv/environment/file/clipboard/console handoff, raw source
 archive or search snippet persistence. Reusing trusted identity prevents
 unnecessary repeat TMDb reads. A local-only named pipe permits the current
-Windows SID explicitly and denies network access; it avoids the older
+Windows SID explicitly and rejects remote pipe clients in the kernel; it avoids the older
 CurrentUserOnly elevation comparison. Same-SID desktop/SSH connectivity still
 needs an actual session handshake; a failed handshake is not permission to
 rerun source tests blindly. Worker calls are separately bounded (60s and<=6
@@ -2474,3 +2474,49 @@ projection: profile diagnostics now expose bounded headings, not biographies.
 No new browser/iPhone, Windows-demo lifecycle or SQL run yet: UI, form transfer,
 launcher and ledger are unchanged. Relevant final regression scope will be
 reassessed after the actual five-film iterations, not claimed from mocks.
+
+#### SSH preflight repair, before credential entry
+
+The owner launch at `fce49c6` returned `session-not-started` /
+`local-pipe-prerequisites`, **sourceRequests0**, before either hidden key prompt.
+That screenshot identifies the failed preflight, not the internal create/
+connect/frame/ACL branch or SSH token groups. The initial desktop/elevated
+preflight success was not proof of success under the owner's SSH token.
+
+Code review found an unconditional Deny-FullControl ACE for the Windows NETWORK
+SID. That SID describes a logon-token group, not whether a pipe client is
+connecting from another computer: it can deny an authorized same-account
+**local** SSH client. The fix retains one protected current-user-SID Allow ACE
+and moves remote-transport rejection to native `PIPE_REJECT_REMOTE_CLIENTS`
+(`0x8`). No Everyone/Users/anonymous grant, listener, default ACL, elevation
+requirement or credential file is introduced. Asynchronous operation,
+first-instance protection, non-inherited handles, request/output bounds and
+one fixed worker remain. The native handle is owned/closed by SafePipeHandle /
+NamedPipeServerStream; its security descriptor and helper compilation contain
+no credentials and exist only in memory. Sources:
+[Microsoft CreateNamedPipe flags](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea),
+[managed SafePipeHandle wrapper](https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.namedpipeserverstream.-ctor).
+
+On any remaining preflight failure, safe diagnostics distinguish create,
+local-connect, request-frame, response-frame and ACL-check, with exception type,
+numeric HResult/Win32 code and NETWORK-group-presence boolean. No exception
+message, token/SID dump, key or source content. This repairs local launch only;
+the screenshot does not by itself prove which SSH authorization check failed.
+The corrected desktop non-elevated preflight already passes pipe round trip,
+exact protected ACL and actual Node status worker, with **zero HTTP requests
+and zero credential prompts**. Actual owner-SSH handshake remains to verify.
+The five-film source series has not started; counts remain3 new /25 historical
+at this checkpoint. No resolver/search-policy/runtime or app-state change in
+this follow-up, no live repeat/merge/deploy.
+
+The focused native Windows Authz regression uses the **actual** new pipe DACL
+and a copy with the old NETWORK deny restored, then adds an enabled NETWORK
+SID to a synthetic current-user authorization context: old ACL/current user
+alone permits, old ACL/NETWORK denies (error5), new ACL/NETWORK permits. This
+reproduces the authorization defect with the Windows engine, not a homemade
+ACE evaluator or a claim that the owner's actual SSH token was captured.
+The same native test invokes the exact-HEAD zero-prompt/zero-HTTP pipe + worker
+preflight. Targeted checks: native pipe regression1/1 and local series worker
+regressions3/3; no full runtime/browser/demo/SQL repetition for this local
+helper-only repair. Actual five-film source work resumes after the hidden
+entry, without new authorization or a repeat of already completed source runs.

@@ -24,19 +24,66 @@ $completedOperations = 0
 $countsIncomplete = $false
 $sourceCounts = @{ total = 0; tmdb = 0; search = 0; cards = 0; personPages = 0 }
 $failureCode = 'prerequisites'
+$pipeCheckStep = $null
+$preflightError = $null
+
+function Initialize-M4LocalPipeNative {
+    if ('M4PracticalLocalPipe' -as [type]) { return }
+    # Compiled in memory, without an output assembly or any credential material.
+    # https://learn.microsoft.com/windows/win32/api/winbase/nf-winbase-createnamedpipea
+    Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.IO.Pipes;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+public static class M4PracticalLocalPipe {
+    public const uint RejectRemoteClients = 0x00000008;
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SecurityAttributes {
+        public int Length;
+        public IntPtr SecurityDescriptor;
+        [MarshalAs(UnmanagedType.Bool)] public bool InheritHandle;
+    }
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+    private static extern SafePipeHandle CreateNamedPipeW(string name, uint openMode,
+        uint pipeMode, uint instances, uint outputSize, uint inputSize, uint timeout,
+        ref SecurityAttributes security);
+    public static NamedPipeServerStream Create(string name, byte[] descriptor) {
+        if (String.IsNullOrEmpty(name) || name.Length > 120 || name.IndexOfAny(new[]{'\\','/',':'}) >= 0)
+            throw new ArgumentException("invalid-pipe-name");
+        var pin = GCHandle.Alloc(descriptor, GCHandleType.Pinned);
+        SafePipeHandle handle = null;
+        try {
+            var security = new SecurityAttributes {
+                Length=Marshal.SizeOf<SecurityAttributes>(), SecurityDescriptor=pin.AddrOfPinnedObject(), InheritHandle=false
+            };
+            // DUPLEX | OVERLAPPED | FIRST_PIPE_INSTANCE. Byte/read-byte/wait are0.
+            handle=CreateNamedPipeW(@"\\.\pipe\"+name, 0x40080003, RejectRemoteClients,
+                1, 4096, 4096, 0, ref security);
+            if (handle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
+            var stream = new NamedPipeServerStream(PipeDirection.InOut, true, false, handle);
+            handle=null; // Stream owns the safe handle, including failure/cancellation cleanup.
+            return stream;
+        } finally {
+            if (handle != null) handle.Dispose();
+            pin.Free();
+        }
+    }
+}
+'@
+}
 
 function New-M4Pipe([string]$Name) {
+    Initialize-M4LocalPipeNative
     $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
     $security = [IO.Pipes.PipeSecurity]::new()
     $security.SetAccessRuleProtection($true, $false)
-    $network = [Security.Principal.SecurityIdentifier]::new([Security.Principal.WellKnownSidType]::NetworkSid, $null)
-    $security.AddAccessRule([IO.Pipes.PipeAccessRule]::new($network, [IO.Pipes.PipeAccessRights]::FullControl, [Security.AccessControl.AccessControlType]::Deny))
     $security.AddAccessRule([IO.Pipes.PipeAccessRule]::new($sid, [IO.Pipes.PipeAccessRights]::FullControl, [Security.AccessControl.AccessControlType]::Allow))
-    # Explicit SID ACL permits the same account across SSH/desktop elevation tokens.
-    # CurrentUserOnly adds an elevation comparison and is deliberately not used.
-    return [IO.Pipes.NamedPipeServerStreamAcl]::Create($Name, [IO.Pipes.PipeDirection]::InOut, 1, [IO.Pipes.PipeTransmissionMode]::Byte,
-        ([IO.Pipes.PipeOptions]::Asynchronous -bor [IO.Pipes.PipeOptions]::FirstPipeInstance), 4096, 4096, $security,
-        [IO.HandleInheritability]::None, [IO.Pipes.PipeAccessRights]0)
+    # NETWORK is a logon-token SID, not a remote-transport test: denying it also
+    # denies a legitimate LOCAL client in some SSH logon contexts. Keep a
+    # current-user-only protected DACL and reject remote clients in the kernel.
+    return [M4PracticalLocalPipe]::Create($Name, $security.GetSecurityDescriptorBinaryForm())
 }
 
 function Read-M4Exact([IO.Stream]$Stream, [byte[]]$Bytes, [Threading.CancellationToken]$Token) {
@@ -87,18 +134,34 @@ function Test-M4LocalPipe {
     $client = $null
     try {
         $name = 'mw-m4-prerequisites-' + [Guid]::NewGuid().ToString('N')
+        $script:pipeCheckStep = 'create'
         $server = New-M4Pipe $name
         $waiting = $server.WaitForConnectionAsync()
         $client = [IO.Pipes.NamedPipeClientStream]::new('.', $name, [IO.Pipes.PipeDirection]::InOut, [IO.Pipes.PipeOptions]::Asynchronous)
+        $script:pipeCheckStep = 'local-connect'
         $client.Connect(3000)
         if (-not $waiting.Wait(3000)) { throw 'acl-connect-timeout' }
+        $script:pipeCheckStep = 'request-frame'
         Write-M4Frame $client '{"probe":true}'
         if ((Read-M4Frame $server 4096 3000) -cne '{"probe":true}') { throw 'acl-request' }
+        $script:pipeCheckStep = 'response-frame'
         Write-M4Frame $server '{"ok":true}'
         if ((Read-M4Frame $client 4096 3000) -cne '{"ok":true}') { throw 'acl-response' }
+        $script:pipeCheckStep = 'acl-check'
         $actual = [IO.Pipes.PipesAclExtensions]::GetAccessControl($server)
         $rules = @($actual.GetAccessRules($true, $false, [Security.Principal.SecurityIdentifier]))
-        if ($rules.Count -ne 2 -or -not $actual.AreAccessRulesProtected) { throw 'acl-contract' }
+        $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+        if ($rules.Count -ne 1 -or -not $actual.AreAccessRulesProtected -or
+            $rules[0].IdentityReference -ne $sid -or $rules[0].AccessControlType -ne [Security.AccessControl.AccessControlType]::Allow -or
+            $rules[0].PipeAccessRights -ne [IO.Pipes.PipeAccessRights]::FullControl) { throw 'acl-contract' }
+        $script:pipeCheckStep = 'complete'
+    } catch {
+        $errorObject = $_.Exception.GetBaseException()
+        $principal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
+        $script:preflightError = @{ step=$script:pipeCheckStep; exceptionType=$errorObject.GetType().FullName; hresult=$errorObject.HResult;
+            networkLogon=$principal.IsInRole([Security.Principal.SecurityIdentifier]::new([Security.Principal.WellKnownSidType]::NetworkSid,$null)) }
+        if ($errorObject -is [ComponentModel.Win32Exception]) { $script:preflightError.win32Code=$errorObject.NativeErrorCode }
+        throw
     } finally {
         if ($client) { $client.Dispose() }
         if ($server) { $server.Dispose() }
@@ -224,7 +287,7 @@ try {
         $secureTavily = ConvertTo-SecureString 'AUTHORED_TAVILY_PLACEHOLDER' -AsPlainText -Force
         $probe = Invoke-M4Worker @{ action = 'status' }
         if ($probe.execution -cne 'local-diagnostic' -or $probe.status -cne 'ready' -or $probe.counts.total -ne 0) { throw 'worker-round-trip' }
-        @{ execution = 'local-diagnostic'; status = 'prerequisites-ok'; localCheckoutSha = $initialCommit; explicitSidAcl = $true; networkDenied = $true; localRoundTrip = $true; workerStatusRoundTrip = $true; sourceRequests = 0; credentialPrompts = 0 } | ConvertTo-Json -Compress
+        @{ execution = 'local-diagnostic'; status = 'prerequisites-ok'; localCheckoutSha = $initialCommit; explicitSidAcl = $true; remoteClientsRejected = $true; localRoundTrip = $true; workerStatusRoundTrip = $true; sourceRequests = 0; credentialPrompts = 0 } | ConvertTo-Json -Compress
         exit 0
     }
     $failureCode = 'interactive-console-required'
@@ -287,7 +350,7 @@ try {
     }
     Write-Host 'Local series session ended. No credential or diagnostic file was created.'
 } catch {
-    @{ execution = 'local-diagnostic'; status = 'session-not-started'; reason = $failureCode; sourceRequests = 0 } | ConvertTo-Json -Compress
+    @{ execution = 'local-diagnostic'; status = 'session-not-started'; reason = $failureCode; preflight=$preflightError; sourceRequests = 0 } | ConvertTo-Json -Depth 5 -Compress
     exit 1
 } finally {
     if ($pipe) { $pipe.Dispose() }
