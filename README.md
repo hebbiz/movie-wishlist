@@ -139,8 +139,11 @@ implemented or documented v1.3.1 scope.
   across films. Mechanism implemented/offline-tested; real registry empty because
   independent person-ID evidence is missing. The observed Villeneuve spelling
   remains unresolved; no live repeat, guessed ID or per-film exception.
-  A separately authorised one-key person-identity check is prepared (<=3 reads,
-  prior22/cumulative<=25); no live result or real-entry confirmation yet.
+  The separately authorised person check used3/3 reads (2TMDb +1person page;
+  cumulative25). TMDb confirms person137427/IMDbnm0898288 but no exact target
+  alias among3 examined aliases. Kinobaza HTTP200 was size-refused at the512KiB
+  bound before parsing. Real entry remains unconfirmed/inactive; no retry or
+  bound increase authorised.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   prepared only; five pilot films still unselected.
 

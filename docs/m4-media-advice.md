@@ -578,8 +578,9 @@ init/auth/lifecycle/retention change, DB/flag/secret/Save/merge/deployment actio
 **Status: mechanism implemented/offline-tested; zero real aliases activated.**
 Separate stacked implementation above #199, pinned base
 `114afcfc58fd0b3fd109de8798df8bbd1ef41a94`; develop verified
-`5bd9f830eb665b2fa1ac4ad7eb2b384267bf37a7`. No merge/deployment or new live run.
-The preceding22 attempts remain the actual total, not a new test allowance.
+`5bd9f830eb665b2fa1ac4ad7eb2b384267bf37a7`. At mechanism implementation no
+merge/deployment or new live run;22 attempts were the then-current total. The
+separately authorised person check below adds3, for25 actual attempts.
 
 The TMDb credits projection already preserves validated `directors.items[].id`;
 M4 service/local-control film construction previously flattened names and lost
@@ -615,11 +616,11 @@ namespace/ID/scope/provenance; no extra UI/short-report or field propagation.
 Authored tests inject a separate lookup through an internal function option,
 never an HTTP/browser contract. Fixed-card parser/legacy film aliases unchanged.
 
-**Available evidence does not authorise a real entry:** the control established
+**Evidence at mechanism implementation did not authorise a real entry:** the control established
 source spelling `Денні Вільньов` versus selected `Дені Вільнев / Denis Villeneuve`
 but recorded movie IDs, not an authoritative person-ID association. The older
 fixed Dune alias list is per-film configuration without independent person-level
-provenance. The person-shaped Tavily pointer was not fetched, and neither its
+provenance. The person-shaped Tavily pointer had not then been fetched, and neither its
 slug, spelling similarity nor the studied film's title/year can prove this
 crosswalk. No TMDb person ID is invented from memory. Required missing evidence:
 an independent person-level record explicitly tying the observed spelling to
@@ -650,13 +651,13 @@ exact URLs/acknowledgement and form-transfer safeguards remain unchanged.
 
 #### Authorised one-time person verification — 2026-10-23
 
-Prepared in the same #200; real registry stays empty until sufficient live
-person-level evidence is received/reviewed. **No new request at preparation.**
+Prepared in the same #200, subsequently executed as recorded below; real
+registry remains empty. **No new request at preparation.**
 The owner authorised <=3 total HTTP attempts, prior22 separate/cumulative<=25:
 one TMDb movie335984 credits GET, one details GET for its validated director
 person ID, and only if needed one exact
-`https://kinobazaua.com/persons/denis-villeneuve` GET. No reliably saved person
-ID evidence exists, so credits are not skipped or replaced by a guessed ID.
+`https://kinobazaua.com/persons/denis-villeneuve` GET. At preparation no reliable
+person-ID evidence was saved, so credits were not skipped or replaced by a guess.
 No film search/title-card/Tavily/watch-provider/platform/destination request.
 Errors spend attempts; no retries, redirect follow, alternative or auto-repeat.
 This person path is a local diagnostic exception, **not runtime card admission**.
@@ -707,6 +708,63 @@ checked.13 docs/446 links/272 anchors, no errors; whitespace/scope checked.
 These are mocks, not real alias confirmation. No browser/Windows-demo/SQL rerun:
 only local diagnostic/credential helpers and docs changed; app/runtime registry,
 admission, query, budgets, lifecycle/auth, UI and retention are unchanged.
+
+**Executed person check — 2026-10-23:** owner-forwarded safe local result,
+run `40763a2f-fddc-41b6-b6da-c09e2d4b779f`, started
+`2026-10-23T19:55:05.822Z`, checkout
+`099db961d86eada84b6b222de667add951979085`, mode `director-person-check`,
+`execution=local-diagnostic`, `buildSha=null`. Local checkout provenance only,
+not independent agent source capture or deployed-runtime attestation. Minimal
+facts below, not a copied JSON/HTML response or persistent content archive.
+
+| Read | Attempts / status | Established evidence |
+| --- | --- | --- |
+| [TMDb movie335984 credits](https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA) | 1 / HTTP200 | The validated Director record identifies person137427, name Дені Вільнев, original name Denis Villeneuve. |
+| [TMDb person137427](https://api.themoviedb.org/3/person/137427?language=uk-UA&append_to_response=external_ids) | 1 / HTTP200 | Matching requested person ID137427, name Дені Вільнев;3 aliases examined, no exact target spelling; projected IMDb person ID nm0898288. |
+| [Kinobaza person pointer](https://kinobazaua.com/persons/denis-villeneuve) | 1 / HTTP200 | `person-page-too-large`; refused before HTML decoding/profile extraction. No H1, canonical, Person object or external person-ID evidence returned. |
+| Total | **3/3** | No confirmed target alias; no redirect/retry/extra read. |
+
+The TMDb reads now establish the film-director-to-person-ID chain; the exact
+alias list contents are not reconstructed from its count. Matching the selected
+person to IMDb nm0898288 does **not** establish that Kinobaza uses that IMDb ID
+or that its profile associates `Денні Вільньов` with this person. HTTP200 does
+not establish a parsed profile. Public birth fields in the safe result are not
+needed for this conclusion and are not archived here.
+
+Precise stop: `readPersonHTML` returns the same `person-page-too-large` for
+declared Content-Length >524288 bytes **or** accumulated body bytes exceeding
+524288 (512 KiB). The safe result contains neither the branch nor the exact
+size. It therefore cannot show which check fired, the complete body size or
+that all HTML was read. Both paths stop before decoding, challenge detection,
+parse5/profile identity inspection; no claim that profile markup/links were
+missing, unsupported or incorrect. No alias, source-value repair or matching
+change is justified by this transport-bound refusal.
+
+**Real-entry status: not confirmed, not activated; registry still empty.**
+Missing evidence is the Kinobaza person-level side of the linkage (e.g. explicit
+profile ownership plus the same IMDb nm0898288 and the target spelling), or a
+trusted person record explicitly listing that exact alias. The earlier movie
+card, similar names/slug and known film ID cannot fill this gap.
+
+Accounting: previous22 + this3 = **25 actual attempts**, ceiling fully spent:
+TMDb14 / Tavily8 / Kinobaza title-card2 / Kinobaza person-page1. No unused budget,
+automatic repeat, re-prompt or additional request is authorised. Analysis/docs
+made zero source calls. A possible **separate proposal, not implemented or
+authorised** is one read of this same person page with a diagnostic-only2MiB
+bound and separate declared-length/stream-limit reason; reuse the now-saved
+TMDb person proof, no repeated TMDb/Tavily/title-card/discovery call. If it still
+fails its new bound, stop. This would require new explicit request/bound scope;
+it is not a change to runtime admission, parsing, retention or application cap.
+
+This result checkpoint changes only README/canonical documentation. Two focused
+authored in-memory transport cases reproduced both size-limit paths with the
+same public reason/counts and no profile extraction (zero source HTTP). These
+are not reconstructions of the real profile or evidence of its actual size.
+Links/anchors, diff scope and whitespace checked; runtime suites not repeated
+for Markdown-only changes. The54/54 preparation evidence remains tied to
+unchanged executed099db96, not a new live validation. No real alias, runtime
+bound, identity gate, query, UI/lifecycle/auth, retention, migration/flag/secret,
+Wishlist, owner checkout/demo, merge/deployment or discovery change.
 
 ### Same-document M4 return state — 2026-10-23
 
