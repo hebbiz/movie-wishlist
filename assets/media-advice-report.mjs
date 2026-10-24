@@ -29,7 +29,8 @@ export function safeMediaReport(result, { applied = false } = {}) {
   lines.push(`Kinobaza: search ${count(result?.resolver?.searchCalls)}; card GET ${count(result?.resolver?.cardCalls)}; unexamined ${count(result?.resolver?.unexamined)}.`);
   for (const [index, s] of (result?.resolver?.searches ?? []).slice(0,2).entries()) {
     const d = safeSearchDiagnostic(s.status, s);
-    lines.push(`Search ${index + 1}: ${d.status}; ${d.outcome}; returned ${d.returned ?? 'unknown'}, admitted ${d.admitted ?? 'unknown'}, rejected ${d.rejected ?? 'unknown'}, duplicates ${d.duplicates ?? 'unknown'}; rejection categories ${JSON.stringify(d.rejectionCategories)}.`);
+    const provider = ['tavily','kinobaza-public-search'].includes(s.provider) ? s.provider : 'unknown';
+    lines.push(`Search ${index + 1}: ${d.status}; ${d.outcome}; returned ${d.returned ?? 'unknown'}, admitted ${d.admitted ?? 'unknown'}, rejected ${d.rejected ?? 'unknown'}, duplicates ${d.duplicates ?? 'unknown'}; rejection categories ${JSON.stringify(d.rejectionCategories)}; provider ${provider}.`);
   }
   for (const card of result?.resolver?.cards?.slice(0,2) ?? []) {
     const d = safeIdentityDiagnostic(card.diagnostics);

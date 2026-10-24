@@ -1,6 +1,7 @@
 import { readTmdbJson, projectTmdbIdentityFor, projectTmdbProvidersFor } from '../../research/grounded-answer-demo/tmdb.mjs';
 import { fetchMotnFor } from '../../research/grounded-answer-demo/motn.mjs';
 import { composeDiscovery } from '../../research/grounded-answer-demo/discovery.mjs';
+import { projectDirectorPeople } from '../../shared/director-alias-crosswalk.mjs';
 const api = 'https://api.themoviedb.org/3';
 const append = 'external_ids,alternative_titles,credits,release_dates,translations';
 const val = f => f?.state === 'reported' ? f.value : null;
@@ -24,7 +25,7 @@ export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetch
   const selected = Array.isArray(candidates) && candidates.length === 1 && Number.isSafeInteger(candidates[0]?.id) && candidates[0].id > 0 ? candidates[0] : null;
   // find-by-IMDb is a crosswalk assertion, not an arbitrary first search result.
   // Independent MOTN can still respond if TMDb transport/availability fails.
-  const film = { id: `imdb:${imdbId}`, imdbId, tmdbId: selected?.id ?? null, title: title(selected?.title) ?? imdbId, identityTitle: title(selected?.title), originalTitle: title(selected?.original_title), year: null, directorAliases: [], directorCount: null, titleAliases: [] };
+  const film = { id: `imdb:${imdbId}`, imdbId, tmdbId: selected?.id ?? null, title: title(selected?.title) ?? imdbId, identityTitle: title(selected?.title), originalTitle: title(selected?.original_title), year: null, directorAliases: [], directorCount: null, directorPeople: [], titleAliases: [] };
   let projection = null, detailsStatus = found.status;
   if (selected) {
     const details = await read('tmdb-details', `${api}/movie/${selected.id}?language=uk-UA&append_to_response=${append}`);
@@ -36,6 +37,7 @@ export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetch
       const release = val(projection.metadata.releaseDate); film.year = /^\d{4}-\d{2}-\d{2}$/.test(release ?? '') ? Number(release.slice(0, 4)) : null;
       const directors = projection.metadata.directors.items ?? [];
       film.directorCount = projection.metadata.directors.state === 'reported' ? directors.length : null;
+      film.directorPeople = projectDirectorPeople(projection.metadata.directors);
       film.directorAliases = directors.flatMap(d => [title(val(d.name)), title(val(d.originalName))]).filter(Boolean);
       film.titleAliases = [film.identityTitle, film.originalTitle, ...(projection.metadata.alternativeTitles.items ?? []).map(t => title(val(t.title)))].filter(Boolean);
     }

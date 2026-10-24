@@ -116,7 +116,7 @@ test('local controls count each Tavily 401 once; unknown search counts are not a
   for(const item of result.cases){
     assert.equal(item.status,'search-auth-error');assert.deepEqual(item.counts,{tmdb:2,search:1,cards:0,total:3});
     assert.equal(item.resolver.searchCalls,1);assert.equal(item.resolver.cardCalls,0);assert.deepEqual(item.cards,[]);
-    assert.deepEqual(item.resolver.searches,[{status:'search-auth-error',outcome:'provider-error',returned:null,admitted:null,rejected:null,duplicates:null,rejectionCategories:{}}]);
+    assert.deepEqual(item.resolver.searches,[{status:'search-auth-error',outcome:'provider-error',returned:null,admitted:null,rejected:null,duplicates:null,rejectionCategories:{},provider:'tavily'}]);
   }
   assert.doesNotMatch(JSON.stringify(result),/PRIVATE_ERROR|AUTHORED_TAVILY_KEY|AUTHORED_TMDB_KEY/);
 });

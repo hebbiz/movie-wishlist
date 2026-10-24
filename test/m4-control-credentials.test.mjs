@@ -8,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readControlCredentials } from '../scripts/m4-control-credentials.mjs';
+import { readControlCredentials, readTmdbCredential } from '../scripts/m4-control-credentials.mjs';
 
 const authored = {tmdbToken:'AUTHORED_TMDB_SECRET',tavilyKey:'AUTHORED_TAVILY_SECRET'};
 const runner = fileURLToPath(new URL('../scripts/m4-control-diagnostic.mjs',import.meta.url));
@@ -29,6 +29,22 @@ test('empty/cancelled/malformed/extra/oversize stdin fails closed with fixed non
     await assert.rejects(readControlCredentials(Readable.from([input])),{message:'invalid-local-credentials'});
   }
   await assert.rejects(readControlCredentials(Readable.from((async function*(){yield '{';throw Error('PRIVATE_STREAM');})())),{message:'invalid-local-credentials'});
+});
+
+test('person-check stdin requires exactly one TMDb key, never a Tavily key or environment fallback',async()=>{
+  assert.deepEqual(await readTmdbCredential(Readable.from([JSON.stringify({tmdbToken:authored.tmdbToken})])),{tmdbToken:authored.tmdbToken});
+  for(const value of ['', '{}', JSON.stringify(authored), JSON.stringify({tmdbToken:'bad key'}), JSON.stringify({tmdbToken:'x'.repeat(4097)})]) {
+    await assert.rejects(readTmdbCredential(Readable.from([value])),{message:'invalid-local-credentials'});
+  }
+  const script=fileURLToPath(new URL('../scripts/m4-director-person-diagnostic.mjs',import.meta.url));
+  const blockNetwork='data:text/javascript,'+encodeURIComponent('globalThis.fetch=()=>{throw Error("AUTHORED_TMDB_SECRET PRIVATE_ERROR")};');
+  const env={...process.env,NODE_OPTIONS:'',TMDB_READ_ACCESS_TOKEN:'INHERITED_PRIVATE_TMDB',TAVILY_API_KEY:'INHERITED_PRIVATE_TAVILY'};
+  const child=input=>spawnSync(process.execPath,['--import',blockNetwork,script,'--live-person-check','--credentials-stdin'],{input,encoding:'utf8',env,timeout:10_000});
+  const valid=child(JSON.stringify({tmdbToken:authored.tmdbToken}));assert.equal(valid.status,0,valid.stderr);
+  const result=JSON.parse(valid.stdout);assert.equal(result.mode,'director-person-check');
+  assert.deepEqual(result.counts,{tmdb:1,personPages:0,total:1});assert.deepEqual(result.accounting,{priorAttempts:22,cumulativeMax:25});
+  assert.doesNotMatch(valid.stdout+valid.stderr,/AUTHORED_TMDB_SECRET|PRIVATE_ERROR|INHERITED_PRIVATE/);
+  for(const input of ['',JSON.stringify(authored)]){const invalid=child(input);assert.equal(invalid.status,2);assert.equal(invalid.stderr,'');assert.equal(JSON.parse(invalid.stdout).status,'local-run-failed-no-retry');}
 });
 test('stdin CLI has no credential argv/env fallback; authored fetch stub makes ZERO network calls',()=>{
   // Startup import is TEST ONLY. The real prompt removes inherited Node hooks.
@@ -76,6 +92,10 @@ test('hidden Windows prompt parses and uses stdin/CurrentUserOnly IPC, not a dis
   assert.match(source,/if \(\$UrlDiagnostic\) \{ \$start.ArgumentList.Add\('--url-diagnostic'\) \}/);
   assert.match(source,/if \(\$TitleYearControl\) \{ \$start.ArgumentList.Add\('--title-year-control'\) \}/);
   assert.match(source,/\$UrlDiagnostic -and \$TitleYearControl/);
+  assert.match(source,/\$DirectorPersonCheck -and \(\$UrlDiagnostic -or \$TitleYearControl\)/);
+  assert.match(source,/if \(-not \$DirectorPersonCheck\) \{\s*\$secureTavily = Read-Host/);
+  assert.match(source,/if \(-not \$DirectorPersonCheck\) \{ \$credentials.tavilyKey = \$tavilyText \}/);
+  assert.match(source,/--live-person-check/);assert.match(source,/\$result.counts.personPages -gt 1/);
   assert.match(source,/\$result.counts.total -gt 6/);assert.match(source,/\$result.accounting.priorAttempts -ne 17/);assert.match(source,/\$result.accounting.cumulativeMax -ne 23/);
   assert.match(source,/\$result.counts.total -gt 3/);assert.match(source,/\$result.counts.cards -ne 0/);
   assert.match(source,/PipeOptions\]::CurrentUserOnly/);
@@ -115,6 +135,8 @@ test('same-SSH safe-result reader parses, bounds result and cannot rerun sources
   assert.match(source,/-Compress:\$Compact/);
   assert.match(source,/counts.total -gt 3/);assert.match(source,/counts.cards -ne 0/);
   assert.match(source,/counts.total -gt 6/);assert.match(source,/accounting.priorAttempts -ne 17/);assert.match(source,/accounting.cumulativeMax -ne 23/);
+  assert.match(source,/param\(\[switch\]\$Compact, \[switch\]\$DirectorPersonCheck\)/);
+  assert.match(source,/counts.personPages -gt 1/);assert.match(source,/accounting.priorAttempts -ne 22/);assert.match(source,/accounting.cumulativeMax -ne 25/);
   assert.doesNotMatch(source,/Read-Host|TMDB_READ_ACCESS_TOKEN|TAVILY_API_KEY|m4-control-diagnostic|node\.exe|https?:|Invoke-WebRequest|Invoke-RestMethod|Set-Content|Out-File|WriteAll|SetAccessControl|SetEnvironmentVariable|\$env:/);
 });
 test('UTF-8 child JSON and ASCII reader output preserve authored aliases under legacy CP866',{skip:nativeSkip},async()=>{

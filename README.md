@@ -134,13 +134,32 @@ implemented or documented v1.3.1 scope.
   Villeneuve); the other visible card fields describe Blade Runner1982 and
   fail title matching. Claims withheld; no general-quality/causal conclusion or
   historical-pilot reconstruction. No automatic repeat or alias bypass.
+  [Person-level director crosswalk](docs/m4-media-advice.md#person-level-director-alias-crosswalk--2026-10-23)
+  preserves server TMDb person IDs and supports exact, provenance-scoped aliases
+  across films. At the mechanism checkpoint the real registry was empty; the
+  [autonomous five-film iteration](docs/m4-media-advice.md#autonomous-five-film-resolver-iteration--2026-10-23)
+  now records independent person-profile evidence for the literal Villeneuve
+  spelling, without guessed IDs or per-film exceptions.
+  [Final five-film automatic results](docs/m4-media-advice.md#five-film-automatic-results--2026-10-24)
+  confirm all five correct cards locally, including Alien via the bounded
+  ordinary Kinobaza title-search fallback; not catalogue-wide accuracy or
+  verified availability/tracks. The expanded task used74 HTTP attempts,
+  including all investigation/rechecks; earlier25 controls remain separate.
+  The separately authorised person check used3/3 reads (2TMDb +1person page;
+  cumulative25). TMDb confirms person137427/IMDbnm0898288 but no exact target
+  alias among3 examined aliases. Kinobaza HTTP200 was size-refused at the512KiB
+  bound before parsing. That historical run did not confirm the entry; the
+  subsequent expanded owner authorization and new evidence are recorded separately.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
-  prepared only; five pilot films still unselected.
+  with its original prepared plan kept separate from later execution records.
 
-M4 remains default-off: narrow #192 apply/deadline/queued-reservation fixes are
-locally verified, including native PostgreSQL 17.6 concurrency. Cleanup is
-prepared inactive; pilot activation and source-use review remain separate.
+M4 default-off semantics and the existing deployment/access state are unchanged
+by this work. Narrow #192 apply/deadline/queued-reservation fixes were locally
+verified, including native PostgreSQL 17.6 concurrency; dated execution records
+describe actual activation separately from prepared plans.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
-for candidate URLs only; quality remains live-unvalidated and customer-app
-source-use conditions remain explicit. Brave research is preserved historically.
-Gemini Grounding stays excluded from URL → HTML extraction; no provider fallback or activation.
+for candidate URLs only, with the [bounded public title-search fallback](docs/m4-media-advice.md#five-film-automatic-results--2026-10-24)
+on this branch. Five local controls do not establish general quality;
+customer-app source-use conditions remain explicit. Brave research is preserved
+historically. Gemini Grounding stays excluded from URL → HTML extraction;
+no Brave/Gemini fallback or activation is introduced.

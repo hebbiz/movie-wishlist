@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver, resolverQueries, admittedCandidates, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
+import { isKinobazaSearchURL, kinobazaSearchURL } from '../netlify/lib/kinobaza-public-search.mjs';
 import { discoverMedia } from '../netlify/lib/media-advice-service.mjs';
 import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { detailsData, providersData, motnData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
@@ -9,14 +10,16 @@ import { safeMediaReport } from '../assets/media-advice-report.mjs';
 import { readFile } from 'node:fs/promises';
 const film = { id: 'authored', tmdbId: IDS[0], imdbId: `tt${IDS[0]}`, title: 'Вигаданий фільм', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: ['Вигаданий фільм','Authored original'], directorCount: 1, directorAliases: ['Authored director'] };
 const urls = ['https://kinobazaua.com/titles/authored-card', 'https://kinobazaua.com/titles/authored-second', 'https://kinobazaua.com/titles/unexamined'];
+const searchHTML = urls => new Response(`<div id="nav-titles">${urls.map(url => `<a href="${url.replace('https://kinobazaua.com','')}">AUTHORED_SEARCH_LABEL</a>`).join('')}</div>`, {headers:{'content-type':'text/html'}});
 function mock({ emptyFirst = false, status, mismatch = false, sameConfirmed = false, unsupported = false } = {}) {
   let search = 0; const calls = [];
   const fetchImpl = async (url, init) => {
     calls.push(url); assert.equal(init.redirect, 'manual'); assert.equal(init.credentials, 'omit');
+    if (isKinobazaSearchURL(url)) { search++; assert.equal(init.method,'GET'); assert.equal(init.headers.Authorization,undefined); return searchHTML(urls); }
     if (url === 'https://api.tavily.com/search') {
       search++; assert.equal(init.headers.Authorization, 'Bearer AUTHORED_TAVILY_KEY');
       assert.equal(init.method, 'POST');
-      assert.deepEqual(JSON.parse(init.body), { query: resolverQueries(film)[emptyFirst && search > 1 ? 1 : 0],
+      assert.deepEqual(JSON.parse(init.body), { query: resolverQueries(film)[search - 1],
         search_depth: 'basic', topic: 'general', max_results: 5, auto_parameters: false,
         include_answer: false, include_raw_content: false, include_images: false,
         include_favicon: false, include_usage: false, include_domains: ['kinobazaua.com'], include_domains_mode: 'restrict' });
@@ -61,6 +64,86 @@ test('multiple confirmed cards are choices; unresolved/mismatch cannot become se
   assert.equal(out.status, 'multiple-confirmed-cards-choose'); assert.equal(out.result, null); assert.equal(out.choices.length, 2);
   const mismatch = await run(mock({ mismatch: true })); assert.equal(mismatch.out.result, null); assert.equal(mismatch.out.choices.length, 0);
 });
+test('completed identity refusal uses public title-search in the second slot and ranks the unseen candidate union', async () => {
+  const next = 'https://kinobazaua.com/titles/authored-original-2001';
+  for (const change of [{ title: 'Wrong film' }, { director: 'Unknown spelling' }]) {
+    let searches = 0;
+    const sent = [];
+    const { out, reserved } = await run({ fetchImpl: async (url, init) => {
+      sent.push(url);
+      if (url === 'https://api.tavily.com/search') {
+        assert.equal(JSON.parse(init.body).query, resolverQueries(film)[searches]);
+        searches++; return Response.json({ results: urls.map(url => ({ url })) });
+      }
+      if (isKinobazaSearchURL(url)) { searches++; return searchHTML([urls[0],next,next]); }
+      assert.ok([urls[0], next].includes(url), 'only discovered and ranked pointers can be read');
+      return new Response(markup({ url, ...(url === urls[0] ? change : {}) }), { headers: { 'content-type': 'text/html' } });
+    } });
+    assert.deepEqual(reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
+    assert.deepEqual(sent, ['https://api.tavily.com/search', urls[0], kinobazaSearchURL(film.originalTitle), next]);
+    assert.deepEqual(out.resolver.searches.map(s=>s.provider),['tavily','kinobaza-public-search']);
+    assert.equal(out.result.sourceURL, next); assert.equal(out.result.identity.status, 'matched');
+    assert.equal(out.resolver.searchCalls, 2); assert.equal(out.resolver.cardCalls, 2);
+    assert.equal(out.resolver.candidates, 4); assert.equal(out.resolver.unexamined, 2);
+    assert.equal(out.status, 'one-confirmed-bounded-not-exhaustive');
+  }
+});
+test('duplicate-only or empty alternate keeps remaining first-search candidates without refetching', async () => {
+  for (const alternate of [[], [urls[0], urls[0]], [urls[1], urls[0], urls[1]]]) {
+    let searches = 0;
+    const sent = [];
+    const { out, reserved } = await run({ fetchImpl: async url => {
+      sent.push(url);
+      if (url === 'https://api.tavily.com/search') { searches++; return Response.json({ results: urls.map(url => ({ url })) }); }
+      if (isKinobazaSearchURL(url)) { searches++; return searchHTML(alternate); }
+      return new Response(markup({ url, ...(url === urls[0] ? { title: 'Wrong film' } : {}) }), { headers: { 'content-type': 'text/html' } });
+    } });
+    assert.deepEqual(reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
+    assert.equal(searches,2);
+    assert.deepEqual(sent.filter(url => url !== 'https://api.tavily.com/search' && !isKinobazaSearchURL(url)), urls.slice(0, 2));
+    assert.equal(out.result.sourceURL, urls[1]);
+    assert.equal(out.resolver.candidates, 3); assert.equal(out.resolver.unexamined, 1);
+  }
+});
+test('slug rank preserves title digits and punctuation but matching-looking pointers never prove identity', async () => {
+  const numbered = { ...film, originalTitle: 'Authored: 2049', titleAliases: [...film.titleAliases, 'Authored: 2049'] };
+  const ranked = ['unrelated', 'authored-2049-2001', 'authored-2049', 'authored-2049-1999'].map(slug => `https://kinobazaua.com/titles/${slug}`);
+  const sent = [], reserved = []; let searches = 0;
+  const out = await createKinobazaResolver({ apiKey: 'AUTHORED_TAVILY_KEY' })(numbered, {
+    calls: [], reserve: async stage => reserved.push(stage), fetchImpl: async url => {
+      sent.push(url);
+      if (url === 'https://api.tavily.com/search') { searches++; return Response.json({ results: ranked.map(url => ({ url })) }); }
+      if (isKinobazaSearchURL(url)) { searches++; return searchHTML([]); }
+      return new Response(markup({ url, original: numbered.originalTitle, ...(url === ranked[1] ? { title: 'Wrong film' } : {}) }), { headers: { 'content-type': 'text/html' } });
+    },
+  });
+  assert.equal(searches,2);
+  assert.deepEqual(sent.filter(url => url !== 'https://api.tavily.com/search' && !isKinobazaSearchURL(url)), [ranked[1], ranked[2]]);
+  assert.equal(out.resolver.cards[0].identity, 'mismatch'); assert.equal(out.result.sourceURL, ranked[2]);
+  assert.equal(out.resolver.candidates, 4); assert.equal(out.resolver.unexamined, 2);
+  assert.deepEqual(reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
+});
+test('public-search errors stay provider errors and do not consume a second card or lose candidate accounting', async () => {
+  for (const [kind, status] of [[401, 'search-auth-error'], [429, 'search-rate-limit'], ['transport', 'search-transport-or-json-error'], ['malformed', 'search-invalid-response']]) {
+    let searches = 0;
+    const { out, reserved } = await run({ fetchImpl: async url => {
+      if (url === 'https://api.tavily.com/search') {
+        searches++; return Response.json({ results: urls.map(url => ({ url })) });
+      }
+      if (isKinobazaSearchURL(url)) {
+        searches++;
+        if (kind === 'transport') throw Error('PRIVATE_ERROR');
+        return kind === 'malformed' ? new Response('<div>No supported results scope</div>',{headers:{'content-type':'text/html'}}) : new Response('PRIVATE_ERROR', { status: kind });
+      }
+      assert.equal(url, urls[0]);
+      return new Response(markup({ url, title: 'Wrong film' }), { headers: { 'content-type': 'text/html' } });
+    } });
+    assert.equal(out.status, status); assert.equal(out.result, null); assert.equal(searches,2);
+    assert.deepEqual(reserved, ['search-1', 'kinobaza-1', 'search-2']);
+    assert.equal(out.resolver.candidates, 3); assert.equal(out.resolver.unexamined, 2);
+    assert.doesNotMatch(JSON.stringify(out), /PRIVATE_ERROR/);
+  }
+});
 test('redirect/403/429/CAPTCHA/malformed HTML do not trigger retries/destination requests', async () => {
   for (const kind of ['redirect', '403', '429', 'captcha', 'malformed']) {
     const m = mock(); const original = m.fetchImpl;
@@ -93,6 +176,38 @@ test('full action max8 attempts; baseline independence and candidate selection d
   assert.equal(result.cardChoices.length, 2); assert.ok(result.rows.every(r => !r.id.startsWith('kinobaza')));
   assert.ok(result.cardChoices.every(c => c.rows.every(r => r.id.startsWith(c.id + ':kinobaza:'))));
   assert.equal(result.stages, undefined); assert.doesNotMatch(JSON.stringify(result), /Untrusted snippet|NO IDENTITY PROOF|AUTHORED_TAVILY_KEY/);
+});
+
+test('full action public-search fallback still uses exactly the existing eight reserved attempts',async()=>{
+  const correct='https://kinobazaua.com/titles/authored-original-2001',sent=[],reserved=[];
+  const result=await discoverMedia({imdbId:film.imdbId,tmdbToken:'AUTHORED_TMDB_KEY',motnKey:'AUTHORED_MOTN_KEY',reserve:async stage=>reserved.push(stage),resolver:createKinobazaResolver({apiKey:'AUTHORED_TAVILY_KEY'}),fetchImpl:async(url,init)=>{
+    sent.push(url);
+    if(url==='https://api.tavily.com/search')return Response.json({results:[{url:urls[0]}]});
+    if(isKinobazaSearchURL(url)){assert.equal(init.headers.Authorization,undefined);return searchHTML([correct]);}
+    if(url.startsWith('https://kinobazaua.com/titles/'))return new Response(markup({url,...(url===urls[0]?{title:'Wrong authored film'}:{})}),{headers:{'content-type':'text/html'}});
+    return Response.json(url.includes('/find/')?{movie_results:[{id:IDS[0],title:film.identityTitle,original_title:film.originalTitle}]}:url.includes('/watch/providers')?providersData(IDS[0]):url.includes('movieofthenight')?motnData(IDS[0]):detailsData(IDS[0]));
+  }});
+  assert.equal(sent.length,8);assert.equal(reserved.length,8);assert.equal(new Set(reserved).size,8);
+  assert.deepEqual(reserved.slice(-4),['search-1','kinobaza-1','search-2','kinobaza-2']);
+  assert.equal(result.metrics.requestsMade,8);assert.equal(result.metrics.requestBudget,8);
+  assert.equal(result.resolver.searchCalls,2);assert.equal(result.resolver.cardCalls,2);
+  assert.deepEqual(result.resolver.searches.map(s=>s.provider),['tavily','kinobaza-public-search']);
+  assert.equal(result.sources.find(s=>s.source==='kinobaza').identity,'matched');
+});
+
+test('denied or expired second-slot reservation never dispatches public search or another card',async()=>{
+  for(const denied of [true,false]){
+    const controller=new AbortController(),sent=[],reserved=[];
+    const out=await createKinobazaResolver({apiKey:'AUTHORED_TAVILY_KEY'})(film,{signal:controller.signal,calls:[],reserve:async stage=>{
+      reserved.push(stage);if(stage==='search-2'){if(denied)throw Error('PRIVATE_DENIAL');controller.abort();}
+    },fetchImpl:async(url,init)=>{
+      sent.push(url);if(url==='https://api.tavily.com/search')return Response.json({results:[{url:urls[0]}]});
+      assert.equal(url,urls[0]);return new Response(markup({url,title:'Wrong authored film'}),{headers:{'content-type':'text/html'}});
+    }});
+    assert.deepEqual(reserved,['search-1','kinobaza-1','search-2']);assert.deepEqual(sent,['https://api.tavily.com/search',urls[0]]);
+    assert.equal(out.resolver.searchCalls,1);assert.equal(out.resolver.cardCalls,1);assert.equal(out.result,null);
+    assert.doesNotMatch(JSON.stringify(out),/PRIVATE_DENIAL/);
+  }
 });
 
 test('deadline expires during durable reservation: no later search/card dispatch or retry', async () => {

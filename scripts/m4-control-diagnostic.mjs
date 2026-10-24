@@ -4,9 +4,11 @@ import { pathToFileURL } from 'node:url';
 import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
 import { admitKinobazaURL } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
 import { createKinobazaResolver, resolverQueries, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
+import { isKinobazaSearchURL } from '../netlify/lib/kinobaza-public-search.mjs';
 import { safeSearchDiagnostic } from '../shared/media-advice-diagnostics.mjs';
 import { readControlCredentials } from './m4-control-credentials.mjs';
 import { describeCandidateURL } from './m4-url-diagnostics.mjs';
+import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 
 const controls = [{ title:'Blade Runner 2049' }, { title:'Mortal Kombat', year:2021 }];
 const api = 'https://api.themoviedb.org/3';
@@ -27,8 +29,9 @@ export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = f
     const signal = AbortSignal.timeout(45_000); let detailURL;
     const queryURL = `${api}/search/movie?query=${encodeURIComponent(control.title)}&language=uk-UA&include_adult=false&page=1${control.year ? `&year=${control.year}` : ''}`;
     const dispatch = async (url, init) => {
-      const type = url === queryURL || url === detailURL ? 'tmdb' : url === 'https://api.tavily.com/search' ? 'search' : admitKinobazaURL(url) ? 'cards' : null;
-      if (!type || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (type === 'search' ? 'POST' : 'GET') || signal.aborted || count[type] >= 2 || totals[type] >= limits[type] || totals.total >= limits.total) throw Error('diagnostic-boundary');
+      const publicSearch = isKinobazaSearchURL(url);
+      const type = url === queryURL || url === detailURL ? 'tmdb' : url === 'https://api.tavily.com/search' || publicSearch ? 'search' : admitKinobazaURL(url) ? 'cards' : null;
+      if (!type || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (url === 'https://api.tavily.com/search' ? 'POST' : 'GET') || publicSearch && Object.keys(init.headers ?? {}).some(k => /authorization|cookie|key/i.test(k)) || signal.aborted || count[type] >= 2 || totals[type] >= limits[type] || totals.total >= limits.total) throw Error('diagnostic-boundary');
       count[type]++; count.total++; totals[type]++; totals.total++;
       const attempt = {type,outcome:'dispatched'}; attempts.push(attempt);
       try { const r = await fetchImpl(url,{...init,signal:AbortSignal.any([signal,init.signal].filter(Boolean))}); attempt.httpStatus=r.status; attempt.outcome='response-received'; return r; }
@@ -49,6 +52,7 @@ export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = f
       const film={id:`imdb:${details.data.imdb_id}`,tmdbId:selected.id,imdbId:details.data.imdb_id,
         identityTitle:val(projection.metadata.requestedTitle),originalTitle:val(projection.metadata.originalTitle),year:Number(val(projection.metadata.releaseDate)?.slice(0,4)) || null,
         directorCount:projection.metadata.directors.state==='reported'?directors.length:null,
+        directorPeople:projectDirectorPeople(projection.metadata.directors),
         directorAliases:directors.flatMap(d=>[val(d.name),val(d.originalName)]).filter(Boolean),
         titleAliases:[val(projection.metadata.requestedTitle),val(projection.metadata.originalTitle),...(projection.metadata.alternativeTitles.items??[]).map(a=>val(a.title))].filter(Boolean)};
       item.identity={tmdbId:film.tmdbId,imdbId:film.imdbId,originalTitle:film.originalTitle,year:film.year,directors:film.directorAliases};

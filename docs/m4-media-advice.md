@@ -1,10 +1,12 @@
 # M4 — Mykola media advice
 
-Status: M4.1–M4.3 implemented; narrow #192 blocker fixes validated locally;
-default off; no live activation authorized. Pilot preparation is conditional on
-independent review and the activation prerequisites below, not a pilot approval.
-Current search provider: **Tavily basic Search**, candidate URLs only,
-offline-tested/live-unvalidated; no activation authorized by this record.
+Status: M4.1–M4.3 implemented; default-off semantics retained. Earlier deployment,
+assignment and cleanup evidence remains in its dated execution records below.
+The #198–#200 successor changes are not merged/deployed by this task.
+Current branch search strategy: **Tavily basic Search**, candidate URLs only,
+with a bounded ordinary Kinobaza title-search fallback after first-card identity
+refusal. [Five locked local controls passed URL/identity checks](#five-film-automatic-results--2026-10-24);
+this is not catalogue-wide accuracy, track verification or new activation approval.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
@@ -572,6 +574,199 @@ remain evidence of executed implementation `e8ff58b`, not newly attested on a
 different runtime. Local links/anchors, whitespace and documentation scope
 checked. No source call, parser/search-policy change, owner checkout/demo change,
 init/auth/lifecycle/retention change, DB/flag/secret/Save/merge/deployment action.
+
+### Person-level director alias crosswalk — 2026-10-23
+
+**Status: mechanism implemented/offline-tested; zero real aliases activated.**
+Separate stacked implementation above #199, pinned base
+`114afcfc58fd0b3fd109de8798df8bbd1ef41a94`; develop verified
+`5bd9f830eb665b2fa1ac4ad7eb2b384267bf37a7`. At mechanism implementation no
+merge/deployment or new live run;22 attempts were the then-current total. The
+separately authorised person check below adds3, for25 actual attempts.
+
+The TMDb credits projection already preserves validated `directors.items[].id`;
+M4 service/local-control film construction previously flattened names and lost
+their person association. `projectDirectorPeople` now retains
+`{namespace:'tmdb:person', personId, names}` from the **matched server-received
+projection**, separately per director. Missing/invalid IDs stay null; no ID is
+guessed from film IDs, names, slug or browser JSON. M4's HTTP handler still
+constructs server discovery inputs explicitly: additional browser person IDs,
+names, records or lookup options do not enter the resolver or ledger.
+
+`shared/director-alias-crosswalk.mjs` is statically imported compiled code, not
+a new database/service/file read, cache, client configuration or network lookup.
+Each reviewed record is keyed by namespace + person ID and contains literal
+aliases, `scope:'kinobaza-director-identity'`, and confirmation evidence with
+source/reference/recording date. This scope applies across films directed by
+that person, **only** to Kinobaza director identity; not title matching, MOTN
+values, tracks, offers, availability or entitlement. Record provenance is a
+review requirement, not self-proving evidence or legal permission. Malformed
+records fail compilation; duplicate person entries or shared alias spellings
+across different IDs yield ambiguous/no crosswalk aliases. Registry and lookup
+results are immutable snapshots; there is no runtime/browser registration.
+
+The identity gate can use the crosswalk only for one selected director/person,
+names attached to that same trusted credits record, and one source director
+value. Multiple/unknown group scope stays unresolved; no flat multi-person
+union, splitting, fuzzy matching, transliteration or diacritic removal. Existing
+NFC/whitespace/case normalization and exact equality remain. Original returned
+TMDb aliases still work without an extra crosswalk; absent person ID cannot
+enable new aliases. Canonical/stable-film-ID/title/year gates retain precedence,
+and unresolved/mismatch still withhold all Kinobaza claims. A match using a new
+confirmed person alias retains `identity.directorAliasEvidence` with record
+namespace/ID/scope/provenance; no extra UI/short-report or field propagation.
+Authored tests inject a separate lookup through an internal function option,
+never an HTTP/browser contract. Fixed-card parser/legacy film aliases unchanged.
+
+**Evidence at mechanism implementation did not authorise a real entry:** the control established
+source spelling `Денні Вільньов` versus selected `Дені Вільнев / Denis Villeneuve`
+but recorded movie IDs, not an authoritative person-ID association. The older
+fixed Dune alias list is per-film configuration without independent person-level
+provenance. The person-shaped Tavily pointer had not then been fetched, and neither its
+slug, spelling similarity nor the studied film's title/year can prove this
+crosswalk. No TMDb person ID is invented from memory. Required missing evidence:
+an independent person-level record explicitly tying the observed spelling to
+the same authoritative namespaced TMDb person ID, with source/date/scope.
+Accordingly `CONFIRMED_DIRECTOR_ALIASES` is deliberately empty. **The specific
+Blade Runner2049 spelling remains unresolved under the shipped registry.**
+The mechanism is complete, but confirming/activating that real record is not.
+
+All positive crosswalk records in regressions are explicitly authored synthetic
+people and provenance, not reconstructed source responses. Offline identity/
+extraction success does not validate real offers/tracks. Tests cover exact
+confirmed spelling, different namespace/person, the same person across films,
+missing/invalid IDs, record ambiguity, multi-director refusal, stable-ID/title/
+year precedence, withholding and ignored browser injection. Validation passed:
+**31/31** new crosswalk regressions, **34/34** resolver/title-year/diagnostic
+regressions and **203/203** dependent TMDb/assisted/workflow/HTTP/report/transfer/
+credential/URL checks.13 Markdown documents/446 links/272 anchors, zero errors;
+diff/whitespace pass. Independent read-only code/evidence reviews found no code
+blocker and no adequate real-record evidence. Initial sandbox child spawning
+failed with EPERM; unchanged tests passed outside that restriction. No new
+browser/iPhone, Windows-demo lifecycle or PostgreSQL run: UI/launcher/SQL
+unchanged. The Netlify Functions skill informed the static import boundary
+(no runtime file reads/new endpoint/configuration), not a deploy. No new
+control/owner cycle, source/rules/API GET,
+DB/migration, flag/secret, init/auth/lifecycle, UI, retention or Wishlist action.
+Search text/admission/request budgets/deadlines/retries/redirect policy, R1/R2,
+exact URLs/acknowledgement and form-transfer safeguards remain unchanged.
+
+#### Authorised one-time person verification — 2026-10-23
+
+Prepared in the same #200, subsequently executed as recorded below; real
+registry remains empty. **No new request at preparation.**
+The owner authorised <=3 total HTTP attempts, prior22 separate/cumulative<=25:
+one TMDb movie335984 credits GET, one details GET for its validated director
+person ID, and only if needed one exact
+`https://kinobazaua.com/persons/denis-villeneuve` GET. At preparation no reliable
+person-ID evidence was saved, so credits were not skipped or replaced by a guess.
+No film search/title-card/Tavily/watch-provider/platform/destination request.
+Errors spend attempts; no retries, redirect follow, alternative or auto-repeat.
+This person path is a local diagnostic exception, **not runtime card admission**.
+
+`scripts/m4-director-person-diagnostic.mjs` requires explicit CLI opt-in and
+strict one-key stdin. Existing hidden helper adds `-DirectorPersonCheck`:
+exact clean ExpectedCommit, only TMDB_READ_ACCESS_TOKEN SecureString prompt,
+no Tavily input or credential argv/env/disk/log handoff. The Node child removes
+inherited source credentials/preload/debug/TLS-log settings, uses the existing
+bounded TMDb reader, a45s overall source deadline and15s per-read bounds.
+Fixed source origin/path/stage/counters are validated before every dispatch;
+TMDb Authorization is never forwarded to Kinobaza. Only initial HTML in memory,
+no scripts/assets/JSON-LD context/linked IDs are fetched. Reader uses
+`-DirectorPersonCheck -Compact` in a second same-SSH/elevation terminal; separate
+current-user-only pipe `mw-m4-director-person-200`, one handoff, <=15min, no file.
+Retrieval failure/unused cap never authorises another run.
+
+Evidence chain: credits must identify movie335984 and one valid Director person
+ID; requested person response ID must match, including any appended ID. Exact
+target spelling in the valid TMDb person name/aliases can directly confirm and
+**skips the optional third GET**. Otherwise shared IMDb **person** nm-ID may
+link TMDb to an explicitly bound Kinobaza Person profile: canonical/H1/Person
+names and stable IDs must be consistent. No requirement that Kinobaza itself
+expose a TMDb ID. Root/appended IMDb conflicts, unrelated or ambiguous Person
+objects, foreign profile ownership or unclear markup do not auto-confirm.
+Plain person links are bounded observations with ownership unestablished for
+review, not a convenient page-wide same-ID proof. No slug/name/filmography/year
+similarity inference. Profiles lacking adequate linkage remain unresolved.
+
+Safe output contains source references, validated person IDs, only matching
+TMDb aliases/counts, bounded profile identity fields/person links, structural
+uncertainties, actual attempt statuses/counts and a new local run ID. No raw
+HTML/JSON response, biography, search snippets, credentials or tracking data.
+Local checkout SHA is distinct from unknown deployed-runtime attestation.
+After input the approved check runs immediately, once; no additional consent
+needed. Only sufficient reviewed proof permits a real registry entry; mocks
+must not be promoted to evidence. No repeated discovery or offer/track claim.
+
+Preparation checks: **54/54** targeted offline regressions passed (15 authored
+person-diagnostic,8 credential/helper,31 person-crosswalk). They cover direct
+TMDb alias proof/skipped third read, common IMDb person-ID proof, wrong or
+ambiguous IDs/profile ownership, appended-ID conflicts, exact spelling, counted
+HTTP/transport/body failures, manual redirects/no destinations, strict one-key
+stdin/no env fallback, secret/body filtering, native PowerShell parsing/IPC and
+unchanged crosswalk withholding. Review found/fixed missing profile-ownership and
+appended-person-ID guards before any source dispatch; bounded name output also
+checked.13 docs/446 links/272 anchors, no errors; whitespace/scope checked.
+These are mocks, not real alias confirmation. No browser/Windows-demo/SQL rerun:
+only local diagnostic/credential helpers and docs changed; app/runtime registry,
+admission, query, budgets, lifecycle/auth, UI and retention are unchanged.
+
+**Executed person check — 2026-10-23:** owner-forwarded safe local result,
+run `40763a2f-fddc-41b6-b6da-c09e2d4b779f`, started
+`2026-10-23T19:55:05.822Z`, checkout
+`099db961d86eada84b6b222de667add951979085`, mode `director-person-check`,
+`execution=local-diagnostic`, `buildSha=null`. Local checkout provenance only,
+not independent agent source capture or deployed-runtime attestation. Minimal
+facts below, not a copied JSON/HTML response or persistent content archive.
+
+| Read | Attempts / status | Established evidence |
+| --- | --- | --- |
+| [TMDb movie335984 credits](https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA) | 1 / HTTP200 | The validated Director record identifies person137427, name Дені Вільнев, original name Denis Villeneuve. |
+| [TMDb person137427](https://api.themoviedb.org/3/person/137427?language=uk-UA&append_to_response=external_ids) | 1 / HTTP200 | Matching requested person ID137427, name Дені Вільнев;3 aliases examined, no exact target spelling; projected IMDb person ID nm0898288. |
+| [Kinobaza person pointer](https://kinobazaua.com/persons/denis-villeneuve) | 1 / HTTP200 | `person-page-too-large`; refused before HTML decoding/profile extraction. No H1, canonical, Person object or external person-ID evidence returned. |
+| Total | **3/3** | No confirmed target alias; no redirect/retry/extra read. |
+
+The TMDb reads now establish the film-director-to-person-ID chain; the exact
+alias list contents are not reconstructed from its count. Matching the selected
+person to IMDb nm0898288 does **not** establish that Kinobaza uses that IMDb ID
+or that its profile associates `Денні Вільньов` with this person. HTTP200 does
+not establish a parsed profile. Public birth fields in the safe result are not
+needed for this conclusion and are not archived here.
+
+Precise stop: `readPersonHTML` returns the same `person-page-too-large` for
+declared Content-Length >524288 bytes **or** accumulated body bytes exceeding
+524288 (512 KiB). The safe result contains neither the branch nor the exact
+size. It therefore cannot show which check fired, the complete body size or
+that all HTML was read. Both paths stop before decoding, challenge detection,
+parse5/profile identity inspection; no claim that profile markup/links were
+missing, unsupported or incorrect. No alias, source-value repair or matching
+change is justified by this transport-bound refusal.
+
+**Real-entry status: not confirmed, not activated; registry still empty.**
+Missing evidence is the Kinobaza person-level side of the linkage (e.g. explicit
+profile ownership plus the same IMDb nm0898288 and the target spelling), or a
+trusted person record explicitly listing that exact alias. The earlier movie
+card, similar names/slug and known film ID cannot fill this gap.
+
+Accounting: previous22 + this3 = **25 actual attempts**, ceiling fully spent:
+TMDb14 / Tavily8 / Kinobaza title-card2 / Kinobaza person-page1. No unused budget,
+automatic repeat, re-prompt or additional request is authorised. Analysis/docs
+made zero source calls. A possible **separate proposal, not implemented or
+authorised** is one read of this same person page with a diagnostic-only2MiB
+bound and separate declared-length/stream-limit reason; reuse the now-saved
+TMDb person proof, no repeated TMDb/Tavily/title-card/discovery call. If it still
+fails its new bound, stop. This would require new explicit request/bound scope;
+it is not a change to runtime admission, parsing, retention or application cap.
+
+This result checkpoint changes only README/canonical documentation. Two focused
+authored in-memory transport cases reproduced both size-limit paths with the
+same public reason/counts and no profile extraction (zero source HTTP). These
+are not reconstructions of the real profile or evidence of its actual size.
+Links/anchors, diff scope and whitespace checked; runtime suites not repeated
+for Markdown-only changes. The54/54 preparation evidence remains tied to
+unchanged executed099db96, not a new live validation. No real alias, runtime
+bound, identity gate, query, UI/lifecycle/auth, retention, migration/flag/secret,
+Wishlist, owner checkout/demo, merge/deployment or discovery change.
 
 ### Same-document M4 return state — 2026-10-23
 
@@ -2177,3 +2372,361 @@ Local Markdown verification covers the root README, this canonical record and
 the existing research README/docs: **13 documents, 424 local links / 263
 anchors**, zero errors. Historical counts above remain pinned to their own
 checkpoints, not silently reused.
+
+## Autonomous five-film resolver iteration — 2026-10-23
+
+**Authorized implementation and live source investigation; no merge/deploy.**
+This subsequent owner decision supersedes the numerical caps of the earlier
+individual diagnostic controls, not application limits or service conditions.
+Lock the five cases before testing: Blade Runner 2049 (2017), Mortal Kombat
+(2021), Alien (1979), Oppenheimer (2023), Dune: Part Two (2024). The first four
+retain difficult owner-pilot cases; do not replace failures with easier films.
+Control URLs are independently established comparison evidence, never inputs
+to `createKinobazaResolver` or film-specific runtime exceptions. Automatic
+discovery, identity acceptance and extraction are separate outcomes; five
+successful controls would not establish whole-catalogue accuracy or rights.
+
+### Reviewed person record, not a film exception
+
+The earlier three-attempt person check stopped at a local 512KiB bound. Under
+the expanded authorization, the canonical Kinobaza person page was successfully
+read with an 8MiB **local inspection** bound: actual HTML 807,749 bytes, HTTP200.
+This does not change runtime title-card admission or its 2MiB body limit.
+Its unique H1 is `Денні Вільньов`; the same profile header explicitly names
+`Denis Villeneuve`, gives `3 жовтня 1967`, and lists director as a role.
+The canonical is the requested
+[Kinobaza person profile](https://kinobazaua.com/persons/denis-villeneuve).
+The existing trusted
+[TMDb movie credits](https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA)
+identified one Director, person137427 (`Дені Вільнев` / `Denis Villeneuve`);
+the already-read
+[TMDb person record](https://api.themoviedb.org/3/person/137427?language=uk-UA&append_to_response=external_ids)
+gave the exact English name and full birth date `1967-10-03`.
+
+Manual person-level review of the exact English full name + full birth date +
+director role, attached to the same canonical profile/H1, establishes the
+literal alias for `tmdb:person:137427`. This is not the older diagnostic's
+automatic exact-alias/shared-ID confirmation: the Kinobaza page exposed neither
+a shared IMDb/TMDb person link nor a JSON-LD Person object. Birthplace values
+differ (TMDb Gentilly versus Kinobaza Trois-Rivières); no matching-birthplace or
+shared-person-ID claim is made. Slug similarity and any studied film title/year
+are not the linkage basis. An independent read-only evidence review agreed
+that this distinctive person-profile composite is adequate for this one
+reviewed record, with those explicit limitations.
+
+The registry now contains exactly one real record: `Денні Вільньов`, namespace
+`tmdb:person`, ID137427, scope `kinobaza-director-identity`, reviewed 2026-10-23.
+Exact NFC/whitespace/case equality only; no transliteration/fuzzy matching or
+director-gate bypass. It applies across this person's films, not other people,
+titles, offers or tracks. Unknown/ambiguous directors remain unresolved;
+explicit film-ID conflicts retain priority and claims remain withheld.
+Authored regressions exercise the actual record with two invented films,
+another person and conflicting film evidence: **31/31 passed**, not live
+availability or extraction validation.
+
+### Practical resolver work and one-entry local session
+
+General discovery changes under this authorization retain two search stages
+and two card stages. Normalize duplicate title-query spellings; use a genuinely
+different established title or an unquoted version when only one exists.
+Promote exact established ASCII title/optional-year slug matches as discovery
+hints, never create a URL or use its slug as identity proof. After a completed
+first-card identity refusal, use the remaining search slot before the
+second card slot; merge/deduplicate actual returned URLs and rank unseen
+candidates. Search errors are not retried and do not trigger alternatives.
+Admission, actual HTML identity/extraction, no redirects, R1/R2, exact links,
+acknowledgement and form controls remain independent. The normal application
+budget remains **8 = baseline4 + search<=2 + cards<=2**, with unchanged ledger
+stages/deadlines. The final fallback policy is recorded in the dated results
+below; no migration or arbitrary network destination is added.
+
+`scripts/m4-practical-session.ps1` is an opt-in local task tool, not deployed
+code. Enter TMDB_READ_ACCESS_TOKEN and TAVILY_API_KEY once each, hidden, and
+leave that SSH terminal open for the series (up to four hours). The helper
+keeps credentials and minimal trusted projected identities only in process
+memory; fresh fixed Node workers load edited resolver code for each requested
+operation. No key argv/environment/file/clipboard/console handoff, raw source
+archive or search snippet persistence. Reusing trusted identity prevents
+unnecessary repeat TMDb reads. A local-only named pipe permits the current
+Windows SID explicitly and rejects remote pipe clients in the kernel; it avoids the older
+CurrentUserOnly elevation comparison. Same-SID desktop/SSH connectivity still
+needs an actual session handshake; a failed handshake is not permission to
+rerun source tests blindly. Worker calls are separately bounded (60s and<=6
+attempts per invocation); the broader task can perform further deliberate
+iterations, with cumulative accounting, not automatic retries.
+
+At preparation, **3 new HTTP attempts**: Kinobaza person2 + title-card1, all200;
+TMDb0/Tavily0. The second profile read obtained the additional co-located
+English-name/birth-date fields not projected by the first inspection. The card
+read confirmed the previously observed Blade Runner2049 H1/H2/year/director
+shape. Historical25 attempts remain separate (**28 combined to this point**).
+No five-film automatic success is claimed yet. Full live resolver evaluation
+continues after the one credential entry; no new per-iteration authorization
+is needed. No MOTN/watch-provider/destination fetch, Wishlist write, owner
+demo change, initApp/lifecycle/auth/UI/retention/SQL/flag change or deployment.
+
+Preparation validation on the edited tree: **72/72 targeted offline/mock tests**
+(crosswalk, resolver, title/year, safe diagnostics and local series worker).
+Native PowerShell7 prerequisite check passed explicit-SID pipe request/response
+and the actual fixed Node worker `status` operation with authored placeholders:
+zero credential prompts/source requests. This exposed/fixed a missing worker
+opt-in argument and .NET async-void return leakage before any real key entry.
+An independent local-worker review also removed a too-broad H1-parent text
+projection: profile diagnostics now expose bounded headings, not biographies.
+13 Markdown docs/447 links/273 anchors, zero errors; whitespace/scope checked.
+No new browser/iPhone, Windows-demo lifecycle or SQL run yet: UI, form transfer,
+launcher and ledger are unchanged. Relevant final regression scope will be
+reassessed after the actual five-film iterations, not claimed from mocks.
+
+#### SSH preflight repair, before credential entry
+
+The owner launch at `fce49c6` returned `session-not-started` /
+`local-pipe-prerequisites`, **sourceRequests0**, before either hidden key prompt.
+That screenshot identifies the failed preflight, not the internal create/
+connect/frame/ACL branch or SSH token groups. The initial desktop/elevated
+preflight success was not proof of success under the owner's SSH token.
+
+Code review found an unconditional Deny-FullControl ACE for the Windows NETWORK
+SID. That SID describes a logon-token group, not whether a pipe client is
+connecting from another computer: it can deny an authorized same-account
+**local** SSH client. The fix retains one protected current-user-SID Allow ACE
+and moves remote-transport rejection to native `PIPE_REJECT_REMOTE_CLIENTS`
+(`0x8`). No Everyone/Users/anonymous grant, listener, default ACL, elevation
+requirement or credential file is introduced. Asynchronous operation,
+first-instance protection, non-inherited handles, request/output bounds and
+one fixed worker remain. The native handle is owned/closed by SafePipeHandle /
+NamedPipeServerStream; its security descriptor and helper compilation contain
+no credentials and exist only in memory. Sources:
+[Microsoft CreateNamedPipe flags](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea),
+[managed SafePipeHandle wrapper](https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.namedpipeserverstream.-ctor).
+
+On any remaining preflight failure, safe diagnostics distinguish create,
+local-connect, request-frame, response-frame and ACL-check, with exception type,
+numeric HResult/Win32 code and NETWORK-group-presence boolean. No exception
+message, token/SID dump, key or source content. This repairs local launch only;
+the screenshot does not by itself prove which SSH authorization check failed.
+The corrected desktop non-elevated preflight already passes pipe round trip,
+exact protected ACL and actual Node status worker, with **zero HTTP requests
+and zero credential prompts**. Actual owner-SSH handshake remains to verify.
+The five-film source series has not started; counts remain3 new /25 historical
+at this checkpoint. No resolver/search-policy/runtime or app-state change in
+this follow-up, no live repeat/merge/deploy.
+
+The focused native Windows Authz regression uses the **actual** new pipe DACL
+and a copy with the old NETWORK deny restored, then adds an enabled NETWORK
+SID to a synthetic current-user authorization context: old ACL/current user
+alone permits, old ACL/NETWORK denies (error5), new ACL/NETWORK permits. This
+reproduces the authorization defect with the Windows engine, not a homemade
+ACE evaluator or a claim that the owner's actual SSH token was captured.
+The same native test invokes the exact-HEAD zero-prompt/zero-HTTP pipe + worker
+preflight. Targeted checks: native pipe regression1/1 and local series worker
+regressions3/3; no full runtime/browser/demo/SQL repetition for this local
+helper-only repair. Actual five-film source work resumes after the hidden
+entry, without new authorization or a repeat of already completed source runs.
+
+#### Full local-session recovery — 2026-10-24
+
+The owner entered the keys at `a79e94f`. The agent could connect locally, so
+the earlier SSH ACL barrier no longer prevented transport. Initial client
+errors were generic and do not establish their exact branch. A subsequent
+diagnostic connection closed without sending a frame; later connects timed
+out. No identify/resolve/inspection operation was dispatched: **zero source
+attempts** in this credential session, not a repeat of the earlier controls.
+
+Code review found a second local-wrapper defect: client EOF can change the
+stream to Broken / `IsConnected=false`; the conditional Disconnect was then
+skipped and subsequent WaitForConnection calls could not recover the still
+allocated pipe. Cleanup now tracks an accepted connection and disconnects it
+even after EOF, recreating the same protected local pipe if necessary. That
+does not repeat a source action or clear credentials/context/counters. The
+client adds typed `-Action` / `-Film` / `-SourceURL` parameters, constructing JSON
+internally instead of relying on nested Windows shell quoting, and emits safe
+error phase/type/HResult only. Remaining outer errors preserve known counters
+or explicitly unknown counts instead of always claiming zero after prior work.
+These are local task-tool repairs, not application search, TTL or budget changes.
+
+The complete fake-key session also reproduced a first-response loss: the
+server disconnected immediately after writing, while PipeStream Flush is not
+a drain and Disconnect discards unread pipe data. The corrected client sends
+a framed receipt only after receiving/validating the entire safe JSON reply;
+the server waits at most5s for that receipt before disconnecting (including
+safe error replies). There is no unbounded WaitForPipeDrain or source retry.
+If sending a receipt fails, the client still preserves the already received
+guarded result/known counts and marks `acknowledgementSent=false`. References:
+[Microsoft pipe disconnection](https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-disconnectnamedpipe),
+[PipeStream Flush semantics](https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.pipestream.flush).
+
+The already-running owner process has the older functions loaded; editing the
+files cannot hot-patch its broken connection state. Restart that helper only,
+not the owner demo/application, and enter the keys hidden again. No credential
+is recovered from process memory, copied to disk or requested in chat. After
+that necessary wrapper restart, the authorized autonomous five-film work
+continues; no source rerun or new per-iteration consent is requested here.
+
+A new native full-loop regression executes the real helper/client code in
+isolated processes with a random pipe and authored fake keys, never the
+owner's pipe. It verifies status twice, an abandoned connection, another
+status with retained counters, receipt acknowledgements, stop and complete
+process/stdout closure. It passes without changing timeouts/assertions; the
+test waits for child `close` (stdio drained), not just `exit`. This closes the
+coverage gap in the older separate pipe/worker preflight. No five-film search
+result is claimed from this local regression.
+
+Final targeted run: **5/5 passed**, no failures/skips or loosened timeouts:
+native Authz/preflight + complete fake-key lifecycle +3 worker regressions.
+The first incomplete protocol tests failed and motivated the actual fixes;
+they are not described as passing evidence.13 docs/447 local links/273 anchor
+references and whitespace/scope checks pass. No live source attempt added;
+no app/runtime/UI/launcher/SQL suite rerun is warranted for these helper-only
+changes. The actual five-film resolver outcome remains pending the corrected
+credential-session start, not declared blocked by an external service.
+
+### Five-film automatic results — 2026-10-24
+
+**Completed local resolver investigation/fix/recheck, not deployed runtime
+attestation or a new owner pilot.** The corrected hidden-input session worked
+under the owner's SSH connection. TMDb search + Details established all five
+identities (10 requests); projected identities were then reused in memory.
+No MOTN, Watch Providers, provider destination, redirect or automatic retry was
+performed. No source HTML/search response/snippet archive was created.
+
+The final five-case pass used the same edited source tree over checkout
+`eaaa07bf54731718f5c8629d85d7704c9f94b5df`, explicitly `localTrackedEdits=true`,
+`execution=local-diagnostic`, `buildSha=null`; it is not a server-attested commit.
+All five worker hashes were
+`7d680acd8d4328496927aa032f19eacea29c1c8c1c18e91282f093343df5d580`.
+The reviewed source changes are committed in #200. The URLs below were actually
+returned by search, then independently checked from HTML; none was supplied
+as a resolver input or installed in a runtime catalogue.
+
+| Film / verified identity | Control / automatically selected card | Final search/card attempts | Identity / extraction | Local run ID |
+| --- | --- | --- | --- | --- |
+| Blade Runner 2049 (2017), TMDb335984 / IMDbtt1856101 | [blade-runner-2049](https://kinobazaua.com/titles/blade-runner-2049) | Tavily1 / cards2 | matched / partial; 32 candidates, 4 localization blocks | `819cad64-99da-40ff-bd98-2c42daad8b67` |
+| Mortal Kombat (2021), TMDb460465 / IMDbtt0293429 | [mortal-kombat-2021](https://kinobazaua.com/titles/mortal-kombat-2021) | Tavily1 / cards2 | matched / ok; 36 candidates, 3 blocks | `2a1f352a-836f-4343-b368-6c2306108a25` |
+| Alien (1979), TMDb348 / IMDbtt0078748 | [alien](https://kinobazaua.com/titles/alien) | Tavily1 + public search1 / cards2 | matched / ok; 29 candidates, 3 blocks | `d014f8ac-2dc5-4430-a59b-eaaf6060a040` |
+| Oppenheimer (2023), TMDb872585 / IMDbtt15398776 | [oppenheimer-2023](https://kinobazaua.com/titles/oppenheimer-2023) | Tavily1 / cards2 | matched / partial; 24 candidates, 3 blocks | `5c2c19fa-6883-42bb-94c7-11fb1ce198aa` |
+| Dune: Part Two (2024), TMDb693134 / IMDbtt15239678 | [dune-part-two](https://kinobazaua.com/titles/dune-part-two) | Tavily1 / cards2 | matched / ok; 32 candidates, 3 blocks | `57ee79f0-ca2b-4f9d-b66c-1e958b67793a` |
+
+Each final result is `one-confirmed-bounded-not-exhaustive`: one accepted card
+among the bounded reads, not proof that all source editions were examined.
+Matched identity uses the existing `explicit-title-year-director-match` route;
+no film stable ID was invented from a snippet or slug. The local summary's
+localization counter was corrected from nonexistent `providerBlocks` to the
+actual `localization.blocks`; the extractor/model were not changed. Counts are
+source claims, not independently verified offers, tracks or entitlement.
+Partial extraction remains partial. No transfer/Save was attempted here.
+
+#### Findings and final general strategy
+
+- The reviewed Villeneuve person alias works for both Blade Runner2049 and
+  Dune2. Unknown person spelling/group scope still withholds claims; no identity
+  gate relaxation was needed for these five films.
+- An early Mortal Kombat pass found Legends: Battle of the Realms first; its
+  different title/director was correctly refused. The second search slot then
+  found the 2021 card. Search outputs varied: the final pass found that card in
+  the first Tavily response. Do not attribute a deterministic ranking guarantee
+  to this small series.
+- Tavily returned Prometheus, Alien3, Covenant and related films for Alien1979,
+  not the actual card, across the original queries, a ten-result experiment,
+  altered quoting/year grouping and an IMDb discriminator. Those experiments
+  did not solve recall; **none of those experimental query/result-limit changes
+  is retained**. The ordinary public source search returned `/titles/alien`;
+  a separate control read passed the same identity gate. That manual control
+  was not counted as automatic success. Two later actual resolver passes found
+  it automatically through the general public-search fallback.
+- Wrong-film pages remain refused, including Alien3/Prometheus/Covenant, a Blade
+  Runner1982 card, Dune: Prophecy and the Oppenheimer documentary. Historical
+  owner-pilot responses are not reconstructed by these new reads.
+
+Tavily remains the primary provider (basic, max5 URL results, existing parameters).
+A successful first search with no admitted pointers still gets the established
+alternate-title Tavily query. After a completed first-card identity refusal,
+the remaining **second search slot** instead reads the source's ordinary
+public form: fixed `https://kinobazaua.com/search?q=<encoded trusted title>`.
+The form action/input and its unique `div#nav-titles` result scope were observed
+read-only on 2026-10-24; this is not an invented/private endpoint. Only literal
+relative `/titles/<admitted-slug>` anchors inside that scope become candidates.
+Source rank, link label, snippet, genre and person text never become identity
+or localization evidence. An explicit source-relative anchor is resolved only
+against the fixed canonical host; title-card admission itself is unchanged.
+
+The fallback has GET/manual/omit/no-auth controls, 15s header/body deadline,
+2MiB UTF-8 HTML bound, at most100,000 nodes/depth256/500 scoped anchors and one
+unambiguous result container. The initial 100-anchor local bound refused an
+ordinary observed scope (173 anchors:40 repeated title links plus133 auxiliary
+links); this own-code limitation was fixed, with an authored regression and a
+remaining finite bound. Missing/ambiguous/unsupported scope is a diagnostic
+refusal, not an absence-of-cards claim. Public-search diagnostic `returned`
+counts scoped anchors, not distinct film results; admitted counts unique safe
+card pointers and duplicate counts responsive repetitions. Safe short reports
+now identify the allowlisted search provider so those units are distinguishable.
+
+The union of actually discovered URLs is deduplicated and ranked before each
+remaining card read. No generated slug, per-film URL/alias exception, prefix
+sequel promotion, fuzzy matching, transliteration or winner among ambiguous
+confirmed cards. Primary/alternate title query text remains title/year-only;
+the director remains an independent HTML identity gate. Errors do not trigger
+fallback; no Brave/Gemini fallback. Search<=2/card GET<=2 and full runtime cap8,
+durable `search-1/2` reservations, handler/finish deadlines and lost-response
+accounting remain unchanged. No new dependency, key, migration or storage.
+
+#### Actual request ledger and limits of the result
+
+| Scope | TMDb | Tavily | Kinobaza public search | Kinobaza title GET | Kinobaza root | Person GET | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Working credential session, all investigation/rechecks | 10 | 22 | 3 | 32 | 0 | 0 | 67 |
+| Public-form/control-structure inspection outside credential broker | 0 | 0 | 3 | 0 | 1 | 0 | 4 |
+| **2026-10-24 total** | **10** | **22** | **6** | **32** | **1** | **0** | **71** |
+| Earlier expanded-task preparation, recorded above | 0 | 0 | 0 | 1 | 0 | 2 | 3 |
+| **This expanded task, total** | **10** | **22** | **6** | **33** | **1** | **2** | **74** |
+
+Earlier separately authorized controls remain25 (historical cumulative99,
+not a single evaluation run). The final five-case recheck alone cost16:
+Tavily5 + public search1 + title GET10, with zero repeat TMDb requests because
+trusted identity was reused. Successful and unsuccessful/refused attempts are
+included. Broker `countsIncomplete=false`; all recorded HTTP responses in this
+working session were200, including semantically refused results. Search-provider
+internal network operations are unknown and not included as known HTTP traffic.
+No credentials or response bodies are included in this ledger. The local key
+session was explicitly stopped after the final pass; no additional live work
+is required to complete this task.
+
+Five successes demonstrate this bounded improvement, not general catalogue
+coverage/accuracy. No automatic claim that a link destination works, tracks bind
+to a particular offer, access exists in UA or the user is entitled. Extraction
+coverage and source-use/account constraints remain; ordinary public search does
+not create blanket permission to reuse content. No new rights closure, production
+activation or hosted latency assertion is made. The full hosted deadline may
+still produce a bounded partial outcome under slower services.
+
+#### Final validation and handoff
+
+- Targeted resolver/public-search/crosswalk/diagnostics tests:86/86 passed.
+- Full `test/*.test.mjs` offline/mock/HTTP/browser run:167 passed,0 failed,
+  1 explicit skip (native PostgreSQL multi-connection fixture is not configured
+  for this run). Chromium/Edge exercised desktop1280x900, iPhone-X-sized375x812
+  and Air-sized820x1180, pending apply/cancel/Escape, manual form edits,
+  clipboard fallback, retained/expired state and late replies without source
+  replay. These are authored browser states, not an actual iPhone/Safari result.
+- Additional relevant invariants after adding two budget/deadline tests:
+  161/161 passed across resolver and research assisted identity, localization,
+  provider grouping/R1/R2 and URL controls. Counts overlap the full run; they
+  are not added together as distinct coverage. The two new cases explicitly
+  cover full-action8 with public fallback and denied/expired `search-2` without
+  dispatch. No assertion/timeout was loosened.
+- The new ordinary-search structural limit was calibrated to observed benign
+  anchor counts, with a regression at173 and refusal above500. This is a
+  justified parser-bound change, not a claim that a prior too-small limit was
+  an external blocker.
+- Native Windows task-helper ACL/complete fake-key session tests passed in the
+  full run. Windows **owner-demo launcher lifecycle** and native PostgreSQL
+  concurrency were not repeated: their code/SQL are unchanged and no new
+  relevant risk was introduced. Prior dated evidence is not called a fresh run.
+- No WebKit/device test, hosted resolver validation or remote-check success is
+  inferred from local tests. Links/anchors, whitespace and scope are checked;
+  remote missing/skipped statuses remain missing/skipped, not passed.
+
+Review-ready in existing stacked #200, above unchanged #199/#198. No merge,
+retarget, deployment, source-policy closure or owner evaluation is performed
+by the handoff. Owner checkout/demo and unrelated untracked files are preserved.
+MW-FUT-01 remains Discovery.

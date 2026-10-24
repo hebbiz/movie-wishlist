@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver, resolverQueries, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
+import { isKinobazaSearchURL } from '../netlify/lib/kinobaza-public-search.mjs';
 import { runControlDiagnostic } from '../scripts/m4-control-diagnostic.mjs';
 import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { detailsData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
@@ -33,14 +34,20 @@ test('title/year search omits the added director, preserving primary/alternate t
     '"A film about Authored director" 2001 site:kinobazaua.com/titles/');
 });
 
-test('existing title deduplication, escaping and bounds do not change with director removal', () => {
+test('query aliases deduplicate case and whitespace, retain escaping/bounds, and relax a single established name', () => {
   assert.deepEqual(resolverQueries({ ...film, originalTitle: '  Same  ', identityTitle: 'Same', titleAliases: ['Other', 'Third'] }), [
     '"Same" 2001 site:kinobazaua.com/titles/', '"Other" 2001 site:kinobazaua.com/titles/',
   ]);
   assert.equal(resolverQueries({ ...film, originalTitle: 'A "quoted" \\ title', year: null })[0],
     '"A  quoted    title" site:kinobazaua.com/titles/');
   assert.deepEqual(resolverQueries({ ...film, originalTitle: 'x'.repeat(501), identityTitle: 'bad\nname', titleAliases: ['Allowed'] }), [
-    '"Allowed" 2001 site:kinobazaua.com/titles/',
+    '"Allowed" 2001 site:kinobazaua.com/titles/', 'Allowed 2001 site:kinobazaua.com/titles/',
+  ]);
+  assert.deepEqual(resolverQueries({ ...film, originalTitle: 'Same Name', identityTitle: ' SAME   NAME ', titleAliases: ['same name'] }), [
+    '"Same Name" 2001 site:kinobazaua.com/titles/', 'Same Name 2001 site:kinobazaua.com/titles/',
+  ]);
+  assert.deepEqual(resolverQueries({ ...film, originalTitle: 'Same Name', identityTitle: ' SAME   NAME ', titleAliases: ['same name', 'Distinct alias'] }), [
+    '"Same Name" 2001 site:kinobazaua.com/titles/', '"Distinct alias" 2001 site:kinobazaua.com/titles/',
   ]);
   assert.equal(resolverQueries({ ...film, originalTitle: 'x'.repeat(500) })[0],
     `"${'x'.repeat(500)}" 2001 site:kinobazaua.com/titles/`);
@@ -79,18 +86,25 @@ test('removing director from query does not bypass source director, title or sta
         searches++; assert.doesNotMatch(JSON.parse(init.body).query, /Authored director/);
         return Response.json({ results: [{ url: urls[0], title: 'Not identity evidence', content: 'Not evidence' }] });
       }
+      if (isKinobazaSearchURL(url)) {
+        searches++; assert.equal(new URL(url).searchParams.get('q'), film.originalTitle);
+        assert.equal(init.method, 'GET'); assert.equal(init.headers.Authorization, undefined); assert.equal(init.body, undefined);
+        return new Response(`<div id="nav-titles"><a href="${new URL(urls[0]).pathname}">Not identity evidence</a></div>`, { headers: { 'content-type': 'text/html' } });
+      }
       cards++; assert.equal(url, urls[0]);
       return new Response(markup({ url, ...change }), { headers: { 'content-type': 'text/html' } });
     });
-    assert.equal(searches, 1); assert.equal(cards, 1);
-    assert.deepEqual(reserved, ['search-1', 'kinobaza-1']);
+    assert.equal(searches, identity === 'matched' ? 1 : 2); assert.equal(cards, 1);
+    assert.deepEqual(reserved, identity === 'matched' ? ['search-1', 'kinobaza-1'] : ['search-1', 'kinobaza-1', 'search-2']);
+    assert.equal(out.resolver.candidates, 1); assert.equal(out.resolver.unexamined, 0);
     assert.equal(out.resolver.cards[0].identity, identity); assert.equal(out.resolver.cards[0].reason, reason);
+    if (identity !== 'matched') assert.equal(out.resolver.searches[1].admitted, 1);
     if (identity === 'matched') assert.equal(out.result.identity.status, 'matched');
     else { assert.equal(out.result, null); assert.deepEqual(out.choices, []); }
   }
 });
 
-test('alternative search remains only after successful zero admitted URLs, including rejected person pointer', async () => {
+test('alternative search still follows successful zero admitted URLs, including rejected person pointer', async () => {
   for (const firstResults of [[], [{ url: 'https://kinobazaua.com/persons/authored-director' }]]) {
     const queries = [];
     const { out, reserved } = await resolveWith(async (url, init) => {
@@ -173,6 +187,36 @@ test('single-film title/year control continues real admission/identity/extractio
   }
   assert.equal(result.cases[0].status, 'multiple-confirmed-cards-choose'); assert.equal(sent.length, 6);
   assert.doesNotMatch(JSON.stringify(result), /AUTHORED_TMDB_KEY|AUTHORED_SEARCH_KEY|AUTHORED_PRIVATE_SNIPPET|Not identity evidence|Not evidence|<h1|<table/);
+});
+
+test('title/year control counts public title search in the existing second slot after first-card refusal', async () => {
+  const next = 'https://kinobazaua.com/titles/blade-runner-2049-2017', sent = [];
+  const result = await runControlDiagnostic({ tmdbToken: 'AUTHORED_TMDB_KEY', tavilyKey: 'AUTHORED_SEARCH_KEY', titleYearControl: true,
+    fetchImpl: async (url, init) => {
+      sent.push(url); assert.equal(init.redirect, 'manual'); assert.equal(init.credentials, 'omit');
+      if (url.startsWith('https://api.themoviedb.org/3/search/movie?')) return Response.json({ results: [{ id: IDS[0], original_title: 'Blade Runner 2049', release_date: '2017-01-01' }] });
+      if (url.startsWith(`https://api.themoviedb.org/3/movie/${IDS[0]}?`)) return Response.json({ ...detailsData(IDS[0]), original_title: 'Blade Runner 2049', release_date: '2017-01-01' });
+      if (url === endpoint) return Response.json({ results: urls.map(url => ({ url })) });
+      if (isKinobazaSearchURL(url)) {
+        assert.equal(new URL(url).searchParams.get('q'), 'Blade Runner 2049');
+        assert.equal(init.method, 'GET'); assert.equal(init.body, undefined);
+        assert.ok(Object.keys(init.headers).every(k => !/authorization|cookie|key/i.test(k)));
+        return new Response(`<div id="nav-titles"><a href="${new URL(next).pathname}">AUTHORED_PRIVATE_SEARCH_TEXT</a></div>`, { headers: { 'content-type': 'text/html' } });
+      }
+      assert.ok([urls[0], next].includes(url), 'only admitted pointers and two card slots may dispatch');
+      return new Response(markup({ url, original: 'Blade Runner 2049', year: 2017, ...(url === urls[0] ? { title: 'Different film' } : {}) }), { headers: { 'content-type': 'text/html' } });
+    },
+  });
+  assert.deepEqual(result.limits, { tmdb: 2, search: 2, cards: 2, total: 6 });
+  assert.deepEqual(result.accounting, { priorAttempts: 17, cumulativeMax: 23 });
+  assert.deepEqual(result.counts, { tmdb: 2, search: 2, cards: 2, total: 6 });
+  assert.deepEqual(result.cases[0].attempts.map(a => a.type), ['tmdb', 'tmdb', 'search', 'cards', 'search', 'cards']);
+  assert.deepEqual(result.cases[0].resolver.searches.map(s => s.provider), ['tavily', 'kinobaza-public-search']);
+  assert.deepEqual(result.cases[0].resolver.cards.map(c => c.identity), ['mismatch', 'matched']);
+  assert.equal(result.cases[0].resolver.candidates, 6); assert.equal(result.cases[0].resolver.unexamined, 4);
+  assert.equal(result.cases[0].status, 'one-confirmed-bounded-not-exhaustive');
+  assert.equal(sent.length, 6); assert.equal(sent.filter(url => url === endpoint).length, 1);
+  assert.doesNotMatch(JSON.stringify(result), /AUTHORED_PRIVATE_SEARCH_TEXT|AUTHORED_TMDB_KEY|AUTHORED_SEARCH_KEY|<div/);
 });
 
 test('title/year control missing credentials and provider failure never spend an automatic second attempt', async () => {
