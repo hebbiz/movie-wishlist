@@ -41,3 +41,25 @@ test('public inspection emits bounded identity fields rather than arbitrary cont
   assert.equal(profile.profileHeading,'Authored person');
   assert.doesNotMatch(JSON.stringify(profile),/AUTHORED_FILMOGRAPHY|AUTHORED_BIOGRAPHY/);
 });
+
+test('series uses the actual public-search fallback, counts it, and keeps only safe ephemeral pointers',async()=>{
+  const film={id:'authored',tmdbId:IDS[0],imdbId:`tt${IDS[0]}`,identityTitle:'Вигаданий фільм',originalTitle:'Authored original',year:2001,directorCount:1,directorAliases:['Authored director'],titleAliases:['Вигаданий фільм','Authored original']};
+  const wrong='https://kinobazaua.com/titles/authored-wrong',correct='https://kinobazaua.com/titles/authored-original';
+  const sent=[];
+  const out=await practicalOperation({...keys,operation:{action:'resolve',film:1},context:{films:{1:film}}},async(url,init)=>{
+    sent.push(url);assert.equal(init.redirect,'manual');assert.equal(init.credentials,'omit');
+    if(url==='https://api.tavily.com/search')return Response.json({results:[{url:wrong,content:'AUTHORED_PRIVATE_SNIPPET'}]});
+    if(url.startsWith('https://kinobazaua.com/search?')){
+      assert.equal(init.method,'GET');assert.equal(init.headers.Authorization,undefined);
+      return new Response('<div id="nav-titles"><a href="/titles/authored-original">AUTHORED_PRIVATE_SEARCH_TEXT</a></div>',{headers:{'content-type':'text/html'}});
+    }
+    assert.ok([wrong,correct].includes(url));return new Response(markup({url,...(url===wrong?{title:'Different authored film'}:{})}),{headers:{'content-type':'text/html'}});
+  });
+  assert.equal(out.result.status,'ok');assert.equal(sent.length,4);
+  assert.deepEqual(out.result.counts,{tmdb:0,search:2,cards:2,personPages:0,total:4});
+  assert.deepEqual(out.result.resolver.searches.map(s=>s.provider),['tavily','kinobaza-public-search']);
+  assert.equal(out.result.confirmed[0].sourceURL,correct);assert.equal(out.result.confirmed[0].providerBlocks,1);
+  assert.equal(out.result.searchPointers.length,2);assert.equal(out.result.searchPointers[1][0].originalPathname,'/titles/authored-original');
+  assert.deepEqual(out.context,{films:{1:film}},'no search response or HTML is retained in session context');
+  assert.doesNotMatch(JSON.stringify(out),/AUTHORED_PRIVATE|AUTHORED_TMDB_KEY|AUTHORED_TAVILY_KEY|<div|<h1/);
+});

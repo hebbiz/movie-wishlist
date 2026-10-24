@@ -1,5 +1,6 @@
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
 import { safeSearchDiagnostic, safeIdentityDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
+import { kinobazaPublicSearch } from './kinobaza-public-search.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
 const titleNames = film => {
@@ -98,7 +99,7 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
   };
 }
 
-export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, onIdentityDiagnostic } = {}) {
+export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, publicSearchFactory = kinobazaPublicSearch, onIdentityDiagnostic } = {}) {
   return async (film, { reserve, fetchImpl, calls, signal }) => {
     const queries = resolverQueries(film), cards = [], urls = new Set(), examined = new Set();
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
@@ -108,17 +109,20 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
     };
     if (!apiKey) return done('not-evaluated-missing-search-key');
     if (!queries.length) return done('not-evaluated-no-established-title');
+    let activeProvider;
     const searchFetch = async (url, init) => {
       const stage = `search-${summary.searchCalls + 1}`;
-      if (summary.searchCalls >= 2 || signal?.aborted || provider.accepts?.(url, init) !== true) throw Error('search-boundary');
+      if (summary.searchCalls >= 2 || signal?.aborted || activeProvider?.accepts?.(url, init) !== true) throw Error('search-boundary');
       await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
       summary.searchCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
       try { const r = await fetchImpl(url, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('search-transport'); }
     };
-    const provider = searchFactory(apiKey, searchFetch); let nextQuery = 0;
-    const searchNext = async () => {
-      const found = await provider.search(queries[nextQuery++], { signal });
-      summary.searches.push(safeSearchDiagnostic(found.status, found.diagnostics));
+    const provider = searchFactory(apiKey, searchFetch), publicProvider = publicSearchFactory(searchFetch); let nextQuery = 0;
+    const searchNext = async (publicFallback = false) => {
+      activeProvider = publicFallback ? publicProvider : provider;
+      const query = publicFallback ? titleNames(film)[0] : queries[nextQuery]; nextQuery++;
+      const found = await activeProvider.search(query, { signal });
+      summary.searches.push({ ...safeSearchDiagnostic(found.status, found.diagnostics), provider: publicFallback ? 'kinobaza-public-search' : 'tavily' });
       if (found.status === 'ok') for (const url of (found.urls ?? []).map(admitKinobazaURL).filter(Boolean)) urls.add(url);
       return found.status;
     };
@@ -147,7 +151,10 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
       if (summary.cardCalls === priorCardCalls) break; // A denied reservation is not a retry opportunity.
       if (i === 0 && ['mismatch', 'unresolved'].includes(result.identity?.status) && nextQuery < queries.length) {
         if (signal?.aborted) break;
-        const status = await searchNext();
+        // A successful search whose first card fails identity can spend the
+        // second search slot on the source's ordinary public title-search form.
+        // It replaces (never adds to) the alternate slot; no fallback on errors.
+        const status = await searchNext(true);
         if (status !== 'ok') return done(status);
       }
     }

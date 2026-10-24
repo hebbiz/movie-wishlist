@@ -9,3 +9,11 @@ test('safe report has only allowlisted metadata, no secrets/raw URLs/body/manual
   assert.doesNotMatch(report, /https?:|PRIVATE|token|BODY|EDIT/);
   assert.match(report, /5\/8/); assert.match(report, /not runtime-attested/);
 });
+
+test('report labels only known search providers, with no URL/query or injected provider text',()=>{
+  for(const provider of ['tavily','kinobaza-public-search','PRIVATE_PROVIDER']){
+    const report=safeMediaReport({resolver:{searches:[{provider,status:'ok',returned:1,admitted:1,rejected:0,duplicates:0,rejectionCategories:{},query:'PRIVATE_QUERY',url:'https://secret.example/'}]}});
+    assert.match(report,new RegExp(`provider ${provider==='PRIVATE_PROVIDER'?'unknown':provider}\\.`));
+    assert.doesNotMatch(report,/PRIVATE|https?:/);
+  }
+});

@@ -1,10 +1,12 @@
 # M4 — Mykola media advice
 
-Status: M4.1–M4.3 implemented; narrow #192 blocker fixes validated locally;
-default off; no live activation authorized. Pilot preparation is conditional on
-independent review and the activation prerequisites below, not a pilot approval.
-Current search provider: **Tavily basic Search**, candidate URLs only,
-offline-tested/live-unvalidated; no activation authorized by this record.
+Status: M4.1–M4.3 implemented; default-off semantics retained. Earlier deployment,
+assignment and cleanup evidence remains in its dated execution records below.
+The #198–#200 successor changes are not merged/deployed by this task.
+Current branch search strategy: **Tavily basic Search**, candidate URLs only,
+with a bounded ordinary Kinobaza title-search fallback after first-card identity
+refusal. [Five locked local controls passed URL/identity checks](#five-film-automatic-results--2026-10-24);
+this is not catalogue-wide accuracy, track verification or new activation approval.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
@@ -2429,13 +2431,14 @@ and two card stages. Normalize duplicate title-query spellings; use a genuinely
 different established title or an unquoted version when only one exists.
 Promote exact established ASCII title/optional-year slug matches as discovery
 hints, never create a URL or use its slug as identity proof. After a completed
-first-card identity refusal, use the remaining alternate search before the
+first-card identity refusal, use the remaining search slot before the
 second card slot; merge/deduplicate actual returned URLs and rank unseen
 candidates. Search errors are not retried and do not trigger alternatives.
 Admission, actual HTML identity/extraction, no redirects, R1/R2, exact links,
 acknowledgement and form controls remain independent. The normal application
 budget remains **8 = baseline4 + search<=2 + cards<=2**, with unchanged ledger
-stages/deadlines. No migration or broader network destination is added.
+stages/deadlines. The final fallback policy is recorded in the dated results
+below; no migration or arbitrary network destination is added.
 
 `scripts/m4-practical-session.ps1` is an opt-in local task tool, not deployed
 code. Enter TMDB_READ_ACCESS_TOKEN and TAVILY_API_KEY once each, hidden, and
@@ -2577,3 +2580,153 @@ references and whitespace/scope checks pass. No live source attempt added;
 no app/runtime/UI/launcher/SQL suite rerun is warranted for these helper-only
 changes. The actual five-film resolver outcome remains pending the corrected
 credential-session start, not declared blocked by an external service.
+
+### Five-film automatic results — 2026-10-24
+
+**Completed local resolver investigation/fix/recheck, not deployed runtime
+attestation or a new owner pilot.** The corrected hidden-input session worked
+under the owner's SSH connection. TMDb search + Details established all five
+identities (10 requests); projected identities were then reused in memory.
+No MOTN, Watch Providers, provider destination, redirect or automatic retry was
+performed. No source HTML/search response/snippet archive was created.
+
+The final five-case pass used the same edited source tree over checkout
+`eaaa07bf54731718f5c8629d85d7704c9f94b5df`, explicitly `localTrackedEdits=true`,
+`execution=local-diagnostic`, `buildSha=null`; it is not a server-attested commit.
+All five worker hashes were
+`7d680acd8d4328496927aa032f19eacea29c1c8c1c18e91282f093343df5d580`.
+The reviewed source changes are committed in #200. The URLs below were actually
+returned by search, then independently checked from HTML; none was supplied
+as a resolver input or installed in a runtime catalogue.
+
+| Film / verified identity | Control / automatically selected card | Final search/card attempts | Identity / extraction | Local run ID |
+| --- | --- | --- | --- | --- |
+| Blade Runner 2049 (2017), TMDb335984 / IMDbtt1856101 | [blade-runner-2049](https://kinobazaua.com/titles/blade-runner-2049) | Tavily1 / cards2 | matched / partial; 32 candidates, 4 localization blocks | `819cad64-99da-40ff-bd98-2c42daad8b67` |
+| Mortal Kombat (2021), TMDb460465 / IMDbtt0293429 | [mortal-kombat-2021](https://kinobazaua.com/titles/mortal-kombat-2021) | Tavily1 / cards2 | matched / ok; 36 candidates, 3 blocks | `2a1f352a-836f-4343-b368-6c2306108a25` |
+| Alien (1979), TMDb348 / IMDbtt0078748 | [alien](https://kinobazaua.com/titles/alien) | Tavily1 + public search1 / cards2 | matched / ok; 29 candidates, 3 blocks | `d014f8ac-2dc5-4430-a59b-eaaf6060a040` |
+| Oppenheimer (2023), TMDb872585 / IMDbtt15398776 | [oppenheimer-2023](https://kinobazaua.com/titles/oppenheimer-2023) | Tavily1 / cards2 | matched / partial; 24 candidates, 3 blocks | `5c2c19fa-6883-42bb-94c7-11fb1ce198aa` |
+| Dune: Part Two (2024), TMDb693134 / IMDbtt15239678 | [dune-part-two](https://kinobazaua.com/titles/dune-part-two) | Tavily1 / cards2 | matched / ok; 32 candidates, 3 blocks | `57ee79f0-ca2b-4f9d-b66c-1e958b67793a` |
+
+Each final result is `one-confirmed-bounded-not-exhaustive`: one accepted card
+among the bounded reads, not proof that all source editions were examined.
+Matched identity uses the existing `explicit-title-year-director-match` route;
+no film stable ID was invented from a snippet or slug. The local summary's
+localization counter was corrected from nonexistent `providerBlocks` to the
+actual `localization.blocks`; the extractor/model were not changed. Counts are
+source claims, not independently verified offers, tracks or entitlement.
+Partial extraction remains partial. No transfer/Save was attempted here.
+
+#### Findings and final general strategy
+
+- The reviewed Villeneuve person alias works for both Blade Runner2049 and
+  Dune2. Unknown person spelling/group scope still withholds claims; no identity
+  gate relaxation was needed for these five films.
+- An early Mortal Kombat pass found Legends: Battle of the Realms first; its
+  different title/director was correctly refused. The second search slot then
+  found the 2021 card. Search outputs varied: the final pass found that card in
+  the first Tavily response. Do not attribute a deterministic ranking guarantee
+  to this small series.
+- Tavily returned Prometheus, Alien3, Covenant and related films for Alien1979,
+  not the actual card, across the original queries, a ten-result experiment,
+  altered quoting/year grouping and an IMDb discriminator. Those experiments
+  did not solve recall; **none of those experimental query/result-limit changes
+  is retained**. The ordinary public source search returned `/titles/alien`;
+  a separate control read passed the same identity gate. That manual control
+  was not counted as automatic success. Two later actual resolver passes found
+  it automatically through the general public-search fallback.
+- Wrong-film pages remain refused, including Alien3/Prometheus/Covenant, a Blade
+  Runner1982 card, Dune: Prophecy and the Oppenheimer documentary. Historical
+  owner-pilot responses are not reconstructed by these new reads.
+
+Tavily remains the primary provider (basic, max5 URL results, existing parameters).
+A successful first search with no admitted pointers still gets the established
+alternate-title Tavily query. After a completed first-card identity refusal,
+the remaining **second search slot** instead reads the source's ordinary
+public form: fixed `https://kinobazaua.com/search?q=<encoded trusted title>`.
+The form action/input and its unique `div#nav-titles` result scope were observed
+read-only on 2026-10-24; this is not an invented/private endpoint. Only literal
+relative `/titles/<admitted-slug>` anchors inside that scope become candidates.
+Source rank, link label, snippet, genre and person text never become identity
+or localization evidence. An explicit source-relative anchor is resolved only
+against the fixed canonical host; title-card admission itself is unchanged.
+
+The fallback has GET/manual/omit/no-auth controls, 15s header/body deadline,
+2MiB UTF-8 HTML bound, at most100,000 nodes/depth256/500 scoped anchors and one
+unambiguous result container. The initial 100-anchor local bound refused an
+ordinary observed scope (173 anchors:40 repeated title links plus133 auxiliary
+links); this own-code limitation was fixed, with an authored regression and a
+remaining finite bound. Missing/ambiguous/unsupported scope is a diagnostic
+refusal, not an absence-of-cards claim. Public-search diagnostic `returned`
+counts scoped anchors, not distinct film results; admitted counts unique safe
+card pointers and duplicate counts responsive repetitions. Safe short reports
+now identify the allowlisted search provider so those units are distinguishable.
+
+The union of actually discovered URLs is deduplicated and ranked before each
+remaining card read. No generated slug, per-film URL/alias exception, prefix
+sequel promotion, fuzzy matching, transliteration or winner among ambiguous
+confirmed cards. Primary/alternate title query text remains title/year-only;
+the director remains an independent HTML identity gate. Errors do not trigger
+fallback; no Brave/Gemini fallback. Search<=2/card GET<=2 and full runtime cap8,
+durable `search-1/2` reservations, handler/finish deadlines and lost-response
+accounting remain unchanged. No new dependency, key, migration or storage.
+
+#### Actual request ledger and limits of the result
+
+| Scope | TMDb | Tavily | Kinobaza public search | Kinobaza title GET | Kinobaza root | Person GET | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Working credential session, all investigation/rechecks | 10 | 22 | 3 | 32 | 0 | 0 | 67 |
+| Public-form/control-structure inspection outside credential broker | 0 | 0 | 3 | 0 | 1 | 0 | 4 |
+| **2026-10-24 total** | **10** | **22** | **6** | **32** | **1** | **0** | **71** |
+| Earlier expanded-task preparation, recorded above | 0 | 0 | 0 | 1 | 0 | 2 | 3 |
+| **This expanded task, total** | **10** | **22** | **6** | **33** | **1** | **2** | **74** |
+
+Earlier separately authorized controls remain25 (historical cumulative99,
+not a single evaluation run). The final five-case recheck alone cost16:
+Tavily5 + public search1 + title GET10, with zero repeat TMDb requests because
+trusted identity was reused. Successful and unsuccessful/refused attempts are
+included. Broker `countsIncomplete=false`; all recorded HTTP responses in this
+working session were200, including semantically refused results. Search-provider
+internal network operations are unknown and not included as known HTTP traffic.
+No credentials or response bodies are included in this ledger. The local key
+session was explicitly stopped after the final pass; no additional live work
+is required to complete this task.
+
+Five successes demonstrate this bounded improvement, not general catalogue
+coverage/accuracy. No automatic claim that a link destination works, tracks bind
+to a particular offer, access exists in UA or the user is entitled. Extraction
+coverage and source-use/account constraints remain; ordinary public search does
+not create blanket permission to reuse content. No new rights closure, production
+activation or hosted latency assertion is made. The full hosted deadline may
+still produce a bounded partial outcome under slower services.
+
+#### Final validation and handoff
+
+- Targeted resolver/public-search/crosswalk/diagnostics tests:86/86 passed.
+- Full `test/*.test.mjs` offline/mock/HTTP/browser run:167 passed,0 failed,
+  1 explicit skip (native PostgreSQL multi-connection fixture is not configured
+  for this run). Chromium/Edge exercised desktop1280x900, iPhone-X-sized375x812
+  and Air-sized820x1180, pending apply/cancel/Escape, manual form edits,
+  clipboard fallback, retained/expired state and late replies without source
+  replay. These are authored browser states, not an actual iPhone/Safari result.
+- Additional relevant invariants after adding two budget/deadline tests:
+  161/161 passed across resolver and research assisted identity, localization,
+  provider grouping/R1/R2 and URL controls. Counts overlap the full run; they
+  are not added together as distinct coverage. The two new cases explicitly
+  cover full-action8 with public fallback and denied/expired `search-2` without
+  dispatch. No assertion/timeout was loosened.
+- The new ordinary-search structural limit was calibrated to observed benign
+  anchor counts, with a regression at173 and refusal above500. This is a
+  justified parser-bound change, not a claim that a prior too-small limit was
+  an external blocker.
+- Native Windows task-helper ACL/complete fake-key session tests passed in the
+  full run. Windows **owner-demo launcher lifecycle** and native PostgreSQL
+  concurrency were not repeated: their code/SQL are unchanged and no new
+  relevant risk was introduced. Prior dated evidence is not called a fresh run.
+- No WebKit/device test, hosted resolver validation or remote-check success is
+  inferred from local tests. Links/anchors, whitespace and scope are checked;
+  remote missing/skipped statuses remain missing/skipped, not passed.
+
+Review-ready in existing stacked #200, above unchanged #199/#198. No merge,
+retarget, deployment, source-policy closure or owner evaluation is performed
+by the handoff. Owner checkout/demo and unrelated untracked files are preserved.
+MW-FUT-01 remains Discovery.

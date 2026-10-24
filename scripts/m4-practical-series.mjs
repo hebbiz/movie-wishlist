@@ -5,7 +5,9 @@ import { pathToFileURL } from 'node:url';
 import { parse } from 'parse5';
 import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
-import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
+import { createKinobazaResolver, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
+import { describeCandidateURL } from './m4-url-diagnostics.mjs';
+import { kinobazaPublicSearch, isKinobazaSearchURL } from '../netlify/lib/kinobaza-public-search.mjs';
 import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 
 export const practicalFilms = Object.freeze([
@@ -60,8 +62,8 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
   const signal = AbortSignal.timeout(60_000);
   let queryURL, detailURL;
   const send = async (url, init) => {
-    const type = url === queryURL || url === detailURL ? 'tmdb' : url === 'https://api.tavily.com/search' ? 'search' : admitKinobazaURL(url) ? 'cards' : operation.action === 'inspect-person' && url === operation.url && personURL(url) ? 'personPages' : null;
-    if (!type || signal.aborted || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (type === 'search' ? 'POST' : 'GET') || counts.total >= 6 || counts[type] >= 2 || type === 'personPages' && Object.keys(init.headers ?? {}).some(k => /authorization|cookie|key/i.test(k))) throw Error('local-source-boundary');
+    const type = url === queryURL || url === detailURL ? 'tmdb' : url === 'https://api.tavily.com/search' || isKinobazaSearchURL(url) ? 'search' : admitKinobazaURL(url) ? 'cards' : operation.action === 'inspect-person' && url === operation.url && personURL(url) ? 'personPages' : null;
+    if (!type || signal.aborted || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (url === 'https://api.tavily.com/search' ? 'POST' : 'GET') || counts.total >= 6 || counts[type] >= 2 || (type === 'personPages' || isKinobazaSearchURL(url)) && Object.keys(init.headers ?? {}).some(k => /authorization|cookie|key/i.test(k))) throw Error('local-source-boundary');
     counts[type]++; counts.total++;
     const attempt = { type, outcome:'dispatched' }; attempts.push(attempt);
     try { const r = await fetchImpl(url, { ...init, signal:AbortSignal.any([signal,init.signal].filter(Boolean)) }); attempt.httpStatus = r.status; attempt.outcome = 'response-received'; return r; }
@@ -107,12 +109,14 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
         return r;
       };
       const card = await fetchAssistedKinobaza(operation.url, film, fetchCard, {signal,onIdentityDiagnostic});
-      return done(card.identity?.status ?? card.status, { comparisons, publicIdentity:inspection, extraction:card.status, candidateCount:card.candidates?.length ?? 0, localizationBlocks:card.localization?.providerBlocks?.length ?? 0 });
+      return done(card.identity?.status ?? card.status, { comparisons, publicIdentity:inspection, extraction:card.status, candidateCount:card.candidates?.length ?? 0, localizationBlocks:card.localization?.blocks?.length ?? 0 });
     }
-    const stages = new Set();
-    const resolved = await createKinobazaResolver({ apiKey:tavilyKey,onIdentityDiagnostic })(film, { fetchImpl:send, signal, calls:[], reserve:async stage => { if(stages.has(stage)) throw Error('repeat-reservation'); stages.add(stage); } });
-    return done(resolved.status, { resolver:resolved.resolver, comparisons,
-      confirmed: [resolved.result, ...(resolved.choices ?? [])].filter(Boolean).map(c => ({ sourceURL:c.sourceURL, identity:c.identity?.status, reason:c.identity?.reason, extraction:c.status, candidates:c.candidates?.length ?? 0, providerBlocks:c.localization?.providerBlocks?.length ?? 0 })) });
+    const stages = new Set(), searchPointers = [];
+    const searchFactory = (key, sendSearch) => tavilySearch(key, sendSearch, { onCandidateURLs: urls => searchPointers.push(urls.map(url => describeCandidateURL(url, {secrets:[tmdbToken,tavilyKey]}))) });
+    const publicSearchFactory = sendSearch => kinobazaPublicSearch(sendSearch, {secrets:[tmdbToken,tavilyKey],onCandidateURLs:urls=>searchPointers.push(urls.map(url=>describeCandidateURL(url,{secrets:[tmdbToken,tavilyKey]})))});
+    const resolved = await createKinobazaResolver({ apiKey:tavilyKey,onIdentityDiagnostic,searchFactory,publicSearchFactory })(film, { fetchImpl:send, signal, calls:[], reserve:async stage => { if(stages.has(stage)) throw Error('repeat-reservation'); stages.add(stage); } });
+    return done(resolved.status, { resolver:resolved.resolver, comparisons, searchPointers,
+      confirmed: [resolved.result, ...(resolved.choices ?? [])].filter(Boolean).map(c => ({ sourceURL:c.sourceURL, identity:c.identity?.status, reason:c.identity?.reason, extraction:c.status, candidates:c.candidates?.length ?? 0, providerBlocks:c.localization?.blocks?.length ?? 0 })) });
   } catch { return done(signal.aborted ? 'local-deadline-no-retry' : 'local-operation-failed-no-retry'); }
 }
 
