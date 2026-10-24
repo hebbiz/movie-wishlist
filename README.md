@@ -111,6 +111,20 @@ process.
 implemented or documented v1.3.1 scope.
 - [M4 media advice implementation and activation boundaries](docs/m4-media-advice.md)
 - [M4 same-document return state and expiry boundaries](docs/m4-media-advice.md#same-document-m4-return-state--2026-10-23)
+- [M4 pilot diagnostic corrections and bounded controls](docs/m4-media-advice.md#pilot-diagnostics-and-bounded-controls--2026-10-23)
+  — historical MOTN `unknown` reports do not prove missing API language data.
+  Diagnostics are offline-tested. First local control run used6/12 attempts,
+  stopping at Tavily authentication. A separately authorised repeat used8/12
+  (TMDb4/Tavily4/Kinobaza0): successful non-empty search results were all rejected
+  by URL admission (`unsupported-path`/`query`), not by HTML identity. Actual URL
+  shapes and historical search/title-refusal causes remain unresolved;
+  local checkout provenance is not deployed-runtime attestation.
+  The separately authorised Blade-only URL diagnostic used3/3 attempts
+  (TMDb2/Tavily1/Kinobaza0; cumulative17). Screenshot evidence shows unchanged
+  `/persons/denis-villeneuve`: a person-shaped pointer correctly rejected by
+  title-card admission, not a normalization defect. No HTML destination checked;
+  query strategy changes are proposals only. A second result-reader error after
+  the JSON was printed is consistent with one-shot handoff consumption.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   prepared only; five pilot films still unselected.
 

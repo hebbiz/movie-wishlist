@@ -1,0 +1,4 @@
+# Only the develop branch gets a build stamp. Existing UI publish/functions
+# settings and all other deploy contexts remain untouched.
+[context.develop]
+  command = "node scripts/stamp-media-advice-build.mjs"

@@ -135,13 +135,13 @@ test('Tavily response contract: empty differs from missing/malformed; only admit
     assert.deepEqual(out, { status: 'search-invalid-response', urls: [] });
   }
   const empty = await tavilySearch('AUTHORED_TAVILY_KEY', async () => Response.json({ results: [] })).search('authored');
-  assert.deepEqual(empty, { status: 'ok', urls: [] });
+  assert.deepEqual(empty, { status: 'ok', urls: [], diagnostics: { returned:0, admitted:0, rejected:0, duplicates:0, rejectionCategories:{} } });
   const out = await tavilySearch('AUTHORED_TAVILY_KEY', async () => Response.json({ results: [
     { url: urls[0], content: 'PRIVATE_SNIPPET', score: 1 }, { url: urls[0] },
     { url: 'https://foreign.example/titles/x' }, { url: 'javascript:alert(1)' },
     { url: urls[1] + '?tracking=PRIVATE' },
   ] })).search('authored');
-  assert.deepEqual(out, { status: 'ok', urls: [urls[0]] });
+  assert.deepEqual(out, { status: 'ok', urls: [urls[0]], diagnostics: { returned:5, admitted:1, rejected:3, duplicates:1, rejectionCategories:{'foreign-host':1,'unsafe-scheme':1,query:1} } });
   assert.doesNotMatch(JSON.stringify(out), /PRIVATE|score|content/);
 });
 

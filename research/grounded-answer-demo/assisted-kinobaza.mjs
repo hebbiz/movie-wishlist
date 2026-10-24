@@ -1,5 +1,6 @@
 // Owner-assisted source card, not a resolver. No URL rewriting or destinations.
 import { extractHtml, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS } from './html-source.mjs';
+import { identityGates } from '../../shared/media-advice-diagnostics.mjs';
 
 export function admitKinobazaURL(value) {
   // Validate original spelling BEFORE URL normalization (default ports/dot paths).
@@ -13,11 +14,38 @@ const normalize = s => typeof s === 'string' ? s.normalize('NFC').replace(/\s+/g
 const text = n => (n.childNodes ?? []).map(c => c.nodeName === '#text' ? c.value : ['script', 'style', 'template', 'noscript', 'iframe'].includes(c.tagName) ? '' : text(c)).join(' ').replace(/\s+/gu, ' ').trim();
 const excluded = n => { for (let p = n; p; p = p.parentNode) if (['nav', 'aside', 'footer', 'template', 'noscript', 'iframe'].includes(p.tagName)) return true; return false; };
 
-export function assistedIdentity(all, film, sourceURL) {
+export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic } = {}) {
   const active = all.filter(n => !excluded(n));
   const canonicals = active.filter(n => n.tagName === 'link' && (attr(n, 'rel') ?? '').split(/\s+/).includes('canonical')).map(n => attr(n, 'href'));
-  const outcome = (status, reason) => ({ status, reason, basis: 'selected TMDb projection versus explicit source identity; no transliteration or user override',
-    observed: { headingCount: headings.length, originalTitleCount: originals.length, directorCount: directors.size, canonicalCount: canonicals.length, stableIdCount: stable.length } });
+  const outcome = (status, reason) => {
+    const counts = { headingCount: headings.length, originalTitleCount: originals.length, directorCount: directors.size, canonicalCount: canonicals.length, stableIdCount: stable.length };
+    const reasonGate = { 'source-identity-structure-limit':'structure-limit', 'source-canonical-conflict':'canonical-conflict', 'source-stable-id-conflict':'stable-id-conflict', 'malformed-source-stable-id':'stable-id-shape', 'source-canonical-ambiguous':'canonical-count', 'source-identity-structure-incomplete':'metadata-structure', 'source-title-year-missing':'heading-format', 'source-title-conflict':'heading-alias', 'source-original-title-scope-unestablished':'original-scope', 'source-original-title-unestablished':'original-alias', 'selected-year-missing':'selected-year', 'source-year-conflict-without-stable-crosswalk':'year-crosswalk', 'source-or-selected-director-missing':'director-presence', 'director-scope-unestablished':'director-scope', 'director-alias-unestablished':'director-alias' };
+    const failedGate = reasonGate[reason] ?? null, failedAt = identityGates.indexOf(failedGate);
+    const parsed = headings.length === 1 ? /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]) : null;
+    const names = [film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])], aliases = new Set(names.map(normalize).filter(Boolean));
+    const directorNames = film.directorAliases ?? [], directorAliases = new Set(directorNames.map(normalize).filter(Boolean));
+    const expected = { tmdb: String(film.tmdbId), imdb: film.imdbId };
+    const diagnostics = { failedGate, counts, comparisons: {
+      canonicalMatch: canonicals.length === 1 ? canonicals[0] === sourceURL : null,
+      stableIdMatch: stable.some(s => s.id && expected[s.namespace] === s.id),
+      stableIdConflict: stable.some(s => s.id && expected[s.namespace] && expected[s.namespace] !== s.id) || ['tmdb','imdb'].some(ns => new Set(stable.filter(s => s.id && s.namespace === ns).map(s => s.id)).size > 1),
+      headingAliasMatch: parsed ? aliases.has(normalize(parsed[1])) : null,
+      originalAliasMatch: originals.length === 1 ? aliases.has(normalize(originals[0])) : null,
+      yearEqual: parsed && film.year ? Number(parsed[2]) === film.year : null,
+      directorAliasMatch: directors.size && directorAliases.size ? [...directors].every(d => directorAliases.has(normalize(d))) : null },
+      gates: Object.fromEntries(identityGates.map((g,i) => [g, status === 'matched' || i < failedAt ? 'pass' : i === failedAt ? status === 'mismatch' ? 'fail' : 'unresolved' : 'not-evaluated'])) };
+    if (reason === 'source-identity-structure-limit') for (const key of Object.keys(diagnostics.comparisons)) diagnostics.comparisons[key] = null;
+    const result = { status, reason, basis: 'selected TMDb projection versus explicit source identity; alias non-match is not independent proof of another film; no transliteration or user override', observed: counts, diagnostics };
+    // Explicit local diagnostic hook only. Values are never attached to the
+    // normal result, report, ledger, log or a browser-controlled option.
+    if (typeof onIdentityDiagnostic === 'function') {
+      const bounded = values => values.slice(0, 32).map(s => typeof s === 'string' ? s.slice(0,500) : null);
+      try { onIdentityDiagnostic({ ...result, sourceURL, sourceIdentity: { h1: bounded(headings), h2: bounded(originals), year: parsed ? Number(parsed[2]) : null, directors: bounded([...directors]) },
+        expected: { year: film.year ?? null, imdbId: film.imdbId, tmdbId: film.tmdbId, titleAliases: bounded(names), directorAliases: bounded(directorNames) },
+        truncated: reason === 'source-identity-structure-limit' || [headings, originals, [...directors], names, directorNames].some(a => a.length > 32 || a.some(s => typeof s === 'string' && s.length > 500)) }); } catch {}
+    }
+    return result;
+  };
   const headings = active.filter(n => n.tagName === 'h1').map(text);
   const headingNode = active.find(n => n.tagName === 'h1');
   const accordions = active.filter(n => attr(n, 'id') === 'availabilityAccordion');
@@ -85,7 +113,7 @@ export function assistedIdentity(all, film, sourceURL) {
   return outcome('matched', stableMatch ? 'explicit-stable-and-structural-match' : 'explicit-title-year-director-match');
 }
 
-export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, signal } = {}) {
+export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, signal, onIdentityDiagnostic } = {}) {
   if (!admitKinobazaURL(sourceURL)) throw new Error('Unadmitted source');
   const controller = new AbortController(); const abort = () => controller.abort(); signal?.addEventListener('abort', abort, { once: true });
   if (signal?.aborted) controller.abort();
@@ -106,7 +134,7 @@ export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeou
     while (true) { const part = await bounded(reader.read()); if (part.done) break; bytes += part.value.byteLength; if (bytes > maxBytes) { void reader.cancel().catch(() => {}); return fail('response-too-large', r.status); } chunks.push(part.value); }
     const html = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
     if (/captcha|cf-chl-|challenge-platform/i.test(html)) return fail('challenge-unsupported-no-retry', r.status);
-    const extracted = await extractHtml(html, film, { identityCheck: all => assistedIdentity(all, film, sourceURL) });
+    const extracted = await extractHtml(html, film, { identityCheck: all => assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic }) });
     const receivedAt = new Date().toISOString();
     if (extracted.localization) extracted.localization.provenance = { source: 'Kinobaza HTML', sourceURL, receivedAt, method: 'initial HTML source blocks; assisted card', upstream: 'not-established' };
     return { ...extracted, sourceURL, receivedAt, bytes, httpStatus: r.status, requestsMade: 1 };
