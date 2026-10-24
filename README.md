@@ -123,8 +123,17 @@ implemented or documented v1.3.1 scope.
   (TMDb2/Tavily1/Kinobaza0; cumulative17). Screenshot evidence shows unchanged
   `/persons/denis-villeneuve`: a person-shaped pointer correctly rejected by
   title-card admission, not a normalization defect. No HTML destination checked;
-  query strategy changes are proposals only. A second result-reader error after
+  at that checkpoint query strategy changes were proposals only. A second result-reader error after
   the JSON was printed is consistent with one-shot handoff consumption.
+  [Title/year-only search](docs/m4-media-advice.md#titleyear-oriented-kinobaza-search--2026-10-23)
+  is now implemented separately above #198, preserving the independent director
+  gate and existing limits. The authorised Blade-only control used5/6 attempts
+  (TMDb2/Tavily1/Kinobaza2; prior17 separate, actual cumulative22).
+  Search admitted3 pointers: two read, one unexamined. The2049 card stopped at
+  director-alias-unestablished (Денні Вільньов versus Дені Вільнев / Denis
+  Villeneuve); the other visible card fields describe Blade Runner1982 and
+  fail title matching. Claims withheld; no general-quality/causal conclusion or
+  historical-pilot reconstruction. No automatic repeat or alias bypass.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   prepared only; five pilot films still unselected.
 

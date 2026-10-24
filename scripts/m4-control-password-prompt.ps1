@@ -3,7 +3,8 @@
 param(
     [Parameter(Mandatory = $true)][ValidatePattern('^[a-f0-9]{40}$')][string]$ExpectedCommit,
     [switch]$CheckPrerequisites,
-    [switch]$UrlDiagnostic
+    [switch]$UrlDiagnostic,
+    [switch]$TitleYearControl
 )
 
 Set-StrictMode -Version Latest
@@ -31,6 +32,7 @@ function Get-TransientPlainText([Security.SecureString]$Value) {
 }
 
 try {
+    if ($UrlDiagnostic -and $TitleYearControl) { throw 'incompatible-control-modes' }
     if (-not $IsWindows -or -not (Test-Path -LiteralPath $nodePath -PathType Leaf) -or -not (Test-Path -LiteralPath $runnerPath -PathType Leaf)) { throw 'prerequisites' }
     $actualCommit = & git -C $repoPath rev-parse HEAD 2>$null
     if ($LASTEXITCODE -ne 0 -or $actualCommit -cne $ExpectedCommit) { throw 'checkout' }
@@ -45,6 +47,7 @@ try {
     $options = [IO.Pipes.PipeOptions]::Asynchronous -bor [IO.Pipes.PipeOptions]::CurrentUserOnly
     $pipe = [IO.Pipes.NamedPipeServerStream]::new($pipeName, [IO.Pipes.PipeDirection]::Out, 1, [IO.Pipes.PipeTransmissionMode]::Byte, $options)
     if ($UrlDiagnostic) { Write-Host 'ONE URL-diagnostic run: Blade Runner 2049 only; TMDb<=2 + Tavily<=1; card GET=0; max3 attempts (prior14 separate).' }
+    elseif ($TitleYearControl) { Write-Host 'ONE title/year control: Blade Runner 2049 only; TMDb<=2 + Tavily<=2 + card GET<=2; max6 attempts (prior17 separate; cumulative max23).' }
     else { Write-Host 'Two hidden inputs; then ONE run: Blade Runner 2049 and Mortal Kombat (2021), max 12 source attempts.' }
     Write-Host 'Do not use a transcript/recorded terminal. Do not repeat after an interrupted or uncertain run.'
     $secureTmdb = Read-Host 'TMDB_READ_ACCESS_TOKEN (hidden)' -AsSecureString
@@ -70,6 +73,7 @@ try {
     $start.ArgumentList.Add('--live-control')
     $start.ArgumentList.Add('--credentials-stdin')
     if ($UrlDiagnostic) { $start.ArgumentList.Add('--url-diagnostic') }
+    if ($TitleYearControl) { $start.ArgumentList.Add('--title-year-control') }
     # No inherited source credentials, Node preload/debug hooks or TLS bypass.
     foreach ($name in @('TMDB_READ_ACCESS_TOKEN','TAVILY_API_KEY','NODE_OPTIONS','NODE_PATH','NODE_INSPECT_RESUME_ON_START','NODE_EXTRA_CA_CERTS','NODE_TLS_REJECT_UNAUTHORIZED','NODE_DEBUG','NODE_DEBUG_NATIVE','NODE_V8_COVERAGE','SSLKEYLOGFILE')) { [void]$start.Environment.Remove($name) }
     $child = [Diagnostics.Process]::new()
@@ -92,6 +96,7 @@ try {
     $result = $resultText | ConvertFrom-Json -Depth 30
     if ($result.execution -cne 'local-diagnostic' -or $result.status -cne 'completed-controls-not-historical-reconstruction' -or $result.runId -notmatch '^[a-f0-9-]{36}$' -or $result.counts.total -gt 12) { throw 'result-contract' }
     if ($UrlDiagnostic -and ($result.mode -cne 'url-diagnostic' -or $result.counts.total -gt 3 -or $result.counts.tmdb -gt 2 -or $result.counts.search -gt 1 -or $result.counts.cards -ne 0 -or @($result.cases).Count -ne 1 -or $result.cases[0].film -cne 'Blade Runner 2049')) { throw 'url-diagnostic-contract' }
+    if ($TitleYearControl -and ($result.mode -cne 'title-year-control' -or $result.counts.total -gt 6 -or $result.counts.tmdb -gt 2 -or $result.counts.search -gt 2 -or $result.counts.cards -gt 2 -or @($result.cases).Count -ne 1 -or $result.cases[0].film -cne 'Blade Runner 2049' -or $result.accounting.priorAttempts -ne 17 -or $result.accounting.cumulativeMax -ne 23)) { throw 'title-year-control-contract' }
     # Checkout is local provenance, NEVER deployed-runtime SHA attestation.
     $reportText = @{ localCheckoutSha = $ExpectedCommit; result = $result } | ConvertTo-Json -Depth 30 -Compress
     $result = $null

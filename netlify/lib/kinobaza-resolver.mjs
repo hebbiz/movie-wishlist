@@ -5,7 +5,7 @@ const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s
 export function resolverQueries(film) {
   const names = [...new Set([film.originalTitle, film.identityTitle, ...(film.titleAliases ?? [])].map(text).filter(Boolean))].slice(0, 2);
   const quote = s => '"' + s.replace(/["\\]/g, ' ') + '"';
-  return names.map(name => [quote(name), Number.isInteger(film.year) ? film.year : '', text(film.directorAliases?.[0]) ? quote(text(film.directorAliases[0])) : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' '));
+  return names.map(name => [quote(name), Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' '));
 }
 export function admittedCandidates(items) {
   return candidateDiagnostics(items)?.urls ?? null;

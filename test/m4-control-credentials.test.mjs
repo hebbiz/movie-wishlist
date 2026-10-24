@@ -47,6 +47,15 @@ test('stdin CLI has no credential argv/env fallback; authored fetch stub makes Z
   assert.deepEqual(urlResult.counts,{tmdb:1,search:0,cards:0,total:1});
   assert.deepEqual(urlResult.accounting,{priorAttempts:14,cumulativeMax:17});
   assert.equal(urlResult.cases.length,1);assert.equal(urlResult.cases[0].film,'Blade Runner 2049');
+  const titleYear=spawnSync(process.execPath,['--import',blockNetwork,runner,'--live-control','--credentials-stdin','--title-year-control'],{input:JSON.stringify(authored),encoding:'utf8',env,timeout:10_000});
+  assert.equal(titleYear.status,0,titleYear.stderr);
+  const titleYearResult=JSON.parse(titleYear.stdout);assert.equal(titleYearResult.mode,'title-year-control');
+  assert.deepEqual(titleYearResult.limits,{tmdb:2,search:2,cards:2,total:6});
+  assert.deepEqual(titleYearResult.counts,{tmdb:1,search:0,cards:0,total:1});
+  assert.deepEqual(titleYearResult.accounting,{priorAttempts:17,cumulativeMax:23});
+  assert.equal(titleYearResult.cases.length,1);assert.equal(titleYearResult.cases[0].film,'Blade Runner 2049');
+  const incompatible=spawnSync(process.execPath,['--import',blockNetwork,runner,'--live-control','--credentials-stdin','--url-diagnostic','--title-year-control'],{input:JSON.stringify(authored),encoding:'utf8',env,timeout:10_000});
+  assert.equal(incompatible.status,2);assert.deepEqual(JSON.parse(incompatible.stdout),{execution:'local-diagnostic',status:'local-run-failed-no-retry'});
   for(const input of ['','{','{}']){
     const invalid=child(input);assert.equal(invalid.status,2);
     assert.deepEqual(JSON.parse(invalid.stdout),{execution:'local-diagnostic',status:'local-run-failed-no-retry'});
@@ -65,6 +74,9 @@ test('hidden Windows prompt parses and uses stdin/CurrentUserOnly IPC, not a dis
   assert.match(source,/StandardOutputEncoding = \[Text.UTF8Encoding\]::new\(\$false\)/);
   assert.match(source,/StandardErrorEncoding = \[Text.UTF8Encoding\]::new\(\$false\)/);
   assert.match(source,/if \(\$UrlDiagnostic\) \{ \$start.ArgumentList.Add\('--url-diagnostic'\) \}/);
+  assert.match(source,/if \(\$TitleYearControl\) \{ \$start.ArgumentList.Add\('--title-year-control'\) \}/);
+  assert.match(source,/\$UrlDiagnostic -and \$TitleYearControl/);
+  assert.match(source,/\$result.counts.total -gt 6/);assert.match(source,/\$result.accounting.priorAttempts -ne 17/);assert.match(source,/\$result.accounting.cumulativeMax -ne 23/);
   assert.match(source,/\$result.counts.total -gt 3/);assert.match(source,/\$result.counts.cards -ne 0/);
   assert.match(source,/PipeOptions\]::CurrentUserOnly/);
   assert.match(source,/WriteAsync\(\$reportBytes, 0, \$reportBytes.Length, \$deadline.Token\)/);
@@ -102,6 +114,7 @@ test('same-SSH safe-result reader parses, bounds result and cannot rerun sources
   assert.match(source,/ConvertTo-Json -Depth 30 -EscapeHandling EscapeNonAscii/);
   assert.match(source,/-Compress:\$Compact/);
   assert.match(source,/counts.total -gt 3/);assert.match(source,/counts.cards -ne 0/);
+  assert.match(source,/counts.total -gt 6/);assert.match(source,/accounting.priorAttempts -ne 17/);assert.match(source,/accounting.cumulativeMax -ne 23/);
   assert.doesNotMatch(source,/Read-Host|TMDB_READ_ACCESS_TOKEN|TAVILY_API_KEY|m4-control-diagnostic|node\.exe|https?:|Invoke-WebRequest|Invoke-RestMethod|Set-Content|Out-File|WriteAll|SetAccessControl|SetEnvironmentVariable|\$env:/);
 });
 test('UTF-8 child JSON and ASCII reader output preserve authored aliases under legacy CP866',{skip:nativeSkip},async()=>{

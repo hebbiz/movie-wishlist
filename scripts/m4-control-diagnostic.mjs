@@ -13,12 +13,13 @@ const api = 'https://api.themoviedb.org/3';
 const append = 'external_ids,alternative_titles,credits,release_dates,translations';
 const val = f => f?.state === 'reported' ? f.value : null;
 const normalized = s => typeof s === 'string' ? s.normalize('NFC').trim().toLowerCase() : '';
-export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = fetch, urlDiagnostic = false } = {}) {
+export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = fetch, urlDiagnostic = false, titleYearControl = false } = {}) {
+  if (urlDiagnostic && titleYearControl) throw Error('incompatible-control-modes');
   const totals = { tmdb:0, search:0, cards:0, total:0 }, cases = [];
-  const limits=urlDiagnostic?{tmdb:2,search:1,cards:0,total:3}:{tmdb:4,search:4,cards:4,total:12};
-  const selectedControls=urlDiagnostic?controls.slice(0,1):controls;
-  const base = { execution:'local-diagnostic', buildSha:null, runId:randomUUID(),mode:urlDiagnostic?'url-diagnostic':'identity-controls',limits,
-    ...(urlDiagnostic?{accounting:{priorAttempts:14,cumulativeMax:17}}:{}) };
+  const limits=urlDiagnostic?{tmdb:2,search:1,cards:0,total:3}:titleYearControl?{tmdb:2,search:2,cards:2,total:6}:{tmdb:4,search:4,cards:4,total:12};
+  const selectedControls=urlDiagnostic||titleYearControl?controls.slice(0,1):controls;
+  const base = { execution:'local-diagnostic', buildSha:null, runId:randomUUID(),mode:urlDiagnostic?'url-diagnostic':titleYearControl?'title-year-control':'identity-controls',limits,
+    ...(urlDiagnostic?{accounting:{priorAttempts:14,cumulativeMax:17}}:titleYearControl?{accounting:{priorAttempts:17,cumulativeMax:23}}:{}) };
   const missing = [['TMDB_READ_ACCESS_TOKEN',tmdbToken],['TAVILY_API_KEY',tavilyKey]].filter(([,v]) => typeof v !== 'string' || !v || /\s/.test(v)).map(([k])=>k);
   if (missing.length) return { ...base, status:'blocked-missing-local-credentials', missing, counts:totals, cases:selectedControls.map(c=>({film:c.title,status:'not-run',counts:{tmdb:0,search:0,cards:0,total:0}})) };
   for (const control of selectedControls) {
@@ -67,9 +68,13 @@ export async function runControlDiagnostic({ tmdbToken, tavilyKey, fetchImpl = f
       const resolver=createKinobazaResolver({apiKey:tavilyKey,onIdentityDiagnostic:d=>comparisons.push(d)});
       const result=await resolver(film,{fetchImpl:dispatch,signal,calls:[],reserve:async stage=>{if(seen.has(stage))throw Error('repeat');seen.add(stage);}});
       item.status=result.status;item.resolver=result.resolver;
-      // Full bounded field comparisons exist only during this invocation. Emit
-      // only the minimum public identity difference for the failing gate.
+      // Comparisons live only during this invocation/IPC handoff. Ordinary
+      // controls emit the minimum public difference for the failing gate.
       item.cards= comparisons.map(d=>({sourceURL:d.sourceURL,identity:d.status,reason:d.reason,diagnostics:d.diagnostics,truncated:d.truncated,
+        // Explicit Blade-only control: bounded public identity fields, never
+        // HTML, search snippets, offers or provider/tracking URLs. Kept in
+        // invocation/IPC memory only; no deployed report/ledger change.
+        ...(titleYearControl?{comparison:{source:d.sourceIdentity,expected:d.expected}}:{}),
         ...(d.diagnostics.failedGate==='heading-alias'?{difference:{h1:d.sourceIdentity.h1,expectedPrimaryTitles:[film.identityTitle,film.originalTitle],knownTitleAliasCount:film.titleAliases.length}}:{}),
         ...(d.diagnostics.failedGate==='original-alias'||d.diagnostics.failedGate==='original-scope'?{difference:{h2:d.sourceIdentity.h2,expectedPrimaryTitles:[film.identityTitle,film.originalTitle]}}:{}),
         ...(d.diagnostics.failedGate?.startsWith('director-')?{difference:{directors:d.sourceIdentity.directors,expectedDirectorAliases:d.expected.directorAliases}}:{}),
@@ -86,7 +91,7 @@ if (process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   let credentials;
   try {
     credentials=process.argv.includes('--credentials-stdin') ? await readControlCredentials(process.stdin) : {tmdbToken:process.env.TMDB_READ_ACCESS_TOKEN,tavilyKey:process.env.TAVILY_API_KEY};
-    const result=await runControlDiagnostic({...credentials,urlDiagnostic:process.argv.includes('--url-diagnostic')});
+    const result=await runControlDiagnostic({...credentials,urlDiagnostic:process.argv.includes('--url-diagnostic'),titleYearControl:process.argv.includes('--title-year-control')});
     process.stdout.write(JSON.stringify(result,null,2)+'\n');
     if(result.status==='blocked-missing-local-credentials') process.exitCode=2;
   } catch {
