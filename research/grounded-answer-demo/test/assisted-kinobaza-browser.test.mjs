@@ -76,7 +76,7 @@ test('assisted mobile card addition: admission, source gate, incremental draft p
       if (kind === 'extraction-refusal') {
         assert.match(report, /Assisted extraction diagnostics: unsupported-accordion-items/);
         assert.match(report, /not evidence of absent offers/);
-        assert.equal(await page.locator('article.discovery-card').count(), 2);
+        assert.equal(await page.locator('article.discovery-card').count(), 3);
       }
       if (kind === 'mismatch') {
         assert.match(report, /Year differs; stable-ID crosswalk unestablished/);

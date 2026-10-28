@@ -2,6 +2,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[a-f0-9]{40}$')][string]$ExpectedCommit,
+    [ValidateSet('practical-five','pilot-retrieval')][string]$Study = 'practical-five',
     [switch]$CheckPrerequisites
 )
 
@@ -17,7 +18,7 @@ $maximumResponse = 524288
 $pipe = $null
 $secureTmdb = $null
 $secureTavily = $null
-$context = $null
+$context = @{ study = $Study }
 $startedAt = [DateTimeOffset]::UtcNow
 $expiresAt = $startedAt.AddHours(4)
 $completedOperations = 0
@@ -171,12 +172,12 @@ function Test-M4LocalPipe {
 function ConvertTo-M4Operation([object]$Value) {
     if ($Value -isnot [Collections.IDictionary]) { throw 'operation-object-required' }
     foreach ($field in $Value.Keys) { if ($field -cnotin @('action', 'film', 'url')) { throw 'operation-field' } }
-    if ($Value.action -isnot [string] -or $Value.action -cnotin @('identify', 'resolve', 'inspect-card', 'inspect-person', 'status', 'stop')) { throw 'operation-action' }
+    if ($Value.action -isnot [string] -or $Value.action -cnotin @('identify', 'resolve', 'inspect-card', 'inspect-person', 'inspect-director', 'status', 'stop')) { throw 'operation-action' }
     $operation = @{ action = $Value.action }
     if ($Value.Contains('film')) {
-        $filmNames = @('Blade Runner 2049', 'Mortal Kombat', 'Alien', 'Oppenheimer', 'Dune: Part Two')
+        $filmNames = if ($Study -ceq 'pilot-retrieval') { @('Blade Runner', 'Mortal Kombat', 'Supergirl') } else { @('Blade Runner 2049', 'Mortal Kombat', 'Alien', 'Oppenheimer', 'Dune: Part Two') }
         if ($Value.film -is [string] -and $Value.film -cin $filmNames) { $operation.film = [Array]::IndexOf($filmNames, $Value.film) + 1 }
-        elseif (($Value.film -is [int] -or $Value.film -is [long]) -and $Value.film -ge 1 -and $Value.film -le 5) { $operation.film = [int]$Value.film }
+        elseif (($Value.film -is [int] -or $Value.film -is [long]) -and $Value.film -ge 1 -and $Value.film -le $filmNames.Count) { $operation.film = [int]$Value.film }
         else { throw 'operation-film' }
     } elseif ($Value.action -cnotin @('status', 'stop')) { throw 'operation-film-required' }
     if ($Value.action -cin @('inspect-card', 'inspect-person')) {
@@ -287,13 +288,13 @@ try {
         $secureTavily = ConvertTo-SecureString 'AUTHORED_TAVILY_PLACEHOLDER' -AsPlainText -Force
         $probe = Invoke-M4Worker @{ action = 'status' }
         if ($probe.execution -cne 'local-diagnostic' -or $probe.status -cne 'ready' -or $probe.counts.total -ne 0) { throw 'worker-round-trip' }
-        @{ execution = 'local-diagnostic'; status = 'prerequisites-ok'; localCheckoutSha = $initialCommit; explicitSidAcl = $true; remoteClientsRejected = $true; localRoundTrip = $true; workerStatusRoundTrip = $true; sourceRequests = 0; credentialPrompts = 0 } | ConvertTo-Json -Compress
+        @{ execution = 'local-diagnostic'; status = 'prerequisites-ok'; study = $Study; localCheckoutSha = $initialCommit; explicitSidAcl = $true; remoteClientsRejected = $true; localRoundTrip = $true; workerStatusRoundTrip = $true; sourceRequests = 0; credentialPrompts = 0 } | ConvertTo-Json -Compress
         exit 0
     }
     $failureCode = 'interactive-console-required'
     if ([Console]::IsInputRedirected) { throw 'interactive-console-required' }
     $pipe = New-M4Pipe $pipeName
-    Write-Host 'Local five-film series. Enter each key once; leave this owner SSH window open (maximum four hours).'
+    Write-Host ('Local diagnostic study: ' + $Study + '. Enter each key once; leave this owner SSH window open (maximum four hours).')
     Write-Host 'Keys stay in process memory. Use an unrecorded terminal; close the window or send stop to end the session.'
     $failureCode = 'hidden-input'
     $secureTmdb = Read-Host 'TMDB_READ_ACCESS_TOKEN (hidden)' -AsSecureString

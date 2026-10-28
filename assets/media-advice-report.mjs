@@ -1,4 +1,4 @@
-import { safeSearchDiagnostic, safeIdentityDiagnostic, resolverStatuses } from '../shared/media-advice-diagnostics.mjs';
+import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../shared/media-advice-diagnostics.mjs';
 const identities = new Set(['matched', 'mismatch', 'unresolved']);
 const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2'];
 const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-and-structural-match','explicit-title-year-director-match']);
@@ -37,7 +37,13 @@ export function safeMediaReport(result, { applied = false } = {}) {
     lines.push(`Card: ${identities.has(card.identity) ? card.identity : 'unresolved'}; reason ${knownReasons.has(card.reason) || card.reason === 'source-identity-structure-limit' ? card.reason : 'unknown'}; gate ${d.failedGate ?? 'none-or-unknown'}.`);
     if (card.reason === 'source-title-conflict') lines.push('Heading is not in known title aliases; not independent proof of a different film.');
     lines.push(`Identity structure ${JSON.stringify(d.counts)}; comparisons ${JSON.stringify(d.comparisons)}.`);
+    const e = safeExtractionDiagnostic(card.extractionDiagnostic);
+    const ref = typeof card.cardRef === 'string' && /^[a-f0-9]{64}$/.test(card.cardRef) ? card.cardRef : 'unknown';
+    lines.push(`Extraction: ${e.status}; candidates ${e.candidateCount ?? 'unknown'}, foreign-context ${e.foreignCandidateCount ?? 'unknown'}, localization blocks ${e.blockCount ?? 'unknown'}, film audio ${e.filmAudioState}; issues ${JSON.stringify(e.issues)}; requested-card SHA256 ${ref}.`);
   }
+  const kinoRows = Array.isArray(result?.rows) ? rows.filter(r=>r.id?.startsWith('kinobaza:') || r.id?.includes(':kinobaza:')).length : undefined;
+  const kinoOther = Array.isArray(result?.unmapped) ? result.unmapped.filter(r=>r.source==='kinobaza').length : undefined;
+  lines.push(`Kinobaza projection: mapped ${count(kinoRows)}; other platforms ${count(kinoOther)}; foreign-context candidates are not UA offers.`);
   lines.push(`Film-level UA audio badge: ${loc(result?.filmLocalization?.ukrainianAudio?.state)}; not provider tracks.`);
   for (const r of rows.slice(0, 24)) {
     const source = ['tmdb','motn','kinobaza'].find(s => r.id?.startsWith(s + ':') || r.id?.includes(':' + s + ':')) ?? 'unknown';

@@ -34,19 +34,30 @@ for (const [name, transform, expected, count, reason = 'source-original-title-un
   if (expected === 'unresolved') { assert.equal(r.identity.reason, reason); assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined); }
 });
 
-for (const [name, transform, issue] of [
-  ['no Ukrainian section', h => h.replaceAll('collapseUA', 'collapsePL').replace('Доступно в Україні', 'Доступно в Польщі'), 'missing-explicit-ukraine-section'],
-  ['unsupported direct accordion child', h => h.replace('<div id="availabilityAccordion">', '<div id="availabilityAccordion"><p>Authored unsupported child</p>'), 'unsupported-accordion-items'],
-  ['ambiguous territory control', h => h.replace('Доступно в Україні</button>', 'Доступно в Україні</button><button>Authored other control</button>'), 'ambiguous-territory-control'],
-]) test(`matched identity versus extraction refusal: ${name}`, async () => {
+for (const [name, transform, issue, candidates] of [
+  ['no Ukrainian section', h => h.replaceAll('collapseUA', 'collapsePL').replace('Доступно в Україні', 'Доступно в Польщі'), 'missing-explicit-ukraine-section', 3],
+  ['unsupported direct accordion child', h => h.replace('<div id="availabilityAccordion">', '<div id="availabilityAccordion"><p>Authored unsupported child</p>'), 'unsupported-accordion-items', 1],
+  ['ambiguous territory control', h => h.replace('Доступно в Україні</button>', 'Доступно в Україні</button><button>Authored other control</button>'), 'ambiguous-territory-control', 1],
+]) test(`matched identity preserves independent claims when country evidence is incomplete: ${name}`, async () => {
   const h = harness({ html: transform(markup()) }); await h.setup(); const r = await h.read(), data = r.payload.result;
-  assert.equal(data.assistedContribution.identity, 'matched'); assert.equal(data.assistedContribution.status, 'unsupported-markup');
-  assert.ok(data.assistedContribution.extractionIssues.includes(issue)); assert.equal(data.assistedContribution.candidates, 0);
+  assert.equal(data.assistedContribution.identity, 'matched'); assert.equal(data.assistedContribution.status, 'partial');
+  assert.ok(data.assistedContribution.extractionIssues.includes(issue)); assert.equal(data.assistedContribution.candidates, candidates);
+  assert.equal(data.assistedContribution.blocks, 1); assert.equal(data.filmLocalization.ukrainianAudio.state, 'reported-positive');
+  const rows = data.rows.filter(row => row.id.startsWith('kinobaza:'));
+  assert.equal(rows.length, 1); assert.equal(rows[0].country, null); assert.equal(rows[0].availability.state, 'unknown');
+  assert.equal(rows[0].kinobazaLocalization.audio.state, 'reported-positive'); assert.equal(rows[0].audio.state, 'unknown');
   data.accounting = r.payload.workflow;
   const report = buildShortReport({ filmId: film.id, mode: 'live', result: data });
   assert.ok(report.includes(`Assisted extraction diagnostics: ${issue}`)); assert.match(report, /not evidence of absent offers/);
   assert.doesNotMatch(report, /https?:|author-tmdb|author-motn|Authored unsupported|Authored other/);
   assert.equal(h.calls.length, 5); assert.equal((await h.read()).status, 400);
+});
+
+test('a separately recognized film badge survives invalid country markup without inventing candidates', async () => {
+  const r = await fetchAssistedKinobaza(CARD, film, async () => response(markup({ blocks: '' }).replace('<div id="availabilityAccordion">', '<div id="availabilityAccordion"><p>Authored unsupported child</p>')));
+  assert.equal(r.identity.status, 'matched'); assert.equal(r.status, 'partial');
+  assert.deepEqual(r.candidates, []); assert.deepEqual(r.availabilitySignals, []); assert.deepEqual(r.localization.blocks, []);
+  assert.equal(r.localization.film.ukrainianAudio.state, 'reported-positive'); assert.deepEqual(r.issues, ['unsupported-accordion-items']);
 });
 
 test('missing viewing boundary stops original-title establishment before extraction, not evidence of absent offers', async () => {

@@ -9,6 +9,14 @@ export const CONFIRMED_DIRECTOR_ALIASES = Object.freeze([Object.freeze({
     reference: 'https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA | https://api.themoviedb.org/3/person/137427?language=uk-UA&append_to_response=external_ids | https://kinobazaua.com/persons/denis-villeneuve',
     verifiedAt: '2026-10-23',
   }),
+}), Object.freeze({
+  namespace: 'tmdb:person', personId: 50767, aliases: Object.freeze(['Крейґ Ґіллеспі']),
+  scope: 'kinobaza-director-identity',
+  evidence: Object.freeze({
+    source: 'Reviewed canonical person header: exact English name Craig Gillespie, full birth date 1967-09-01 and director role; trusted TMDb credits person50767 and matching person details. No shared external person ID observed on Kinobaza.',
+    reference: 'https://api.themoviedb.org/3/movie/1081003?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations | https://api.themoviedb.org/3/person/50767?language=uk-UA&append_to_response=external_ids | https://kinobazaua.com/persons/craig-gillespie',
+    verifiedAt: '2026-10-28',
+  }),
 })]);
 const namespace = 'tmdb:person';
 const scope = 'kinobaza-director-identity';

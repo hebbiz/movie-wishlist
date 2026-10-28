@@ -3,7 +3,7 @@
 param(
     [Parameter(Mandatory = $true, ParameterSetName = 'JSON')][string]$Operation,
     [Parameter(Mandatory = $true, ParameterSetName = 'Action')]
-    [ValidateSet('identify','resolve','inspect-card','inspect-person','status','stop')][string]$Action,
+    [ValidateSet('identify','resolve','inspect-card','inspect-person','inspect-director','status','stop')][string]$Action,
     [Parameter(ParameterSetName = 'Action')][ValidateRange(1,5)][int]$Film,
     [Parameter(ParameterSetName = 'Action')][string]$SourceURL
 )

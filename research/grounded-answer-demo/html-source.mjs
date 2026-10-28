@@ -142,10 +142,8 @@ export async function extractHtml(html, film, { identityCheck } = {}) {
     const accordion = accordions[0];
     const localization = extractLocalization({ accordion, h1: all.find(n => n.tagName === 'h1'), identifyProvider: providerName, isExcluded: excluded,
       makeCandidate: (anchor, territory, provider) => candidate(anchor, territory, html, provider) });
-    const items = children(accordion).filter(n => n.tagName);
-    if (!items.length || items.some(n => !hasClass(n, 'accordion-item'))) return fail('unsupported-accordion-items');
-    const candidates = []; const issues = []; const panels = new Set();
-    const add = (a, territory) => {
+    const independentCandidates = [], independentIssues = [];
+    const add = (a, territory, candidates, issues) => {
       if (excluded(a)) return;
       const provider = providerName(a);
       if (provider?.unsupported) { issues.push('conflicting-provider-label'); return; }
@@ -154,31 +152,48 @@ export async function extractHtml(html, film, { identityCheck } = {}) {
       if (entry && localization.byAnchor.has(a)) entry.blockId = localization.byAnchor.get(a).blockId;
       if (entry) { candidates.push(entry); if (entry.issue) issues.push(entry.issue); }
     };
-    for (const item of items) {
-      const headings = nodes(item).filter(n => hasClass(n, 'accordion-header'));
-      if (headings.length !== 1) return fail('ambiguous-territory-heading');
-      const buttons = nodes(headings[0]).filter(n => n.tagName === 'button');
-      if (buttons.length !== 1) return fail('ambiguous-territory-control');
-      const [code] = Object.entries(territories).find(([, label]) => text(buttons[0]) === label) ?? [];
-      const target = attr(buttons[0], 'data-bs-target');
-      if (!code || target !== `#collapse${code}` || panels.has(code)) return fail('unsupported-or-conflicting-territory');
-      const panel = all.filter(n => attr(n, 'id') === target.slice(1));
-      if (panel.length !== 1 || panel[0].parentNode !== item || attr(panel[0], 'data-bs-parent') !== '#availabilityAccordion') return fail('ambiguous-territory-panel');
-      panels.add(code);
-      for (const a of nodes(panel[0]).filter(n => n.tagName === 'a')) add(a, { code, label: territories[code] });
-    }
-    if (!panels.has('UA')) return fail('missing-explicit-ukraine-section');
     const h1 = all.find(n => n.tagName === 'h1');
     for (const a of all.filter(n => n.tagName === 'a')) {
       const offset = a.sourceCodeLocation?.startOffset;
       // Only source-specific film badges between the title and country accordion.
-      if (offset > h1.sourceCodeLocation.startOffset && offset < accordion.sourceCodeLocation.startOffset) add(a, null);
+      if (offset > h1.sourceCodeLocation.startOffset && offset < accordion.sourceCodeLocation.startOffset) add(a, null, independentCandidates, independentIssues);
     }
+    if (independentCandidates.length > 100) return fail('candidate-count-limit');
+    // Film badges/source blocks have their own validated boundary. Country
+    // parsing is atomic: ambiguity withholds every country claim, not these
+    // independent observations. A valid foreign-only accordion stays foreign.
+    const countryCandidates = [], countryIssues = [], panels = new Set();
+    const countryIssue = (() => {
+      const items = children(accordion).filter(n => n.tagName);
+      if (!items.length || items.some(n => !hasClass(n, 'accordion-item'))) return 'unsupported-accordion-items';
+      for (const item of items) {
+        const headings = nodes(item).filter(n => hasClass(n, 'accordion-header'));
+        if (headings.length !== 1) return 'ambiguous-territory-heading';
+        const buttons = nodes(headings[0]).filter(n => n.tagName === 'button');
+        if (buttons.length !== 1) return 'ambiguous-territory-control';
+        const [code] = Object.entries(territories).find(([, label]) => text(buttons[0]) === label) ?? [];
+        const target = attr(buttons[0], 'data-bs-target');
+        if (!code || target !== `#collapse${code}` || panels.has(code)) return 'unsupported-or-conflicting-territory';
+        const panel = all.filter(n => attr(n, 'id') === target.slice(1));
+        if (panel.length !== 1 || panel[0].parentNode !== item || attr(panel[0], 'data-bs-parent') !== '#availabilityAccordion') return 'ambiguous-territory-panel';
+        panels.add(code);
+        for (const a of nodes(panel[0]).filter(n => n.tagName === 'a')) add(a, { code, label: territories[code] }, countryCandidates, countryIssues);
+        if (countryCandidates.length + independentCandidates.length > 100) return 'candidate-count-limit';
+      }
+      return panels.has('UA') ? null : 'missing-explicit-ukraine-section';
+    })();
+    if (countryIssue === 'candidate-count-limit') return fail(countryIssue);
+    const countryValid = !countryIssue || countryIssue === 'missing-explicit-ukraine-section';
+    const independentClaims = independentCandidates.length || localization.blocks.length || localization.film.ukrainianAudio.state !== 'unknown';
+    if (!countryValid && !independentClaims) return fail(countryIssue);
+    // Keep the established order and block IDs when all country sections parse.
+    const candidates = [...(countryValid ? countryCandidates : []), ...independentCandidates];
+    const issues = [...(countryValid ? countryIssues : []), ...independentIssues, ...(countryIssue ? [countryIssue] : []), ...localization.issues];
     if (candidates.length > 100) return fail('candidate-count-limit');
     const availabilitySignals = candidates.filter(c => c.territory).map(c => ({ provider: c.provider, href: c.href, territory: c.territory,
       state: 'source-section-claim', value: 'available', access: 'unknown', upstream: 'JustWatch', basis: 'Explicit country heading/panel, not href presence or account entitlement.' }));
-    return { status: candidates.length ? (issues.length || localization.issues.length ? 'partial' : 'ok') : 'unresolved', identity: checked, candidates,
-      localization: { film: localization.film, blocks: localization.blocks }, availabilitySignals, issues: [...new Set([...issues, ...localization.issues])] };
+    return { status: candidates.length || independentClaims ? (issues.length ? 'partial' : 'ok') : 'unresolved', identity: checked, candidates,
+      localization: { film: localization.film, blocks: localization.blocks }, availabilitySignals, issues: [...new Set(issues)] };
   } catch { return { status: 'unsupported-markup', candidates: [], issues: ['unresolved-parser-or-structure'] }; }
 }
 
