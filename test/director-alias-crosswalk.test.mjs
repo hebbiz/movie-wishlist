@@ -1,5 +1,5 @@
-// Authored markup/films, not reconstructed source HTML or live coverage. One
-// test exercises the independently reviewed production person record below;
+// Authored markup/films, not reconstructed source HTML or live coverage. Tests
+// exercise the independently reviewed production person records below;
 // other records are authored. No availability/track assertion.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -36,7 +36,7 @@ async function identity({ selected = film, html = markup({ director: 'Vérified 
 }
 
 test('reviewed real alias is immutable and person-scoped; authored films are not live coverage evidence', async () => {
-  assert.equal(CONFIRMED_DIRECTOR_ALIASES.length, 1); assert.equal(Object.isFrozen(CONFIRMED_DIRECTOR_ALIASES), true);
+  assert.equal(CONFIRMED_DIRECTOR_ALIASES.length, 2); assert.equal(Object.isFrozen(CONFIRMED_DIRECTOR_ALIASES), true);
   assert.deepEqual(CONFIRMED_DIRECTOR_ALIASES[0].aliases, ['Денні Вільньов']);
   const selected = { ...film, directorAliases: ['Дені Вільнев', 'Denis Villeneuve'],
     directorPeople: [person({ personId:137427, names: ['Дені Вільнев', 'Denis Villeneuve'] })] };
@@ -52,6 +52,26 @@ test('reviewed real alias is immutable and person-scoped; authored films are not
     const result = await fetchAssistedKinobaza(CARD, selected, async () => htmlResponse(markup({director:'Денні Вільньов',...change})));
     assert.equal(result.identity.status,'mismatch'); assert.deepEqual(result.candidates,[]); assert.equal(result.localization,undefined);
   }
+});
+
+test('reviewed Gillespie spelling is person-scoped across films, never a Supergirl or spelling-similarity exception',async()=>{
+  const reviewed=CONFIRMED_DIRECTOR_ALIASES.find(r=>r.personId===50767);
+  assert.deepEqual(reviewed.aliases,['Крейґ Ґіллеспі']);assert.equal(reviewed.evidence.verifiedAt,'2026-10-28');
+  assert.match(reviewed.evidence.source,/1967-09-01/);assert.equal(Object.isFrozen(reviewed.aliases),true);
+  const selected={...film,directorAliases:['Крейґ Джиллеспай','Craig Gillespie'],directorPeople:[person({personId:50767,names:['Крейґ Джиллеспай','Craig Gillespie']})]};
+  for(const [index,personId] of [50767,50767,578].entries()){
+    const movie={...selected,identityTitle:`Авторський фільм ${index}`,originalTitle:`Invented film ${index}`,year:2000+index,directorPeople:[person({personId,names:selected.directorAliases})]};
+    const result=await fetchAssistedKinobaza(CARD,movie,async()=>htmlResponse(markup({title:movie.identityTitle,original:movie.originalTitle,year:movie.year,director:'Крейґ Ґіллеспі'})));
+    assert.equal(result.identity.status,personId===50767?'matched':'unresolved');
+    if(personId===50767)assert.equal(result.identity.directorAliasEvidence.personId,50767);
+    else{assert.equal(result.identity.reason,'director-alias-unestablished');assert.deepEqual(result.candidates,[]);assert.equal(result.localization,undefined);}
+  }
+  for(const change of [{director:'Крейг Гіллеспі'},{director:'Крейґ Ґіллеспі / Інша людина'},{stable:`<tr><td>IMDb:</td><td>tt${IDS[1]}</td></tr>`},{title:'Different authored film'},{year:1999}]){
+    const result=await fetchAssistedKinobaza(CARD,selected,async()=>htmlResponse(markup({director:'Крейґ Ґіллеспі',...change})));
+    assert.equal(result.identity.status,change.director?'unresolved':'mismatch');assert.deepEqual(result.candidates,[]);assert.equal(result.localization,undefined);
+  }
+  const ambiguous=await fetchAssistedKinobaza(CARD,{...selected,directorCount:2},async()=>htmlResponse(markup({director:'Крейґ Ґіллеспі'})));
+  assert.equal(ambiguous.identity.reason,'director-scope-unestablished');assert.deepEqual(ambiguous.candidates,[]);assert.equal(ambiguous.localization,undefined);
 });
 
 test('lookup is exact, namespaced, scoped and carries authored confirmation provenance', () => {

@@ -65,6 +65,30 @@ test('director inspection admits one fixed GET only from a cached single trusted
   const arbitraryURL=await practicalOperation({...keys,operation:{action:'inspect-director',film:1,url:'https://api.themoviedb.org/3/person/1'},context:{films:{1:film}}},()=>assert.fail('director URL cannot be supplied'));
   assert.equal(arbitraryURL.result.status,'invalid-operation');assert.equal(arbitraryURL.result.counts.total,0);
 });
+
+test('director inspection refuses root/appended API errors and malformed external IDs without rejecting missing optional IDs',async()=>{
+  const film={directorCount:1,directorPeople:[{namespace:'tmdb:person',personId:999999,names:['Authored director']}]};
+  const data={id:999999,name:'Authored director',also_known_as:[],imdb_id:'nm9999999',external_ids:{imdb_id:'nm9999999'}};
+  const inspect=async changed=>{
+    let calls=0;
+    const out=await practicalOperation({...keys,operation:{action:'inspect-director',film:1},context:{films:{1:film}}},async()=>{
+      calls++;return Response.json({...data,...changed,status_message:'AUTHORED_PRIVATE_ERROR'});
+    });
+    assert.equal(calls,1);assert.equal(out.result.counts.tmdb,1);assert.equal(out.result.counts.total,1);
+    assert.doesNotMatch(JSON.stringify(out),/AUTHORED_PRIVATE_ERROR|status_message/);
+    return out.result;
+  };
+  for(const changed of [{success:false},{status_code:7},{external_ids:{success:false}},{external_ids:{status_code:7}},
+    {external_ids:'invalid-object'},{external_ids:[]},{external_ids:false},{external_ids:7}]){
+    const refused=await inspect(changed);
+    assert.equal(refused.status,'tmdb-person-identity-refused');assert.equal(refused.directorIdentity,undefined);
+  }
+  for(const external_ids of [undefined,null]){
+    const accepted=await inspect({external_ids});
+    assert.equal(accepted.status,'director-identity-inspected');assert.equal(accepted.directorIdentity.imdbNameId,'nm9999999');
+  }
+});
+
 test('trusted identity is reused in parent-memory context; actual resolver still reserves its stages',async()=>{
   const fetched=[];
   const send=async(url,init)=>{

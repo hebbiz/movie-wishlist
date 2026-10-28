@@ -157,6 +157,12 @@ M4 default-off semantics and the existing deployment/access state are unchanged
 by this work. Narrow #192 apply/deadline/queued-reservation fixes were locally
 verified, including native PostgreSQL 17.6 concurrency; dated execution records
 describe actual activation separately from prepared plans.
+The [three-film pilot retrieval follow-up](docs/m4-media-advice.md#three-film-pilot-retrieval-follow-up--2026-10-28)
+preserves independent localization when UA country data is absent, adds a
+reviewed person-level Craig Gillespie alias and safe extraction diagnostics.
+Current automatic Blade Runner1982/Mortal Kombat2021/Supergirl2026 checks matched
+all three cards locally; historical response causes, entitlement and general
+coverage remain unproven. No deployment or source-policy closure is implied.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
 for candidate URLs only, with the [bounded public title-search fallback](docs/m4-media-advice.md#five-film-automatic-results--2026-10-24)
 on this branch. Five local controls do not establish general quality;

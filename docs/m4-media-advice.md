@@ -2748,7 +2748,7 @@ Owner evidence, not archived source responses:
 | Mortal Kombat (2021) | `b9c22f56-8ad3-458b-bee0-ab970f829bbf` | Matched, seven source rows Apple/Rakuten/MEGOGO/Prime; positive preservation control. Apple UA audio5.1/subtitle observation is not an attested ability to buy. |
 | Supergirl (2026) | `f7aca2a8-c902-4857-92ec-5bd82bd64e05` | First card title/year match with director-alias unresolved, second year refusal; 8/8 and eleven unread candidates. Report lacks card URLs; do not attribute either historical read to today's known URL. MOTN Prime language claims do not establish offer binding or UA entitlement. |
 
-Implementation plan: establish current extraction and person-level evidence;
+Implementation: establish current extraction and person-level evidence;
 preserve independent film/provider localization when country sections cannot
 establish UA availability; reuse exact namespaced person aliases across films;
 add bounded content-free extraction diagnostics and a digest of the requested
@@ -2770,16 +2770,25 @@ control, not a newly attested TMDb projection; independent TMDb checks follow.
 The current Supergirl director anchor points to
 `https://kinobazaua.com/persons/craig-gillespie`. Its canonical person header
 co-locates H1 `Крейґ Ґіллеспі`, English H2 `Craig Gillespie`, birth date
-1 September1967, Sydney NSW Australia and director role. Person-level linkage
-to a trusted TMDb person ID still requires the server TMDb projection/details;
-film title/year or slug alone is not used to activate a record.
+1 September1967, Sydney NSW Australia and director role. The subsequent trusted
+TMDb projection establishes sole director `tmdb:person:50767`; its fixed person
+details record reports `Крейґ Джиллеспай`, IMDb `nm0318916`, birth date
+`1967-09-01`, and no additional aliases. The exact English full name, complete
+birth date and director role agree across independently read person headers.
+This reviewed composite evidence activates literal `Крейґ Ґіллеспі` only for
+person50767 and scope `kinobaza-director-identity`; no shared external person ID
+was observed on Kinobaza. References: [trusted TMDb film projection](https://api.themoviedb.org/3/movie/1081003?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations),
+[TMDb person](https://api.themoviedb.org/3/person/50767?language=uk-UA&append_to_response=external_ids),
+[Kinobaza person](https://kinobazaua.com/persons/craig-gillespie). No film/slug
+shortcut, fuzzy matching, transliteration, flat multi-person alias list or new
+runtime person request. The existing Villeneuve record remains unchanged.
 
 Historical exact-card/body recovery is unavailable by design: copied reports
 omit URLs/bodies, the technical ledger stores no source content, and transient
 results were not archived. A new source response cannot establish what an old
-request returned. The follow-up will report current automatic results separately.
+request returned. Current automatic results below are separate new evidence.
 
-Prepared fixes retain independent pre-accordion observations on country-only
+Implemented fixes retain independent pre-accordion observations on country-only
 refusal, while ambiguous countries are handled atomically and valid foreign
 countries stay foreign. Shared fixed/assisted extraction changes because both
 use that same proven faulty path; admission and identity are unchanged.
@@ -2805,11 +2814,88 @@ The digest is not a capability, retrieval success or identity proof. Existing
 runtime SHA/run-ID attestation remains unchanged. Source content, aliases and
 HTML are still absent from normal reports/ledger.
 
-Preparation verification:176/176 targeted extraction/workflow/report/resolver,
-R1/R2, localization and helper regressions;8/8 scoped native helper/worker checks
-with authored fake keys and zero source requests. Assertions/timeouts were not
-loosened. A one-entry `-Study pilot-retrieval` hidden session reuses the proven
-local SID-only broker and trusted cached identities; default five-film controls
-remain unchanged. Full browser/dependent checks and the actual three-film
-resolver pass follow once local TMDb/Tavily credentials are entered. No values
-are read/exported from Netlify or stored in files/environment/logs.
+### Current automatic results, not historical reconstruction
+
+PR [#201](https://github.com/hebbiz/movie-wishlist/pull/201), based on develop
+`e63316bcb36fdd3aff41c0522a4495d42460bc69`. Fresh server-side TMDb search/details
+established Blade Runner78/`tt0083658`/1982/person578, Mortal Kombat460465/
+`tt0293429`/2021/person1828590 and Supergirl1081003/`tt8814476`/2026/person50767.
+The normal resolver, admission, identity, extraction and composition functions
+then ran without supplying known card URLs. No MOTN/Watch Providers or provider
+destinations were requested. Shared trusted identity data was reused, not fetched
+again during resolver repeats. Known URLs were used only in separately counted
+markup/control inspections, never injected as resolver successes.
+
+| Film / final local run | Automatic accepted card | Outcome and added source scopes | Resolver attempts in this pass |
+| --- | --- | --- | --- |
+| Blade Runner1982 / `3b9acca1-f9c2-471d-b9a1-8d8e788af19b` | `https://kinobazaua.com/titles/blade-runner` | Matched; partial,20 candidates/2 blocks/2 Kinobaza mapped rows. General film UA audio positive; Apple subtitles positive with named stereo/dolby audio labels negative; MEGOGO audio/subtitles positive. Both provider blocks have unknown territory/availability. Ex Machina correctly rejected by title. | Tavily1 + card2 =3 |
+| Mortal Kombat2021 / `f0901a0c-e6dc-418f-ad90-5a4180996097` | `https://kinobazaua.com/titles/mortal-kombat-2021` | Matched; ok,36 candidates/3 blocks/4 Kinobaza-only mapped rows. UA-section Apple pointer has unknown tracks; separate Apple/Rakuten/MEGOGO blocks keep literal track values and unknown territory. General film UA audio positive. Legends: Battle of the Realms correctly rejected by title. | Tavily1 + card2 =3 |
+| Supergirl2026 / `42a13989-aff0-4224-935e-c9e2a6492fec` | `https://kinobazaua.com/titles/supergirl-2026` | Matched with confirmed person alias; ok,24 candidates/1 block/3 Kinobaza mapped rows. UA-section Rakuten/HBO pointers have unknown tracks; separate Rakuten block audio/subtitles positive, territory unknown. General film UA audio positive. Just Her remains unresolved and withheld. | Tavily1 + public Kinobaza search1 + card2 =4 |
+
+All outcomes are `one-confirmed-bounded-not-exhaustive`; no claim that unread
+candidates do not contain another match. Supergirl's first current pass read the
+same correct card but stopped specifically at director-alias; after the reviewed
+person record it passes without changing any other gate. This establishes a
+current before/after, not the identity of either historical owner-read card.
+Mortal Kombat's four rows above are **Kinobaza-only**: the owner's seven historical
+rows were combined source observations, including Prime. Their different counts
+are not evidence of dropped baseline rows; an authored seven-observation
+Apple/Rakuten/MEGOGO/Prime preservation regression checks composition separately.
+No current Prime availability or Apple purchase/5.1 claim is independently
+validated by this source-limited run. Source country, film badge, provider track,
+offer binding and entitlement remain distinct.
+
+### Request ledger and secret handling
+
+This task used **34 application HTTP attempts**, including failed local diagnostics
+and deliberate rechecks: TMDb7, Tavily6, ordinary Kinobaza search2, title-card18,
+Kinobaza person1. The protected broker counted27 (TMDb7/search8/card12), plus the
+seven separately recorded pre-session reads above. TMDb comprises6 identity
+search/details reads and1 person read; search comprises6 Tavily +2 public search.
+The two automatic three-film passes used10 each; fresh identity/person reads7;
+pre-session reads7. This ledger is separate from earlier tasks'74/25/control
+counts and from the historical owner pilot. No provider/tracking destination,
+MOTN, Watch Providers, retry/redirect, production discovery, transfer or Save.
+
+The one hidden `-Study pilot-retrieval` session reused the existing SID-only
+broker; keys stayed in process memory, never argv/environment/files/logs or a
+Netlify export. Default five-film controls remain unchanged. The session was
+explicitly stopped after the final pass (zero requests to stop). Results identify
+`execution=local-diagnostic`, `buildSha=null`, checkout3a0d2ef plus tracked edits
+and worker digest; they are not attested deployed-runtime reports. Minimal
+identity/claim comparisons, not raw HTML/search response archives, are recorded.
+
+### Verification and boundaries
+
+Preparation:176/176 targeted extraction/workflow/report/resolver, R1/R2,
+localization/helper checks;8/8 scoped native helper/worker tests with fake keys
+and zero source HTTP. The broader main/HTTP/browser run had172 passes,1 skip
+(unconfigured native PostgreSQL fixture) and1 browser-environment failure:
+bundled Chromium was absent. The affected assisted browser suite then passed
+11/11 using installed Edge, unchanged assertions/timeouts. This is browser
+viewport testing, not native iPhone/WebKit validation. The final confirmed
+person entry also passed56/56 crosswalk/resolver/report regressions; independent
+review ran194/194 dependent offline cases with no runtime blocker. Final combined
+offline/HTTP/browser suite passed **291/291**, including desktop/iPhone X/Air
+viewports, assisted addition, pending apply, cancel, manual edits, retained/expired
+state, logout/context changes, clipboard/report, R1/R2 and forbidden enrichment.
+A sandbox child-process `EPERM` prevented an earlier invocation from starting;
+the allowed local execution passed without code/assertion/timeout relaxation.
+Review also found a local-only person-inspection helper accepted malformed/API
+error-shaped appended external IDs. It now refuses those proof inputs rather
+than labelling them inspected; **22/22** helper/person diagnostic tests passed,
+including eight new error-shape cases and missing/null optional-ID preservation.
+The actual Craig response was valid; this did not require another source call
+or alter runtime identity policy. Links:13 docs/451 local links/277 anchor
+references, zero errors; whitespace/scope clean. Local Node is24.22.0; deployed
+Node22 compatibility is not a newly executed hosting validation.
+
+No new runtime calls/stages/cap, broader admission, parser wrapper guessing,
+identity relaxation, R1/R2/acknowledgement change, offer enrichment, chat UI,
+initApp/global lifecycle/auth, persistence/retention, SQL/flag/secret or deployment
+change. The shared extractor necessarily serves fixed and assisted cards; both
+retain identity/boundary/count guards. Launcher/Windows lifecycle and native
+PostgreSQL concurrency were not repeated: their dependent code/schema is
+unchanged; native local IPC was tested separately. Existing source-use/account
+uncertainties remain; this investigation is not blanket rights approval or proof
+of general accuracy/coverage. MW-FUT-01 remains Discovery.

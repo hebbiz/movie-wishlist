@@ -111,8 +111,11 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
       directorURL = `${api}/person/${person.personId}?language=uk-UA&append_to_response=external_ids`;
       const response = await readTmdbJson(directorURL, tmdbToken, send, {signal});
       if (response.status !== 'ok') return done(`tmdb-person-${response.status}`);
-      const data = response.data, imdbIds = [data?.imdb_id,data?.external_ids?.imdb_id].filter(v => v !== undefined && v !== null && v !== '');
-      if (data?.id !== person.personId || (data.external_ids?.id !== undefined && data.external_ids.id !== person.personId) || !safeName(data.name) || !Array.isArray(data.also_known_as) || data.also_known_as.length > 32 || !data.also_known_as.every(safeName) ||
+      const data = response.data, externalIds = data?.external_ids;
+      const invalidExternalIds = externalIds !== undefined && externalIds !== null &&
+        (typeof externalIds !== 'object' || Array.isArray(externalIds) || externalIds.success === false || Object.hasOwn(externalIds,'status_code') || Object.hasOwn(externalIds,'id') && externalIds.id !== person.personId);
+      const imdbIds = [data?.imdb_id,externalIds?.imdb_id].filter(v => v !== undefined && v !== null && v !== '');
+      if (data?.id !== person.personId || data.success === false || Object.hasOwn(data,'status_code') || invalidExternalIds || !safeName(data.name) || !Array.isArray(data.also_known_as) || data.also_known_as.length > 32 || !data.also_known_as.every(safeName) ||
           (data.birthday !== undefined && data.birthday !== null && !calendarDate(data.birthday)) || imdbIds.some(v => typeof v !== 'string' || !/^nm\d{7,10}$/.test(v)) || new Set(imdbIds).size > 1) return done('tmdb-person-identity-refused');
       return done('director-identity-inspected', { directorIdentity:{ personId:data.id, name:data.name, alsoKnownAs:data.also_known_as, dateOfBirth:data.birthday ?? null, imdbNameId:imdbIds[0] ?? null } });
     }
