@@ -111,6 +111,10 @@ process.
 implemented or documented v1.3.1 scope.
 - [M4 media advice implementation and activation boundaries](docs/m4-media-advice.md)
 - [M4 same-document return state and expiry boundaries](docs/m4-media-advice.md#same-document-m4-return-state--2026-10-23)
+- [M4 pilot Mykola dialog, grouped platform variants and form-session memory](docs/m4-media-advice.md#mykola-media-dialog-and-form-session-lifetime--2026-10-28)
+  — separate Mykola-style conversation; first open searches once, results stay
+  in memory for the card session and become stale rather than disappearing at
+  30 minutes. Server ledger/limits stay unchanged; not deployed by this work.
 - [M4 pilot diagnostic corrections and bounded controls](docs/m4-media-advice.md#pilot-diagnostics-and-bounded-controls--2026-10-23)
   — historical MOTN `unknown` reports do not prove missing API language data.
   Diagnostics are offline-tested. First local control run used6/12 attempts,

@@ -4112,11 +4112,60 @@ body.invite-page.app-ready .container {
 /* Media advice owns a separate dialog; never shares social chat containers. */
 .media-advice-entry { color: #c6ae75; background: transparent; border: 1px solid #766440; border-radius: 8px; min-height: 44px; padding: 8px 12px; font: inherit; }
 .media-advice-entry[hidden] { display: none; }
-.media-advice-entry:focus-visible, .media-advice-dialog button:focus-visible { outline: 3px solid #d8bf7e; outline-offset: 3px; }
-.media-advice-dialog { box-sizing: border-box; width: min(620px, calc(100vw - 24px)); max-height: 90dvh; overflow: auto; color: #eee; background: #111827; border: 1px solid #766440; border-radius: 14px; padding: 20px; }
+.media-advice-entry:focus-visible, .media-advice-dialog :focus-visible { outline: 3px solid #d8bf7e; outline-offset: 3px; }
+.media-advice-dialog { box-sizing: border-box; width: min(680px, calc(100vw - 24px)); max-height: 90dvh; overflow: auto; color: #f4f4f4; background: #181818; border: 1px solid #766440; border-radius: 16px; padding: 0 20px 20px; overscroll-behavior: contain; }
 .media-advice-dialog::backdrop { background: #0009; }
-.media-advice-dialog button { min-height: 44px; margin: 6px 8px 6px 0; }
+.media-advice-dialog button { width: auto; min-height: 44px; padding: 10px 14px; margin: 4px 0; font: inherit; border-radius: 10px; }
 .media-advice-dialog p, .media-advice-dialog pre { overflow-wrap: anywhere; white-space: pre-wrap; }
-.media-advice-row { border-top: 1px solid #5558; margin-top: 12px; padding-top: 8px; }
+.media-advice-row { min-width: 0; border: 1px solid #444; border-radius: 12px; padding: 12px; background: #202020; }
 .media-advice-dialog label { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
 .media-advice-dialog input[type="checkbox"] { width: 22px; height: 22px; flex: 0 0 22px; }
+.media-advice-dialog [hidden] { display: none !important; }
+.media-advice-header { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 0 12px; background: #181818; border-bottom: 1px solid #3c3c3c; }
+.media-advice-header h2 { margin: 0; font-size: 21px; }
+.media-advice-film { margin: 5px 0 0; color: #c6bfae; font-size: 14px; }
+.media-advice-header button { flex-shrink: 0; background: #2a2a2a; color: #f4f4f4; }
+.media-advice-chat { gap: 14px; }
+.media-advice-chat .mykola-bubble, .media-advice-chat .user-bubble { box-sizing: border-box; max-width: calc(100% - 50px); }
+.media-advice-chat .mykola-bubble p, .media-advice-chat .user-bubble p { margin: 0; }
+.media-advice-chat .mykola-bubble p { color: #f4f4f4; }
+.media-advice-chat .user-bubble p { color: #111; }
+.media-advice-chat .mykola-typing-bubble { margin-top: 10px; }
+.media-advice-options { display: grid; gap: 10px; margin-left: 50px; }
+.media-advice-option-title { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+.media-advice-option-title h3 { margin: 0; font-size: 17px; }
+.media-advice-option-title span { font-size: 13px; color: #d6b25e; }
+.media-advice-dialog .media-advice-variant-label { display: block; padding: 10px 0 4px; color: #bdbdbd; font-size: 13px; }
+.media-advice-variant-select { box-sizing: border-box; display: block; width: 100%; min-width: 0; min-height: 44px; margin-top: 6px; padding: 8px; border: 1px solid #666; border-radius: 8px; background: #282828; color: #f4f4f4; font: inherit; font-size: 16px; line-height: 1.4; }
+.media-advice-row p { margin: 7px 0; font-size: 14px; }
+.media-advice-source, .media-advice-footnote { color: #bdbdbd; font-size: 13px; }
+.media-advice-warning, .media-advice-notice, .media-advice-stale { color: #e1c680; }
+.media-advice-stale { border-left: 3px solid #aa8d4f; padding-left: 12px; font-size: 14px; }
+.media-advice-row-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.media-advice-row-actions button { background: #303030; color: #eee; border: 1px solid #766440; }
+.media-advice-row-actions button:last-child { background: #d6b25e; color: #161616; }
+.media-advice-dialog summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: #c6bfae; }
+.media-advice-dialog summary::after { content: '⌄'; margin-left: 8px; }
+.media-advice-dialog details[open] > summary::after { transform: rotate(180deg); }
+.media-advice-dialog pre { max-height: 260px; overflow: auto; font-size: 12px; }
+.media-advice-attribution, .media-advice-other, .media-advice-footnote { margin-left: 50px; }
+.media-advice-attribution a { color: #d6b25e; }
+.media-advice-report-bubble button { color: #e5c77e; background: transparent; padding-left: 0; text-decoration: underline; }
+.media-advice-diagnostics textarea { box-sizing: border-box; width: 100%; min-height: 240px; margin-top: 12px; padding: 12px; background: #101010; color: #eee; border: 1px solid #555; font: 13px/1.5 monospace; resize: vertical; }
+.media-advice-diagnostics > button { margin-right: 8px; }
+.media-advice-preview { padding-top: 12px; }
+.media-advice-preview button { margin-right: 8px; }
+@media (max-width: 480px) {
+  .media-advice-dialog { width: calc(100vw - 12px); max-height: calc(100dvh - 24px); padding: 0 12px 16px; }
+  .media-advice-header { align-items: flex-start; }
+  .media-advice-header h2 { font-size: 19px; }
+  .media-advice-header button { font-size: 13px; padding: 8px; }
+  .media-advice-chat .mykola-message-row, .media-advice-chat .user-message-row { gap: 8px; }
+  .media-advice-chat .mykola-avatar, .media-advice-chat .user-avatar { width: 30px; height: 30px; font-size: 13px; }
+  .media-advice-chat .mykola-bubble, .media-advice-chat .user-bubble { max-width: calc(100% - 38px); padding: 10px 12px; }
+  .media-advice-options, .media-advice-attribution, .media-advice-other, .media-advice-footnote { margin-left: 38px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .media-advice-chat .mykola-bubble, .media-advice-chat .user-bubble { animation: none; }
+  .media-advice-chat .mykola-typing-dot { animation: none; opacity: .7; }
+}

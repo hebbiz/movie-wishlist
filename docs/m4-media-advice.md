@@ -794,6 +794,8 @@ Those lose in-memory state; durable restoration would need a separately approved
 retention design. Explicit close, cancel/Save, logout and genuine user/group/
 film/list/form-session changes retain their invalidation/close behavior.
 
+Historical client-expiry behavior in this paragraph is superseded by the
+[pilot dialog/session decision](#mykola-media-dialog-and-form-session-lifetime--2026-10-28).
 The existing server session TTL remains 30 minutes and SQL/ledger retention is
 unchanged. The M4 view uses a conservative local bound of 30 minutes from explicit
 discovery dispatch (before server session creation), not from response/reopen.
@@ -2899,6 +2901,178 @@ PostgreSQL concurrency were not repeated: their dependent code/schema is
 unchanged; native local IPC was tested separately. Existing source-use/account
 uncertainties remain; this investigation is not blanket rights approval or proof
 of general accuracy/coverage. MW-FUT-01 remains Discovery.
+
+## Mykola media dialog and form-session lifetime — 2026-10-28
+
+**Implemented for review; not merged/deployed or live-evaluated in this task.**
+Base `develop=f64c739593e07c879852c7b54f2729e9fd04f68f`, with #201 already merged.
+The owner authorizes the presentation/ranking and local memory-lifetime change;
+the existing pilot flag/default-off semantics and user/group access rules are
+unchanged. No new user/movie/group restriction. This is not production release
+readiness or completion of MW-FUT-01, which remains Discovery.
+
+### Implementation and user flow
+
+`assets/media-advice.mjs` keeps its own dialog, state, timers, abort controller,
+selection tokens, original source-row references and focus/scroll positions.
+It reuses Mykola's **CSS** bubbles, avatar and typing dots, never his conversation
+history, mutable controller, HTML snapshot or Advice Room lifecycle. No changes
+to `initApp`, its call frequency/order or global auth/resume handlers.
+The only `app.js` edits are in the existing M4 integration: capture title/year
+with the already established IMDb/form identity, and invalidate M4 on those
+identity inputs. These display fields are not sent as trusted server identity.
+
+Opening a new permitted form context explicitly starts its one discovery:
+loading bubble/dots exist only while the real promise is pending, with no fake
+delay. Completion shows a short Mykola answer and one compact card per established
+platform. Every original source row remains a separate variant inside that card.
+Reopening the same card session resumes the same DOM/results/variant/scroll,
+not another request. Closing does not reopen automatically on access refresh.
+Same-document app return retains state; full reload/iOS page eviction still
+loses memory, and durable recovery is not promised or introduced.
+
+Platform cards show only the selected variant's access, territory, languages,
+literal reported price/quality and meaningful warnings. A native selector makes
+all variants accessible without repeated action blocks: at most one link action
+and one selection action per platform. Switching variants changes neither the
+group order nor the underlying rows; it revokes pending selection and resets
+tracking/affiliate acknowledgement. Missing/unsafe URLs have no link action.
+Source names and technical field limitations live in the diagnostic report and
+attribution, not in the main platform list or per-row JSON disclosures.
+No new plain-text
+chat input, LLM, physical-offer search or fabricated links. Other/unmapped
+platforms remain visible read-only. Multiple identity-confirmed Kinobaza cards
+remain explicit local choices, not automatic merging or further fetches.
+
+`Відкрити посилання` appears only under the existing classification policy;
+exact href and tracking/affiliate acknowledgement remain intact. `Обрати` is
+bound to the **original row**, then shows before/after recommended medium and
+URL. Only `Перенести в картку`, after fresh source-free access authorization,
+can change those local form fields. A missing new URL cannot silently erase an
+old one: the explicit clear checkbox is still required. Changed form fields,
+canceled/replaced tokens, Escape/close, context changes and late authorization
+cannot apply the old preview. Ordinary Save remains the sole Wishlist write.
+
+### Deterministic evidence priority (owner's new decision)
+
+`assets/media-advice-presentation.mjs` is a pure view of projected original rows:
+
+1. Explicit UA source context and positive Ukrainian audio in that same row.
+2. Explicit UA source context and positive Ukrainian subtitles without positive
+   Ukrainian audio; unknown and explicitly negative audio are explained differently.
+3. Explicit UA source context without established language data.
+4. Supplemental rows whose territory is unknown/foreign; conflicts remain visible
+   but do not become a recommendation. Equal evidence retains stable input order,
+   with no new price/quality/provider preference or numeric confidence.
+
+The first-choice explanation is at most two sentences and describes the actual
+evidence, not a guaranteed best offer. No provider-name join or copying tracks
+from a film badge/separate block to an offer. Kinobaza block language stays a
+separate claim (`Для цієї пропозиції ще не перевірено`); unknown territory cannot
+become UA. Unknown/empty lists are not negative. Conflicts are not repaired or
+resolved by choosing a winner. A group warning keeps contradictions in other
+variants visible while a different variant is selected. The summary names the
+ranked original variant's ordinal/access when its platform has several options;
+selecting another option cannot silently acquire that explanation or its tracks.
+Recommendations do not assert entitlement.
+
+The 2026-10-29 review refinement is visual grouping, not offer deduplication or
+enrichment: even two rows with the same URL remain separate. Only established
+canonical platform mappings group together; ambiguous identity/provider rows
+remain read-only separate observations. An authored Supergirl-shaped fixture
+(not a reconstruction of the live response) contains2 Prime,2 HBO and4 Rakuten
+rows and renders3 platform cards with8 independently accessible variants.
+
+### Thirty minutes: freshness, not deletion of the answer
+
+The server action ledger still expires after **30 minutes**, keeps atomic stage
+reservations, cap8, finish/replay/rate limits and its existing retention/cleanup.
+No SQL, backend handler, source adapter, migration or production setting changes.
+`media_advice_action('capability')` already checks user/flag/group/edit-card rights
+**before** looking up an action session/TTL: see the second migration's capability
+branch and `netlify/functions/media-advice.mjs`. This source-free check is also
+the client's existing `validateApply` boundary, so stale viewing/transfer does
+not need a longer ledger or a permission bypass.
+
+The view now retains projected results for the **form session in page memory**.
+At 30 minutes from dispatch it marks them stale, retains expanded sections and
+positions, and revokes any pending preview authorization so that it must be
+reviewed with the warning. A new selection of retained results still checks
+fresh capability before applying. `Оновити вручну` is an explicit user action:
+after capability it rotates the M4 action reference and starts one new bounded
+discovery, subject to the unchanged server daily-session/replay/stage controls.
+It appears for stale/error results; reopening/returning/copy/render does not
+refresh sources. Abort does not refund a reserved attempt. A failed reply leaves
+accounting unknown, not a claimed zero or permission for an automatic retry.
+
+Successful Save, cancel/back-to-list, another form/movie/IMDb/group/user, logout
+or failed/revoked access clears the controller context. No full HTML/JSON body,
+search snippet archive, localStorage/sessionStorage/IndexedDB or server result
+storage. This is an explicitly approved extension of **projected-result memory
+lifetime**, not of technical ledger retention or source rights.
+
+### Temporary pilot report
+
+The last Mykola bubble links to `Діагностичний звіт`. It opens a separate panel
+with copy, selectable text fallback and return/focus preservation. Nothing is
+sent automatically. `safeMediaReport` receives the captured **run** title/year/
+IMDb context, not the subsequently edited form. A trusted result identity can
+fill matching context fields; incompatible IMDb bindings are withheld as
+unknown. Safe build/deploy/run IDs retain their prior provenance rules; missing
+attestation stays unknown. Source outcome statuses are allowlisted; row scopes,
+language distinctions, extraction/card-digest/search counters remain available.
+Each retained row also has a generated platform/variant reference matching the
+selector ordinal, fixed source label, allowlisted access/field states and safe
+conflict/block reason codes. Raw source descriptions and literal URLs stay out
+of the copied report; removing the main-list technical details adds no storage.
+The diagnostic panel also has a collapsed, read-only view of the already
+projected row/unmapped fields, including literal localization labels/formats.
+It uses bounded known keys and withholds URLs, raw-body/private keys and
+credential-shaped strings; this view is not appended to the copied short report.
+Thus simplifying the platform list does not erase inspectable source evidence.
+Age is updated if the report remains open across the freshness boundary, and
+copy recomputes it without a source call. No credentials, arbitrary error body,
+private/group metadata, raw URLs/tracking query or responses in the copied report.
+
+### Verification and activation boundaries
+
+Authored unit/HTTP/browser checks cover evidence ordering/no enrichment,
+source/refusal/empty/partial/conflict states, safe reports, real add/edit forms,
+explicit transfer, manual edits/missing URL/acknowledgement, isolated other chats,
+auto-once/reopen/return/expiry/context/late response guards and mobile focus/copy.
+Final 2026-10-29 full `test/*.test.mjs` run: **206 passed,1 skipped,0 failed**
+(207 total), including31 browser cases/subtests. This supersedes the original
+PR checkpoint's193/1 result. The skip is the unconfigured native
+PostgreSQL17 multi-connection fixture, not a passed concurrency result.
+The prior checkpoint's additional106/106 source/projection/R1/R2 result is
+historical, not a new run; source adapters/shared policies are unchanged.
+The grouped-card review adds8-to-3 rendering, all8 original options, no source
+names/per-row JSON in the main list, variant-scoped literal price/quality,
+unknown territory/block tracks, conflict visibility, exact non-primary transfer,
+acknowledgement reset, pending-selection cancellation and retained native controls.
+The final real-form
+browser run also checks successful ordinary Save with a **mocked** DB, clearing
+the cached dialog without a source call, and passed5/5 after adjusting screenshot
+capture to two actual mobile scroll positions (not an overflow-clipped element).
+Earlier failures while adapting the old
+technical-view tests led to explicit visible-preview waits and capturing scroll
+at the actual report click (after browser auto-scroll), not an unrelated prior
+position; assertions/timeouts were not weakened or increased. Native dialog focus
+handoffs, pending notice clearing and next-frame scroll restore are covered.
+No server/shared/migration diff; normalized source comparison confirms the whole
+`app.js` outside its M4 integration, including `initApp`/global lifecycle/auth,
+is unchanged. Syntax, whitespace,13 docs/453 local links/279 anchor references
+and13 handoff sections passed. Local Node24.22.0/installed Edge were used; no
+new Netlify Node22/deployed-runtime validation is claimed. Screenshot paths are
+listed in the PR; authored files stay outside Git and public artifacts.
+Screenshots use invented source fixtures, not live availability/coverage evidence.
+Browser viewports include1280×900,375×812 (iPhone X size),420×912 (iPhone Air size)
+and820×1180; these are Edge/Chromium simulations, not native Safari/iPhone tests.
+No live source discovery, Wishlist write, flag/secret change, migration, merge or
+deployment. Owner checkout/demo and unrelated files are preserved. Native
+PostgreSQL concurrency and Windows launcher lifecycle need no new run because
+their code/contracts/schema are unchanged; existing offline ledger tests still
+verify no new bypass. Separate merge/deployment approval remains required.
 
 ### Owner verification on develop — 2026-10-28
 

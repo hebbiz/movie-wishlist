@@ -269,7 +269,8 @@ function mediaAdviceContext() {
   const imdbId = normalizeImdbIdFromUrl(document.getElementById("imdb_url").value);
   const stamp = JSON.stringify([imdbId, document.getElementById("title").value, document.getElementById("year").value]);
   if (!currentUser || !canUpdateMovie() || !mediaAdviceEstablished || mediaAdviceEstablished !== stamp || formPanel.style.display === "none") return null;
-  return { userId: currentUser.id, groupId: currentGroupId, imdbId, listId: editingMovieId, formSession: mediaAdviceFormSession };
+  return { userId: currentUser.id, groupId: currentGroupId, imdbId, listId: editingMovieId, formSession: mediaAdviceFormSession,
+    title: document.getElementById("title").value, year: document.getElementById("year").value };
 }
 
 function establishMediaAdvice() {
@@ -304,7 +305,7 @@ import("./assets/media-advice.mjs").then(({ createMediaAdvice }) => {
   });
   mediaAdviceController.refresh();
 }).catch(() => {}); // Feature failure must not prevent ordinary editing.
-document.getElementById("imdb_url").addEventListener("input", invalidateMediaAdvice);
+for (const id of ["imdb_url", "title", "year"]) document.getElementById(id).addEventListener("input", invalidateMediaAdvice);
 let adviceRoomPollingTimer = null;
 let adviceRoomResultShown = false;
 
