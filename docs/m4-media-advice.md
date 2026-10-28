@@ -2899,3 +2899,21 @@ PostgreSQL concurrency were not repeated: their dependent code/schema is
 unchanged; native local IPC was tested separately. Existing source-use/account
 uncertainties remain; this investigation is not blanket rights approval or proof
 of general accuracy/coverage. MW-FUT-01 remains Discovery.
+
+### Owner verification on develop — 2026-10-28
+
+Owner-reported Netlify Function runs on deployed merge commit
+`61bc9e706230811628560468f41e7d112dbd64bf` and deploy
+`6ae2524cfdbb0094fbf3b6ff` verified the two focused pilot fixes:
+
+- Blade Runner (1982), run `e6bcacd8-e91d-4cb0-b75c-9c8f5a1a6921`:
+  the confirmed card URL digest matches `/titles/blade-runner`; two
+  Kinobaza rows (Apple and MEGOGO) and the film-level Ukrainian audio badge
+  were retained. Provider territory and availability remain unknown.
+- Supergirl (2026), run `03e07997-7655-4591-ab29-22a531abd724`:
+  the confirmed card URL digest matches `/titles/supergirl-2026`; identity
+  matched and three Kinobaza rows were projected. The separate Rakuten
+  localization block has unknown territory and unverified offer binding.
+
+These focused runs do not establish account entitlement, current platform
+availability, general catalog coverage, or native iPhone compatibility.
