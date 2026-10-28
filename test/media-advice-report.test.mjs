@@ -1,6 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { safeMediaReport, mediaSourceDetails } from '../assets/media-advice-report.mjs';
+import { authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
+
+test('diagnostic-only projections retain literal localization evidence and unmapped access without URLs or raw/secret fields', () => {
+  const row = { source: 'kinobaza', name: 'Plex', access: { state: 'reported', value: 'rent' }, reason: 'provider-mapping-unresolved',
+    provenance: { source: 'Kinobaza HTML', sourceURL: 'https://private.example/PRIVATE', body: 'PRIVATE_BODY', token: 'PRIVATE_TOKEN' },
+    kinobazaLocalization: { href: 'https://private.example/PRIVATE', audio: { state: 'reported-positive', evidence: [{ label: 'Укр. звук (dolby)', literal: '+', state: 'positive', formatLiteral: 'dolby', rawHTML: 'PRIVATE_HTML' }] } },
+    observations: [{ audio: { state: 'reported', ukrainian: [{ language: 'ukr' }] }, quality: { state: 'reported', value: 'hd' }, price: { state: 'reported', amount: { state: 'reported', value: '1.23' }, currency: { state: 'reported', value: 'XXX' } }, link: { href: 'https://private.example/PRIVATE' } }],
+    body: 'PRIVATE_BODY', credentials: 'PRIVATE_SECRET' };
+  const before = JSON.stringify(row), details = mediaSourceDetails(row), text = JSON.stringify(details);
+  assert.equal(details.name, 'Plex'); assert.equal(details.access.value, 'rent');
+  assert.match(text, /Укр\. звук \(dolby\)/); assert.match(text, /provider-mapping-unresolved/);
+  assert.match(text, /1\.23/); assert.match(text, /XXX/); assert.match(text, /ukr/);
+  assert.doesNotMatch(text, /PRIVATE|https?:|sourceURL|href|rawHTML|credentials|body/);
+  assert.equal(JSON.stringify(row), before);
+  for (const value of ['https://private.example/PRIVATE','token=PRIVATE','Bearer PRIVATE','tvly-PRIVATE123456789']) {
+    assert.equal(mediaSourceDetails({ name: value }).name, '[withheld]');
+  }
+});
 test('safe report permits IMDb-bound film identity but no secrets/raw URLs/body/manual fields or attested commit', () => {
   const result = { film: { title: 'Authored Film', year: 2001, imdbId: 'tt1234567', privateField: 'PRIVATE TITLE FIELD' }, rows: [{ id: 'motn:1', provider: { key: 'apple' }, country:'UA', link: { href: 'https://secret.example/?token=PRIVATE' }, price: { value: 'PRIVATE' } }],
     sources: [{ source:'tmdb', identity:'matched', status:'PRIVATE BODY' }], metrics: { requestsMade:5, requestBudget:8, calls:[{ stage:'tmdb-find', headers:'PRIVATE' }] },
@@ -102,4 +120,81 @@ test('safe extraction diagnostics distinguish lost country claims from retained 
   result.resolver.cards[0].cardRef='https://secret.example/PRIVATE';result.resolver.cards[0].extractionDiagnostic={status:'PRIVATE',candidateCount:-1,foreignCandidateCount:'0',blockCount:100000,filmAudioState:'PRIVATE',issues:['PRIVATE']};
   const withheld=safeMediaReport(result);assert.match(withheld,/Extraction: unknown; candidates unknown, foreign-context unknown, localization blocks unknown, film audio unknown/);
   assert.match(withheld,/requested-card SHA256 unknown/);assert.doesNotMatch(withheld,/PRIVATE|https?:/);
+});
+
+test('all eight Prime/HBO/Rakuten source claims retain their own generated group-variant references and scopes', () => {
+  const rows = authoredGroupedMediaRows();
+  rows[0].quality = { state: 'reported', value: 'PRIVATE_QUALITY' };
+  rows[0].price = { state: 'reported', amount: { state: 'invalid', value: 'PRIVATE_PRICE' }, currency: { state: 'reported', value: 'PRIVATE_CURRENCY' } };
+  rows[6].kinobazaLocalization.issues = ['ambiguous-provider-block', 'possible-block-conflict-scope-unestablished', 'PRIVATE_BLOCK_ISSUE https://secret.example/'];
+  const before = JSON.stringify(rows), report = safeMediaReport({ rows });
+  assert.equal((report.match(/^(?:motn|tmdb|kinobaza)\/(?:prime|hbo|rakuten):/gm) ?? []).length, 8);
+  assert.equal((report.match(/^Variant /gm) ?? []).length, 8);
+  for (const [reference, source, access] of [
+    ['prime/variant-1', 'motn', 'rental'], ['prime/variant-2', 'motn', 'purchase'],
+    ['hbo/variant-1', 'motn', 'subscription'], ['hbo/variant-2', 'tmdb', 'subscription'],
+    ['rakuten/variant-1', 'motn', 'rental'], ['rakuten/variant-2', 'tmdb', 'buy'],
+    ['rakuten/variant-3', 'kinobaza', 'subscription'], ['rakuten/variant-4', 'motn', 'subscription'],
+  ]) assert.ok(report.includes(`Variant ${reference}: source ${source}; access ${access};`));
+  assert.match(report, /Variant prime\/variant-1: source motn; access rental; quality reported; price reported \(amount invalid, currency reported\)/);
+  assert.match(report, /motn\/prime: UA source context; MOTN audio reported-uk/);
+  assert.match(report, /motn\/prime: UA source context; MOTN audio unknown/);
+  assert.match(report, /kinobaza\/rakuten: territory unknown; Kinobaza provider-block audio reported-positive, subtitles reported-positive/);
+  assert.match(report, /conflicts 1 \[audio:unverified-flag\]/);
+  assert.match(report, /block issues \[ambiguous-provider-block, possible-block-conflict-scope-unestablished\]/);
+  assert.doesNotMatch(report, /PRIVATE|AUTHORED|AUTHOR%|https?:|authored-conflict|sourceURL|snippet/);
+  assert.equal(JSON.stringify(rows), before);
+});
+
+test('variant diagnostics preserve only allowlisted access, field states, conflict fields/types and block issue codes', () => {
+  const row = { id: 'kinobaza:PRIVATE_ROW', identityStatus: 'matched', provider: { key: 'rakuten', name: 'PRIVATE_PLATFORM' },
+    provenance: { source: 'PRIVATE_SOURCE', sourceURL: 'https://secret.example/?token=PRIVATE', snippet: 'PRIVATE_SNIPPET' },
+    access: { state: 'reported', value: 'PRIVATE_ACCESS' }, quality: { state: 'PRIVATE_QUALITY', value: 'PRIVATE_QUALITY_VALUE' },
+    price: { state: 'invalid', amount: { state: 'PRIVATE_AMOUNT', value: 'PRIVATE_PRICE' }, currency: { state: 'not-reported', value: 'PRIVATE_CURRENCY' } },
+    conflicts: [{ field: 'subtitles', type: 'conflicting-block-labels', source: 'PRIVATE_CONFLICT_SOURCE' }, { field: 'PRIVATE_FIELD', type: 'PRIVATE_TYPE' }],
+    kinobazaLocalization: { issues: ['unsupported-provider-block', 'conflicting-block-labels', 'PRIVATE_ISSUE', 'unsupported-provider-block'] } };
+  const report = safeMediaReport({ rows: [row] });
+  assert.match(report, /Variant rakuten\/variant-1: source kinobaza; access unknown; quality unknown; price invalid \(amount unknown, currency not-reported\)/);
+  assert.match(report, /conflicts 2 \[subtitles:conflicting-block-labels, unknown-field:unverified-flag\]/);
+  assert.match(report, /block issues \[unsupported-provider-block, conflicting-block-labels\]/);
+  assert.doesNotMatch(report, /PRIVATE|https?:|sourceURL|snippet|\[object Object\]/);
+});
+
+test('unresolved groups get distinct generated references and source labels only use exact recognized provenance', () => {
+  const base = { identityStatus: 'matched', provider: { key: 'prime' }, audio: { state: 'unknown' }, subtitles: { state: 'unknown' } };
+  const rows = [{ ...base, id: 'motn:canonical' }, { ...base, id: 'PRIVATE_ID', identityStatus: 'unresolved', provenance: { source: 'Movie of the Night' } },
+    { ...base, id: 'PRIVATE_ID', providerConflict: true, provenance: { source: '__proto__' } },
+    { ...base, id: 'PRIVATE_ID', provider: { key: '__proto__' }, provenance: { source: 'constructor' } }];
+  const report = safeMediaReport({ rows });
+  assert.match(report, /Variant prime\/variant-1: source motn/);
+  assert.match(report, /Variant unmapped-group-2\/variant-1: source motn/);
+  assert.match(report, /Variant unmapped-group-3\/variant-1: source unknown.*provider conflict yes/);
+  assert.match(report, /Variant unmapped-group-4\/variant-1: source unknown/);
+  assert.doesNotMatch(report, /PRIVATE|__proto__|constructor|function Object|\[object Object\]/);
+});
+
+test('supplementary variant diagnostics retain the existing maximum of 24 reported source rows', () => {
+  const rows = Array.from({ length: 30 }, (_, index) => ({ id: `motn:PRIVATE_${index}`, identityStatus: 'matched', provider: { key: 'prime' } }));
+  const report = safeMediaReport({ rows });
+  assert.equal((report.match(/^motn\/prime:/gm) ?? []).length, 24);
+  assert.equal((report.match(/^Variant /gm) ?? []).length, 24);
+  assert.match(report, /Variant prime\/variant-24:/); assert.doesNotMatch(report, /variant-25|PRIVATE/);
+});
+
+test('row comparison diagnostics retain discrepancy versus non-comparable distinctions without peer IDs or raw values', () => {
+  const reasons = ['package-scope-unresolved','version-scope-unresolved','package-differs','version-differs',
+    'same-declared-card-offer-scope-unknown','card-pointer-equivalence-unestablished'];
+  for (const reason of reasons) {
+    const outcome = reason === 'same-declared-card-offer-scope-unknown' ? 'possible-discrepancy' : 'non-comparable';
+    const row = { id: 'motn:PRIVATE_ROW', identityStatus: 'matched', provider: { key: 'prime' }, comparisonsOmitted: 3,
+      comparisons: [{ field: 'quality', outcome, reason, peer: 'https://secret.example/PRIVATE_PEER', value: 'PRIVATE_VALUE' },
+        { field: 'PRIVATE_FIELD', outcome: 'PRIVATE_OUTCOME', reason: 'PRIVATE_REASON', peer: 'PRIVATE_PEER' }] };
+    const report = safeMediaReport({ rows: [row] });
+    assert.ok(report.includes(`comparisons 2 [quality:${outcome}:${reason}, unknown-field:unknown:unknown]; comparisons omitted 3.`));
+    assert.doesNotMatch(report, /PRIVATE|https?:|peer|value|snippet/);
+  }
+  const comparisons = Array.from({ length: 8 }, () => ({ field: 'price', outcome: 'non-comparable', reason: 'package-differs' }));
+  const report = safeMediaReport({ rows: [{ id: 'motn:0', provider: { key: 'prime' }, comparisons, comparisonsOmitted: 'PRIVATE_COUNT' }] });
+  assert.equal((report.match(/price:non-comparable:package-differs/g) ?? []).length, 4);
+  assert.match(report, /comparisons 8 \[/); assert.match(report, /comparisons omitted unknown/); assert.doesNotMatch(report, /PRIVATE/);
 });

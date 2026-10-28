@@ -1,9 +1,44 @@
 import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../shared/media-advice-diagnostics.mjs';
+import { groupMediaRows } from './media-advice-presentation.mjs';
 const identities = new Set(['matched', 'mismatch', 'unresolved']);
+const platforms = new Set(['apple','prime','netflix','hbo','rakuten','megogo']);
+const accessKinds = new Set(['rent','rental','buy','purchase','subscription','flatrate','addon','free','ad-supported']);
+const fieldStates = new Set(['unknown','reported','not-reported','invalid','missing','null','reported-empty']);
+const conflictFields = new Set(['audio','subtitles','quality','price','localization','provider','identity','access','territory','link','package','cut','version']);
+const conflictTypes = new Set(['conflicting-block-labels','provider-id-conflict','source-identity-conflict']);
+const comparisonFields = new Set(['quality','price']);
+const comparisonOutcomes = new Set(['non-comparable','possible-discrepancy']);
+const comparisonReasons = new Set(['package-scope-unresolved','version-scope-unresolved','package-differs','version-differs','same-declared-card-offer-scope-unknown','card-pointer-equivalence-unestablished']);
+const blockIssues = new Set(['provider-block-count-limit','ambiguous-provider-block','unsupported-provider-block','block-field-count-limit','conflicting-block-labels','possible-block-conflict-scope-unestablished']);
+const sourceLabels = new Map([['Kinobaza HTML','kinobaza'], ['Movie of the Night','motn'], ['TMDB / JustWatch','tmdb'], ['TMDb / JustWatch','tmdb']]);
 const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2'];
 const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-and-structural-match','explicit-title-year-director-match']);
 const count = n => Number.isSafeInteger(n) && n >= 0 && n < 10000 ? n : 'unknown';
 const loc = s => ['reported-positive','reported-negative','conflicting'].includes(s) ? s : 'unknown';
+const fieldState = field => fieldStates.has(field?.state) ? field.state : 'unknown';
+function rowSource(row) {
+  const rowId = typeof row?.id === 'string' ? row.id : '';
+  const source = ['tmdb','motn','kinobaza'].find(source => rowId.startsWith(source + ':') || rowId.includes(':' + source + ':'));
+  if (source) return source;
+  return sourceLabels.get(row?.provenance?.source) ?? 'unknown';
+}
+function variantReferences(rows) {
+  const references = new Map();
+  for (const [groupIndex, group] of groupMediaRows(rows).entries()) {
+    const platform = platforms.has(group.key) ? group.key : `unmapped-group-${count(groupIndex + 1)}`;
+    for (const [index, row] of group.rows.entries()) references.set(row, `${platform}/variant-${count(index + 1)}`);
+  }
+  return references;
+}
+function rowDiagnostics(row, reference, source) {
+  const access = row.access?.state === 'reported' && accessKinds.has(row.access.value) ? row.access.value : 'unknown';
+  const conflicts = Array.isArray(row.conflicts) ? row.conflicts : [];
+  const conflictLabels = conflicts.slice(0, 4).map(conflict => `${conflictFields.has(conflict?.field) ? conflict.field : 'unknown-field'}:${conflictTypes.has(conflict?.type) ? conflict.type : 'unverified-flag'}`);
+  const comparisons = Array.isArray(row.comparisons) ? row.comparisons : [];
+  const comparisonLabels = comparisons.slice(0, 4).map(comparison => `${comparisonFields.has(comparison?.field) ? comparison.field : 'unknown-field'}:${comparisonOutcomes.has(comparison?.outcome) ? comparison.outcome : 'unknown'}:${comparisonReasons.has(comparison?.reason) ? comparison.reason : 'unknown'}`);
+  const issues = [...new Set((Array.isArray(row.kinobazaLocalization?.issues) ? row.kinobazaLocalization.issues : []).filter(issue => blockIssues.has(issue)))].slice(0, 8);
+  return `Variant ${reference ?? 'unknown'}: source ${source}; access ${access}; quality ${fieldState(row.quality)}; price ${fieldState(row.price)} (amount ${fieldState(row.price?.amount)}, currency ${fieldState(row.price?.currency)}); conflicts ${count(conflicts.length)} [${conflictLabels.join(', ')}]; provider conflict ${row.providerConflict === true ? 'yes' : 'no'}; block issues [${issues.join(', ')}]; comparisons ${count(comparisons.length)} [${comparisonLabels.join(', ')}]; comparisons omitted ${count(row.comparisonsOmitted)}.`;
+}
 const sourceStatuses = new Set([...resolverStatuses, 'ok','partial','unresolved','identity-mismatch','identity-unresolved',
   'invalid-response','invalid-response-or-id','invalid-results','invalid-UA','missing-token-no-request','invalid-token-no-request',
   'missing-key-no-request','invalid-key-no-request','redirect-not-followed','api-auth-error','api-access-denied','title-not-returned',
@@ -44,6 +79,25 @@ function reportFilm(result, filmContext) {
   return { title: filmTitle(boundFilm?.title) ?? filmTitle(contextId ? filmContext?.title : null),
     year: year(boundFilm?.year) ?? year(contextId ? filmContext?.year : null), imdbId: boundId };
 }
+// On-demand diagnostic view of already projected fields, not raw responses.
+// URLs/IDs/unknown keys never enter it; the copied short report stays separate.
+export function mediaSourceDetails(row) {
+  const keys = new Set(['source','name','country','territory','code','access','reason','sourceBucket','conflictingPlatforms',
+    'provenance','upstream','method','receivedAt','observationTime','audio','subtitles','ukrainianAudio','ukrainianSubtitles',
+    'quality','price','amount','currency','kinobazaLocalization','conflicts','comparisons','comparisonsOmitted','extractionIssue',
+    'observation','observations','state','value','note','language','region','closedCaptions','ukrainian','returnedLocales',
+    'completeness','evidence','label','literal','formatLiteral','typeLiteral','provider','territoryBasis','binding','issues',
+    'field','type','scope','outcome','service','addon']);
+  const clean = (value, depth = 0) => {
+    if (depth > 8) return '[bounded]';
+    if (value === null || typeof value === 'boolean' || typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') return filmTitle(value) ?? '[withheld]';
+    if (Array.isArray(value)) return value.slice(0, 64).map(item => clean(item, depth + 1));
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key]) => keys.has(key)).map(([key, v]) => [key, clean(v, depth + 1)]));
+    return null;
+  };
+  return clean(row);
+}
 export function motnLanguageReport(f) {
   if (f?.state === 'not-reported') return 'not-reported (missing-or-null)';
   if (f?.state === 'invalid') return 'invalid-withheld';
@@ -54,6 +108,7 @@ export function motnLanguageReport(f) {
 const id = s => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s) ? s : 'unknown';
 export function safeMediaReport(result, { applied = false, filmContext, stale } = {}) {
   const rows = result?.rows ?? [];
+  const references = variantReferences(rows);
   const film = reportFilm(result, filmContext);
   const rt = result?.runtime, attested = rt?.execution === 'netlify-function' && rt.buildProvenance === 'netlify-build-commit-ref-and-git-head' && /^[a-f0-9]{40}$/.test(rt.buildSha ?? '') && /^[a-f0-9]{24}$/.test(rt.deployId ?? '');
   const lines = ['MW-FUT-01 M4 — source claims, not entitlement.', attested ? `Commit: ${rt.buildSha} (server build stamp); deploy ${rt.deployId}.` : 'Commit: unknown (not runtime-attested).',
@@ -65,7 +120,7 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
     `Mapped source rows: ${count(rows.length)}; other-platform rows: ${count(result?.unmapped?.length)}.`];
   for (const source of ['tmdb','motn','kinobaza']) {
     const s = result?.sources?.find(s => s.source === source);
-    lines.push(`${source}: identity ${identities.has(s?.identity) ? s.identity : 'unresolved'}; status ${sourceStatus(source, s?.status)}; source outcomes/details remain on page.`);
+    lines.push(`${source}: identity ${identities.has(s?.identity) ? s.identity : 'unresolved'}; status ${sourceStatus(source, s?.status)}; source diagnostics below.`);
   }
   for (const stage of stages) lines.push(`${stage}: ${count(result?.metrics?.calls?.filter(c => c.stage === stage).length)} reserved.`);
   lines.push(`Kinobaza resolver: ${resolverStatuses.has(result?.resolver?.status) ? result.resolver.status : 'unknown'}.`);
@@ -89,11 +144,12 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
   lines.push(`Kinobaza projection: mapped ${count(kinoRows)}; other platforms ${count(kinoOther)}; foreign-context candidates are not UA offers.`);
   lines.push(`Film-level UA audio badge: ${loc(result?.filmLocalization?.ukrainianAudio?.state)}; not provider tracks.`);
   for (const r of rows.slice(0, 24)) {
-    const source = ['tmdb','motn','kinobaza'].find(s => r.id?.startsWith(s + ':') || r.id?.includes(':' + s + ':')) ?? 'unknown';
-    const platform = ['apple','prime','netflix','hbo','rakuten','megogo'].includes(r.provider?.key) ? r.provider.key : 'unmapped';
+    const source = rowSource(r);
+    const platform = platforms.has(r.provider?.key) ? r.provider.key : 'unmapped';
     const b = r.kinobazaLocalization;
     const language = source === 'motn' ? `MOTN audio ${motnLanguageReport(r.audio)}, subtitles ${motnLanguageReport(r.subtitles)}` : source === 'kinobaza' ? `Kinobaza provider-block audio ${loc(b?.audio?.state)}, subtitles ${loc(b?.subtitles?.state)}` : 'provider tracks not established by TMDb availability';
     lines.push(`${source}/${platform}: ${r.country === 'UA' ? 'UA source context' : 'territory unknown'}; ${language}; offer binding unverified.`);
+    lines.push(rowDiagnostics(r, references.get(r), source));
   }
   lines.push(applied ? 'Local form transfer performed; not saved by this feature.' : 'No attested transfer/save in this report.');
   return lines.join('\n');

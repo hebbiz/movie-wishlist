@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rankMediaRows, presentMediaRow, summarizeMediaAdvice } from '../assets/media-advice-presentation.mjs';
+import { rankMediaRows, groupMediaRows, presentMediaRow, summarizeMediaAdvice } from '../assets/media-advice-presentation.mjs';
+import { authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
 
 // Authored projected rows only. No source request, offer merge or stored result.
 const reported = (language = 'ukr') => ({ state: 'reported', ukrainian: [{ language }] });
@@ -33,8 +34,8 @@ test('provider block tracks, the general film badge, and matching provider names
   assert.equal(presentMediaRow(country).band, 'ua');
   assert.equal(presentMediaRow(block).band, 'supplemental');
   assert.match(presentMediaRow(block).audioLabel, /невідомо/);
-  assert.equal(presentMediaRow(block).blockAudioLabel, 'Кінобаза вказує українське аудіо');
-  assert.equal(presentMediaRow(block).blockSubtitlesLabel, 'Кінобаза вказує українські субтитри');
+  assert.equal(presentMediaRow(block).blockAudioLabel, 'Є згадка про українське аудіо');
+  assert.equal(presentMediaRow(block).blockSubtitlesLabel, 'Є згадка про українські субтитри');
   assert.ok(presentMediaRow(block).warnings.includes('Для цієї пропозиції ще не перевірено.'));
   assert.match(summarizeMediaAdvice(result), /Prime Video.*українські субтитри/);
   assert.equal(country.audio.state, 'unknown');
@@ -79,11 +80,11 @@ test('subtitles rank second without positive same-row audio, with distinct negat
   assert.match(summarizeMediaAdvice([negative]), /а українське аудіо джерело позначає як відсутнє/);
   assert.match(summarizeMediaAdvice([subtitle]), /а українське аудіо не підтверджене/);
   const block = presentMediaRow(row('block', { kinobazaLocalization: { audio: { state: 'reported-negative' } } }));
-  assert.match(block.blockAudioLabel, /зазначені українські аудіодоріжки як відсутні/);
+  assert.match(block.blockAudioLabel, /Зазначені українські аудіодоріжки позначені як відсутні/);
   assert.match(block.audioLabel, /невідомо/);
   const uncertain = presentMediaRow(row('uncertain', { kinobazaLocalization: { audio: { state: 'conflicting' }, subtitles: { state: 'unknown' } } }));
-  assert.match(uncertain.blockAudioLabel, /Дані Кінобази.*суперечливі/);
-  assert.equal(uncertain.blockSubtitlesLabel, 'Кінобаза не уточнює, чи є українські субтитри');
+  assert.match(uncertain.blockAudioLabel, /Згадки про українське аудіо суперечливі/);
+  assert.equal(uncertain.blockSubtitlesLabel, 'Не уточнено, чи є українські субтитри');
 });
 
 test('presentation uses known source/platform labels and does not echo raw source descriptions', () => {
@@ -105,4 +106,76 @@ test('empty, partial, or wholly refused results have concise unknown-not-unavail
   }
   assert.deepEqual(rankMediaRows(undefined), []);
   assert.deepEqual(rankMediaRows([null, false]), []);
+});
+
+test('eight separate projected rows form three ordered platform cards with every original variant retained', () => {
+  const rows = authoredGroupedMediaRows(), groups = groupMediaRows(rows);
+  assert.deepEqual(groups.map(group => [group.key, group.title, group.rows.length, group.readOnly]), [
+    ['prime', 'Prime Video', 2, false], ['hbo', 'HBO Max', 2, false], ['rakuten', 'Rakuten TV', 4, false],
+  ]);
+  assert.strictEqual(groups[0].primary, rows[0]); assert.strictEqual(groups[1].primary, rows[2]); assert.strictEqual(groups[2].primary, rows[4]);
+  const retained = groups.flatMap(group => group.rows);
+  assert.equal(retained.length, 8); assert.equal(new Set(retained).size, 8);
+  for (const original of rows) assert.ok(retained.includes(original));
+  assert.strictEqual(groups[0].rows[1], rows[1]); assert.equal(groups[0].rows[1].link.href, null);
+  assert.deepEqual(groups[2].rows.slice(0, 2).map(option => option.access.value), ['rental', 'buy']);
+  assert.equal(groups[2].rows[0].link.href, groups[2].rows[1].link.href);
+  assert.notStrictEqual(groups[2].rows[0], groups[2].rows[1], 'shared URL is not offer equivalence');
+});
+
+test('grouping never lends unknown-territory block tracks or a conflicting option to another row', () => {
+  const rows = authoredGroupedMediaRows(), group = groupMediaRows(rows).find(item => item.key === 'rakuten');
+  assert.equal(presentMediaRow(group.primary).band, 'ua'); assert.equal(group.primary.audio.state, 'unknown');
+  assert.equal(group.primary.subtitles.state, 'unknown'); assert.equal(group.primary.kinobazaLocalization, undefined);
+  assert.strictEqual(group.rows[2], rows[6]); assert.equal(presentMediaRow(group.rows[2]).band, 'supplemental');
+  assert.strictEqual(group.rows[3], rows[7]); assert.equal(presentMediaRow(group.rows[3]).band, 'withheld');
+  assert.deepEqual(group.rows[3].conflicts, [{ field: 'audio', type: 'authored-conflict' }]);
+});
+
+test('conflicting provider mappings and unresolved identities remain separate read-only observations', () => {
+  const canonical = row('canonical', { provider: { key: 'prime' } });
+  const mappingConflict = row('mapping-conflict', { provider: { key: 'prime' }, providerConflict: true, audio: reported() });
+  const identityUnknown = row('identity-unknown', { provider: { key: 'prime' }, identityStatus: 'unresolved' });
+  const unknownProvider = row('unknown-provider', { provider: { key: 'plex', name: 'Prime Video' } });
+  const groups = groupMediaRows([mappingConflict, identityUnknown, unknownProvider, canonical]);
+  assert.equal(groups.length, 4); assert.equal(groups[0].key, 'prime'); assert.strictEqual(groups[0].primary, canonical);
+  assert.deepEqual(groups[0].rows, [canonical]); assert.equal(new Set(groups.map(group => group.key)).size, 4);
+  for (const group of groups.slice(1)) { assert.match(group.key, /^unresolved:/); assert.equal(group.readOnly, true); assert.equal(group.rows.length, 1); }
+  assert.strictEqual(groups[1].primary, mappingConflict); assert.strictEqual(groups[2].primary, identityUnknown);
+});
+
+test('group ties and variant ties follow supplied order without mutating even frozen input rows', () => {
+  const rows = [row('rakuten-first', { provider: { key: 'rakuten' } }), row('prime-first', { provider: { key: 'prime' } }), row('rakuten-next', { provider: { key: 'rakuten' } })];
+  const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
+  const before = JSON.stringify(rows); freeze(rows);
+  const groups = groupMediaRows(rows);
+  assert.deepEqual(groups.map(group => group.key), ['rakuten', 'prime']);
+  assert.strictEqual(groups[0].rows[0], rows[0]); assert.strictEqual(groups[0].rows[1], rows[2]);
+  assert.strictEqual(groups[1].primary, rows[1]); assert.equal(JSON.stringify(rows), before);
+  assert.deepEqual(groupMediaRows(undefined), []); assert.deepEqual(groupMediaRows([null, false]), []);
+});
+
+test('presenting a different group option does not replace the explanation of the original ranked evidence', () => {
+  const rows = authoredGroupedMediaRows(), summary = summarizeMediaAdvice(rows), prime = groupMediaRows(rows)[0];
+  assert.equal(presentMediaRow(prime.rows[1]).accessLabel, 'Купівля');
+  assert.match(presentMediaRow(prime.rows[1]).audioLabel, /невідомо/);
+  assert.equal(prime.rows[1].link.href, null);
+  assert.equal(summarizeMediaAdvice(rows), summary); assert.strictEqual(prime.primary, rows[0]);
+  assert.match(summary, /Prime Video.*Україну та українське аудіо/);
+});
+
+test('summary anchors the best original variant even when another option of that platform is presented', () => {
+  const rows = authoredGroupedMediaRows(), prime = groupMediaRows(rows)[0], selected = prime.rows[1];
+  const summary = summarizeMediaAdvice(rows, { variantName: first => {
+    assert.strictEqual(first, prime.primary);
+    return `варіант ${prime.rows.indexOf(first) + 1} (${presentMediaRow(first).accessLabel.toLowerCase()})`;
+  } });
+  assert.match(summary, /Prime Video, варіант 1 \(оренда\): джерело вказує Україну та українське аудіо/);
+  assert.equal(summary.split(/[.!?]/).filter(sentence => sentence.trim()).length, 2);
+  assert.equal(selected.access.value, 'purchase'); assert.equal(selected.link.href, null); assert.equal(selected.audio.state, 'unknown');
+  assert.doesNotMatch(summary, /варіант 2|купівля/);
+  const ordinary = summarizeMediaAdvice(rows);
+  for (const variantName of [() => 'https://private.example/PRIVATE', () => 'варіант 1 (PRIVATE)', () => 'варіант 1\nPRIVATE', () => { throw Error('PRIVATE'); }]) {
+    assert.equal(summarizeMediaAdvice(rows, { variantName }), ordinary);
+  }
 });

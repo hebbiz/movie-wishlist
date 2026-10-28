@@ -4135,6 +4135,8 @@ body.invite-page.app-ready .container {
 .media-advice-option-title { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
 .media-advice-option-title h3 { margin: 0; font-size: 17px; }
 .media-advice-option-title span { font-size: 13px; color: #d6b25e; }
+.media-advice-dialog .media-advice-variant-label { display: block; padding: 10px 0 4px; color: #bdbdbd; font-size: 13px; }
+.media-advice-variant-select { box-sizing: border-box; display: block; width: 100%; min-width: 0; min-height: 44px; margin-top: 6px; padding: 8px; border: 1px solid #666; border-radius: 8px; background: #282828; color: #f4f4f4; font: inherit; font-size: 16px; line-height: 1.4; }
 .media-advice-row p { margin: 7px 0; font-size: 14px; }
 .media-advice-source, .media-advice-footnote { color: #bdbdbd; font-size: 13px; }
 .media-advice-warning, .media-advice-notice, .media-advice-stale { color: #e1c680; }

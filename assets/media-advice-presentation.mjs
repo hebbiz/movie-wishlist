@@ -33,6 +33,27 @@ export function rankMediaRows(rows) {
     .sort((a, b) => bands[bandFor(a.row)] - bands[bandFor(b.row)] || a.index - b.index).map(entry => entry.row);
 }
 
+// A group is a display container, never a combined offer. Its primary and every
+// option are original rows, each retaining its own language, access and link.
+// Unestablished identity/provider mappings cannot join a canonical platform.
+export function groupMediaRows(rows) {
+  const groups = [], canonical = new Map();
+  for (const [index, row] of rankMediaRows(rows).entries()) {
+    const known = row.identityStatus === 'matched' && !row.providerConflict && Object.hasOwn(providers, row.provider?.key);
+    if (!known) {
+      groups.push({ key: `unresolved:${index}`, title: presentMediaRow(row).title, rows: [row], primary: row, readOnly: true });
+      continue;
+    }
+    const key = row.provider.key;
+    if (!canonical.has(key)) {
+      const group = { key, title: providers[key], rows: [], primary: row, readOnly: false };
+      canonical.set(key, group); groups.push(group);
+    }
+    canonical.get(key).rows.push(row);
+  }
+  return groups;
+}
+
 function sourceLabel(row) {
   const id = typeof row?.id === 'string' ? row.id : '';
   if (/(^|:)kinobaza:/.test(id) || row?.provenance?.source === 'Kinobaza HTML') return 'Кінобаза';
@@ -55,10 +76,10 @@ function blockLabel(row, key) {
   const field = row?.kinobazaLocalization?.[key];
   if (!field) return null;
   const subject = key === 'audio' ? 'українське аудіо' : 'українські субтитри';
-  if (field.state === 'reported-positive') return `Кінобаза вказує ${subject}`;
-  if (field.state === 'reported-negative') return `Кінобаза позначає зазначені українські ${key === 'audio' ? 'аудіодоріжки' : 'субтитри'} як відсутні`;
-  if (field.state === 'conflicting') return `Дані Кінобази про ${subject} суперечливі`;
-  return `Кінобаза не уточнює, чи є ${subject}`;
+  if (field.state === 'reported-positive') return `Є згадка про ${subject}`;
+  if (field.state === 'reported-negative') return `Зазначені українські ${key === 'audio' ? 'аудіодоріжки' : 'субтитри'} позначені як відсутні`;
+  if (field.state === 'conflicting') return `Згадки про ${subject} суперечливі`;
+  return `Не уточнено, чи є ${subject}`;
 }
 
 // Text labels are fixed vocabulary. Source details remain available separately;
@@ -82,11 +103,19 @@ export function presentMediaRow(row) {
 
 // At most two sentences. Priority describes source evidence, never entitlement,
 // verified destination tracks, merged offers, or absence when sources are quiet.
-export function summarizeMediaAdvice(resultOrRows) {
+export function summarizeMediaAdvice(resultOrRows, { variantName } = {}) {
   const rows = rankMediaRows(Array.isArray(resultOrRows) ? resultOrRows : resultOrRows?.rows);
   const first = rows.find(row => eligible(row));
   if (!first) return 'Поки не отримано узгоджених варіантів для вибору. Це не означає, що фільм недоступний.';
-  const { title, band } = presentMediaRow(first);
+  const presented = presentMediaRow(first), band = presented.band;
+  let variant = '';
+  if (typeof variantName === 'function') {
+    try {
+      const label = variantName(first), match = typeof label === 'string' && /^варіант [1-9]\d{0,2}(?: \(([^()\r\n]{1,50})\))?$/iu.exec(label);
+      if (match && (!match[1] || [...Object.values(accessLabels), 'Тип доступу невідомий'].some(access => access.toLowerCase() === match[1].toLowerCase()))) variant = `, ${label}`;
+    } catch {} // Optional local display labels cannot change evidence or the answer.
+  }
+  const title = presented.title + variant;
   if (band === 'ua-audio') return `Спершу перегляньте ${title}: джерело вказує Україну та українське аудіо для цього варіанта. Перевірте доріжки й умови доступу на платформі.`;
   if (band === 'ua-subtitles') {
     const audio = languageState(first, 'audio') === 'negative' ? 'українське аудіо джерело позначає як відсутнє' : 'українське аудіо не підтверджене';

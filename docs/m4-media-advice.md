@@ -2924,15 +2924,22 @@ identity inputs. These display fields are not sent as trusted server identity.
 
 Opening a new permitted form context explicitly starts its one discovery:
 loading bubble/dots exist only while the real promise is pending, with no fake
-delay. Completion shows a short Mykola answer and compact separate source rows.
-Reopening the same card session resumes the same DOM/results/details/scroll,
+delay. Completion shows a short Mykola answer and one compact card per established
+platform. Every original source row remains a separate variant inside that card.
+Reopening the same card session resumes the same DOM/results/variant/scroll,
 not another request. Closing does not reopen automatically on access refresh.
 Same-document app return retains state; full reload/iOS page eviction still
 loses memory, and durable recovery is not promised or introduced.
 
-Each row retains source label, territory/language unknowns and meaningful
-warnings. Collapsed details contain provenance and technical field limitations;
-API/ledger/counter/status diagnostics are not the main answer. No new plain-text
+Platform cards show only the selected variant's access, territory, languages,
+literal reported price/quality and meaningful warnings. A native selector makes
+all variants accessible without repeated action blocks: at most one link action
+and one selection action per platform. Switching variants changes neither the
+group order nor the underlying rows; it revokes pending selection and resets
+tracking/affiliate acknowledgement. Missing/unsafe URLs have no link action.
+Source names and technical field limitations live in the diagnostic report and
+attribution, not in the main platform list or per-row JSON disclosures.
+No new plain-text
 chat input, LLM, physical-offer search or fabricated links. Other/unmapped
 platforms remain visible read-only. Multiple identity-confirmed Kinobaza cards
 remain explicit local choices, not automatic merging or further fetches.
@@ -2963,7 +2970,18 @@ evidence, not a guaranteed best offer. No provider-name join or copying tracks
 from a film badge/separate block to an offer. Kinobaza block language stays a
 separate claim (`Для цієї пропозиції ще не перевірено`); unknown territory cannot
 become UA. Unknown/empty lists are not negative. Conflicts are not repaired or
-resolved by choosing a winner. Recommendations do not assert entitlement.
+resolved by choosing a winner. A group warning keeps contradictions in other
+variants visible while a different variant is selected. The summary names the
+ranked original variant's ordinal/access when its platform has several options;
+selecting another option cannot silently acquire that explanation or its tracks.
+Recommendations do not assert entitlement.
+
+The 2026-10-29 review refinement is visual grouping, not offer deduplication or
+enrichment: even two rows with the same URL remain separate. Only established
+canonical platform mappings group together; ambiguous identity/provider rows
+remain read-only separate observations. An authored Supergirl-shaped fixture
+(not a reconstruction of the live response) contains2 Prime,2 HBO and4 Rakuten
+rows and renders3 platform cards with8 independently accessible variants.
 
 ### Thirty minutes: freshness, not deletion of the answer
 
@@ -3003,6 +3021,15 @@ fill matching context fields; incompatible IMDb bindings are withheld as
 unknown. Safe build/deploy/run IDs retain their prior provenance rules; missing
 attestation stays unknown. Source outcome statuses are allowlisted; row scopes,
 language distinctions, extraction/card-digest/search counters remain available.
+Each retained row also has a generated platform/variant reference matching the
+selector ordinal, fixed source label, allowlisted access/field states and safe
+conflict/block reason codes. Raw source descriptions and literal URLs stay out
+of the copied report; removing the main-list technical details adds no storage.
+The diagnostic panel also has a collapsed, read-only view of the already
+projected row/unmapped fields, including literal localization labels/formats.
+It uses bounded known keys and withholds URLs, raw-body/private keys and
+credential-shaped strings; this view is not appended to the copied short report.
+Thus simplifying the platform list does not erase inspectable source evidence.
 Age is updated if the report remains open across the freshness boundary, and
 copy recomputes it without a source call. No credentials, arbitrary error body,
 private/group metadata, raw URLs/tracking query or responses in the copied report.
@@ -3013,12 +3040,21 @@ Authored unit/HTTP/browser checks cover evidence ordering/no enrichment,
 source/refusal/empty/partial/conflict states, safe reports, real add/edit forms,
 explicit transfer, manual edits/missing URL/acknowledgement, isolated other chats,
 auto-once/reopen/return/expiry/context/late response guards and mobile focus/copy.
-Final full `test/*.test.mjs` run: **193 passed,1 skipped,0 failed** (194 total),
-including30 browser cases/subtests. The skip is the unconfigured native
+Final 2026-10-29 full `test/*.test.mjs` run: **206 passed,1 skipped,0 failed**
+(207 total), including31 browser cases/subtests. This supersedes the original
+PR checkpoint's193/1 result. The skip is the unconfigured native
 PostgreSQL17 multi-connection fixture, not a passed concurrency result.
-Additional dependent source/projection/R1/R2 checks:106/106. The final real-form
+The prior checkpoint's additional106/106 source/projection/R1/R2 result is
+historical, not a new run; source adapters/shared policies are unchanged.
+The grouped-card review adds8-to-3 rendering, all8 original options, no source
+names/per-row JSON in the main list, variant-scoped literal price/quality,
+unknown territory/block tracks, conflict visibility, exact non-primary transfer,
+acknowledgement reset, pending-selection cancellation and retained native controls.
+The final real-form
 browser run also checks successful ordinary Save with a **mocked** DB, clearing
-the cached dialog without a source call. Earlier failures while adapting the old
+the cached dialog without a source call, and passed5/5 after adjusting screenshot
+capture to two actual mobile scroll positions (not an overflow-clipped element).
+Earlier failures while adapting the old
 technical-view tests led to explicit visible-preview waits and capturing scroll
 at the actual report click (after browser auto-scroll), not an unrelated prior
 position; assertions/timeouts were not weakened or increased. Native dialog focus
