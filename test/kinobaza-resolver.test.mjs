@@ -8,6 +8,7 @@ import { detailsData, providersData, motnData, IDS } from '../research/grounded-
 import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs';
 import { safeMediaReport } from '../assets/media-advice-report.mjs';
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 const film = { id: 'authored', tmdbId: IDS[0], imdbId: `tt${IDS[0]}`, title: 'Вигаданий фільм', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: ['Вигаданий фільм','Authored original'], directorCount: 1, directorAliases: ['Authored director'] };
 const urls = ['https://kinobazaua.com/titles/authored-card', 'https://kinobazaua.com/titles/authored-second', 'https://kinobazaua.com/titles/unexamined'];
 const searchHTML = urls => new Response(`<div id="nav-titles">${urls.map(url => `<a href="${url.replace('https://kinobazaua.com','')}">AUTHORED_SEARCH_LABEL</a>`).join('')}</div>`, {headers:{'content-type':'text/html'}});
@@ -48,6 +49,12 @@ test('one query, at most two sequential distinct card GETs, withheld mismatch, b
   assert.equal(out.result.identity.status, 'matched'); assert.equal(out.resolver.cards[1].identity, 'mismatch');
   assert.equal(out.resolver.unexamined, 1); assert.equal(out.status, 'one-confirmed-bounded-not-exhaustive');
   assert.ok(!m.calls.some(u => u.includes('apple') || u.includes('justwatch')));
+  assert.equal(out.resolver.cards[0].cardRef,createHash('sha256').update(urls[0]).digest('hex'));
+  assert.equal(out.resolver.cards[0].extractionDiagnostic.candidateCount,out.result.candidates.length);
+  assert.equal(out.resolver.cards[0].extractionDiagnostic.blockCount,1);
+  assert.equal(out.resolver.cards[1].extractionDiagnostic.candidateCount,0);
+  assert.equal(out.resolver.cards[1].extractionDiagnostic.blockCount,0);
+  assert.doesNotMatch(safeMediaReport({resolver:out.resolver}),/https?:|PRIVATE|Untrusted snippet/);
 });
 test('empty admitted result permits one alternative; auth/rate/transport error never retry', async () => {
   const empty = mock({ emptyFirst: true }); const ok = await run(empty);

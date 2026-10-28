@@ -1,5 +1,6 @@
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
-import { safeSearchDiagnostic, safeIdentityDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
+import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
+import { createHash } from 'node:crypto';
 import { kinobazaPublicSearch } from './kinobaza-public-search.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
@@ -147,7 +148,13 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, p
       const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic });
       cards.push(result);
       summary.cards.push({ identity: result.identity?.status ?? 'unresolved', reason: result.identity?.reason ?? null, extraction: result.status, candidates: result.candidates?.length ?? 0,
-        diagnostics: safeIdentityDiagnostic(result.identity?.diagnostics) });
+        diagnostics: safeIdentityDiagnostic(result.identity?.diagnostics),
+        // Public-pointer digest for comparing a known URL offline, never a
+        // capability, HTML hash, source archive or claim that a request succeeded.
+        cardRef: summary.cardCalls > priorCardCalls ? createHash('sha256').update(url).digest('hex') : null,
+        extractionDiagnostic: safeExtractionDiagnostic({status:result.status,issues:result.issues,
+          candidateCount:result.candidates?.length ?? 0, foreignCandidateCount:(result.candidates??[]).filter(c=>c.territory && c.territory.code!=='UA').length,
+          blockCount:result.localization?.blocks?.length ?? 0,filmAudioState:result.localization?.film?.ukrainianAudio?.state}) });
       if (summary.cardCalls === priorCardCalls) break; // A denied reservation is not a retry opportunity.
       if (i === 0 && ['mismatch', 'unresolved'].includes(result.identity?.status) && nextQuery < queries.length) {
         if (signal?.aborted) break;

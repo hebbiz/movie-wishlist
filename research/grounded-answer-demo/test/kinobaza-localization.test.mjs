@@ -3,13 +3,18 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { extractHtml, fetchHtmlCandidates, htmlScenario, canonicalKinobazaURL, canonicalRedirectTarget } from '../html-source.mjs';
 import { FILMS, selectRequest } from '../config.mjs';
-import { runDiscovery, authoredDiscoveryData } from '../discovery.mjs';
+import { runDiscovery, authoredDiscoveryData, composeDiscovery } from '../discovery.mjs';
 import { prepareDraft, compactFields } from '../public/discovery-client.mjs';
-import { localizedMarkup, tableBlock, paragraphBlock, badge } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge } from './kinobaza-localization.fixture.mjs';
 
 const parse = (body, film = 'coherence') => extractHtml(body, FILMS[film]);
 const selection = film => htmlScenario(FILMS[film], { discovery: 'digital-ua' });
 const html = body => new Response(body, { headers: { 'content-type': 'text/html; charset=UTF-8' } });
+// Authored structural cases, not retained or reconstructed public page HTML.
+const providerLink = (provider, href = 'https://example.com/authored-country') => `<a title="Дивитись / Купити на ${provider}" href="${href}"><img alt="${provider}"></a>`;
+const countrySection = (code, label, anchors = providerLink('Apple TV Store')) => `<div class="accordion-item"><h2 class="accordion-header"><button data-bs-target="#collapse${code}">${label}</button></h2><div id="collapse${code}" data-bs-parent="#availabilityAccordion">${anchors}</div></div>`;
+const countryMarkup = (blocks, sections, general = true) => `<!doctype html><html><body><h1>Coherence (2013)</h1><h2>Coherence</h2><table><tr><td>Режисер:</td><td>James Ward Byrkit</td></tr></table>${general ? generalBadge : ''}${blocks}<div id="availabilityAccordion">${sections}</div></body></html>`;
+const compose = result => composeDiscovery(FILMS.coherence, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result, status: result.status } });
 
 test('general film badge never supplies provider tracks; Coherence paragraph / Dune table are independently recognized structures', async () => {
   const general = await parse(localizedMarkup());
@@ -70,6 +75,65 @@ test('country sections, foreign links and source blocks are independent observat
   assert.ok(r.availabilitySignals.every(s => s.access === 'unknown' && s.upstream === 'JustWatch'));
   assert.ok(r.candidates.filter(c => c.territory).every(c => !c.blockId));
   assert.equal(r.candidates.find(c => c.provider === 'megogo').territory, null);
+});
+
+test('three valid foreign sections without UA preserve independent iTunes/MEGOGO blocks and the film badge', async () => {
+  const appleHref = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authoronly?at=AUTHOR%2fONLY&amp;x=1';
+  const megogoHref = 'https://megogo.net/ua/view/999999-authored.html';
+  const body = countryMarkup(tableBlock('itunes', [['Укр. звук', '+'], ['Укр. субтитри', '-']], appleHref) + paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', megogoHref),
+    countrySection('PL', 'Доступно в Польщі') + countrySection('CZ', 'Доступно в Чехії') + countrySection('DE', 'Доступно в Німеччині'));
+  const r = await parse(body);
+  assert.equal(r.identity.status, 'matched'); assert.equal(r.status, 'partial'); assert.deepEqual(r.issues, ['missing-explicit-ukraine-section']);
+  assert.deepEqual(r.candidates.map(c => c.territory?.code ?? null), ['PL', 'CZ', 'DE', null, null]);
+  assert.deepEqual(r.availabilitySignals.map(s => s.territory.code), ['PL', 'CZ', 'DE']);
+  assert.equal(r.localization.film.ukrainianAudio.state, 'reported-positive'); assert.equal(r.localization.blocks.length, 2);
+  for (const block of r.localization.blocks) {
+    const candidate = r.candidates.find(c => c.blockId === block.blockId);
+    assert.equal(candidate.href, block.href); assert.equal(candidate.provider, block.provider); assert.equal(block.territory, null);
+  }
+  assert.equal(r.candidates[3].rawHref, appleHref); assert.equal(r.candidates[3].href, appleHref.replace('&amp;', '&'));
+  const projection = compose(r);
+  assert.deepEqual(projection.rows.map(row => row.provider.key), ['apple', 'megogo']);
+  assert.equal(projection.filmLocalization.ukrainianAudio.state, 'reported-positive');
+  assert.ok(projection.rows.every(row => row.country === null && row.availability.state === 'unknown' && row.access.state === 'unknown' && row.audio.state === 'unknown'));
+  assert.ok(projection.rows.every(row => row.kinobazaLocalization.audio.state === 'reported-positive' && !row.countrySignal));
+  const refused = await parse(body.replace('Coherence (2013)', 'Coherence (2020)'));
+  assert.equal(refused.identity.status, 'unresolved'); assert.deepEqual(refused.candidates, []); assert.equal(refused.localization, undefined);
+});
+
+test('later ambiguous country panel rolls back earlier valid UA claims while preserving only independent blocks', async () => {
+  const sections = countrySection('UA', 'Доступно в Україні') + countrySection('PL', 'Доступно в Польщі').replace('id="collapsePL"', 'id="changedPL"');
+  const r = await parse(countryMarkup(tableBlock('itunes') + paragraphBlock('megogo'), sections));
+  assert.equal(r.status, 'partial'); assert.deepEqual(r.issues, ['ambiguous-territory-panel']);
+  assert.deepEqual(r.candidates.map(c => c.territory), [null, null]); assert.deepEqual(r.availabilitySignals, []);
+  assert.equal(r.localization.blocks.length, 2); assert.equal(r.localization.film.ukrainianAudio.state, 'reported-positive');
+  assert.ok(compose(r).rows.every(row => row.country === null && row.availability.state === 'unknown' && !row.countrySignal));
+  const empty = await parse(countryMarkup('', sections, false));
+  assert.equal(empty.status, 'unsupported-markup'); assert.deepEqual(empty.candidates, []); assert.equal(empty.localization, undefined);
+});
+
+test('successful UA parsing preserves seven separate Apple/Rakuten/MEGOGO/Prime observations and their order', async () => {
+  const blocks = tableBlock('itunes') + paragraphBlock('rakuten') + paragraphBlock('megogo') + paragraphBlock('amazon prime');
+  const sections = countrySection('UA', 'Доступно в Україні', ['Apple TV Store', 'Rakuten TV', 'Prime Video'].map(provider => providerLink(provider)).join(''));
+  const r = await parse(countryMarkup(blocks, sections));
+  assert.equal(r.status, 'ok'); assert.deepEqual(r.issues, []);
+  assert.deepEqual(r.candidates.map(c => c.provider), ['Apple TV Store', 'Rakuten TV', 'Prime Video', 'itunes', 'rakuten', 'megogo', 'amazon prime']);
+  assert.deepEqual(r.candidates.map(c => c.territory?.code ?? null), ['UA', 'UA', 'UA', null, null, null, null]);
+  const projection = compose(r);
+  assert.equal(projection.rows.length, 7); assert.equal(projection.unmapped.length, 0); assert.equal(r.localization.blocks.length, 4);
+  assert.deepEqual(projection.rows.map(row => row.provider.key), ['apple', 'rakuten', 'prime', 'apple', 'rakuten', 'megogo', 'prime']);
+  assert.ok(projection.rows.slice(0, 3).every(row => !row.kinobazaLocalization && row.audio.state === 'unknown'));
+});
+
+test('the 100-candidate cap applies across independent and country extraction and cannot be bypassed by country fallback', async () => {
+  const ua = countrySection('UA', 'Доступно в Україні');
+  const atCap = await parse(countryMarkup(badge('itunes').repeat(99), ua));
+  assert.equal(atCap.candidates.length, 100); assert.equal(atCap.status, 'ok');
+  for (const [count, sections] of [[100, ua], [101, '<p>Unsupported authored child</p>']]) {
+    const r = await parse(countryMarkup(badge('itunes').repeat(count), sections));
+    assert.equal(r.identity.status, 'matched'); assert.equal(r.status, 'unsupported-markup');
+    assert.deepEqual(r.issues, ['candidate-count-limit']); assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined);
+  }
 });
 
 test('unsafe/relative/tracking/search hrefs remain candidates with original classification, never fetched or rebuilt', async () => {

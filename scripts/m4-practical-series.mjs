@@ -9,11 +9,21 @@ import { createKinobazaResolver, tavilySearch } from '../netlify/lib/kinobaza-re
 import { describeCandidateURL } from './m4-url-diagnostics.mjs';
 import { kinobazaPublicSearch, isKinobazaSearchURL } from '../netlify/lib/kinobaza-public-search.mjs';
 import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
+import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
 
 export const practicalFilms = Object.freeze([
   { title: 'Blade Runner 2049', year: 2017 }, { title: 'Mortal Kombat', year: 2021 },
   { title: 'Alien', year: 1979 }, { title: 'Oppenheimer', year: 2023 }, { title: 'Dune: Part Two', year: 2024 },
 ]);
+// Local task selections only. No IDs, source URLs or application catalogue entry.
+export const practicalStudies = Object.freeze({
+  'practical-five': practicalFilms,
+  'pilot-retrieval': Object.freeze([
+    Object.freeze({ title: 'Blade Runner', year: 1982 }),
+    Object.freeze({ title: 'Mortal Kombat', year: 2021 }),
+    Object.freeze({ title: 'Supergirl', year: 2026 }),
+  ]),
+});
 const normalize = s => typeof s === 'string' ? s.normalize('NFC').replace(/\s+/gu, ' ').trim().toLowerCase() : '';
 const val = f => f?.state === 'reported' ? f.value : null;
 const api = 'https://api.themoviedb.org/3';
@@ -22,6 +32,26 @@ const attr = (n, key) => n.attrs?.find(a => a.name === key)?.value;
 const text = n => (n.childNodes ?? []).map(c => c.nodeName === '#text' ? c.value : ['script','style','template','noscript','iframe'].includes(c.tagName) ? '' : text(c)).join(' ').replace(/\s+/gu, ' ').trim();
 const personURL = s => typeof s === 'string' && /^https:\/\/kinobazaua\.com\/persons\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s) ? s : null;
 const nodes = html => { const out = [], stack = [parse(html, { sourceCodeLocationInfo: true })]; while (stack.length && out.length < 100_000) { const n = stack.pop(); out.push(n); stack.push(...n.childNodes ?? []); } return out; };
+const safeName = s => typeof s === 'string' && s.trim() && s.length <= 500 && !/[\p{C}]/u.test(s);
+const calendarDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(Date.parse(s)) && new Date(s).toISOString().slice(0,10) === s;
+const issueCodes = values => [...new Set((values ?? []).filter(v => typeof v === 'string' && /^[a-z0-9-]{1,120}$/.test(v)))].slice(0,32);
+const localizationField = f => ({ state: f?.state ?? 'unknown', language: f?.language ?? 'uk',
+  evidence: (f?.evidence ?? []).slice(0,64).map(e => ({ label:e.label, literal:e.literal, state:e.state,
+    ...(e.formatLiteral ? {formatLiteral:e.formatLiteral} : {}), ...(e.typeLiteral ? {typeLiteral:e.typeLiteral} : {}) })) });
+
+// Reuse the application projection, then retain only bounded diagnostic fields.
+// Provider destinations, tracking queries and full projected reports never leave.
+function summarizeDiscovery(film, card) {
+  const projected = composeDiscovery(film, { tmdb:{status:'not-requested',result:null}, motn:{status:'not-requested',result:null}, kinobaza:{status:card.status,result:card} });
+  return { mappedCount:projected.rows.length, unmappedCount:projected.unmapped.length,
+    filmUkrainianAudio:localizationField(projected.filmLocalization?.ukrainianAudio),
+    mapped:projected.rows.slice(0,100).map(r => ({ provider:r.provider.name, providerKey:r.provider.key, country:r.country,
+      audio:localizationField(r.kinobazaLocalization?.audio), subtitles:localizationField(r.kinobazaLocalization?.subtitles),
+      extraction:r.linkAudit?.extraction, blockAssociation:r.linkAudit?.blockAssociation, linkKind:r.link?.kind,
+      issues:issueCodes(r.kinobazaLocalization?.issues) })),
+    unmapped:projected.unmapped.slice(0,100).map(r => ({ name:r.name, reason:r.reason, extractionIssue:r.extractionIssue })),
+    extractionIssues:issueCodes(card.issues) };
+}
 
 // A few public identity fields, never an HTML dump, search response, snippet or offer archive.
 export function inspectPublicIdentity(html, url) {
@@ -50,19 +80,22 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
   const counts = { tmdb:0, search:0, cards:0, personPages:0, total:0 }, attempts = [];
   const result = { execution:'local-diagnostic', buildSha:null, runId:randomUUID(), startedAt:new Date().toISOString(), action:operation?.action, counts, attempts };
   const done = (status, extra = {}) => ({ result:{ ...result, status, ...extra }, context });
-  const allowed = ['identify','resolve','inspect-card','inspect-person','status'];
+  const allowed = ['identify','resolve','inspect-card','inspect-person','inspect-director','status'];
   if (!operation || !allowed.includes(operation.action) || Object.keys(operation).some(k => !['action','film','url'].includes(k))) return done('invalid-operation');
+  const study = context.study ?? 'practical-five';
+  if (!Object.hasOwn(practicalStudies, study)) return done('invalid-local-study');
   if (operation.action === 'status') return done('ready', { cachedFilms:Object.keys(context.films ?? {}).map(Number) });
-  const index = operation.film - 1, control = practicalFilms[index];
+  const index = operation.film - 1, control = practicalStudies[study][index];
   if (!control || !Number.isInteger(operation.film) || [tmdbToken,tavilyKey].some(s => typeof s !== 'string' || !s || s.length > 4096 || /\s/.test(s))) return done('invalid-local-input');
-  if (operation.action.startsWith('inspect-') && !(operation.action === 'inspect-card' ? admitKinobazaURL(operation.url) : personURL(operation.url))) return done('unadmitted-inspection-url');
+  if (['inspect-card','inspect-person'].includes(operation.action) && !(operation.action === 'inspect-card' ? admitKinobazaURL(operation.url) : personURL(operation.url))) return done('unadmitted-inspection-url');
+  if (!['inspect-card','inspect-person'].includes(operation.action) && Object.hasOwn(operation,'url')) return done('invalid-operation');
   result.film = `${control.title} (${control.year})`;
   // This is a task-wide series, not unlimited per-request runtime work. Each
   // invocation is bounded and actual resolver still enforces 2 search/2 cards.
   const signal = AbortSignal.timeout(60_000);
-  let queryURL, detailURL;
+  let queryURL, detailURL, directorURL;
   const send = async (url, init) => {
-    const type = url === queryURL || url === detailURL ? 'tmdb' : url === 'https://api.tavily.com/search' || isKinobazaSearchURL(url) ? 'search' : admitKinobazaURL(url) ? 'cards' : operation.action === 'inspect-person' && url === operation.url && personURL(url) ? 'personPages' : null;
+    const type = url === queryURL || url === detailURL || url === directorURL ? 'tmdb' : url === 'https://api.tavily.com/search' || isKinobazaSearchURL(url) ? 'search' : admitKinobazaURL(url) ? 'cards' : operation.action === 'inspect-person' && url === operation.url && personURL(url) ? 'personPages' : null;
     if (!type || signal.aborted || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (url === 'https://api.tavily.com/search' ? 'POST' : 'GET') || counts.total >= 6 || counts[type] >= 2 || (type === 'personPages' || isKinobazaSearchURL(url)) && Object.keys(init.headers ?? {}).some(k => /authorization|cookie|key/i.test(k))) throw Error('local-source-boundary');
     counts[type]++; counts.total++;
     const attempt = { type, outcome:'dispatched' }; attempts.push(attempt);
@@ -72,6 +105,17 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
   try {
     context.films ??= {};
     let film = context.films[operation.film];
+    if (operation.action === 'inspect-director') {
+      const person = film?.directorPeople?.[0];
+      if (!film || film.directorCount !== 1 || film.directorPeople?.length !== 1 || person?.namespace !== 'tmdb:person' || !Number.isSafeInteger(person.personId) || person.personId < 1) return done('cached-single-director-required');
+      directorURL = `${api}/person/${person.personId}?language=uk-UA&append_to_response=external_ids`;
+      const response = await readTmdbJson(directorURL, tmdbToken, send, {signal});
+      if (response.status !== 'ok') return done(`tmdb-person-${response.status}`);
+      const data = response.data, imdbIds = [data?.imdb_id,data?.external_ids?.imdb_id].filter(v => v !== undefined && v !== null && v !== '');
+      if (data?.id !== person.personId || (data.external_ids?.id !== undefined && data.external_ids.id !== person.personId) || !safeName(data.name) || !Array.isArray(data.also_known_as) || data.also_known_as.length > 32 || !data.also_known_as.every(safeName) ||
+          (data.birthday !== undefined && data.birthday !== null && !calendarDate(data.birthday)) || imdbIds.some(v => typeof v !== 'string' || !/^nm\d{7,10}$/.test(v)) || new Set(imdbIds).size > 1) return done('tmdb-person-identity-refused');
+      return done('director-identity-inspected', { directorIdentity:{ personId:data.id, name:data.name, alsoKnownAs:data.also_known_as, dateOfBirth:data.birthday ?? null, imdbNameId:imdbIds[0] ?? null } });
+    }
     if (!film) {
       queryURL = `${api}/search/movie?query=${encodeURIComponent(control.title)}&language=uk-UA&include_adult=false&page=1&year=${control.year}`;
       const search = await readTmdbJson(queryURL, tmdbToken, send, {signal});
@@ -109,14 +153,15 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
         return r;
       };
       const card = await fetchAssistedKinobaza(operation.url, film, fetchCard, {signal,onIdentityDiagnostic});
-      return done(card.identity?.status ?? card.status, { comparisons, publicIdentity:inspection, extraction:card.status, candidateCount:card.candidates?.length ?? 0, localizationBlocks:card.localization?.blocks?.length ?? 0 });
+      return done(card.identity?.status ?? card.status, { comparisons, publicIdentity:inspection, extraction:card.status, candidateCount:card.candidates?.length ?? 0, localizationBlocks:card.localization?.blocks?.length ?? 0, discovery:summarizeDiscovery(film,card) });
     }
     const stages = new Set(), searchPointers = [];
     const searchFactory = (key, sendSearch) => tavilySearch(key, sendSearch, { onCandidateURLs: urls => searchPointers.push(urls.map(url => describeCandidateURL(url, {secrets:[tmdbToken,tavilyKey]}))) });
     const publicSearchFactory = sendSearch => kinobazaPublicSearch(sendSearch, {secrets:[tmdbToken,tavilyKey],onCandidateURLs:urls=>searchPointers.push(urls.map(url=>describeCandidateURL(url,{secrets:[tmdbToken,tavilyKey]})))});
     const resolved = await createKinobazaResolver({ apiKey:tavilyKey,onIdentityDiagnostic,searchFactory,publicSearchFactory })(film, { fetchImpl:send, signal, calls:[], reserve:async stage => { if(stages.has(stage)) throw Error('repeat-reservation'); stages.add(stage); } });
-    return done(resolved.status, { resolver:resolved.resolver, comparisons, searchPointers,
-      confirmed: [resolved.result, ...(resolved.choices ?? [])].filter(Boolean).map(c => ({ sourceURL:c.sourceURL, identity:c.identity?.status, reason:c.identity?.reason, extraction:c.status, candidates:c.candidates?.length ?? 0, providerBlocks:c.localization?.blocks?.length ?? 0 })) });
+    const confirmed = [resolved.result, ...(resolved.choices ?? [])].filter(Boolean).map(c => ({ sourceURL:c.sourceURL, identity:c.identity?.status, reason:c.identity?.reason, extraction:c.status, candidates:c.candidates?.length ?? 0, providerBlocks:c.localization?.blocks?.length ?? 0, discovery:summarizeDiscovery(film,c) }));
+    return done(resolved.status, { resolver:resolved.resolver, comparisons, searchPointers, confirmed,
+      discovery:{mappedCount:confirmed.reduce((n,c)=>n+c.discovery.mappedCount,0),unmappedCount:confirmed.reduce((n,c)=>n+c.discovery.unmappedCount,0)} });
   } catch { return done(signal.aborted ? 'local-deadline-no-retry' : 'local-operation-failed-no-retry'); }
 }
 

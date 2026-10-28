@@ -6,6 +6,15 @@ export const identityGates = ['structure-limit', 'canonical-conflict', 'stable-i
 export const identityCounts = ['headingCount', 'originalTitleCount', 'directorCount', 'canonicalCount', 'stableIdCount'];
 export const identityFlags = ['canonicalMatch', 'stableIdMatch', 'stableIdConflict', 'headingAliasMatch', 'originalAliasMatch', 'yearEqual', 'directorAliasMatch'];
 export const safeCount = n => Number.isSafeInteger(n) && n >= 0 && n < 10000 ? n : null;
+const extractionStatuses = new Set(['ok','partial','unresolved','unsupported-markup','parser-unavailable','identity-mismatch','identity-unresolved','redirect-not-followed','access-blocked-no-retry','http-error-no-retry','unsupported-content-type','response-too-large','empty-response','challenge-unsupported-no-retry','timeout-or-cancelled-no-retry','network-or-decoding-error-no-retry']);
+const extractionIssues = new Set(['html-size-limit','html-parse-errors','missing-or-duplicate-availabilityAccordion','unsupported-accordion-items','ambiguous-territory-heading','ambiguous-territory-control','unsupported-or-conflicting-territory','ambiguous-territory-panel','missing-explicit-ukraine-section','candidate-count-limit','unresolved-parser-or-structure','conflicting-provider-label','missing-href','unsafe-url-or-label','not-an-absolute-provider-url','unsafe-url-scheme','unsafe-or-invalid-url','provider-block-count-limit','ambiguous-provider-block','unsupported-provider-block','block-field-count-limit','conflicting-block-labels','possible-block-conflict-scope-unestablished']);
+export function safeExtractionDiagnostic(d) {
+  return { status: extractionStatuses.has(d?.status) ? d.status : 'unknown',
+    issues: [...new Set((Array.isArray(d?.issues) ? d.issues : []).filter(s=>extractionIssues.has(s)))].slice(0,32),
+    candidateCount: safeCount(d?.candidateCount), foreignCandidateCount: safeCount(d?.foreignCandidateCount),
+    blockCount: safeCount(d?.blockCount),
+    filmAudioState: ['reported-positive','reported-negative','conflicting'].includes(d?.filmAudioState) ? d.filmAudioState : 'unknown' };
+}
 export function safeSearchDiagnostic(status, d) {
   const known = searchStatuses.has(status) ? status : 'unknown';
   const counts = Object.fromEntries(['returned', 'admitted', 'rejected', 'duplicates'].map(k => [k, safeCount(d?.[k])]));

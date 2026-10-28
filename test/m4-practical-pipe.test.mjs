@@ -167,7 +167,8 @@ try {
   assert.equal(commit.status, 0, commit.stderr);
   const sha = commit.stdout.trim();
   assert.match(sha, /^[a-f0-9]{40}$/);
-  const preflight = spawnSync(pwsh, ['-NoProfile', '-NonInteractive', '-File', helper, '-ExpectedCommit', sha, '-CheckPrerequisites'], {
+  for (const study of ['practical-five','pilot-retrieval']) {
+  const preflight = spawnSync(pwsh, ['-NoProfile', '-NonInteractive', '-File', helper, '-ExpectedCommit', sha, '-Study', study, '-CheckPrerequisites'], {
     cwd: repo, encoding: 'utf8', timeout: 30_000
   });
   assert.ifError(preflight.error);
@@ -175,6 +176,7 @@ try {
   assert.equal(preflight.stderr, '');
   const report = JSON.parse(preflight.stdout);
   assert.equal(report.status, 'prerequisites-ok');
+  assert.equal(report.study, study);
   assert.equal(report.localCheckoutSha, sha);
   assert.equal(report.explicitSidAcl, true);
   assert.equal(report.remoteClientsRejected, true);
@@ -182,6 +184,7 @@ try {
   assert.equal(report.workerStatusRoundTrip, true);
   assert.equal(report.sourceRequests, 0);
   assert.equal(report.credentialPrompts, 0);
+  }
 });
 
 test('full fake-key broker reconnects after two status requests and an abandoned client, then stops', { skip: nativeSkip, timeout: 60_000 }, async () => {
@@ -213,7 +216,7 @@ test('full fake-key broker reconnects after two status requests and an abandoned
     return Buffer.from(wrapper, 'utf16le').toString('base64');
   };
   const psArgs = encoded => ['-NoProfile', '-NonInteractive', '-OutputFormat', 'Text', '-EncodedCommand', encoded];
-  const server = spawn(pwsh, psArgs(encodedSource(serverSource, `-ExpectedCommit ${sha}`)), { cwd: repo, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const server = spawn(pwsh, psArgs(encodedSource(serverSource, `-ExpectedCommit ${sha} -Study pilot-retrieval`)), { cwd: repo, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   let stdout = '';
   let stderr = '';
   server.stdout.setEncoding('utf8').on('data', text => { stdout += text; });
@@ -224,7 +227,7 @@ test('full fake-key broker reconnects after two status requests and an abandoned
   });
   const client = action => {
     const checked = spawnSync(pwsh, psArgs(encodedSource(clientSource, `-Action ${action}`)), { cwd: repo, encoding: 'utf8', timeout: 16_000, windowsHide: true });
-    assert.ifError(checked.error);
+    assert.equal(checked.error,undefined,`fake client ${action}: ${checked.error?.message ?? ''}; server: ${stdout} ${stderr}`);
     assert.equal(checked.status, 0, checked.stderr || checked.stdout);
     assert.equal(checked.stderr, '');
     const report = JSON.parse(checked.stdout);
@@ -259,6 +262,11 @@ test('full fake-key broker reconnects after two status requests and an abandoned
       assert.equal(report.result.counts.total, 0);
       assert.equal(report.session.completedOperations, expectedOperations);
     }
+    const director = client('InSpEcT-DiReCtOr -Film 1');
+    assert.equal(director.result.action, 'inspect-director');
+    assert.equal(director.result.status, 'cached-single-director-required');
+    assert.equal(director.result.counts.total, 0);
+    assert.equal(director.session.completedOperations, 3);
     const abandonCode = `$pipe=[IO.Pipes.NamedPipeClientStream]::new('.',${psString(pipeName)},[IO.Pipes.PipeDirection]::InOut,[IO.Pipes.PipeOptions]::Asynchronous);try {$pipe.Connect(5000)} finally {$pipe.Dispose()}`;
     const abandoned = spawnSync(pwsh, psArgs(Buffer.from(abandonCode, 'utf16le').toString('base64')), { cwd: repo, encoding: 'utf8', timeout: 10_000, windowsHide: true });
     assert.ifError(abandoned.error);
@@ -267,11 +275,11 @@ test('full fake-key broker reconnects after two status requests and an abandoned
     const recovered = client('status');
     assert.equal(recovered.result.status, 'ready');
     assert.equal(recovered.result.counts.total, 0);
-    assert.equal(recovered.session.completedOperations, 3);
+    assert.equal(recovered.session.completedOperations, 4);
     const stopped = client('stop');
     assert.equal(stopped.result.status, 'session-stopped');
     assert.equal(stopped.result.sourceRequests, 0);
-    assert.equal(stopped.session.completedOperations, 3);
+    assert.equal(stopped.session.completedOperations, 4);
     const exit = await Promise.race([exited, new Promise((_, reject) => { const timer = setTimeout(() => reject(new Error('fake broker did not exit after stop')), 5000); timer.unref(); })]);
     assert.equal(exit.code, 0, stderr || stdout);
     assert.equal(stderr, '');

@@ -71,12 +71,23 @@ test('attribution, navigation, ads, trailers and inert scripts cannot supply pro
   assert.equal(result.candidates.length, 3);
 });
 
-test('section ambiguity, changed markup, parse errors and CAPTCHA are explicit, with no guessed list', async () => {
+test('country ambiguity withholds every country candidate while retaining the separately bounded badge', async () => {
+  for (const [body, issue] of [
+    [markup().replace('Доступно в Україні', 'Український інтерфейс'), 'unsupported-or-conflicting-territory'],
+    [markup().replace('data-bs-target="#collapseUA"', 'data-bs-target="#collapsePL"'), 'unsupported-or-conflicting-territory'],
+    [markup().replace('id="collapseUA"', 'id="collapseXX"'), 'ambiguous-territory-panel'],
+  ]) {
+    const result = await parse(body);
+    assert.equal(result.status, 'partial'); assert.equal(result.identity.status, 'matched'); assert.deepEqual(result.issues, ['not-an-absolute-provider-url', issue]);
+    assert.equal(result.candidates.length, 1); assert.equal(result.candidates[0].provider, 'Example Outside');
+    assert.equal(result.candidates[0].territory, null); assert.equal(result.candidates[0].href, '/relative?x=%2F&y=1');
+    assert.deepEqual(result.availabilitySignals, []);
+  }
+});
+
+test('changed boundary, parse errors and CAPTCHA still withhold all claims', async () => {
   for (const html of [
     markup().replace('id="availabilityAccordion"', 'id="changed"'),
-    markup().replace('Доступно в Україні', 'Український інтерфейс'),
-    markup().replace('data-bs-target="#collapseUA"', 'data-bs-target="#collapsePL"'),
-    markup().replace('id="collapseUA"', 'id="collapseXX"'),
     markup().replace('href="/relative', 'href="x" href="/relative'),
     '<!doctype html><html><head><title>CAPTCHA</title></head><body>Verify access</body></html>',
   ]) { const result = await parse(html); assert.ok(['unsupported-markup', 'identity-unresolved'].includes(result.status)); assert.deepEqual(result.candidates, []); }

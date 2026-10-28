@@ -2730,3 +2730,86 @@ Review-ready in existing stacked #200, above unchanged #199/#198. No merge,
 retarget, deployment, source-policy closure or owner evaluation is performed
 by the handoff. Owner checkout/demo and unrelated untracked files are preserved.
 MW-FUT-01 remains Discovery.
+
+## Three-film pilot retrieval follow-up — 2026-10-28
+
+**Authorized investigation and implementation; merge/deployment not authorized.**
+Base: verified `origin/develop` / deployed commit
+`e63316bcb36fdd3aff41c0522a4495d42460bc69`. Netlify deploy
+`6ae1f36b7525afed6cc83754` is ready, branch `develop`, context `branch-deploy`,
+with the media-advice Node22 function present. This task changes neither that
+deployment nor production. Work is isolated from the owner checkout/demo.
+
+Owner evidence, not archived source responses:
+
+| Film | Owner run | Reported outcome / limit |
+| --- | --- | --- |
+| Blade Runner (1982) | `70479803-be87-4152-9f3c-bd3322f001bd` | Kinobaza matched, 7/8, mapped0, film-UA unknown; externally observed iTunes/MEGOGO/audio on the current card does not reconstruct the historical HTML. |
+| Mortal Kombat (2021) | `b9c22f56-8ad3-458b-bee0-ab970f829bbf` | Matched, seven source rows Apple/Rakuten/MEGOGO/Prime; positive preservation control. Apple UA audio5.1/subtitle observation is not an attested ability to buy. |
+| Supergirl (2026) | `f7aca2a8-c902-4857-92ec-5bd82bd64e05` | First card title/year match with director-alias unresolved, second year refusal; 8/8 and eleven unread candidates. Report lacks card URLs; do not attribute either historical read to today's known URL. MOTN Prime language claims do not establish offer binding or UA entitlement. |
+
+Implementation plan: establish current extraction and person-level evidence;
+preserve independent film/provider localization when country sections cannot
+establish UA availability; reuse exact namespaced person aliases across films;
+add bounded content-free extraction diagnostics and a digest of the requested
+card pointer; run the actual resolver for the locked three films plus relevant
+offline/browser regressions. No inferred country/offer enrichment, broader URL
+fetch, UI/controller/global auth/lifecycle change, persistence or migration.
+
+Initial current evidence (five read-only HTTP attempts): three known
+card markup inspections, one exact Blade Runner extraction diagnostic, one
+person-profile inspection. Bodies were processed only in memory.
+The current Blade Runner card has PL/CZ/DE sections and no UA section. The actual
+unmodified extractor returned matched / unsupported-markup /
+`missing-explicit-ukraine-section`, candidates0, no localization: it computes
+independent badge/block localization then discards it on this global refusal.
+That proves a present code defect, not the historical run URL or body.
+The diagnostic's selected title/year/director metadata was an explicit owner
+control, not a newly attested TMDb projection; independent TMDb checks follow.
+
+The current Supergirl director anchor points to
+`https://kinobazaua.com/persons/craig-gillespie`. Its canonical person header
+co-locates H1 `Крейґ Ґіллеспі`, English H2 `Craig Gillespie`, birth date
+1 September1967, Sydney NSW Australia and director role. Person-level linkage
+to a trusted TMDb person ID still requires the server TMDb projection/details;
+film title/year or slug alone is not used to activate a record.
+
+Historical exact-card/body recovery is unavailable by design: copied reports
+omit URLs/bodies, the technical ledger stores no source content, and transient
+results were not archived. A new source response cannot establish what an old
+request returned. The follow-up will report current automatic results separately.
+
+Prepared fixes retain independent pre-accordion observations on country-only
+refusal, while ambiguous countries are handled atomically and valid foreign
+countries stay foreign. Shared fixed/assisted extraction changes because both
+use that same proven faulty path; admission and identity are unchanged.
+The current Blade Runner post-fix control returns partial,20 candidates,
+2 blocks and2 mapped rows: Apple/iTunes audio reported-negative/subtitles
+reported-positive for the named block labels; MEGOGO audio/subtitles
+reported-positive; general film audio reported-positive. Both rows have country
+unknown and availability unknown. These are literal source scopes, not a claim
+that Apple has no Ukrainian track in any offer or that MEGOGO is entitled in UA.
+This control still uses explicit owner metadata, not fresh TMDb attestation.
+
+Source attempts before the credential-backed series: **7** = titleGET6 +
+personGET1. One post-GET local diagnostic used an incomplete projection-stage
+argument and failed before printing a result; its spent GET is included, not
+reported as zero or silently retried. The corrected deliberate check produced
+the result above. No body archive or application retry was introduced.
+
+Content-free diagnostics now retain allowlisted extraction status/issues,
+candidate/foreign/block counts and film-badge state. Each attempted admitted
+card also gets SHA256 of its exact requested public URL: compare a known URL
+offline without copying raw URLs into the short report or archiving a body.
+The digest is not a capability, retrieval success or identity proof. Existing
+runtime SHA/run-ID attestation remains unchanged. Source content, aliases and
+HTML are still absent from normal reports/ledger.
+
+Preparation verification:176/176 targeted extraction/workflow/report/resolver,
+R1/R2, localization and helper regressions;8/8 scoped native helper/worker checks
+with authored fake keys and zero source requests. Assertions/timeouts were not
+loosened. A one-entry `-Study pilot-retrieval` hidden session reuses the proven
+local SID-only broker and trusted cached identities; default five-film controls
+remain unchanged. Full browser/dependent checks and the actual three-film
+resolver pass follow once local TMDb/Tavily credentials are entered. No values
+are read/exported from Netlify or stored in files/environment/logs.
