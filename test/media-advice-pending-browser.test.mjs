@@ -35,7 +35,7 @@ test('pending authorization cannot apply a revoked selection token', { skip: !pr
         writeForm: fields => { window.writes++; document.querySelector('#medium').value = fields.recommended_medium; document.querySelector('#url').value = fields.purchase_url; },
       });
     });
-    await page.locator('#entry').click(); await page.getByRole('button', { name: 'Знайти варіанти', exact: true }).click();
+    await page.locator('#entry').click();
     await page.getByRole('button', { name: 'Обрати', exact: true }).click();
     await page.getByRole('button', { name: 'Перенести в картку' }).click();
     await page.waitForFunction(() => typeof releaseApply === 'function');

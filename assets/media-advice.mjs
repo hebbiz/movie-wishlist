@@ -1,10 +1,8 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { safeMediaReport } from './media-advice-report.mjs';
+import { rankMediaRows, presentMediaRow, summarizeMediaAdvice } from './media-advice-presentation.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
-const value = f => f?.state === 'reported' ? f.value : null;
-const accessLabel = f => ({ rent: 'оренда', rental: 'оренда', buy: 'купівля', purchase: 'купівля', subscription: 'передплата', flatrate: 'передплата', addon: 'пакет', free: 'безкоштовний доступ', 'ad-supported': 'з рекламою' })[value(f)] ?? 'тип доступу не встановлено';
-const localizationLabel = f => ({ 'reported-positive': '«+» у блоці', 'reported-negative': '«−» у блоці', conflicting: 'суперечливі позначки' })[f?.state] ?? 'невідомо';
 export function transferFor(row, acknowledged = false) {
   if (row?.identityStatus !== 'matched' || row?.providerConflict || !Object.hasOwn(media, row?.provider?.key)) return null;
   const link = classifyLink(row.link?.href, row.provider);
@@ -22,181 +20,255 @@ export function applyPreview(preview, current) {
   return preview && Object.keys(preview.before).every(k => current[k] === preview.before[k]) ? { ...preview.after } : null;
 }
 
-// A controller instance owns all state. No shared Mykola/Advice Room history.
+// Shared visual classes, private DOM/state. Never call another Mykola controller.
 export function createMediaAdvice({ document: doc, entry, context, readForm, writeForm, capability, discover, validateApply = capability, renewContext, now = Date.now }) {
   const dialog = doc.createElement('dialog'); dialog.className = 'media-advice-dialog';
   dialog.setAttribute('aria-label', 'Поради носіїв від Миколи'); doc.body.append(dialog);
-  let session = null, generation = 0, controller = null, capabilityGeneration = 0, selectionToken = null, returnFocus, scrollY = 0, expiryTimer;
-  // Conservative bound: the existing ledger TTL is 30 minutes from server start;
-  // dispatch precedes it. No result recovery/storage or extension on reopening.
-  const ttlMs = 30 * 60 * 1000;
-  const key = c => c && JSON.stringify([c.userId, c.groupId, c.imdbId, c.listId ?? null, c.formSession]);
+  let session = null, generation = 0, controller = null, capabilityGeneration = 0, selectionToken = null;
+  let returnFocus, viewReturnFocus, scrollY = 0, freshnessTimer, chat, preview, diagnostics, notice, staleNotice;
+  // View freshness only. The server's 30-minute action ledger is NOT extended.
+  const freshnessMs = 30 * 60 * 1000;
+  const key = c => c && JSON.stringify([c.userId, c.groupId, c.imdbId, c.listId ?? null, c.formSession, c.title ?? null, c.year ?? null]);
+  const usable = c => c?.userId && c.groupId && /^tt\d{7,10}$/.test(c.imdbId ?? '') && c.formSession;
   const valid = () => session && key(context()) === session.key;
   const node = (tag, text) => { const e = doc.createElement(tag); if (text !== undefined) e.textContent = text; return e; };
   function button(text, action) { const e = node('button', text); e.type = 'button'; e.addEventListener('click', action); return e; }
-  function close() { selectionToken = null; dialog.close(); if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true }); doc.defaultView.scrollTo(0, scrollY); }
-  function invalidate() { clearTimeout(expiryTimer); selectionToken = null; generation++; capabilityGeneration++; controller?.abort(); controller = null; session = null; entry.hidden = true; if (dialog.open) dialog.close(); dialog.replaceChildren(); }
-  function expireIfNeeded(timerElapsed = false) {
-    if (!session || session.expired || !session.expiresAt || !timerElapsed && now() < session.expiresAt) return Boolean(session?.expired);
-    clearTimeout(expiryTimer); selectionToken = null; generation++; controller?.abort(); controller = null;
-    session.result = null; session.choice = null; session.expired = true;
-    render(); return true;
+  function bubble(text, user = false) {
+    const row = node('div'); row.className = user ? 'user-message-row' : 'mykola-message-row';
+    const avatar = node('div', user ? 'Ви' : 'М'); avatar.className = user ? 'user-avatar' : 'mykola-avatar'; avatar.setAttribute('aria-hidden', 'true');
+    const body = node('div'); body.className = user ? 'user-bubble' : 'mykola-bubble';
+    if (text) body.append(node('p', text)); row.append(avatar, body); chat.append(row); return body;
   }
-  async function renew() {
-    if (!valid() || !expireIfNeeded() || !renewContext) return;
-    const c = context(), epoch = generation; let ok = false;
-    try { ok = await capability(c); } catch {}
-    if (epoch !== generation || !valid() || key(c) !== key(context())) return;
-    if (!ok) return invalidate();
-    const next = renewContext();
-    if (!next || key(next) !== key(context()) ||
-        ['userId', 'groupId', 'imdbId', 'listId'].some(k => (c[k] ?? null) !== (next[k] ?? null)) || next.formSession === c.formSession) return invalidate();
-    generation++; session = { context: { ...next }, key: key(next), used: false, result: null };
-    render('Можна вручну запустити новий пошук. Автоматичних запитів до джерел не було.');
+  function tell(text) { if (notice) { notice.textContent = text; notice.hidden = !text; } }
+  function returnToChat(message) {
+    selectionToken = null; preview?.remove(); preview = null;
+    if (diagnostics) diagnostics.hidden = true;
+    if (chat) chat.hidden = false;
+    if (valid()) dialog.scrollTop = session.chatScroll ?? 0;
+    tell(message ?? '');
+    if (dialog.open && viewReturnFocus?.isConnected && !viewReturnFocus.closest('[hidden]')) viewReturnFocus.focus({ preventScroll: true });
+  }
+  function close() {
+    selectionToken = null;
+    if (preview) returnToChat();
+    if (session) session.dialogScroll = dialog.scrollTop;
+    dialog.close();
+    if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+    doc.defaultView.scrollTo(0, scrollY);
+  }
+  function invalidate() {
+    clearTimeout(freshnessTimer); selectionToken = null; generation++; capabilityGeneration++;
+    controller?.abort(); controller = null; session = null; entry.hidden = true;
+    if (dialog.open) dialog.close(); dialog.replaceChildren(); chat = preview = diagnostics = notice = staleNotice = viewReturnFocus = null;
+  }
+  function markStale(timerElapsed = false) {
+    if (!session || session.stale || session.startedAt === undefined || !timerElapsed && now() < session.startedAt + freshnessMs) return;
+    session.stale = true; clearTimeout(freshnessTimer);
+    // Cancel pending apply so a newly stale selection must be reviewed again.
+    if (selectionToken) returnToChat('Дані вже не свіжі. Перевірте вибір повторно.');
+    if (staleNotice) staleNotice.hidden = false;
+    const refreshButton = dialog.querySelector('[data-media-refresh]');
+    if (refreshButton) refreshButton.hidden = false;
+    const report = diagnostics?.querySelector('textarea');
+    if (report) report.value = reportText();
   }
   async function refresh() {
     const c = context();
-    if (!c?.userId || !c.groupId || !/^tt\d{7,10}$/.test(c.imdbId ?? '') || !c.formSession) { invalidate(); return; }
+    if (!usable(c)) return invalidate();
     if (session && session.key !== key(c)) invalidate();
     if (!session) entry.hidden = true;
-    expireIfNeeded();
-    // A renewed access check must also revoke an authorization still awaiting
-    // apply, but ordinary results DOM/details/scroll are not re-rendered.
-    if (selectionToken) { selectionToken = null; render('Перевірте вибір повторно після оновлення доступу.'); }
-    const epoch = ++capabilityGeneration;
-    const check = capabilityGeneration; // Invalidating a different form also revokes in-flight capability replies.
+    markStale();
+    if (selectionToken) returnToChat('Перевірте вибір повторно після оновлення доступу.');
+    const check = ++capabilityGeneration;
     try {
       const ok = await capability(c);
       if (check !== capabilityGeneration) return;
       if (key(context()) !== key(c) || ok !== true) return invalidate();
-      expireIfNeeded(); entry.hidden = false;
-    } catch { if (epoch === capabilityGeneration) invalidate(); }
+      markStale(); entry.hidden = false;
+    } catch { if (check === capabilityGeneration) invalidate(); }
   }
-  function render(message) {
-    selectionToken = null;
-    dialog.replaceChildren(node('h2', 'Поради Миколи'), button('← До картки', close));
-    dialog.append(node('p', 'Це повідомлення джерел, не гарантія доступності чи придбання. Невідоме — не «немає».'));
-    if (session.expired) {
-      dialog.append(node('p', 'Строк поточного пошуку (30 хвилин) завершився. Результати очищено; автоматичного повтору немає.'));
-      if (renewContext) dialog.append(button('Оновити вручну', renew));
-      return;
-    }
-    if (session.result?.rows?.length) dialog.append(node('p', 'Є варіанти для вашого вибору. Де джерела мовчать, Микола фактів не домальовує.'));
-    if (message) { const status = node('p', message); status.setAttribute('role', 'status'); dialog.append(status); }
-    const search = button('Знайти варіанти', run); search.disabled = session.used; dialog.append(search);
-    for (const s of session.result?.sources ?? []) dialog.append(node('p', `${s.source}: ${s.status}; identity: ${s.identity}`));
-    if (session.result?.film) dialog.append(node('h3', session.result.film.title));
-    if (session.result?.metrics) dialog.append(node('p', `Джерельні HTTP-спроби: ${session.result.metrics.requestsMade} / ${session.result.metrics.requestBudget}; зарезервовано в ledger: ${session.result.metrics.ledgerReservations ?? 'невідомо'}. Повторних запитів немає.`));
-    if (session.result?.metrics) {
-      const counts = node('details'); counts.append(node('summary', 'Облік запитів'),
-        node('pre', JSON.stringify(session.result.metrics, null, 2))); dialog.append(counts);
-    }
-    if (session.choice) dialog.append(node('p', `Обрана source-картка Кінобази: ${session.choice.sourceURL}. Identity matched; це не entitlement.`));
-    if (session.result?.resolver) {
-      const info = node('details'); info.append(node('summary', 'Пошук картки Кінобази'),
-        node('pre', JSON.stringify(session.result.resolver, null, 2))); dialog.append(info);
-    }
-    for (const choice of session.result?.cardChoices ?? []) dialog.append(button(`Використати підтверджену картку ${choice.id}`, () => {
+  async function renew() {
+    if (!valid() || session.loading || session.renewing || !renewContext) return;
+    const current = session, c = context(), epoch = generation; current.renewing = true;
+    let ok = false; try { ok = await capability(c); } catch {}
+    if (epoch !== generation || !valid() || current !== session || key(c) !== key(context())) return;
+    if (!ok) return invalidate();
+    const next = renewContext();
+    if (!next || key(next) !== key(context()) || ['userId', 'groupId', 'imdbId', 'listId', 'title', 'year'].some(k => (c[k] ?? null) !== (next[k] ?? null)) || next.formSession === c.formSession) return invalidate();
+    clearTimeout(freshnessTimer); generation++; controller?.abort(); selectionToken = null;
+    session = { context: { ...next }, key: key(next), used: false, result: null };
+    // Explicit refresh alone creates a new bounded ledger action. Server rate,
+    // identity, authorization, reservation, deadlines and caps remain in force.
+    await run();
+  }
+  const rowsFor = () => [...(session.result?.rows ?? []), ...(session.choice?.rows ?? [])];
+  const filmLocalizationFor = () => session.choice?.filmLocalization ?? session.result?.filmLocalization;
+  const reportText = () => safeMediaReport({ ...session.result, rows: rowsFor(), unmapped: [...(session.result?.unmapped ?? []), ...(session.choice?.unmapped ?? [])], filmLocalization: filmLocalizationFor() }, { applied: session.applied, filmContext: session.runContext, stale: session.stale === true });
+  function showReport() {
+    if (!valid()) return invalidate();
+    markStale(); selectionToken = null; session.chatScroll = dialog.scrollTop;
+    viewReturnFocus = doc.activeElement;
+    diagnostics.replaceChildren(node('h3', 'Діагностичний звіт'), node('p', 'Лише для пілоту. Звіт нікуди не надсилається автоматично.'), button('← До порад', () => returnToChat()));
+    const text = node('textarea'); text.readOnly = true; text.value = reportText(); text.setAttribute('aria-label', 'Короткий звіт для копіювання'); text.rows = 14;
+    const status = node('p'); status.setAttribute('role', 'status');
+    diagnostics.append(button('Скопіювати короткий звіт', async () => {
       if (!valid()) return invalidate();
-      if (expireIfNeeded()) return;
-      session.choice = choice; render('Обрана картка Кінобази. Це не підтвердження характеристик інших пропозицій.');
-    }));
-    const filmLocalization = session.choice?.filmLocalization ?? session.result?.filmLocalization;
-    if (filmLocalization?.ukrainianAudio?.state === 'reported-positive') dialog.append(node('p', 'Кінобаза вказує українську локалізацію фільму загалом. Це не підтвердження доріжки на кожній платформі.'));
-    const rows = [...(session.result?.rows ?? []), ...(session.choice?.rows ?? [])], groups = new Map();
-    for (const row of rows) {
-      const groupKey = row.provider?.key ?? 'unmapped';
-      if (!groups.has(groupKey)) { const group = node('section'); group.append(node('h3', row.provider?.name ?? 'Інша платформа')); groups.set(groupKey, group); dialog.append(group); }
-      const card = node('section'); card.className = 'media-advice-row';
-      card.append(node('p', `${row.provenance?.source ?? 'Джерело не зазначено'} · ${accessLabel(row.access)} · ${row.country ?? 'територія невідома'}`));
-      if (row.kind === 'candidate-link') card.append(node('p', 'Посилання-кандидат, не підтверджена пропозиція.'));
-      if (row.conflicts?.length) card.append(node('p', 'Суперечливі дані джерела; ці характеристики не переносяться до форми.'));
-      if (row.comparisons?.some(c => c.outcome === 'possible-discrepancy')) card.append(node('p', 'Можлива розбіжність; еквівалентність пропозицій не встановлена.'));
-      if (row.provenance?.source === 'Movie of the Night') card.append(node('p', 'MOTN: мовні списки, якість і ціни потребують перевірки; порожній список не означає відсутність.'));
-      if (row.kinobazaLocalization) card.append(node('p', `Кінобаза: українське аудіо — ${localizationLabel(row.kinobazaLocalization.audio)}, субтитри — ${localizationLabel(row.kinobazaLocalization.subtitles)}; для конкретної пропозиції ще не перевірено.`));
-      const details = node('details'); details.append(node('summary', 'Джерело й обмеження'), node('pre', JSON.stringify({ provenance: row.provenance, audio: row.audio, subtitles: row.subtitles, quality: row.quality, price: row.price, conflicts: row.conflicts, comparisons: row.comparisons }, null, 2))); card.append(details);
-      const transfer = transferFor(row); let acknowledged = false;
-      if (transfer?.needsAck) {
-        const label = node('label'), check = node('input'); check.type = 'checkbox';
-        check.addEventListener('change', () => { acknowledged = check.checked; }); label.append(check, doc.createTextNode('Розумію: посилання містить tracking/affiliate-перехід.')); card.append(label);
-      }
-      if (transfer?.link.transferable) card.append(button('Відкрити посилання', () => {
-        if (!valid()) return invalidate();
-        if (expireIfNeeded()) return;
-        if (transfer.needsAck && !acknowledged) { render('Спочатку підтвердьте tracking/affiliate-перехід.'); return; }
-        doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
-      }));
-      const select = button('Обрати', () => review(row, acknowledged)); select.disabled = !transfer; card.append(select); groups.get(groupKey).append(card);
-    }
-    for (const row of [...(session.result?.unmapped ?? []), ...(session.choice?.unmapped ?? [])]) {
-      const details = node('details'); details.append(node('summary', `Інші платформи — ${row.name ?? 'назву не встановлено'} (${row.source}): лише для перегляду`),
-        node('pre', JSON.stringify({ access: row.access, reason: row.reason, provenance: row.provenance, observations: row.observations ?? row.observation }, null, 2))); dialog.append(details);
-    }
-    const attribution = node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB. ');
-    for (const [text, href] of [['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'], ['Streaming Availability API by Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/']]) {
-      const a = node('a', text); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; attribution.append(a, doc.createTextNode(' · '));
-    }
-    dialog.append(attribution);
-    dialog.append(node('p', 'Країнові секції Кінобази й TMDb можуть походити з JustWatch — це не незалежні підтвердження.'));
-    const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; dialog.append(logo);
-    if (session.result) dialog.append(button('Скопіювати короткий звіт', async () => {
-      if (!valid()) return invalidate();
-      if (expireIfNeeded()) return;
-      const epoch = generation, report = safeMediaReport({ ...session.result, rows, filmLocalization }, { applied: session.applied });
+      markStale(); const report = reportText(); text.value = report;
+      const epoch = generation, current = session;
       try {
         if (!doc.defaultView.navigator.clipboard?.writeText) throw Error();
         await doc.defaultView.navigator.clipboard.writeText(report);
-        if (epoch === generation && valid() && !expireIfNeeded()) { const notice = node('p', 'Короткий звіт скопійовано.'); notice.setAttribute('role', 'status'); dialog.append(notice); }
+        if (epoch === generation && current === session && valid()) status.textContent = 'Короткий звіт скопійовано.';
       } catch {
-        if (epoch !== generation || !valid() || expireIfNeeded()) return;
-        const fallback = node('textarea'); fallback.readOnly = true; fallback.value = report; fallback.setAttribute('aria-label', 'Короткий звіт для копіювання');
-        dialog.append(node('p', 'Буфер недоступний. Виділіть і скопіюйте текст.'), fallback); fallback.focus(); fallback.select();
+        if (epoch !== generation || current !== session || !valid()) return;
+        status.textContent = 'Буфер недоступний. Виділіть і скопіюйте текст.'; text.focus(); text.select();
       }
-    }));
-    if (session.result && !session.result.rows?.length) dialog.append(node('p', 'Придатних варіантів джерела не повернули. Це не означає, що фільм недоступний.'));
+    }), text, status);
+    chat.hidden = true; diagnostics.hidden = false; dialog.scrollTop = 0;
+    const heading = diagnostics.querySelector('h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
+  }
+  function attribution() {
+    const details = node('details'); details.className = 'media-advice-attribution'; details.append(node('summary', 'Про джерела та обмеження'));
+    details.append(node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'));
+    const links = node('p');
+    for (const [label, href] of [['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'], ['Streaming Availability API by Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/']]) {
+      const a = node('a', label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a, doc.createTextNode(' · '));
+    }
+    details.append(links, node('p', 'Країнові секції Кінобази й TMDb можуть походити з JustWatch — це не незалежні підтвердження.'));
+    const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; details.append(logo); chat.append(details);
+  }
+  function render() {
+    const hadFocus = dialog.open && dialog.contains(doc.activeElement);
+    selectionToken = null; preview = null;
+    const header = node('header'); header.className = 'media-advice-header';
+    const heading = node('div'); heading.append(node('h2', 'Поради Миколи'));
+    const film = node('p', `${session.context.title || 'Фільм'}${session.context.year ? ` · ${session.context.year}` : ''}`); film.className = 'media-advice-film'; heading.append(film);
+    header.append(heading, button('← До картки', close));
+    chat = node('div'); chat.className = 'media-advice-chat mykola-chat';
+    diagnostics = node('section'); diagnostics.className = 'media-advice-diagnostics'; diagnostics.hidden = true;
+    dialog.replaceChildren(header, chat, diagnostics);
+    bubble(`Де подивитися «${session.context.title || 'цей фільм'}»?`, true);
+    staleNotice = node('div'); staleNotice.className = 'media-advice-stale'; staleNotice.hidden = !session.stale; staleNotice.setAttribute('role', 'status');
+    staleNotice.append(node('p', 'Це попередні результати, отримані понад 30 хвилин тому. Вони збережені для цієї картки, але актуальність потрібно перевірити.'));
+    chat.append(staleNotice);
+    notice = node('p'); notice.className = 'media-advice-notice'; notice.hidden = true; notice.setAttribute('role', 'status'); chat.append(notice);
+    if (session.loading) {
+      const body = bubble('Шукаю варіанти… Перевірю, що джерела кажуть про українську мову.'); body.setAttribute('role', 'status');
+      const typing = node('span'); typing.className = 'mykola-typing-bubble'; typing.setAttribute('aria-hidden', 'true');
+      for (let i = 0; i < 3; i++) { const dot = node('span'); dot.className = 'mykola-typing-dot'; typing.append(dot); } body.append(typing);
+      if (hadFocus) header.querySelector('button').focus({ preventScroll: true });
+      return;
+    }
+    if (!session.result) {
+      bubble('Зараз не вдалося отримати відповідь. Спроба могла бути витрачена; повторного пошуку без вашої дії не буде.');
+    } else {
+      const rows = rankMediaRows(rowsFor());
+      const answer = bubble(summarizeMediaAdvice(rows)); answer.classList.add('media-advice-answer');
+      if (session.result.sources?.some(s => /error|failed|unavailable|timeout|blocked|unsupported|partial/i.test(s.status ?? ''))) bubble('Частина відомостей неповна або не надійшла. Показую те, що вдалося отримати, без здогадок.');
+      for (const [index, choice] of (session.result.cardChoices ?? []).entries()) {
+        if (!index) bubble('Знайшов кілька карток із підтвердженою відповідністю фільму. Оберіть, дані якої додати до відповіді.');
+        chat.append(button(`Використати підтверджену картку ${index + 1}`, () => { if (!valid()) return invalidate(); session.choice = choice; render(); }));
+      }
+      if (filmLocalizationFor()?.ukrainianAudio?.state === 'reported-positive') bubble('Кінобаза вказує українське аудіо для фільму загалом. На кожній платформі його наявність ще треба перевірити.');
+      const list = node('div'); list.className = 'media-advice-options';
+      for (const row of rows) {
+        const p = presentMediaRow(row), card = node('article'); card.className = 'media-advice-row'; card.dataset.rowId = row.id;
+        const title = node('div'); title.className = 'media-advice-option-title'; title.append(node('h3', p.title), node('span', p.accessLabel)); card.append(title);
+        const basis = node('p', `${p.territoryLabel} · ${p.sourceLabel}`); basis.className = 'media-advice-source'; card.append(basis);
+        card.append(node('p', p.audioLabel), node('p', p.subtitlesLabel));
+        if (row.kinobazaLocalization) {
+          const block = node('p', `${[p.blockAudioLabel, p.blockSubtitlesLabel].filter(Boolean).join('. ')}.`); block.className = 'media-advice-warning'; card.append(block);
+        }
+        for (const warning of p.warnings) { const warningNode = node('p', warning); warningNode.className = 'media-advice-warning'; card.append(warningNode); }
+        if (row.kind === 'candidate-link') card.append(node('p', 'Посилання зі сторінки джерела — умови перегляду ще потрібно перевірити.'));
+        const details = node('details'); details.append(node('summary', 'Джерело й обмеження'), node('pre', JSON.stringify({ provenance: row.provenance, audio: row.audio, subtitles: row.subtitles, quality: row.quality, price: row.price, kinobazaLocalization: row.kinobazaLocalization, conflicts: row.conflicts, comparisons: row.comparisons }, null, 2))); card.append(details);
+        const transfer = transferFor(row); let acknowledged = false;
+        if (transfer?.needsAck) {
+          const label = node('label'), check = node('input'); check.type = 'checkbox';
+          check.addEventListener('change', () => { acknowledged = check.checked; }); label.append(check, doc.createTextNode('Розумію: посилання містить tracking/affiliate-перехід.')); card.append(label);
+        }
+        const actions = node('div'); actions.className = 'media-advice-row-actions';
+        if (transfer?.link.transferable) actions.append(button('Відкрити посилання', () => {
+          if (!valid()) return invalidate(); markStale();
+          if (transfer.needsAck && !acknowledged) return tell('Спочатку підтвердьте tracking/affiliate-перехід.');
+          doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
+        }));
+        const select = button('Обрати', () => review(row, acknowledged)); select.disabled = !transfer; actions.append(select); card.append(actions); list.append(card);
+      }
+      chat.append(list);
+      for (const row of [...(session.result.unmapped ?? []), ...(session.choice?.unmapped ?? [])]) {
+        const details = node('details'); details.className = 'media-advice-other'; details.append(node('summary', `Інші платформи — ${row.name ?? 'назву не встановлено'}: лише для перегляду`), node('pre', JSON.stringify({ source: row.source, access: row.access, reason: row.reason, provenance: row.provenance, observations: row.observations ?? row.observation }, null, 2))); chat.append(details);
+      }
+      const caution = node('p', 'Це відомості джерел, не гарантія доступності. Невідоме не означає «немає».'); caution.className = 'media-advice-footnote'; chat.append(caution); attribution();
+    }
+    if (renewContext) {
+      const update = button('Оновити вручну', renew); update.dataset.mediaRefresh = ''; update.hidden = !session.stale && !session.error; chat.append(update);
+    }
+    // Last Mykola bubble is pilot-only diagnostics, never mixed into the answer.
+    const last = bubble('Якщо щось не зійшлося, тут є подробиці для пілоту.'); last.classList.add('media-advice-report-bubble'); last.append(button('Діагностичний звіт', showReport));
+    if (hadFocus) header.querySelector('button').focus({ preventScroll: true });
   }
   function review(row, acknowledged) {
-    const token = selectionToken = {}; // Separate from cached discovery/form generation.
-    if (!valid()) return invalidate();
-    if (expireIfNeeded()) return;
+    if (!valid()) return invalidate(); markStale();
     const before = readForm(), transfer = transferFor(row, acknowledged);
-    if (!transfer || transfer.blocked) return render('Потрібне підтвердження tracking/affiliate-переходу.');
-    const preview = node('section'); preview.className = 'media-advice-preview';
+    if (!transfer || transfer.blocked) return tell('Потрібне підтвердження tracking/affiliate-переходу.');
+    tell('');
+    const token = selectionToken = {}; session.chatScroll = dialog.scrollTop;
+    viewReturnFocus = doc.activeElement;
+    preview?.remove(); diagnostics.hidden = true; chat.hidden = true;
+    preview = node('section'); preview.className = 'media-advice-preview';
     preview.append(node('h3', 'Перевірте зміни'), node('p', `Рекомендований носій: ${before.recommended_medium || '—'} → ${transfer.medium}`), node('p', `Посилання: ${before.purchase_url || '—'} → ${transfer.url || 'відсутнє'}`), node('p', 'Статус, придбаний носій, назва, рік і автор не змінюються. Збереження — звичайною кнопкою форми.'));
+    if (session.stale) preview.append(node('p', 'Це попередні результати. Перевірте актуальність пропозиції перед збереженням.'));
     let clearMissing = false;
     if (!transfer.url && before.purchase_url) { const label = node('label'), check = node('input'); check.type = 'checkbox'; check.addEventListener('change', () => clearMissing = check.checked); label.append(check, doc.createTextNode('Явно очистити попереднє посилання.')); preview.append(label); }
     const apply = button('Перенести в картку', async () => {
-      const epoch = generation; apply.disabled = true;
-      let permitted = false; try { permitted = await validateApply(context()); } catch {}
-      if (epoch !== generation || token !== selectionToken || !dialog.open || !valid() || expireIfNeeded()) return;
-      const p = makePreview(row, before, { acknowledged, clearMissing }), changes = applyPreview(p, readForm());
-      if (!permitted) { invalidate(); return; }
-      if (!changes) { render('Поля змінилися або очищення не підтверджено. Оберіть варіант повторно.'); return; }
+      const epoch = generation, c = context(); apply.disabled = true;
+      let permitted = false; try { permitted = await validateApply(c); } catch {}
+      markStale();
+      if (epoch !== generation || token !== selectionToken || !dialog.open || !valid()) return;
+      if (!permitted) return invalidate();
+      const changes = applyPreview(makePreview(row, before, { acknowledged, clearMissing }), readForm());
+      if (!changes) return returnToChat('Поля змінилися або очищення не підтверджено. Оберіть варіант повторно.');
       writeForm(changes); session.applied = true; close();
-    }); preview.append(apply, button('Скасувати вибір', () => render())); dialog.replaceChildren(preview);
+    });
+    preview.append(apply, button('Скасувати вибір', () => returnToChat())); dialog.append(preview); dialog.scrollTop = 0;
+    const heading = preview.querySelector('h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
   }
   async function run() {
-    if (!valid() || expireIfNeeded() || session.used) return; session.used = true;
-    session.expiresAt = now() + ttlMs; expiryTimer = setTimeout(() => expireIfNeeded(true), ttlMs);
+    if (!valid() || session.used) return; session.used = true; session.loading = true;
+    session.startedAt = now(); session.runContext = { ...session.context };
     const epoch = generation, current = session;
-    controller = new AbortController(); render('Шукаю варіанти…');
+    freshnessTimer = setTimeout(() => { if (current === session && epoch === generation) markStale(true); }, freshnessMs);
+    controller = new AbortController(); render();
     try {
       const result = await discover(current.context, { signal: controller.signal });
-      if (epoch !== generation || !valid() || expireIfNeeded()) return;
-      session.result = result; render('Результати джерел.');
-    } catch { if (epoch === generation && valid() && !expireIfNeeded()) render('Запит завершився без результату. Спроба могла бути витрачена; автоматичного повтору немає.'); }
+      if (epoch !== generation || current !== session || !valid()) return;
+      if (result?.film?.imdbId && result.film.imdbId !== current.context.imdbId) return invalidate();
+      current.result = result; current.loading = false; markStale(); render();
+    } catch {
+      if (epoch !== generation || current !== session || !valid()) return;
+      current.error = true; current.loading = false; markStale(); render();
+    }
   }
   entry.addEventListener('click', async () => {
-    const c = context(), epoch = generation; let ok = false; try { ok = await capability(c); } catch {}
-    if (!ok || epoch !== generation || key(c) !== key(context())) { entry.hidden = true; return; }
-    if (!session || session.key !== key(c)) session = { context: { ...c }, key: key(c), used: false, result: null };
+    const c = context(), epoch = generation; if (!usable(c)) return invalidate();
+    const check = ++capabilityGeneration; let ok = false; try { ok = await capability(c); } catch {}
+    if (check !== capabilityGeneration || epoch !== generation || key(c) !== key(context())) return;
+    if (!ok) return invalidate();
+    if (!session || session.key !== key(c)) { generation++; session = { context: { ...c }, key: key(c), used: false, result: null }; dialog.replaceChildren(); }
     returnFocus = doc.activeElement; scrollY = doc.defaultView.scrollY;
-    expireIfNeeded(); if (!dialog.hasChildNodes()) render(); dialog.showModal();
+    markStale();
+    if (!session.used) void run();
+    if (!dialog.open) dialog.showModal();
+    const top = session.dialogScroll ?? 0, current = session, reportHidden = diagnostics.hidden;
+    dialog.scrollTop = top;
+    // Native showModal focus can scroll again after this event. Restore before
+    // the next paint, without reviving a closed/changed context or a new view.
+    doc.defaultView.requestAnimationFrame(() => {
+      if (valid() && session === current && dialog.open && !preview && diagnostics.hidden === reportHidden) dialog.scrollTop = top;
+    });
   });
   dialog.addEventListener('cancel', e => { e.preventDefault(); close(); });
-  dialog.addEventListener('close', () => {
-    selectionToken = null;
-    if (session && dialog.querySelector('.media-advice-preview')) render();
-  });
+  dialog.addEventListener('close', () => { selectionToken = null; if (preview) returnToChat(); });
   return { refresh, invalidate, dialog };
 }
