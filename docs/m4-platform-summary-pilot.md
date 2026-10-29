@@ -260,3 +260,38 @@ No assertions/timeouts weakened, no source calls or real Wishlist writes. Server
 source policies, reports, ranking and lifecycle/auth are unchanged. Syntax,
 whitespace/scope and the same14-doc/455-link/280-anchor check passed; unrelated
 server/SQL/Windows suites were not repeated.
+
+### Mobile service emblems — 2026-10-30
+
+From develop `146aa187709f1a2bf3cf9bef2d16a04a22d4ba5c` after merged #206:
+at widths up to480px, a successfully loaded service emblem replaces its visible
+name in the comparison's first column. The narrower80px service column frees
+equal remaining space for centered audio/subtitle headings and values. Wider
+screens retain emblem plus name. The full button name remains in `aria-label`,
+the visually hidden text and a tooltip; selection still uses the existing gold
+pressed state, focus outline and native44px touch/keyboard button. Availability
+symbols remain separate, unchanged observations.
+
+While an emblem is pending or if loading fails, the readable service name stays
+visible. A failed image is hidden without retry or replacement request. Services
+without an emblem also keep their text. This is presentation-only: no changes
+to ranking, source fields, URL choice/deduplication, reports, transfer/Save,
+session/TTL, initApp/global lifecycle/auth, server, flags or schema. No live
+source/destination requests, owner checkout/demo changes, merge or deployment.
+
+Validation:78/78 targeted offline/mock checks passed,0 failed/skipped. Browser
+main suite5/5 passed at1280×900,375×812 (iPhone X-size),420×912 (iPhone Air-size),
+820×1180; the unchanged pending/resume suites also passed25/25 on the same
+runtime code. Tests verify mobile-only name hiding, visible desktop names,
+accessible full button labels, centered headers/symbols,44px targets, no
+horizontal overflow, actual failed SVG requests, visible fallback, keyboard
+selection/preview, retained reopen, no extra discovery and ordinary Save only.
+The layout helper waits for the existing180ms bubble animation to finish before
+measuring; no runtime animation or assertion/timeout was weakened. The failure
+fixture retains the selected film ID and uses a test-only local asset query to
+avoid decoded-image cache reuse; production SVG addresses are unchanged.
+Authored `mobile-service-icons-{375,420}.png` and
+`mobile-service-fallback-{375,420}.png` were visually inspected outside Git.
+These are Edge viewport tests, not real iPhone/Safari/VoiceOver validation.
+Syntax, whitespace/scope and14-doc/455-link/280-anchor checks passed. Server/SQL,
+native PostgreSQL and Windows lifecycle were not rerun: dependencies unchanged.

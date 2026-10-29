@@ -130,3 +130,19 @@ test('duplicate source rows with one admitted URL need no chooser or purchase/re
   assert.deepEqual(state.output, { recommended_medium: 'Rakuten TV', purchase_url: first.link.href });
   assert.equal(JSON.stringify(rows), before); assert.equal(state.calls, 1);
 });
+
+test('service name remains available until a usable emblem loads and falls back on error without changing actions', async t => {
+  const original = ownBlock('apple'), { control, state, button } = await harness(t, [original]);
+  const service = control.dialog.querySelector('.media-advice-service-select');
+  const name = service.querySelector('.media-advice-service-name'), icon = service.querySelector('img');
+  assert.equal(service.attributes['aria-label'], 'Apple TV / iTunes'); assert.equal(service.attributes.title, 'Apple TV / iTunes');
+  assert.equal(name.textContent, 'Apple TV / iTunes'); assert.equal(service.dataset.iconState, 'pending');
+  icon.naturalWidth = 24; for (const callback of icon.listeners.load) callback();
+  assert.equal(service.dataset.iconState, 'loaded'); assert.equal(icon.hidden, false);
+  for (const callback of icon.listeners.error) callback();
+  assert.equal(service.dataset.iconState, 'failed'); assert.equal(icon.hidden, true);
+  assert.equal(name.textContent, 'Apple TV / iTunes'); assert.equal(service.attributes['aria-pressed'], 'true');
+  await button('Обрати').click(); await button('Перенести в картку').click();
+  assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: original.link.href });
+  assert.equal(state.calls, 1); assert.deepEqual(state.opens, []);
+});

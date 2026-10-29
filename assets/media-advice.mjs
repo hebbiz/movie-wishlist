@@ -219,9 +219,17 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     for (const info of groups) {
       const tr = node('tr'); tr.className = 'media-advice-row'; tr.dataset.providerKey = info.group.key; tr.dataset.rowId = info.transferRow?.id ?? '';
       const cell = node('th'); cell.setAttribute('scope', 'row');
-      const choose = button('', () => showActions(info)); choose.className = 'media-advice-service-select'; choose.setAttribute('aria-label', info.group.title); choose.setAttribute('aria-pressed', 'false');
-      if (Object.hasOwn(serviceIcons, info.group.key)) { const icon = node('img'); icon.className = 'media-advice-provider-icon'; icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; icon.alt = ''; icon.setAttribute('aria-hidden', 'true'); icon.width = 24; icon.height = 24; choose.append(icon); }
-      choose.append(node('span', info.group.title)); cell.append(choose, symbol(info.comparison?.availability ?? fallback)); tr.append(cell);
+      const choose = button('', () => showActions(info)); choose.className = 'media-advice-service-select'; choose.setAttribute('aria-label', info.group.title); choose.setAttribute('title', info.group.title); choose.setAttribute('aria-pressed', 'false');
+      if (Object.hasOwn(serviceIcons, info.group.key)) {
+        const icon = node('img'); icon.className = 'media-advice-provider-icon'; icon.alt = ''; icon.setAttribute('aria-hidden', 'true'); icon.width = 24; icon.height = 24;
+        choose.dataset.iconState = 'pending';
+        const fallbackName = () => { icon.hidden = true; choose.dataset.iconState = 'failed'; };
+        icon.addEventListener('load', () => { if (icon.naturalWidth > 0) choose.dataset.iconState = 'loaded'; else fallbackName(); });
+        icon.addEventListener('error', fallbackName);
+        icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; choose.append(icon);
+      }
+      const name = node('span', info.group.title); name.className = 'media-advice-service-name'; choose.append(name);
+      cell.append(choose, symbol(info.comparison?.availability ?? fallback)); tr.append(cell);
       for (const field of ['audio', 'subtitles']) { const td = node('td'); td.append(symbol(info.comparison?.[field] ?? fallback)); tr.append(td); }
       controls.push({ info, tr, button: choose }); rows.append(tr);
     }
