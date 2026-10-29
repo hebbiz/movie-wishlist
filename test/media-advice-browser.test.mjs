@@ -164,78 +164,17 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.locator('.media-advice-answer').waitFor();
       assert.equal(await page.locator('.media-advice-row').count(),3);
       assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['prime','hbo','rakuten']);
-      assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.rowId)),['motn:prime-rent','motn:hbo-subtitles','motn:rakuten-rent']);
-      assert.deepEqual(await page.locator('.media-advice-variant-select').evaluateAll(selects=>selects.map(s=>s.options.length)),[2,2,4]);
-      assert.equal(await page.locator('.media-advice-variant-select option').count(),8,'all original source variants remain selectable');
-      assert.match(await page.locator('.media-advice-answer').innerText(),/Prime Video.*варіант 1.*Оренда.*українське аудіо/);
-      if(process.env.M4_SCREENSHOT_DIR) {
-        await page.evaluate(()=>mediaAdviceController.dialog.scrollTop=0);
-        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/authored-grouped-420.png`,animations:'disabled'});
-        await page.evaluate(()=>{
-          const dialog=mediaAdviceController.dialog, hbo=dialog.querySelector('[data-provider-key="hbo"]');
-          dialog.scrollTop+=hbo.getBoundingClientRect().top-dialog.querySelector('header').getBoundingClientRect().bottom-10;
-        });
-        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/authored-platforms-420.png`,animations:'disabled'});
-        await page.evaluate(()=>mediaAdviceController.dialog.scrollTop=0);
-      }
-      const rankedAnswer=await page.locator('.media-advice-answer').innerText();
+      assert.equal(await page.locator('.media-advice-variant-select').count(),0);
+      assert.match(await page.locator('.media-advice-answer').innerText(),/Prime Video.*українське аудіо/);
       const beforeVariants=calls.filter(c=>c.action==='discover').length;
       const beforeVariantWrites=await page.evaluate(()=>authoredDBWrites.length);
-      await page.evaluate(()=>{
-        window.groupedChat=document.querySelector('.media-advice-chat');
-        window.platformCards=[...document.querySelectorAll('.media-advice-row')];
-        window.variantSelects=platformCards.map(c=>c.querySelector('.media-advice-variant-select'));
-      });
-      for(const key of ['prime','hbo','rakuten']) {
-        const card=page.locator(`.media-advice-row[data-provider-key="${key}"]`);
-        const select=card.locator('.media-advice-variant-select');
-        assert.equal(await card.getByRole('button',{name:'Обрати',exact:true}).count(),1);
-        assert.equal(await card.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),key==='hbo'?0:1);
-        assert.equal(await select.evaluate(s=>s.tagName),'SELECT');
-        for(const row of authored.rows.filter(r=>r.provider.key===key)) {
-          await select.selectOption(row.id);
-          assert.equal(await card.getAttribute('data-row-id'),row.id);
-          assert.equal(await card.getByRole('button',{name:'Обрати',exact:true}).count(),1);
-          assert.equal(await card.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),row.link.href?1:0);
-          assert.match(await card.innerText(),row.country==='UA'?/Україна/:/Країну не встановлено/);
-          if(row.id==='motn:prime-rent') assert.match(await card.innerText(),/Українське аудіо: вказано джерелом/);
-          if(row.id==='motn:prime-buy') {
-            assert.match(await card.innerText(),/Українське аудіо: невідомо/);
-            assert.match(await card.innerText(),/Купівля/);
-            assert.equal(await card.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),0);
-          }
-          if(row.id==='motn:hbo-subtitles') assert.match(await card.innerText(),/Українські субтитри: вказано джерелом/);
-          if(row.id==='tmdb:hbo-availability') assert.match(await card.innerText(),/Українські субтитри: невідомо/);
-          if(row.id==='motn:rakuten-rent') {
-            assert.match(await card.innerText(),/Якість за даними джерела: hd/);
-            assert.match(await card.innerText(),/Ціна за даними джерела: 1\.23 XXX/);
-          }
-          if(row.id==='tmdb:rakuten-buy') assert.doesNotMatch(await card.innerText(),/1\.23|XXX|Якість за даними/,'literal properties from the rental row cannot propagate to purchase');
-          if(row.id==='kinobaza:rakuten-block') {
-            assert.match(await card.innerText(),/Українське аудіо: невідомо/);
-            assert.match(await card.innerText(),/Українські субтитри: невідомо/);
-            assert.match(await card.innerText(),/Є згадка про українське аудіо/);
-            assert.match(await card.innerText(),/Для цієї пропозиції ще не перевірено/);
-          }
-          if(row.id==='motn:rakuten-conflict') assert.match(await card.innerText(),/Українське аудіо: суперечливі дані/);
-          assert.equal(await page.locator('.media-advice-row').count(),3);
-          assert.equal(await page.locator('.media-advice-options details,.media-advice-options pre').count(),0);
-          assert.doesNotMatch(await page.locator('.media-advice-options').innerText(),/TMDb|JustWatch|Movie of the Night|Kinobaza|Кінобаза|AUTHORED|motn:|tmdb:|kinobaza:/);
-          assert.deepEqual(await page.evaluate(()=>[groupedChat===document.querySelector('.media-advice-chat'),...platformCards.map((c,i)=>c===document.querySelectorAll('.media-advice-row')[i]),...variantSelects.map((s,i)=>s===document.querySelectorAll('.media-advice-variant-select')[i])]),Array(7).fill(true),'switching a variant preserves chat, platform cards and native controls');
-        }
-      }
-      assert.equal(calls.filter(c=>c.action==='discover').length,beforeVariants);
-      assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeVariantWrites);
-      assert.equal(await page.locator('.media-advice-answer').innerText(),rankedAnswer,'the explanation stays anchored to its named variant');
       const rakuten=page.locator('.media-advice-row[data-provider-key="rakuten"]');
-      await rakuten.locator('.media-advice-variant-select').selectOption('motn:rakuten-rent');
-      assert.match(await rakuten.innerText(),/суперечлив/i,'a group conflict remains visible while another original variant is selected');
-      assert.match(await rakuten.innerText(),/Українське аудіо: невідомо/);
+      assert.match(await rakuten.innerText(),/Оренда.*Купівля/);
+      assert.doesNotMatch(await page.locator('.media-advice-options').innerText(),/Ціна|1\.23|XXX|TMDb|JustWatch|Movie of the Night/);
+      assert.equal(await rakuten.getByRole('button',{name:'Обрати',exact:true}).count(),1);
+      assert.equal(await rakuten.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),1);
+      assert.match(await rakuten.innerText(),/суперечлив/i);
       assert.equal(await page.locator('.media-advice-chat .mykola-message-row').last().getByRole('button',{name:'Діагностичний звіт'}).count(),1);
-      await page.evaluate(() => mediaAdviceController.dialog.scrollTop = 0);
-      if (process.env.M4_SCREENSHOT_DIR) {
-        await page.locator('.media-advice-dialog').screenshot({ path:`${process.env.M4_SCREENSHOT_DIR}/authored-ranked-420.png`,animations:'disabled' });
-      }
       const beforeReport = calls.filter(c=>c.action==='discover').length;
       await page.getByRole('button',{name:'Діагностичний звіт'}).click();
       assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Mapped source rows: 8/);
@@ -246,19 +185,15 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       if (process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({ path:`${process.env.M4_SCREENSHOT_DIR}/authored-report-420.png`,animations:'disabled' });
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeReport);
       await page.getByRole('button',{name:'← До порад'}).click();
-      assert.equal(await rakuten.getAttribute('data-row-id'),'motn:rakuten-rent');
-      assert.equal(await page.evaluate(()=>groupedChat===document.querySelector('.media-advice-chat')&&platformCards.every(c=>c.isConnected)),true);
-      await rakuten.locator('.media-advice-variant-select').selectOption('tmdb:rakuten-buy');
-      assert.equal(await rakuten.getAttribute('data-row-id'),'tmdb:rakuten-buy');
-      assert.match(await rakuten.innerText(),/Купівля/);
+      const selectedRow=authored.rows.find(r=>r.id==='motn:rakuten-rent');
+      assert.equal(await rakuten.getAttribute('data-row-id'),selectedRow.id);
       await rakuten.getByRole('button',{name:'Обрати',exact:true}).click();
-      const selectedBuy=authored.rows.find(r=>r.id==='tmdb:rakuten-buy');
-      assert.ok((await page.locator('.media-advice-preview').innerText()).includes(selectedBuy.link.href));
+      assert.ok((await page.locator('.media-advice-preview').innerText()).includes(selectedRow.link.href));
       assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeVariantWrites);
       await page.getByRole('button',{name:'Перенести в картку',exact:true}).click();
       await page.waitForFunction(()=>!mediaAdviceController.dialog.open);
       assert.equal(await page.locator('#recommended_medium').inputValue(),'Rakuten TV');
-      assert.equal(await page.locator('#purchase_url').inputValue(),selectedBuy.link.href);
+      assert.equal(await page.locator('#purchase_url').inputValue(),selectedRow.link.href);
       assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeVariantWrites);
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeVariants);
     }
@@ -403,3 +338,4 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   });
 });
+
