@@ -24,3 +24,21 @@ export function authoredGroupedMediaRows() {
       conflicts: [{ field: 'audio', type: 'authored-conflict' }], link: { href: 'https://rakuten.tv/ua/movies/authored-conflict' } }),
   ];
 }
+
+// Authored HTML through the actual extractor/projection, never a live response.
+export async function authoredDuneMediaResult() {
+  const { FILMS } = await import('../research/grounded-answer-demo/config.mjs');
+  const { MOTN_FILMS } = await import('../research/grounded-answer-demo/motn.mjs');
+  const { extractHtml } = await import('../research/grounded-answer-demo/html-source.mjs');
+  const { composeDiscovery } = await import('../research/grounded-answer-demo/discovery.mjs');
+  const { localizedMarkup, tableBlock, paragraphBlock } = await import('../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs');
+  const film = { ...FILMS['dune-part-two'], year: 2024, imdbId: MOTN_FILMS['dune-part-two'].imdbId };
+  const body = localizedMarkup(
+    tableBlock('itunes', [['Укр. звук (стерео)', '+'], ['Укр. субтитри', '−']], 'https://itunes.apple.com/ua/movie/id9999001?at=AUTHOR%2fONLY') +
+    tableBlock('rakuten', [['Укр. звук', '+'], ['Укр. субтитри', '+']], 'https://rakuten.tv/ua/movies/authored-dune') +
+    paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', 'https://megogo.net/ua/view/9999002-authored.html'), 'dune-part-two', false);
+  const extraction = await extractHtml(body, film);
+  const result = composeDiscovery(film, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: extraction, status: extraction.status } }, { synthetic: true });
+  return { ...result, rows: result.rows.filter(row => row.kinobazaLocalization), unmapped: [], stages: undefined,
+    metrics: { requestsMade: 0, requestBudget: 8, calls: [] } };
+}

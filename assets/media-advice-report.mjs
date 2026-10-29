@@ -1,5 +1,5 @@
 import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../shared/media-advice-diagnostics.mjs';
-import { groupMediaRows } from './media-advice-presentation.mjs';
+import { groupMediaRows, presentMediaGroups } from './media-advice-presentation.mjs';
 const identities = new Set(['matched', 'mismatch', 'unresolved']);
 const platforms = new Set(['apple','prime','netflix','hbo','rakuten','megogo']);
 const accessKinds = new Set(['rent','rental','buy','purchase','subscription','flatrate','addon','free','ad-supported']);
@@ -91,7 +91,7 @@ export function mediaSourceDetails(row) {
   const clean = (value, depth = 0) => {
     if (depth > 8) return '[bounded]';
     if (value === null || typeof value === 'boolean' || typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value === 'string') return filmTitle(value) ?? '[withheld]';
+    if (typeof value === 'string') return value === '' ? '' : filmTitle(value) ?? '[withheld]';
     if (Array.isArray(value)) return value.slice(0, 64).map(item => clean(item, depth + 1));
     if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key]) => keys.has(key)).map(([key, v]) => [key, clean(v, depth + 1)]));
     return null;
@@ -143,6 +143,9 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
   const kinoOther = Array.isArray(result?.unmapped) ? result.unmapped.filter(r=>r.source==='kinobaza').length : undefined;
   lines.push(`Kinobaza projection: mapped ${count(kinoRows)}; other platforms ${count(kinoOther)}; foreign-context candidates are not UA offers.`);
   lines.push(`Film-level UA audio badge: ${loc(result?.filmLocalization?.ukrainianAudio?.state)}; not provider tracks.`);
+  for (const info of presentMediaGroups(rows, { filmId: result?.film?.id }).filter(info => info.kinobaza.applied)) {
+    lines.push(`M4 Kinobaza interpretation/${platforms.has(info.group.key) ? info.group.key : 'unknown'}: UA by application rule matched-provider-block-app-ua-interpretation; audio ${loc(info.kinobaza.audio)}, subtitles ${loc(info.kinobaza.subtitles)}; not independently verified availability or offer binding.`);
+  }
   for (const r of rows.slice(0, 24)) {
     const source = rowSource(r);
     const platform = platforms.has(r.provider?.key) ? r.provider.key : 'unmapped';
@@ -150,6 +153,15 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
     const language = source === 'motn' ? `MOTN audio ${motnLanguageReport(r.audio)}, subtitles ${motnLanguageReport(r.subtitles)}` : source === 'kinobaza' ? `Kinobaza provider-block audio ${loc(b?.audio?.state)}, subtitles ${loc(b?.subtitles?.state)}` : 'provider tracks not established by TMDb availability';
     lines.push(`${source}/${platform}: ${r.country === 'UA' ? 'UA source context' : 'territory unknown'}; ${language}; offer binding unverified.`);
     lines.push(rowDiagnostics(r, references.get(r), source));
+    if (source === 'kinobaza' && b) for (const key of ['audio', 'subtitles']) {
+      const field = b[key], evidence = Array.isArray(field?.evidence) ? field.evidence : [];
+      const literals = evidence.slice(0, 8).map(e => {
+        const label = typeof e?.label === 'string' && /^(?:Укр\. (?:звук|субтитри)(?: \([^()\r\n]{1,80}\))?|укр\. (?:аудіо|субтитри))$/u.test(e.label) ? filmTitle(e.label) : null;
+        const literal = ['', '+', '-', '−', '?', 'укр. аудіо', 'укр. субтитри'].includes(e?.literal) ? e.literal : 'unknown';
+        return { label: label ?? 'withheld', literal, state: ['positive','negative','unknown'].includes(e?.state) ? e.state : 'unknown' };
+      });
+      lines.push(`Kinobaza ${references.get(r) ?? 'unknown'} ${key} source values: ${loc(field?.state)}; evidence ${JSON.stringify(literals)}; omitted ${count(Math.max(0, evidence.length - literals.length))}.`);
+    }
   }
   lines.push(applied ? 'Local form transfer performed; not saved by this feature.' : 'No attested transfer/save in this report.');
   return lines.join('\n');
