@@ -13,7 +13,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       const path = new URL(req.url, 'http://localhost').pathname;
       const file = resolve(root, '.' + path);
       if (!file.startsWith(root + '/'.replace('/', process.platform === 'win32' ? '\\' : '/'))) throw Error();
-      res.setHeader('Content-Type', ({ '.mjs': 'text/javascript', '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html' })[extname(file)] ?? 'text/plain');
+      res.setHeader('Content-Type', ({ '.mjs': 'text/javascript', '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.svg': 'image/svg+xml' })[extname(file)] ?? 'text/plain');
       res.end(await readFile(file));
     } catch { res.writeHead(404).end(); }
   });
@@ -64,9 +64,22 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.equal(await page.locator('.media-advice-answer p').evaluate(e=>getComputedStyle(e).color),'rgb(244, 244, 244)');
     assert.match(await page.locator('.media-advice-dialog').innerText(),/Authored film/);
     assert.doesNotMatch(await page.locator('.media-advice-chat').innerText(),/Джерельні HTTP|ledger|requestsMade|requestBudget|identity:|searchCalls/);
-    assert.equal(await page.locator('.media-advice-row .media-advice-variant-select').count(),0,'a single source row needs no variant selector');
+    assert.equal(await page.locator('.media-advice-link-select').count(),0,'a single admissible link is immediately available without a selector');
+    assert.equal(await page.locator('.media-advice-variant-select').count(),0,'raw source rows are not a user-facing choice');
     assert.equal(await page.locator('.media-advice-row details,.media-advice-row pre').count(),0,'technical provenance belongs in diagnostics');
     assert.doesNotMatch(await page.locator('.media-advice-options').innerText(),/TMDb|JustWatch|Movie of the Night|Kinobaza HTML|AUTHORED/);
+    assert.equal(await page.getByRole('table').count(),1,'all services share one compact comparison');
+    assert.deepEqual(await page.getByRole('columnheader').allTextContents(),['Сервіс','Укр. аудіо','Укр. субтитри']);
+    assert.equal(await page.locator('.media-advice-row').evaluateAll(rows=>rows.every(row=>row.tagName==='TR')),true);
+    assert.equal(await page.locator('.media-advice-row img.media-advice-provider-icon').count(),1,'use the existing SVG platform emblem');
+    assert.equal(await page.locator('.media-advice-provider-icon').evaluateAll(nodes=>nodes.every(n=>new URL(n.src).pathname.endsWith('.svg')&&n.alt==='')),true);
+    await page.waitForFunction(()=>[...document.querySelectorAll('.media-advice-provider-icon')].every(image=>image.complete&&image.naturalWidth>0));
+    assert.equal(await page.locator('.media-advice-row button').count(),1,'one service picker, no repeated open/select action blocks');
+    assert.equal(await page.locator('.media-advice-actions').getByRole('button',{name:'Обрати',exact:true}).count(),1);
+    assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),1);
+    assert.equal(await page.locator('.media-advice-legend').count(),1);
+    assert.equal(await page.locator('.media-advice-comparison-caution').count(),1);
+    assert.equal(await page.locator('.media-advice-dialog').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
     // Real re-init path, with non-M4 data loaders isolated: unchanged auth
     // handler -> unchanged initApp -> actual loadCurrentRole -> M4 access refresh.
     await page.evaluate(() => {
@@ -207,9 +220,10 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     await page.locator('#submitButton').click();
     await page.waitForFunction(() => window.authoredDBWrites.length === 1);
     assert.equal(await page.evaluate(() => window.authoredDBWrites[0].name), 'movie_group_lists');
-    if (width === 420) {
+    if ([375,420].includes(width)) {
       allowed = true;
       authored.rows = authoredGroupedMediaRows();
+      authored.unmapped = [];
       authored.sources = [{source:'tmdb',status:'ok',identity:'matched'},{source:'motn',status:'ok',identity:'matched'},{source:'kinobaza',status:'partial',identity:'matched'}];
       await page.evaluate(() => startEditMovie('list')); await page.locator('#mediaAdviceEntry').click();
       await page.locator('.media-advice-answer').waitFor();
@@ -220,16 +234,18 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       const beforeVariants=calls.filter(c=>c.action==='discover').length;
       const beforeVariantWrites=await page.evaluate(()=>authoredDBWrites.length);
       const rakuten=page.locator('.media-advice-row[data-provider-key="rakuten"]');
-      assert.match(await rakuten.innerText(),/Оренда.*Купівля/);
       assert.doesNotMatch(await page.locator('.media-advice-options').innerText(),/Ціна|1\.23|XXX|TMDb|JustWatch|Movie of the Night/);
-      assert.equal(await rakuten.getByRole('button',{name:'Обрати',exact:true}).count(),1);
-      assert.equal(await rakuten.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),1);
-      assert.match(await rakuten.innerText(),/суперечлив/i);
+      assert.equal(await page.getByRole('button',{name:'Обрати',exact:true}).count(),1);
+      assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),1);
+      assert.equal(await page.locator('.media-advice-row img.media-advice-provider-icon').count(),3);
+      assert.equal(await page.locator('.media-advice-legend').count(),1);
+      assert.equal(await page.locator('.media-advice-comparison-caution').count(),1);
       assert.equal(await page.locator('.media-advice-chat .mykola-message-row').last().getByRole('button',{name:'Діагностичний звіт'}).count(),1);
       const beforeReport = calls.filter(c=>c.action==='discover').length;
       await page.getByRole('button',{name:'Діагностичний звіт'}).click();
       assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Mapped source rows: 8/);
       await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
+      assert.equal(await page.locator('.media-advice-diagnostics details pre').count(),8,'all eight original rows remain in diagnostics');
       assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/Укр\. звук \(dolby\)/);
       assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/Kinobaza|kinobaza/);
       assert.doesNotMatch(await page.locator('.media-advice-diagnostics details').innerText(),/https?:|href|AUTHOR%/);
@@ -238,7 +254,20 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.getByRole('button',{name:'← До порад'}).click();
       const selectedRow=authored.rows.find(r=>r.id==='motn:rakuten-rent');
       assert.equal(await rakuten.getAttribute('data-row-id'),selectedRow.id);
-      await rakuten.getByRole('button',{name:'Обрати',exact:true}).click();
+      await rakuten.locator('.media-advice-service-select').click();
+      const offerSelect=page.getByLabel('Посилання сервісу Rakuten TV');
+      assert.equal(await offerSelect.locator('option').count(),3,'four Rakuten rows expose only their three different admissible literal links');
+      assert.doesNotMatch(await offerSelect.innerText(),/Оренда|Купівля|TMDb|Movie of the Night|kinobaza:|motn:/,'the choice describes links, not internal offer rows');
+      assert.match(await offerSelect.innerText(),/Посилання 1/);assert.match(await offerSelect.innerText(),/Посилання 3/);
+      const originalConflict=authored.rows.find(r=>r.id==='motn:rakuten-conflict');
+      await offerSelect.selectOption('2');
+      assert.equal(await rakuten.getAttribute('data-row-id'),originalConflict.id);
+      await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+      assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[originalConflict.link.href,'_blank','noopener,noreferrer']);
+      await offerSelect.selectOption('0');
+      assert.equal(await rakuten.getAttribute('data-row-id'),selectedRow.id);
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-distinct-links-${width}.png`,animations:'disabled'});
+      await page.getByRole('button',{name:'Обрати',exact:true}).click();
       assert.match(await page.locator('.media-advice-preview').innerText(),/Посилання буде замінено\./);
       await page.locator('.media-advice-preview').getByText('Повні адреси',{exact:true}).click();
       assert.ok((await page.locator('.media-advice-preview details').innerText()).includes(selectedRow.link.href));
@@ -249,6 +278,41 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(await page.locator('#purchase_url').inputValue(),selectedRow.link.href);
       assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeVariantWrites);
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeVariants);
+
+      // The Supergirl-shaped eight original rows still yield three services;
+      // four Rakuten rent/buy/block rows with one exact URL need no chooser.
+      authored.rows=authoredGroupedMediaRows();
+      for(const row of authored.rows.filter(row=>row.provider.key==='rakuten')) row.link.href=selectedRow.link.href;
+      const beforeSharedCalls=calls.filter(c=>c.action==='discover').length;
+      await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();
+      await page.locator('.media-advice-answer').waitFor();
+      assert.equal(await page.locator('.media-advice-row').count(),3);
+      await page.locator('.media-advice-row[data-provider-key="rakuten"] .media-advice-service-select').click();
+      assert.equal(await page.locator('.media-advice-link-select').count(),0,'four duplicate Rakuten URLs do not create a user-facing choice');
+      assert.equal(await page.locator('.media-advice-variant-select').count(),0);
+      assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),1);
+      assert.equal(await page.getByRole('button',{name:'Обрати',exact:true}).count(),1);
+      await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
+      assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Mapped source rows: 8/);
+      await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
+      assert.equal(await page.locator('.media-advice-diagnostics details pre').count(),8);
+      await page.getByRole('button',{name:'← До порад',exact:true}).click();
+      await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+      assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[selectedRow.link.href,'_blank','noopener,noreferrer']);
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-one-link-${width}.png`,animations:'disabled'});
+      await page.getByRole('button',{name:'Обрати',exact:true}).click();
+      await page.locator('.media-advice-preview').getByText('Повні адреси',{exact:true}).click();
+      assert.ok((await page.locator('.media-advice-preview details').innerText()).includes(selectedRow.link.href));
+      assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeVariantWrites,'link opening and preview do not write to the Wishlist');
+      await page.getByRole('button',{name:'Перенести в картку',exact:true}).click();
+      await page.waitForFunction(()=>!mediaAdviceController.dialog.open);
+      assert.equal(await page.locator('#purchase_url').inputValue(),selectedRow.link.href);
+      assert.equal(await page.locator('#recommended_medium').inputValue(),'Rakuten TV');
+      assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeVariantWrites,'transfer still changes local form fields only');
+      await page.locator('#mediaAdviceEntry').click();
+      assert.equal(await page.locator('.media-advice-link-select').count(),0);
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      assert.equal(calls.filter(c=>c.action==='discover').length,beforeSharedCalls+1,'link deduplication, diagnostic access and reopen add no discovery');
 
       // Actual authored HTML -> extraction -> projection, with separate own
       // provider blocks and no country-section pointer or source HTTP request.
@@ -269,11 +333,21 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       const kinoOrder=await page.locator('.media-advice-row').evaluateAll(cards=>cards.map(c=>c.dataset.providerKey));
       assert.deepEqual([...kinoOrder].sort(),['apple','megogo','rakuten']);
       const apple=page.locator('.media-advice-row[data-provider-key="apple"]');
-      assert.match(await apple.innerText(),/Українське аудіо — за даними Кінобази/);
-      assert.match(await apple.innerText(),/Українські субтитри: позначено «−» Кінобазою/);
+      assert.deepEqual(kinoOrder,['apple','rakuten','megogo'],'language category first, then the agreed service priorities');
+      assert.equal(await apple.locator('th[scope=row]').count(),1);assert.equal(await apple.locator('td').count(),2);
+      assert.equal(await apple.locator('td').nth(0).innerText(),'+');
+      assert.equal(await apple.locator('td').nth(1).innerText(),'−');
+      assert.match(await apple.locator('td').nth(0).getAttribute('aria-label')??await apple.locator('td').nth(0).locator('[aria-label]').getAttribute('aria-label'),/українське аудіо|Кінобаз/i);
+      assert.match(await apple.locator('td').nth(1).getAttribute('aria-label')??await apple.locator('td').nth(1).locator('[aria-label]').getAttribute('aria-label'),/субтитр|відсут|познач/i);
       for(const key of ['rakuten','megogo']) {
         const card=page.locator(`.media-advice-row[data-provider-key="${key}"]`);
-        assert.match(await card.innerText(),/Українське аудіо та субтитри — за даними Кінобази/);
+        assert.equal(await card.locator('td').nth(0).innerText(),'+');
+        assert.equal(await card.locator('td').nth(1).innerText(),'+');
+      }
+      for(const card of await page.locator('.media-advice-row').all()) {
+        assert.match(await card.locator('th[scope=row]').innerText(),/◐/,'a Kinobaza block is partial availability evidence');
+        const accessible=await card.locator('[aria-label]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')).join(' '));
+        assert.match(accessible,/неповн|частков|окремо не перевірен/i);
       }
       assert.doesNotMatch(await page.locator('.media-advice-options').innerText(),/91\.17|XXX|Ціна|Доступно в Україні|гарантовано/i);
       assert.equal(await page.locator('.media-advice-row input[type=checkbox]').count(),0);
@@ -282,7 +356,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeKinoCalls+1);
       if(process.env.M4_SCREENSHOT_DIR) {
         await page.evaluate(()=>mediaAdviceController.dialog.scrollTop=0);
-        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/authored-kino-languages-420.png`,animations:'disabled'});
+        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-comparison-${width}.png`,animations:'disabled'});
       }
       await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
       await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
@@ -305,9 +379,10 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       for(const [index,key] of ['apple','rakuten','megogo'].entries()) {
         const card=page.locator(`.media-advice-row[data-provider-key="${key}"]`);
         const original=rawKino.find(r=>r.provider.key===key);
-        await card.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+        await card.locator('.media-advice-service-select').click();
+        await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
         assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[original.link.href,'_blank','noopener,noreferrer']);
-        await card.getByRole('button',{name:'Обрати',exact:true}).click();
+        await page.getByRole('button',{name:'Обрати',exact:true}).click();
         await page.locator('.media-advice-preview').getByText('Повні адреси',{exact:true}).click();
         assert.ok((await page.locator('.media-advice-preview details').innerText()).includes(original.link.href));
         assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeKinoWrites);
@@ -346,6 +421,35 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     }
     if (width === 1280) {
       allowed = true;
+      // Authored source rows, not catalogue/availability assertions: the
+      // comparison keeps language category ahead of the owner's service order.
+      const allServices=['megogo','prime','hbo','netflix','rakuten','apple'];
+      const sourceLanguage=()=>({state:'reported',ukrainian:[{language:'ukr'}]});
+      const freshServiceRows=()=>allServices.map(key=>({
+        id:`motn:comparison-${key}`,identityStatus:'matched',provider:{key},country:'UA',
+        audio:sourceLanguage(),subtitles:{state:'unknown'},link:{href:null},
+        provenance:{source:'Movie of the Night'},
+      }));
+      authored.rows=freshServiceRows();
+      await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();
+      await page.locator('.media-advice-answer').waitFor();
+      assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['apple','rakuten','prime','hbo','netflix','megogo']);
+      assert.equal(await page.getByRole('table').count(),1);assert.equal(await page.getByRole('columnheader').count(),3);
+      assert.equal(await page.getByRole('button',{name:'Обрати',exact:true}).count(),1);
+      assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),0,'missing links never create an opening action');
+      assert.equal(await page.locator('.media-advice-link-select').count(),0,'zero admissible links need no selector');
+      const tiedRankCalls=calls.filter(c=>c.action==='discover').length;
+      await page.locator('.media-advice-row[data-provider-key="megogo"] .media-advice-service-select').click();
+      assert.equal(calls.filter(c=>c.action==='discover').length,tiedRankCalls,'choosing a service cannot search again');
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      authored.rows=freshServiceRows().map(row=>({...row,audio:row.provider.key==='netflix'?sourceLanguage():{state:'unknown'},subtitles:row.provider.key==='prime'?sourceLanguage():{state:'unknown'}}));
+      await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();await page.locator('.media-advice-answer').waitFor();
+      assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['netflix','prime','apple','rakuten','hbo','megogo']);
+      assert.match(await page.locator('.media-advice-answer').innerText(),/Netflix.*українське аудіо/);
+      const unknownAudio=page.locator('.media-advice-row[data-provider-key="apple"] td').nth(0);
+      assert.equal(await unknownAudio.innerText(),'?');
+      assert.match(await unknownAudio.locator('[aria-label]').getAttribute('aria-label'),/невідом|не встановлен|не підтверджен/i);
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
       for (const kind of ['no-results', 'identity-refusal', 'source-failed', 'unbound-localization', 'conflicting-properties', 'several', 'unsafe-link']) {
         authored.rows = ['no-results','identity-refusal','source-failed'].includes(kind) ? [] : [{
           id: 'kinobaza:authored', identityStatus: 'matched', kind: 'candidate-link', country: null,
@@ -361,9 +465,13 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         assert.equal(await page.locator('.media-advice-row').count(), authored.rows.length);
         if (kind === 'unsafe-link') {
           assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),0);
+          assert.equal(await page.locator('.media-advice-link-select').count(),0,'an unsafe URL is not offered as a choice');
           assert.equal(await page.evaluate(()=>authoredOpened.length),1);
         }
-        if (kind === 'unbound-localization') assert.match(await page.locator('.media-advice-dialog').innerText(), /Для цієї пропозиції ще не перевірено/);
+        if (kind === 'unbound-localization') {
+          const cell=page.locator('.media-advice-row td').nth(0);
+          assert.equal(await cell.innerText(),'?','a foreign-scope/unbound block does not become a proven offer track');
+        }
         if (['no-results','identity-refusal','source-failed'].includes(kind)) assert.match(await page.locator('.media-advice-dialog').innerText(), /не означає, що фільм недоступний/);
         if(kind==='source-failed') {
           assert.match(await page.locator('.media-advice-chat').innerText(),/Частина відомостей неповна або не надійшла/);
@@ -374,7 +482,9 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
           await page.getByRole('button',{name:'← До порад',exact:true}).click();
         }
         if (kind === 'conflicting-properties') {
-          assert.match(await page.locator('.media-advice-dialog').innerText(), /Джерело містить суперечливі дані/);
+          const cell=page.locator('.media-advice-row td').nth(0);
+          assert.match(await cell.getAttribute('aria-label')??await cell.locator('[aria-label]').getAttribute('aria-label'),/суперечлив/i);
+          assert.notEqual(await cell.innerText(),'−','conflict is not evidence that a track is absent');
           assert.equal(await page.locator('.media-advice-row details,.media-advice-row pre').count(),0);
           await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
           assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/conflicting-block-labels/);

@@ -1,10 +1,10 @@
-# M4 pilot: platform summaries and Kinobaza language interpretation
+# M4 pilot: compact service comparison and Kinobaza language interpretation
 
 Owner feedback on Supergirl (2026), develop deploy 6ae2746cf949428fe03a9806, 2026-10-29: show a single result per streaming service, group purchase and rental labels, and hide price while the displayed currency needs investigation. A platform card may contain source observations from different offers; this is a presentation summary, not proof that those offers are identical. Preserve the original rows in the diagnostic report. Selecting a card transfers one explicitly chosen original link after preview and authorization checks; the policy still rejects unsupported destinations. No price/currency correction is claimed.
 
 Historical #203 rule, superseded by the generalized rule below: Rakuten only required a matched Ukraine-context Kinobaza link plus a separate matched Rakuten localization block. The current rule no longer needs that separate UA pointer and applies to all supported services. Historical source rows are not rewritten.
 
-The existing 30-minute freshness indication, form-session lifetime, access checks, transfer preview, explicit ordinary Save and diagnostic report remain in effect. Identity/provider matching and server limits remain unchanged. Source data, entitlement, availability and chosen destination remain unverified; the reported Supergirl HBO link may lead to an American Sign Language version. Further pilot feedback will determine whether the simplification is useful.
+The current presentation is the [compact service comparison](#compact-service-comparison--2026-10-29) below, replacing the earlier repeated cards without changing their original source observations. The existing 30-minute freshness indication, form-session lifetime, access checks, transfer preview, explicit ordinary Save and diagnostic report remain in effect. Identity/provider matching and server limits remain unchanged. Source data, entitlement, availability and chosen destination remain unverified; the reported Supergirl HBO link may lead to an American Sign Language version. Further pilot feedback will determine whether the simplification is useful.
 
 ## Link actions and compact preview — 2026-10-29
 
@@ -151,3 +151,112 @@ migration, production or owner-checkout/demo modification.
   No live Dune page or platform validation was performed. Full server/SQL/native
   PostgreSQL concurrency and Windows launcher lifecycle were not repeated because
   their dependent code/contracts are unchanged. No production activation claimed.
+
+## Compact service comparison — 2026-10-29
+
+Owner-approved presentation update from develop
+`c0bf202b1839667209445d081522e030115a0ad1` after merged #205. Implemented for
+review; no merge/deployment or live discovery by this task.
+
+Mykola gives a short evidence-based recommendation, then one comparison bubble
+with a semantic three-column table: `Сервіс`, `Укр. аудіо`, `Укр. субтитри`.
+It reuses the existing six service SVGs. One legend and a shared caution replace
+the repeated card disclaimers. Technical sources, original fields, reason states
+and per-observation provenance remain in the unchanged diagnostic report and
+`Про джерела та обмеження`; prices stay hidden.
+
+- Availability `◐`: the service's own admitted Kinobaza block on a matched film
+  card is incomplete evidence, including a block with unknown languages. The
+  #205 application-region rule is preserved, not promoted to a platform check.
+- Availability `●`: a separate matched source record explicitly returns a UA
+  option. This is still a source claim, not independently verified availability
+  or entitlement, and is not attributed to Kinobaza. `◇` means a known other
+  country; `?` means unknown.
+- Languages `+` / `−` / `?` / `±` distinguish positive claims, explicit negative
+  claims, unknown and differing/conflicting observations. Missing/unlisted fields
+  are never negative. A negative only for named audio formats uses `?` overall,
+  with a scoped accessible explanation: other Ukrainian tracks remain unknown.
+- A positive original variant remains useful if another record is negative:
+  display `±`, say that records/variants differ, do not invent a confirmed offer
+  conflict or erase that positive variant. A field that is itself conflicting
+  does not become positive. Unknown/foreign-country tracks cannot borrow UA from
+  another row, and no track is silently bound to the selected URL.
+
+Ordering is language category first: positive Ukrainian audio, then positive
+Ukrainian subtitles without established audio, then unconfirmed languages.
+Within each category use Apple TV → Rakuten TV → equal Netflix/HBO Max/Prime Video
+→ MEGOGO; equal peers retain stable source order. The original row ordering,
+identity gates and transfer eligibility are not rewritten to achieve that order.
+
+Service names are keyboard/touch buttons selecting one shared action area. The
+owner's #206 follow-up removes the original-record/offer selector: actions show
+only distinct admitted **literal URLs** for that service. Zero/one URL needs no
+selector; duplicate rent/buy/source records with the same href never become
+repeated user choices. Multiple URLs use `Посилання 1`, etc. with their hostname;
+the exact selected address can be inspected in collapsed text details, without
+following it. No query/fragment/encoding normalization or redirect resolution is
+performed to infer destination equivalence. Each choice retains one original
+representative row, preferring the existing primary for its URL; all original
+observations and disagreements remain in diagnostics. No offers or fields merge.
+Opening requires an admitted exact original URL and an explicit click;
+missing/unsafe links have no Open action. Choosing leads to preview → local transfer →
+ordinary Save flow, including explicit clearing of an existing URL when needed.
+Selecting a service/link neither opens a site nor writes or refreshes sources.
+Symbols have screen-reader labels, table row/column headers and a single visible
+legend; icons are decorative next to the service text. Session/reopen/scroll,
+30-minute stale indication, authorization/pending apply and isolation are retained.
+
+Validation uses authored examples and local mocked boundaries, not live platform
+availability evidence. No initApp/global lifecycle/auth, other chat, server cap,
+shared link policy, JustWatch URL, parser, retention, schema, flag or production
+change. No source request, real Wishlist write or new persistence is introduced.
+
+### Verification of the compact comparison
+
+- 141/141 targeted offline/mock checks passed,0 failed/skipped: category-before-
+  service ranking, stable equal peers, own-block/film guards, partial versus
+  separate UA presence, missing/negative/format-negative/conflicting/mixed
+  languages, immutable original rows, exact transfer/report and shared R1/R2.
+- Three existing browser suites executed in installed Edge:30/30 passed,0
+  failed/skipped. Desktop1280×900, iPhone X-size375×812, iPhone Air-size420×912,
+  tablet820×1180; viewport emulation is not native iPhone/Safari/WebKit.
+  The real add/edit forms use mocked authentication/source/DB boundaries.
+  Authored eight-to-three and Dune cases check table/loaded SVGs/accessible
+  symbols, all original variant choices, language/service order, exact opens,
+  preview/local apply/ordinary Save, missing/unsafe links, copy fallback,
+  no discovery replay, retained scroll/session and pending/stale/access guards.
+- The browser conflict fixture exposed a lost warning in the simplified view:
+  a matched known-service record with unestablished region and an explicit
+  field conflict now shows scoped `±`, never a positive track or UA promotion.
+  Its regression also proves that a separate UA record cannot repair that scope.
+  The browser's option indices and SVG test-host MIME were updated for the new
+  semantic table; assertions and timeouts were not weakened.
+- Authored `compact-comparison-375.png` and `compact-comparison-420.png` were
+  visually inspected outside Git/public artifacts. No live source/availability,
+  deployed Node22 or real-device result is claimed. Local Node24.22.0/Edge.
+- Syntax, whitespace/scope and14 selected Markdown documents/455 local links/
+  280 anchor references/13 existing handoff sections passed. Compared with #205,
+  the extra link/anchor is this record's compact-comparison section, same scope.
+  Full server/SQL/native PostgreSQL concurrency and Windows launcher lifecycle
+  were not repeated: no dependent code/schema/contracts changed.
+
+### Follow-up: choose links, not source records — PR #206
+
+The follow-up replaces the original-record selector described in the first
+checkpoint's tests above. Current targeted offline/mock result:77/77 passed,
+0 failed/skipped (presentation, link choice/preview, DOM and safe report). The
+three browser suites were rerun:30/30 passed,0 failed/skipped, same four Edge
+viewports. Authored Supergirl-shaped eight-to-three data keeps all eight rows in
+diagnostics: four Rakuten rows with one URL show no chooser; four rows with three
+distinct URLs show three link choices, not four rent/buy/source choices. Cases
+with zero/one/multiple URLs, unsafe/refused addresses, exact non-primary open and
+transfer, normal Save, pending apply, retained/reopened/stale/access boundaries
+remain covered. Query/fragment/percent-encoding differences are not silently
+normalized; original representative identity and all source fields are preserved.
+Authored `compact-one-link-{375,420}.png` and
+`compact-distinct-links-{375,420}.png` remain outside Git; mobile examples were
+visually inspected. This is not real iPhone/Safari or live destination validation.
+No assertions/timeouts weakened, no source calls or real Wishlist writes. Server,
+source policies, reports, ranking and lifecycle/auth are unchanged. Syntax,
+whitespace/scope and the same14-doc/455-link/280-anchor check passed; unrelated
+server/SQL/Windows suites were not repeated.

@@ -3,12 +3,26 @@ import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
 import { groupMediaRows, presentMediaGroups, summarizeMediaGroups } from './media-advice-presentation.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
+const serviceIcons = Object.freeze({ apple: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
 export function transferFor(row) {
   if (row?.identityStatus !== 'matched' || row?.providerConflict || !Object.hasOwn(media, row?.provider?.key)) return null;
   const link = classifyLink(row.link?.href, row.provider);
   // M4's explicit open/apply actions need no extra referral acknowledgement.
   // The shared classification and the observed href itself remain untouched.
   return { medium: media[row.provider.key], url: link.transferable ? link.href : null, link };
+}
+// Choices are literal admitted URLs, not merged offers. Each choice keeps one
+// original representative; duplicate source observations stay in diagnostics.
+export function linkChoicesFor(info) {
+  if (info?.group?.readOnly) return [];
+  const choices = new Map();
+  for (const row of info?.group?.rows ?? []) {
+    if (row.provider?.key !== info.group.key) continue;
+    const transfer = transferFor(row);
+    if (!transfer?.link.transferable) continue;
+    if (!choices.has(transfer.url) || row === info.transferRow) choices.set(transfer.url, { row, href: transfer.url });
+  }
+  return [...choices.values()];
 }
 export function makePreview(row, form, { clearMissing = false } = {}) {
   const transfer = transferFor(row);
@@ -148,7 +162,73 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     }
     details.append(links, node('p', 'Країнові секції Кінобази й TMDb можуть походити з JustWatch — це не незалежні підтвердження.'));
     details.append(node('p', 'Деякі посилання можуть проходити через сторонній сервіс, який враховує переходи.'));
+    details.append(node('p', 'Мовні дані власного блоку сервісу на підтвердженій картці Кінобази враховуємо для українського регіону. Це правило застосунку, не незалежна перевірка доступності чи доріжок конкретної пропозиції. Позначка «−» біля зазначеного формату аудіо не доводить відсутності всіх українських доріжок.'));
     const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; details.append(logo); chat.append(details);
+  }
+  function comparison(groups) {
+    if (!groups.length) return;
+    const body = bubble(); body.classList.add('media-advice-comparison-bubble', 'media-advice-options');
+    const table = node('table'); table.className = 'media-advice-comparison';
+    const caption = node('caption', 'Порівняння сервісів за відомостями джерел'); caption.className = 'media-advice-sr-only'; table.append(caption);
+    const head = node('thead'), headings = node('tr');
+    for (const title of ['Сервіс', 'Укр. аудіо', 'Укр. субтитри']) { const th = node('th', title); th.setAttribute('scope', 'col'); headings.append(th); }
+    head.append(headings); table.append(head);
+    const rows = node('tbody'), controls = [], actions = node('div'); actions.className = 'media-advice-actions';
+    actions.setAttribute('aria-label', 'Дії для обраного сервісу');
+    const symbol = state => { const e = node('span', state.symbol); e.className = 'media-advice-symbol'; e.setAttribute('role', 'img'); e.setAttribute('aria-label', state.label); e.setAttribute('title', state.label); e.dataset.state = state.state; return e; };
+    const fallback = { state: 'unknown', symbol: '?', label: 'Невідомо: даних недостатньо, це не означає відсутність.' };
+    session.linkSelections ??= new Map();
+    const selected = groups.find(info => info.group.key === session.platformKey) ?? groups.find(info => !info.group.readOnly) ?? groups[0];
+    function showActions(info) {
+      if (!valid()) return invalidate();
+      selectionToken = null; session.platformKey = info.group.key;
+      for (const item of controls) item.button.setAttribute('aria-pressed', String(item.info === info));
+      actions.replaceChildren();
+      const group = info.group;
+      const links = linkChoicesFor(info);
+      const chosen = links.find(link => link.href === session.linkSelections.get(group.key)) ?? links.find(link => link.row === info.transferRow) ?? links[0];
+      const row = chosen?.row ?? info.transferRow;
+      const item = controls.find(item => item.info === info); if (item && row) item.tr.dataset.rowId = row.id;
+      actions.append(node('p', `Обраний сервіс: ${group.title}`));
+      if (links.length > 1) {
+        const label = node('label', 'Посилання сервісу'), select = node('select'); select.className = 'media-advice-link-select';
+        select.setAttribute('aria-label', `Посилання сервісу ${group.title}`);
+        for (const [index, link] of links.entries()) {
+          const option = node('option', `Посилання ${index + 1} · ${new URL(link.href).hostname}`);
+          option.value = String(index); option.selected = link === chosen; select.append(option);
+        }
+        select.addEventListener('change', () => {
+          if (!valid()) return invalidate();
+          const link = links[Number(select.value)]; if (!link) return;
+          session.linkSelections.set(group.key, link.href); showActions(info);
+          actions.querySelector('select')?.focus({ preventScroll: true });
+        });
+        label.append(select); actions.append(label);
+      }
+      if (chosen) {
+        const address = node('details'); address.className = 'media-advice-link-address';
+        address.append(node('summary', 'Адреса обраного посилання'), node('p', chosen.href)); actions.append(address);
+      } else actions.append(node('p', 'Придатного посилання немає.'));
+      const transfer = transferFor(row), buttons = node('div'); buttons.className = 'media-advice-row-actions';
+      if (transfer?.link.transferable) buttons.append(button('Відкрити посилання', () => {
+        if (!valid()) return invalidate(); markStale();
+        doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
+      }));
+      const choose = button('Обрати', () => review(row)); choose.disabled = group.readOnly || !transfer; buttons.append(choose); actions.append(buttons);
+    }
+    for (const info of groups) {
+      const tr = node('tr'); tr.className = 'media-advice-row'; tr.dataset.providerKey = info.group.key; tr.dataset.rowId = info.transferRow?.id ?? '';
+      const cell = node('th'); cell.setAttribute('scope', 'row');
+      const choose = button('', () => showActions(info)); choose.className = 'media-advice-service-select'; choose.setAttribute('aria-label', info.group.title); choose.setAttribute('aria-pressed', 'false');
+      if (Object.hasOwn(serviceIcons, info.group.key)) { const icon = node('img'); icon.className = 'media-advice-provider-icon'; icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; icon.alt = ''; icon.setAttribute('aria-hidden', 'true'); icon.width = 24; icon.height = 24; choose.append(icon); }
+      choose.append(node('span', info.group.title)); cell.append(choose, symbol(info.comparison?.availability ?? fallback)); tr.append(cell);
+      for (const field of ['audio', 'subtitles']) { const td = node('td'); td.append(symbol(info.comparison?.[field] ?? fallback)); tr.append(td); }
+      controls.push({ info, tr, button: choose }); rows.append(tr);
+    }
+    table.append(rows); body.append(table);
+    const legend = node('p', '● — джерело вказує Україну; ◐ — неповні дані сервісу; ◇ — інша країна. Мови: + — вказано; − — явно позначено відсутність; ? — невідомо; ± — дані різняться.'); legend.className = 'media-advice-legend';
+    const caution = node('p', 'Це відомості джерел, не гарантія доступності. Невідоме не означає «немає». Мовні дані й посилання можуть стосуватися різних варіантів сервісу.'); caution.className = 'media-advice-comparison-caution';
+    body.append(legend, caution, actions); showActions(selected);
   }
   function render() {
     const hadFocus = dialog.open && dialog.contains(doc.activeElement);
@@ -183,34 +263,11 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         chat.append(button(`Використати підтверджену картку ${index + 1}`, () => { if (!valid()) return invalidate(); session.choice = choice; render(); }));
       }
       if (filmLocalizationFor()?.ukrainianAudio?.state === 'reported-positive') bubble('Є згадка про українське аудіо для фільму загалом. На кожній платформі його наявність ще треба перевірити.');
-      const list = node('div'); list.className = 'media-advice-options';
-      for (const info of groups) {
-        const group = info.group, row = info.transferRow;
-        const card = node('article'); card.className = 'media-advice-row'; card.dataset.providerKey = group.key; card.dataset.rowId = row.id;
-        const title = node('div'); title.className = 'media-advice-option-title'; title.append(node('h3', group.title)); card.append(title);
-        const body = node('div'); body.className = 'media-advice-variant';
-        const basis = node('p', `${info.access} · ${info.territory}`); basis.className = 'media-advice-source'; body.append(basis);
-        if (info.languageSummary) body.append(node('p', info.languageSummary));
-        else body.append(node('p', info.audio), node('p', info.subtitles));
-        for (const label of info.otherLanguageLabels) body.append(node('p', label));
-        if (info.unboundLabels.length) { const e = node('p', info.unboundLabels.join('. ') + '. Для цієї пропозиції ще не перевірено.'); e.className = 'media-advice-warning'; body.append(e); }
-        for (const warning of [...new Set(info.warnings)]) { const e = node('p', warning); e.className = 'media-advice-warning'; body.append(e); }
-        if (group.rows.length > 1) body.append(node('p', 'Відомості можуть стосуватися різних пропозицій; перевірте умови за посиланням.'));
-        if (row.kind === 'candidate-link') body.append(node('p', 'Умови перегляду за посиланням ще потрібно перевірити.'));
-        const transfer = transferFor(row);
-        const actions = node('div'); actions.className = 'media-advice-row-actions';
-        if (transfer?.link.transferable) actions.append(button('Відкрити посилання', () => {
-          if (!valid()) return invalidate(); markStale();
-          doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
-        }));
-        const select = button('Обрати', () => review(row)); select.disabled = group.readOnly || !transfer; actions.append(select); body.append(actions);
-        card.append(body); list.append(card);
-      }
-      chat.append(list);
+      comparison(groups);
       for (const row of [...(session.result.unmapped ?? []), ...(session.choice?.unmapped ?? [])]) {
         const other = node('p', `Інші платформи — ${row.name ?? 'назву не встановлено'}: лише для перегляду. Тип доступу й умови потрібно перевірити окремо.`); other.className = 'media-advice-other'; chat.append(other);
       }
-      const caution = node('p', 'Це відомості джерел, не гарантія доступності. Невідоме не означає «немає».'); caution.className = 'media-advice-footnote'; chat.append(caution); attribution();
+      attribution();
     }
     if (renewContext) {
       const update = button('Оновити вручну', renew); update.dataset.mediaRefresh = ''; update.hidden = !session.stale && !session.error; chat.append(update);
