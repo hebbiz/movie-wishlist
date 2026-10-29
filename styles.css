@@ -4177,8 +4177,11 @@ body.invite-page.app-ready .container {
   .media-advice-chat .mykola-avatar, .media-advice-chat .user-avatar { width: 30px; height: 30px; font-size: 13px; }
   .media-advice-chat .mykola-bubble, .media-advice-chat .user-bubble { max-width: calc(100% - 38px); padding: 10px 12px; }
   .media-advice-chat .media-advice-comparison-bubble { width: calc(100% - 38px); padding: 10px 8px; }
-  .media-advice-comparison th:first-child { width: 50%; }
-  .media-advice-dialog .media-advice-service-select { gap: 4px; font-size: 12px; }
+  .media-advice-comparison th:first-child { width: 80px; text-align: center; }
+  .media-advice-dialog .media-advice-service-select { justify-content: center; min-width: 44px; gap: 4px; font-size: 12px; text-align: center; }
+  .media-advice-provider-icon { width: 32px; height: 28px; flex-basis: 32px; }
+  .media-advice-service-select[data-icon-state="loaded"] .media-advice-service-name { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+  .media-advice-service-name { min-width: 0; }
   .media-advice-attribution, .media-advice-other, .media-advice-footnote { margin-left: 38px; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -6,6 +6,52 @@ import { pathToFileURL } from 'node:url';
 import { resolve, extname } from 'node:path';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
 
+async function assertServiceComparisonLayout(page, width) {
+  await page.waitForFunction(() => [...document.querySelectorAll('.media-advice-provider-icon')].every(image => image.complete && image.naturalWidth > 0));
+  // Measure settled geometry, not the existing 180ms bubbleIn scale(0.98).
+  // Keep the same 44px assertion; do not change application animation/timing.
+  await page.locator('.media-advice-comparison').evaluate(table => Promise.all(table.closest('.mykola-bubble').getAnimations().map(animation => animation.finished)));
+  const layout = await page.locator('.media-advice-comparison').evaluate(table => {
+    const rect = element => { const r = element.getBoundingClientRect(); return { x: r.x, width: r.width, height: r.height, center: r.x + r.width / 2 }; };
+    const headers = [...table.querySelectorAll('thead th')].map(header => ({ ...rect(header), align: getComputedStyle(header).textAlign }));
+    return {
+      width: table.clientWidth, scrollWidth: table.scrollWidth, headers,
+      services: [...table.querySelectorAll('.media-advice-service-select')].map(button => {
+        const name = button.querySelector('.media-advice-service-name');
+        const style = getComputedStyle(name);
+        return { label: button.getAttribute('aria-label'), title: button.title, text: name.textContent,
+          state: button.dataset.iconState, button: rect(button), name: rect(name),
+          nameDisplay: style.display, nameVisibility: style.visibility,
+          language: [...button.closest('tr').querySelectorAll('td')].map(cell => ({ ...rect(cell), align: getComputedStyle(cell).textAlign, symbol: rect(cell.firstElementChild) })),
+        };
+      }),
+    };
+  });
+  assert.ok(layout.scrollWidth <= layout.width + 1, 'the comparison itself has no horizontal overflow');
+  for (const service of layout.services) {
+    assert.equal(service.state, 'loaded');
+    assert.equal(service.label, service.text, 'the full service name remains the accessible button name');
+    assert.equal(service.title, service.text, 'the emblem has a full-name tooltip');
+    if (width <= 480) {
+      assert.ok(service.button.height >= 44, 'service selection retains a mobile-sized touch target');
+      assert.ok(service.name.width <= 1 && service.name.height <= 1, 'a loaded mobile emblem replaces the visible service name');
+      assert.notEqual(service.nameDisplay, 'none', 'the name is visually hidden rather than removed');
+      assert.notEqual(service.nameVisibility, 'hidden');
+      for (const [index, cell] of service.language.entries()) {
+        const header = layout.headers[index + 1];
+        assert.equal(header.align, 'center'); assert.equal(cell.align, 'center');
+        assert.ok(Math.abs(header.center - cell.symbol.center) <= 1, 'language symbols line up with the centered column header');
+        assert.ok(header.height >= 30, 'the two-line mobile heading retains room to read');
+      }
+    } else {
+      assert.ok(service.name.width > 1 && service.name.height > 1, 'wider viewports retain emblem and visible name');
+    }
+  }
+  assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  for (const service of layout.services) assert.equal(await page.getByRole('button', { name: service.label, exact: true }).count(), 1);
+}
+
 test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, isolated transfer and report', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const root = resolve(import.meta.dirname, '..');
   const server = createServer(async (req, res) => {
@@ -74,6 +120,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.equal(await page.locator('.media-advice-row img.media-advice-provider-icon').count(),1,'use the existing SVG platform emblem');
     assert.equal(await page.locator('.media-advice-provider-icon').evaluateAll(nodes=>nodes.every(n=>new URL(n.src).pathname.endsWith('.svg')&&n.alt==='')),true);
     await page.waitForFunction(()=>[...document.querySelectorAll('.media-advice-provider-icon')].every(image=>image.complete&&image.naturalWidth>0));
+    await assertServiceComparisonLayout(page, width);
     assert.equal(await page.locator('.media-advice-row button').count(),1,'one service picker, no repeated open/select action blocks');
     assert.equal(await page.locator('.media-advice-actions').getByRole('button',{name:'Обрати',exact:true}).count(),1);
     assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),1);
@@ -229,6 +276,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.locator('.media-advice-answer').waitFor();
       assert.equal(await page.locator('.media-advice-row').count(),3);
       assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['prime','hbo','rakuten']);
+      await assertServiceComparisonLayout(page, width);
       assert.equal(await page.locator('.media-advice-variant-select').count(),0);
       assert.match(await page.locator('.media-advice-answer').innerText(),/Prime Video.*українське аудіо/);
       const beforeVariants=calls.filter(c=>c.action==='discover').length;
@@ -255,6 +303,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       const selectedRow=authored.rows.find(r=>r.id==='motn:rakuten-rent');
       assert.equal(await rakuten.getAttribute('data-row-id'),selectedRow.id);
       await rakuten.locator('.media-advice-service-select').click();
+      assert.equal(await rakuten.locator('.media-advice-service-select').getAttribute('aria-pressed'),'true');
+      assert.equal(await page.locator('.media-advice-service-select[aria-pressed="true"]').count(),1,'service selection remains explicit with emblem-only mobile buttons');
       const offerSelect=page.getByLabel('Посилання сервісу Rakuten TV');
       assert.equal(await offerSelect.locator('option').count(),3,'four Rakuten rows expose only their three different admissible literal links');
       assert.doesNotMatch(await offerSelect.innerText(),/Оренда|Купівля|TMDb|Movie of the Night|kinobaza:|motn:/,'the choice describes links, not internal offer rows');
@@ -334,6 +384,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.deepEqual([...kinoOrder].sort(),['apple','megogo','rakuten']);
       const apple=page.locator('.media-advice-row[data-provider-key="apple"]');
       assert.deepEqual(kinoOrder,['apple','rakuten','megogo'],'language category first, then the agreed service priorities');
+      await assertServiceComparisonLayout(page, width);
       assert.equal(await apple.locator('th[scope=row]').count(),1);assert.equal(await apple.locator('td').count(),2);
       assert.equal(await apple.locator('td').nth(0).innerText(),'+');
       assert.equal(await apple.locator('td').nth(1).innerText(),'−');
@@ -357,6 +408,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       if(process.env.M4_SCREENSHOT_DIR) {
         await page.evaluate(()=>mediaAdviceController.dialog.scrollTop=0);
         await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-comparison-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/mobile-service-icons-${width}.png`,animations:'disabled'});
       }
       await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
       await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
@@ -418,6 +470,50 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         if(refusal==='identity') assert.equal(await page.getByRole('button',{name:'Обрати',exact:true}).isDisabled(),true);
         await page.getByRole('button',{name:'← До картки',exact:true}).click();
       }
+      // A genuinely failed emblem request must reveal a readable full-name
+      // fallback, not a broken-image-only button. A new explicit form session
+      // remounts the images; choosing/reopening still adds no source discovery.
+      let failedEmblems=0;
+      const failEmblem=route=>{failedEmblems++;return route.abort();};
+      // Retain the selected film binding from the preceding authored Dune run.
+      authored.rows=authoredGroupedMediaRows().map(row=>({...row,filmId:authored.film.id}));
+      const beforeFallbackCalls=calls.filter(c=>c.action==='discover').length;
+      const beforeFallbackWrites=await page.evaluate(()=>authoredDBWrites.length);
+      await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();
+      await page.locator('.media-advice-answer').waitFor();
+      assert.equal(await page.locator('.media-advice-service-select').count(),3,'the fallback fixture belongs to the current selected film');
+      // Force an actual local asset failure, not a decoded image-cache hit.
+      // This query exists only in the test; production SVG URLs stay unchanged.
+      await context.route('**/assets/icons/media/*.svg?authored-failure=1',failEmblem);
+      await page.locator('.media-advice-provider-icon').evaluateAll(images=>images.forEach(image=>image.src=new URL(image.src).pathname+'?authored-failure=1'));
+      await page.waitForFunction(()=>document.querySelectorAll('.media-advice-service-select[data-icon-state="failed"]').length===3);
+      assert.equal(failedEmblems,3,'failed state comes from three actual locally aborted emblem requests');
+      const fallbackServices=await page.locator('.media-advice-service-select').evaluateAll(buttons=>buttons.map(button=>{
+        const name=button.querySelector('.media-advice-service-name'),r=name.getBoundingClientRect();
+        const image=button.querySelector('.media-advice-provider-icon');
+        return {name:name.textContent,label:button.getAttribute('aria-label'),width:r.width,height:r.height,imageShown:image.getBoundingClientRect().width>0&&getComputedStyle(image).display!=='none'};
+      }));
+      for(const service of fallbackServices) {
+        assert.equal(service.label,service.name);assert.ok(service.width>1&&service.height>1,'full service name is visible when its emblem fails');
+        assert.equal(service.imageShown,false,'failed emblem is not displayed beside the fallback');
+        assert.equal(await page.getByRole('button',{name:service.name,exact:true}).count(),1);
+      }
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog=>dialog.scrollWidth<=dialog.clientWidth),true);
+      const fallbackPrime=page.getByRole('button',{name:'Prime Video',exact:true});
+      await fallbackPrime.focus();await fallbackPrime.press('Enter');
+      assert.equal(await fallbackPrime.getAttribute('aria-pressed'),'true');
+      assert.match(await page.locator('.media-advice-actions').innerText(),/Обраний сервіс: Prime Video/);
+      await page.getByRole('button',{name:'Обрати',exact:true}).click();
+      await page.locator('.media-advice-preview').waitFor();
+      assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeFallbackWrites,'fallback selection and preview stay local');
+      await page.getByRole('button',{name:'Скасувати вибір',exact:true}).click();
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/mobile-service-fallback-${width}.png`,animations:'disabled'});
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();await page.locator('#mediaAdviceEntry').click();
+      assert.equal(await page.locator('.media-advice-service-select[data-icon-state="failed"]').count(),3);
+      assert.equal(calls.filter(c=>c.action==='discover').length,beforeFallbackCalls+1,'new explicit form session searches once; icon failure, keyboard choice and reopen do not search again');
+      assert.equal(failedEmblems,3,'reopening retains the fallback without reloading the emblem');
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      await context.unroute('**/assets/icons/media/*.svg?authored-failure=1',failEmblem);
     }
     if (width === 1280) {
       allowed = true;
@@ -434,6 +530,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();
       await page.locator('.media-advice-answer').waitFor();
       assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['apple','rakuten','prime','hbo','netflix','megogo']);
+      await assertServiceComparisonLayout(page, width);
       assert.equal(await page.getByRole('table').count(),1);assert.equal(await page.getByRole('columnheader').count(),3);
       assert.equal(await page.getByRole('button',{name:'Обрати',exact:true}).count(),1);
       assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),0,'missing links never create an opening action');
