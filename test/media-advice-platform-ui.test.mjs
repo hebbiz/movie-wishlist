@@ -116,3 +116,17 @@ test('unadmitted block signs remain unknown; unsafe links never open and medium-
   assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: '' });
   assert.deepEqual(state.opens, []); assert.equal(state.calls, 1);
 });
+
+test('duplicate source rows with one admitted URL need no chooser or purchase/rental labels', async t => {
+  const first = ownBlock('rakuten');
+  const rows = [first, { ...first, id: 'motn:rent', access: { state: 'reported', value: 'rental' } }, { ...first, id: 'tmdb:buy', access: { state: 'reported', value: 'buy' } }, { ...first, id: 'kinobaza:another-record' }];
+  const before = JSON.stringify(rows), { control, state, button } = await harness(t, rows);
+  assert.equal(control.dialog.querySelectorAll('select').length, 0);
+  assert.doesNotMatch(control.dialog.querySelector('.media-advice-actions').textContent, /Оренда|Купівля|Варіант|motn|tmdb/);
+  await button('Відкрити посилання').click();
+  assert.deepEqual(state.opens, [[first.link.href, '_blank', 'noopener,noreferrer']]);
+  await button('Обрати').click(); assert.equal(state.output, null);
+  await button('Перенести в картку').click();
+  assert.deepEqual(state.output, { recommended_medium: 'Rakuten TV', purchase_url: first.link.href });
+  assert.equal(JSON.stringify(rows), before); assert.equal(state.calls, 1);
+});

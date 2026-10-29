@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makePreview, applyPreview, transferFor, linkPreview } from '../assets/media-advice.mjs';
+import { makePreview, applyPreview, transferFor, linkPreview, linkChoicesFor } from '../assets/media-advice.mjs';
+import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
+import { authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
 export const authoredRow = (href = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authored') => ({
   id: 'motn:authored', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' },
   country: 'UA', access: { state: 'reported', value: 'rental' }, provenance: { source: 'AUTHORED MOTN' }, link: { href },
@@ -63,4 +65,49 @@ test('unresolved, conflicting provider, unknown platform and unsafe href cannot 
     assert.equal(makePreview(authoredRow(href), form), null, 'unsafe/missing URL cannot silently erase an existing link');
     assert.equal(makePreview(authoredRow(href), form, { clearMissing: true }).after.purchase_url, '');
   }
+});
+
+test('four authored Supergirl-shaped Rakuten rows offer only distinct literal admitted links, leaving all observations intact', () => {
+  const rows = authoredGroupedMediaRows(), before = JSON.stringify(rows);
+  const info = presentMediaGroups(rows).find(info => info.group.key === 'rakuten');
+  const links = linkChoicesFor(info);
+  assert.equal(info.group.rows.length, 4); assert.equal(links.length, 3);
+  assert.strictEqual(links[0].row, info.transferRow);
+  assert.deepEqual(links.map(link => link.href), [...new Set(info.group.rows.map(row => row.link.href))]);
+  for (const link of links) assert.ok(info.group.rows.includes(link.row));
+  assert.equal(JSON.stringify(rows), before);
+  const form = { recommended_medium: 'DVD', purchase_url: '' };
+  for (const link of links) {
+    const preview = makePreview(link.row, form);
+    assert.equal(preview.rowId, link.row.id); assert.equal(preview.after.purchase_url, link.href);
+  }
+
+  const one = info.group.rows.map(row => ({ ...row, link: { href: links[0].href } }));
+  const single = presentMediaGroups(one)[0];
+  assert.equal(linkChoicesFor(single).length, 1);
+  assert.equal(single.group.rows.length, 4, 'deduplication never removes source observations');
+});
+
+test('link choices preserve a preferred original representative without normalizing queries, encoding or fragments', () => {
+  const href = 'https://click.justwatch.com/a?token=Authored%2fOnly#Anchor';
+  const first = authoredRow(href), preferred = { ...authoredRow(href), id: 'preferred-original', access: { state: 'reported', value: 'purchase' } };
+  const changed = { ...authoredRow(href.replace('%2f', '%2F')), id: 'different-literal' };
+  const fragment = { ...authoredRow(href.replace('#Anchor', '#Other')), id: 'different-fragment' };
+  const group = { key: 'apple', rows: [first, preferred, changed, fragment], readOnly: false };
+  const before = JSON.stringify(group), links = linkChoicesFor({ group, transferRow: preferred });
+  assert.deepEqual(links.map(link => link.href), [href, changed.link.href, fragment.link.href]);
+  assert.strictEqual(links[0].row, preferred); assert.equal(JSON.stringify(group), before);
+  assert.equal(makePreview(links[0].row, { recommended_medium: 'DVD', purchase_url: '' }).rowId, preferred.id);
+});
+
+test('zero/one/multiple link choices exclude missing, unsafe and refused URLs without hiding safe conflicting observations', () => {
+  const unsafe = authoredRow('javascript:alert(1)'), missing = authoredRow(null), good = authoredRow();
+  const info = rows => ({ group: { key: 'apple', rows, readOnly: false }, transferRow: rows[0] });
+  const refused = { ...good, identityStatus: 'unresolved' }, providerConflict = { ...good, providerConflict: true };
+  assert.deepEqual(linkChoicesFor(info([unsafe, missing, refused, providerConflict])), []);
+  assert.equal(linkChoicesFor(info([unsafe, missing, good])).length, 1);
+  const fieldConflict = { ...good, id: 'safe-field-conflict', audio: { state: 'conflicting' }, conflicts: [{ field: 'audio' }] };
+  assert.strictEqual(linkChoicesFor(info([fieldConflict]))[0].row, fieldConflict);
+  assert.deepEqual(linkChoicesFor({ group: { key: 'apple', rows: [good], readOnly: true } }), []);
+  assert.deepEqual(linkChoicesFor({ group: { key: 'netflix', rows: [good] } }), []);
 });

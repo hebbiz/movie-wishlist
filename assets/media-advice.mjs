@@ -1,6 +1,6 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
-import { groupMediaRows, presentMediaGroups, summarizeMediaGroups, presentMediaRow } from './media-advice-presentation.mjs';
+import { groupMediaRows, presentMediaGroups, summarizeMediaGroups } from './media-advice-presentation.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
 const serviceIcons = Object.freeze({ apple: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
@@ -10,6 +10,19 @@ export function transferFor(row) {
   // M4's explicit open/apply actions need no extra referral acknowledgement.
   // The shared classification and the observed href itself remain untouched.
   return { medium: media[row.provider.key], url: link.transferable ? link.href : null, link };
+}
+// Choices are literal admitted URLs, not merged offers. Each choice keeps one
+// original representative; duplicate source observations stay in diagnostics.
+export function linkChoicesFor(info) {
+  if (info?.group?.readOnly) return [];
+  const choices = new Map();
+  for (const row of info?.group?.rows ?? []) {
+    if (row.provider?.key !== info.group.key) continue;
+    const transfer = transferFor(row);
+    if (!transfer?.link.transferable) continue;
+    if (!choices.has(transfer.url) || row === info.transferRow) choices.set(transfer.url, { row, href: transfer.url });
+  }
+  return [...choices.values()];
 }
 export function makePreview(row, form, { clearMissing = false } = {}) {
   const transfer = transferFor(row);
@@ -164,7 +177,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     actions.setAttribute('aria-label', 'Дії для обраного сервісу');
     const symbol = state => { const e = node('span', state.symbol); e.className = 'media-advice-symbol'; e.setAttribute('role', 'img'); e.setAttribute('aria-label', state.label); e.setAttribute('title', state.label); e.dataset.state = state.state; return e; };
     const fallback = { state: 'unknown', symbol: '?', label: 'Невідомо: даних недостатньо, це не означає відсутність.' };
-    session.rowSelections ??= new Map();
+    session.linkSelections ??= new Map();
     const selected = groups.find(info => info.group.key === session.platformKey) ?? groups.find(info => !info.group.readOnly) ?? groups[0];
     function showActions(info) {
       if (!valid()) return invalidate();
@@ -172,24 +185,30 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       for (const item of controls) item.button.setAttribute('aria-pressed', String(item.info === info));
       actions.replaceChildren();
       const group = info.group;
-      const row = group.rows.find(row => row.id === session.rowSelections.get(group.key)) ?? info.transferRow;
+      const links = linkChoicesFor(info);
+      const chosen = links.find(link => link.href === session.linkSelections.get(group.key)) ?? links.find(link => link.row === info.transferRow) ?? links[0];
+      const row = chosen?.row ?? info.transferRow;
       const item = controls.find(item => item.info === info); if (item && row) item.tr.dataset.rowId = row.id;
       actions.append(node('p', `Обраний сервіс: ${group.title}`));
-      if (group.rows.length > 1) {
-        const label = node('label', 'Варіант сервісу'), select = node('select'); select.className = 'media-advice-offer-select';
-        select.setAttribute('aria-label', `Варіант сервісу ${group.title}`);
-        for (const [index, original] of group.rows.entries()) {
-          const transfer = transferFor(original), option = node('option', `Варіант ${index + 1} · ${presentMediaRow(original).accessLabel} · ${transfer?.link.transferable ? 'є посилання' : 'без придатного посилання'}`);
-          option.value = String(index); option.selected = original === row; select.append(option);
+      if (links.length > 1) {
+        const label = node('label', 'Посилання сервісу'), select = node('select'); select.className = 'media-advice-link-select';
+        select.setAttribute('aria-label', `Посилання сервісу ${group.title}`);
+        for (const [index, link] of links.entries()) {
+          const option = node('option', `Посилання ${index + 1} · ${new URL(link.href).hostname}`);
+          option.value = String(index); option.selected = link === chosen; select.append(option);
         }
         select.addEventListener('change', () => {
           if (!valid()) return invalidate();
-          const original = group.rows[Number(select.value)]; if (!original) return;
-          session.rowSelections.set(group.key, original.id); showActions(info);
+          const link = links[Number(select.value)]; if (!link) return;
+          session.linkSelections.set(group.key, link.href); showActions(info);
           actions.querySelector('select')?.focus({ preventScroll: true });
         });
         label.append(select); actions.append(label);
       }
+      if (chosen) {
+        const address = node('details'); address.className = 'media-advice-link-address';
+        address.append(node('summary', 'Адреса обраного посилання'), node('p', chosen.href)); actions.append(address);
+      } else actions.append(node('p', 'Придатного посилання немає.'));
       const transfer = transferFor(row), buttons = node('div'); buttons.className = 'media-advice-row-actions';
       if (transfer?.link.transferable) buttons.append(button('Відкрити посилання', () => {
         if (!valid()) return invalidate(); markStale();

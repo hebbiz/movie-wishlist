@@ -188,13 +188,20 @@ Within each category use Apple TV → Rakuten TV → equal Netflix/HBO Max/Prime
 → MEGOGO; equal peers retain stable source order. The original row ordering,
 identity gates and transfer eligibility are not rewritten to achieve that order.
 
-Service names are keyboard/touch buttons selecting one shared action area. If a
-service has several original observations, its local variant selector retains
-each observation rather than constructing a combined offer. Opening requires an
-admitted exact original URL and an explicit click; missing/unsafe links have no
-Open action. Choosing leads to the existing preview → explicit local transfer →
+Service names are keyboard/touch buttons selecting one shared action area. The
+owner's #206 follow-up removes the original-record/offer selector: actions show
+only distinct admitted **literal URLs** for that service. Zero/one URL needs no
+selector; duplicate rent/buy/source records with the same href never become
+repeated user choices. Multiple URLs use `Посилання 1`, etc. with their hostname;
+the exact selected address can be inspected in collapsed text details, without
+following it. No query/fragment/encoding normalization or redirect resolution is
+performed to infer destination equivalence. Each choice retains one original
+representative row, preferring the existing primary for its URL; all original
+observations and disagreements remain in diagnostics. No offers or fields merge.
+Opening requires an admitted exact original URL and an explicit click;
+missing/unsafe links have no Open action. Choosing leads to preview → local transfer →
 ordinary Save flow, including explicit clearing of an existing URL when needed.
-Selecting a service/variant neither opens a site nor writes or refreshes sources.
+Selecting a service/link neither opens a site nor writes or refreshes sources.
 Symbols have screen-reader labels, table row/column headers and a single visible
 legend; icons are decorative next to the service text. Session/reopen/scroll,
 30-minute stale indication, authorization/pending apply and isolation are retained.
@@ -232,3 +239,24 @@ change. No source request, real Wishlist write or new persistence is introduced.
   the extra link/anchor is this record's compact-comparison section, same scope.
   Full server/SQL/native PostgreSQL concurrency and Windows launcher lifecycle
   were not repeated: no dependent code/schema/contracts changed.
+
+### Follow-up: choose links, not source records — PR #206
+
+The follow-up replaces the original-record selector described in the first
+checkpoint's tests above. Current targeted offline/mock result:77/77 passed,
+0 failed/skipped (presentation, link choice/preview, DOM and safe report). The
+three browser suites were rerun:30/30 passed,0 failed/skipped, same four Edge
+viewports. Authored Supergirl-shaped eight-to-three data keeps all eight rows in
+diagnostics: four Rakuten rows with one URL show no chooser; four rows with three
+distinct URLs show three link choices, not four rent/buy/source choices. Cases
+with zero/one/multiple URLs, unsafe/refused addresses, exact non-primary open and
+transfer, normal Save, pending apply, retained/reopened/stale/access boundaries
+remain covered. Query/fragment/percent-encoding differences are not silently
+normalized; original representative identity and all source fields are preserved.
+Authored `compact-one-link-{375,420}.png` and
+`compact-distinct-links-{375,420}.png` remain outside Git; mobile examples were
+visually inspected. This is not real iPhone/Safari or live destination validation.
+No assertions/timeouts weakened, no source calls or real Wishlist writes. Server,
+source policies, reports, ranking and lifecycle/auth are unchanged. Syntax,
+whitespace/scope and the same14-doc/455-link/280-anchor check passed; unrelated
+server/SQL/Windows suites were not repeated.
