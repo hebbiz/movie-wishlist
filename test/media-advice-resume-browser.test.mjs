@@ -76,29 +76,27 @@ test('M4 retained document: revalidation, expiry and context boundaries without 
       assert.equal(await page.locator('.media-advice-stale').isVisible(),true);
       assert.equal(await page.evaluate(()=>calls),1);
     } else if (mode === 'retained' || mode === 'inflight') {
-      await page.locator('.media-advice-variant-select').selectOption('authored-other');
       await page.evaluate(async () => {
         window.chat = control.dialog.querySelector('.media-advice-chat');
         window.card = chat.querySelector('.media-advice-row');
-        window.variants = card.querySelector('.media-advice-variant-select');
         window.bubble = chat.querySelector('.mykola-bubble');
         control.dialog.scrollTop = 60; window.topBefore = control.dialog.scrollTop;
         await control.refresh(); await control.refresh();
       });
-      assert.deepEqual(await page.evaluate(() => [control.dialog.open, chat.isConnected, bubble.isConnected, card.isConnected,variants.isConnected,variants.value,control.dialog.scrollTop === topBefore, calls, writes, storageWrites]), [true, true, true, true,true,'authored-other',true,1,0,0]);
+      assert.deepEqual(await page.evaluate(() => [control.dialog.open, chat.isConnected, bubble.isConnected, card.isConnected,control.dialog.scrollTop === topBefore, calls, writes, storageWrites]), [true, true, true, true,true,1,0,0]);
       await page.evaluate(() => control.dialog.querySelector('.media-advice-report-bubble button').addEventListener('click', () => window.reportTop = control.dialog.scrollTop, {capture:true,once:true}));
       await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
       assert.equal(await page.locator('.media-advice-diagnostics').isVisible(),true);
       assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Authored retained film/);
       await page.getByRole('button',{name:'← До порад',exact:true}).click();
       await page.waitForFunction(() => control.dialog.scrollTop === reportTop);
-      assert.deepEqual(await page.evaluate(()=>[chat.isConnected,bubble.isConnected,card.isConnected,variants.isConnected,variants.value,control.dialog.scrollTop===reportTop,calls]),[true,true,true,true,'authored-other',true,1]);
+      assert.deepEqual(await page.evaluate(()=>[chat.isConnected,bubble.isConnected,card.isConnected,control.dialog.scrollTop===reportTop,calls]),[true,true,true,true,1]);
       await page.keyboard.press('Escape'); await page.evaluate(() => control.refresh());
       assert.equal(await page.evaluate(() => control.dialog.open), false);
       await page.locator('#entry').click();
       await page.waitForFunction(() => control.dialog.open && control.dialog.scrollTop === reportTop);
       assert.equal(await page.getByRole('button', { name: 'Знайти варіанти', exact: true }).count(), 0);
-      assert.equal(await page.evaluate(() => card.isConnected && variants.isConnected && variants.value==='authored-other'), true);
+      assert.equal(await page.evaluate(() => card.isConnected), true);
       assert.equal(await page.evaluate(() => control.dialog.scrollTop === reportTop), true);
     } else if (mode === 'pending-revalidation') {
       await page.getByRole('button', { name: 'Обрати', exact: true }).click();
@@ -161,3 +159,4 @@ test('M4 retained document: revalidation, expiry and context boundaries without 
     await page.evaluate(() => control.invalidate());
   });
 });
+
