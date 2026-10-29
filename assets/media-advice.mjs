@@ -1,6 +1,6 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
-import { groupMediaRows, presentMediaRow, summarizeMediaAdvice } from './media-advice-presentation.mjs';
+import { groupMediaRows, presentMediaGroups, summarizeMediaGroups } from './media-advice-presentation.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
 export function transferFor(row, acknowledged = false) {
@@ -170,12 +170,8 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     if (!session.result) {
       bubble('Зараз не вдалося отримати відповідь. Спроба могла бути витрачена; повторного пошуку без вашої дії не буде.');
     } else {
-      const rows = rowsFor(), groups = groupMediaRows(rows);
-      const variantName = row => {
-        const group = groups.find(g => g.rows.includes(row));
-        return group?.rows.length > 1 ? `варіант ${group.rows.indexOf(row) + 1} (${presentMediaRow(row).accessLabel})` : null;
-      };
-      const answer = bubble(summarizeMediaAdvice(rows, { variantName })); answer.classList.add('media-advice-answer');
+      const rows = rowsFor(), groups = presentMediaGroups(rows);
+      const answer = bubble(summarizeMediaGroups(groups)); answer.classList.add('media-advice-answer');
       if (session.result.sources?.some(s => /error|failed|unavailable|timeout|blocked|unsupported|partial/i.test(s.status ?? ''))) bubble('Частина відомостей неповна або не надійшла. Показую те, що вдалося отримати, без здогадок.');
       for (const [index, choice] of (session.result.cardChoices ?? []).entries()) {
         if (!index) bubble('Знайшов кілька карток із підтвердженою відповідністю фільму. Оберіть, дані якої додати до відповіді.');
@@ -183,69 +179,30 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       }
       if (filmLocalizationFor()?.ukrainianAudio?.state === 'reported-positive') bubble('Є згадка про українське аудіо для фільму загалом. На кожній платформі його наявність ще треба перевірити.');
       const list = node('div'); list.className = 'media-advice-options';
-      session.variantSelections ??= new Map();
-      for (const group of groups) {
-        const card = node('article'); card.className = 'media-advice-row'; card.dataset.providerKey = group.key;
-        const title = node('div'); title.className = 'media-advice-option-title';
-        title.append(node('h3', group.title));
-        if (group.rows.length > 1) title.append(node('span', `Варіантів: ${group.rows.length}`));
-        card.append(title);
-        let selected = group.rows.find(row => row.id === session.variantSelections.get(group.key)) ?? group.primary;
+      for (const info of groups) {
+        const group = info.group, row = info.transferRow;
+        const card = node('article'); card.className = 'media-advice-row'; card.dataset.providerKey = group.key; card.dataset.rowId = row.id;
+        const title = node('div'); title.className = 'media-advice-option-title'; title.append(node('h3', group.title)); card.append(title);
         const body = node('div'); body.className = 'media-advice-variant';
-        if (group.rows.length > 1) {
-          const label = node('label'); label.className = 'media-advice-variant-label'; label.append(node('span', 'Варіант перегляду'));
-          const variants = node('select'); variants.className = 'media-advice-variant-select';
-          for (const [index, row] of group.rows.entries()) {
-            const p = presentMediaRow(row), option = node('option', `${index + 1}. ${p.accessLabel} · ${row.country === 'UA' ? 'Україна' : p.territoryLabel} · ${transferFor(row)?.link.transferable ? 'є посилання' : 'без посилання'}`);
-            option.value = row.id; variants.append(option);
-          }
-          variants.value = selected.id;
-          variants.addEventListener('change', () => {
-            if (!valid()) return invalidate();
-            const row = group.rows.find(row => row.id === variants.value); if (!row) return;
-            // A variant is a new original-row selection, never an update to an
-            // outstanding preview. It cannot reuse another link's acknowledgement.
-            if (selectionToken) returnToChat();
-            selectionToken = null; selected = row; session.variantSelections.set(group.key, row.id); paint();
-          });
-          label.append(variants); card.append(label);
-          if (group.rows.some(row => row.providerConflict || row.conflicts?.length || ['audio', 'subtitles'].some(key => row[key]?.state === 'conflicting'))) {
-            const warning = node('p', 'У частини варіантів є суперечливі дані. Перегляньте їх окремо.'); warning.className = 'media-advice-warning'; card.append(warning);
-          }
-          if (group.rows.some(row => row.comparisons?.some(comparison => comparison.outcome === 'possible-discrepancy'))) {
-            const warning = node('p', 'Характеристики різних варіантів можуть відрізнятися — це не одна спільна пропозиція.'); warning.className = 'media-advice-warning'; card.append(warning);
-          }
+        const basis = node('p', `${info.access} · ${info.territory}`); basis.className = 'media-advice-source'; body.append(basis);
+        body.append(node('p', info.audio), node('p', info.subtitles));
+        if (info.unboundLabels.length) { const e = node('p', info.unboundLabels.join('. ') + '. Для цієї пропозиції ще не перевірено.'); e.className = 'media-advice-warning'; body.append(e); }
+        for (const warning of [...new Set(info.warnings)]) { const e = node('p', warning); e.className = 'media-advice-warning'; body.append(e); }
+        if (group.rows.length > 1) body.append(node('p', 'Відомості можуть стосуватися різних пропозицій; перевірте умови за посиланням.'));
+        if (row.kind === 'candidate-link') body.append(node('p', 'Умови перегляду за посиланням ще потрібно перевірити.'));
+        const transfer = transferFor(row); let acknowledged = false;
+        if (transfer?.needsAck) {
+          const label = node('label'), check = node('input'); check.type = 'checkbox';
+          check.addEventListener('change', () => { acknowledged = check.checked; }); label.append(check, doc.createTextNode('Розумію: посилання містить tracking/affiliate-перехід.')); body.append(label);
         }
-        function paint() {
-          const row = selected, p = presentMediaRow(row); card.dataset.rowId = row.id; body.replaceChildren();
-          const basis = node('p', `${p.accessLabel} · ${p.territoryLabel}`); basis.className = 'media-advice-source'; body.append(basis);
-          body.append(node('p', p.audioLabel), node('p', p.subtitlesLabel));
-          // Literal properties belong only to this row; no currency/quality repair.
-          if (row.quality?.state === 'reported' && typeof row.quality.value === 'string') body.append(node('p', `Якість за даними джерела: ${row.quality.value}`));
-          if (row.price?.state === 'reported') {
-            const amount = row.price.amount?.state === 'reported' ? row.price.amount.value : null;
-            const currency = row.price.currency?.state === 'reported' ? row.price.currency.value : null;
-            if (amount !== null || currency !== null) body.append(node('p', `Ціна за даними джерела: ${amount ?? 'невідомо'} ${currency ?? '(валюта невідома)'}`));
-          }
-          if (row.kinobazaLocalization) {
-            const block = node('p', `${[p.blockAudioLabel, p.blockSubtitlesLabel].filter(Boolean).join('. ')}.`); block.className = 'media-advice-warning'; body.append(block);
-          }
-          for (const warning of p.warnings) { const e = node('p', warning); e.className = 'media-advice-warning'; body.append(e); }
-          if (row.kind === 'candidate-link') body.append(node('p', 'Посилання зі сторінки джерела — умови перегляду ще потрібно перевірити.'));
-          const transfer = transferFor(row); let acknowledged = false;
-          if (transfer?.needsAck) {
-            const label = node('label'), check = node('input'); check.type = 'checkbox';
-            check.addEventListener('change', () => { acknowledged = check.checked; }); label.append(check, doc.createTextNode('Розумію: посилання містить tracking/affiliate-перехід.')); body.append(label);
-          }
-          const actions = node('div'); actions.className = 'media-advice-row-actions';
-          if (transfer?.link.transferable) actions.append(button('Відкрити посилання', () => {
-            if (!valid()) return invalidate(); markStale();
-            if (transfer.needsAck && !acknowledged) return tell('Спочатку підтвердьте tracking/affiliate-перехід.');
-            doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
-          }));
-          const select = button('Обрати', () => review(row, acknowledged)); select.disabled = group.readOnly || !transfer; actions.append(select); body.append(actions);
-        }
-        paint(); card.append(body); list.append(card);
+        const actions = node('div'); actions.className = 'media-advice-row-actions';
+        if (transfer?.link.transferable) actions.append(button('Відкрити посилання', () => {
+          if (!valid()) return invalidate(); markStale();
+          if (transfer.needsAck && !acknowledged) return tell('Спочатку підтвердьте tracking/affiliate-перехід.');
+          doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
+        }));
+        const select = button('Обрати', () => review(row, acknowledged)); select.disabled = group.readOnly || !transfer; actions.append(select); body.append(actions);
+        card.append(body); list.append(card);
       }
       chat.append(list);
       for (const row of [...(session.result.unmapped ?? []), ...(session.choice?.unmapped ?? [])]) {
@@ -324,3 +281,4 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   dialog.addEventListener('close', () => { selectionToken = null; if (preview) returnToChat(); });
   return { refresh, invalidate, dialog };
 }
+
