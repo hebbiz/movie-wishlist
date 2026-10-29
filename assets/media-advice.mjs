@@ -3,21 +3,25 @@ import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
 import { groupMediaRows, presentMediaGroups, summarizeMediaGroups } from './media-advice-presentation.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
-export function transferFor(row, acknowledged = false) {
+export function transferFor(row) {
   if (row?.identityStatus !== 'matched' || row?.providerConflict || !Object.hasOwn(media, row?.provider?.key)) return null;
   const link = classifyLink(row.link?.href, row.provider);
-  const needsAck = link.kind === 'tracking-redirect' || link.acknowledgementRequired;
-  return { medium: media[row.provider.key], url: link.transferable && (!needsAck || acknowledged) ? link.href : null,
-    needsAck: Boolean(needsAck), blocked: Boolean(needsAck && !acknowledged), link };
+  // M4's explicit open/apply actions need no extra referral acknowledgement.
+  // The shared classification and the observed href itself remain untouched.
+  return { medium: media[row.provider.key], url: link.transferable ? link.href : null, link };
 }
-export function makePreview(row, form, { acknowledged = false, clearMissing = false } = {}) {
-  const transfer = transferFor(row, acknowledged);
-  if (!transfer || transfer.blocked || !transfer.url && form.purchase_url && !clearMissing) return null;
+export function makePreview(row, form, { clearMissing = false } = {}) {
+  const transfer = transferFor(row);
+  if (!transfer || !transfer.url && form.purchase_url && !clearMissing) return null;
   return { rowId: row.id, before: { ...form }, after: { recommended_medium: transfer.medium, purchase_url: transfer.url ?? '' },
-    linkKind: transfer.link.kind, acknowledged };
+    linkKind: transfer.link.kind };
 }
 export function applyPreview(preview, current) {
   return preview && Object.keys(preview.before).every(k => current[k] === preview.before[k]) ? { ...preview.after } : null;
+}
+export function linkPreview(current, chosen) {
+  if (chosen) return current === chosen ? 'Посилання вже додано' : current ? 'Посилання буде замінено.' : 'Посилання буде додано.';
+  return current ? 'Посилання буде очищено лише після підтвердження.' : 'Придатного посилання немає.';
 }
 
 // Shared visual classes, private DOM/state. Never call another Mykola controller.
@@ -143,6 +147,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const a = node('a', label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a, doc.createTextNode(' · '));
     }
     details.append(links, node('p', 'Країнові секції Кінобази й TMDb можуть походити з JustWatch — це не незалежні підтвердження.'));
+    details.append(node('p', 'Деякі посилання можуть проходити через сторонній сервіс, який враховує переходи.'));
     const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; details.append(logo); chat.append(details);
   }
   function render() {
@@ -190,18 +195,13 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         for (const warning of [...new Set(info.warnings)]) { const e = node('p', warning); e.className = 'media-advice-warning'; body.append(e); }
         if (group.rows.length > 1) body.append(node('p', 'Відомості можуть стосуватися різних пропозицій; перевірте умови за посиланням.'));
         if (row.kind === 'candidate-link') body.append(node('p', 'Умови перегляду за посиланням ще потрібно перевірити.'));
-        const transfer = transferFor(row); let acknowledged = false;
-        if (transfer?.needsAck) {
-          const label = node('label'), check = node('input'); check.type = 'checkbox';
-          check.addEventListener('change', () => { acknowledged = check.checked; }); label.append(check, doc.createTextNode('Розумію: посилання містить tracking/affiliate-перехід.')); body.append(label);
-        }
+        const transfer = transferFor(row);
         const actions = node('div'); actions.className = 'media-advice-row-actions';
         if (transfer?.link.transferable) actions.append(button('Відкрити посилання', () => {
           if (!valid()) return invalidate(); markStale();
-          if (transfer.needsAck && !acknowledged) return tell('Спочатку підтвердьте tracking/affiliate-перехід.');
           doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
         }));
-        const select = button('Обрати', () => review(row, acknowledged)); select.disabled = group.readOnly || !transfer; actions.append(select); body.append(actions);
+        const select = button('Обрати', () => review(row)); select.disabled = group.readOnly || !transfer; actions.append(select); body.append(actions);
         card.append(body); list.append(card);
       }
       chat.append(list);
@@ -217,16 +217,20 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const last = bubble('Якщо щось не зійшлося, тут є подробиці для пілоту.'); last.classList.add('media-advice-report-bubble'); last.append(button('Діагностичний звіт', showReport));
     if (hadFocus) header.querySelector('button').focus({ preventScroll: true });
   }
-  function review(row, acknowledged) {
+  function review(row) {
     if (!valid()) return invalidate(); markStale();
-    const before = readForm(), transfer = transferFor(row, acknowledged);
-    if (!transfer || transfer.blocked) return tell('Потрібне підтвердження tracking/affiliate-переходу.');
+    const before = readForm(), transfer = transferFor(row);
+    if (!transfer) return;
     tell('');
     const token = selectionToken = {}; session.chatScroll = dialog.scrollTop;
     viewReturnFocus = doc.activeElement;
     preview?.remove(); diagnostics.hidden = true; chat.hidden = true;
     preview = node('section'); preview.className = 'media-advice-preview';
-    preview.append(node('h3', 'Перевірте зміни'), node('p', `Рекомендований носій: ${before.recommended_medium || '—'} → ${transfer.medium}`), node('p', `Посилання: ${before.purchase_url || '—'} → ${transfer.url || 'відсутнє'}`), node('p', 'Статус, придбаний носій, назва, рік і автор не змінюються. Збереження — звичайною кнопкою форми.'));
+    preview.append(node('h3', 'Перевірте зміни'), node('p', `Рекомендований носій: ${before.recommended_medium || '—'} → ${transfer.medium}`), node('p', linkPreview(before.purchase_url, transfer.url)), node('p', 'Статус, придбаний носій, назва, рік і автор не змінюються. Збереження — звичайною кнопкою форми.'));
+    if (before.purchase_url || transfer.url) {
+      const details = node('details'); details.className = 'media-advice-preview-links';
+      details.append(node('summary', 'Повні адреси'), node('p', `Зараз: ${before.purchase_url || 'відсутнє'}`), node('p', `Обране: ${transfer.url || 'відсутнє'}`)); preview.append(details);
+    }
     if (session.stale) preview.append(node('p', 'Це попередні результати. Перевірте актуальність пропозиції перед збереженням.'));
     let clearMissing = false;
     if (!transfer.url && before.purchase_url) { const label = node('label'), check = node('input'); check.type = 'checkbox'; check.addEventListener('change', () => clearMissing = check.checked); label.append(check, doc.createTextNode('Явно очистити попереднє посилання.')); preview.append(label); }
@@ -236,7 +240,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       markStale();
       if (epoch !== generation || token !== selectionToken || !dialog.open || !valid()) return;
       if (!permitted) return invalidate();
-      const changes = applyPreview(makePreview(row, before, { acknowledged, clearMissing }), readForm());
+      const changes = applyPreview(makePreview(row, before, { clearMissing }), readForm());
       if (!changes) return returnToChat('Поля змінилися або очищення не підтверджено. Оберіть варіант повторно.');
       writeForm(changes); session.applied = true; close();
     });

@@ -23,10 +23,14 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
   const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || 'msedge', headless: true }); t.after(() => browser.close());
   for (const [width, height] of [[1280, 900], [375, 812], [420, 912], [820, 1180]]) await t.test(`${width}x${height}`, async t => {
     const context = await browser.newContext({ viewport: { width, height }, serviceWorkers: 'block' }); t.after(() => context.close());
-    await context.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw Error('AUTHORED denied'); } } }));
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw Error('AUTHORED denied'); } } });
+      window.authoredOpened=[];window.open=(...args)=>{authoredOpened.push(args);return null;};
+    });
     let allowed = false, calls = [], resolveDiscover;
     t.after(() => { resolveDiscover?.(); resolveDiscover = null; });
-    const authored = { film: { title:'Authored film', originalTitle:'Authored original', year:2020, imdbId:'tt1234567' }, rows: [{ id: 'motn:1', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' }, country: 'UA', access: { state: 'reported', value: 'rental' }, provenance: { source: 'AUTHORED' }, link: { href: 'https://itunes.apple.com/ua/movie/id123?at=&x=%2F' } }], sources: [{ source: 'tmdb', status: 'partial', identity: 'matched' }], unmapped: [{ name: 'Plex', source: 'tmdb' }], metrics:{ requestsMade:4, requestBudget:8, ledgerReservations:4 } };
+    const trackingURL='https://itunes.apple.com/ua/movie/id123?at=&x=%2F&campaign='+ 'AUTHORED-long-original-pointer%2f'.repeat(24);
+    const authored = { film: { title:'Authored film', originalTitle:'Authored original', year:2020, imdbId:'tt1234567' }, rows: [{ id: 'motn:1', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' }, country: 'UA', access: { state: 'reported', value: 'rental' }, provenance: { source: 'AUTHORED' }, link: { href: trackingURL } }], sources: [{ source: 'tmdb', status: 'partial', identity: 'matched' }], unmapped: [{ name: 'Plex', source: 'tmdb' }], metrics:{ requestsMade:4, requestBudget:8, ledgerReservations:4 } };
     await context.route('**/*', async route => {
       const u = new URL(route.request().url());
       if (u.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'text/javascript', body: `window.authoredDBWrites=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:window.authoredLogin?{access_token:'AUTHORED',user:{id:'user'}}:null}}),onAuthStateChange:fn=>{window.authoredAuthEvent=fn;}},from:name=>({select:()=>{const q={eq:()=>q,maybeSingle:async()=>({data:{role:'owner'}})};return q;},insert:fields=>{window.authoredDBWrites.push({name,fields,operation:'insert'});return{error:{message:'AUTHORED stop before ordinary save completion'}}},update:fields=>{window.authoredDBWrites.push({name,fields,operation:'update'});return{eq:async()=>({error:{message:'AUTHORED stop before ordinary save completion'}})}}})})}` });
@@ -85,21 +89,62 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.evaluate(() => mediaAdviceController.dialog.scrollTop = 0);
       await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/authored-${width}.png`,animations:'disabled' });
     }
+    assert.deepEqual(await page.evaluate(()=>authoredOpened),[],'opening the advice and receiving results cannot visit a destination');
+    assert.equal(await page.locator('.media-advice-row input[type=checkbox]').count(),0);
+    await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+    assert.deepEqual(await page.evaluate(()=>authoredOpened),[[trackingURL,'_blank','noopener,noreferrer']]);
+    assert.equal(calls.filter(c=>c.action==='discover').length,1);
+    assert.equal(await page.evaluate(()=>authoredDBWrites.length),0);
     await page.getByRole('button', { name: 'Обрати', exact: true }).click();
-    assert.match(await page.locator('.media-advice-dialog').innerText(), /підтвердження/);
-    await page.locator('.media-advice-row input').check(); await page.getByRole('button', { name: 'Обрати', exact: true }).click();
     assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('.media-advice-preview h3')), true);
+    const preview=page.locator('.media-advice-preview');
+    assert.match(await preview.innerText(),/Посилання буде замінено\./);
+    assert.doesNotMatch(await preview.innerText(),/https?:/);
+    assert.equal(await preview.locator('details').evaluate(e=>e.open),false);
+    if(width===420&&process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/preview-replaced-420.png`,animations:'disabled'});
+    if(width===375&&process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-long-preview-375.png`,animations:'disabled'});
+    await preview.getByText('Повні адреси',{exact:true}).click();
+    const fullAddresses=await preview.locator('details').innerText();
+    assert.ok(fullAddresses.includes('https://old.example'));assert.ok(fullAddresses.includes(trackingURL));
+    assert.equal(await page.locator('.media-advice-dialog').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
+    if(width===420&&process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/preview-full-addresses-420.png`,animations:'disabled'});
+    if(width===375&&process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/expanded-long-preview-375.png`,animations:'disabled'});
     await page.getByRole('button', { name: 'Скасувати вибір' }).click();
     assert.equal(await page.getByRole('button', { name: 'Обрати', exact: true }).evaluate(e => document.activeElement === e), true);
-    await page.locator('.media-advice-row input').check(); await page.getByRole('button', { name: 'Обрати', exact: true }).click();
+    await page.getByRole('button', { name: 'Обрати', exact: true }).click();
     await page.getByRole('button', { name: 'Перенести в картку' }).click();
     await page.waitForFunction(() => !document.querySelector('.media-advice-dialog').open);
     assert.equal(await page.locator('#recommended_medium').inputValue(), 'Apple TV / iTunes');
     assert.equal(await page.locator('#purchase_url').inputValue(), authored.rows[0].link.href);
     assert.deepEqual(await page.evaluate(() => [document.querySelector('#title').value, document.querySelector('#status').value, document.querySelector('#owned_medium').value, activeAdviceRoom.id, mykolaChat.textContent]), ['Authored film', 'wishlist', '', 'KEEP', 'SOCIAL HISTORY']);
     assert.equal(calls.filter(c => c.action === 'discover').length, 1);
+    if(width===420) {
+      await page.locator('#mediaAdviceEntry').click();
+      await page.getByRole('button',{name:'Обрати',exact:true}).click();
+      assert.match(await preview.innerText(),/Посилання вже додано/);
+      assert.doesNotMatch(await preview.innerText(),/https?:/);
+      assert.equal(await preview.locator('details').evaluate(e=>e.open),false);
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/preview-same-420.png`,animations:'disabled'});
+      await preview.getByText('Повні адреси',{exact:true}).click();
+      assert.ok((await preview.locator('details').innerText()).includes(trackingURL));
+      await page.getByRole('button',{name:'Скасувати вибір',exact:true}).click();
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      await page.locator('#purchase_url').fill('');
+      await page.locator('#mediaAdviceEntry').click();
+      await page.getByRole('button',{name:'Обрати',exact:true}).click();
+      assert.match(await preview.innerText(),/Посилання буде додано\./);
+      assert.doesNotMatch(await preview.innerText(),/https?:/);
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/preview-added-420.png`,animations:'disabled'});
+      await preview.getByText('Повні адреси',{exact:true}).click();
+      assert.ok((await preview.locator('details').innerText()).includes(trackingURL));
+      await page.getByRole('button',{name:'Скасувати вибір',exact:true}).click();
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      assert.equal(calls.filter(c=>c.action==='discover').length,1);
+      assert.equal(await page.evaluate(()=>authoredDBWrites.length),0);
+    }
     await page.locator('#purchase_url').fill('https://manual.example/');
     await page.locator('#mediaAdviceEntry').click(); assert.equal(await page.getByRole('button', { name: 'Знайти варіанти', exact: true }).count(), 0);
+    assert.equal(await page.evaluate(()=>authoredOpened.length),1,'reopening does not repeat the explicit destination action');
     await page.getByRole('button', { name: '← До картки' }).click(); assert.equal(await page.locator('#purchase_url').inputValue(), 'https://manual.example/');
     await page.evaluate(() => mediaAdviceController.refresh());
     assert.equal(await page.evaluate(() => mediaAdviceController.dialog.open), false);
@@ -135,6 +180,12 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     authored.rows[0].link.href = null;
     await page.evaluate(() => startEditMovie('list')); await page.locator('#mediaAdviceEntry').click();
     await page.getByRole('button', { name: 'Обрати', exact: true }).click();
+    assert.match(await preview.innerText(),/Посилання буде очищено лише після підтвердження\./);
+    assert.equal(await preview.locator('input[type=checkbox]').isChecked(),false);
+    assert.doesNotMatch(await preview.innerText(),/https?:/);
+    if(width===420&&process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/preview-missing-420.png`,animations:'disabled'});
+    await preview.getByText('Повні адреси',{exact:true}).click();
+    assert.ok((await preview.locator('details').innerText()).includes('https://old.example'));
     await page.getByRole('button', { name: 'Перенести в картку' }).click();
     await page.waitForFunction(() => document.querySelector('.media-advice-dialog').textContent.includes('очищення не підтверджено'));
     assert.match(await page.locator('.media-advice-dialog').innerText(), /очищення не підтверджено/);
@@ -188,7 +239,9 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       const selectedRow=authored.rows.find(r=>r.id==='motn:rakuten-rent');
       assert.equal(await rakuten.getAttribute('data-row-id'),selectedRow.id);
       await rakuten.getByRole('button',{name:'Обрати',exact:true}).click();
-      assert.ok((await page.locator('.media-advice-preview').innerText()).includes(selectedRow.link.href));
+      assert.match(await page.locator('.media-advice-preview').innerText(),/Посилання буде замінено\./);
+      await page.locator('.media-advice-preview').getByText('Повні адреси',{exact:true}).click();
+      assert.ok((await page.locator('.media-advice-preview details').innerText()).includes(selectedRow.link.href));
       assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeVariantWrites);
       await page.getByRole('button',{name:'Перенести в картку',exact:true}).click();
       await page.waitForFunction(()=>!mediaAdviceController.dialog.open);
@@ -199,7 +252,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     }
     if (width === 1280) {
       allowed = true;
-      for (const kind of ['no-results', 'identity-refusal', 'source-failed', 'unbound-localization', 'conflicting-properties', 'several']) {
+      for (const kind of ['no-results', 'identity-refusal', 'source-failed', 'unbound-localization', 'conflicting-properties', 'several', 'unsafe-link']) {
         authored.rows = ['no-results','identity-refusal','source-failed'].includes(kind) ? [] : [{
           id: 'kinobaza:authored', identityStatus: 'matched', kind: 'candidate-link', country: null,
           provider: { key: 'apple', name: 'Apple TV Store' }, provenance: { source: 'Kinobaza HTML' }, link: { href: 'https://itunes.apple.com/ua/movie/id123' },
@@ -208,9 +261,14 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         }];
         authored.sources = [{ source: 'kinobaza', status: kind === 'identity-refusal' ? 'identity-unresolved' : kind==='source-failed'?'stage-failed-no-retry':'partial', identity: kind === 'identity-refusal'||kind==='source-failed' ? 'unresolved' : 'matched' }];
         if (kind === 'several') authored.rows.push({ ...authored.rows[0], id: 'motn:independent', provider: { key: 'prime', name: 'Prime Video' }, kinobazaLocalization: undefined, link: { href: 'https://www.primevideo.com/detail/AUTHORED/' }, provenance: { source: 'Movie of the Night' } });
+        if (kind === 'unsafe-link') authored.rows[0].link.href='javascript:alert(1)';
         await page.evaluate(() => startEditMovie('list')); await page.locator('#mediaAdviceEntry').click();
         await page.locator('.media-advice-answer').waitFor();
         assert.equal(await page.locator('.media-advice-row').count(), authored.rows.length);
+        if (kind === 'unsafe-link') {
+          assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),0);
+          assert.equal(await page.evaluate(()=>authoredOpened.length),1);
+        }
         if (kind === 'unbound-localization') assert.match(await page.locator('.media-advice-dialog').innerText(), /Для цієї пропозиції ще не перевірено/);
         if (['no-results','identity-refusal','source-failed'].includes(kind)) assert.match(await page.locator('.media-advice-dialog').innerText(), /не означає, що фільм недоступний/);
         if(kind==='source-failed') {

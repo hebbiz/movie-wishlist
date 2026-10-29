@@ -15,8 +15,7 @@ test('Supergirl-shaped observations form one result per service and preserve ori
   assert.match(rak.warnings.join(' '),/країна.*не підтверджені/); assert.equal(JSON.stringify(rows),before);
   assert.equal(makePreview(rak.transferRow,{recommended_medium:'DVD',purchase_url:''}).after.purchase_url,rows[6].link.href);
   const hbo=groups.find(x=>x.group.key==='hbo'); assert.equal(hbo.access,'Передплата'); assert.equal(hbo.transferRow,rows[3]);
-  assert.equal(makePreview(hbo.transferRow,{recommended_medium:'',purchase_url:''}),null,'tracking requires acknowledgement');
-  assert.equal(makePreview(hbo.transferRow,{recommended_medium:'',purchase_url:''},{acknowledged:true}).after.purchase_url,rows[3].link.href);
+  assert.equal(makePreview(hbo.transferRow,{recommended_medium:'',purchase_url:''}).after.purchase_url,rows[3].link.href,'M4 explicit apply needs no separate tracking checkbox');
   assert.match(summarizeMediaGroups(groups),/Rakuten TV|Prime Video/);
 });
 test('Rakuten inference needs matched Kinobaza UA link and matched same-provider localization', () => {
