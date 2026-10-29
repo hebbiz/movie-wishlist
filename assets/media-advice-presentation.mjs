@@ -4,6 +4,10 @@ import { classifyLink } from '../shared/media-link-policy.mjs';
 const providers = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'MEGOGO', rakuten: 'Rakuten TV' });
 const accessLabels = Object.freeze({ rent: 'Оренда', rental: 'Оренда', buy: 'Купівля', purchase: 'Купівля', subscription: 'Передплата', flatrate: 'Передплата', addon: 'Додатковий пакет', free: 'Безкоштовний доступ', 'ad-supported': 'З рекламою' });
 const bands = Object.freeze({ 'ua-audio': 0, 'ua-subtitles': 1, ua: 2, supplemental: 3, withheld: 4 });
+// A preference between services is applied only after the language category.
+// Equal services retain the supplied order; original source-row ranking stays
+// independent of this display-only preference.
+const servicePriority = Object.freeze({ apple: 0, rakuten: 1, netflix: 2, hbo: 2, prime: 2, megogo: 3 });
 const value = field => field?.state === 'reported' ? field.value : null;
 const ukrainian = language => typeof language === 'string' && ['uk', 'ukr'].includes(language.toLowerCase());
 const hasConflicts = row => Boolean(row?.providerConflict || row?.conflicts?.length || ['audio', 'subtitles'].some(key => row?.[key]?.state === 'conflicting'));
@@ -169,6 +173,57 @@ function kinoLanguageLabel(state, key) {
   if (state === 'conflicting') return `${subject}: суперечливі дані Кінобази`;
   return `${subject}: невідомо`;
 }
+function comparisonAvailability(rows, kinoRows) {
+  const matched = rows.filter(row => row.identityStatus === 'matched' && !row.providerConflict && Object.hasOwn(providers, row.provider?.key));
+  // The regional interpretation of a Kinobaza block is never promoted to an
+  // independently returned UA availability observation.
+  if (matched.some(row => !kinoSource(row) && row.country === 'UA')) return { state: 'reported', symbol: '●', label: 'Джерело вказує варіант для України; фактичну доступність не перевірено' };
+  if (kinoRows.length) return { state: 'partial', symbol: '◐', label: 'Неповні дані сервісу Кінобази; український регіон враховано за правилом застосунку, доступність не перевірено' };
+  if (matched.length && matched.every(row => row.country && row.country !== 'UA')) return { state: 'foreign', symbol: '◇', label: 'Джерела вказують іншу країну; доступність в Україні невідома' };
+  return { state: 'unknown', symbol: '?', label: 'Доступність в Україні невідома' };
+}
+function comparisonLanguage(rows, kinoRows, key) {
+  const subject = key === 'audio' ? 'Українське аудіо' : 'Українські субтитри';
+  const observations = [];
+  for (const row of rows) {
+    // Preserve a field-specific warning even where a record's region/block
+    // scope is unestablished. It cannot supply a positive track or UA context.
+    if (row.identityStatus === 'matched' && !row.providerConflict && Object.hasOwn(providers, row.provider?.key) && !row.country && !kinoRows.includes(row) && languageState(row, key) === 'conflicting') {
+      observations.push({ state: 'conflicting', source: 'unknown-scope' });
+    }
+    // A foreign/unknown-country offer cannot borrow UA from another record.
+    if (row.identityStatus !== 'matched' || row.providerConflict || row.country !== 'UA' || kinoSource(row)) continue;
+    const state = languageState(row, key);
+    if (state === 'conflicting') observations.push({ state, source: 'ua-row' });
+    else if (eligible(row) && ['reported', 'negative'].includes(state)) observations.push({ state, source: 'ua-row' });
+  }
+  const kinoState = blockLanguage(kinoRows, key);
+  if (kinoState !== 'unknown') {
+    const negatives = kinoRows.map(row => row.kinobazaLocalization[key]).filter(field => field?.state === 'reported-negative');
+    const namedFormatOnly = key === 'audio' && negatives.length > 0 && negatives.every(field => Array.isArray(field.evidence) && field.evidence.length > 0 &&
+      field.evidence.filter(item => item?.state === 'negative').length > 0 && field.evidence.filter(item => item?.state === 'negative').every(item => typeof item.formatLiteral === 'string' && item.formatLiteral.trim()));
+    observations.push({ state: kinoState === 'reported-positive' ? 'reported' : kinoState === 'reported-negative' ? namedFormatOnly ? 'format-negative' : 'negative' : 'conflicting', source: 'kinobaza-block' });
+  }
+  const sources = [...new Set(observations.map(item => item.source))];
+  const positive = observations.some(item => item.state === 'reported');
+  const negative = observations.some(item => ['negative', 'format-negative'].includes(item.state));
+  const conflict = observations.some(item => item.state === 'conflicting');
+  const mixed = positive && (negative || conflict);
+  const state = mixed ? 'mixed' : conflict ? 'conflicting' : positive ? 'reported' : observations.some(item => item.state === 'negative') ? 'negative' : observations.some(item => item.state === 'format-negative') ? 'format-negative' : 'unknown';
+  const source = sources.length === 1 && sources[0] === 'kinobaza-block' ? 'за даними Кінобази для цього сервісу; український регіон — правило застосунку' : 'за окремими записами джерел у контексті України';
+  let symbol = '?', label = `${subject}: невідомо; незгадана мова не означає її відсутності`;
+  if (state === 'reported') { symbol = '+'; label = `${subject}: джерело повідомляє наявність, ${source}; доріжку конкретної пропозиції не гарантуємо`; }
+  if (state === 'negative') { symbol = '−'; label = `${subject}: джерело явно позначає відсутність у зазначеному записі, ${source}; це не висновок про всі пропозиції`;
+  }
+  if (state === 'format-negative') label = `${subject}: зазначені формати позначено як відсутні, але наявність інших українських доріжок невідома`;
+  if (state === 'mixed') { symbol = '±'; label = `${subject}: в одному записі є позитивні дані, інші записи відрізняються або суперечливі; це можуть бути різні пропозиції`;
+  }
+  if (state === 'conflicting') { symbol = '±'; label = `${subject}: суперечливі дані; це не означає відсутність доріжки`;
+  }
+  if (sources.includes('unknown-scope') && state === 'conflicting') label = `${subject}: суперечливі дані з невстановленою країною або областю застосування; це не означає відсутність доріжки`;
+  if (sources.includes('unknown-scope') && state === 'mixed') label = `${subject}: є позитивний запис для України та суперечлива згадка з невстановленою країною або областю застосування; записи не об'єднано в одну пропозицію`;
+  return { state, symbol, label, sources };
+}
 export function presentMediaGroup(group, { filmId } = {}) {
   const rows = (group?.rows ?? []).filter(row => !filmId || row.filmId === filmId);
   const safe = rows.filter(eligible);
@@ -197,7 +252,8 @@ export function presentMediaGroup(group, { filmId } = {}) {
   if (inferred && base.country === 'UA' && languageState(base, 'subtitles') === 'reported' && !inferredSubtitles) otherLanguageLabels.push('В іншому варіанті джерело вказує українські субтитри; умови можуть відрізнятися.');
   const unbound = !inferred && rows.find(r => eligible(r) && r.kinobazaLocalization);
   const unboundLabels = unbound ? [blockLabel(unbound, 'audio'), blockLabel(unbound, 'subtitles')].filter(Boolean) : [];
-  return { group, transferRow, band, access, audio, subtitles, inferred, inferredAudio, inferredSubtitles, unboundLabels,
+  const comparison = { availability: comparisonAvailability(rows, kinoRows), audio: comparisonLanguage(rows, kinoRows, 'audio'), subtitles: comparisonLanguage(rows, kinoRows, 'subtitles') };
+  return { group, transferRow, band, access, audio, subtitles, inferred, inferredAudio, inferredSubtitles, unboundLabels, comparison,
     languageSummary, otherLanguageLabels, kinobaza: { applied: inferred, audio: kinoAudio, subtitles: kinoSubtitles, basis: 'matched-provider-block-app-ua-interpretation' },
     territory: inferred ? 'Український регіон — за правилом застосунку' : presentMediaRow(evidence).territoryLabel,
     warnings: [ ...presentMediaRow(evidence).warnings.filter(warning => !inferred || !['Країну доступу не встановлено.', 'Для цієї пропозиції ще не перевірено.'].includes(warning)),
@@ -209,12 +265,15 @@ export function presentMediaGroups(rows, { filmId } = {}) {
   if (!filmId && filmIds.size > 1) return []; // No established single-film view context.
   const scoped = filmId ? (Array.isArray(rows) ? rows : []).filter(row => row?.filmId === filmId) : rows;
   return groupMediaRows(scoped).map((g, index) => ({ ...presentMediaGroup(g, { filmId }), index }))
-    .sort((a,b) => bands[a.band] - bands[b.band] || a.index - b.index);
+    .sort((a,b) => comparisonCategory(a.band) - comparisonCategory(b.band) || (servicePriority[a.group.key] ?? 4) - (servicePriority[b.group.key] ?? 4) || a.index - b.index);
 }
+const comparisonCategory = band => band === 'ua-audio' ? 0 : band === 'ua-subtitles' ? 1 : band === 'withheld' ? 3 : 2;
 export function summarizeMediaGroups(groups) {
   const first = groups.find(g => g.band !== 'withheld');
   if (!first) return 'Поки не отримано узгоджених варіантів для вибору. Це не означає, що фільм недоступний.';
   const title = first.group.title;
+  if (first.band === 'ua-audio' && first.comparison?.audio.state === 'mixed') return `Спершу перегляньте ${title}: один із записів повідомляє українське аудіо, але інші дані для сервісу різняться. Перевірте доріжки й умови обраного варіанта на платформі.`;
+  if (first.band === 'ua-subtitles' && first.comparison?.subtitles.state === 'mixed') return `Спершу перегляньте ${title}: один із записів повідомляє українські субтитри, але інші дані для сервісу різняться. Перевірте доріжки й умови обраного варіанта на платформі.`;
   if (first.inferred && (first.band === 'ua-audio' && first.inferredAudio || first.band === 'ua-subtitles' && first.inferredSubtitles)) return `Спершу перегляньте ${title}: за даними Кінобази є українські ${first.band === 'ua-audio' ? 'аудіо' : 'субтитри'}, які ми враховуємо для українського регіону. Перевірте доступність та умови на платформі.`;
   if (first.inferred && first.band === 'ua') return `Кінобаза згадує ${title}; враховуємо цей варіант для українського регіону, але українські доріжки не підтверджені. Доступність та умови перевірте на платформі.`;
   if (first.band === 'ua-audio') return `Спершу перегляньте ${title}: джерело вказує Україну та українське аудіо. Перевірте доріжки й умови доступу на платформі.`;

@@ -51,15 +51,20 @@ async function harness(t, rows) {
   return { control, state, button };
 }
 
-test('all six service cards show own-block language interpretation, hide prices and transfer the exact original URL only on apply', async t => {
+test('all six services have one accessible comparison with scoped symbols, no prices and exact original URL transfer only on apply', async t => {
   for (const key of Object.keys(services)) await t.test(key, async t => {
     const original = ownBlock(key), before = JSON.stringify(original), { control, state, button } = await harness(t, [original]);
     assert.equal(control.dialog.querySelectorAll('.media-advice-row').length, 1);
     assert.equal(control.dialog.querySelectorAll('.media-advice-variant-select').length, 0);
     const text = control.dialog.textContent;
-    assert.match(text, /Українське аудіо та субтитри — за даними Кінобази/);
-    assert.match(text, /Український регіон — за правилом застосунку/);
-    assert.match(text, /Це правило інтерпретації, не перевірка доступності на платформі/);
+    assert.equal(control.dialog.querySelectorAll('table').length, 1);
+    const symbols = control.dialog.querySelector('.media-advice-row').querySelectorAll('.media-advice-symbol');
+    assert.deepEqual(symbols.map(s => s.textContent), ['◐', '+', '+']);
+    assert.match(symbols[0].attributes['aria-label'], /Кінобаз|неповн/);
+    for (const symbol of symbols.slice(1)) assert.match(symbol.attributes['aria-label'], /Кінобаз.*правило застосунку/);
+    assert.equal(control.dialog.querySelectorAll('.media-advice-legend').length, 1);
+    assert.equal(control.dialog.querySelectorAll('.media-advice-comparison-caution').length, 1);
+    assert.match(text, /не незалежна перевірка доступності/);
     assert.doesNotMatch(text, /PRICE_SENTINEL|USD|Ціна|Варіант перегляду/); assert.equal(state.output, null);
     await button('Відкрити посилання').click();
     assert.deepEqual(state.opens, [[services[key][2], '_blank', 'noopener,noreferrer']]);
@@ -72,14 +77,42 @@ test('all six service cards show own-block language interpretation, hide prices 
   });
 });
 
-test('Apple negative audio remains scoped while subtitles and other services retain their own signs', async t => {
+test('Apple format-negative audio stays unknown overall while subtitles and other services retain their own signs', async t => {
   const rows = [ownBlock('apple', 'reported-negative'), ownBlock('rakuten'), ownBlock('megogo')];
   const { control, state } = await harness(t, rows);
   const cards = control.dialog.querySelectorAll('.media-advice-row'); assert.equal(cards.length, 3);
   const apple = cards.find(card => card.dataset.providerKey === 'apple');
-  assert.match(apple.textContent, /Українське аудіо: «−» для зазначених доріжок — за даними Кінобази/);
-  assert.match(apple.textContent, /Українські субтитри — за даними Кінобази/);
-  assert.doesNotMatch(apple.textContent, /Українське аудіо та субтитри/);
-  for (const key of ['rakuten', 'megogo']) assert.match(cards.find(card => card.dataset.providerKey === key).textContent, /Українське аудіо та субтитри — за даними Кінобази/);
+  const symbols = apple.querySelectorAll('.media-advice-symbol');
+  assert.deepEqual(symbols.map(s => s.textContent), ['◐', '?', '+']);
+  assert.match(symbols[1].attributes['aria-label'], /формати.*інших українських доріжок невідома/);
+  for (const key of ['rakuten', 'megogo']) assert.deepEqual(cards.find(card => card.dataset.providerKey === key).querySelectorAll('.media-advice-symbol').map(s => s.textContent), ['◐', '+', '+']);
   assert.equal(state.calls, 1); assert.equal(state.output, null);
+});
+
+test('selecting a different comparison service replaces only shared actions, without automatic open, discovery or form write', async t => {
+  const apple = ownBlock('apple'), rakuten = ownBlock('rakuten');
+  const { control, state, button } = await harness(t, [rakuten, apple]);
+  const services = control.dialog.querySelectorAll('.media-advice-service-select');
+  assert.equal(services[0].attributes['aria-label'], 'Apple TV / iTunes');
+  assert.equal(services[0].attributes['aria-pressed'], 'true');
+  await services[1].click();
+  assert.equal(services[1].attributes['aria-pressed'], 'true');
+  assert.equal(services[0].attributes['aria-pressed'], 'false');
+  assert.equal(control.dialog.querySelectorAll('button').filter(b => b.textContent === 'Обрати').length, 1);
+  assert.equal(control.dialog.querySelectorAll('button').filter(b => b.textContent === 'Відкрити посилання').length, 1);
+  assert.deepEqual(state.opens, []); assert.equal(state.output, null); assert.equal(state.calls, 1);
+  await button('Обрати').click(); await button('Перенести в картку').click();
+  assert.deepEqual(state.output, { recommended_medium: 'Rakuten TV', purchase_url: rakuten.link.href });
+});
+
+test('unadmitted block signs remain unknown; unsafe links never open and medium-only transfer invents no URL', async t => {
+  const row = ownBlock('apple', 'conflicting'); row.link.href = 'javascript:alert(1)';
+  const { control, state, button } = await harness(t, [row]);
+  assert.equal(button('Відкрити посилання'), undefined);
+  const symbols = control.dialog.querySelector('.media-advice-row').querySelectorAll('.media-advice-symbol');
+  assert.deepEqual(symbols.map(s => s.textContent), ['?', '?', '?'], 'unadmitted block cannot lend its language signs');
+  await button('Обрати').click(); assert.equal(state.output, null);
+  await button('Перенести в картку').click();
+  assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: '' });
+  assert.deepEqual(state.opens, []); assert.equal(state.calls, 1);
 });
