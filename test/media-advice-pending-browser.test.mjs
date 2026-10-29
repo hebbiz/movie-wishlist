@@ -25,9 +25,10 @@ test('pending authorization cannot apply a revoked selection token', { skip: !pr
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.evaluate(async () => {
       const { createMediaAdvice } = await import('/assets/media-advice.mjs');
-      const row = { id: 'authored', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' }, link: { href: 'https://itunes.apple.com/ua/movie/id123' } };
-      const other = {...row,id:'authored-tracking',link:{href:'https://itunes.apple.com/ua/movie/id456?at=AUTHOR%2fONLY'}};
+      const row = { id: 'authored', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' }, link: { href: 'https://click.justwatch.com/a?authored=%2F&ref=EXACT' } };
+      const other = {...row,id:'authored-tracking',link:{href:'https://click.justwatch.com/other?ref=AUTHOR%2fONLY'}};
       window.writes = 0; window.sourceCalls = 0;
+      window.authoredOpened=[];window.open=(...args)=>{authoredOpened.push(args);return null;};
       window.control = createMediaAdvice({ document, entry: document.querySelector('#entry'),
         context: () => ({ userId: 'u', groupId: 'g', imdbId: 'tt1234567', formSession: 's' }), capability: async () => true,
         validateApply: () => new Promise(r => window.releaseApply = r),
@@ -40,7 +41,19 @@ test('pending authorization cannot apply a revoked selection token', { skip: !pr
     await page.getByRole('button', { name: 'Обрати', exact: true }).waitFor();
     assert.equal(await page.locator('.media-advice-row').count(),1);
     assert.equal(await page.locator('.media-advice-variant-select').count(),0);
+    assert.equal(await page.locator('.media-advice-row input[type=checkbox]').count(),0);
+    await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+    assert.deepEqual(await page.evaluate(()=>authoredOpened),[['https://click.justwatch.com/a?authored=%2F&ref=EXACT','_blank','noopener,noreferrer']]);
+    assert.equal(await page.evaluate(()=>writes),0);
+    assert.equal(await page.evaluate(()=>sourceCalls),1);
     await page.getByRole('button', { name: 'Обрати', exact: true }).click();
+    assert.match(await page.locator('.media-advice-preview').innerText(),/Посилання буде замінено\./);
+    assert.doesNotMatch(await page.locator('.media-advice-preview').innerText(),/https?:/);
+    assert.equal(await page.locator('.media-advice-preview details').evaluate(e=>e.open),false);
+    await page.locator('.media-advice-preview').getByText('Повні адреси',{exact:true}).click();
+    const addresses=await page.locator('.media-advice-preview details').innerText();
+    assert.ok(addresses.includes('https://old.example/'));
+    assert.ok(addresses.includes('https://click.justwatch.com/a?authored=%2F&ref=EXACT'));
     await page.getByRole('button', { name: 'Перенести в картку' }).click();
     await page.waitForFunction(() => typeof releaseApply === 'function');
     if (mode === 'cancel' || mode === 'new-selection') await page.getByRole('button', { name: 'Скасувати вибір' }).click();
@@ -52,7 +65,7 @@ test('pending authorization cannot apply a revoked selection token', { skip: !pr
     const applied=mode==='apply';
     assert.equal(await page.evaluate(() => writes), applied ? 1 : 0);
     assert.equal(await page.locator('#medium').inputValue(), applied ? 'Apple TV / iTunes' : 'DVD');
-    assert.equal(await page.locator('#url').inputValue(), mode === 'apply' ? 'https://itunes.apple.com/ua/movie/id123' : mode === 'form-edit' ? 'https://manual.example/' : 'https://old.example/');
+    assert.equal(await page.locator('#url').inputValue(), mode === 'apply' ? 'https://click.justwatch.com/a?authored=%2F&ref=EXACT' : mode === 'form-edit' ? 'https://manual.example/' : 'https://old.example/');
     assert.equal(await page.evaluate(() => sourceCalls), 1);
     assert.equal(await page.locator('#other').textContent(), 'OTHER CHAT');
   });

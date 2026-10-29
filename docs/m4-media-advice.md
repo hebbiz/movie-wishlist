@@ -2904,6 +2904,11 @@ of general accuracy/coverage. MW-FUT-01 remains Discovery.
 
 ## Mykola media dialog and form-session lifetime — 2026-10-28
 
+Current pilot presentation supersedes the historical per-variant UI and required
+M4 tracking acknowledgement below: see [platform summaries, Rakuten inference
+and compact link preview](m4-platform-summary-pilot.md). This follow-up changes
+only M4 client interaction, not shared URL admission or research consumers.
+
 **Implemented for review; not merged/deployed or live-evaluated in this task.**
 Base `develop=f64c739593e07c879852c7b54f2729e9fd04f68f`, with #201 already merged.
 The owner authorizes the presentation/ranking and local memory-lifetime change;
