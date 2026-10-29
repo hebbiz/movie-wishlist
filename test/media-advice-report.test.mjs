@@ -1,7 +1,45 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { safeMediaReport, mediaSourceDetails } from '../assets/media-advice-report.mjs';
-import { authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
+import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
+
+test('Dune authored source signs and M4 region interpretation are separate in the copied report, without changing source rows', async () => {
+  const result = await authoredDuneMediaResult(), before = JSON.stringify(result.rows);
+  const report = safeMediaReport(result);
+  assert.match(report, /M4 Kinobaza interpretation\/apple: UA by application rule matched-provider-block-app-ua-interpretation; audio reported-positive, subtitles reported-negative; not independently verified availability or offer binding/);
+  for (const key of ['rakuten','megogo']) assert.match(report, new RegExp(`M4 Kinobaza interpretation/${key}:.*audio reported-positive, subtitles reported-positive`));
+  assert.match(report, /kinobaza\/apple: territory unknown/);
+  assert.match(report, /Kinobaza apple\/variant-1 audio source values: reported-positive.*Укр\. звук \(стерео\).*"literal":"\+"/);
+  assert.match(report, /Kinobaza apple\/variant-1 subtitles source values: reported-negative.*"literal":"−"/);
+  assert.match(report, /Kinobaza megogo\/variant-1 audio source values: reported-positive.*укр\. аудіо/);
+  assert.doesNotMatch(report, /https?:|AUTHOR%|9999001|9999002|<html/);
+  assert.equal(JSON.stringify(result.rows), before);
+});
+
+test('literal Kinobaza diagnostics are bounded and withhold URL/credential-shaped or unsupported labels and values', () => {
+  const row = authoredGroupedMediaRows()[6];
+  row.kinobazaLocalization.audio.evidence = [
+    { label: 'Укр. звук (token=PRIVATE)', literal: '+', state: 'positive' },
+    { label: 'Укр. звук (https://private.example/PRIVATE)', literal: 'PRIVATE', state: 'PRIVATE' },
+    { label: 'PRIVATE BODY', literal: '−', state: 'negative' },
+    ...Array.from({ length: 9 }, () => ({ label: 'Укр. звук (стерео)', literal: '+', state: 'positive' })),
+  ];
+  const report = safeMediaReport({ rows: [row] });
+  assert.match(report, /"label":"withheld","literal":"\+","state":"positive"/);
+  assert.match(report, /"label":"withheld","literal":"unknown","state":"unknown"/);
+  assert.match(report, /omitted 4/);
+  assert.doesNotMatch(report, /PRIVATE|https?:|private\.example|token=/);
+});
+
+test('empty source value remains distinct from a missing language field without implying absence', () => {
+  const row = authoredGroupedMediaRows()[6];
+  row.kinobazaLocalization.audio = { state: 'unknown', evidence: [{ label: 'Укр. звук', literal: '', state: 'unknown' }] };
+  delete row.kinobazaLocalization.subtitles;
+  const report = safeMediaReport({ rows: [row] });
+  assert.match(report, /audio source values: unknown; evidence \[\{"label":"Укр\. звук","literal":"","state":"unknown"\}\]/);
+  assert.match(report, /subtitles source values: unknown; evidence \[\]/);
+  assert.equal(mediaSourceDetails(row).kinobazaLocalization.audio.evidence[0].literal, '');
+});
 
 test('diagnostic-only projections retain literal localization evidence and unmapped access without URLs or raw/secret fields', () => {
   const row = { source: 'kinobaza', name: 'Plex', access: { state: 'reported', value: 'rent' }, reason: 'provider-mapping-unresolved',

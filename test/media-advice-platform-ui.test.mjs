@@ -1,31 +1,85 @@
+// An authored minimal DOM exercises the real controller; no browser/network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMediaAdvice } from '../assets/media-advice.mjs';
+
 class Element {
-  constructor(tag='div', text=''){ this.tagName=tag.toUpperCase();this.children=[];this.attributes={};this.listeners={};this.dataset={};this.hidden=false;this.open=false;this.isConnected=true;this.classList={add:()=>{}};this.textContent=text; }
-  set textContent(v){this._text=String(v);this.children=[];} get textContent(){return this._text+this.children.map(x=>x.textContent).join('');}
-  append(...items){for(const e of items){if(e && typeof e==='object'){e.parent=this;this.children.push(e);} }}
-  replaceChildren(...items){this.textContent='';this.append(...items);}
-  remove(){this.isConnected=false;if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);}
-  setAttribute(k,v){this.attributes[k]=v;} addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);}
-  async click(){for(const fn of this.listeners.click??[])await fn({});} focus(){} closest(){return null;}
-  showModal(){this.open=true;} close(){this.open=false;for(const fn of this.listeners.close??[])fn({});}
-  contains(e){return e===this||this.children.some(x=>x.contains?.(e));}
-  querySelector(sel){return this.querySelectorAll(sel)[0]??null;}
-  querySelectorAll(sel){const match=e=>sel.startsWith('.')?e.className?.split(' ').includes(sel.slice(1)):sel==='button'?e.tagName==='BUTTON':sel==='textarea'?e.tagName==='TEXTAREA':sel==='h3'?e.tagName==='H3':false;return this.children.flatMap(e=>[...(match(e)?[e]:[]),...(e.querySelectorAll?.(sel)??[])]);}
+  constructor(tag = 'div', text = '') { this.tagName = tag.toUpperCase(); this.children = []; this.attributes = {}; this.listeners = {}; this.dataset = {}; this.hidden = false; this.open = false; this.isConnected = true; this.classList = { add: () => {} }; this.textContent = text; }
+  set textContent(value) { this._text = String(value); this.children = []; } get textContent() { return this._text + this.children.map(child => child.textContent).join(''); }
+  append(...items) { for (const item of items) if (item && typeof item === 'object') { item.parent = this; this.children.push(item); } }
+  replaceChildren(...items) { this.textContent = ''; this.append(...items); }
+  remove() { this.isConnected = false; if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); }
+  setAttribute(key, value) { this.attributes[key] = value; } addEventListener(key, callback) { (this.listeners[key] ??= []).push(callback); }
+  async click() { for (const callback of this.listeners.click ?? []) await callback({}); } focus() {} closest() { return null; }
+  showModal() { this.open = true; } close() { this.open = false; for (const callback of this.listeners.close ?? []) callback({}); }
+  contains(element) { return element === this || this.children.some(child => child.contains?.(element)); }
+  querySelector(selector) { return this.querySelectorAll(selector)[0] ?? null; }
+  querySelectorAll(selector) {
+    const matches = element => selector.startsWith('.') ? element.className?.split(' ').includes(selector.slice(1)) : element.tagName === selector.toUpperCase();
+    return this.children.flatMap(child => [...(matches(child) ? [child] : []), ...(child.querySelectorAll?.(selector) ?? [])]);
+  }
 }
-test('rendered combined cards hide prices and transfer the exact Rakuten URL after preview',async()=>{
-  const entry=new Element('button'), body=new Element('body');let output=null, calls=0;
-  const doc={body,activeElement:entry,createElement:t=>new Element(t),createTextNode:t=>new Element('text',t),defaultView:{scrollY:0,scrollTo(){},requestAnimationFrame(f){f()},navigator:{}}};
-  const source=(id,key,extra={})=>({id,identityStatus:'matched',provider:{key},country:'UA',...extra});
-  const url='https://rakuten.tv/ua/movies/authored';
-  const rows=[source('tmdb:buy','rakuten',{access:{state:'reported',value:'buy'},price:{state:'reported',amount:{state:'reported',value:'123'},currency:{state:'reported',value:'USD'}}}),source('tmdb:rent','rakuten',{access:{state:'reported',value:'rent'}}),source('kinobaza:ua','rakuten',{link:{href:url}}),source('kinobaza:block','rakuten',{country:null,kinobazaLocalization:{audio:{state:'reported-positive'},subtitles:{state:'reported-positive'}}})];
-  const control=createMediaAdvice({document:doc,entry,context:()=>({userId:'u',groupId:'g',imdbId:'tt1234567',formSession:'s',title:'Film'}),capability:async()=>true,discover:async()=>{calls++;return{rows}},readForm:()=>({recommended_medium:'DVD',purchase_url:''}),writeForm:v=>output=v});
-  await entry.click(); await new Promise(r=>setTimeout(r,0));
-  assert.equal(control.dialog.querySelectorAll('.media-advice-row').length,1);assert.equal(control.dialog.querySelectorAll('.media-advice-variant-select').length,0);
-  const text=control.dialog.textContent;assert.match(text,/Купівля \/ Оренда/);assert.match(text,/українське аудіо/i);assert.match(text,/субтитри/i);assert.doesNotMatch(text,/123|USD|Ціна/);
-  const select=control.dialog.querySelectorAll('button').find(b=>b.textContent==='Обрати');await select.click();
-  assert.match(control.dialog.textContent,/Перевірте зміни/);assert.equal(output,null);
-  await control.dialog.querySelectorAll('button').find(b=>b.textContent==='Перенести в картку').click();
-  assert.deepEqual(output,{recommended_medium:'Rakuten TV',purchase_url:url});assert.equal(calls,1);control.invalidate();
+const filmId = 'imdb:tt1234567';
+const services = {
+  apple: ['itunes', 'Apple TV / iTunes', 'https://itunes.apple.com/ua/movie/id123?at=AUTHORED%2fONLY#Anchor'],
+  prime: ['amazon prime', 'Prime Video', 'https://www.primevideo.com/detail/AUTHORED?exact=%2f#Anchor'],
+  hbo: ['HBO Max', 'HBO Max', 'https://click.justwatch.com/a?exact=AUTHORED%2fONLY#Anchor'],
+  netflix: ['netflix', 'Netflix', 'https://www.netflix.com/ua/title/123456?exact=%2f#Anchor'],
+  rakuten: ['rakuten', 'Rakuten TV', 'https://rakuten.tv/ua/movies/authored?exact=%2f#Anchor'],
+  megogo: ['megogo', 'Megogo', 'https://megogo.net/ua/view/123-authored.html?exact=%2f#Anchor'],
+};
+function ownBlock(key, audio = 'reported-positive', subtitles = 'reported-positive') {
+  const [sourceName, , href] = services[key];
+  return { id: `kinobaza:${key}`, filmId, identityStatus: 'matched', provider: { key, sourceName }, country: null, kind: 'candidate-link',
+    audio: { state: 'unknown' }, subtitles: { state: 'unknown' }, conflicts: [], link: { href },
+    linkAudit: { blockAssociation: 'associated' }, provenance: { source: 'Kinobaza HTML' },
+    price: { state: 'reported', amount: { state: 'reported', value: 'PRICE_SENTINEL' }, currency: { state: 'reported', value: 'USD' } },
+    kinobazaLocalization: { blockId: 'kinobaza:block:0', provider: sourceName, href, territory: null, issues: [],
+      audio: { state: audio, language: 'uk', evidence: [{ label: 'Укр. звук (стерео)', literal: audio === 'reported-positive' ? '+' : '−', state: audio === 'reported-positive' ? 'positive' : 'negative', formatLiteral: 'стерео' }] },
+      subtitles: { state: subtitles, language: 'uk', evidence: [] } } };
+}
+async function harness(t, rows) {
+  const entry = new Element('button'), body = new Element('body'), state = { output: null, calls: 0, opens: [] };
+  const doc = { body, activeElement: entry, createElement: tag => new Element(tag), createTextNode: text => new Element('text', text),
+    defaultView: { scrollY: 0, scrollTo() {}, requestAnimationFrame(callback) { callback(); }, navigator: {}, open(...args) { state.opens.push(args); } } };
+  const control = createMediaAdvice({ document: doc, entry, context: () => ({ userId: 'u', groupId: 'g', imdbId: 'tt1234567', formSession: 's', title: 'Authored film' }),
+    capability: async () => true, discover: async () => { state.calls++; return { rows, film: { id: filmId, imdbId: 'tt1234567' } }; },
+    readForm: () => ({ recommended_medium: 'DVD', purchase_url: '' }), writeForm: fields => state.output = fields });
+  t.after(() => control.invalidate());
+  await entry.click(); await new Promise(resolve => setTimeout(resolve, 0));
+  const button = text => control.dialog.querySelectorAll('button').find(element => element.textContent === text);
+  return { control, state, button };
+}
+
+test('all six service cards show own-block language interpretation, hide prices and transfer the exact original URL only on apply', async t => {
+  for (const key of Object.keys(services)) await t.test(key, async t => {
+    const original = ownBlock(key), before = JSON.stringify(original), { control, state, button } = await harness(t, [original]);
+    assert.equal(control.dialog.querySelectorAll('.media-advice-row').length, 1);
+    assert.equal(control.dialog.querySelectorAll('.media-advice-variant-select').length, 0);
+    const text = control.dialog.textContent;
+    assert.match(text, /Українське аудіо та субтитри — за даними Кінобази/);
+    assert.match(text, /Український регіон — за правилом застосунку/);
+    assert.match(text, /Це правило інтерпретації, не перевірка доступності на платформі/);
+    assert.doesNotMatch(text, /PRICE_SENTINEL|USD|Ціна|Варіант перегляду/); assert.equal(state.output, null);
+    await button('Відкрити посилання').click();
+    assert.deepEqual(state.opens, [[services[key][2], '_blank', 'noopener,noreferrer']]);
+    assert.equal(state.calls, 1); assert.equal(state.output, null);
+    await button('Обрати').click(); assert.match(control.dialog.textContent, /Перевірте зміни/); assert.equal(state.output, null);
+    await button('Перенести в картку').click();
+    assert.deepEqual(state.output, { recommended_medium: services[key][1], purchase_url: services[key][2] });
+    assert.equal(state.calls, 1); assert.equal(JSON.stringify(original), before);
+    assert.equal(original.country, null); assert.equal(original.audio.state, 'unknown');
+  });
+});
+
+test('Apple negative audio remains scoped while subtitles and other services retain their own signs', async t => {
+  const rows = [ownBlock('apple', 'reported-negative'), ownBlock('rakuten'), ownBlock('megogo')];
+  const { control, state } = await harness(t, rows);
+  const cards = control.dialog.querySelectorAll('.media-advice-row'); assert.equal(cards.length, 3);
+  const apple = cards.find(card => card.dataset.providerKey === 'apple');
+  assert.match(apple.textContent, /Українське аудіо: «−» для зазначених доріжок — за даними Кінобази/);
+  assert.match(apple.textContent, /Українські субтитри — за даними Кінобази/);
+  assert.doesNotMatch(apple.textContent, /Українське аудіо та субтитри/);
+  for (const key of ['rakuten', 'megogo']) assert.match(cards.find(card => card.dataset.providerKey === key).textContent, /Українське аудіо та субтитри — за даними Кінобази/);
+  assert.equal(state.calls, 1); assert.equal(state.output, null);
 });

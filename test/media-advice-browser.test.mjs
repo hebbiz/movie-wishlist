@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { resolve, extname } from 'node:path';
-import { authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
+import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
 
 test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, isolated transfer and report', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const root = resolve(import.meta.dirname, '..');
@@ -249,6 +249,100 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(await page.locator('#purchase_url').inputValue(),selectedRow.link.href);
       assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeVariantWrites);
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeVariants);
+
+      // Actual authored HTML -> extraction -> projection, with separate own
+      // provider blocks and no country-section pointer or source HTTP request.
+      const kino=await authoredDuneMediaResult();
+      kino.rows[0].price={state:'reported',amount:{state:'reported',value:'91.17'},currency:{state:'reported',value:'XXX'}};
+      const rawKino=structuredClone(kino.rows);
+      Object.assign(authored,kino);
+      const beforeKinoCalls=calls.filter(c=>c.action==='discover').length;
+      const beforeKinoWrites=await page.evaluate(()=>authoredDBWrites.length);
+      await page.evaluate(film=>{
+        Object.assign(movies[0],{title:film.title,year:film.year,imdb_url:`https://imdb.com/title/${film.imdbId}`});
+        startEditMovie('list');
+      },kino.film);
+      await page.locator('#mediaAdviceEntry').click();
+      await page.locator('.media-advice-answer').waitFor();
+      assert.equal(calls.filter(c=>c.action==='discover').length,beforeKinoCalls+1);
+      assert.equal(await page.locator('.media-advice-row').count(),3);
+      const kinoOrder=await page.locator('.media-advice-row').evaluateAll(cards=>cards.map(c=>c.dataset.providerKey));
+      assert.deepEqual([...kinoOrder].sort(),['apple','megogo','rakuten']);
+      const apple=page.locator('.media-advice-row[data-provider-key="apple"]');
+      assert.match(await apple.innerText(),/Українське аудіо — за даними Кінобази/);
+      assert.match(await apple.innerText(),/Українські субтитри: позначено «−» Кінобазою/);
+      for(const key of ['rakuten','megogo']) {
+        const card=page.locator(`.media-advice-row[data-provider-key="${key}"]`);
+        assert.match(await card.innerText(),/Українське аудіо та субтитри — за даними Кінобази/);
+      }
+      assert.doesNotMatch(await page.locator('.media-advice-options').innerText(),/91\.17|XXX|Ціна|Доступно в Україні|гарантовано/i);
+      assert.equal(await page.locator('.media-advice-row input[type=checkbox]').count(),0);
+      await page.evaluate(async()=>{await mediaAdviceController.refresh();await mediaAdviceController.refresh();});
+      assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(cards=>cards.map(c=>c.dataset.providerKey)),kinoOrder);
+      assert.equal(calls.filter(c=>c.action==='discover').length,beforeKinoCalls+1);
+      if(process.env.M4_SCREENSHOT_DIR) {
+        await page.evaluate(()=>mediaAdviceController.dialog.scrollTop=0);
+        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/authored-kino-languages-420.png`,animations:'disabled'});
+      }
+      await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
+      await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
+      const diagnosticRows=await page.locator('.media-advice-diagnostics details pre').evaluateAll(nodes=>nodes.map(n=>JSON.parse(n.textContent)));
+      assert.equal(diagnosticRows.length,3);
+      for(const original of rawKino) {
+        const detail=diagnosticRows.find(r=>r.kinobazaLocalization?.provider===original.kinobazaLocalization.provider);
+        assert.ok(detail);
+        assert.equal(detail.country,original.country);
+        assert.deepEqual(detail.audio,original.audio);assert.deepEqual(detail.subtitles,original.subtitles);
+        assert.deepEqual(detail.kinobazaLocalization.audio,original.kinobazaLocalization.audio);
+        assert.deepEqual(detail.kinobazaLocalization.subtitles,original.kinobazaLocalization.subtitles);
+        assert.equal(detail.kinobazaLocalization.binding,original.kinobazaLocalization.binding);
+        if(original.price?.amount?.value==='91.17') assert.deepEqual(detail.price,original.price);
+      }
+      assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/Укр\. звук \(стерео\)/);
+      assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/91\.17/);
+      await page.getByRole('button',{name:'← До порад',exact:true}).click();
+      const openedBeforeKino=await page.evaluate(()=>authoredOpened.length);
+      for(const [index,key] of ['apple','rakuten','megogo'].entries()) {
+        const card=page.locator(`.media-advice-row[data-provider-key="${key}"]`);
+        const original=rawKino.find(r=>r.provider.key===key);
+        await card.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+        assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[original.link.href,'_blank','noopener,noreferrer']);
+        await card.getByRole('button',{name:'Обрати',exact:true}).click();
+        await page.locator('.media-advice-preview').getByText('Повні адреси',{exact:true}).click();
+        assert.ok((await page.locator('.media-advice-preview details').innerText()).includes(original.link.href));
+        assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeKinoWrites);
+        await page.getByRole('button',{name:'Перенести в картку',exact:true}).click();
+        await page.waitForFunction(()=>!mediaAdviceController.dialog.open);
+        assert.equal(await page.locator('#recommended_medium').inputValue(),({apple:'Apple TV / iTunes',rakuten:'Rakuten TV',megogo:'Megogo'})[key]);
+        assert.equal(await page.locator('#purchase_url').inputValue(),original.link.href);
+        assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeKinoWrites);
+        assert.equal(calls.filter(c=>c.action==='discover').length,beforeKinoCalls+1);
+        if(index<2) await page.locator('#mediaAdviceEntry').click();
+      }
+      assert.equal(await page.evaluate(()=>authoredOpened.length),openedBeforeKino+3);
+      assert.deepEqual(await page.evaluate(()=>[activeAdviceRoom.id,mykolaChat.textContent]),['KEEP','SOCIAL HISTORY']);
+      await page.locator('#submitButton').click();
+      await page.waitForFunction(n=>authoredDBWrites.length===n+1,beforeKinoWrites);
+      const kinoSave=await page.evaluate(()=>authoredDBWrites.at(-1));
+      assert.equal(kinoSave.name,'movie_group_lists');assert.equal(kinoSave.operation,'update');
+      assert.equal(kinoSave.fields.purchase_url,rawKino.find(r=>r.provider.key==='megogo').link.href);
+      assert.equal(calls.filter(c=>c.action==='discover').length,beforeKinoCalls+1);
+
+      // Positive labels require the selected film and this exact service block.
+      for(const refusal of ['identity','service']) {
+        const row=structuredClone(rawKino.find(r=>r.provider.key==='apple'));
+        if(refusal==='identity') row.identityStatus='unresolved';
+        else row.kinobazaLocalization.provider='Rakuten TV';
+        authored.rows=[row];
+        const beforeRefusal=calls.filter(c=>c.action==='discover').length;
+        await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();
+        await page.locator('.media-advice-answer').waitFor();
+        assert.doesNotMatch(await page.locator('.media-advice-options').innerText(),/Українське аудіо(?: та субтитри)? — за даними Кінобази/);
+        assert.equal(calls.filter(c=>c.action==='discover').length,beforeRefusal+1);
+        assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeKinoWrites+1);
+        if(refusal==='identity') assert.equal(await page.getByRole('button',{name:'Обрати',exact:true}).isDisabled(),true);
+        await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      }
     }
     if (width === 1280) {
       allowed = true;

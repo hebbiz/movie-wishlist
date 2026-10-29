@@ -130,45 +130,93 @@ export function summarizeMediaAdvice(resultOrRows, { variantName } = {}) {
 
 // Presentation-only platform summary. Source rows remain unchanged for reporting.
 const kinoSource = row => /(^|:)kinobaza:/.test(row?.id ?? '') || row?.provenance?.source === 'Kinobaza HTML';
-export function presentMediaGroup(group) {
-  const rows = group?.rows ?? [];
+const normalizedLabel = name => typeof name === 'string' ? name.normalize('NFC').trim().toLowerCase() : null;
+const boundaryIssues = new Set(['ambiguous-provider-block', 'unsupported-provider-block', 'provider-block-count-limit', 'block-field-count-limit']);
+function ownKinobazaBlock(row, filmId) {
+  const block = row?.kinobazaLocalization;
+  return row?.identityStatus === 'matched' && !row.providerConflict && kinoSource(row) && Object.hasOwn(providers, row.provider?.key) &&
+    (!filmId || row.filmId === filmId) && (!row.country || row.country === 'UA') && (!block?.territory?.code || block.territory.code === 'UA') &&
+    /^kinobaza:block:\d+$/.test(block?.blockId ?? '') && row.linkAudit?.blockAssociation === 'associated' &&
+    Boolean(normalizedLabel(row.provider?.sourceName)) && normalizedLabel(block.provider) === normalizedLabel(row.provider.sourceName) &&
+    block.href === row.link?.href && classifyLink(row.link?.href, row.provider).transferable &&
+    (block.issues === undefined || Array.isArray(block.issues)) && !(block.issues ?? []).some(issue => boundaryIssues.has(issue));
+}
+function blockLanguage(rows, key) {
+  const fields = rows.map(row => row.kinobazaLocalization[key]).filter(Boolean);
+  if (fields.some(field => field.state === 'conflicting')) return 'conflicting';
+  const positives = fields.filter(field => field.state === 'reported-positive'), negatives = fields.filter(field => field.state === 'reported-negative');
+  const labels = new Map();
+  for (const field of [...positives, ...negatives]) {
+    // An unexplained positive/negative disagreement is not a format mapping.
+    if (!Array.isArray(field.evidence) || !field.evidence.length) {
+      if (positives.length && negatives.length) return 'conflicting';
+      continue;
+    }
+    for (const e of field.evidence) {
+      if (!e || typeof e !== 'object') return 'conflicting';
+      if (!['positive', 'negative'].includes(e.state)) continue;
+      const label = normalizedLabel(e.label); if (!label) return 'conflicting';
+      if (labels.has(label) && labels.get(label) !== e.state) return 'conflicting';
+      labels.set(label, e.state);
+    }
+  }
+  return positives.length ? 'reported-positive' : negatives.length ? 'reported-negative' : 'unknown';
+}
+function kinoLanguageLabel(state, key) {
+  const subject = key === 'audio' ? 'Українське аудіо' : 'Українські субтитри';
+  if (state === 'reported-positive') return `${subject} — за даними Кінобази`;
+  if (state === 'reported-negative') return key === 'audio' ? `${subject}: «−» для зазначених доріжок — за даними Кінобази` : `${subject}: позначено «−» Кінобазою`;
+  if (state === 'conflicting') return `${subject}: суперечливі дані Кінобази`;
+  return `${subject}: невідомо`;
+}
+export function presentMediaGroup(group, { filmId } = {}) {
+  const rows = (group?.rows ?? []).filter(row => !filmId || row.filmId === filmId);
   const safe = rows.filter(eligible);
   const linked = safe.filter(r => classifyLink(r.link?.href, r.provider).transferable);
-  // Rakuten inference is restricted to matched Kinobaza UA pointer + matched
-  // Kinobaza language block for this film/provider. It is not offer verification.
-  const kinoUA = group.key === 'rakuten' && linked.find(r => r.country === 'UA' && kinoSource(r));
-  const kinoBlocks = kinoUA ? rows.filter(r => r.identityStatus === 'matched' && !r.providerConflict && kinoSource(r) && (!r.country || r.country === 'UA') && r.kinobazaLocalization) : [];
-  const blockPositive = key => kinoBlocks.some(r => r.kinobazaLocalization[key]?.state === 'reported-positive');
-  const blockConflicted = key => kinoBlocks.some(r => hasConflicts(r) || ['conflicting','reported-negative'].includes(r.kinobazaLocalization[key]?.state));
-  const inferredAudio = blockPositive('audio') && !blockConflicted('audio');
-  const inferredSubtitles = blockPositive('subtitles') && !blockConflicted('subtitles');
-  const inferred = Boolean(kinoUA && (inferredAudio || inferredSubtitles));
-  const base = safe[0] ?? group.primary;
-  const transferRow = (inferred && kinoUA) || linked.find(r => classifyLink(r.link?.href, r.provider).kind === 'exact-card-unverified') || linked[0] || base;
-  const evidence = inferred ? kinoUA : base;
-  const inferredBand = inferredAudio ? 'ua-audio' : inferredSubtitles ? 'ua-subtitles' : 'withheld';
-  const band = bands[bandFor(base)] < bands[inferredBand] ? bandFor(base) : inferred ? inferredBand : bandFor(base);
+  const explicitFilms = new Set(rows.map(row => row.filmId).filter(id => typeof id === 'string' && id));
+  const scope = filmId ?? (explicitFilms.size === 1 ? [...explicitFilms][0] : null);
+  // This is the owner's M4 region interpretation, not a mutation of source
+  // country/offer fields or a join to another service's/film's language block.
+  const kinoRows = explicitFilms.size > 1 && !filmId ? [] : rows.filter(row => ownKinobazaBlock(row, scope));
+  const kinoAudio = blockLanguage(kinoRows, 'audio'), kinoSubtitles = blockLanguage(kinoRows, 'subtitles');
+  const inferredAudio = kinoAudio === 'reported-positive', inferredSubtitles = kinoSubtitles === 'reported-positive';
+  const inferred = kinoRows.length > 0 && [kinoAudio, kinoSubtitles].some(state => state !== 'unknown');
+  const policyBand = inferredAudio ? 'ua-audio' : inferredSubtitles ? 'ua-subtitles' : inferred ? 'ua' : 'withheld';
+  const base = safe[0] ?? rows[0];
+  const policyRow = kinoRows.find(row => inferredAudio && row.kinobazaLocalization.audio?.state === 'reported-positive' || !inferredAudio && inferredSubtitles && row.kinobazaLocalization.subtitles?.state === 'reported-positive') ?? kinoRows[0];
+  const transferRow = (inferred && policyRow) || linked.find(r => classifyLink(r.link?.href, r.provider).kind === 'exact-card-unverified') || linked[0] || base;
+  const evidence = inferred ? policyRow : base;
+  const band = bands[bandFor(base)] < bands[policyBand] ? bandFor(base) : inferred ? policyBand : bandFor(base);
   const accesses = [...new Set(safe.filter(r => r.country === 'UA').map(r => value(r.access)).filter(Boolean).map(v => accessLabels[v]).filter(Boolean))];
   const access = accesses.length ? accesses.join(' / ') : presentMediaRow(base).accessLabel;
-  const audio = inferredAudio ? 'Українське аудіо: є згадка' : languageLabel(evidence, 'audio');
-  const subtitles = inferredSubtitles ? 'Українські субтитри: є згадка' : languageLabel(evidence, 'subtitles');
+  const audio = inferred ? kinoLanguageLabel(kinoAudio, 'audio') : languageLabel(evidence, 'audio');
+  const subtitles = inferred ? kinoLanguageLabel(kinoSubtitles, 'subtitles') : languageLabel(evidence, 'subtitles');
+  const languageSummary = inferredAudio && inferredSubtitles ? 'Українське аудіо та субтитри — за даними Кінобази' : null;
+  const otherLanguageLabels = [];
+  if (inferred && base.country === 'UA' && languageState(base, 'audio') === 'reported' && !inferredAudio) otherLanguageLabels.push('В іншому варіанті джерело вказує українське аудіо; умови можуть відрізнятися.');
+  if (inferred && base.country === 'UA' && languageState(base, 'subtitles') === 'reported' && !inferredSubtitles) otherLanguageLabels.push('В іншому варіанті джерело вказує українські субтитри; умови можуть відрізнятися.');
   const unbound = !inferred && rows.find(r => eligible(r) && r.kinobazaLocalization);
   const unboundLabels = unbound ? [blockLabel(unbound, 'audio'), blockLabel(unbound, 'subtitles')].filter(Boolean) : [];
   return { group, transferRow, band, access, audio, subtitles, inferred, inferredAudio, inferredSubtitles, unboundLabels,
-    territory: presentMediaRow(evidence).territoryLabel,
-    warnings: [ ...presentMediaRow(evidence).warnings,
-      ...(inferred ? ['Мовні дані Кінобази наведені окремо; країна і відповідність пропозиції не підтверджені.'] : []),
-      ...(rows.some(hasConflicts) ? ['У джерелах є суперечливі дані.'] : []) ] };
+    languageSummary, otherLanguageLabels, kinobaza: { applied: inferred, audio: kinoAudio, subtitles: kinoSubtitles, basis: 'matched-provider-block-app-ua-interpretation' },
+    territory: inferred ? 'Український регіон — за правилом застосунку' : presentMediaRow(evidence).territoryLabel,
+    warnings: [ ...presentMediaRow(evidence).warnings.filter(warning => !inferred || !['Країну доступу не встановлено.', 'Для цієї пропозиції ще не перевірено.'].includes(warning)),
+      ...(inferred ? ['Це правило інтерпретації, не перевірка доступності на платформі.'] : []),
+      ...(rows.some(hasConflicts) || [kinoAudio, kinoSubtitles].includes('conflicting') ? ['У джерелах є суперечливі дані.'] : []) ] };
 }
-export function presentMediaGroups(rows) {
-  return groupMediaRows(rows).map((g, index) => ({ ...presentMediaGroup(g), index }))
+export function presentMediaGroups(rows, { filmId } = {}) {
+  const filmIds = new Set((Array.isArray(rows) ? rows : []).map(row => row?.filmId).filter(id => typeof id === 'string' && id));
+  if (!filmId && filmIds.size > 1) return []; // No established single-film view context.
+  const scoped = filmId ? (Array.isArray(rows) ? rows : []).filter(row => row?.filmId === filmId) : rows;
+  return groupMediaRows(scoped).map((g, index) => ({ ...presentMediaGroup(g, { filmId }), index }))
     .sort((a,b) => bands[a.band] - bands[b.band] || a.index - b.index);
 }
 export function summarizeMediaGroups(groups) {
   const first = groups.find(g => g.band !== 'withheld');
   if (!first) return 'Поки не отримано узгоджених варіантів для вибору. Це не означає, що фільм недоступний.';
   const title = first.group.title;
-  if (first.inferred && (first.band === 'ua-audio' && first.inferredAudio || first.band === 'ua-subtitles' && first.inferredSubtitles)) return `Спершу перегляньте ${title}: Кінобаза вказує Україну і згадує українські ${first.band === 'ua-audio' ? 'аудіо' : 'субтитри'}. Перевірте мови та умови на платформі.`;
+  if (first.inferred && (first.band === 'ua-audio' && first.inferredAudio || first.band === 'ua-subtitles' && first.inferredSubtitles)) return `Спершу перегляньте ${title}: за даними Кінобази є українські ${first.band === 'ua-audio' ? 'аудіо' : 'субтитри'}, які ми враховуємо для українського регіону. Перевірте доступність та умови на платформі.`;
+  if (first.inferred && first.band === 'ua') return `Кінобаза згадує ${title}; враховуємо цей варіант для українського регіону, але українські доріжки не підтверджені. Доступність та умови перевірте на платформі.`;
   if (first.band === 'ua-audio') return `Спершу перегляньте ${title}: джерело вказує Україну та українське аудіо. Перевірте доріжки й умови доступу на платформі.`;
   if (first.band === 'ua-subtitles') return `Спершу перегляньте ${title}: джерело вказує Україну та українські субтитри. Перевірте доріжки й умови доступу на платформі.`;
   if (first.band === 'ua') return `Спершу перегляньте ${title}: джерело вказує Україну, але мови не підтверджені. Перевірте мови й умови доступу на платформі.`;

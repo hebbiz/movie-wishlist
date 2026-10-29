@@ -5,7 +5,7 @@ import { extractHtml, fetchHtmlCandidates, htmlScenario, canonicalKinobazaURL, c
 import { FILMS, selectRequest } from '../config.mjs';
 import { runDiscovery, authoredDiscoveryData, composeDiscovery } from '../discovery.mjs';
 import { prepareDraft, compactFields } from '../public/discovery-client.mjs';
-import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge, authoredDuneLanguageMarkup } from './kinobaza-localization.fixture.mjs';
 
 const parse = (body, film = 'coherence') => extractHtml(body, FILMS[film]);
 const selection = film => htmlScenario(FILMS[film], { discovery: 'digital-ua' });
@@ -14,7 +14,7 @@ const html = body => new Response(body, { headers: { 'content-type': 'text/html;
 const providerLink = (provider, href = 'https://example.com/authored-country') => `<a title="Дивитись / Купити на ${provider}" href="${href}"><img alt="${provider}"></a>`;
 const countrySection = (code, label, anchors = providerLink('Apple TV Store')) => `<div class="accordion-item"><h2 class="accordion-header"><button data-bs-target="#collapse${code}">${label}</button></h2><div id="collapse${code}" data-bs-parent="#availabilityAccordion">${anchors}</div></div>`;
 const countryMarkup = (blocks, sections, general = true) => `<!doctype html><html><body><h1>Coherence (2013)</h1><h2>Coherence</h2><table><tr><td>Режисер:</td><td>James Ward Byrkit</td></tr></table>${general ? generalBadge : ''}${blocks}<div id="availabilityAccordion">${sections}</div></body></html>`;
-const compose = result => composeDiscovery(FILMS.coherence, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result, status: result.status } });
+const compose = (result, film = 'coherence') => composeDiscovery(FILMS[film], { tmdb: { result: null }, motn: { result: null }, kinobaza: { result, status: result.status } });
 
 test('general film badge never supplies provider tracks; Coherence paragraph / Dune table are independently recognized structures', async () => {
   const general = await parse(localizedMarkup());
@@ -75,6 +75,106 @@ test('country sections, foreign links and source blocks are independent observat
   assert.ok(r.availabilitySignals.every(s => s.access === 'unknown' && s.upstream === 'JustWatch'));
   assert.ok(r.candidates.filter(c => c.territory).every(c => !c.blockId));
   assert.equal(r.candidates.find(c => c.provider === 'megogo').territory, null);
+});
+
+test('authored Dune 2024 Apple/Rakuten tables and MEGOGO paragraph remain separate without a UA country pointer', async () => {
+  const body = authoredDuneLanguageMarkup().replaceAll('collapseUA', 'collapseCZ').replace('Доступно в Україні', 'Доступно в Чехії');
+  const r = await parse(body, 'dune-part-two');
+  assert.equal(r.identity.status, 'matched'); assert.equal(r.status, 'partial');
+  assert.ok(r.issues.includes('missing-explicit-ukraine-section')); assert.ok(r.availabilitySignals.every(signal => signal.territory.code !== 'UA'));
+  assert.equal(r.localization.film.ukrainianAudio.state, 'reported-positive');
+  const projection = compose(r, 'dune-part-two');
+  assert.deepEqual(projection.rows.map(row => row.provider.key), ['apple', 'rakuten', 'megogo']);
+  const [apple, rakuten, megogo] = projection.rows;
+  assert.equal(apple.kinobazaLocalization.audio.state, 'reported-positive'); assert.equal(apple.kinobazaLocalization.subtitles.state, 'reported-negative');
+  assert.deepEqual(apple.kinobazaLocalization.audio.evidence.map(item => item.formatLiteral), ['стерео', 'dolby']);
+  assert.deepEqual(apple.kinobazaLocalization.subtitles.evidence.map(item => item.label), ['Укр. субтитри']);
+  for (const row of [rakuten, megogo]) {
+    assert.equal(row.kinobazaLocalization.audio.state, 'reported-positive'); assert.equal(row.kinobazaLocalization.subtitles.state, 'reported-positive');
+  }
+  assert.deepEqual(megogo.kinobazaLocalization.audio.evidence.map(item => item.label), ['укр. аудіо']);
+  assert.ok(projection.rows.every(row => row.country === null && row.access.state === 'unknown' && row.availability.state === 'unknown' && row.audio.state === 'unknown' && row.subtitles.state === 'unknown' && !row.countrySignal));
+  for (const row of projection.rows) {
+    const block = row.kinobazaLocalization, candidate = r.candidates.find(candidate => candidate.blockId === block.blockId);
+    assert.equal(candidate.href, block.href); assert.equal(candidate.provider, block.provider); assert.equal(block.territory, null);
+    assert.equal(block.audio.completeness, 'unknown'); assert.equal(block.subtitles.completeness, 'unknown');
+  }
+});
+
+test('Dune table presence prevents parenthetical fallback even when table fields are negative, unknown, missing or empty', async () => {
+  for (const [rows, audio, subtitles] of [
+    [[['Укр. звук', '-'], ['Укр. субтитри', '?']], 'reported-negative', 'unknown'],
+    [[['Укр. звук', '?'], ['Укр. субтитри', '']], 'unknown', 'unknown'],
+    [[['Мова оригіналу', 'українська']], 'unknown', 'unknown'],
+    [[], 'unknown', 'unknown'],
+  ]) {
+    const block = tableBlock('itunes', rows).replace('</table>', '</table> (укр. аудіо, укр. субтитри)');
+    const r = await parse(localizedMarkup(block, 'dune-part-two'), 'dune-part-two');
+    const own = r.localization.blocks[0];
+    assert.equal(own.audio.state, audio); assert.equal(own.subtitles.state, subtitles);
+    assert.ok(own.audio.evidence.every(item => item.label !== 'укр. аудіо')); assert.ok(own.subtitles.evidence.every(item => item.label !== 'укр. субтитри'));
+  }
+  const noTable = await parse(localizedMarkup(paragraphBlock('itunes'), 'dune-part-two'), 'dune-part-two');
+  assert.equal(noTable.localization.blocks[0].audio.state, 'reported-positive'); assert.equal(noTable.localization.blocks[0].subtitles.state, 'reported-positive');
+});
+
+test('Dune format-specific signs stay literal while contradictory signs for the same label stay conflicting', async () => {
+  const r = await parse(authoredDuneLanguageMarkup({ appleRows: [
+    ['Укр. звук (стерео)', '+'], ['Укр. звук (dolby)', '-'], ['Укр. субтитри (forced)', '-'], ['Укр. субтитри (SDH)', '+'],
+  ] }), 'dune-part-two');
+  const apple = r.localization.blocks[0];
+  assert.equal(apple.audio.state, 'reported-positive'); assert.equal(apple.subtitles.state, 'reported-positive');
+  assert.deepEqual(apple.audio.evidence.map(item => [item.formatLiteral, item.state]), [['стерео', 'positive'], ['dolby', 'negative']]);
+  assert.deepEqual(apple.subtitles.evidence.map(item => [item.typeLiteral, item.state]), [['forced', 'negative'], ['SDH', 'positive']]);
+  assert.ok(!apple.issues.includes('conflicting-block-labels')); assert.doesNotMatch(JSON.stringify(apple), /Atmos|5\.1|codec|channels/);
+  const conflict = await parse(authoredDuneLanguageMarkup({ appleRows: [['Укр. звук', '+'], ['Укр. звук', '-'], ['Укр. субтитри', '+'], ['Укр. субтитри', '−']] }), 'dune-part-two');
+  const projected = compose(conflict, 'dune-part-two').rows.find(row => row.provider.key === 'apple');
+  assert.equal(projected.kinobazaLocalization.audio.state, 'conflicting'); assert.equal(projected.kinobazaLocalization.subtitles.state, 'conflicting');
+  assert.deepEqual(projected.conflicts.map(item => [item.field, item.type]), [['audio', 'conflicting-block-labels'], ['subtitles', 'conflicting-block-labels']]);
+  assert.equal(projected.audio.state, 'unknown'); assert.equal(projected.subtitles.state, 'unknown');
+});
+
+test('Dune block facts cannot cross services or attach to a country-only row of the same platform', async () => {
+  const r = await parse(authoredDuneLanguageMarkup({
+    rakutenRows: [['Укр. звук', '?']], megogoTokens: '', extraBlocks: paragraphBlock('netflix', ''),
+  }).replaceAll('Example UA', 'Apple TV Store').replaceAll('Example Foreign', 'Rakuten TV'), 'dune-part-two');
+  const projection = compose(r, 'dune-part-two'), countryApple = projection.rows.find(row => row.country === 'UA' && row.provider.key === 'apple');
+  assert.ok(countryApple); assert.equal(countryApple.kinobazaLocalization, undefined);
+  assert.equal(countryApple.audio.state, 'unknown'); assert.equal(countryApple.subtitles.state, 'unknown');
+  const blocks = projection.rows.filter(row => row.kinobazaLocalization);
+  assert.equal(blocks.find(row => row.provider.key === 'apple').kinobazaLocalization.audio.state, 'reported-positive');
+  for (const provider of ['rakuten', 'megogo', 'netflix']) {
+    const row = blocks.find(row => row.provider.key === provider);
+    assert.ok(row); assert.equal(row.kinobazaLocalization.audio.state, 'unknown'); assert.equal(row.kinobazaLocalization.subtitles.state, 'unknown');
+  }
+  assert.ok(!projection.rows.some(row => row.country === 'PL')); assert.equal(projection.filmLocalization.ukrainianAudio.state, 'reported-positive');
+});
+
+test('Dune duplicate platform blocks retain their own signs and IDs instead of merging into a universal track claim', async () => {
+  const r = await parse(authoredDuneLanguageMarkup({ extraBlocks: tableBlock('itunes', [['Укр. звук', '-'], ['Укр. субтитри', '+']], 'https://example.com/authored-dune-other-apple') }), 'dune-part-two');
+  const apple = compose(r, 'dune-part-two').rows.filter(row => row.provider.key === 'apple');
+  assert.equal(apple.length, 2); assert.equal(new Set(apple.map(row => row.kinobazaLocalization.blockId)).size, 2);
+  assert.deepEqual(apple.map(row => row.kinobazaLocalization.audio.state), ['reported-positive', 'reported-negative']);
+  assert.deepEqual(apple.map(row => row.kinobazaLocalization.subtitles.state), ['reported-negative', 'reported-positive']);
+  assert.ok(apple.every(row => row.kinobazaLocalization.issues.includes('possible-block-conflict-scope-unestablished')));
+  assert.ok(apple.every(row => row.country === null && row.audio.state === 'unknown' && row.subtitles.state === 'unknown'));
+});
+
+test('recognized no-table blocks work for every mapped service without requiring a separate UA pointer', async () => {
+  // HBO uses the already supported explicit provider title/image spelling;
+  // no new badge label, fuzzy matcher or source-markup assumption is introduced.
+  const hbo = paragraphBlock('HBO Max').replace('title="Доступно в HBO Max"', 'title="Дивитись / Купити на HBO Max"').replace('alt="Доступно в HBO Max"', 'alt="HBO Max"');
+  const blocks = ['itunes', 'rakuten', 'megogo', 'netflix', 'prime video'].map(provider => paragraphBlock(provider)).join('') + hbo;
+  const body = localizedMarkup(blocks, 'dune-part-two').replaceAll('collapseUA', 'collapseCZ').replace('Доступно в Україні', 'Доступно в Чехії');
+  const r = await parse(body, 'dune-part-two'), rows = compose(r, 'dune-part-two').rows;
+  assert.deepEqual(rows.map(row => row.provider.key), ['apple', 'rakuten', 'megogo', 'netflix', 'prime', 'hbo']);
+  assert.ok(rows.every(row => row.country === null && row.availability.state === 'unknown' && row.kinobazaLocalization.audio.state === 'reported-positive' && row.kinobazaLocalization.subtitles.state === 'reported-positive'));
+});
+
+test('unmatched Dune identity withholds all authored provider/localization claims before composition', async () => {
+  const r = await parse(authoredDuneLanguageMarkup().replace('(2024)', '(2025)'), 'dune-part-two');
+  assert.equal(r.identity.status, 'unresolved'); assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined);
+  const projection = compose(r, 'dune-part-two'); assert.deepEqual(projection.rows, []); assert.equal(projection.filmLocalization, null);
 });
 
 test('three valid foreign sections without UA preserve independent iTunes/MEGOGO blocks and the film badge', async () => {

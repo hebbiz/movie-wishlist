@@ -175,7 +175,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     if (!session.result) {
       bubble('Зараз не вдалося отримати відповідь. Спроба могла бути витрачена; повторного пошуку без вашої дії не буде.');
     } else {
-      const rows = rowsFor(), groups = presentMediaGroups(rows);
+      const rows = rowsFor(), groups = presentMediaGroups(rows, { filmId: session.result.film?.id });
       const answer = bubble(summarizeMediaGroups(groups)); answer.classList.add('media-advice-answer');
       if (session.result.sources?.some(s => /error|failed|unavailable|timeout|blocked|unsupported|partial/i.test(s.status ?? ''))) bubble('Частина відомостей неповна або не надійшла. Показую те, що вдалося отримати, без здогадок.');
       for (const [index, choice] of (session.result.cardChoices ?? []).entries()) {
@@ -190,7 +190,9 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         const title = node('div'); title.className = 'media-advice-option-title'; title.append(node('h3', group.title)); card.append(title);
         const body = node('div'); body.className = 'media-advice-variant';
         const basis = node('p', `${info.access} · ${info.territory}`); basis.className = 'media-advice-source'; body.append(basis);
-        body.append(node('p', info.audio), node('p', info.subtitles));
+        if (info.languageSummary) body.append(node('p', info.languageSummary));
+        else body.append(node('p', info.audio), node('p', info.subtitles));
+        for (const label of info.otherLanguageLabels) body.append(node('p', label));
         if (info.unboundLabels.length) { const e = node('p', info.unboundLabels.join('. ') + '. Для цієї пропозиції ще не перевірено.'); e.className = 'media-advice-warning'; body.append(e); }
         for (const warning of [...new Set(info.warnings)]) { const e = node('p', warning); e.className = 'media-advice-warning'; body.append(e); }
         if (group.rows.length > 1) body.append(node('p', 'Відомості можуть стосуватися різних пропозицій; перевірте умови за посиланням.'));
