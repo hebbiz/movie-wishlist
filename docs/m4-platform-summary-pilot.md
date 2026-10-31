@@ -430,3 +430,43 @@ local Edge viewport emulations, not real iPhone/Safari/VoiceOver or live-source
 validation. Existing server/SQL/native PostgreSQL/Windows lifecycle and the
 dedicated pending/resume suites are not repeated for this CSS-only follow-up;
 their dependent logic is unchanged. MW-FUT-01 remains Discovery.
+
+### Shared emblem and service-name axes — 2026-10-31
+
+From develop `094162f2eebc8c5d93e4c601a9ef5d456e5d2bec` after merged #210.
+Above480px, each service button fills its cell and uses the same46px emblem
+track plus a flexible, left-aligned name track. Emblem centers share one axis;
+name starts share another even when one or all images fail. The name's explicit
+grid position preserves the empty emblem track for readable text fallback.
+At481–640px, the same button uses two rows: centered emblem above a left-aligned
+name. Long canonical names wrap without clipping or entering the access cell.
+The existing mobile icon-only/fallback styles are untouched. All table columns
+remain25%, with unchanged headers, symbols, SVG proportions, focus, pressed
+selection, accessible labels and at-least44×44px targets.
+
+Only scoped CSS changes the application; no DOM/controller, source data,
+ranking, URL policy/link, preview/Save, report, session/freshness, other Mykola
+context, initApp/global lifecycle/auth, server/schema/flag or production change.
+No live calls, real Wishlist writes, merge/deployment or owner checkout/demo edits.
+
+The existing browser geometry regression additionally measures loaded emblem
+centers and actual text starts across rows (maximum1px spread), including mixed
+loaded/failed images, all-failed fallback and the longest canonical service names.
+It retains equal four-column center steps, containment/row-height/target and
+no-overflow assertions. Boundary resizing320/480/481/600/640/641/700 reuses the
+same authored result without discovery or writes. At1280px, all six emblems
+share x419 and names x450; at820px they share x189 and x220 respectively.
+The unchanged column step is140px on both,64.25px at375 and75.5px at420.
+Screenshots `service-axes-*` remain outside Git; wide/mobile/mixed-fallback
+examples are authored fixtures, not live source evidence or real iPhone testing.
+
+21/21 targeted offline/mock checks and5/5 in the existing main browser suite
+passed,0 failures/skips. Edge viewports:375×812,420×912,820×1180,1280×900;
+the retained-result boundary sweep also checks fallback at481/600/641px.
+Mobile/wide/fallback screenshots were visually inspected. Existing keyboard
+selection, exact open, preview/local transfer/ordinary Save, diagnostics and
+reopen-without-discovery checks remain covered. Syntax, whitespace/scope and
+14-doc/455-link/280-anchor/13-handoff checks passed; assertions/timeouts unchanged.
+Real iPhone/Safari/VoiceOver and deployed Node22 are not tested. Dedicated
+pending/resume, server/SQL/native PostgreSQL and Windows lifecycle suites are
+not repeated: dependent code is unchanged. Local Node24.22.0/Edge.
