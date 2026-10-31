@@ -12,37 +12,49 @@ async function assertServiceComparisonLayout(page, width) {
   // Keep the same 44px assertion; do not change application animation/timing.
   await page.locator('.media-advice-comparison').evaluate(table => Promise.all(table.closest('.mykola-bubble').getAnimations().map(animation => animation.finished)));
   const layout = await page.locator('.media-advice-comparison').evaluate(table => {
-    const rect = element => { const r = element.getBoundingClientRect(); return { x: r.x, width: r.width, height: r.height, center: r.x + r.width / 2 }; };
+    const rect = element => { const r = element.getBoundingClientRect(); return { x: r.x, right: r.right, width: r.width, height: r.height, center: r.x + r.width / 2 }; };
     const headers = [...table.querySelectorAll('thead th')].map(header => ({ ...rect(header), align: getComputedStyle(header).textAlign }));
     return {
       width: table.clientWidth, scrollWidth: table.scrollWidth, headers,
+      rows: [...table.querySelectorAll('tbody tr')].map(rect),
       services: [...table.querySelectorAll('.media-advice-service-select')].map(button => {
         const name = button.querySelector('.media-advice-service-name');
-        const style = getComputedStyle(name);
+        const style = getComputedStyle(name), image = button.querySelector('.media-advice-provider-icon');
         return { label: button.getAttribute('aria-label'), title: button.title, text: name.textContent,
           state: button.dataset.iconState, button: rect(button), name: rect(name),
+          image: rect(image), imageFit: getComputedStyle(image).objectFit,
           nameDisplay: style.display, nameVisibility: style.visibility,
           language: [...button.closest('tr').querySelectorAll('td')].map(cell => ({ ...rect(cell), align: getComputedStyle(cell).textAlign, symbol: rect(cell.firstElementChild) })),
         };
       }),
     };
   });
+  assert.deepEqual(await page.getByRole('columnheader').allTextContents(), ['Сервіс', 'Доступ', 'Аудіо', 'Субтитри']);
+  assert.equal(await page.locator('.media-advice-table-caption').evaluate(element=>element.tagName), 'CAPTION');
+  assert.equal(await page.locator('.media-advice-table-caption').innerText(), 'Аудіо та субтитри — українською');
+  assert.equal(await page.locator('.media-advice-table-caption').isVisible(), true, 'the native caption explains both language columns');
+  assert.ok(layout.headers.every(header => header.align === 'center'), 'all four column headings are centered on every viewport');
+  assert.ok(Math.max(...layout.rows.map(row => row.height)) - Math.min(...layout.rows.map(row => row.height)) <= 1, 'loaded service rows have one consistent height');
   assert.ok(layout.scrollWidth <= layout.width + 1, 'the comparison itself has no horizontal overflow');
   for (const service of layout.services) {
     assert.equal(service.state, 'loaded');
     assert.equal(service.label, service.text, 'the full service name remains the accessible button name');
     assert.equal(service.title, service.text, 'the emblem has a full-name tooltip');
+    assert.ok(service.button.height >= 44, 'service selection retains a touch-sized target on every viewport');
+    assert.ok(Math.abs(layout.headers[0].center - service.button.center) <= 1, 'the service choice lines up with its centered column heading');
+    assert.equal(service.imageFit, 'contain', 'emblem dimensions never distort the SVG proportions');
+    assert.equal(service.language.length, 3, 'availability has a separate cell before the two language cells');
+    assert.ok(service.language[0].symbol.x - service.image.right >= 8, 'the emblem and availability symbol have visible separation');
+    for (const [index, cell] of service.language.entries()) {
+      const header = layout.headers[index + 1];
+      assert.equal(cell.align, 'center');
+      assert.ok(Math.abs(header.center - cell.symbol.center) <= 1, 'availability and language symbols line up with their centered column headings');
+      assert.ok(header.height >= 30, 'column headings retain readable vertical room');
+    }
     if (width <= 480) {
-      assert.ok(service.button.height >= 44, 'service selection retains a mobile-sized touch target');
       assert.ok(service.name.width <= 1 && service.name.height <= 1, 'a loaded mobile emblem replaces the visible service name');
       assert.notEqual(service.nameDisplay, 'none', 'the name is visually hidden rather than removed');
       assert.notEqual(service.nameVisibility, 'hidden');
-      for (const [index, cell] of service.language.entries()) {
-        const header = layout.headers[index + 1];
-        assert.equal(header.align, 'center'); assert.equal(cell.align, 'center');
-        assert.ok(Math.abs(header.center - cell.symbol.center) <= 1, 'language symbols line up with the centered column header');
-        assert.ok(header.height >= 30, 'the two-line mobile heading retains room to read');
-      }
     } else {
       assert.ok(service.name.width > 1 && service.name.height > 1, 'wider viewports retain emblem and visible name');
     }
@@ -115,7 +127,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.equal(await page.locator('.media-advice-row details,.media-advice-row pre').count(),0,'technical provenance belongs in diagnostics');
     assert.doesNotMatch(await page.locator('.media-advice-options').innerText(),/TMDb|JustWatch|Movie of the Night|Kinobaza HTML|AUTHORED/);
     assert.equal(await page.getByRole('table').count(),1,'all services share one compact comparison');
-    assert.deepEqual(await page.getByRole('columnheader').allTextContents(),['Сервіс','Укр. аудіо','Укр. субтитри']);
+    assert.deepEqual(await page.getByRole('columnheader').allTextContents(),['Сервіс','Доступ','Аудіо','Субтитри']);
     assert.equal(await page.locator('.media-advice-row').evaluateAll(rows=>rows.every(row=>row.tagName==='TR')),true);
     assert.equal(await page.locator('.media-advice-row img.media-advice-provider-icon').count(),1,'use the existing SVG platform emblem');
     assert.equal(await page.locator('.media-advice-provider-icon').evaluateAll(nodes=>nodes.every(n=>new URL(n.src).pathname.endsWith('.svg')&&n.alt==='')),true);
@@ -417,18 +429,19 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       const apple=page.locator('.media-advice-row[data-provider-key="apple"]');
       assert.deepEqual(kinoOrder,['apple','rakuten','megogo'],'language category first, then the agreed service priorities');
       await assertServiceComparisonLayout(page, width);
-      assert.equal(await apple.locator('th[scope=row]').count(),1);assert.equal(await apple.locator('td').count(),2);
-      assert.equal(await apple.locator('td').nth(0).innerText(),'+');
-      assert.equal(await apple.locator('td').nth(1).innerText(),'−');
-      assert.match(await apple.locator('td').nth(0).getAttribute('aria-label')??await apple.locator('td').nth(0).locator('[aria-label]').getAttribute('aria-label'),/українське аудіо|Кінобаз/i);
-      assert.match(await apple.locator('td').nth(1).getAttribute('aria-label')??await apple.locator('td').nth(1).locator('[aria-label]').getAttribute('aria-label'),/субтитр|відсут|познач/i);
+      assert.equal(await apple.locator('th[scope=row]').count(),1);assert.equal(await apple.locator('td').count(),3);
+      assert.equal(await apple.locator('td').nth(1).innerText(),'+');
+      assert.equal(await apple.locator('td').nth(2).innerText(),'−');
+      assert.match(await apple.locator('td').nth(1).getAttribute('aria-label')??await apple.locator('td').nth(1).locator('[aria-label]').getAttribute('aria-label'),/українське аудіо|Кінобаз/i);
+      assert.match(await apple.locator('td').nth(2).getAttribute('aria-label')??await apple.locator('td').nth(2).locator('[aria-label]').getAttribute('aria-label'),/субтитр|відсут|познач/i);
       for(const key of ['rakuten','megogo']) {
         const card=page.locator(`.media-advice-row[data-provider-key="${key}"]`);
-        assert.equal(await card.locator('td').nth(0).innerText(),'+');
         assert.equal(await card.locator('td').nth(1).innerText(),'+');
+        assert.equal(await card.locator('td').nth(2).innerText(),'+');
       }
       for(const card of await page.locator('.media-advice-row').all()) {
-        assert.match(await card.locator('th[scope=row]').innerText(),/◐/,'a Kinobaza block is partial availability evidence');
+        assert.doesNotMatch(await card.locator('th[scope=row]').innerText(),/◐/,'the availability symbol no longer shares the service column');
+        assert.equal(await card.locator('td').nth(0).innerText(),'◐','a Kinobaza block is partial availability evidence in its own column');
         const accessible=await card.locator('[aria-label]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')).join(' '));
         assert.match(accessible,/неповн|частков|окремо не перевірен/i);
       }
@@ -442,6 +455,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-comparison-${width}.png`,animations:'disabled'});
         await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/natural-dialog-${width}.png`,animations:'disabled'});
         await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/mobile-service-icons-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/aligned-services-dialog-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/aligned-services-table-${width}.png`,animations:'disabled'});
       }
       await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
       assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Film-level UA audio badge: reported-positive; not provider tracks\./);
@@ -549,6 +564,53 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.getByRole('button',{name:'← До картки',exact:true}).click();
       await context.unroute('**/assets/icons/media/*.svg?authored-failure=1',failEmblem);
     }
+    if (width > 480) {
+      // The same three authored blocks also exercise the actual tablet/desktop
+      // layout, rather than deriving wide-view assertions from a one-row table.
+      allowed = true;
+      const savedResult={...authored}, savedMovie=await page.evaluate(()=>({...movies[0]}));
+      const kino=await authoredDuneMediaResult();
+      Object.assign(authored,kino);
+      const beforeWideCalls=calls.filter(c=>c.action==='discover').length;
+      const beforeWideWrites=await page.evaluate(()=>authoredDBWrites.length);
+      await page.evaluate(film=>{
+        Object.assign(movies[0],{title:film.title,year:film.year,imdb_url:`https://imdb.com/title/${film.imdbId}`});
+        startEditMovie('list');
+      },kino.film);
+      await page.locator('#mediaAdviceEntry').click();await page.locator('.media-advice-answer').waitFor();
+      await assertServiceComparisonLayout(page,width);
+      assert.equal(await page.locator('.media-advice-row').count(),3);
+      const rakuten=page.getByRole('button',{name:'Rakuten TV',exact:true});
+      await rakuten.focus();await rakuten.press('Space');
+      assert.equal(await rakuten.getAttribute('aria-pressed'),'true');
+      assert.equal(await page.locator('.media-advice-service-select[aria-pressed="true"]').count(),1);
+      if(process.env.M4_SCREENSHOT_DIR) {
+        await page.evaluate(()=>mediaAdviceController.dialog.scrollTop=0);
+        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/aligned-services-dialog-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/aligned-services-table-${width}.png`,animations:'disabled'});
+      }
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();await page.locator('#mediaAdviceEntry').click();
+      assert.equal(await rakuten.getAttribute('aria-pressed'),'true','keyboard selection survives reopening on tablet and desktop');
+      assert.equal(calls.filter(c=>c.action==='discover').length,beforeWideCalls+1);
+      assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeWideWrites);
+      const failEmblem=route=>route.abort();
+      await context.route('**/assets/icons/media/*.svg?authored-wide-failure=1',failEmblem);
+      await page.locator('.media-advice-provider-icon').evaluateAll(images=>images.forEach(image=>image.src=new URL(image.src).pathname+'?authored-wide-failure=1'));
+      await page.waitForFunction(()=>document.querySelectorAll('.media-advice-service-select[data-icon-state="failed"]').length===3);
+      for(const fallback of await page.locator('.media-advice-service-select').all()) {
+        assert.equal(await fallback.locator('.media-advice-service-name').isVisible(),true);
+        assert.equal(await fallback.locator('.media-advice-provider-icon').isVisible(),false);
+        const name=await fallback.locator('.media-advice-service-name').innerText();
+        assert.equal(await fallback.getAttribute('aria-label'),name);
+      }
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog=>dialog.scrollWidth<=dialog.clientWidth),true);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      await context.unroute('**/assets/icons/media/*.svg?authored-wide-failure=1',failEmblem);
+      for(const key of Object.keys(authored)) if(!(key in savedResult)) delete authored[key];
+      Object.assign(authored,savedResult);
+      await page.evaluate(movie=>Object.assign(movies[0],movie),savedMovie);
+    }
     if (width === 1280) {
       allowed = true;
       // Authored source rows, not catalogue/availability assertions: the
@@ -565,7 +627,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.locator('.media-advice-answer').waitFor();
       assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['apple','rakuten','prime','hbo','netflix','megogo']);
       await assertServiceComparisonLayout(page, width);
-      assert.equal(await page.getByRole('table').count(),1);assert.equal(await page.getByRole('columnheader').count(),3);
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/aligned-all-service-emblems-${width}.png`,animations:'disabled'});
+      assert.equal(await page.getByRole('table').count(),1);assert.equal(await page.getByRole('columnheader').count(),4);
       assert.equal(await page.getByRole('button',{name:'Обрати',exact:true}).count(),1);
       assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),0,'missing links never create an opening action');
       assert.equal(await page.locator('.media-advice-link-select').count(),0,'zero admissible links need no selector');
@@ -577,7 +640,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();await page.locator('.media-advice-answer').waitFor();
       assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['netflix','prime','apple','rakuten','hbo','megogo']);
       assert.match(await page.locator('.media-advice-answer').innerText(),/Netflix.*українськ(?:е аудіо|ою доріжкою)/);
-      const unknownAudio=page.locator('.media-advice-row[data-provider-key="apple"] td').nth(0);
+      const unknownAudio=page.locator('.media-advice-row[data-provider-key="apple"] td').nth(1);
       assert.equal(await unknownAudio.innerText(),'?');
       assert.match(await unknownAudio.locator('[aria-label]').getAttribute('aria-label'),/невідом|не встановлен|не підтверджен/i);
       await page.getByRole('button',{name:'← До картки',exact:true}).click();
@@ -600,7 +663,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
           assert.equal(await page.evaluate(()=>authoredOpened.length),1);
         }
         if (kind === 'unbound-localization') {
-          const cell=page.locator('.media-advice-row td').nth(0);
+          const cell=page.locator('.media-advice-row td').nth(1);
           assert.equal(await cell.innerText(),'?','a foreign-scope/unbound block does not become a proven offer track');
         }
         if (['no-results','identity-refusal','source-failed'].includes(kind)) assert.match(await page.locator('.media-advice-dialog').innerText(), /не означає, що фільм недоступний/);
@@ -613,7 +676,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
           await page.getByRole('button',{name:'← До порад',exact:true}).click();
         }
         if (kind === 'conflicting-properties') {
-          const cell=page.locator('.media-advice-row td').nth(0);
+          const cell=page.locator('.media-advice-row td').nth(1);
           assert.match(await cell.getAttribute('aria-label')??await cell.locator('[aria-label]').getAttribute('aria-label'),/суперечлив/i);
           assert.notEqual(await cell.innerText(),'−','conflict is not evidence that a track is absent');
           assert.equal(await page.locator('.media-advice-row details,.media-advice-row pre').count(),0);

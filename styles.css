@@ -4132,16 +4132,25 @@ body.invite-page.app-ready .container {
 .media-advice-chat .mykola-typing-bubble { margin-top: 10px; }
 .media-advice-chat .media-advice-comparison-bubble { width: calc(100% - 50px); }
 .media-advice-comparison { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14px; line-height: 1.35; }
-.media-advice-comparison th, .media-advice-comparison td { padding: 8px 3px; border-bottom: 1px solid #54504a; text-align: center; }
-.media-advice-comparison th:first-child { width: 52%; text-align: left; }
-.media-advice-comparison thead th { color: #d3c6a6; font-size: 12px; font-weight: 500; }
-.media-advice-comparison th[scope="row"] { position: relative; padding-right: 23px; }
-.media-advice-dialog .media-advice-service-select { display: flex; align-items: center; gap: 7px; width: 100%; margin: 0; padding: 6px 4px; background: transparent; color: #eee; text-align: left; font-size: 14px; line-height: 1.35; border: 1px solid transparent; }
+.media-advice-table-caption { padding-bottom: 8px; color: #d3c6a6; font-size: 12px; text-align: center; }
+.media-advice-service-column { width: 42%; }
+.media-advice-availability-column { width: 16%; }
+.media-advice-language-column { width: 21%; }
+.media-advice-comparison th, .media-advice-comparison td { padding: 6px; border-bottom: 1px solid #54504a; text-align: center; vertical-align: middle; }
+.media-advice-comparison thead th { padding-block: 8px; color: #d3c6a6; font-size: 12px; font-weight: 500; }
+.media-advice-comparison tbody tr { height: 68px; }
+.media-advice-dialog .media-advice-service-select { display: flex; align-items: center; justify-content: center; gap: 8px; width: fit-content; max-width: 100%; min-width: 44px; min-height: 52px; margin: 0 auto; padding: 2px 4px; background: transparent; color: #eee; text-align: center; font-size: 13px; line-height: 1.25; border: 1px solid transparent; }
 .media-advice-service-select span { overflow-wrap: anywhere; }
-.media-advice-dialog .media-advice-service-select[aria-pressed="true"] { border-color: #8d7848; background: #ffffff09; color: #e6c97f; }
-.media-advice-provider-icon { width: 24px; height: 24px; flex: 0 0 24px; filter: brightness(0) invert(1); object-fit: contain; }
+.media-advice-service-name { min-width: 0; }
+.media-advice-dialog .media-advice-service-select[aria-pressed="true"] { border-color: #d6b25e; background: #d6b25e14; color: #e6c97f; }
+.media-advice-icon-slot { display: inline-flex; align-items: center; justify-content: center; width: 46px; max-width: 100%; height: 40px; flex: 0 0 46px; }
+.media-advice-provider-icon { width: var(--media-emblem-width, 28px); height: var(--media-emblem-height, 28px); max-width: 100%; max-height: 100%; filter: brightness(0) invert(1); object-fit: contain; }
+.media-advice-row[data-provider-key="apple"] { --media-emblem-width: 36px; --media-emblem-height: 36px; }
+.media-advice-row[data-provider-key="rakuten"], .media-advice-row[data-provider-key="netflix"] { --media-emblem-width: 26px; --media-emblem-height: 26px; }
+.media-advice-row[data-provider-key="hbo"] { --media-emblem-width: 42px; --media-emblem-height: 24px; }
+.media-advice-row[data-provider-key="prime"] { --media-emblem-width: 46px; --media-emblem-height: 26px; }
+.media-advice-row[data-provider-key="megogo"] { --media-emblem-width: 44px; --media-emblem-height: 40px; }
 .media-advice-symbol { display: inline-block; font-size: 20px; line-height: 1.3; }
-.media-advice-comparison th[scope="row"] > .media-advice-symbol { position: absolute; top: 50%; right: 3px; transform: translateY(-50%); font-size: 16px; }
 .media-advice-symbol[data-state="reported"] { color: #bce0bb; }
 .media-advice-symbol[data-state="partial"], .media-advice-symbol[data-state="mixed"], .media-advice-symbol[data-state="conflicting"] { color: #e5c77e; }
 .media-advice-chat .media-advice-legend { margin-top: 8px; font-size: 12px; line-height: 1.5; color: #c9c3b7; }
@@ -4177,11 +4186,11 @@ body.invite-page.app-ready .container {
   .media-advice-chat .mykola-avatar, .media-advice-chat .user-avatar { width: 30px; height: 30px; font-size: 13px; }
   .media-advice-chat .mykola-bubble, .media-advice-chat .user-bubble { max-width: calc(100% - 38px); padding: 10px 12px; }
   .media-advice-chat .media-advice-comparison-bubble { width: calc(100% - 38px); padding: 10px 8px; }
-  .media-advice-comparison th:first-child { width: 80px; text-align: center; }
-  .media-advice-dialog .media-advice-service-select { justify-content: center; min-width: 44px; gap: 4px; font-size: 12px; text-align: center; }
-  .media-advice-provider-icon { width: 32px; height: 28px; flex-basis: 32px; }
+  .media-advice-service-column { width: 64px; }
+  .media-advice-availability-column { width: 48px; }
+  .media-advice-language-column { width: auto; }
+  .media-advice-dialog .media-advice-service-select { width: 52px; gap: 0; padding: 2px; font-size: 12px; line-height: 1.2; }
   .media-advice-service-select[data-icon-state="loaded"] .media-advice-service-name { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-  .media-advice-service-name { min-width: 0; }
   .media-advice-attribution, .media-advice-other, .media-advice-footnote { margin-left: 38px; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -170,9 +170,12 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     if (!groups.length) return;
     const body = bubble(); body.classList.add('media-advice-comparison-bubble', 'media-advice-options');
     const table = node('table'); table.className = 'media-advice-comparison';
-    const caption = node('caption', 'Порівняння сервісів за відомостями джерел'); caption.className = 'media-advice-sr-only'; table.append(caption);
+    const caption = node('caption', 'Аудіо та субтитри — українською'); caption.className = 'media-advice-table-caption'; table.append(caption);
+    const columns = node('colgroup');
+    for (const kind of ['service', 'availability', 'language', 'language']) { const col = node('col'); col.className = `media-advice-${kind}-column`; columns.append(col); }
+    table.append(columns);
     const head = node('thead'), headings = node('tr');
-    for (const title of ['Сервіс', 'Укр. аудіо', 'Укр. субтитри']) { const th = node('th', title); th.setAttribute('scope', 'col'); headings.append(th); }
+    for (const title of ['Сервіс', 'Доступ', 'Аудіо', 'Субтитри']) { const th = node('th', title); th.setAttribute('scope', 'col'); headings.append(th); }
     head.append(headings); table.append(head);
     const rows = node('tbody'), controls = [], actions = node('div'); actions.className = 'media-advice-actions';
     actions.setAttribute('aria-label', 'Дії для обраного сервісу');
@@ -222,15 +225,17 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const cell = node('th'); cell.setAttribute('scope', 'row');
       const choose = button('', () => showActions(info)); choose.className = 'media-advice-service-select'; choose.setAttribute('aria-label', info.group.title); choose.setAttribute('title', info.group.title); choose.setAttribute('aria-pressed', 'false');
       if (Object.hasOwn(serviceIcons, info.group.key)) {
+        const slot = node('span'); slot.className = 'media-advice-icon-slot'; slot.setAttribute('aria-hidden', 'true');
         const icon = node('img'); icon.className = 'media-advice-provider-icon'; icon.alt = ''; icon.setAttribute('aria-hidden', 'true'); icon.width = 24; icon.height = 24;
         choose.dataset.iconState = 'pending';
-        const fallbackName = () => { icon.hidden = true; choose.dataset.iconState = 'failed'; };
+        const fallbackName = () => { icon.hidden = true; slot.hidden = true; choose.dataset.iconState = 'failed'; };
         icon.addEventListener('load', () => { if (icon.naturalWidth > 0) choose.dataset.iconState = 'loaded'; else fallbackName(); });
         icon.addEventListener('error', fallbackName);
-        icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; choose.append(icon);
+        icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; slot.append(icon); choose.append(slot);
       }
       const name = node('span', info.group.title); name.className = 'media-advice-service-name'; choose.append(name);
-      cell.append(choose, symbol(info.comparison?.availability ?? fallback)); tr.append(cell);
+      cell.append(choose); tr.append(cell);
+      const availability = node('td'); availability.append(symbol(info.comparison?.availability ?? fallback)); tr.append(availability);
       for (const field of ['audio', 'subtitles']) { const td = node('td'); td.append(symbol(info.comparison?.[field] ?? fallback)); tr.append(td); }
       controls.push({ info, tr, button: choose }); rows.append(tr);
     }
