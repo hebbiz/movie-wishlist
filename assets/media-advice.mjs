@@ -155,6 +155,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   }
   function attribution() {
     const details = node('details'); details.className = 'media-advice-attribution'; details.append(node('summary', 'Про джерела та обмеження'));
+    details.append(node('p', 'Це відомості джерел, не гарантія доступності. Невідоме не означає «немає». Мовні дані й посилання можуть стосуватися різних варіантів сервісу.'));
     details.append(node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'));
     const links = node('p');
     for (const [label, href] of [['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'], ['Streaming Availability API by Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/']]) {
@@ -234,9 +235,9 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       controls.push({ info, tr, button: choose }); rows.append(tr);
     }
     table.append(rows); body.append(table);
-    const legend = node('p', '● — джерело вказує Україну; ◐ — неповні дані сервісу; ◇ — інша країна. Мови: + — вказано; − — явно позначено відсутність; ? — невідомо; ± — дані різняться.'); legend.className = 'media-advice-legend';
-    const caution = node('p', 'Це відомості джерел, не гарантія доступності. Невідоме не означає «немає». Мовні дані й посилання можуть стосуватися різних варіантів сервісу.'); caution.className = 'media-advice-comparison-caution';
-    body.append(legend, caution, actions); showActions(selected);
+    const legend = node('details'); legend.className = 'media-advice-legend';
+    legend.append(node('summary', 'Що означають позначки'), node('p', '● — джерело вказує Україну; ◐ — неповні дані сервісу; ◇ — інша країна. Мови: + — вказано; − — явно позначено відсутність; ? — невідомо; ± — дані різняться.'));
+    body.append(legend, actions); showActions(selected);
   }
   function render() {
     const hadFocus = dialog.open && dialog.contains(doc.activeElement);
@@ -270,7 +271,6 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         if (!index) bubble('Знайшов кілька карток із підтвердженою відповідністю фільму. Оберіть, дані якої додати до відповіді.');
         chat.append(button(`Використати підтверджену картку ${index + 1}`, () => { if (!valid()) return invalidate(); session.choice = choice; render(); }));
       }
-      if (filmLocalizationFor()?.ukrainianAudio?.state === 'reported-positive') bubble('Є згадка про українське аудіо для фільму загалом. На кожній платформі його наявність ще треба перевірити.');
       comparison(groups);
       for (const row of [...(session.result.unmapped ?? []), ...(session.choice?.unmapped ?? [])]) {
         const other = node('p', `Інші платформи — ${row.name ?? 'назву не встановлено'}: лише для перегляду. Тип доступу й умови потрібно перевірити окремо.`); other.className = 'media-advice-other'; chat.append(other);

@@ -43,7 +43,7 @@ test('all six supported services interpret their own admitted matched block with
     const preview = makePreview(info.transferRow, { recommended_medium: 'DVD', purchase_url: '' });
     assert.equal(preview.after.purchase_url, services[key][1]); assert.equal(preview.rowId, original.id);
     assert.equal(JSON.stringify(original), before);
-    assert.match(summarizeMediaGroups([info]), /Кінобаз/);
+    assert.match(summarizeMediaGroups([info]), /є дані про українське аудіо/);
   });
 });
 
@@ -160,8 +160,8 @@ test('interpreted region without positive tracks is not attributed to source ter
     assert.equal(original.country, null); assert.equal(info.inferred, true); assert.equal(info.band, 'ua');
     const summary = summarizeMediaGroups([info]);
     assert.doesNotMatch(summary, /джерело вказує Україну|є українські/);
-    assert.match(summary, /правил|враховуємо|інтерпрет/);
-    assert.ok(summary.split(/[.!?]+/u).filter(part => part.trim()).length <= 2);
+    assert.match(summary, /доріжки поки не підтверджені|доріжки суперечливі/);
+    assert.ok(summary.split(/[.!?]+/u).filter(part => part.trim()).length <= 3);
   }
 });
 
@@ -281,7 +281,7 @@ test('independent positive tracks remain visible beside negative Kinobaza record
   assert.match(info.comparison.audio.label, /одному записі.*різні пропозиції/);
   assert.deepEqual(info.comparison.audio.sources, ['ua-row', 'kinobaza-block']);
   const summary = summarizeMediaGroups([info]);
-  assert.match(summary, /один із записів повідомляє українське аудіо.*інші дані.*різняться/);
+  assert.match(summary, /є згадка про українське аудіо.*дані різняться між варіантами/);
   assert.doesNotMatch(summary, /Кінобаз.*є українські/);
   assert.ok([direct, kino].includes(info.transferRow)); assert.equal(JSON.stringify([direct, kino]), before);
 });
@@ -329,4 +329,63 @@ test('an unbound matched localization field retains its scope-qualified conflict
     const excluded = view([{ ...unbound, ...extra }], { filmId });
     assert.equal(excluded.comparison.audio.state, 'unknown');
   }
+});
+
+test('natural advice counts services rather than repeated source records and follows the existing ranked choice', () => {
+  const rent = row('motn:rent', 'rakuten', { audio: { state: 'reported', ukrainian: [{ language: 'uk' }] } });
+  const purchase = { ...rent, id: 'motn:purchase' };
+  const single = presentMediaGroups([rent, purchase], { filmId }), before = JSON.stringify(single);
+  const answer = summarizeMediaGroups(single);
+  assert.match(answer, /^Знайшов один варіант\. Мій вибір — Rakuten TV: є дані про українське аудіо\./);
+  assert.doesNotMatch(answer, /кілька|купівл|оренд|гарант|точно доступн|TMDb|Movie of the Night|ledger|правилом застосунку/);
+  assert.equal(JSON.stringify(single), before, 'summary does not alter source records, transfer rows or comparison state');
+
+  const several = presentMediaGroups([row('tmdb:apple', 'apple'), rent], { filmId });
+  assert.deepEqual(several.map(info => info.group.key), ['rakuten', 'apple']);
+  assert.match(summarizeMediaGroups(several), /^Знайшов кілька варіантів\. Мій вибір — Rakuten TV/);
+  assert.ok(several.every(info => [rent, purchase].includes(info.transferRow) || info.group.key === 'apple'));
+});
+
+test('natural advice keeps one brief caveat while preserving positive, subtitles-only and unknown evidence', () => {
+  const examples = [
+    [view([block('rakuten')], { filmId }), /Мій вибір — Rakuten TV: є дані про українське аудіо/],
+    [view([block('apple', {}, { audio: undefined })], { filmId }), /Apple TV \/ iTunes: є дані про українські субтитри, а українське аудіо не підтверджене/],
+    [view([row('tmdb:ua', 'prime')], { filmId }), /Prime Video, але українські доріжки поки не підтверджені/],
+    [view([block('netflix', {}, { audio: sign('reported-negative'), subtitles: sign('reported-negative', 'subtitles') })], { filmId }), /українські доріжки поки не підтверджені/],
+    [view([row('motn:foreign', 'hbo', { country: 'PL', audio: { state: 'reported', ukrainian: [{ language: 'uk' }] } })], { filmId }), /доступність в Україні поки не встановлена/],
+  ];
+  for (const [info, expected] of examples) {
+    const before = JSON.stringify(info), answer = summarizeMediaGroups([info]);
+    assert.match(answer, expected);
+    assert.equal(answer.match(/Інформація не завжди точна, тож варто перевіряти\./gu)?.length, 1);
+    assert.ok(answer.split(/[.!?]+/u).filter(part => part.trim()).length <= 3);
+    assert.doesNotMatch(answer, /немає українських|доріжки відсутні|гарант|правилом застосунку|TMDb|Movie of the Night/);
+    assert.equal(JSON.stringify(info), before);
+  }
+});
+
+test('natural advice keeps mixed and conflict-only language uncertainty without inventing one common offer', () => {
+  const audio = row('motn:audio', 'rakuten', { audio: { state: 'reported', ukrainian: [{ language: 'uk' }] } });
+  const mixedAudio = view([audio, block('rakuten', {}, { audio: sign('reported-negative'), subtitles: unknown() })], { filmId });
+  assert.match(summarizeMediaGroups([mixedAudio]), /є згадка про українське аудіо, але дані різняться між варіантами/);
+  const subtitles = row('motn:subtitles', 'apple', { subtitles: { state: 'reported', ukrainian: [{ language: 'uk' }] } });
+  const mixedSubtitles = view([subtitles, block('apple', {}, { audio: unknown(), subtitles: sign('reported-negative', 'subtitles') })], { filmId });
+  assert.match(summarizeMediaGroups([mixedSubtitles]), /є згадка про українські субтитри, але дані різняться між варіантами/);
+  const audioConflict = view([block('megogo', {}, { audio: sign('conflicting') })], { filmId });
+  assert.match(summarizeMediaGroups([audioConflict]), /є дані про українські субтитри, але щодо українського аудіо є суперечності/);
+  const conflictOnly = view([block('hbo', {}, { audio: sign('conflicting'), subtitles: unknown() })], { filmId });
+  const answer = summarizeMediaGroups([conflictOnly]);
+  assert.match(answer, /Можна перевірити HBO Max, але дані про українські доріжки суперечливі/);
+  assert.doesNotMatch(answer, /Мій вибір|є дані про українське аудіо|немає|відсутн/);
+});
+
+test('empty and withheld advice never assert unavailability or borrow a film-level audio badge', () => {
+  const refused = view([block('apple', { identityStatus: 'unresolved' })], { filmId });
+  const unknownTracks = view([row('tmdb:ua', 'apple', { filmAudio: { ukrainian: true } })], { filmId });
+  for (const groups of [[], [refused]]) {
+    const answer = summarizeMediaGroups(groups);
+    assert.equal(answer, 'Поки не знайшов підтверджених варіантів для вибору. Це не означає, що фільм недоступний.');
+    assert.doesNotMatch(answer, /Мій вибір|є дані про українське аудіо/);
+  }
+  assert.match(summarizeMediaGroups([unknownTracks]), /українські доріжки поки не підтверджені/);
 });

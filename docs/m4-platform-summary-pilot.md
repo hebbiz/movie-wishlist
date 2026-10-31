@@ -295,3 +295,44 @@ Authored `mobile-service-icons-{375,420}.png` and
 These are Edge viewport tests, not real iPhone/Safari/VoiceOver validation.
 Syntax, whitespace/scope and14-doc/455-link/280-anchor checks passed. Server/SQL,
 native PostgreSQL and Windows lifecycle were not rerun: dependencies unchanged.
+
+### Natural dialog format — 2026-10-31
+
+From develop `9f0f25e33d01fd389aad61baa22329bce595a289` after merged #207.
+Mykola's first answer is now up to three short sentences: one/several service
+results, the existing top-ranked service and actual language/uncertainty reason,
+then «Інформація не завжди точна, тож варто перевіряти». Example on authored
+positive evidence: «Знайшов кілька варіантів. Мій вибір — Rakuten TV: є дані
+про українське аудіо. Інформація не завжди точна, тож варто перевіряти».
+This is a source-claim-based suggestion, not verified availability or one merged
+offer. Empty/withheld results do not imply unavailable; unknown, conflicting,
+mixed-variant and non-UA evidence retain their limits. Counts refer to services,
+not repeated source observations. Sorting, category/service priority and source
+records are unchanged; no LLM or new facts are introduced.
+
+The separate general-film audio bubble is removed, but the film-level badge
+remains in the unchanged diagnostic report and cannot become provider tracks.
+The comparison retains the same columns, symbols, accessible per-symbol labels,
+mobile emblems/fallback, selected service/link and actions. A single native
+`Що означають позначки` details control hides the legend by default. The repeated
+table caution moves intact into the existing `Про джерела та обмеження` details.
+Visible stale-data, partial-source and request-error notices remain unchanged.
+Details/scroll are kept with the existing DOM on close/reopen, without discovery.
+Preview → explicit local transfer → ordinary Save, diagnostic copy/fallback and
+session isolation are unchanged. No initApp/global lifecycle/auth, other Mykola
+context, server/schema/flag/retention or production change; no live source calls,
+Wishlist writes, merge or deployment in this task.
+
+Validation:83/83 targeted offline/mock checks and30/30 in the three existing
+browser suites passed,0 failures/skips. Authored positive/single/several,
+subtitles-only, unknown/mixed/conflicting, empty/withheld results retain their
+evidence scope and one short caveat. Browser coverage includes1280×900,
+375×812,420×912,820×1180; closed native legend/attribution, expansion and retained
+open/scroll on re-init/reopen with one discovery; film badge reported but not
+promoted to a bubble/track; visible partial/stale/error states, exact links,
+preview/local transfer/ordinary Save and existing isolation/pending/access guards.
+`natural-dialog-{375,420}.png` were visually inspected outside Git. Edge viewport
+tests are not native iPhone/Safari/VoiceOver or live-source validation. No
+assertion/timeout weakening. Syntax, whitespace/scope and14-doc/455-link/
+280-anchor checks passed. Server/SQL/native PostgreSQL and Windows lifecycle
+were not repeated: dependencies unchanged.

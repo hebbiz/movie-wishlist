@@ -38,12 +38,12 @@ function ownBlock(key, audio = 'reported-positive', subtitles = 'reported-positi
       audio: { state: audio, language: 'uk', evidence: [{ label: 'Укр. звук (стерео)', literal: audio === 'reported-positive' ? '+' : '−', state: audio === 'reported-positive' ? 'positive' : 'negative', formatLiteral: 'стерео' }] },
       subtitles: { state: subtitles, language: 'uk', evidence: [] } } };
 }
-async function harness(t, rows) {
+async function harness(t, rows, extra = {}) {
   const entry = new Element('button'), body = new Element('body'), state = { output: null, calls: 0, opens: [] };
   const doc = { body, activeElement: entry, createElement: tag => new Element(tag), createTextNode: text => new Element('text', text),
     defaultView: { scrollY: 0, scrollTo() {}, requestAnimationFrame(callback) { callback(); }, navigator: {}, open(...args) { state.opens.push(args); } } };
   const control = createMediaAdvice({ document: doc, entry, context: () => ({ userId: 'u', groupId: 'g', imdbId: 'tt1234567', formSession: 's', title: 'Authored film' }),
-    capability: async () => true, discover: async () => { state.calls++; return { rows, film: { id: filmId, imdbId: 'tt1234567' } }; },
+    capability: async () => true, discover: async () => { state.calls++; return { rows, film: { id: filmId, imdbId: 'tt1234567' }, ...extra }; },
     readForm: () => ({ recommended_medium: 'DVD', purchase_url: '' }), writeForm: fields => state.output = fields });
   t.after(() => control.invalidate());
   await entry.click(); await new Promise(resolve => setTimeout(resolve, 0));
@@ -63,7 +63,13 @@ test('all six services have one accessible comparison with scoped symbols, no pr
     assert.match(symbols[0].attributes['aria-label'], /Кінобаз|неповн/);
     for (const symbol of symbols.slice(1)) assert.match(symbol.attributes['aria-label'], /Кінобаз.*правило застосунку/);
     assert.equal(control.dialog.querySelectorAll('.media-advice-legend').length, 1);
-    assert.equal(control.dialog.querySelectorAll('.media-advice-comparison-caution').length, 1);
+    const legend = control.dialog.querySelector('.media-advice-legend');
+    assert.equal(legend.tagName, 'DETAILS'); assert.equal(legend.open, false);
+    assert.equal(legend.querySelector('summary').textContent, 'Що означають позначки');
+    assert.equal(control.dialog.querySelectorAll('.media-advice-comparison-caution').length, 0);
+    const attribution = control.dialog.querySelector('.media-advice-attribution');
+    assert.equal(attribution.open, false);
+    assert.match(attribution.textContent, /не гарантія доступності.*Невідоме не означає «немає».*різних варіантів сервісу/);
     assert.match(text, /не незалежна перевірка доступності/);
     assert.doesNotMatch(text, /PRICE_SENTINEL|USD|Ціна|Варіант перегляду/); assert.equal(state.output, null);
     await button('Відкрити посилання').click();
@@ -145,4 +151,16 @@ test('service name remains available until a usable emblem loads and falls back 
   await button('Обрати').click(); await button('Перенести в картку').click();
   assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: original.link.href });
   assert.equal(state.calls, 1); assert.deepEqual(state.opens, []);
+});
+
+test('a film-level audio badge remains in diagnostics without adding a separate Mykola bubble or provider track', async t => {
+  const row = ownBlock('apple', 'unknown', 'unknown');
+  row.kinobazaLocalization.audio = { state: 'unknown', evidence: [] };
+  const { control, state, button } = await harness(t, [row], { filmLocalization: { ukrainianAudio: { state: 'reported-positive' } } });
+  assert.doesNotMatch(control.dialog.textContent, /Є згадка про українське аудіо для фільму загалом/);
+  const symbols = control.dialog.querySelector('.media-advice-row').querySelectorAll('.media-advice-symbol');
+  assert.deepEqual(symbols.map(symbol => symbol.textContent), ['◐', '?', '?']);
+  await button('Діагностичний звіт').click();
+  assert.match(control.dialog.querySelector('textarea').value, /Film-level UA audio badge: reported-positive/);
+  assert.equal(state.calls, 1); assert.equal(state.output, null); assert.deepEqual(state.opens, []);
 });

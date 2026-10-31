@@ -4144,7 +4144,7 @@ body.invite-page.app-ready .container {
 .media-advice-comparison th[scope="row"] > .media-advice-symbol { position: absolute; top: 50%; right: 3px; transform: translateY(-50%); font-size: 16px; }
 .media-advice-symbol[data-state="reported"] { color: #bce0bb; }
 .media-advice-symbol[data-state="partial"], .media-advice-symbol[data-state="mixed"], .media-advice-symbol[data-state="conflicting"] { color: #e5c77e; }
-.media-advice-chat .media-advice-legend, .media-advice-chat .media-advice-comparison-caution { margin-top: 10px; font-size: 12px; line-height: 1.5; color: #c9c3b7; }
+.media-advice-chat .media-advice-legend { margin-top: 8px; font-size: 12px; line-height: 1.5; color: #c9c3b7; }
 .media-advice-actions { border-top: 1px solid #54504a; margin-top: 12px; padding-top: 12px; }
 .media-advice-actions > p { font-size: 13px; }
 .media-advice-dialog .media-advice-actions label { display: block; font-size: 13px; }
