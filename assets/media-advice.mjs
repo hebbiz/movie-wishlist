@@ -1,7 +1,7 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
 import { groupMediaRows, presentMediaGroups, summarizeMediaGroups } from './media-advice-presentation.mjs';
-import { groupLinkChoices } from './media-advice-link-choices.mjs';
+import { groupLinkChoices, preferredAppleLinkChoice } from './media-advice-link-choices.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
 const serviceIcons = Object.freeze({ apple: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
@@ -16,6 +16,10 @@ export function transferFor(row) {
 // The representative URL/row stays original; all observations stay in diagnostics.
 export function linkChoicesFor(info) {
   if (info?.group?.readOnly) return [];
+  if (info?.group?.key === 'apple') {
+    const choice = preferredAppleLinkChoice(info.group.rows, { preferredRow: info.transferRow });
+    return choice ? [choice] : [];
+  }
   return groupLinkChoices(info?.group?.rows, { providerKey: info?.group?.key, preferredRow: info?.transferRow });
 }
 export function makePreview(row, form, { clearMissing = false } = {}) {
@@ -139,6 +143,13 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const sourceDetails = node('details'); sourceDetails.append(node('summary', 'Джерельні деталі варіантів'));
     for (const group of groupMediaRows(rowsFor())) for (const [index, row] of group.rows.entries()) {
       sourceDetails.append(node('h4', `${group.title} · варіант ${index + 1}`), node('pre', JSON.stringify(mediaSourceDetails(row), null, 2)));
+      // Apple alternatives stay inspectable on demand, not in the primary
+      // chooser or copyable short report. Text only: no automatic navigation.
+      const transfer = group.key === 'apple' ? transferFor(row) : null;
+      if (transfer?.link.transferable) {
+        const address = node('details'); address.className = 'media-advice-link-address media-advice-diagnostic-link';
+        address.append(node('summary', 'Адреса вихідного запису'), node('p', transfer.url)); sourceDetails.append(address);
+      }
     }
     for (const row of [...(session.result?.unmapped ?? []), ...(session.choice?.unmapped ?? [])]) {
       sourceDetails.append(node('h4', 'Інша платформа · лише для перегляду'), node('pre', JSON.stringify(mediaSourceDetails(row), null, 2)));

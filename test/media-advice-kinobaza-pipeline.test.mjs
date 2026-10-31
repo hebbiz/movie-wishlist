@@ -100,3 +100,28 @@ test('recovered irrelevant image errors do not bypass unresolved director or sta
     assert.deepEqual(result.rows, []); assert.equal(result.filmLocalization, null); assert.deepEqual(groups, []);
   }
 });
+
+test('actual authored extraction distinguishes top provider block from UA accordion before choosing one original Apple link', async () => {
+  const tv = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authored?playableId=tvs.sbd.9001%3A999999';
+  const uaHref = `https://click.justwatch.com/a?cx=AUTHORED&r=${encodeURIComponent(tv)}&uct_country=ua`;
+  const anchor = `<a title="Дивитись / Купити на Apple TV Store"${attribute(uaHref)}><img alt="Apple TV Store"></a>`;
+  for (const upperHref of [tv, hrefs.apple, null]) {
+    const body = markup({ apple: upperHref }).replaceAll('collapseCZ', 'collapseUA').replace('Доступно в Чехії', 'Доступно в Україні')
+      .replace('data-bs-parent="#availabilityAccordion">', `data-bs-parent="#availabilityAccordion">${anchor}`);
+    const extracted = await fetchAssistedKinobaza(sourceURL, film, async () => new Response(body, { headers: { 'content-type': 'text/html' } }));
+    assert.equal(extracted.identity.status, 'matched');
+    const result = composeDiscovery(film, { tmdb: { result: null }, motn: { result: null }, kinobaza: { status: extracted.status, result: extracted } });
+    const before = JSON.stringify(result.rows), info = presentMediaGroups(result.rows, { filmId: film.id }).find(info => info.group.key === 'apple');
+    const ua = info.group.rows.find(row => row.country === 'UA'), upper = info.group.rows.find(row => row.country === null);
+    assert.equal(ua.territoryBasis, 'Explicit Ukrainian section; not entitlement');
+    assert.equal(ua.countrySignal.href, uaHref); assert.equal(ua.countrySignal.territory.code, 'UA');
+    assert.equal(ua.kinobazaLocalization, undefined);
+    assert.equal(upper.territoryBasis, 'Outside territory section'); assert.equal(upper.linkAudit.blockAssociation, 'associated');
+    assert.equal(upper.kinobazaLocalization.href, upperHref); assert.equal(upper.countrySignal, null);
+    const choices = linkChoicesFor(info);
+    assert.equal(choices.length, 1); assert.strictEqual(choices[0].row, upperHref ? upper : ua);
+    assert.equal(choices[0].href, upperHref ?? uaHref);
+    assert.equal(makePreview(choices[0].row, { recommended_medium: '', purchase_url: '' }).after.purchase_url, upperHref ?? uaHref);
+    assert.equal(info.group.rows.length, 2); assert.equal(JSON.stringify(result.rows), before);
+  }
+});

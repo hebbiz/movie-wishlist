@@ -67,7 +67,7 @@ function directPointer(href, providerKey) {
     // raw values and order, so only documented tracking differences disappear.
     qualifiers.push([key, 'raw', value]);
   }
-  return { country, key: JSON.stringify([providerKey, namespace, country, card, qualifiers]) };
+  return { country, hostname: url.hostname, key: JSON.stringify([providerKey, namespace, country, card, qualifiers]) };
 }
 
 function declaredPointer(href, providerKey) {
@@ -110,6 +110,56 @@ function semanticKey(row, href, providerKey) {
     else return null;
   }
   return JSON.stringify([pointer.key, editions]);
+}
+
+const blockBoundaryIssues = new Set(['ambiguous-provider-block', 'unsupported-provider-block', 'provider-block-count-limit', 'block-field-count-limit']);
+const label = value => typeof value === 'string' ? value.normalize('NFC').trim().toLowerCase() : null;
+function appleOrigin(row) {
+  // Source identity/section evidence is issued by the server projection, not
+  // inferred from a hostname, person/movie ID, language badge or missing country.
+  if (row.provenance?.source !== 'Kinobaza HTML') return 'unestablished';
+  const block = row.kinobazaLocalization;
+  if (row.country === null && row.territoryBasis === 'Outside territory section' &&
+      /^kinobaza:block:\d+$/.test(block?.blockId ?? '') && row.linkAudit?.blockAssociation === 'associated' &&
+      block.territory === null && block.href === row.link.href && label(block.provider) &&
+      label(block.provider) === label(row.provider.sourceName) &&
+      (block.issues === undefined || Array.isArray(block.issues)) &&
+      !(block.issues ?? []).some(issue => blockBoundaryIssues.has(issue))) return 'top-provider-block';
+  const signal = row.countrySignal;
+  if (!block && row.country === 'UA' && row.territoryBasis === 'Explicit Ukrainian section; not entitlement' &&
+      row.provenance.upstream === 'JustWatch section (shared with TMDb)' &&
+      signal?.state === 'source-section-claim' && signal.territory?.code === 'UA' &&
+      signal.href === row.link.href && label(signal.provider) &&
+      label(signal.provider) === label(row.provider.sourceName)) return 'ua-country-section';
+  return 'unestablished';
+}
+
+function appleHost(href) {
+  // A safe native URL is already admitted by the shared policy. A wrapper
+  // contributes only an independently validated declared target, never a
+  // verified redirect or a replacement URL for opening/transfer.
+  if (classifyLink(href, { key: 'apple' }).kind === 'exact-card-unverified') return new URL(href).hostname;
+  return declaredPointer(href, 'apple')?.hostname ?? null;
+}
+
+export function preferredAppleLinkChoice(rows, { preferredRow } = {}) {
+  const eligible = (Array.isArray(rows) ? rows : []).filter(row => row?.identityStatus === 'matched' &&
+    !row.providerConflict && row.provider?.key === 'apple' && classifyLink(row.link?.href, row.provider).transferable);
+  const priorities = [
+    ['top-provider-block', 'tv.apple.com'],
+    ['top-provider-block', 'itunes.apple.com'],
+    ['ua-country-section', 'tv.apple.com'],
+  ];
+  // Inspect original rows before semantic deduplication: its representative
+  // could be a regional observation of the same pointer, hiding top-block origin.
+  for (const [origin, hostname] of priorities) {
+    const row = eligible.find(row => appleOrigin(row) === origin && appleHost(row.link.href) === hostname);
+    if (row) return { row, href: row.link.href, members: [row], equivalence: 'ui-preference-not-equivalence', selectionBasis: `${origin}/${hostname}` };
+  }
+  // No Kinobaza (or unestablished origin): preserve the existing eligible
+  // presentation preference, then stable input order. No link is invented.
+  const row = eligible.includes(preferredRow) ? preferredRow : eligible[0];
+  return row ? { row, href: row.link.href, members: [row], equivalence: 'ui-preference-not-equivalence', selectionBasis: 'existing-preference-or-stable-order' } : null;
 }
 
 export function groupLinkChoices(rows, { providerKey, preferredRow } = {}) {

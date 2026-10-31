@@ -88,14 +88,14 @@ test('four authored Supergirl-shaped Rakuten rows offer only distinct literal ad
   assert.equal(single.group.rows.length, 4, 'deduplication never removes source observations');
 });
 
-test('link choices preserve a preferred original representative without normalizing queries, encoding or fragments', () => {
+test('single Apple fallback preserves the preferred original URL without normalizing queries, encoding or fragments', () => {
   const href = 'https://click.justwatch.com/a?token=Authored%2fOnly#Anchor';
   const first = authoredRow(href), preferred = { ...authoredRow(href), id: 'preferred-original', access: { state: 'reported', value: 'purchase' } };
   const changed = { ...authoredRow(href.replace('%2f', '%2F')), id: 'different-literal' };
   const fragment = { ...authoredRow(href.replace('#Anchor', '#Other')), id: 'different-fragment' };
   const group = { key: 'apple', rows: [first, preferred, changed, fragment], readOnly: false };
   const before = JSON.stringify(group), links = linkChoicesFor({ group, transferRow: preferred });
-  assert.deepEqual(links.map(link => link.href), [href, changed.link.href, fragment.link.href]);
+  assert.deepEqual(links.map(link => link.href), [href]);
   assert.strictEqual(links[0].row, preferred); assert.equal(JSON.stringify(group), before);
   assert.equal(makePreview(links[0].row, { recommended_medium: 'DVD', purchase_url: '' }).rowId, preferred.id);
 });

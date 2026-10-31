@@ -51,6 +51,27 @@ async function harness(t, rows, extra = {}) {
   return { control, state, button };
 }
 
+test('unselected admitted Apple URLs remain local diagnostic text only; unsafe/refused URLs and copied report stay withheld', async t => {
+  const first = ownBlock('apple'), second = { ...ownBlock('apple'), id: 'motn:alternative',
+    link: { href: 'https://tv.apple.com/ua/movie/authored/umc.cmc.alternative?playableId=tvs.sbd.9001%3A456' } };
+  const unsafe = { ...ownBlock('apple'), id: 'kinobaza:unsafe', link: { href: 'https://user:PRIVATE_SECRET@tv.apple.com/ua/movie/authored/umc.cmc.unsafe' } };
+  const refused = { ...ownBlock('apple'), id: 'kinobaza:refused', identityStatus: 'unresolved', link: { href: 'https://itunes.apple.com/ua/movie/id987654' } };
+  const rows = [first, second, unsafe, refused], before = JSON.stringify(rows);
+  const { control, state, button } = await harness(t, rows);
+  await button('Діагностичний звіт').click();
+  const addresses = control.dialog.querySelectorAll('.media-advice-diagnostic-link');
+  assert.equal(addresses.length, 2);
+  assert.deepEqual(addresses.map(address => address.querySelector('p').textContent), [first.link.href, second.link.href]);
+  assert.ok(addresses.every(address => address.tagName === 'DETAILS' && !address.open && !address.querySelector('a')));
+  assert.equal(control.dialog.querySelectorAll('pre').length, rows.length);
+  const report = control.dialog.querySelector('textarea').value;
+  for (const row of rows) assert.ok(!report.includes(row.link.href));
+  assert.ok(!control.dialog.textContent.includes('PRIVATE_SECRET'));
+  assert.ok(!control.dialog.textContent.includes(refused.link.href));
+  assert.equal(JSON.stringify(rows), before); assert.equal(state.calls, 1);
+  assert.deepEqual(state.opens, []); assert.equal(state.output, null);
+});
+
 test('all six services have one accessible comparison with scoped symbols, no prices and exact original URL transfer only on apply', async t => {
   for (const key of Object.keys(services)) await t.test(key, async t => {
     const original = ownBlock(key), before = JSON.stringify(original), { control, state, button } = await harness(t, [original]);
