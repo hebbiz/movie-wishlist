@@ -18,7 +18,7 @@ test('M4 retained document: revalidation, expiry and context boundaries without 
   t.after(() => new Promise(r => { server.closeAllConnections(); server.close(r); }));
   const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href);
   const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || 'msedge', headless: true }); t.after(() => browser.close());
-  for (const mode of ['retained', 'expiry', 'expiry-timer', 'expiry-pending-apply', 'expiry-stale-apply', 'report-age', 'discovery-error', 'pending-revalidation', 'inflight', 'logout', 'user', 'group', 'film', 'list', 'form-session', 'access-revoked', 'access-error']) await t.test(mode, async t => {
+  for (const mode of ['ordinary-beta', 'diagnostics-revoked', 'diagnostics-revoked-closed', 'finish-diagnostics-revoked', 'finish-access-revoked', 'retained', 'expiry', 'expiry-timer', 'expiry-pending-apply', 'expiry-stale-apply', 'report-age', 'discovery-error', 'pending-revalidation', 'inflight', 'logout', 'user', 'group', 'film', 'list', 'form-session', 'access-revoked', 'access-error']) await t.test(mode, async t => {
     const page = await browser.newPage({ viewport: { width: 375, height: 812 } }); t.after(() => page.close());
     const external = [];
     await page.route('**/*', route => {
@@ -30,20 +30,26 @@ test('M4 retained document: revalidation, expiry and context boundaries without 
     await page.evaluate(async mode => {
       const { createMediaAdvice } = await import('/assets/media-advice.mjs');
       window.c = { userId: 'u', groupId: 'g', imdbId: 'tt1234567', formSession: 's',title:'Authored retained film',year:2020 };
-      window.clock = 1000; window.allowed = true; window.accessError = false; window.writes = 0; window.calls = 0; window.storageWrites = 0; window.applyChecks = 0; window.discoveryContexts = [];
+      window.clock = 1000; window.allowed = true; window.diagnosticsAllowed = mode !== 'ordinary-beta'; window.accessError = false; window.writes = 0; window.calls = 0; window.storageWrites = 0; window.applyChecks = 0; window.discoveryContexts = [];
       Storage.prototype.setItem = () => { storageWrites++; throw Error('No storage'); };
       window.row = { id: 'authored', identityStatus: 'matched',country:'UA', provider: { key: 'apple', name: 'Apple TV Store' }, provenance: { source: 'AUTHORED' }, link: { href: 'https://itunes.apple.com/ua/movie/id123' } };
       window.otherRow = {...row,id:'authored-other',country:'GB',link:{href:'https://itunes.apple.com/gb/movie/id456'}};
       window.control = createMediaAdvice({ document, entry: document.querySelector('#entry'), context: () => c, now: () => clock,
-        capability: async () => { if (accessError) throw Error('AUTHORED'); return allowed; },
+        capability: async () => { if (accessError) throw Error('AUTHORED'); return { mykola_media_advice: allowed, mykola_media_advice_diagnostics: allowed && diagnosticsAllowed }; },
         validateApply: () => { applyChecks++; return new Promise(r => window.releaseApply = r); },
         renewContext: () => c = { ...c, formSession: 'renewed' },
-        discover: async c => { calls++; discoveryContexts.push({...c}); if (mode === 'discovery-error') throw Error('AUTHORED PRIVATE BODY'); if (mode === 'inflight') await new Promise(r => window.releaseDiscovery = r); return { rows: [row,otherRow],film:{title:'Authored retained film',year:2020,imdbId:'tt1234567'} }; },
+        discover: async c => { calls++; discoveryContexts.push({...c}); if (mode === 'discovery-error') throw Error('AUTHORED PRIVATE BODY'); if (mode === 'inflight') await new Promise(r => window.releaseDiscovery = r); return { rows: [row,otherRow],film:{title:'Authored retained film',year:2020,imdbId:'tt1234567'}, ...(mode.startsWith('finish-') ? { capabilities: { mykola_media_advice: mode !== 'finish-access-revoked', mykola_media_advice_diagnostics: false } } : {}) }; },
         readForm: () => ({ recommended_medium: document.querySelector('#medium').value, purchase_url: document.querySelector('#url').value }),
         writeForm: fields => { writes++; document.querySelector('#medium').value = fields.recommended_medium; document.querySelector('#url').value = fields.purchase_url; },
       });
     }, mode);
     await page.locator('#entry').click();
+    if (mode === 'finish-access-revoked') {
+      await page.waitForFunction(() => calls === 1 && !control.dialog.open);
+      assert.equal(await page.locator('.media-advice-row,textarea,pre').count(), 0);
+      assert.equal(await page.evaluate(() => writes), 0); assert.deepEqual(external, []);
+      await page.evaluate(() => control.invalidate()); return;
+    }
     if (mode === 'discovery-error') {
       await page.waitForFunction(() => control.dialog.textContent.includes('Зараз не вдалося отримати відповідь'));
       assert.equal(await page.locator('.mykola-typing-bubble').count(),0);
@@ -64,7 +70,28 @@ test('M4 retained document: revalidation, expiry and context boundaries without 
     }
     await page.getByRole('button', { name: 'Обрати', exact: true }).waitFor();
     assert.equal(await page.getByRole('button',{name:'Знайти варіанти',exact:true}).count(),0);
-    if (mode === 'report-age') {
+    if (mode === 'ordinary-beta' || mode === 'finish-diagnostics-revoked') {
+      assert.equal(await page.locator('.media-advice-beta').innerText(), 'Beta');
+      assert.equal(await page.locator('.media-advice-row').count(), 1);
+      assert.equal(await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).count(), 0);
+      assert.equal(await page.locator('textarea,pre,.media-advice-report-bubble').count(), 0);
+      await page.keyboard.press('Escape'); await page.locator('#entry').click();
+      // A new capability on reopen is authoritative; the finished run did not
+      // expose a report when its own fresh diagnostics capability was false.
+      if (mode === 'ordinary-beta') assert.equal(await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).count(), 0);
+      assert.equal(await page.evaluate(() => calls), 1);
+    } else if (mode.startsWith('diagnostics-revoked')) {
+      await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+      assert.equal(await page.locator('textarea').count(), 1);
+      if (mode === 'diagnostics-revoked-closed') await page.keyboard.press('Escape');
+      await page.evaluate(async mode => { diagnosticsAllowed = false; if (mode === 'diagnostics-revoked') await control.refresh(); }, mode);
+      if (mode === 'diagnostics-revoked-closed') await page.locator('#entry').click();
+      assert.equal(await page.locator('textarea,pre,.media-advice-report-bubble').count(), 0, 'revocation clears even an already opened report rather than merely hiding it');
+      assert.equal(await page.locator('.media-advice-chat').isVisible(), true);
+      assert.equal(await page.locator('.media-advice-row').count(), 1);
+      assert.equal(await page.getByRole('button', { name: 'Скопіювати короткий звіт', exact: true }).count(), 0);
+      assert.equal(await page.evaluate(() => calls), 1);
+    } else if (mode === 'report-age') {
       await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>window.copiedReport=text}}));
       await page.getByRole('button',{name:'Діагностичний звіт'}).click();
       assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/within local 30-minute age limit/);

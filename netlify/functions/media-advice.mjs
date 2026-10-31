@@ -3,6 +3,7 @@ import { discoverMedia } from '../lib/media-advice-service.mjs';
 import { createKinobazaResolver } from '../lib/kinobaza-resolver.mjs';
 import { createDeadline, HandlerDeadline } from '../lib/media-advice-deadline.mjs';
 import { mediaRuntime } from '../lib/media-advice-runtime.mjs';
+import { mediaCapabilities, productMediaResult } from '../lib/media-advice-response.mjs';
 const uuid = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 const reply = (status, payload) => new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
 
@@ -44,13 +45,16 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
       const args = { p_user: auth.user.id, p_group: data.groupId, p_imdb: data.imdbId, p_list: data.listId ?? null, p_form: data.formSession };
       rpc = async (p_op, extra = {}) => {
         const { data: result, error } = await deadline.wait(signal => {
-          const query = db.rpc('media_advice_action', { ...args, p_op, ...extra });
+          const query = db.rpc('media_advice_beta_action', { ...args, p_op, ...extra });
           return typeof query.abortSignal === 'function' ? query.abortSignal(signal) : query;
         }, { finish: p_op === 'finish' });
         if (error || !result) throw Error('access-or-budget-denied');
         return result;
       };
-      if (data.action === 'capability') return reply(200, await rpc('capability'));
+      if (data.action === 'capability') {
+        const capabilities = mediaCapabilities(await rpc('capability'));
+        return capabilities.mykola_media_advice ? reply(200, capabilities) : reply(403, { status: 'access-unavailable' });
+      }
       session = await rpc('start');
       const result = await deadline.wait(signal => run({ imdbId: data.imdbId, tmdbToken: env('TMDB_READ_ACCESS_TOKEN'), motnKey: env('MOTN_API_KEY'),
         reserve: stage => rpc('reserve', { p_session: session.id, p_stage: stage }),
@@ -62,7 +66,9 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
       result.runtime = mediaRuntime(context); // Never read build/run identity from browser JSON.
       const serialized = JSON.stringify(result);
       if (['SUPABASE_SERVICE_ROLE_KEY', 'TMDB_READ_ACCESS_TOKEN', 'MOTN_API_KEY', 'TAVILY_API_KEY'].map(env).filter(Boolean).some(secret => serialized.includes(secret))) return reply(502, { status: 'unsafe-source-content-withheld' });
-      return reply(200, { result });
+      const capabilities = mediaCapabilities(receipt);
+      if (!capabilities.mykola_media_advice) return reply(403, { status: 'access-unavailable' });
+      return reply(200, { result: capabilities.mykola_media_advice_diagnostics ? { ...result, capabilities } : productMediaResult(result, capabilities) });
     } catch (error) {
       // One best-effort finish, never a retry/refund. A lost RPC reply may still
       // have committed. Suppress source results when final authorization fails.

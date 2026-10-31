@@ -1,11 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makePreview, applyPreview, transferFor, linkPreview, linkChoicesFor } from '../assets/media-advice.mjs';
+import { makePreview, applyPreview, transferFor, linkPreview, linkChoicesFor, normalizeMediaCapabilities } from '../assets/media-advice.mjs';
 import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
 import { authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
 export const authoredRow = (href = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authored') => ({
   id: 'motn:authored', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' },
   country: 'UA', access: { state: 'reported', value: 'rental' }, provenance: { source: 'AUTHORED MOTN' }, link: { href },
+});
+
+test('Beta capability is exact and diagnostics require their own explicit authorized capability', () => {
+  for (const value of [false, null, undefined, {}, { mykola_media_advice: false, mykola_media_advice_diagnostics: true }, { mykola_media_advice: 'true' }]) {
+    assert.deepEqual(normalizeMediaCapabilities(value), { mykola_media_advice: false, mykola_media_advice_diagnostics: false });
+  }
+  for (const value of [true, { mykola_media_advice: true }, { mykola_media_advice: true, mykola_media_advice_diagnostics: 'true' }]) {
+    assert.deepEqual(normalizeMediaCapabilities(value), { mykola_media_advice: true, mykola_media_advice_diagnostics: false });
+  }
+  assert.deepEqual(normalizeMediaCapabilities({ mykola_media_advice: true, mykola_media_advice_diagnostics: true }), { mykola_media_advice: true, mykola_media_advice_diagnostics: true });
 });
 test('only approved form fields, exact href, no title/status/ownership transfer', () => {
   const form = { recommended_medium: 'DVD', purchase_url: 'https://old.example/' };
