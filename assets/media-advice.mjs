@@ -155,16 +155,17 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   }
   function attribution() {
     const details = node('details'); details.className = 'media-advice-attribution'; details.append(node('summary', 'Про джерела та обмеження'));
-    details.append(node('p', 'Це відомості джерел, не гарантія доступності. Невідоме не означає «немає». Мовні дані й посилання можуть стосуватися різних варіантів сервісу.'));
-    details.append(node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'));
-    const links = node('p');
-    for (const [label, href] of [['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'], ['Streaming Availability API by Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/']]) {
-      const a = node('a', label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a, doc.createTextNode(' · '));
+    details.append(node('p', 'Відомості можуть бути неповними або застарілими. Доступність, умови перегляду й доріжки перевіряйте на платформі.'));
+    details.append(node('p', 'Мовні дані та посилання можуть стосуватися різних пропозицій. Брак інформації не означає відсутності доріжки.'));
+    details.append(node('p', 'Мовний блок сервісу на підтвердженій картці Кінобази враховуємо для України за правилом застосунку, не як перевірку платформи. «−» для окремого формату аудіо не виключає інших українських доріжок.'));
+    details.append(node('p', 'Кінобаза й TMDb можуть використовувати спільні дані JustWatch, тож це не незалежні підтвердження. Деякі посилання ведуть через сторонній сервіс, що рахує переходи.'));
+    const footer = node('footer'); footer.className = 'media-advice-source-footer';
+    const links = node('nav'); links.className = 'media-advice-source-links'; links.setAttribute('aria-label', 'Джерела даних');
+    for (const [label, href] of [['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'], ['Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/']]) {
+      const a = node('a', label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a);
     }
-    details.append(links, node('p', 'Країнові секції Кінобази й TMDb можуть походити з JustWatch — це не незалежні підтвердження.'));
-    details.append(node('p', 'Деякі посилання можуть проходити через сторонній сервіс, який враховує переходи.'));
-    details.append(node('p', 'Мовні дані власного блоку сервісу на підтвердженій картці Кінобази враховуємо для українського регіону. Це правило застосунку, не незалежна перевірка доступності чи доріжок конкретної пропозиції. Позначка «−» біля зазначеного формату аудіо не доводить відсутності всіх українських доріжок.'));
-    const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; details.append(logo); chat.append(details);
+    footer.append(links, node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'));
+    const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; footer.append(logo); details.append(footer); chat.append(details);
   }
   function comparison(groups) {
     if (!groups.length) return;
