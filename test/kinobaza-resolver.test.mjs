@@ -350,7 +350,7 @@ test('handler → projection → report/ledger: no search snippets, envelope, ke
     rpc: async (_, args) => {
       rpc.push(args);
       if (args.p_op === 'reserve') reservations.push(args.p_stage);
-      return { data: { id: 'AUTHORED_SESSION', attempts: reservations } };
+      return { data: { id: 'AUTHORED_SESSION', attempts: reservations, mykola_media_advice: true, mykola_media_advice_diagnostics: true } };
     } };
   const result = await createMediaAdviceHandler({ client, env: k => k === 'TAVILY_API_KEY' ? 'AUTHORED_TAVILY_KEY' : k === 'TMDB_READ_ACCESS_TOKEN' ? 'AUTHORED_TMDB_KEY' : k === 'MOTN_API_KEY' ? 'AUTHORED_MOTN_KEY' : '',
     resolver: createKinobazaResolver({ apiKey: 'AUTHORED_TAVILY_KEY' }), fetchImpl,

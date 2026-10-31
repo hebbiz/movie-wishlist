@@ -295,7 +295,7 @@ import("./assets/media-advice.mjs").then(({ createMediaAdvice }) => {
     document, entry: document.getElementById("mediaAdviceEntry"), context: mediaAdviceContext,
     readForm: () => ({ recommended_medium: document.getElementById("recommended_medium").value, purchase_url: document.getElementById("purchase_url").value }),
     writeForm: fields => { for (const [key, value] of Object.entries(fields)) document.getElementById(key).value = value; },
-    capability: async c => (await mediaAdviceRequest("capability", c)).mykola_media_advice === true,
+    capability: async c => await mediaAdviceRequest("capability", c),
     discover: async (c, { signal }) => (await mediaAdviceRequest("discover", c, signal)).result,
     renewContext: () => {
       if (!mediaAdviceContext()) return null;

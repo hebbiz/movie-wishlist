@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';
 import { createMediaAdvice } from '../assets/media-advice.mjs';
 
 class Element {
-  constructor(tag = 'div', text = '') { this.tagName = tag.toUpperCase(); this.children = []; this.attributes = {}; this.listeners = {}; this.dataset = {}; this.hidden = false; this.open = false; this.isConnected = true; this.classList = { add: () => {} }; this.textContent = text; }
+  constructor(tag = 'div', text = '') { this.tagName = tag.toUpperCase(); this.children = []; this.attributes = {}; this.listeners = {}; this.dataset = {}; this.hidden = false; this.open = false; this.isConnected = true; this.classList = { add: (...names) => { this.className = [...new Set([...(this.className?.split(' ') ?? []), ...names])].join(' '); } }; this.textContent = text; }
   set textContent(value) { this._text = String(value); this.children = []; } get textContent() { return this._text + this.children.map(child => child.textContent).join(''); }
   append(...items) { for (const item of items) if (item && typeof item === 'object') { item.parent = this; this.children.push(item); } }
   replaceChildren(...items) { this.textContent = ''; this.append(...items); }
   remove() { this.isConnected = false; if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); }
   setAttribute(key, value) { this.attributes[key] = value; } addEventListener(key, callback) { (this.listeners[key] ??= []).push(callback); }
-  async click() { for (const callback of this.listeners.click ?? []) await callback({}); } focus() {} closest() { return null; }
+  async click() { for (const callback of this.listeners.click ?? []) await callback({}); } focus() {} closest(selector) { return selector.startsWith('.') && this.className?.split(' ').includes(selector.slice(1)) ? this : this.parent?.closest(selector) ?? null; }
   showModal() { this.open = true; } close() { this.open = false; for (const callback of this.listeners.close ?? []) callback({}); }
   contains(element) { return element === this || this.children.some(child => child.contains?.(element)); }
   querySelector(selector) { return this.querySelectorAll(selector)[0] ?? null; }
@@ -38,18 +38,57 @@ function ownBlock(key, audio = 'reported-positive', subtitles = 'reported-positi
       audio: { state: audio, language: 'uk', evidence: [{ label: 'Укр. звук (стерео)', literal: audio === 'reported-positive' ? '+' : '−', state: audio === 'reported-positive' ? 'positive' : 'negative', formatLiteral: 'стерео' }] },
       subtitles: { state: subtitles, language: 'uk', evidence: [] } } };
 }
-async function harness(t, rows, extra = {}) {
-  const entry = new Element('button'), body = new Element('body'), state = { output: null, calls: 0, opens: [] };
+async function harness(t, rows, extra = {}, capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: true }) {
+  const entry = new Element('button'), body = new Element('body'), state = { output: null, calls: 0, opens: [], capabilities };
   const doc = { body, activeElement: entry, createElement: tag => new Element(tag), createTextNode: text => new Element('text', text),
     defaultView: { scrollY: 0, scrollTo() {}, requestAnimationFrame(callback) { callback(); }, navigator: {}, open(...args) { state.opens.push(args); } } };
   const control = createMediaAdvice({ document: doc, entry, context: () => ({ userId: 'u', groupId: 'g', imdbId: 'tt1234567', formSession: 's', title: 'Authored film' }),
-    capability: async () => true, discover: async () => { state.calls++; return { rows, film: { id: filmId, imdbId: 'tt1234567' }, ...extra }; },
+    capability: async () => state.capabilities, discover: async () => { state.calls++; return { rows, film: { id: filmId, imdbId: 'tt1234567' }, ...extra }; },
     readForm: () => ({ recommended_medium: 'DVD', purchase_url: '' }), writeForm: fields => state.output = fields });
   t.after(() => control.invalidate());
   await entry.click(); await new Promise(resolve => setTimeout(resolve, 0));
   const button = text => control.dialog.querySelectorAll('button').find(element => element.textContent === text);
   return { control, state, button };
 }
+
+test('ordinary Beta and legacy basic capability show advice and transfer without diagnostic bubble, report or source detail DOM', async t => {
+  for (const capabilities of [true, { mykola_media_advice: true, mykola_media_advice_diagnostics: false }]) {
+    const original = ownBlock('apple'), { control, state, button } = await harness(t, [original], {}, capabilities);
+    assert.equal(control.dialog.querySelector('.media-advice-beta').textContent, 'Beta');
+    assert.match(control.dialog.querySelector('.media-advice-attribution').textContent, /Поради Миколи щодо носіїв доступні в режимі бета-тестування для українського регіону/);
+    assert.equal(button('Діагностичний звіт'), undefined);
+    assert.equal(control.dialog.querySelectorAll('textarea').length, 0);
+    assert.equal(control.dialog.querySelectorAll('pre').length, 0);
+    await button('Обрати').click(); await button('Перенести в картку').click();
+    assert.equal(state.output.purchase_url, original.link.href); assert.equal(state.calls, 1);
+  }
+});
+
+test('fresh finish capability denies stale diagnostics or feature access despite successful initial authorization', async t => {
+  const ordinary = await harness(t, [ownBlock('apple')], { capabilities: { mykola_media_advice: true, mykola_media_advice_diagnostics: false } });
+  assert.equal(ordinary.button('Діагностичний звіт'), undefined);
+  assert.equal(ordinary.control.dialog.querySelectorAll('.media-advice-row').length, 1);
+  const denied = await harness(t, [ownBlock('apple')], { capabilities: { mykola_media_advice: false, mykola_media_advice_diagnostics: false } });
+  assert.equal(denied.control.dialog.open, false); assert.equal(denied.control.dialog.children.length, 0);
+  assert.equal(denied.state.output, null); assert.equal(denied.state.calls, 1);
+});
+
+test('diagnostics revocation clears existing report/copy/details and preserves ordinary result without repeating discovery', async t => {
+  const { control, state, button } = await harness(t, [ownBlock('apple')]);
+  await button('Діагностичний звіт').click();
+  assert.equal(control.dialog.querySelectorAll('textarea').length, 1);
+  assert.equal(control.dialog.querySelectorAll('pre').length, 1);
+  state.capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: false };
+  await control.refresh();
+  assert.equal(control.dialog.open, true);
+  assert.equal(control.dialog.querySelector('.media-advice-chat').hidden, false);
+  assert.equal(control.dialog.querySelectorAll('textarea').length, 0);
+  assert.equal(control.dialog.querySelectorAll('pre').length, 0);
+  assert.equal(button('Діагностичний звіт'), undefined); assert.equal(button('Скопіювати короткий звіт'), undefined);
+  assert.equal(control.dialog.querySelectorAll('.media-advice-row').length, 1);
+  await button('Обрати').click(); await button('Перенести в картку').click();
+  assert.equal(state.output.purchase_url, services.apple[2]); assert.equal(state.calls, 1);
+});
 
 test('unselected admitted Apple URLs remain local diagnostic text only; unsafe/refused URLs and copied report stay withheld', async t => {
   const first = ownBlock('apple'), second = { ...ownBlock('apple'), id: 'motn:alternative',
@@ -118,7 +157,7 @@ test('source notes consolidate all limitations and retain exact attribution link
   const section = control.dialog.querySelector('.media-advice-attribution');
   assert.equal(section.tagName, 'DETAILS'); assert.equal(section.open, false);
   assert.equal(section.querySelector('summary').textContent, 'Про джерела та обмеження');
-  assert.equal(section.children.filter(child => child.tagName === 'P').length, 4);
+  assert.equal(section.children.filter(child => child.tagName === 'P').length, 5);
   for (const meaning of [
     /неповними або застарілими/, /Доступність, умови перегляду й доріжки перевіряйте на платформі/,
     /Мовні дані та посилання можуть стосуватися різних пропозицій/,
@@ -133,7 +172,7 @@ test('source notes consolidate all limitations and retain exact attribution link
   const links = nav.querySelectorAll('a');
   assert.deepEqual(links.map(link => [link.textContent, link.href]), [
     ['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'],
-    ['Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/'],
+    ['Streaming Availability API by Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/'],
   ]);
   assert.equal(section.querySelectorAll('a').length, 4, 'source links appear once, in the footer');
   assert.ok(links.every(link => link.target === '_blank' && link.rel === 'noopener noreferrer'));
