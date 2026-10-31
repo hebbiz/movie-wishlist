@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import { safeMediaReport, mediaSourceDetails } from '../assets/media-advice-report.mjs';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
 
+test('recovered noncritical markup is named without retaining parser attributes or arbitrary issue content', () => {
+  const report = safeMediaReport({ resolver: { cards: [{ identity: 'matched', extractionDiagnostic: {
+    status: 'partial', issues: ['noncritical-image-markup-recovered', 'PRIVATE_ATTRIBUTE', 'https://private.example/'],
+    candidateCount: 3, foreignCandidateCount: 0, blockCount: 3, filmAudioState: 'unknown', raw: 'PRIVATE_BODY',
+  } }] } });
+  assert.match(report, /Extraction: partial; candidates 3.*localization blocks 3/);
+  assert.match(report, /issues \["noncritical-image-markup-recovered"\]/);
+  assert.doesNotMatch(report, /PRIVATE|https?:|raw|ATTRIBUTE/);
+});
+
 test('Dune authored source signs and M4 region interpretation are separate in the copied report, without changing source rows', async () => {
   const result = await authoredDuneMediaResult(), before = JSON.stringify(result.rows);
   const report = safeMediaReport(result);

@@ -32,9 +32,10 @@ test('report: extraction diagnostic allowlist never copies arbitrary source issu
   const r = await result(); r.dynamic = true; r.assisted = true;
   r.film = { ...r.film, dynamic: true };
   r.assistedContribution = { identity: 'matched', candidates: 0, blocks: 0, reason: 'explicit-title-year-director-match',
-    extractionIssues: ['ambiguous-territory-panel', 'https://private.example/SECRET', 'SECRET_BODY'] };
+    extractionIssues: ['ambiguous-territory-panel', 'noncritical-image-markup-recovered', 'https://private.example/SECRET', 'SECRET_BODY'] };
   const report = buildShortReport({ filmId: r.film.id, result: r });
   assert.match(report, /Assisted extraction diagnostics: ambiguous-territory-panel/);
+  assert.match(report, /noncritical-image-markup-recovered/);
   assert.doesNotMatch(report, /SECRET|https?:/);
 });
 async function result() {
