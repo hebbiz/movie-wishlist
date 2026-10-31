@@ -14,6 +14,7 @@ and the preserved [Gemini finding](#gemini-primary-resolver-feasibility-2026-10-
 Canonical implementation record, not a second research architecture. Evidence and
 source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
 Latest narrow source-parser change: [Mad Max markup recovery](#mad-max-noncritical-image-markup-recovery--2026-10-31).
+Latest link-choice decision: [declared destinations and duplicate navigation](#link-choice-equivalence-and-justwatch-inspection--2026-10-31).
 
 ## Reviewed baseline and sequence
 
@@ -3201,3 +3202,120 @@ or timeouts were weakened. No initApp/global
 lifecycle/auth/UI, budgets/deadlines, source interpretation/ranking, session,
 preview/Save, ledger, migration, flag or production changes. Merge/deployment
 remain separately authorized; this does not establish general parser coverage.
+
+## Link-choice equivalence and JustWatch inspection — 2026-10-31
+
+Base develop `1f732537547ad67f84f5be3252f3ffc732b0d925`, after #213.
+The owner-supplied deploy `6ae5cef3b77db1ed705befed` is ready, branch-deploy
+`develop`, at that exact commit. Run `34a94bd3-42a6-4dcf-a675-02fa6aa17c2c`
+reported four Apple choices and two Rakuten choices. Full original result URLs
+are not archived by M4; the owner cannot provide the four pre-redirect addresses.
+Current source inspections below **are not a reconstruction of that run** and do
+not identify the two additional historical Apple addresses. No new MOTN API call
+was made; no local MOTN credential was available and no secret was read from
+Netlify. No new owner evaluation or authenticated discovery was requested.
+
+### Current Mad Max links and observed transport
+
+Current [Kinobaza card](https://kinobazaua.com/titles/mad-max-fury-road) extraction
+returns two Apple and two Rakuten candidate URLs. None is a literal duplicate.
+The own-block Apple CTA repeats the same iTunes href inside its table; it already
+produces only one candidate, so it is not the cause of four historical choices.
+
+| Source observation | Declared destination / distinguishing fields | Observed read-only outcome |
+| --- | --- | --- |
+| Apple UA-section JustWatch, href digest `034e67b1ef217a7cd80cf6730b4ac420526b5fb12342e834f984f18c0356922b` | `r` names `https://tv.apple.com/ua/movie/mad-max-fury-road/umc.cmc.6xerenwn1999cjd2y6421r2ex` with `playableId=tvs.sbd.9001:990549112`. | HTTP302 to that card with added `at`, `ct`, `itsct`; Apple returns200, title Mad Max: Fury Road, canonical URL with that same UA/UMC ID. Thus `r` is not byte-identical to the actual Location. |
+| Apple own-block iTunes, digest `9fd6a1a989a8c50d6b480310342d1e71b5a28e1af454b3dddcc3f721ae6c28e7` | `https://itunes.apple.com/ua/movie/id990549112`, query keys `at`, `l=uk`. | Three explicit301 steps: same iTunes card without `at`; localized-slug Apple TV URL; the same English-slug UA/UMC canonical above. This current route convergence is established, not independent offer/track/entitlement verification. |
+| Rakuten UA-section JustWatch, digest `0dcbd6e3eee9e9c08efdb33de5498f02f4aa27178a34aac21a0900dbde9cff69` | `r=https://www.rakuten.tv/ua/movies/mad-max-fury-road`. | HTTP302 Location exactly equals `r`. |
+| Rakuten own-block JustWatch, digest `092b08ba7fd9c3232f4cd760b0b5263ce4f20d987c16176653a3964df7c9f108` | Same exact `r` and `uct_country`; only outer `cx` differs from the UA-section link. | HTTP302 to the exact same URL. One destination GET returns200, generic Rakuten TV shell; scripts/login/purchase/playback were not executed. |
+
+The address supplied in a parameter and an observed redirect are distinct
+evidence. A supported `r` can be decoded locally and independently validated,
+but it is **not** an authenticated promise about future HTTP responses. There
+is no automatic redirect or destination fetch in the application, no direct-URL
+substitution, and no removal of source tracking parameters from open/transfer.
+These links establish neither new versions nor different offers; they also do
+not prove that all four historical Apple routes were equivalent.
+
+### Implemented navigation grouping, not an offer join
+
+`assets/media-advice-link-choices.mjs` is a pure presentation helper, called only
+by the existing `linkChoicesFor`. Each admitted choice keeps one **original**
+row and its exact href; the preferred original transfer row remains preferred.
+All original rows, access/language/package/edition facts and provenance remain
+unchanged in the diagnostic report. No source field is moved to a peer row.
+
+- Exact duplicate URLs remain one navigation action.
+- Apple TV UMC identity or iTunes numeric identity is compared within its own
+  namespace and explicit URL country. Rakuten uses its exact admitted regional
+  host/path; different slugs, hosts or trailing slashes are not guessed aliases.
+- Only documented Apple tracking keys `at`, `ct`, `itscg`, `itsct` are omitted
+  from the comparison key, **not from the original href**. Sources:
+  [Apple linking guide](https://performance-partners.apple.com/linking) and
+  [Apple TV Marketing Tools token definitions](https://toolbox.marketingtools.apple.com/en-us/apple-tv/subscribe-link).
+- `playableId` is decoded once and retained as a content qualifier. Other
+  parameters keep exact raw key/value spelling and relative order. Different,
+  missing or ambiguous qualifiers remain separate. No universal query stripping.
+- A JustWatch declared target participates only for exact HTTPS
+  `click.justwatch.com/a`, one each of `cx`, `r`, `uct_country`, no extra keys or
+  fragment, explicit UA, and an independently admitted same-provider UA card.
+  Nested wrappers, wrong providers, credentials, explicit ports, path
+  normalization, duplicate/encoded keys and malformed encoding do not establish
+  equivalence. Existing outer-link admission is unchanged.
+- Conflicting explicit country/cut/version/package evidence cannot bridge
+  semantic groups. Rent/buy labels alone do not turn the same card navigation
+  into different links; their source observations remain separate in diagnostics.
+- Missing/unsafe URLs remain unavailable as choices. Unknown semantics stay
+  distinct, never a reason to invent a link or to infer a shared offer.
+
+The current Mad Max Rakuten pair is now **2 choices →1**, selecting the unchanged
+own-block pointer when that is the preferred original row. The two current Apple
+routes remain **2→2**: the one-film redirect observation is not compiled into a
+per-film exception or a universal iTunes-number↔UMC crosswalk. `l=uk` is retained,
+not interpreted as track evidence. This is an intentional remaining limit, not
+a claim that the routes lead to different films. Known Apple tracking-only
+duplicates within one established card/qualifier namespace do collapse.
+
+A fresh local actual-extractor→composition→presentation→choice→preview check
+at 11:50:15 UTC confirms those counts and exact chosen URLs without row mutation.
+Dune: Part Two is a control: two Rakuten pointers declare the same UUID-based
+UA path and collapse2→1; its one iTunes route stays one. An authored six-row
+Mad Max-shaped fixture separately exercises four Apple source observations→two
+choices and two Rakuten observations→one; it is not a reconstruction of the
+owner's missing four URLs. Rendering/grouping/opening preview adds0 source calls.
+
+### Research accounting and boundaries
+
+This task made13 explicit HTTP GET attempts: Kinobaza Mad Max3 and Dune2;
+JustWatch3; iTunes2; Apple TV2; Rakuten1. All completed with200/301/302.
+The total includes separately requested redirect hops and final source-control
+reads, never application retries. Official-document browsing is separate.
+No cookies/credentials, subresource/script execution, purchase/playback, hidden
+endpoints, search/TMDb/MOTN calls or Wishlist writes. HTML and pointer maps were
+process-memory only and were discarded; no raw-body/search archive or retention
+change. Source-use/account conditions are unchanged, not blanket permission.
+
+Validation: 90/90 targeted offline tests pass across link choices, controller,
+platform presentation/summary, report and Kinobaza pipeline. The pending-apply
+and retained-document browser regressions pass 25/25, including revoked
+selection, changed form/context, access, expiry and late replies. Syntax and
+whitespace checks pass. Local documentation validation: 14 documents, 457 local
+links, 282 anchors, all 13 handoff sections, no errors.
+
+The real-form dialog browser suite also passes 5/5 (parent plus four viewports:
+1280×900, 375×812 iPhone X-size, 420×912 iPhone Air-size, 820×1180 tablet).
+Its new authored six-row case verifies deduplicated choices, switching to the
+distinct original iTunes pointer, exact open/preview/local apply, all six
+diagnostic records, no DB writes and reopen without another discovery.
+
+Browser runs use authored responses and local Edge/Playwright; they are not
+Safari/WebKit or physical-iPhone evidence, nor a deployed-runtime/source
+evaluation. Server/SQL/native-PostgreSQL and Windows lifecycle suites are not
+repeated: their code and dependencies are unchanged by this presentation-only
+helper. No earlier server result is attributed to the new commit.
+
+Only client link-choice presentation and its tests/documentation change. Ranking,
+language interpretation, link admission/R1/R2, original-row preview/apply/Save,
+session/stale/pending protection, initApp/global lifecycle/auth, server timeouts
+and budgets, schema/flags/main/production are unchanged. Merge/deployment remain
+separate decisions. MW-FUT-01 remains Discovery.
