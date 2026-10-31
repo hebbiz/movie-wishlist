@@ -41,6 +41,28 @@ test('pilot study has three title/year-only controls and selects them without ch
   }
 });
 
+test('Tavily fallback study selects five pilot titles without prefilled IDs or source URLs',async()=>{
+  assert.deepEqual(practicalStudies['tavily-fallback'],[
+    {title:'Alien',year:1979},{title:'Mad Max: Fury Road',year:2015},{title:'Dune: Part Two',year:2024},
+    {title:'Blade Runner 2049',year:2017},{title:'Mortal Kombat',year:2021},
+  ]);
+  for(const [i,control] of practicalStudies['tavily-fallback'].entries()){
+    assert.equal(Object.keys(control).sort().join(','),'title,year');
+    let calls=0;
+    const out=await practicalOperation({...keys,operation:{action:'identify',film:i+1},context:{study:'tavily-fallback'}},async(url,init)=>{
+      calls++;assert.equal(init.method,'GET');
+      if(calls===1){
+        assert.equal(url,`https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(control.title)}&language=uk-UA&include_adult=false&page=1&year=${control.year}`);
+        return Response.json({results:[{id:IDS[0],original_title:control.title,release_date:`${control.year}-01-01`}]});
+      }
+      return Response.json({...detailsData(IDS[0]),original_title:control.title,release_date:`${control.year}-01-01`});
+    });
+    assert.equal(calls,2);assert.equal(out.result.status,'identity-established');
+    assert.equal(out.result.film,`${control.title} (${control.year})`);
+    assert.deepEqual(out.result.counts,{tmdb:2,search:0,cards:0,personPages:0,total:2});
+  }
+});
+
 test('director inspection admits one fixed GET only from a cached single trusted TMDb person',async()=>{
   const film={directorCount:1,directorPeople:[{namespace:'tmdb:person',personId:999999,names:['Authored director']}]};
   const data={id:999999,name:'Authored director',also_known_as:['Авторський режисер'],birthday:'1970-02-28',imdb_id:'nm9999999',external_ids:{imdb_id:'nm9999999'},biography:'AUTHORED_PRIVATE_BIO',homepage:'https://private.example/?key=AUTHORED_PRIVATE_URL'};
@@ -116,22 +138,22 @@ test('public inspection emits bounded identity fields rather than arbitrary cont
   assert.doesNotMatch(JSON.stringify(profile),/AUTHORED_FILMOGRAPHY|AUTHORED_BIOGRAPHY/);
 });
 
-test('series uses the actual public-search fallback, counts it, and keeps only safe ephemeral pointers',async()=>{
+test('series uses the actual alternate Tavily fallback, counts it, and keeps only safe ephemeral pointers',async()=>{
   const film={id:'authored',tmdbId:IDS[0],imdbId:`tt${IDS[0]}`,identityTitle:'Вигаданий фільм',originalTitle:'Authored original',year:2001,directorCount:1,directorAliases:['Authored director'],titleAliases:['Вигаданий фільм','Authored original']};
   const wrong='https://kinobazaua.com/titles/authored-wrong',correct='https://kinobazaua.com/titles/authored-original';
-  const sent=[];
+  const sent=[];let searches=0;
   const out=await practicalOperation({...keys,operation:{action:'resolve',film:1},context:{films:{1:film}}},async(url,init)=>{
     sent.push(url);assert.equal(init.redirect,'manual');assert.equal(init.credentials,'omit');
-    if(url==='https://api.tavily.com/search')return Response.json({results:[{url:wrong,content:'AUTHORED_PRIVATE_SNIPPET'}]});
-    if(url.startsWith('https://kinobazaua.com/search?')){
-      assert.equal(init.method,'GET');assert.equal(init.headers.Authorization,undefined);
-      return new Response('<div id="nav-titles"><a href="/titles/authored-original">AUTHORED_PRIVATE_SEARCH_TEXT</a></div>',{headers:{'content-type':'text/html'}});
+    if(url==='https://api.tavily.com/search'){
+      searches++;assert.equal(init.method,'POST');
+      assert.equal(JSON.parse(init.body).query,searches===1?'"Authored original" 2001 site:kinobazaua.com/titles/':'"Authored original" "Вигаданий фільм" "2001" site:kinobazaua.com/titles/');
+      return Response.json({results:[{url:searches===1?wrong:correct,content:'AUTHORED_PRIVATE_SNIPPET'}]});
     }
     assert.ok([wrong,correct].includes(url));return new Response(markup({url,...(url===wrong?{title:'Different authored film'}:{})}),{headers:{'content-type':'text/html'}});
   });
   assert.equal(out.result.status,'ok');assert.equal(sent.length,4);
   assert.deepEqual(out.result.counts,{tmdb:0,search:2,cards:2,personPages:0,total:4});
-  assert.deepEqual(out.result.resolver.searches.map(s=>s.provider),['tavily','kinobaza-public-search']);
+  assert.deepEqual(out.result.resolver.searches.map(s=>s.provider),['tavily','tavily']);
   assert.equal(out.result.confirmed[0].sourceURL,correct);assert.equal(out.result.confirmed[0].providerBlocks,1);
   assert.equal(out.result.discovery.mappedCount,2);assert.equal(out.result.discovery.unmappedCount,0);
   const discovery=out.result.confirmed[0].discovery;
@@ -140,6 +162,7 @@ test('series uses the actual public-search fallback, counts it, and keeps only s
   assert.ok(discovery.mapped.every(r=>r.providerKey==='apple'));
   assert.deepEqual(discovery.extractionIssues,[]);
   assert.equal(out.result.searchPointers.length,2);assert.equal(out.result.searchPointers[1][0].originalPathname,'/titles/authored-original');
+  assert.ok(sent.every(url=>url==='https://api.tavily.com/search'||[wrong,correct].includes(url)),'no public Kinobaza search or destination request');
   assert.deepEqual(out.context,{films:{1:film}},'no search response or HTML is retained in session context');
   assert.doesNotMatch(JSON.stringify(out),/AUTHORED_PRIVATE|AUTHORED_TMDB_KEY|AUTHORED_TAVILY_KEY|<div|<h1|click\.justwatch|AUTHOR%2fONLY|author=%2F/);
 });

@@ -168,8 +168,9 @@ Current automatic Blade Runner1982/Mortal Kombat2021/Supergirl2026 checks matche
 all three cards locally; historical response causes, entitlement and general
 coverage remain unproven. No deployment or source-policy closure is implied.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
-for candidate URLs only, with the [bounded public title-search fallback](docs/m4-media-advice.md#five-film-automatic-results--2026-10-24)
-on this branch. Five local controls do not establish general quality;
+for candidate URLs only, with a [bounded second Tavily search](docs/m4-media-advice.md#tavily-only-alternative-search--2026-10-31)
+on this branch; the former Kinobaza `/search` fallback is no longer used.
+Five local controls do not establish general quality;
 customer-app source-use conditions remain explicit. Brave research is preserved
 historically. Gemini Grounding stays excluded from URL → HTML extraction;
 no Brave/Gemini fallback or activation is introduced.
