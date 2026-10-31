@@ -58,7 +58,14 @@ test('all six services have one accessible comparison with scoped symbols, no pr
     assert.equal(control.dialog.querySelectorAll('.media-advice-variant-select').length, 0);
     const text = control.dialog.textContent;
     assert.equal(control.dialog.querySelectorAll('table').length, 1);
-    const symbols = control.dialog.querySelector('.media-advice-row').querySelectorAll('.media-advice-symbol');
+    const table = control.dialog.querySelector('table'), row = control.dialog.querySelector('.media-advice-row');
+    assert.equal(table.querySelector('caption').textContent, 'Аудіо та субтитри — українською');
+    assert.deepEqual(table.querySelector('thead').querySelectorAll('th').map(th => th.textContent), ['Сервіс', 'Доступ', 'Аудіо', 'Субтитри']);
+    assert.deepEqual(row.children.map(cell => cell.tagName), ['TH', 'TD', 'TD', 'TD']);
+    assert.equal(row.querySelector('th').attributes.scope, 'row');
+    assert.equal(row.querySelector('th').querySelectorAll('.media-advice-symbol').length, 0, 'the service button never contains the availability symbol');
+    assert.deepEqual(row.querySelectorAll('td').map(cell => cell.textContent), ['◐', '+', '+']);
+    const symbols = row.querySelectorAll('.media-advice-symbol');
     assert.deepEqual(symbols.map(s => s.textContent), ['◐', '+', '+']);
     assert.match(symbols[0].attributes['aria-label'], /Кінобаз|неповн/);
     for (const symbol of symbols.slice(1)) assert.match(symbol.attributes['aria-label'], /Кінобаз.*правило застосунку/);
@@ -140,13 +147,14 @@ test('duplicate source rows with one admitted URL need no chooser or purchase/re
 test('service name remains available until a usable emblem loads and falls back on error without changing actions', async t => {
   const original = ownBlock('apple'), { control, state, button } = await harness(t, [original]);
   const service = control.dialog.querySelector('.media-advice-service-select');
-  const name = service.querySelector('.media-advice-service-name'), icon = service.querySelector('img');
+  const name = service.querySelector('.media-advice-service-name'), icon = service.querySelector('img'), slot = service.querySelector('.media-advice-icon-slot');
   assert.equal(service.attributes['aria-label'], 'Apple TV / iTunes'); assert.equal(service.attributes.title, 'Apple TV / iTunes');
   assert.equal(name.textContent, 'Apple TV / iTunes'); assert.equal(service.dataset.iconState, 'pending');
   icon.naturalWidth = 24; for (const callback of icon.listeners.load) callback();
   assert.equal(service.dataset.iconState, 'loaded'); assert.equal(icon.hidden, false);
   for (const callback of icon.listeners.error) callback();
   assert.equal(service.dataset.iconState, 'failed'); assert.equal(icon.hidden, true);
+  assert.equal(slot.hidden, true, 'failed emblems leave no empty slot before the text fallback');
   assert.equal(name.textContent, 'Apple TV / iTunes'); assert.equal(service.attributes['aria-pressed'], 'true');
   await button('Обрати').click(); await button('Перенести в картку').click();
   assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: original.link.href });

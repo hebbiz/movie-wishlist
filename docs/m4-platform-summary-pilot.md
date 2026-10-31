@@ -336,3 +336,52 @@ tests are not native iPhone/Safari/VoiceOver or live-source validation. No
 assertion/timeout weakening. Syntax, whitespace/scope and14-doc/455-link/
 280-anchor checks passed. Server/SQL/native PostgreSQL and Windows lifecycle
 were not repeated: dependencies unchanged.
+
+### Aligned four-column service table — 2026-10-31
+
+From develop `8a2f6b8986f7d6cc79aa826442bb5107b38d4954` after merged #208.
+All viewport sizes now use one native table: `Сервіс`, `Доступ`, `Аудіо`,
+`Субтитри`. The visible caption `Аудіо та субтитри — українською` qualifies
+both language columns. The existing availability symbol moves into its own
+cell; its state and accessible explanation do not change. Headings, service
+choices and symbols are centered, with a consistent loaded-row height and
+separate space between the emblem and availability. Per-emblem display boxes
+account for the existing SVGs' different painted bounds; `object-fit: contain`
+preserves their proportions. No new assets or image requests are introduced.
+
+Up to480px, loaded emblems replace the visible service name. Wider screens
+retain emblem plus name. Every selection keeps its full accessible name,
+tooltip, native keyboard control, focus ring and at least44px touch target;
+a compact gold pressed state identifies the selected service. Pending/failed
+emblems retain readable text, and a failed image/slot is hidden without retry.
+Fallback text may wrap and increase the minimum row height rather than clip.
+
+Only table markup/styles and their regressions change. Symbol meanings,
+language/service ranking, all original source records/scopes, exact URLs,
+link choice, preview → explicit local transfer → ordinary Save, diagnostics,
+session/reopen/freshness behavior and other Mykola contexts are unchanged.
+No initApp/global lifecycle/auth, server, schema/migrations, flags/secrets,
+production/main or owner checkout/demo change. No live search/source/destination
+calls, real Wishlist writes, merge or deployment.
+
+Validation:83/83 targeted offline/mock checks and30/30 checks in the three
+existing browser suites passed,0 failures/skips. Installed Edge covers
+375×812 (iPhone X-size),420×912 (iPhone Air-size),820×1180 and1280×900.
+Geometry checks verify all four header/value centers, equal loaded-row heights,
+emblem-to-availability spacing, proportional SVG display,44px targets and no
+horizontal overflow. Authored three/six-service fixtures retain ranking,
+individual symbols/accessible labels, keyboard selection and single selection;
+actual local asset failures show readable fallback on mobile and wide screens.
+Existing exact open/preview/local transfer/ordinary Save, source diagnostics,
+pending/stale/access guards, isolation and reopen-without-discovery regressions
+remain covered. The first run exposed cramped one-line headers; header padding
+was increased, not the geometry assertion relaxed. The new wide fixture restores
+its mocked access after the preceding denial case. No timeouts were changed.
+
+`aligned-services-dialog-{375,420,820,1280}.png`, corresponding table crops and
+`aligned-all-service-emblems-1280.png` are authored screenshots outside Git;
+mobile/wide examples were visually inspected. Edge viewport emulation is not
+real iPhone/Safari/VoiceOver or live-source validation. Local Node24.22.0,
+not deployed Node22. Syntax, whitespace/scope and14-doc/455-link/280-anchor/
+13-handoff-section checks passed. Server/SQL/native PostgreSQL and Windows
+launcher lifecycle were not repeated: dependent components are unchanged.
