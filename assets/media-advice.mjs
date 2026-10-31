@@ -1,6 +1,7 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
 import { groupMediaRows, presentMediaGroups, summarizeMediaGroups } from './media-advice-presentation.mjs';
+import { groupLinkChoices } from './media-advice-link-choices.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
 const serviceIcons = Object.freeze({ apple: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
@@ -11,18 +12,11 @@ export function transferFor(row) {
   // The shared classification and the observed href itself remain untouched.
   return { medium: media[row.provider.key], url: link.transferable ? link.href : null, link };
 }
-// Choices are literal admitted URLs, not merged offers. Each choice keeps one
-// original representative; duplicate source observations stay in diagnostics.
+// One navigation choice per established card pointer, not a merged offer.
+// The representative URL/row stays original; all observations stay in diagnostics.
 export function linkChoicesFor(info) {
   if (info?.group?.readOnly) return [];
-  const choices = new Map();
-  for (const row of info?.group?.rows ?? []) {
-    if (row.provider?.key !== info.group.key) continue;
-    const transfer = transferFor(row);
-    if (!transfer?.link.transferable) continue;
-    if (!choices.has(transfer.url) || row === info.transferRow) choices.set(transfer.url, { row, href: transfer.url });
-  }
-  return [...choices.values()];
+  return groupLinkChoices(info?.group?.rows, { providerKey: info?.group?.key, preferredRow: info?.transferRow });
 }
 export function makePreview(row, form, { clearMissing = false } = {}) {
   const transfer = transferFor(row);

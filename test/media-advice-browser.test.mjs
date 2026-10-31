@@ -519,6 +519,66 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.getByRole('button',{name:'← До картки',exact:true}).click();
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeSharedCalls+1,'link deduplication, diagnostic access and reopen add no discovery');
 
+      // Authored Mad Max-shaped four Apple/two Rakuten observations, not live
+      // URLs or reconstructed provider offers. Comparison may group proven
+      // pointers, but the chosen original href and source row remain intact.
+      const applePointer='https://tv.apple.com/ua/movie/authored-madmax/umc.cmc.authoredmadmax?playableId=tvs.sbd.9000000001';
+      const appleOriginal=applePointer+'&at=AUTHOR%2fONLY';
+      const appleITunes='https://itunes.apple.com/ua/movie/id9000000001?at=AUTHOR%2fONLY&l=uk';
+      const rakutenPointer='https://rakuten.tv/ua/movies/authored-madmax';
+      const justWatch=(pointer,campaign)=>`https://click.justwatch.com/a?cx=${campaign}&r=${encodeURIComponent(pointer)}&uct_country=ua`;
+      const authoredLinkRow=(id,key,href)=>({id,identityStatus:'matched',provider:{key},country:'UA',kind:'source-offer',
+        audio:{state:'unknown'},subtitles:{state:'unknown'},conflicts:[],provenance:{source:'AUTHORED'},link:{href}});
+      authored.rows=[
+        authoredLinkRow('motn:madmax-apple-original','apple',appleOriginal),
+        authoredLinkRow('motn:madmax-apple-tracking','apple',applePointer+'&ct=AUTHOR%2fOTHER'),
+        authoredLinkRow('kinobaza:madmax-apple-declared','apple',justWatch(applePointer+'&itsct=AUTHOR%2fOTHER','AUTHOR-apple')),
+        authoredLinkRow('kinobaza:madmax-itunes-original','apple',appleITunes),
+        authoredLinkRow('motn:madmax-rakuten-original','rakuten',justWatch(rakutenPointer,'AUTHOR-rakuten-one')),
+        authoredLinkRow('kinobaza:madmax-rakuten-duplicate','rakuten',justWatch(rakutenPointer,'AUTHOR-rakuten-two')),
+      ];
+      const originalMadMaxRows=JSON.stringify(authored.rows);
+      const beforePointerCalls=calls.filter(c=>c.action==='discover').length;
+      const beforePointerWrites=await page.evaluate(()=>authoredDBWrites.length);
+      await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();
+      await page.locator('.media-advice-answer').waitFor();
+      assert.equal(await page.locator('.media-advice-row').count(),2);
+      const appleChoice=page.getByLabel('Посилання сервісу Apple TV / iTunes');
+      assert.equal(await appleChoice.locator('option').count(),2,'four Apple records expose the shared TV pointer and distinct iTunes card, not four source rows');
+      assert.equal(await page.locator('.media-advice-row[data-provider-key="apple"]').getAttribute('data-row-id'),'motn:madmax-apple-original');
+      await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+      assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[appleOriginal,'_blank','noopener,noreferrer'],'comparison does not replace the original URL with a normalized or declared destination');
+      await appleChoice.selectOption('1');
+      assert.equal(await page.locator('.media-advice-row[data-provider-key="apple"]').getAttribute('data-row-id'),'kinobaza:madmax-itunes-original');
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      await page.locator('#mediaAdviceEntry').click();
+      assert.equal(await appleChoice.inputValue(),'1','reopen retains the distinct selected pointer');
+      assert.equal(calls.filter(c=>c.action==='discover').length,beforePointerCalls+1);
+      await page.getByRole('button',{name:'Обрати',exact:true}).click();
+      await page.locator('.media-advice-preview').getByText('Повні адреси',{exact:true}).click();
+      assert.ok((await page.locator('.media-advice-preview details').innerText()).includes(appleITunes));
+      assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforePointerWrites,'selection and preview stay in the local card');
+      await page.getByRole('button',{name:'Перенести в картку',exact:true}).click();
+      await page.waitForFunction(()=>!mediaAdviceController.dialog.open);
+      assert.equal(await page.locator('#purchase_url').inputValue(),appleITunes);
+      assert.equal(await page.locator('#recommended_medium').inputValue(),'Apple TV / iTunes');
+      await page.locator('#mediaAdviceEntry').click();
+      await page.locator('.media-advice-row[data-provider-key="rakuten"] .media-advice-service-select').click();
+      assert.equal(await page.locator('.media-advice-link-select').count(),0,'two same-UA declared Rakuten pointers need no chooser');
+      assert.equal(await page.locator('.media-advice-row[data-provider-key="rakuten"]').getAttribute('data-row-id'),'motn:madmax-rakuten-original');
+      await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+      assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[authored.rows[4].link.href,'_blank','noopener,noreferrer']);
+      await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
+      assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Mapped source rows: 6/);
+      await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
+      assert.equal(await page.locator('.media-advice-diagnostics details pre').count(),6,'pointer grouping leaves all original records in diagnostics');
+      await page.getByRole('button',{name:'← До порад',exact:true}).click();
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-pointer-dedup-${width}.png`,animations:'disabled'});
+      await page.getByRole('button',{name:'← До картки',exact:true}).click();
+      assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforePointerWrites);
+      assert.equal(calls.filter(c=>c.action==='discover').length,beforePointerCalls+1,'dedup, opening, diagnostics, transfer and reopen add no source discovery');
+      assert.equal(JSON.stringify(authored.rows),originalMadMaxRows,'presentation never mutates or merges the original observations');
+
       // Actual authored HTML -> extraction -> projection, with separate own
       // provider blocks and no country-section pointer or source HTTP request.
       const kino=await authoredDuneMediaResult();
