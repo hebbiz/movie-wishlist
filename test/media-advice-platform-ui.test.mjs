@@ -76,8 +76,10 @@ test('all six services have one accessible comparison with scoped symbols, no pr
     assert.equal(control.dialog.querySelectorAll('.media-advice-comparison-caution').length, 0);
     const attribution = control.dialog.querySelector('.media-advice-attribution');
     assert.equal(attribution.open, false);
-    assert.match(attribution.textContent, /не гарантія доступності.*Невідоме не означає «немає».*різних варіантів сервісу/);
-    assert.match(text, /не незалежна перевірка доступності/);
+    assert.match(attribution.textContent, /перевіряйте на платформі/);
+    assert.match(attribution.textContent, /різних пропозицій/);
+    assert.match(attribution.textContent, /Брак інформації не означає відсутності доріжки/);
+    assert.match(text, /за правилом застосунку, не як перевірку платформи/);
     assert.doesNotMatch(text, /PRICE_SENTINEL|USD|Ціна|Варіант перегляду/); assert.equal(state.output, null);
     await button('Відкрити посилання').click();
     assert.deepEqual(state.opens, [[services[key][2], '_blank', 'noopener,noreferrer']]);
@@ -88,6 +90,36 @@ test('all six services have one accessible comparison with scoped symbols, no pr
     assert.equal(state.calls, 1); assert.equal(JSON.stringify(original), before);
     assert.equal(original.country, null); assert.equal(original.audio.state, 'unknown');
   });
+});
+
+test('source notes consolidate all limitations and retain exact attribution links and TMDb credit inside the closed section', async t => {
+  const { control, state } = await harness(t, [ownBlock('apple')]);
+  const section = control.dialog.querySelector('.media-advice-attribution');
+  assert.equal(section.tagName, 'DETAILS'); assert.equal(section.open, false);
+  assert.equal(section.querySelector('summary').textContent, 'Про джерела та обмеження');
+  assert.equal(section.children.filter(child => child.tagName === 'P').length, 4);
+  for (const meaning of [
+    /неповними або застарілими/, /Доступність, умови перегляду й доріжки перевіряйте на платформі/,
+    /Мовні дані та посилання можуть стосуватися різних пропозицій/,
+    /Брак інформації не означає відсутності доріжки/,
+    /підтвердженій картці Кінобази.*для України за правилом застосунку, не як перевірку платформи/,
+    /«−» для окремого формату аудіо не виключає інших українських доріжок/,
+    /Кінобаза й TMDb.*спільні дані JustWatch.*не незалежні підтвердження/,
+    /Деякі посилання.*сторонній сервіс, що рахує переходи/,
+  ]) assert.match(section.textContent, meaning);
+  const footer = section.querySelector('footer'), nav = footer.querySelector('nav');
+  assert.equal(footer.parent, section); assert.equal(nav.attributes['aria-label'], 'Джерела даних');
+  const links = nav.querySelectorAll('a');
+  assert.deepEqual(links.map(link => [link.textContent, link.href]), [
+    ['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'],
+    ['Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/'],
+  ]);
+  assert.equal(section.querySelectorAll('a').length, 4, 'source links appear once, in the footer');
+  assert.ok(links.every(link => link.target === '_blank' && link.rel === 'noopener noreferrer'));
+  assert.equal(footer.querySelector('p').textContent, 'This product uses the TMDB API but is not endorsed or certified by TMDB.');
+  const logo = footer.querySelector('img');
+  assert.deepEqual([logo.src, logo.alt, logo.width], ['/research/grounded-answer-demo/public/tmdb-logo.svg', 'TMDB', 110]);
+  assert.equal(state.calls, 1); assert.equal(state.output, null); assert.deepEqual(state.opens, []);
 });
 
 test('Apple format-negative audio stays unknown overall while subtitles and other services retain their own signs', async t => {

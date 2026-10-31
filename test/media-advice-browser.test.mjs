@@ -123,6 +123,60 @@ async function assertServiceComparisonLayout(page, width) {
   await assertColumnRhythm(page,width);
 }
 
+async function assertSourceFooter(page, width) {
+  const details = page.locator('.media-advice-attribution');
+  const footer = details.locator('footer.media-advice-source-footer');
+  const navigation = footer.getByRole('navigation', { name: 'Джерела даних' });
+  const links = navigation.getByRole('link');
+  const expected = [
+    ['TMDb', 'https://www.themoviedb.org/'],
+    ['JustWatch', 'https://www.justwatch.com/'],
+    ['Movie of the Night', 'https://www.movieofthenight.com/about/api'],
+    ['Кінобаза', 'https://kinobazaua.com/'],
+  ];
+  assert.equal(await details.locator(':scope > footer').count(), 1, 'source links and attribution share one footer inside the expanded explanation');
+  assert.equal(await links.count(), 4);
+  assert.deepEqual(await links.evaluateAll(elements => elements.map(a => [a.textContent, a.href])), expected, 'source destinations remain exactly unchanged');
+  assert.deepEqual(await links.evaluateAll(elements => elements.map(a => [a.target, a.rel])), expected.map(() => ['_blank', 'noopener noreferrer']));
+  assert.equal(await footer.getByText('This product uses the TMDB API but is not endorsed or certified by TMDB.', { exact: true }).count(), 1);
+  assert.deepEqual(await footer.locator('img').evaluate(image => [image.getAttribute('src'), image.alt, image.width]), ['/research/grounded-answer-demo/public/tmdb-logo.svg', 'TMDB', 110]);
+  assert.equal(await details.locator(':scope > p').count(), 4, 'the explanation is consolidated before the attribution footer');
+  assert.equal(await footer.evaluate(element => element.scrollWidth <= element.clientWidth), true, 'the footer wraps without horizontal overflow');
+  assert.equal(await details.evaluate(element => element.scrollWidth <= element.clientWidth), true);
+  for (const link of await links.all()) {
+    assert.equal(await link.isVisible(), true);
+    assert.equal(await link.evaluate(element => { const r=element.getBoundingClientRect(), p=element.closest('footer').getBoundingClientRect(); return r.x >= p.x-1 && r.right <= p.right+1; }), true, 'each full source label fits inside the footer');
+  }
+  // Native anchors must remain reachable in document order without activating
+  // a destination or invoking discovery. Keyboard focus also checks the real
+  // :focus-visible styling rather than inferring accessibility from tabindex.
+  await details.locator('summary').focus();
+  for (let index = 0; index < expected.length; index++) {
+    await page.keyboard.press('Tab');
+    assert.equal(await links.nth(index).evaluate(element => element === document.activeElement), true, 'Tab reaches each source link in its visible order');
+    assert.equal(await links.nth(index).evaluate(element => { const style=getComputedStyle(element); return element.matches(':focus-visible') && style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0; }), true, 'a focused source link has a visible keyboard indicator');
+  }
+  if (process.env.M4_SCREENSHOT_DIR && [375,420,1280].includes(width)) {
+    await details.locator('summary').focus();
+    const visibleSection = await details.evaluate(element => {
+      const dialog=element.closest('dialog'), header=dialog.querySelector('.media-advice-header');
+      dialog.scrollTop += element.getBoundingClientRect().top - (header.getBoundingClientRect().bottom + 8);
+      const section=element.getBoundingClientRect(), heading=header.getBoundingClientRect(), viewport=dialog.getBoundingClientRect();
+      return { top:section.top, bottom:section.bottom, headerBottom:heading.bottom, dialogBottom:viewport.bottom };
+    });
+    if (visibleSection.top >= visibleSection.headerBottom && visibleSection.bottom <= visibleSection.dialogBottom) {
+      // A sticky dialog header must not cover the first lines in a cropped
+      // screenshot. Position the real scroll container; never hide UI or
+      // resize/rewrite the rendered content to manufacture a full capture.
+      await details.screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/source-footer-section-${width}.png`, animations: 'disabled' });
+    } else {
+      await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/source-footer-section-${width}-top.png`, animations: 'disabled' });
+      await details.locator('footer').scrollIntoViewIfNeeded();
+      await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/source-footer-section-${width}-bottom.png`, animations: 'disabled' });
+    }
+  }
+}
+
 test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, isolated transfer and report', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const root = resolve(import.meta.dirname, '..');
   const server = createServer(async (req, res) => {
@@ -206,7 +260,12 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.match(await page.locator('.media-advice-legend').innerText(),/\? — невідомо; ± — дані різняться/);
     await page.getByText('Про джерела та обмеження',{exact:true}).click();
     assert.equal(await page.locator('.media-advice-attribution').evaluate(e=>e.open),true);
-    assert.match(await page.locator('.media-advice-attribution').innerText(),/не гарантія доступності.*Невідоме не означає «немає».*різних варіантів сервісу/s);
+    await assertSourceFooter(page, width);
+    assert.equal(calls.filter(c => c.action === 'discover').length, 1, 'expanding the source footer and focusing its links never starts discovery');
+    assert.equal(await page.evaluate(()=>authoredDBWrites.length),0);
+    assert.deepEqual(await page.evaluate(()=>authoredOpened),[]);
+    assert.equal(context.pages().length, 1, 'viewing and tabbing through attribution never opens a destination');
+    assert.equal(page.url(), origin + '/app.html');
     assert.equal(await page.locator('.media-advice-dialog').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
     // Real re-init path, with non-M4 data loaders isolated: unchanged auth
     // handler -> unchanged initApp -> actual loadCurrentRole -> M4 access refresh.

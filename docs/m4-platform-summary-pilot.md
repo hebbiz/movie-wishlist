@@ -470,3 +470,36 @@ reopen-without-discovery checks remain covered. Syntax, whitespace/scope and
 Real iPhone/Safari/VoiceOver and deployed Node22 are not tested. Dedicated
 pending/resume, server/SQL/native PostgreSQL and Windows lifecycle suites are
 not repeated: dependent code is unchanged. Local Node24.22.0/Edge.
+
+### Source notes footer — 2026-10-31
+
+From develop `8e88927cf9f51ead409c660fa664800c08b6259f` after merged #211.
+The existing closed `Про джерела та обмеження` section now has four short
+Ukrainian paragraphs: incomplete/stale data and platform verification; different
+offers and missing-language uncertainty; matched Kinobaza block/Ukraine as an
+application interpretation plus format-specific negative audio limits; shared
+JustWatch provenance and neutral third-party click accounting. No new disclaimer
+bubble or repeated table caution is added. Visible error/stale warnings, legend,
+diagnostics and native expansion/reopen behavior are unchanged.
+
+A wrapping native navigation footer inside the section groups TMDb, JustWatch,
+Movie of the Night and Kinobaza. All four original URLs, new-tab protections,
+TMDb English attribution text and logo source/alt/width are preserved. Anchors
+have44px-high targets and retain the existing keyboard focus indicator. Copy and
+footer layout only: no search/ranking, movie URL, preview/Save, session, initApp/
+global lifecycle/auth, server/schema/flag or other Mykola-context change.
+
+22/22 targeted offline/mock tests and5/5 main browser tests passed,0 failures/
+skips. The dedicated copy contract checks every retained meaning and exact
+footer/link/credit attributes; browser checks all four native Tab stops/visible
+focus, layout at375/420/820/1280px, expansion/reopen without another discovery,
+and no navigation/write just from viewing. Existing real add/edit mock flows,
+table geometry, exact link transfer, report and visible error/stale behavior
+remain covered. Authored `source-footer-section-*` screenshots stay outside Git;
+mobile/wide examples were visually inspected, with the real dialog scrolled
+below its sticky header for the capture. They are Edge viewport emulation, not
+real iPhone/Safari/VoiceOver validation. Syntax, whitespace/scope and the existing
+14-doc/455-link/280-anchor/13-handoff checks passed; no assertions/timeouts weakened.
+Server/SQL/native PostgreSQL/Windows lifecycle and dedicated pending/resume suites
+are not repeated: dependent code is unchanged. No live calls, real Wishlist
+writes, owner checkout/demo edits, merge/deployment or production changes.

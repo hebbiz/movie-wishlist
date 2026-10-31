@@ -4169,7 +4169,14 @@ body.invite-page.app-ready .container {
 .media-advice-dialog details[open] > summary::after { transform: rotate(180deg); }
 .media-advice-dialog pre { max-height: 260px; overflow: auto; font-size: 12px; }
 .media-advice-attribution, .media-advice-other, .media-advice-footnote { margin-left: 50px; }
+.media-advice-attribution { font-size: 14px; line-height: 1.5; }
+.media-advice-attribution > p { margin: 0 0 10px; }
 .media-advice-attribution a { color: #d6b25e; }
+.media-advice-source-footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #54504a; font-size: 13px; }
+.media-advice-source-links { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.media-advice-source-links a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 3px; }
+.media-advice-source-footer p { margin: 10px 0; }
+.media-advice-source-footer img { display: block; max-width: 100%; }
 .media-advice-report-bubble button { color: #e5c77e; background: transparent; padding-left: 0; text-decoration: underline; }
 .media-advice-diagnostics textarea { box-sizing: border-box; width: 100%; min-height: 240px; margin-top: 12px; padding: 12px; background: #101010; color: #eee; border: 1px solid #555; font: 13px/1.5 monospace; resize: vertical; }
 .media-advice-diagnostics > button { margin-right: 8px; }
