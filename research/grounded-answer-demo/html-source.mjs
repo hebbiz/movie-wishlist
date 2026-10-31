@@ -124,17 +124,48 @@ function candidate(a, territory, html, provider) {
   return { ...entry, hrefKind: 'absolute', status: 'candidate' };
 }
 
+const IMAGE_ATTRIBUTE_RECOVERY = new Set(['missing-whitespace-between-attributes', 'unexpected-character-in-attribute-name']);
+function noncriticalImageError(error, all, html) {
+  if (!IMAGE_ATTRIBUTE_RECOVERY.has(error.code)) return false;
+  const accordions = all.filter(n => attr(n, 'id') === 'availabilityAccordion');
+  const end = accordions.length === 1 ? accordions[0].sourceCodeLocation?.endTag?.endOffset : null;
+  if (!Number.isInteger(end)) return false;
+  const targets = all.filter(n => {
+    const span = n.sourceCodeLocation?.startTag;
+    return span && Number.isInteger(error.startOffset) && Number.isInteger(error.endOffset) &&
+      span.startOffset <= error.startOffset && error.startOffset < span.endOffset && error.endOffset <= span.endOffset;
+  });
+  if (targets.length !== 1) return false;
+  const node = targets[0], span = node.sourceCodeLocation.startTag;
+  // Only a located, void HTML image after the bounded viewing sections. Do not
+  // recover a broken tag that could have swallowed later metadata/HTML tags.
+  if (node.tagName !== 'img' || node.namespaceURI !== 'http://www.w3.org/1999/xhtml' ||
+      children(node).length || span.startOffset < end || html.slice(span.startOffset + 1, span.endOffset).includes('<')) return false;
+  const critical = p => ['h1', 'h2', 'table', 'tr', 'td', 'th'].includes(p.tagName) ||
+    attr(p, 'id') === 'availabilityAccordion' || p.tagName === 'a' && providerName(p);
+  for (let p = node.parentNode; p; p = p.parentNode) if (critical(p)) return false;
+  // parse5 may foster-parent an image out of a table. Its original source
+  // interval must also be outside critical structures, not just its DOM parent.
+  if (all.some(p => critical(p) && p.sourceCodeLocation?.startOffset <= span.startOffset &&
+      p.sourceCodeLocation?.endOffset >= span.endOffset)) return false;
+  return true;
+}
+
 // parse5 is lazy: existing Gemini modes still run without installing this parser.
 export async function extractHtml(html, film, { identityCheck } = {}) {
   if (typeof html !== 'string' || Buffer.byteLength(html) > HTML_LIMIT_BYTES) return { status: 'unsupported-markup', candidates: [], issues: ['html-size-limit'] };
   let parse;
   try { ({ parse } = await import('parse5')); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['Run npm ci --prefix research/grounded-answer-demo --ignore-scripts'] }; }
   try {
-    const errors = [];
-    const doc = parse(html, { sourceCodeLocationInfo: true, onParseError: e => { if (errors.length < 10) errors.push(e.code); } });
-    // Recovery is fine for omitted doctype, not duplicate attributes / ambiguous tokenization.
-    if (errors.some(e => e !== 'missing-doctype')) return { status: 'unsupported-markup', candidates: [], issues: ['html-parse-errors'] };
-    const all = nodes(doc); const checked = identityCheck ? identityCheck(all) : identity(all, film);
+    const errors = []; let overflow = false;
+    const doc = parse(html, { sourceCodeLocationInfo: true, onParseError: e => {
+      if (errors.length < 256) errors.push({ code: e.code, startOffset: e.startOffset, endOffset: e.endOffset }); else overflow = true;
+    } });
+    const all = nodes(doc), recoveries = errors.filter(e => e.code !== 'missing-doctype');
+    // Never silently drop a late critical error behind the event bound. No HTML
+    // repair/serialization: identity and extraction use the same parsed tree.
+    if (overflow || recoveries.some(e => !noncriticalImageError(e, all, html))) return { status: 'unsupported-markup', candidates: [], issues: ['html-parse-errors'] };
+    const checked = identityCheck ? identityCheck(all) : identity(all, film);
     const fail = issue => ({ status: 'unsupported-markup', identity: checked, candidates: [], issues: [issue] });
     if (checked.status !== 'matched') return { status: checked.status === 'mismatch' ? 'identity-mismatch' : 'identity-unresolved', identity: checked, candidates: [], issues: [checked.reason ?? 'title-year-director-not-unambiguous'] };
     const accordions = all.filter(n => attr(n, 'id') === 'availabilityAccordion');
@@ -188,7 +219,8 @@ export async function extractHtml(html, film, { identityCheck } = {}) {
     if (!countryValid && !independentClaims) return fail(countryIssue);
     // Keep the established order and block IDs when all country sections parse.
     const candidates = [...(countryValid ? countryCandidates : []), ...independentCandidates];
-    const issues = [...(countryValid ? countryIssues : []), ...independentIssues, ...(countryIssue ? [countryIssue] : []), ...localization.issues];
+    const issues = [...(countryValid ? countryIssues : []), ...independentIssues, ...(countryIssue ? [countryIssue] : []), ...localization.issues,
+      ...(recoveries.length ? ['noncritical-image-markup-recovered'] : [])];
     if (candidates.length > 100) return fail('candidate-count-limit');
     const availabilitySignals = candidates.filter(c => c.territory).map(c => ({ provider: c.provider, href: c.href, territory: c.territory,
       state: 'source-section-claim', value: 'available', access: 'unknown', upstream: 'JustWatch', basis: 'Explicit country heading/panel, not href presence or account entitlement.' }));

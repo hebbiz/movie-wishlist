@@ -13,6 +13,7 @@ the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-a
 and the preserved [Gemini finding](#gemini-primary-resolver-feasibility-2026-10-21).
 Canonical implementation record, not a second research architecture. Evidence and
 source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
+Latest narrow source-parser change: [Mad Max markup recovery](#mad-max-noncritical-image-markup-recovery--2026-10-31).
 
 ## Reviewed baseline and sequence
 
@@ -3096,3 +3097,107 @@ Owner-reported Netlify Function runs on deployed merge commit
 
 These focused runs do not establish account entitlement, current platform
 availability, general catalog coverage, or native iPhone compatibility.
+
+## Mad Max noncritical image markup recovery — 2026-10-31
+
+Implemented locally on develop `cd96811b4a0f4527154d5863177c8c94043927de`
+(after #212); not merged or deployed by this task. MW-FUT-01 remains Discovery.
+The owner run `0d87341b-9cb6-42c3-9521-2257bb2073cd` reported a pre-identity
+`unsupported-markup / html-parse-errors` refusal. Its first requested-card digest
+`1a36d8f904915591582ac309a60c3ebd4a47e9891332c0fa5c955a3fbbe5d1d1`
+matches [the supplied Mad Max card](https://kinobazaua.com/titles/mad-max-fury-road),
+not an archived HTML body. The precise historical parser errors remain unknown.
+
+### Current response and cause
+
+The current HTTP200 response read at **2026-10-31 10:23:52 UTC**,432172 bytes,
+has exactly three parse5 errors at one trailer image on line3021:
+`missing-whitespace-between-attributes` (column210), then
+`unexpected-character-in-attribute-name` (columns236 and276). Unescaped quotes
+inside the image's `alt` produce stray attributes. This image follows the film
+metadata (H1 644–646, original H2 648, labelled director row1521–1526), the
+provider blocks1723–1813, and the complete availability accordion1818–2337.
+The old shared extractor rejects every non-doctype parse error before identity;
+it reproduces the reported refusal and zero candidates on these current bytes.
+This is a current reproduction, not proof of the historical response's contents.
+
+Recovery is structural, not a film/slug/trailer-text exception. Only those two
+attribute-tokenization codes may be tolerated, inside one located HTML void
+`img` **after a unique explicitly closed availability accordion**. Errors in
+H1/H2/table/provider-anchor ancestry or original source intervals, foreign elements, tags swallowing another
+`<`, duplicate attributes, unknown errors, missing/duplicate viewing boundaries
+or more than256 error events still refuse. Every collected error is classified;
+a later critical error cannot hide behind the old ten-event diagnostic cap.
+Source intervals also catch an image that parse5 foster-parents out of a table;
+repaired DOM ancestry alone is not accepted as proof of a noncritical location.
+No HTML repair, script execution or second parser is introduced. Identity and
+extraction use the original parse5 tree. Successful recovery stays `partial`
+with allowlisted, content-free `noncritical-image-markup-recovered` diagnostics.
+The fixed-card research path shares this parser, so the same narrow handling
+applies there; its identity, transport and extraction rules are unchanged.
+
+### Full-path result and controls
+
+The same in-memory responses were passed through baseline/current `extractHtml`
+with the same assisted identity gate, then actual composition, M4 presentation
+and transfer eligibility. These are **local controls, not a deployed run or a new
+TMDb identity fetch**. Control identity inputs were explicit: Mad Max's supplied
+IMDb/year and title/director names supported by the
+[Ukrainian distributor](https://kinomania.com.ua/shalenyy-maks-doroga-gnivu-0)
+and [Cannes film record](https://www.festival-cannes.com/en/f/mad-max-fury-road/);
+the distributor's2020 re-release date is not used as production year. Mortal
+Kombat's previously established movie identity and literal director name are
+local extraction-control inputs, not a newly verified person alias. Dune uses
+the existing reviewed person137427 alias record. No runtime aliases are added.
+
+| Current card | Baseline → fixed extraction | Own provider-block audio / subtitles | M4 projection |
+| --- | --- | --- | --- |
+| Mad Max: Fury Road2015 | unsupported-markup,0 → matched/partial,36 candidates,3 blocks | Apple `+ / −`; Rakuten `+ / −`; MEGOGO `+ / unknown` | 6 Kinobaza rows,0 unmapped; all three blocks reach the comparison and exact link choices. A fourth HBO group retains unknown languages. |
+| [Mortal Kombat2021](https://kinobazaua.com/titles/mortal-kombat-2021) | identical before/after: matched/ok,36 candidates,3 blocks | Apple `+ / +`; Rakuten named audio formats `−` / subtitles `+`; MEGOGO `+ / +` | 4 Kinobaza-only rows,0 unmapped. Named-format negatives do not imply absence of every Ukrainian audio track. |
+| [Dune: Part Two2024](https://kinobazaua.com/titles/dune-part-two) | identical before/after: matched/ok,32 candidates,3 blocks | Apple `+ / −`; Rakuten `+ / +`; MEGOGO `+ / +` | 5 Kinobaza-only rows,0 unmapped. |
+
+For both controls the **entire extracted object** is identical before/after.
+Candidate counts include foreign-country contexts and are not UA offer counts.
+Mad Max's own block URLs classify as admitted iTunes, JustWatch tracking and
+MEGOGO links; they survive unchanged. Apple's nested table CTA repeats the same
+URL, not a lost second offer. No downstream localization/link/presentation defect
+was established, so those production modules are not changed. The three language
+blocks retain unknown source territory/availability; M4 displays `◐` and uses
+the approved Ukraine interpretation, not independently verified availability or
+offer binding. The film-level audio badge stays unknown and supplies no tracks.
+No provider destination was opened and no purchase, playback or entitlement is
+verified. The historical owner's combined baseline rows are not these Kinobaza-
+only projections.
+
+Five direct Kinobaza card GET attempts were made: Mad Max three times (first local
+analysis process was sandbox-blocked; the last read at11:09:55 UTC rechecked the
+final source-interval guard and confirmed the same before/after outcome), Mortal
+Kombat once, Dune once; all200. These were explicit local research reads, not
+application retries. HTML existed only in memory, was reused for before/after
+analysis without refetches, and the process was terminated afterwards. Public
+documentation/identity-reference browsing is separate from these five source
+GETs. No Tavily, TMDb API, MOTN, Watch Providers, redirect or destination requests;
+no keys, raw HTML archive, new persistence, Wishlist writes or owner tests.
+
+### Regression evidence
+
+Authored fixtures are not reconstructed source HTML. They cover recovery after
+the closed boundary, critical/ambiguous structures and duplicate attributes,
+late critical errors/overflow, exact links, one-shot bounded GET, missing/unsafe
+links, source-block scopes, unresolved directors/stable conflicts/withholding,
+composition→comparison→original-row preview, and content-free safe reports.
+Validation: final M4 full offline/HTTP suite229 passed,4 skipped (three browser entry
+tests subsequently ran explicitly; native PostgreSQL17 concurrency remains
+unconfigured/skipped). Final changed parser/report/pipeline target54/54 passed;
+full shared research offline/HTTP suite479 passed,13 legacy browser entries
+skipped. M4 Edge browser suite30/30 passed: real add/edit forms with authored
+network/DB mocks, desktop1280×900, tablet820×1180 and iPhone-size375×812/420×912,
+pending apply, retained/stale results, context isolation and normal mocked Save.
+These are viewport simulations, not native Safari/iPhone or deployed Node22
+validation. Syntax, whitespace and14-document local link/anchor checks passed.
+Windows launcher lifecycle/native database concurrency were not repeated:
+transport/launcher, ledger and schema dependencies did not change. No assertions
+or timeouts were weakened. No initApp/global
+lifecycle/auth/UI, budgets/deadlines, source interpretation/ranking, session,
+preview/Save, ledger, migration, flag or production changes. Merge/deployment
+remain separately authorized; this does not establish general parser coverage.

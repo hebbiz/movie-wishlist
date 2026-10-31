@@ -93,6 +93,57 @@ test('changed boundary, parse errors and CAPTCHA still withhold all claims', asy
   ]) { const result = await parse(html); assert.ok(['unsupported-markup', 'identity-unresolved'].includes(result.status)); assert.deepEqual(result.candidates, []); }
 });
 
+// Authored tokenization regressions, not an archive of any source response.
+const brokenTrailerImage = '<img alt="Authored "quoted" trailer" src="/authored.jpg">';
+const afterViewing = (image = brokenTrailerImage) => markup().replace('</body>', `${image}</body>`);
+test('located noncritical image attribute errors after a closed viewing boundary preserve exact candidates', async () => {
+  const expected = await parse(markup()), result = await parse(afterViewing());
+  assert.equal(result.status, 'partial'); assert.equal(result.identity.status, 'matched');
+  assert.deepEqual(result.candidates, expected.candidates);
+  assert.deepEqual(result.localization, expected.localization);
+  assert.deepEqual(result.availabilitySignals, expected.availabilitySignals);
+  assert.deepEqual(result.issues, [...expected.issues, 'noncritical-image-markup-recovered']);
+});
+
+test('the same image errors in or before critical structures still refuse before identity', async () => {
+  const append = content => markup().replace('</body>', `${content}</body>`);
+  const cases = [
+    markup().replace('<h1>', `${brokenTrailerImage}<h1>`),
+    markup().replace('<div id="collapseUA"', `${brokenTrailerImage}<div id="collapseUA"`),
+    append(`<h1>${brokenTrailerImage}</h1>`), append(`<h2>${brokenTrailerImage}</h2>`),
+    append(`<table><tbody><tr><td>${brokenTrailerImage}</td></tr></tbody></table>`),
+    append(`<table>${brokenTrailerImage}<tbody><tr><td>Authored</td></tr></tbody></table>`),
+    append(`<a title="Дивитись / Купити на Apple TV" href="https://example.com/">${brokenTrailerImage}</a>`),
+    append('<img alt="Authored "broken" swallowed <h1> title">'),
+    afterViewing().replace('</div><script>', '<script>'),
+    markup().replace('id="availabilityAccordion"', 'id="changed"').replace('</body>', `${brokenTrailerImage}</body>`),
+    append(`<div id="availabilityAccordion"></div>${brokenTrailerImage}`),
+  ];
+  for (const [index, body] of cases.entries()) {
+    let checks = 0;
+    const result = await extractHtml(body, FILMS.coherence, { identityCheck: () => { checks++; return { status: 'matched' }; } });
+    assert.equal(result.status, 'unsupported-markup', `critical case ${index}`); assert.deepEqual(result.issues, ['html-parse-errors']);
+    assert.equal(checks, 0); assert.deepEqual(result.candidates, []); assert.equal(result.localization, undefined);
+  }
+});
+
+test('duplicate and other attribute errors remain critical, including after many tolerated events', async () => {
+  for (const body of [
+    afterViewing('<img alt="one" alt="two">'),
+    afterViewing('<img src="/x\u0000">'),
+    afterViewing().replace('</head>', '<link rel="canonical" href="first" href="second"></head>'),
+    afterViewing().replace('data-bs-target="#collapseUA"', 'data-bs-target="#collapseUA" data-bs-target="#collapsePL"'),
+    afterViewing().replace('id="collapseUA"', 'id="collapseUA" id="collapsePL"'),
+    afterViewing().replace('href="https://example.com/redirect', 'href="first" href="https://example.com/redirect'),
+    afterViewing(brokenTrailerImage.repeat(12) + '<img alt="first" alt="second">'),
+    afterViewing(brokenTrailerImage.repeat(257)),
+  ]) {
+    const result = await parse(body);
+    assert.equal(result.status, 'unsupported-markup'); assert.deepEqual(result.issues, ['html-parse-errors']);
+    assert.deepEqual(result.candidates, []);
+  }
+});
+
 test('one bounded GET only; no key/cookies/body, redirects manual, no destination requests', async () => {
   const calls = [];
   const result = await fetchHtmlCandidates(select(), async (url, init) => { calls.push({ url, init }); return htmlResponse(markup()); });

@@ -96,7 +96,7 @@ export function buildShortReport({ filmId, mode, receivedAt, result, failed = fa
         const reasons = new Set(['source-canonical-conflict', 'source-canonical-ambiguous', 'malformed-source-stable-id', 'source-stable-id-conflict', 'source-identity-structure-incomplete', 'source-identity-structure-limit', 'source-title-year-missing',
           'source-title-conflict', 'source-original-title-unestablished', 'source-original-title-scope-unestablished', 'selected-year-missing', 'source-year-conflict-without-stable-crosswalk', 'source-or-selected-director-missing', 'director-scope-unestablished', 'director-alias-unestablished', 'explicit-stable-and-structural-match', 'explicit-title-year-director-match', 'html-parse-errors']);
         lines.push(`Assisted addition: identity ${identity(c.identity)}; candidates ${count(c.candidates)}; localization blocks ${count(c.blocks)}; reason ${reasons.has(c.reason) ? c.reason : 'unresolved-or-inspect-page'}.`);
-        const extractionCodes = new Set(['html-size-limit', 'html-parse-errors', 'missing-or-duplicate-availabilityAccordion', 'unsupported-accordion-items',
+        const extractionCodes = new Set(['html-size-limit', 'html-parse-errors', 'noncritical-image-markup-recovered', 'missing-or-duplicate-availabilityAccordion', 'unsupported-accordion-items',
           'ambiguous-territory-heading', 'ambiguous-territory-control', 'unsupported-or-conflicting-territory', 'ambiguous-territory-panel',
           'missing-explicit-ukraine-section', 'candidate-count-limit', 'unresolved-parser-or-structure']);
         const extraction = (Array.isArray(c.extractionIssues) ? c.extractionIssues : []).filter(code => extractionCodes.has(code)).slice(0, 8);
