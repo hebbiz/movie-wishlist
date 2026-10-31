@@ -15,6 +15,8 @@ Canonical implementation record, not a second research architecture. Evidence an
 source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
 Latest narrow source-parser change: [Mad Max markup recovery](#mad-max-noncritical-image-markup-recovery--2026-10-31).
 Latest link-choice decision: [declared destinations and duplicate navigation](#link-choice-equivalence-and-justwatch-inspection--2026-10-31).
+Apple UI preference now supersedes its multi-choice presentation:
+[one provenance-prioritized Apple link](#single-apple-link-preference--2026-10-31).
 
 ## Reviewed baseline and sequence
 
@@ -3319,3 +3321,100 @@ language interpretation, link admission/R1/R2, original-row preview/apply/Save,
 session/stale/pending protection, initApp/global lifecycle/auth, server timeouts
 and budgets, schema/flags/main/production are unchanged. Merge/deployment remain
 separate decisions. MW-FUT-01 remains Discovery.
+
+## Single Apple link preference — 2026-10-31
+
+Base develop `004f425dc9f49d9729b8e9ff2942c62fbb54e13b`, after merged #214.
+This owner-approved UI preference replaces the multiple-Apple-choice policy,
+not the source observations or the finding that iTunes/UMC offers are not proved
+equivalent. Other services retain #214's choice/deduplication behavior.
+
+### Origin evidence and deterministic selection
+
+Inspection confirmed the existing server projection already distinguishes:
+
+- Recognized top provider blocks: `kinobazaLocalization.blockId`, exact block
+  href/provider association, `linkAudit.blockAssociation=associated`, null source
+  country/territory and `territoryBasis=Outside territory section`. These come
+  from the bounded film-content area before `availabilityAccordion`, not from
+  matching a host, movie ID or a screenshot. Ambiguous/unsupported block
+  boundaries cannot establish this priority.
+- UA regional observations: `country=UA`, matching `countrySignal` provider/href
+  and UA territory, `source-section-claim`, explicit country-section basis and
+  JustWatch-section upstream. The extractor validates its heading/control/panel
+  independently of top blocks.
+
+References: `kinobaza-localization.mjs` (`extractLocalization`), `html-source.mjs`
+(`extractHtml`) and `discovery.mjs` (`composeDiscovery`). No parser, server or
+source-contract change was needed. Unrecognized top anchors without a confirmed
+block association are **not guessed** into a priority category; they remain
+eligible under the safe fallback.
+
+`preferredAppleLinkChoice` inspects original eligible rows before deduplication:
+top-block TV → top-block iTunes → UA-section TV → existing eligible presentation
+preference, otherwise first eligible row in the supplied stable order. Multiple
+rows in the same priority also retain that order, without a price/quality/ID
+tie-break. Missing Kinobaza does not remove usable other-source pointers.
+
+A native admitted Apple URL supplies its host class. A strict admitted JustWatch
+`r` can supply only the **declared** Apple target class; no redirect/destination
+request occurs and the wrapper stays the exact selected URL. Numeric iTunes and
+playableId similarity is never an equivalence or identity rule. The main Apple
+actions expose one original row/href and no redundant select control.
+
+### Current Mad Max check, not historical reconstruction
+
+One read-only card GET at 12:33:09 UTC returned200, matched identity under the
+existing local control projection and partial extraction. No new TMDb identity
+request or deployed-runtime attestation was performed. The existing extractor
+and composition produced:
+
+- `kinobaza:1`: UA regional Apple TV Store JustWatch pointer, declared UA TV UMC
+  card with `playableId=tvs.sbd.9001:990549112`, no own-block association;
+  href SHA256 `034e67b1ef217a7cd80cf6730b4ac420526b5fb12342e834f984f18c0356922b`.
+- `kinobaza:33`: top-block `itunes`, `kinobaza:block:0`, associated literal href
+  `https://itunes.apple.com/ua/movie/id990549112` with its original query intact;
+  href SHA256 `9fd6a1a989a8c50d6b480310342d1e71b5a28e1af454b3dddcc3f721ae6c28e7`.
+
+The actual extraction→composition→presentation→preview control now chooses only
+the top iTunes row, with that exact digest/URL and no row mutation (2→1 current
+Kinobaza choices). This one page read does not reconstruct all three URLs from
+the owner's live result or establish which source supplied its additional TV
+address. The authored three-Apple-row regression explicitly covers distinct
+playableIds and the coinciding iTunes number without claiming offer equivalence.
+
+### Diagnostics and preserved boundaries
+
+Every original row remains in the in-memory result and sanitized source details.
+Every admitted matched Apple address is additionally available as **closed,
+text-only local diagnostic details**, including unselected alternatives. Unsafe,
+missing, identity-refused or provider-conflicting links are withheld. These are
+not anchors, are not included in copied short-report/JSON projections, and are
+not automatically opened, copied, sent, logged or persisted. Existing context
+invalidation clears them with the result; no new storage or retention policy.
+
+Language signs, provenance, ranking, identity/link policy, exact open/preview/
+transfer, explicit apply and ordinary Save remain independent and unchanged.
+No offer/track joins, new source calls on render/reopen, initApp/global lifecycle/
+auth changes, budgets, migrations, flags, main/production or owner-checkout edits.
+This task's live accounting is one Kinobaza GET, zero search/API/destination
+requests; earlier research accounting remains separate. Merge and deployment
+are not authorized. MW-FUT-01 remains Discovery.
+
+Validation: 99/99 targeted offline tests pass (link choice, controller, platform
+summary/UI, report and actual authored extraction pipeline). Browser final runs
+pass 5/5 real-form desktop/iPhone X-size/Air-size/tablet tests and 25/25 pending-
+apply/retained-document tests. They cover all priority tiers, absent Kinobaza,
+deterministic ties, three original Apple addresses retained outside the copied
+report, exact open/preview/apply, no actual DB writes, ordinary mocked Save,
+reopen/no discovery, stale/access/context boundaries and late replies. The new
+diagnostic details required narrowing prior browser JSON-only selectors to the
+original sanitized `pre` elements; URL/raw-content exclusions there were not
+relaxed. No assertions or timeouts were weakened.
+
+Syntax, whitespace and local documentation links/anchors pass. Independent
+read-only review found no blockers. Browser evidence is Edge/Playwright viewport
+emulation, not physical iPhone or Safari/WebKit. Server/SQL/native-PG/Windows
+lifecycle suites were not repeated because their components/dependencies did
+not change; no previous results are attributed to this new commit. No live
+discovery, Wishlist Save, merge or manual deployment was performed.

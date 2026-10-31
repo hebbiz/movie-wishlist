@@ -369,8 +369,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('.media-advice-diagnostics h3')), true);
     assert.equal(await page.getByLabel('Короткий звіт для копіювання').isVisible(),true);
     await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
-    assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/Plex/);
-    assert.doesNotMatch(await page.locator('.media-advice-diagnostics details').innerText(),/https?:|sourceURL|href/);
+    assert.match((await page.locator('.media-advice-diagnostics details pre').allTextContents()).join('\n'),/Plex/);
+    assert.doesNotMatch((await page.locator('.media-advice-diagnostics details pre').allTextContents()).join('\n'),/https?:|sourceURL|href/);
     await page.getByRole('button', { name: 'Скопіювати короткий звіт' }).click();
     const report = await page.getByLabel('Короткий звіт для копіювання').inputValue();
     assert.doesNotMatch(report, /https?:|manual.example|AUTHORED|at=/);
@@ -449,9 +449,9 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Mapped source rows: 8/);
       await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
       assert.equal(await page.locator('.media-advice-diagnostics details pre').count(),8,'all eight original rows remain in diagnostics');
-      assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/Укр\. звук \(dolby\)/);
-      assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/Kinobaza|kinobaza/);
-      assert.doesNotMatch(await page.locator('.media-advice-diagnostics details').innerText(),/https?:|href|AUTHOR%/);
+      assert.match((await page.locator('.media-advice-diagnostics details pre').allTextContents()).join('\n'),/Укр\. звук \(dolby\)/);
+      assert.match((await page.locator('.media-advice-diagnostics details pre').allTextContents()).join('\n'),/Kinobaza|kinobaza/);
+      assert.doesNotMatch((await page.locator('.media-advice-diagnostics details pre').allTextContents()).join('\n'),/https?:|href|AUTHOR%/);
       if (process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({ path:`${process.env.M4_SCREENSHOT_DIR}/authored-report-420.png`,animations:'disabled' });
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeReport);
       await page.getByRole('button',{name:'← До порад'}).click();
@@ -519,21 +519,31 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.getByRole('button',{name:'← До картки',exact:true}).click();
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeSharedCalls+1,'link deduplication, diagnostic access and reopen add no discovery');
 
-      // Authored Mad Max-shaped four Apple/two Rakuten observations, not live
-      // URLs or reconstructed provider offers. Comparison may group proven
-      // pointers, but the chosen original href and source row remain intact.
+      // Authored Mad Max-shaped three Apple/two Rakuten observations, not live
+      // URLs or reconstructed offers. Different playableIds and an iTunes ID
+      // resembling one of them are NOT proof of offer equivalence. Apple now
+      // presents one provenance-prioritized original URL without a chooser.
       const applePointer='https://tv.apple.com/ua/movie/authored-madmax/umc.cmc.authoredmadmax?playableId=tvs.sbd.9000000001';
       const appleOriginal=applePointer+'&at=AUTHOR%2fONLY';
-      const appleITunes='https://itunes.apple.com/ua/movie/id9000000001?at=AUTHOR%2fONLY&l=uk';
+      const appleRegional='https://tv.apple.com/ua/movie/authored-madmax/umc.cmc.authoredmadmax?playableId=tvs.sbd.9000000002';
+      const appleITunes='https://itunes.apple.com/ua/movie/id9000000002?at=AUTHOR%2fONLY&l=uk';
       const rakutenPointer='https://rakuten.tv/ua/movies/authored-madmax';
       const justWatch=(pointer,campaign)=>`https://click.justwatch.com/a?cx=${campaign}&r=${encodeURIComponent(pointer)}&uct_country=ua`;
       const authoredLinkRow=(id,key,href)=>({id,identityStatus:'matched',provider:{key},country:'UA',kind:'source-offer',
         audio:{state:'unknown'},subtitles:{state:'unknown'},conflicts:[],provenance:{source:'AUTHORED'},link:{href}});
+      const authoredAppleBlock=(id,href)=>({...authoredLinkRow(id,'apple',href),country:null,kind:'candidate-link',
+        provider:{key:'apple',sourceName:'itunes'},provenance:{source:'Kinobaza HTML'},
+        territoryBasis:'Outside territory section',
+        kinobazaLocalization:{blockId:'kinobaza:block:0',provider:'itunes',href,territory:null,issues:[]},
+        linkAudit:{blockAssociation:'associated'}});
+      const regionalHref=justWatch(appleRegional,'AUTHOR-apple-region');
       authored.rows=[
         authoredLinkRow('motn:madmax-apple-original','apple',appleOriginal),
-        authoredLinkRow('motn:madmax-apple-tracking','apple',applePointer+'&ct=AUTHOR%2fOTHER'),
-        authoredLinkRow('kinobaza:madmax-apple-declared','apple',justWatch(applePointer+'&itsct=AUTHOR%2fOTHER','AUTHOR-apple')),
-        authoredLinkRow('kinobaza:madmax-itunes-original','apple',appleITunes),
+        {...authoredLinkRow('kinobaza:madmax-apple-regional','apple',regionalHref),
+          provider:{key:'apple',sourceName:'itunes'},provenance:{source:'Kinobaza HTML',upstream:'JustWatch section (shared with TMDb)'},
+          territoryBasis:'Explicit Ukrainian section; not entitlement',
+          countrySignal:{state:'source-section-claim',territory:{code:'UA'},href:regionalHref,provider:'itunes'}},
+        authoredAppleBlock('kinobaza:madmax-itunes-original',appleITunes),
         authoredLinkRow('motn:madmax-rakuten-original','rakuten',justWatch(rakutenPointer,'AUTHOR-rakuten-one')),
         authoredLinkRow('kinobaza:madmax-rakuten-duplicate','rakuten',justWatch(rakutenPointer,'AUTHOR-rakuten-two')),
       ];
@@ -543,16 +553,14 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();
       await page.locator('.media-advice-answer').waitFor();
       assert.equal(await page.locator('.media-advice-row').count(),2);
-      const appleChoice=page.getByLabel('Посилання сервісу Apple TV / iTunes');
-      assert.equal(await appleChoice.locator('option').count(),2,'four Apple records expose the shared TV pointer and distinct iTunes card, not four source rows');
-      assert.equal(await page.locator('.media-advice-row[data-provider-key="apple"]').getAttribute('data-row-id'),'motn:madmax-apple-original');
+      assert.equal(await page.locator('.media-advice-link-select').count(),0,'one chosen Apple URL does not expose the underlying source records as a chooser');
+      assert.equal(await page.locator('.media-advice-row[data-provider-key="apple"]').getAttribute('data-row-id'),'kinobaza:madmax-itunes-original','the associated upper-block iTunes URL outranks UA-table TV and unrelated MOTN TV URLs');
       await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
-      assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[appleOriginal,'_blank','noopener,noreferrer'],'comparison does not replace the original URL with a normalized or declared destination');
-      await appleChoice.selectOption('1');
-      assert.equal(await page.locator('.media-advice-row[data-provider-key="apple"]').getAttribute('data-row-id'),'kinobaza:madmax-itunes-original');
+      assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[appleITunes,'_blank','noopener,noreferrer'],'preference never replaces the original URL with a normalized or declared destination');
       await page.getByRole('button',{name:'← До картки',exact:true}).click();
       await page.locator('#mediaAdviceEntry').click();
-      assert.equal(await appleChoice.inputValue(),'1','reopen retains the distinct selected pointer');
+      assert.equal(await page.locator('.media-advice-link-select').count(),0);
+      assert.equal(await page.locator('.media-advice-row[data-provider-key="apple"]').getAttribute('data-row-id'),'kinobaza:madmax-itunes-original','reopen retains the one preferred original pointer');
       assert.equal(calls.filter(c=>c.action==='discover').length,beforePointerCalls+1);
       await page.getByRole('button',{name:'Обрати',exact:true}).click();
       await page.locator('.media-advice-preview').getByText('Повні адреси',{exact:true}).click();
@@ -567,17 +575,51 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(await page.locator('.media-advice-link-select').count(),0,'two same-UA declared Rakuten pointers need no chooser');
       assert.equal(await page.locator('.media-advice-row[data-provider-key="rakuten"]').getAttribute('data-row-id'),'motn:madmax-rakuten-original');
       await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
-      assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[authored.rows[4].link.href,'_blank','noopener,noreferrer']);
+      assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[authored.rows[3].link.href,'_blank','noopener,noreferrer']);
       await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
-      assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Mapped source rows: 6/);
+      assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Mapped source rows: 5/);
       await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
-      assert.equal(await page.locator('.media-advice-diagnostics details pre').count(),6,'pointer grouping leaves all original records in diagnostics');
+      assert.equal(await page.locator('.media-advice-diagnostics details pre').count(),5,'Apple preference and unchanged Rakuten grouping leave all original records in diagnostics');
+      const diagnosticAddresses=page.locator('.media-advice-diagnostic-link');
+      assert.equal(await diagnosticAddresses.count(),3,'every admitted original Apple address stays available only in diagnostic details');
+      assert.deepEqual(await diagnosticAddresses.locator('p').allTextContents(),authored.rows.slice(0,3).map(row=>row.link.href));
+      assert.equal(await diagnosticAddresses.locator('a').count(),0,'diagnostic addresses are text, not automatic or extra navigation actions');
+      assert.equal(await diagnosticAddresses.first().getAttribute('open'),null);
+      await diagnosticAddresses.first().locator('summary').click();
+      assert.equal(await diagnosticAddresses.first().locator('p').innerText(),appleOriginal);
+      const safeReport=await page.getByLabel('Короткий звіт для копіювання').inputValue();
+      for(const original of authored.rows.slice(0,3)) assert.ok(!safeReport.includes(original.link.href),'alternative URLs never enter the copied short report');
       await page.getByRole('button',{name:'← До порад',exact:true}).click();
       if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-pointer-dedup-${width}.png`,animations:'disabled'});
       await page.getByRole('button',{name:'← До картки',exact:true}).click();
       assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforePointerWrites);
       assert.equal(calls.filter(c=>c.action==='discover').length,beforePointerCalls+1,'dedup, opening, diagnostics, transfer and reopen add no source discovery');
       assert.equal(JSON.stringify(authored.rows),originalMadMaxRows,'presentation never mutates or merges the original observations');
+
+      // A proven upper-block TV pointer takes priority over upper-block iTunes.
+      // Without any Kinobaza rows, the existing suitable source result remains
+      // usable. Neither rule grants a new language/availability observation.
+      for(const priorityCase of ['upper-tv','no-kinobaza']) {
+        const upperTV=appleRegional+'&ct=AUTHOR%2fUPPER';
+        authored.rows=priorityCase==='upper-tv'
+          ? [authoredLinkRow('motn:madmax-apple-original','apple',appleOriginal),
+            authoredAppleBlock('kinobaza:madmax-itunes-original',appleITunes),
+            authoredAppleBlock('kinobaza:madmax-tv-upper',upperTV)]
+          : [authoredLinkRow('motn:madmax-apple-original','apple',appleOriginal),
+            authoredLinkRow('motn:madmax-apple-other','apple',appleRegional)];
+        const expectedHref=priorityCase==='upper-tv'?upperTV:appleOriginal;
+        const expectedRow=priorityCase==='upper-tv'?'kinobaza:madmax-tv-upper':'motn:madmax-apple-original';
+        const beforePriorityCalls=calls.filter(c=>c.action==='discover').length;
+        await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();
+        await page.locator('.media-advice-answer').waitFor();
+        assert.equal(await page.locator('.media-advice-link-select').count(),0);
+        assert.equal(await page.locator('.media-advice-row[data-provider-key="apple"]').getAttribute('data-row-id'),expectedRow);
+        await page.getByRole('button',{name:'Відкрити посилання',exact:true}).click();
+        assert.deepEqual(await page.evaluate(()=>authoredOpened.at(-1)),[expectedHref,'_blank','noopener,noreferrer']);
+        await page.getByRole('button',{name:'← До картки',exact:true}).click();
+        assert.equal(calls.filter(c=>c.action==='discover').length,beforePriorityCalls+1);
+        assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforePointerWrites);
+      }
 
       // Actual authored HTML -> extraction -> projection, with separate own
       // provider blocks and no country-section pointer or source HTTP request.
@@ -651,8 +693,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         assert.equal(detail.kinobazaLocalization.binding,original.kinobazaLocalization.binding);
         if(original.price?.amount?.value==='91.17') assert.deepEqual(detail.price,original.price);
       }
-      assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/Укр\. звук \(стерео\)/);
-      assert.match(await page.locator('.media-advice-diagnostics details').innerText(),/91\.17/);
+      assert.match((await page.locator('.media-advice-diagnostics details pre').allTextContents()).join('\n'),/Укр\. звук \(стерео\)/);
+      assert.match((await page.locator('.media-advice-diagnostics details pre').allTextContents()).join('\n'),/91\.17/);
       await page.getByRole('button',{name:'← До порад',exact:true}).click();
       const openedBeforeKino=await page.evaluate(()=>authoredOpened.length);
       for(const [index,key] of ['apple','rakuten','megogo'].entries()) {

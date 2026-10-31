@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupLinkChoices } from '../assets/media-advice-link-choices.mjs';
-import { makePreview } from '../assets/media-advice.mjs';
+import { groupLinkChoices, preferredAppleLinkChoice } from '../assets/media-advice-link-choices.mjs';
+import { makePreview, linkChoicesFor } from '../assets/media-advice.mjs';
 
 // Authored pointers only: these do not reconstruct a live source response.
 const apple = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authored';
@@ -165,4 +165,101 @@ test('unresolved identity, provider conflicts, wrong group and unknown platform 
   const good = row('good', apple), rows = [good, { ...good, identityStatus: 'unresolved' }, { ...good, providerConflict: true }, row('other', rakuten, 'rakuten')];
   assert.deepEqual(choices(rows).map(choice => choice.row), [good]);
   assert.deepEqual(choices(rows, 'unknown'), []); assert.deepEqual(choices(null), []);
+});
+
+// Authored provenance follows the actual parser -> composition contract. These
+// are not archived Mad Max source responses or an iTunes/UMC offer crosswalk.
+const itunes = 'https://itunes.apple.com/ua/movie/id123?at=AUTHORED%2fONLY&l=uk';
+const native = (id, href) => row(id, href, 'apple', { provider: { key: 'apple', sourceName: 'itunes' }, provenance: { source: 'Movie of the Night' } });
+const top = (id, href) => ({ ...native(id, href), territoryBasis: 'Outside territory section',
+  provenance: { source: 'Kinobaza HTML' }, linkAudit: { blockAssociation: 'associated' },
+  kinobazaLocalization: { blockId: 'kinobaza:block:0', provider: 'itunes', href, territory: null, issues: [] } });
+const regional = (id, href) => ({ ...native(id, href), country: 'UA', territoryBasis: 'Explicit Ukrainian section; not entitlement',
+  provenance: { source: 'Kinobaza HTML', upstream: 'JustWatch section (shared with TMDb)' },
+  countrySignal: { state: 'source-section-claim', territory: { code: 'UA' }, provider: 'itunes', href } });
+const selected = (rows, preferredRow = rows[0]) => linkChoicesFor({ group: { key: 'apple', rows }, transferRow: preferredRow });
+
+test('one Apple UI choice: proven top TV > top iTunes > UA TV > existing safe fallback', () => {
+  const motn = native('motn', `${apple}?playableId=tvs.sbd.9001:999`),
+    ua = regional('ua', wrapper(`${apple}?playableId=tvs.sbd.9001:123`)),
+    ownITunes = top('top-itunes', itunes), ownTV = top('top-tv', `${apple}?playableId=tvs.sbd.9001:456`);
+  const cases = [[motn, ua, ownITunes, ownTV], [ownITunes, motn, ownTV, ua], [ownTV, ownITunes, ua, motn]];
+  for (const rows of cases) { const result = selected(rows, motn); assert.equal(result.length, 1); assert.strictEqual(result[0].row, ownTV); }
+  assert.strictEqual(selected([motn, ua, ownITunes], motn)[0].row, ownITunes);
+  assert.strictEqual(selected([motn, ua], motn)[0].row, ua);
+  assert.strictEqual(selected([motn])[0].row, motn);
+});
+
+test('Mad Max-shaped numeric ID coincidence does not join records, languages or offers', () => {
+  const rows = [native('motn:tv-a', `${apple}?playableId=tvs.sbd.9001:999`),
+    regional('kinobaza:ua-tv-b', wrapper(`${apple}?playableId=tvs.sbd.9001:123`)), top('kinobaza:itunes-b', itunes)];
+  rows[0].audio = { state: 'reported', ukrainian: [{ language: 'uk' }] };
+  rows[1].subtitles = { state: 'reported-positive', language: 'uk' };
+  rows[2].kinobazaLocalization.audio = { state: 'reported-negative', language: 'uk' };
+  const before = JSON.stringify(rows), result = selected(rows);
+  assert.equal(result.length, 1); assert.strictEqual(result[0].row, rows[2]);
+  assert.equal(result[0].equivalence, 'ui-preference-not-equivalence'); assert.deepEqual(result[0].members, [rows[2]]);
+  assert.equal(result[0].href, itunes); assert.equal(result[0].row.audio, undefined);
+  assert.equal(JSON.stringify(rows), before); assert.equal(rows.length, 3);
+  const preview = makePreview(result[0].row, { recommended_medium: 'DVD', purchase_url: 'https://example.com/manual' });
+  assert.equal(preview.rowId, rows[2].id); assert.equal(preview.after.purchase_url, itunes);
+});
+
+test('same-priority Apple links retain original row order, independently of preferred representative', () => {
+  const first = top('first', `${apple}?playableId=first&at=ONE`), second = top('second', `${apple}?playableId=second&at=TWO`);
+  for (let i = 0; i < 3; i++) assert.strictEqual(selected([first, second], second)[0].row, first);
+  assert.strictEqual(selected([second, first], first)[0].row, second);
+});
+
+test('top origin needs exact parser block association, not host, ID, source name or missing country alone', () => {
+  const ua = regional('ua', wrapper(apple));
+  for (const change of [
+    { provenance: { source: 'Movie of the Night' } }, { country: 'UA' }, { territoryBasis: undefined },
+    { linkAudit: { blockAssociation: 'unresolved' } }, { kinobazaLocalization: undefined },
+    { kinobazaLocalization: { ...top('x', itunes).kinobazaLocalization, href: `${itunes}&other=one` } },
+    { kinobazaLocalization: { ...top('x', itunes).kinobazaLocalization, provider: 'rakuten' } },
+    { kinobazaLocalization: { ...top('x', itunes).kinobazaLocalization, blockId: 'unknown' } },
+    { kinobazaLocalization: { ...top('x', itunes).kinobazaLocalization, territory: { code: 'UA' } } },
+    { kinobazaLocalization: { ...top('x', itunes).kinobazaLocalization, issues: ['ambiguous-provider-block'] } },
+  ]) {
+    const unestablished = { ...top('unestablished', itunes), ...change };
+    assert.strictEqual(selected([unestablished, ua], unestablished)[0].row, ua, JSON.stringify(change));
+  }
+});
+
+test('UA priority needs matching country-section evidence; unestablished records use the existing fallback', () => {
+  const motn = native('motn', apple), href = wrapper(apple), source = regional('ua', href);
+  for (const change of [
+    { country: null }, { territoryBasis: undefined }, { provenance: { source: 'Kinobaza HTML' } },
+    { countrySignal: undefined }, { countrySignal: { ...source.countrySignal, territory: { code: 'GB' } } },
+    { countrySignal: { ...source.countrySignal, href: itunes } },
+    { countrySignal: { ...source.countrySignal, provider: 'rakuten' } },
+    { countrySignal: { ...source.countrySignal, state: 'unknown' } },
+  ]) assert.strictEqual(selected([{ ...source, ...change }, motn], motn)[0].row, motn);
+  const uaITunes = regional('ua-itunes', wrapper(itunes));
+  assert.strictEqual(selected([uaITunes, motn], motn)[0].row, motn, 'regional iTunes has no special category');
+});
+
+test('safe declared Apple target may establish host category but never replaces original wrapper', () => {
+  const wrapped = top('wrapped', wrapper(`${apple}?playableId=tvs.sbd.9001%3A123&at=AUTHORED%2fONLY`)), ownITunes = top('itunes', itunes);
+  const result = selected([ownITunes, wrapped]);
+  assert.strictEqual(result[0].row, wrapped); assert.equal(result[0].href, wrapped.link.href);
+  assert.equal(makePreview(result[0].row, { recommended_medium: '', purchase_url: '' }).after.purchase_url, wrapped.link.href);
+  for (const href of [wrapper(rakuten), `${wrapper(apple)}&r=${encodeURIComponent(apple)}`, wrapper(wrapper(apple)),
+    wrapper('https://user:password@tv.apple.com/ua/movie/authored/umc.cmc.authored')]) {
+    assert.strictEqual(selected([top('unknown-target', href), ownITunes])[0].row, ownITunes);
+  }
+});
+
+test('no Kinobaza: one eligible existing preference or stable first URL, never a fabricated or refused link', () => {
+  const first = native('first', `${apple}?playableId=one`), second = native('second', `${apple}?playableId=two`);
+  assert.strictEqual(selected([first, second], second)[0].row, second);
+  assert.strictEqual(selected([first, second], top('absent', itunes))[0].row, first);
+  for (const extra of [{ identityStatus: 'unresolved' }, { identityStatus: 'mismatch' }, { providerConflict: true },
+    { provider: { key: 'rakuten' } }, { link: { href: 'javascript:alert(1)' } }, { link: { href: null } }]) {
+    const refused = { ...top('refused', itunes), ...extra };
+    assert.strictEqual(selected([refused, first], refused)[0].row, first);
+    assert.deepEqual(selected([refused]), []);
+  }
+  assert.equal(preferredAppleLinkChoice(null), null);
 });
