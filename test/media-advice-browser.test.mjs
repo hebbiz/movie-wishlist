@@ -125,7 +125,17 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.equal(await page.locator('.media-advice-actions').getByRole('button',{name:'Обрати',exact:true}).count(),1);
     assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),1);
     assert.equal(await page.locator('.media-advice-legend').count(),1);
-    assert.equal(await page.locator('.media-advice-comparison-caution').count(),1);
+    assert.deepEqual(await page.locator('.media-advice-legend').evaluate(e=>[e.tagName,e.open]),['DETAILS',false]);
+    assert.equal(await page.locator('.media-advice-legend').innerText(),'Що означають позначки','the symbol explanation is closed by default');
+    assert.equal(await page.locator('.media-advice-comparison-caution').count(),0,'the table does not repeat a standalone technical caution');
+    assert.equal(await page.locator('.media-advice-attribution').evaluate(e=>e.open),false);
+    assert.equal(await page.locator('.media-advice-row [role=img][aria-label]').count(),3,'availability and both language symbols remain individually labelled when the legend is closed');
+    await page.getByText('Що означають позначки',{exact:true}).click();
+    assert.equal(await page.locator('.media-advice-legend').evaluate(e=>e.open),true);
+    assert.match(await page.locator('.media-advice-legend').innerText(),/\? — невідомо; ± — дані різняться/);
+    await page.getByText('Про джерела та обмеження',{exact:true}).click();
+    assert.equal(await page.locator('.media-advice-attribution').evaluate(e=>e.open),true);
+    assert.match(await page.locator('.media-advice-attribution').innerText(),/не гарантія доступності.*Невідоме не означає «немає».*різних варіантів сервісу/s);
     assert.equal(await page.locator('.media-advice-dialog').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
     // Real re-init path, with non-M4 data loaders isolated: unchanged auth
     // handler -> unchanged initApp -> actual loadCurrentRole -> M4 access refresh.
@@ -145,6 +155,20 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.equal(await page.evaluate(() => authoredInitCalls), 1);
     assert.deepEqual(await page.evaluate(() => [mediaAdviceController.dialog.open, authoredChat.isConnected, authoredBubble.isConnected, mediaAdviceController.dialog.scrollTop === authoredScroll]), [true, true, true, true]);
     assert.equal(calls.filter(c => c.action === 'discover').length, 1);
+    assert.deepEqual(await page.locator('.media-advice-legend,.media-advice-attribution').evaluateAll(elements=>elements.map(e=>e.open)),[true,true]);
+    const retainedScroll=await page.evaluate(()=>mediaAdviceController.dialog.scrollTop);
+    // Activate the existing close action without Playwright first scrolling the
+    // header into view: otherwise a vacuous retained position of zero can pass.
+    await page.locator('.media-advice-header button').evaluate(button=>button.click());
+    await page.locator('#mediaAdviceEntry').click();
+    await page.locator('.media-advice-dialog').waitFor({state:'visible'});
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    assert.deepEqual(await page.locator('.media-advice-legend,.media-advice-attribution').evaluateAll(elements=>elements.map(e=>e.open)),[true,true],'reopening preserves the two expanded explanations');
+    assert.equal(await page.evaluate(()=>mediaAdviceController.dialog.scrollTop),retainedScroll,'reopening restores the retained dialog position');
+    assert.equal(calls.filter(c=>c.action==='discover').length,1,'expanding explanations, re-init and reopening never search again');
+    await page.getByText('Що означають позначки',{exact:true}).click();
+    await page.getByText('Про джерела та обмеження',{exact:true}).click();
+    assert.deepEqual(await page.locator('.media-advice-legend,.media-advice-attribution').evaluateAll(elements=>elements.map(e=>e.open)),[false,false]);
     if (process.env.M4_SCREENSHOT_DIR) {
       await page.evaluate(() => mediaAdviceController.dialog.scrollTop = 0);
       await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/authored-${width}.png`,animations:'disabled' });
@@ -278,7 +302,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['prime','hbo','rakuten']);
       await assertServiceComparisonLayout(page, width);
       assert.equal(await page.locator('.media-advice-variant-select').count(),0);
-      assert.match(await page.locator('.media-advice-answer').innerText(),/Prime Video.*українське аудіо/);
+      assert.match(await page.locator('.media-advice-answer').innerText(),/Prime Video.*українськ(?:е аудіо|ою доріжкою)/);
       const beforeVariants=calls.filter(c=>c.action==='discover').length;
       const beforeVariantWrites=await page.evaluate(()=>authoredDBWrites.length);
       const rakuten=page.locator('.media-advice-row[data-provider-key="rakuten"]');
@@ -287,7 +311,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),1);
       assert.equal(await page.locator('.media-advice-row img.media-advice-provider-icon').count(),3);
       assert.equal(await page.locator('.media-advice-legend').count(),1);
-      assert.equal(await page.locator('.media-advice-comparison-caution').count(),1);
+      assert.equal(await page.locator('.media-advice-legend').evaluate(e=>e.open),false);
+      assert.equal(await page.locator('.media-advice-comparison-caution').count(),0);
       assert.equal(await page.locator('.media-advice-chat .mykola-message-row').last().getByRole('button',{name:'Діагностичний звіт'}).count(),1);
       const beforeReport = calls.filter(c=>c.action==='discover').length;
       await page.getByRole('button',{name:'Діагностичний звіт'}).click();
@@ -367,6 +392,9 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       // Actual authored HTML -> extraction -> projection, with separate own
       // provider blocks and no country-section pointer or source HTTP request.
       const kino=await authoredDuneMediaResult();
+      // Deliberately authored positive film-level metadata: it stays in the
+      // safe report, never adds a separate recommendation bubble or offer track.
+      kino.filmLocalization={ukrainianAudio:{state:'reported-positive'}};
       kino.rows[0].price={state:'reported',amount:{state:'reported',value:'91.17'},currency:{state:'reported',value:'XXX'}};
       const rawKino=structuredClone(kino.rows);
       Object.assign(authored,kino);
@@ -380,6 +408,10 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.locator('.media-advice-answer').waitFor();
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeKinoCalls+1);
       assert.equal(await page.locator('.media-advice-row').count(),3);
+      assert.doesNotMatch(await page.locator('.media-advice-chat').innerText(),/Є згадка про українське аудіо для фільму загалом/);
+      assert.equal(await page.locator('.media-advice-legend').evaluate(e=>e.open),false);
+      assert.equal(await page.locator('.media-advice-attribution').evaluate(e=>e.open),false);
+      assert.match(await page.locator('.media-advice-answer').innerText(),/Apple TV.*українськ(?:е аудіо|ою доріжкою)/);
       const kinoOrder=await page.locator('.media-advice-row').evaluateAll(cards=>cards.map(c=>c.dataset.providerKey));
       assert.deepEqual([...kinoOrder].sort(),['apple','megogo','rakuten']);
       const apple=page.locator('.media-advice-row[data-provider-key="apple"]');
@@ -408,9 +440,11 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       if(process.env.M4_SCREENSHOT_DIR) {
         await page.evaluate(()=>mediaAdviceController.dialog.scrollTop=0);
         await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-comparison-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/natural-dialog-${width}.png`,animations:'disabled'});
         await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/mobile-service-icons-${width}.png`,animations:'disabled'});
       }
       await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
+      assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Film-level UA audio badge: reported-positive; not provider tracks\./);
       await page.getByText('Джерельні деталі варіантів',{exact:true}).click();
       const diagnosticRows=await page.locator('.media-advice-diagnostics details pre').evaluateAll(nodes=>nodes.map(n=>JSON.parse(n.textContent)));
       assert.equal(diagnosticRows.length,3);
@@ -542,7 +576,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       authored.rows=freshServiceRows().map(row=>({...row,audio:row.provider.key==='netflix'?sourceLanguage():{state:'unknown'},subtitles:row.provider.key==='prime'?sourceLanguage():{state:'unknown'}}));
       await page.evaluate(()=>startEditMovie('list'));await page.locator('#mediaAdviceEntry').click();await page.locator('.media-advice-answer').waitFor();
       assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['netflix','prime','apple','rakuten','hbo','megogo']);
-      assert.match(await page.locator('.media-advice-answer').innerText(),/Netflix.*українське аудіо/);
+      assert.match(await page.locator('.media-advice-answer').innerText(),/Netflix.*українськ(?:е аудіо|ою доріжкою)/);
       const unknownAudio=page.locator('.media-advice-row[data-provider-key="apple"] td').nth(0);
       assert.equal(await unknownAudio.innerText(),'?');
       assert.match(await unknownAudio.locator('[aria-label]').getAttribute('aria-label'),/невідом|не встановлен|не підтверджен/i);

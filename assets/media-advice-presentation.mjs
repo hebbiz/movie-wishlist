@@ -269,15 +269,20 @@ export function presentMediaGroups(rows, { filmId } = {}) {
 }
 const comparisonCategory = band => band === 'ua-audio' ? 0 : band === 'ua-subtitles' ? 1 : band === 'withheld' ? 3 : 2;
 export function summarizeMediaGroups(groups) {
-  const first = groups.find(g => g.band !== 'withheld');
-  if (!first) return 'Поки не отримано узгоджених варіантів для вибору. Це не означає, що фільм недоступний.';
+  const choices = groups.filter(g => g.band !== 'withheld'), first = choices[0];
+  if (!first) return 'Поки не знайшов підтверджених варіантів для вибору. Це не означає, що фільм недоступний.';
   const title = first.group.title;
-  if (first.band === 'ua-audio' && first.comparison?.audio.state === 'mixed') return `Спершу перегляньте ${title}: один із записів повідомляє українське аудіо, але інші дані для сервісу різняться. Перевірте доріжки й умови обраного варіанта на платформі.`;
-  if (first.band === 'ua-subtitles' && first.comparison?.subtitles.state === 'mixed') return `Спершу перегляньте ${title}: один із записів повідомляє українські субтитри, але інші дані для сервісу різняться. Перевірте доріжки й умови обраного варіанта на платформі.`;
-  if (first.inferred && (first.band === 'ua-audio' && first.inferredAudio || first.band === 'ua-subtitles' && first.inferredSubtitles)) return `Спершу перегляньте ${title}: за даними Кінобази є українські ${first.band === 'ua-audio' ? 'аудіо' : 'субтитри'}, які ми враховуємо для українського регіону. Перевірте доступність та умови на платформі.`;
-  if (first.inferred && first.band === 'ua') return `Кінобаза згадує ${title}; враховуємо цей варіант для українського регіону, але українські доріжки не підтверджені. Доступність та умови перевірте на платформі.`;
-  if (first.band === 'ua-audio') return `Спершу перегляньте ${title}: джерело вказує Україну та українське аудіо. Перевірте доріжки й умови доступу на платформі.`;
-  if (first.band === 'ua-subtitles') return `Спершу перегляньте ${title}: джерело вказує Україну та українські субтитри. Перевірте доріжки й умови доступу на платформі.`;
-  if (first.band === 'ua') return `Спершу перегляньте ${title}: джерело вказує Україну, але мови не підтверджені. Перевірте мови й умови доступу на платформі.`;
-  return `Є додаткова згадка про ${title}, але доступність в Україні не встановлено. Перевірте країну, мови й умови доступу на платформі.`;
+  const lead = choices.length === 1 ? 'Знайшов один варіант.' : 'Знайшов кілька варіантів.';
+  const caveat = 'Інформація не завжди точна, тож варто перевіряти.';
+  const audio = first.comparison?.audio.state, subtitles = first.comparison?.subtitles.state;
+  let advice;
+  if (first.band === 'ua-audio' && audio === 'mixed') advice = `Я б перевірив ${title}: є згадка про українське аудіо, але дані різняться між варіантами.`;
+  else if (first.band === 'ua-subtitles' && subtitles === 'mixed') advice = `Я б перевірив ${title}: є згадка про українські субтитри, але дані різняться між варіантами.`;
+  else if (first.band === 'ua-audio') advice = `Мій вибір — ${title}: є дані про українське аудіо.`;
+  else if (first.band === 'ua-subtitles') advice = `Я б почав із ${title}: є дані про українські субтитри, ${audio === 'conflicting' ? 'але щодо українського аудіо є суперечності' : 'а українське аудіо не підтверджене'}.`;
+  else if (first.band === 'ua') advice = ['conflicting', 'mixed'].includes(audio) || ['conflicting', 'mixed'].includes(subtitles)
+    ? `Можна перевірити ${title}, але дані про українські доріжки суперечливі.`
+    : `Можна перевірити ${title}, але українські доріжки поки не підтверджені.`;
+  else advice = `Є згадка про ${title}, але доступність в Україні поки не встановлена.`;
+  return `${lead} ${advice} ${caveat}`;
 }
