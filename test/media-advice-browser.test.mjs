@@ -17,9 +17,11 @@ async function assertColumnRhythm(page, viewportWidth, iconState = 'loaded') {
       rows:[...table.querySelectorAll('tbody tr')].map(row=>{
         const button=row.querySelector('.media-advice-service-select');
         const name=button.querySelector('.media-advice-service-name');
+        const image=button.querySelector('.media-advice-provider-icon');
         return {
           cells:[...row.children].map(cell=>({ ...rect(cell), symbol:cell.tagName==='TD'?rect(cell.firstElementChild):null })),
           button:rect(button), name:{ ...rect(name), text:textRect(name), scrollWidth:name.scrollWidth, clientWidth:name.clientWidth },
+          image:rect(image), iconState:button.dataset.iconState,
         };
       }),
     };
@@ -46,8 +48,20 @@ async function assertColumnRhythm(page, viewportWidth, iconState = 'loaded') {
       assert.ok(row.name.scrollWidth<=row.name.clientWidth+1, 'the full service name or fallback can wrap without horizontal clipping');
     }
   }
+  if(viewportWidth>480) {
+    const nameStarts=geometry.rows.map(row=>row.name.x);
+    const textStarts=geometry.rows.map(row=>row.name.text.x);
+    const iconCenters=geometry.rows.filter(row=>row.iconState==='loaded').map(row=>row.image.center);
+    assert.ok(Math.max(...nameStarts)-Math.min(...nameStarts)<=1, 'visible names and fallback retain a separate common left axis');
+    assert.ok(Math.max(...textStarts)-Math.min(...textStarts)<=1, 'the actual name text starts on that axis, including wrapped names');
+    if(iconCenters.length>1) assert.ok(Math.max(...iconCenters)-Math.min(...iconCenters)<=1, 'loaded emblems share one vertical center axis despite different painted widths');
+    for(const row of geometry.rows.filter(row=>row.iconState==='loaded')) {
+      const nameSharesRow=row.name.y<row.image.bottom&&row.name.bottom>row.image.y;
+      if(nameSharesRow) assert.ok(row.image.right<=row.name.x+1, 'a horizontal emblem/name pair never overlaps');
+    }
+  }
   const rounded=value=>Math.round(value*100)/100;
-  console.info(`M4 column rhythm ${JSON.stringify({viewport:viewportWidth,iconState,tableWidth:rounded(geometry.table.width),centers:geometry.headers.map(header=>rounded(header.center)),steps:steps.map(rounded)})}`);
+  console.info(`M4 column rhythm ${JSON.stringify({viewport:viewportWidth,iconState,tableWidth:rounded(geometry.table.width),centers:geometry.headers.map(header=>rounded(header.center)),steps:steps.map(rounded),...(viewportWidth>480?{emblemCenters:geometry.rows.filter(row=>row.iconState==='loaded').map(row=>rounded(row.image.center)),nameStarts:geometry.rows.map(row=>rounded(row.name.text.x))}:{})})}`);
 }
 
 async function assertServiceComparisonLayout(page, width) {
@@ -500,8 +514,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/compact-comparison-${width}.png`,animations:'disabled'});
         await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/natural-dialog-${width}.png`,animations:'disabled'});
         await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/mobile-service-icons-${width}.png`,animations:'disabled'});
-        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/even-rhythm-dialog-${width}.png`,animations:'disabled'});
-        await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/even-rhythm-table-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-dialog-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-table-${width}.png`,animations:'disabled'});
       }
       await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
       assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),/Film-level UA audio badge: reported-positive; not provider tracks\./);
@@ -602,7 +616,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.locator('.media-advice-preview').waitFor();
       assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeFallbackWrites,'fallback selection and preview stay local');
       await page.getByRole('button',{name:'Скасувати вибір',exact:true}).click();
-      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/even-rhythm-fallback-${width}.png`,animations:'disabled'});
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-fallback-${width}.png`,animations:'disabled'});
       await page.getByRole('button',{name:'← До картки',exact:true}).click();await page.locator('#mediaAdviceEntry').click();
       assert.equal(await page.locator('.media-advice-service-select[data-icon-state="failed"]').count(),3);
       assert.equal(calls.filter(c=>c.action==='discover').length,beforeFallbackCalls+1,'new explicit form session searches once; icon failure, keyboard choice and reopen do not search again');
@@ -632,20 +646,20 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(await page.locator('.media-advice-service-select[aria-pressed="true"]').count(),1);
       if(process.env.M4_SCREENSHOT_DIR) {
         await page.evaluate(()=>mediaAdviceController.dialog.scrollTop=0);
-        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/even-rhythm-dialog-${width}.png`,animations:'disabled'});
-        await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/even-rhythm-table-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-dialog-${width}.png`,animations:'disabled'});
+        await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-table-${width}.png`,animations:'disabled'});
       }
       if(width===1280) {
         const beforeResizeCalls=calls.filter(c=>c.action==='discover').length;
         const beforeResizeWrites=await page.evaluate(()=>authoredDBWrites.length);
         // Exercise the narrowest width and both sides of the name breakpoint
         // on this same in-memory result, without another discovery fixture.
-        for(const resizedWidth of [320,480,481,600]) {
+        for(const resizedWidth of [320,480,481,600,640,641,700]) {
           await page.setViewportSize({width:resizedWidth,height:900});
           await assertServiceComparisonLayout(page,resizedWidth);
           assert.equal(await rakuten.getAttribute('aria-pressed'),'true');
-          if(resizedWidth===320&&process.env.M4_SCREENSHOT_DIR) {
-            await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/even-rhythm-table-${resizedWidth}.png`,animations:'disabled'});
+          if(process.env.M4_SCREENSHOT_DIR) {
+            await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-table-${resizedWidth}.png`,animations:'disabled'});
           }
         }
         await page.setViewportSize({width,height});
@@ -659,7 +673,13 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeWideWrites);
       const failEmblem=route=>route.abort();
       await context.route('**/assets/icons/media/*.svg?authored-wide-failure=1',failEmblem);
-      await page.locator('.media-advice-provider-icon').evaluateAll(images=>images.forEach(image=>image.src=new URL(image.src).pathname+'?authored-wide-failure=1'));
+      // A single failed emblem must not pull its fallback name into the icon
+      // column while the remaining emblem/name pairs keep their common axes.
+      await page.locator('.media-advice-row[data-provider-key="apple"] .media-advice-provider-icon').evaluate(image=>image.src=new URL(image.src).pathname+'?authored-wide-failure=1');
+      await page.waitForFunction(()=>document.querySelectorAll('.media-advice-service-select[data-icon-state="failed"]').length===1);
+      await assertColumnRhythm(page,width,'one-failed');
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-mixed-fallback-${width}.png`,animations:'disabled'});
+      await page.locator('.media-advice-service-select[data-icon-state="loaded"] .media-advice-provider-icon').evaluateAll(images=>images.forEach(image=>image.src=new URL(image.src).pathname+'?authored-wide-failure=1'));
       await page.waitForFunction(()=>document.querySelectorAll('.media-advice-service-select[data-icon-state="failed"]').length===3);
       for(const fallback of await page.locator('.media-advice-service-select').all()) {
         assert.equal(await fallback.locator('.media-advice-service-name').isVisible(),true);
@@ -668,6 +688,14 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         assert.equal(await fallback.getAttribute('aria-label'),name);
       }
       await assertColumnRhythm(page,width,'failed');
+      if(width===1280) {
+        for(const resizedWidth of [481,600,641]) {
+          await page.setViewportSize({width:resizedWidth,height:900});
+          await assertColumnRhythm(page,resizedWidth,'failed');
+        }
+        await page.setViewportSize({width,height});
+      }
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-fallback-${width}.png`,animations:'disabled'});
       assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog=>dialog.scrollWidth<=dialog.clientWidth),true);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
       await page.getByRole('button',{name:'← До картки',exact:true}).click();
@@ -692,7 +720,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       await page.locator('.media-advice-answer').waitFor();
       assert.deepEqual(await page.locator('.media-advice-row').evaluateAll(rows=>rows.map(r=>r.dataset.providerKey)),['apple','rakuten','prime','hbo','netflix','megogo']);
       await assertServiceComparisonLayout(page, width);
-      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/even-rhythm-all-service-emblems-${width}.png`,animations:'disabled'});
+      if(process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-comparison').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/service-axes-all-service-emblems-${width}.png`,animations:'disabled'});
       assert.equal(await page.getByRole('table').count(),1);assert.equal(await page.getByRole('columnheader').count(),4);
       assert.equal(await page.getByRole('button',{name:'Обрати',exact:true}).count(),1);
       assert.equal(await page.getByRole('button',{name:'Відкрити посилання',exact:true}).count(),0,'missing links never create an opening action');
