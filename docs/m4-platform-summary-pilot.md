@@ -385,3 +385,48 @@ real iPhone/Safari/VoiceOver or live-source validation. Local Node24.22.0,
 not deployed Node22. Syntax, whitespace/scope and14-doc/455-link/280-anchor/
 13-handoff-section checks passed. Server/SQL/native PostgreSQL and Windows
 launcher lifecycle were not repeated: dependent components are unchanged.
+
+### Equal horizontal column rhythm — 2026-10-31
+
+From develop `5ebbb85874ed67509fe104e442d4e6401d07b31c` after merged #209.
+The previous42/16/21/21 percent widths and mobile64/48px first columns placed
+the centers at unequal intervals. All four columns now use25% on every screen.
+Headers, existing symbols and service choices remain centered in their own
+cells. Mobile cell padding is reduced to keep readable headings and52px
+selection buttons. At320px, narrower padding/44px buttons and11px headings
+keep all content inside its column; no content is hidden or truncated.
+At481–640px, the visible name sits below its emblem within the same button,
+with a uniform taller row, rather than squeezing the emblem/name into another
+column. Wider screens retain side-by-side names and emblems. SVG proportions,
+mobile icon-only names, accessible labels, focus and pressed state are unchanged.
+
+The only application change is scoped CSS. No DOM/controller, symbol meaning,
+data/evidence/ranking, URL/admission/link choice, preview/Save, diagnostic,
+session/freshness, other Mykola context, initApp/global lifecycle/auth, server,
+schema/flag/secret or production change. No live calls, real Wishlist writes,
+merge or deployment; owner checkout/demo and unrelated files are preserved.
+
+Validation records actual consecutive center distances, not just overflow:
+375px viewport:64.25/64.25/64.25px;420px:75.5/75.5/75.5px;
+820px and1280px:140/140/140px. The same retained authored result is resized
+to320/480/481/600px without a new discovery or write; its steps are respectively
+50.5,90.5,80.75,110.5px, equal in each table. Regressions require a maximum1px
+spread from subpixel rounding, complete headings/values/targets within cells,
+at least44×44px targets, readable fallback, equal loaded-row heights and no
+horizontal overflow. Initial checks exposed320px overflow and uneven rows just
+above480px; scoped responsive styling fixes these without relaxing assertions
+or timeouts. Geometry waits for the existing bubble animation to settle.
+
+21/21 targeted offline/mock tests and5/5 tests in the existing main browser
+suite passed,0 failures/skips. The real add/edit forms use mocked service/DB
+boundaries; selection, exact open/preview/transfer/ordinary Save, diagnostics,
+session isolation and reopen without discovery remain covered. Syntax,
+whitespace/scope and14-doc/455-link/280-anchor/13-handoff checks passed.
+
+Authored screenshots `even-rhythm-table-{375,420}.png`, corresponding dialog
+and fallback images, and wide/tablet examples remain outside Git; mobile and
+wide examples were visually inspected. These are
+local Edge viewport emulations, not real iPhone/Safari/VoiceOver or live-source
+validation. Existing server/SQL/native PostgreSQL/Windows lifecycle and the
+dedicated pending/resume suites are not repeated for this CSS-only follow-up;
+their dependent logic is unchanged. MW-FUT-01 remains Discovery.
