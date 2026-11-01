@@ -152,7 +152,7 @@ function noncriticalImageError(error, all, html) {
 }
 
 // parse5 is lazy: existing Gemini modes still run without installing this parser.
-export async function extractHtml(html, film, { identityCheck } = {}) {
+export async function extractHtml(html, film, { identityCheck, onIdentityBlocked } = {}) {
   if (typeof html !== 'string' || Buffer.byteLength(html) > HTML_LIMIT_BYTES) return { status: 'unsupported-markup', candidates: [], issues: ['html-size-limit'] };
   let parse;
   try { ({ parse } = await import('parse5')); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['Run npm ci --prefix research/grounded-answer-demo --ignore-scripts'] }; }
@@ -165,7 +165,9 @@ export async function extractHtml(html, film, { identityCheck } = {}) {
     // Never silently drop a late critical error behind the event bound. No HTML
     // repair/serialization: identity and extraction use the same parsed tree.
     if (overflow || recoveries.some(e => !noncriticalImageError(e, all, html))) return { status: 'unsupported-markup', candidates: [], issues: ['html-parse-errors'] };
-    const checked = identityCheck ? await identityCheck(all) : identity(all, film);
+    // Internal staged verification can resume extraction against this already
+    // validated tree. No DOM, raw HTML or continuation is part of the result.
+    const extractChecked = checked => {
     const fail = issue => ({ status: 'unsupported-markup', identity: checked, candidates: [], issues: [issue] });
     if (checked.status !== 'matched') return { status: checked.status === 'mismatch' ? 'identity-mismatch' : 'identity-unresolved', identity: checked, candidates: [], issues: [checked.reason ?? 'title-year-director-not-unambiguous'] };
     const accordions = all.filter(n => attr(n, 'id') === 'availabilityAccordion');
@@ -226,6 +228,18 @@ export async function extractHtml(html, film, { identityCheck } = {}) {
       state: 'source-section-claim', value: 'available', access: 'unknown', upstream: 'JustWatch', basis: 'Explicit country heading/panel, not href presence or account entitlement.' }));
     return { status: candidates.length || independentClaims ? (issues.length ? 'partial' : 'ok') : 'unresolved', identity: checked, candidates,
       localization: { film: localization.film, blocks: localization.blocks }, availabilitySignals, issues: [...new Set(issues)] };
+    };
+    const checked = identityCheck ? await identityCheck(all) : identity(all, film);
+    if (checked.status === 'unresolved' && typeof onIdentityBlocked === 'function') {
+      let available = true;
+      try { onIdentityBlocked(async nextIdentityCheck => {
+        if (!available || typeof nextIdentityCheck !== 'function') return extractChecked(checked);
+        available = false;
+        try { return extractChecked(await nextIdentityCheck(all)); }
+        catch { return { status: 'unsupported-markup', candidates: [], issues: ['unresolved-parser-or-structure'] }; }
+      }); } catch {} // A diagnostic/controller hook cannot alter the first result.
+    }
+    return extractChecked(checked);
   } catch { return { status: 'unsupported-markup', candidates: [], issues: ['unresolved-parser-or-structure'] }; }
 }
 

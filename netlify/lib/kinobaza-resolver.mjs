@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { initialReleaseEvidence } from '../../shared/film-release-year.mjs';
 import { createDirectorVerifier } from './kinobaza-director-verifier.mjs';
 import { safeDirectorProfileDiagnostic } from '../../shared/director-profile-diagnostics.mjs';
+import { selectDirectorCandidates } from './director-candidate-selection.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
 const titleNames = film => {
@@ -24,12 +25,15 @@ export function resolverQueries(film) {
       .find(n => n && n.normalize('NFC').toLocaleLowerCase('uk-UA') !== primary.normalize('NFC').toLocaleLowerCase('uk-UA'));
     const firstYear = initialReleaseEvidence(film)[0]?.year ?? film.year;
     const quoted = s => '"' + s.replace(/["\\]/g,' ') + '"';
-    const build = parts => [...parts, Number.isInteger(firstYear) ? firstYear : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
-    const first = build([quoted(primary)]);
+    const build = (parts, queryYear) => [...parts, Number.isInteger(queryYear) ? queryYear : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
+    const first = build([quoted(primary)], firstYear);
     const person = film.directorCount === 1 && film.directorPeople?.length === 1 ? film.directorPeople[0] : null;
     const director = person?.names?.map(text).find(n => /^[\p{Script=Latin}\p{M} .,'’()-]+$/u.test(n));
-    const second = build([quoted(primary),other ? quoted(other) : '',director ? quoted(director) : '']);
-    return [first,second.length <= 550 ? second : build([other ? quoted(other) : primary.replace(/["\\]/g,' ')])];
+    // A confirmed earlier premiere and the primary Details year are distinct
+    // search contexts. Preserve both within the same two slots, including the
+    // bounded-query fallback, rather than searching the premiere year twice.
+    const second = build([quoted(primary),other ? quoted(other) : '',director ? quoted(director) : ''], film.year);
+    return [first,second.length <= 550 ? second : build([other ? quoted(other) : primary.replace(/["\\]/g,' ')], film.year)];
   }
   const names = titleNames(film).slice(0, 2), clean = s => s.replace(/["\\]/g, ' ');
   const query = name => [name, Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
@@ -136,14 +140,23 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
 
 export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, onIdentityDiagnostic } = {}) {
   return async (film, { reserve, fetchImpl, calls, signal, sourceCap = 8, tmdbToken }) => {
-    const queries = resolverQueries(film), cards = [], urls = new Set(), examined = new Set();
+    const queries = resolverQueries(film), cards = [], deferred = [], urls = new Set(), examined = new Set();
     const director = createDirectorVerifier({film,tmdbToken,sourceCap,reserve,fetchImpl,calls,signal});
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
+    let selection, alternateFailure;
     const done = (status, result = null, choices = []) => {
       summary.candidates = urls.size; summary.unexamined = urls.size - examined.size;
-      summary.directorProfile = safeDirectorProfileDiagnostic(director.diagnostic());
+      summary.directorProfile = safeDirectorProfileDiagnostic({...director.diagnostic(),
+        ...(selection ? {selection:selection.diagnostic} : {}),
+        ...(selection?.ambiguous ? {status:'unresolved',reason:'director-profile-candidates-ambiguous'} : {})});
+      for (const pending of deferred) pending.dispose();
       summary.status = resolverStatuses.has(status) ? status : 'unknown'; return { status, result, choices, resolver: summary };
     };
+    const cardSummary = (result, cardRef) => ({ identity: result.identity?.status ?? 'unresolved', reason: result.identity?.reason ?? null,
+      extraction: result.status, candidates: result.candidates?.length ?? 0, diagnostics: safeIdentityDiagnostic(result.identity?.diagnostics), cardRef,
+      extractionDiagnostic: safeExtractionDiagnostic({status:result.status,issues:result.issues,
+        candidateCount:result.candidates?.length ?? 0, foreignCandidateCount:(result.candidates??[]).filter(c=>c.territory && c.territory.code!=='UA').length,
+        blockCount:result.localization?.blocks?.length ?? 0,filmAudioState:result.localization?.film?.ukrainianAudio?.state}) });
     if (!apiKey) return done('not-evaluated-missing-search-key');
     if (!queries.length) return done('not-evaluated-no-established-title');
     let activeProvider;
@@ -181,17 +194,14 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         summary.cardCalls++; examined.add(url); const call = { stage, status: 'attempt-reserved' }; calls.push(call);
         try { const r = await fetchImpl(target, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('card-transport'); }
       };
+      const index = cards.length;
       const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic,
-        ...(sourceCap === 10 ? {verifyDirector:director.verify} : {}) });
+        ...(sourceCap === 10 ? {verifyDirector:director.verify,onDeferredDirector:pending => deferred.push({...pending,index})} : {}) });
       cards.push(result);
-      summary.cards.push({ identity: result.identity?.status ?? 'unresolved', reason: result.identity?.reason ?? null, extraction: result.status, candidates: result.candidates?.length ?? 0,
-        diagnostics: safeIdentityDiagnostic(result.identity?.diagnostics),
+      summary.cards.push(cardSummary(result,
         // Public-pointer digest for comparing a known URL offline, never a
         // capability, HTML hash, source archive or claim that a request succeeded.
-        cardRef: summary.cardCalls > priorCardCalls ? createHash('sha256').update(url).digest('hex') : null,
-        extractionDiagnostic: safeExtractionDiagnostic({status:result.status,issues:result.issues,
-          candidateCount:result.candidates?.length ?? 0, foreignCandidateCount:(result.candidates??[]).filter(c=>c.territory && c.territory.code!=='UA').length,
-          blockCount:result.localization?.blocks?.length ?? 0,filmAudioState:result.localization?.film?.ukrainianAudio?.state}) });
+        summary.cardCalls > priorCardCalls ? createHash('sha256').update(url).digest('hex') : null));
       if (summary.cardCalls === priorCardCalls) break; // A denied reservation is not a retry opportunity.
       if (i === 0 && ['mismatch', 'unresolved'].includes(result.identity?.status) && nextQuery < queries.length) {
         if (signal?.aborted) break;
@@ -200,13 +210,31 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         // existing single-title alternative). Shared slot accounting with
         // empty results: never a third search, source /search or error retry.
         const status = await searchNext(true);
-        if (status !== 'ok') return done(status);
+        if (status !== 'ok') {
+          // A failed disambiguation cannot discard an already-read eligible
+          // card. Finish its bounded proof, without retrying the search or
+          // reading another card; retain the exact search error in diagnostics.
+          if (deferred.length) { alternateFailure = status; break; }
+          return done(status);
+        }
+      }
+    }
+    // Both bounded card reads retain their opportunities before the only person
+    // pair is allocated. Resume the SAME validated DOM, never refetch a card or
+    // infer proof from this ordering. Equal different profiles remain unresolved.
+    if (deferred.length) {
+      selection = selectDirectorCandidates(deferred);
+      for (const pending of selection.selected) {
+        if (signal?.aborted) break;
+        const result = await pending.resume();
+        cards[pending.index] = result;
+        summary.cards[pending.index] = cardSummary(result, summary.cards[pending.index].cardRef);
       }
     }
     summary.unexamined = urls.size - examined.size;
     const confirmed = cards.filter(c => c.identity?.status === 'matched');
     if (confirmed.length > 1) return done('multiple-confirmed-cards-choose', null, confirmed);
-    if (confirmed.length === 1) return done(summary.unexamined ? 'one-confirmed-bounded-not-exhaustive' : confirmed[0].status, confirmed[0]);
-    return done(summary.unexamined ? 'bounded-unresolved' : 'no-confirmed-card');
+    if (confirmed.length === 1) return done(alternateFailure ? 'partial' : summary.unexamined ? 'one-confirmed-bounded-not-exhaustive' : confirmed[0].status, confirmed[0]);
+    return done(alternateFailure ?? (summary.unexamined ? 'bounded-unresolved' : 'no-confirmed-card'));
   };
 }

@@ -175,12 +175,15 @@ export function linkedDirectorProfile(all) {
   return typeof url === 'string' && url.length <= 512 && /^https:\/\/kinobazaua\.com\/persons\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ? {sourceURL:url,sourceAlias:text(cells[1])} : null;
 }
 
-export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, signal, onIdentityDiagnostic, directorAliasLookup, verifyDirector } = {}) {
+export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, signal, onIdentityDiagnostic, directorAliasLookup, verifyDirector, onDeferredDirector } = {}) {
   if (!admitKinobazaURL(sourceURL)) throw new Error('Unadmitted source');
   const controller = new AbortController(); const abort = () => controller.abort(); signal?.addEventListener('abort', abort, { once: true });
   if (signal?.aborted) controller.abort();
   let reader; const timer = setTimeout(abort, timeoutMs);
-  const aborted = new Promise((_, reject) => { if (controller.signal.aborted) reject(Error('aborted')); else controller.signal.addEventListener('abort', () => reject(Error('aborted')), { once: true }); });
+  // The parent signal must still bound a deferred continuation after the first
+  // card read returns and its temporary abort bridge is removed in finally.
+  const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  const aborted = new Promise((_, reject) => { if (combined.aborted) reject(Error('aborted')); else combined.addEventListener('abort', () => reject(Error('aborted')), { once: true }); });
   const bounded = p => Promise.race([p, aborted]);
   const fail = (status, httpStatus) => ({ status, ...(httpStatus ? { httpStatus } : {}), candidates: [], sourceURL });
   try {
@@ -199,11 +202,17 @@ export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeou
     // waits plus the handler's unchanged end-to-end deadline, not a second GET.
     clearTimeout(timer);
     if (/captcha|cf-chl-|challenge-platform/i.test(html)) return fail('challenge-unsupported-no-retry', r.status);
-    const extracted = await bounded(extractHtml(html, film, { identityCheck: async all => {
+    const receivedAt = new Date().toISOString();
+    const attach = extracted => {
+      if (extracted.localization) extracted.localization.provenance = { source: 'Kinobaza HTML', sourceURL, receivedAt, method: 'initial HTML source blocks; assisted card', upstream: 'not-established' };
+      return { ...extracted, sourceURL, receivedAt, bytes, httpStatus: r.status, requestsMade: 1 };
+    };
+    let deferredPointer, resumeExtraction;
+    const verifyIdentity = async all => {
       const checked = assistedIdentity(all, film, sourceURL, {directorAliasLookup});
       const pointer = checked.reason === 'director-alias-unestablished' && typeof verifyDirector === 'function' ? linkedDirectorProfile(all) : null;
       let proof;
-      if (pointer && !controller.signal.aborted) { try { proof = await bounded(verifyDirector(pointer)); } catch {} }
+      if (pointer && !combined.aborted) { try { proof = await bounded(verifyDirector(pointer)); } catch {} }
       const person = film.directorCount === 1 && film.directorPeople?.length === 1 ? film.directorPeople[0] : null;
       const valid = person?.namespace === 'tmdb:person' && Number.isSafeInteger(person.personId) && person.personId > 0 &&
         proof?.status === 'confirmed' && proof.provenance?.namespace === person.namespace &&
@@ -211,10 +220,36 @@ export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeou
         proof.provenance.sourceURL === pointer?.sourceURL && proof.aliases?.length === 1 && normalize(proof.aliases[0]) === normalize(pointer.sourceAlias);
       const lookup = valid ? candidate => candidate.namespace === person.namespace && candidate.personId === person.personId ? proof : {status:'unresolved'} : directorAliasLookup;
       return assistedIdentity(all, film, sourceURL, {onIdentityDiagnostic,directorAliasLookup:lookup});
-    } }));
-    const receivedAt = new Date().toISOString();
-    if (extracted.localization) extracted.localization.provenance = { source: 'Kinobaza HTML', sourceURL, receivedAt, method: 'initial HTML source blocks; assisted card', upstream: 'not-established' };
-    return { ...extracted, sourceURL, receivedAt, bytes, httpStatus: r.status, requestsMade: 1 };
-  } catch { if (reader) void reader.cancel().catch(() => {}); return fail(controller.signal.aborted ? 'timeout-or-cancelled-no-retry' : 'network-or-decoding-error-no-retry'); }
+    };
+    const extracted = await bounded(extractHtml(html, film, { identityCheck: async all => {
+      const checked = assistedIdentity(all, film, sourceURL, {directorAliasLookup});
+      const pointer = checked.reason === 'director-alias-unestablished' && typeof verifyDirector === 'function' && typeof onDeferredDirector === 'function' ? linkedDirectorProfile(all) : null;
+      if (pointer) {
+        deferredPointer = pointer;
+        return assistedIdentity(all, film, sourceURL, {onIdentityDiagnostic,directorAliasLookup});
+      }
+      return verifyIdentity(all);
+    }, onIdentityBlocked: resume => { if (deferredPointer) resumeExtraction = resume; } }));
+    const initial = attach(extracted);
+    if (deferredPointer && resumeExtraction) {
+      let pending = resumeExtraction, resumed;
+      resumeExtraction = null;
+      const dispose = () => { pending = null; };
+      const resume = () => {
+        if (resumed) return resumed;
+        const continuation = pending; pending = null;
+        if (!continuation) return Promise.resolve(initial);
+        resumed = (async () => {
+          if (combined.aborted) return fail('timeout-or-cancelled-no-retry', r.status);
+          try { return attach(await bounded(continuation(verifyIdentity))); }
+          catch { return fail(combined.aborted ? 'timeout-or-cancelled-no-retry' : 'network-or-decoding-error-no-retry', r.status); }
+        })();
+        return resumed;
+      };
+      try { onDeferredDirector({ pointer: deferredPointer, identity: extracted.identity, resume, dispose }); }
+      catch { dispose(); } // Controller registration failure keeps claims withheld.
+    }
+    return initial;
+  } catch { if (reader) void reader.cancel().catch(() => {}); return fail(combined.aborted ? 'timeout-or-cancelled-no-retry' : 'network-or-decoding-error-no-retry'); }
   finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
 }

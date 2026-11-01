@@ -58,9 +58,29 @@ test('contextual queries prefer explicitly English translation and retain locali
   const queries = resolverQueries(selected);
   assert.deepEqual(queries, [
     '"Authored English title" 2006 site:kinobazaua.com/titles/',
-    '"Authored English title" "Вигадана локалізована назва" "Authored director" 2006 site:kinobazaua.com/titles/',
+    '"Authored English title" "Вигадана локалізована назва" "Authored director" 2008 site:kinobazaua.com/titles/',
   ]);
   assert.equal(resolverRefusalQuery(selected), queries[1]);
+});
+
+test('two contextual search slots cover the confirmed premiere and primary years without accepting unrelated release contexts', () => {
+  const selected = { ...film, year: 2008 };
+  for (const releases of [[release(2006, 1), release(2008, 3)], [release(2008, 3), release(2006, 1)]]) {
+    const queries = resolverQueries(context(selected, { releases }));
+    assert.equal(queries.length, 2);
+    assert.match(queries[0], / 2006 site:kinobazaua\.com\/titles\/$/);
+    assert.match(queries[1], / 2008 site:kinobazaua\.com\/titles\/$/);
+    assert.equal(resolverRefusalQuery(context(selected, { releases })), queries[1]);
+  }
+  for (const releases of [[release(2008)], [release(2006, 4)], [release(2006, 5)], [release(2006, 6)],
+    [release(2006, 1, '')], [release(2010, 1)], [{ ...release(2006), date: '2007-09-09' }]]) {
+    const queries = resolverQueries(context(selected, { releases }));
+    assert.ok(queries.every(query => / 2008 site:kinobazaua\.com\/titles\/$/.test(query)));
+    assert.ok(queries.every(query => !/ 2006 | 2010 /.test(query)));
+  }
+  const bounded = resolverQueries(context({ ...selected, originalTitle: 'X'.repeat(500), identityTitle: 'Y'.repeat(500) }, { releases: [release(2006)] }));
+  assert.ok(bounded.every(query => query.length <= 550));
+  assert.match(bounded[1], / 2008 site:kinobazaua\.com\/titles\/$/);
 });
 
 test('country-only alternatives/translations never imply English and unmatched parent context cannot influence query text/year', () => {

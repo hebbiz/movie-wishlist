@@ -138,6 +138,35 @@ test('second slot already spent on empty first results cannot reopen after ident
   assert.ok(out.resolver.searches.every(search => search.provider === 'tavily'));
 });
 
+test('premiere/primary year queries share the same two slots for empty results and first-card refusal', async () => {
+  const selected = {...film,year:2008,identityContext:{tmdbId:film.tmdbId,titleEvidence:[],releaseEvidence:[
+    {date:'2006-09-09T00:00:00Z',year:2006,type:1,country:'CA'},
+  ]}};
+  for (const path of ['empty-first','refused-first','both-slots-before-refusal']) {
+    const queries = [], reserved = [], sent = [];
+    const out = await createKinobazaResolver({apiKey:'AUTHORED_TAVILY_KEY'})(selected, {
+      calls:[],reserve:async stage=>reserved.push(stage),fetchImpl:async(url,init)=>{
+        sent.push(url);
+        if(url==='https://api.tavily.com/search') {
+          queries.push(JSON.parse(init.body).query);
+          return Response.json({results:queries.length===1 && path!=='refused-first' ? [] :
+            (queries.length===1 || path==='both-slots-before-refusal' ? urls.slice(0,2) : [urls[1]]).map(url=>({url}))});
+        }
+        return new Response(markup({url,year:2008,...(url===urls[0]?{title:'Different authored film'}:{})}),{headers:{'content-type':'text/html'}});
+      },
+    });
+    assert.equal(queries.length,2);
+    assert.match(queries[0],/ 2006 site:kinobazaua\.com\/titles\/$/);
+    assert.match(queries[1],/ 2008 site:kinobazaua\.com\/titles\/$/);
+    assert.equal(out.result.sourceURL,urls[1]);
+    assert.equal(out.result.identity.status,'matched');
+    assert.equal(reserved.filter(stage=>stage.startsWith('search-')).length,2);
+    assert.equal(new Set(reserved).size,reserved.length);
+    assert.ok(out.resolver.cardCalls<=2);
+    assert.ok(sent.every(url=>url==='https://api.tavily.com/search'||urls.includes(url)));
+  }
+});
+
 test('runtime resolver has no automatic public Kinobaza search dependency or endpoint', async () => {
   const source = await readFile(new URL('../netlify/lib/kinobaza-resolver.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /kinobaza-public-search|kinobazaPublicSearch|publicSearchFactory|kinobazaua\.com\/search/);

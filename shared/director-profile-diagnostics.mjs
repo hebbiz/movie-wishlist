@@ -20,7 +20,7 @@ const reasons = new Set([
   'director-profile-invalid-content', 'director-profile-response-too-large', 'director-profile-challenge-refused', 'director-profile-timeout-no-retry',
   'director-profile-network-or-decoding-error', 'director-unsafe-source-content-withheld', 'director-profile-not-enabled-for-budget',
   'director-profile-trusted-single-person-required', 'director-profile-missing-tmdb-credential', 'director-profile-ledger-required',
-  'director-profile-pointer-rejected', 'director-profile-pair-unavailable', 'director-profile-verification-error',
+  'director-profile-pointer-rejected', 'director-profile-pair-unavailable', 'director-profile-verification-error', 'director-profile-candidates-ambiguous',
 ]);
 const bases = new Set(['shared-person-id', 'exact-name-birthdate-role']);
 const stageNames = new Set(['tmdb-person', 'kinobaza-person']);
@@ -30,10 +30,16 @@ const accounting = new Set(['no-extra-attempts', 'reservation-may-have-committed
 const counts = ['sourceAttempts', 'reservationRequests', 'reservationsAcknowledged', 'tmdbPersonCalls', 'kinobazaPersonCalls'];
 const comparisons = ['stableIdConflict', 'stableIdMatch', 'birthdayConflict', 'birthdayMatch', 'latinNameMatch', 'nativeAliasMatch'];
 const count = n => Number.isSafeInteger(n) && n >= 0 && n <= 2 ? n : null;
+const selectionBases = new Set(['scoped-film-id', 'selected-year', 'contextual-release-year', 'ambiguous-top-profiles', 'no-eligible-card']);
 
 export function safeDirectorProfileDiagnostic(d) {
   return { status: statuses.has(d?.status) ? d.status : 'unknown', reason: reasons.has(d?.reason) ? d.reason : 'unknown',
     basis: bases.has(d?.basis) ? d.basis : null,
+    ...(d?.selection ? {selection: {
+      eligibleCards: count(d.selection.eligibleCards), unverifiedCards: count(d.selection.unverifiedCards),
+      selectedCards: Array.isArray(d.selection.selectedCards) ? [...new Set(d.selection.selectedCards.filter(n => n === 1 || n === 2))].slice(0,2) : [],
+      basis: selectionBases.has(d.selection.basis) ? d.selection.basis : 'unknown',
+    }} : {}),
     ...Object.fromEntries(counts.map(key => [key, count(d?.[key])])),
     attempts: (Array.isArray(d?.attempts) ? d.attempts : []).slice(0, 2).map(a => ({
       stage: stageNames.has(a?.stage) ? a.stage : 'unknown', status: attemptStates.has(a?.status) ? a.status : 'unknown',

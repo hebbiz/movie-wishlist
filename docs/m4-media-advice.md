@@ -4193,8 +4193,11 @@ Transport/auth/quota errors do not trigger retries/fallback. Exact admitted URL
 deduplication and stable candidate ordering remain; a slug/rank/snippet is never
 identity proof. There is no runtime Kinobaza `/search` or Tavily person search.
 
-For search, the earliest supported premiere/theatrical year can replace the
-primary year token. For identity, a different source year without a shared movie
+For search, the first query uses the earliest supported premiere/theatrical year
+if present. The second uses the primary Details year, so a confirmed premiere2006
+and primary2008 do not consume both slots searching only2006. This applies to
+empty/all-rejected results, first-card refusal and the bounded-text fallback;
+the query still keeps known title/director context. For identity, a different source year without a shared movie
 ID must be that earliest contextual year (types1/2/3), with title/original-title
 and confirmed director still mandatory. Digital/physical/TV dates, later reissues,
 an arbitrary nearby year and an event belonging to another TMDb ID cannot do so.
@@ -4220,6 +4223,18 @@ film gates have passed and the remaining failure is director-alias-unestablished
 Existing reviewed person crosswalks/exact names and movie-ID bypasses need no
 profile requests. Unknown or multiple selected/source directors remain unresolved.
 
+The resolver defers eligible director-only refusals until its existing bounded
+card-reading loop ends. It allocates the single person pair using already-checked
+film metadata: scoped shared same-system film ID first, then exact primary year,
+then supported contextual-release variance. This is work allocation, not new
+identity proof. Titles, original-title scope, years, canonical and ID conflicts
+must already pass; search rank/snippet/slug do not decide which person to trust.
+Equally strong candidates with different profile URLs or normalized aliases have
+no evidence-based winner: `director-profile-candidates-ambiguous`, zero speculative
+profile requests, unresolved claims withheld. The same exact profile/normalized
+alias can share one bound proof, but each card reruns all gates independently;
+two confirmed cards remain explicit choices rather than being collapsed.
+
 One TMDb **person** GET uses the trusted credits ID and `language=en-US`; it does
 not trust a browser person ID or transliterate a credit. This obtains an exact
 Latin comparison name even where Ukrainian/credit projections use another script.
@@ -4240,8 +4255,12 @@ requires the **entire** bounded style-only preamble, exact located error spans,
 single standard doctype and immediate html/head openings; it uses the original
 bytes/tree. Text/script prefixes, other/critical errors, duplicate headers or
 conflicting semantic records remain refused. This does not broaden film-card
-markup policy. The only shared extractor change is awaiting its supplied identity
-callback, so verification can use the same card DOM without a second card GET.
+markup policy. The shared extractor awaits its supplied identity callback and
+offers an internal one-shot blocked-identity continuation. The resolver can resume
+the same validated DOM and extraction function after allocating the pair, without
+a second card GET or parse. Fixed-card matching and markup rules are unchanged.
+Raw bytes/DOM/continuations stay invocation-local, never enter result/DTO, report,
+ledger, logs or persistent storage; unused continuations are disposed on exit.
 
 Current person evidence:
 
@@ -4279,7 +4298,14 @@ The new stages `tmdb-person` and `kinobaza-person` reserve atomically before I/O
 Each has a5s header/body/reservation cutoff; the unchanged handler entry deadline
 still limits source work to45s and preserves finish up to53s plus response margin.
 The extra pair can consume up to10s of that shared time; preserving request slots
-does not guarantee all can finish before the deadline. No retries or redirects.
+does not guarantee all can finish before the deadline. Deferral reads/gates the
+available cards first, leaving less time for profile proof if earlier waits are
+slow. An initial director-only refusal may now spend the still-available second
+Tavily slot before person proof; this is at most one additional search compared
+with eager first-card success, not a new slot or retry. A failed second search
+does not discard an already-read eligible card: it can finish its bounded proof,
+return partial if confirmed, and preserve the exact provider error in diagnostics.
+No additional card is read after that search error. No retries or redirects.
 
 `supabase/migrations/20261101180436_media_advice_identity_budget.sql` was created
 with local Supabase CLI `migration new`, not applied remotely. It adds only a
@@ -4312,6 +4338,10 @@ the prior RPC/constraint transactionally. Do not erase accounting rows or mark
 migration history repaired simply to make rollback pass.
 
 ### Current-response controls: before and after
+
+The live counts/times below belong to the preceding implementation checkpoint
+`790975b592c8d5559e927561ddd18faeb0aef0fa`, before the narrow follow-up below.
+They are retained evidence, not fresh live validation of the changed query/allocation.
 
 The fixed prior head21d1be2 identity inspects each current card in memory before
 the optional person proof; final results below come from the actual resolver,
@@ -4384,6 +4414,9 @@ flags, access assignments, retention policy or production data was changed here.
 
 ### Validation of the integrated change
 
+These results record checkpoint790975b; the following subsection records the
+latest narrow follow-up validation separately.
+
 - Final complete offline/HTTP run: **891 passed,0 failed,1 skipped (892 total)**
   across application and research regressions. The skipped optional research
   synthetic mobile display is not counted as success. This includes contextual
@@ -4419,3 +4452,68 @@ suite is reused because launcher/lifecycle components are unchanged. initApp,
 global lifecycle/auth, other Mykola contexts, UI/ranking/preview/Save and link
 policies remain unchanged. Remote checks must be attached to the final exact
 commit; absent/skipped checks are not successful validation.
+
+### Two-year search and deferred person-pair follow-up — 2026-11-01
+
+Review reproduced two application defects using authored fixtures before fixes:
+both contextual queries emitted2006 despite a trusted primary2008 (2 assertions
+failed), and the first eligible card spent the person pair before a stronger
+second card could be examined (5 of8 initial selection regressions failed).
+The rules above now cover both cases without increasing the prepared cap10 or
+legacy cap8, changing the ledger/SQL, or borrowing search/card slots for profiles.
+
+The decisive selection regression has a first2006 premiere candidate and a
+second2008 primary-year candidate with different linked profiles. The second
+gets the only pair and confirms; the first remains withheld. Full-action counts
+are4 baseline +2 Tavily +2 cards +2 person =10. A scoped shared-film-ID candidate
+outranks a no-ID candidate even with a different year, but still must prove its
+director. A failed chosen profile never causes a second pair or relaxed proof.
+
+**Residual limit:** two equally supported different profiles cannot both be
+verified with one Kinobaza profile GET. A future option would reuse one TMDb
+person read and allow2 distinct Kinobaza person reads: at least3 person attempts,
+full cap11 and a new ledger stage/deadline assessment. It is not implemented or
+authorized by this follow-up. Alternatively retain bounded unresolved/manual
+narrowing; choosing the first profile by convenience is not identity evidence.
+
+Safe diagnostics expose only eligible/selected/unverified card counts, one-based
+card indexes and an allowlisted allocation basis/reason. Profile URLs, aliases,
+DOB, raw HTML and search content are not added. Ordinary Beta users still receive
+no privileged resolver diagnostics. The receipt time remains the original card
+read time, not the later proof-completion time; continuation is bounded by the
+same parent deadline and cannot revive results after abort.
+
+New external source HTTP attempts: **0**. Both changes are deterministic control
+flow/query defects reproduced offline; another source response is unnecessary
+to establish them. Earlier live observations, including The Fall DOB conflict,
+remain unchanged evidence, not claims of a new successful discovery or tracks.
+
+Follow-up validation on the completed runtime changes:
+
+- **911 passed,0 failed,1 skipped /912 offline+HTTP tests**, including20 new
+  authored regressions and the3 existing PGlite migration tests. The optional
+  research synthetic mobile-display skip is not success. The sandbox initially
+  denied child-process spawning (EPERM); the authorized local rerun passed,
+  without weakening assertions or timeouts.
+- **5/5 browser tests**, local Edge/Chromium, mocked Auth/source/DB, external
+  requests blocked: desktop1280×900, tablet820×1180, iPhone X375×812 and
+  Air420×912-size emulation. Preview/transfer, manual-edit/pending-apply guards,
+  report, close/reopen and isolated sessions remain covered; not real-device QA
+  or an actual Wishlist Save.
+- Independent review found and closed the alternate-search-error early-exit
+  regression;401 and15s mock timeout retain the first card with partial status
+  after valid proof,9 total authored attempts, no retry or second card GET.
+  No remaining code blocker was found in that review.
+- Syntax/whitespace and14-document local link/anchor audit passed
+  (471 links,292 anchors). initApp/global lifecycle/auth/UI, permissions,
+  ranking, links, historical SQL and the prepared migration are unchanged.
+- Native PostgreSQL17.6 evidence (**6/6**,24 loopback connections) and Windows
+  lifecycle/IPC evidence from checkpoint790975b are explicitly reused, not
+  rerun: no SQL, ledger RPC, database dependency, launcher or IPC component
+  changed. The full suite reran the existing local migration/access contracts.
+
+No live source calls, live database operations, flag changes, merge or manual
+deployment were performed. Automatic PR Preview/checks, if triggered by the
+existing Git integration, must be reported against the new exact SHA rather
+than inheriting checkpoint790975b statuses. Real iPhone/WebKit, deployed
+authenticated smoke and new live query/profile behavior remain unvalidated.

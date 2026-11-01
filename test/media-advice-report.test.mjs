@@ -365,6 +365,19 @@ test('director diagnostic prefix injection and malformed counts/states never bec
   assert.doesNotMatch(report, /PRIVATE|https?:|sourceURL|raw|Infinity/);
 });
 
+test('profile pair allocation diagnostics retain safe card indexes/basis but no profile facts or untrusted content', () => {
+  const input = {status:'unresolved',reason:'director-profile-candidates-ambiguous',sourceAttempts:0,
+    selection:{eligibleCards:2,selectedCards:[],unverifiedCards:2,basis:'ambiguous-top-profiles',profileURL:'https://private.example/PRIVATE',aliases:['PRIVATE_ALIAS']}};
+  const report = safeMediaReport({resolver:{directorProfile:input}});
+  assert.match(report,/director-profile-candidates-ambiguous/);
+  assert.match(report,/"eligibleCards":2,"unverifiedCards":2,"selectedCards":\[\],"basis":"ambiguous-top-profiles"/);
+  assert.doesNotMatch(report,/PRIVATE|https?:|profileURL|aliases/);
+  const safe = safeDirectorProfileDiagnostic({...input,selection:{eligibleCards:99,unverifiedCards:'2',selectedCards:[1,2,2,'1',3,'PRIVATE'],basis:'PRIVATE'}});
+  assert.deepEqual(safe.selection,{eligibleCards:null,unverifiedCards:null,selectedCards:[1,2],basis:'unknown'});
+  const product = productMediaResult({rows:[],resolver:{directorProfile:input}},{mykola_media_advice:true,mykola_media_advice_diagnostics:false});
+  assert.doesNotMatch(JSON.stringify(product),/directorProfile|selection|ambiguous-top-profiles|PRIVATE/);
+});
+
 test('contextual release-year confirmation is recognized separately from same-year and shared-ID routes in the short report', async () => {
   const film = { ...cascadeFilm, year: 2008, identityContext: { tmdbId: cascadeFilm.tmdbId, titleEvidence: [],
     releaseEvidence: [{ date: '2006-09-09T00:00:00.000Z', year: 2006, type: 1, country: 'CA', language: 'en' }] } };
