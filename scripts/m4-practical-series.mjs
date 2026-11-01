@@ -7,7 +7,6 @@ import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answe
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
 import { createKinobazaResolver, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
 import { describeCandidateURL } from './m4-url-diagnostics.mjs';
-import { kinobazaPublicSearch, isKinobazaSearchURL } from '../netlify/lib/kinobaza-public-search.mjs';
 import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
 
@@ -22,6 +21,13 @@ export const practicalStudies = Object.freeze({
     Object.freeze({ title: 'Blade Runner', year: 1982 }),
     Object.freeze({ title: 'Mortal Kombat', year: 2021 }),
     Object.freeze({ title: 'Supergirl', year: 2026 }),
+  ]),
+  'tavily-fallback': Object.freeze([
+    Object.freeze({ title: 'Alien', year: 1979 }),
+    Object.freeze({ title: 'Mad Max: Fury Road', year: 2015 }),
+    Object.freeze({ title: 'Dune: Part Two', year: 2024 }),
+    Object.freeze({ title: 'Blade Runner 2049', year: 2017 }),
+    Object.freeze({ title: 'Mortal Kombat', year: 2021 }),
   ]),
 });
 const normalize = s => typeof s === 'string' ? s.normalize('NFC').replace(/\s+/gu, ' ').trim().toLowerCase() : '';
@@ -95,8 +101,8 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
   const signal = AbortSignal.timeout(60_000);
   let queryURL, detailURL, directorURL;
   const send = async (url, init) => {
-    const type = url === queryURL || url === detailURL || url === directorURL ? 'tmdb' : url === 'https://api.tavily.com/search' || isKinobazaSearchURL(url) ? 'search' : admitKinobazaURL(url) ? 'cards' : operation.action === 'inspect-person' && url === operation.url && personURL(url) ? 'personPages' : null;
-    if (!type || signal.aborted || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (url === 'https://api.tavily.com/search' ? 'POST' : 'GET') || counts.total >= 6 || counts[type] >= 2 || (type === 'personPages' || isKinobazaSearchURL(url)) && Object.keys(init.headers ?? {}).some(k => /authorization|cookie|key/i.test(k))) throw Error('local-source-boundary');
+    const type = url === queryURL || url === detailURL || url === directorURL ? 'tmdb' : url === 'https://api.tavily.com/search' ? 'search' : admitKinobazaURL(url) ? 'cards' : operation.action === 'inspect-person' && url === operation.url && personURL(url) ? 'personPages' : null;
+    if (!type || signal.aborted || init.redirect !== 'manual' || init.credentials !== 'omit' || init.method !== (url === 'https://api.tavily.com/search' ? 'POST' : 'GET') || counts.total >= 6 || counts[type] >= 2 || type === 'personPages' && Object.keys(init.headers ?? {}).some(k => /authorization|cookie|key/i.test(k))) throw Error('local-source-boundary');
     counts[type]++; counts.total++;
     const attempt = { type, outcome:'dispatched' }; attempts.push(attempt);
     try { const r = await fetchImpl(url, { ...init, signal:AbortSignal.any([signal,init.signal].filter(Boolean)) }); attempt.httpStatus = r.status; attempt.outcome = 'response-received'; return r; }
@@ -160,8 +166,7 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
     }
     const stages = new Set(), searchPointers = [];
     const searchFactory = (key, sendSearch) => tavilySearch(key, sendSearch, { onCandidateURLs: urls => searchPointers.push(urls.map(url => describeCandidateURL(url, {secrets:[tmdbToken,tavilyKey]}))) });
-    const publicSearchFactory = sendSearch => kinobazaPublicSearch(sendSearch, {secrets:[tmdbToken,tavilyKey],onCandidateURLs:urls=>searchPointers.push(urls.map(url=>describeCandidateURL(url,{secrets:[tmdbToken,tavilyKey]})))});
-    const resolved = await createKinobazaResolver({ apiKey:tavilyKey,onIdentityDiagnostic,searchFactory,publicSearchFactory })(film, { fetchImpl:send, signal, calls:[], reserve:async stage => { if(stages.has(stage)) throw Error('repeat-reservation'); stages.add(stage); } });
+    const resolved = await createKinobazaResolver({ apiKey:tavilyKey,onIdentityDiagnostic,searchFactory })(film, { fetchImpl:send, signal, calls:[], reserve:async stage => { if(stages.has(stage)) throw Error('repeat-reservation'); stages.add(stage); } });
     const confirmed = [resolved.result, ...(resolved.choices ?? [])].filter(Boolean).map(c => ({ sourceURL:c.sourceURL, identity:c.identity?.status, reason:c.identity?.reason, extraction:c.status, candidates:c.candidates?.length ?? 0, providerBlocks:c.localization?.blocks?.length ?? 0, discovery:summarizeDiscovery(film,c) }));
     return done(resolved.status, { resolver:resolved.resolver, comparisons, searchPointers, confirmed,
       discovery:{mappedCount:confirmed.reduce((n,c)=>n+c.discovery.mappedCount,0),unmappedCount:confirmed.reduce((n,c)=>n+c.discovery.unmappedCount,0)} });

@@ -1,7 +1,6 @@
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
 import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
 import { createHash } from 'node:crypto';
-import { kinobazaPublicSearch } from './kinobaza-public-search.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
 const titleNames = film => {
@@ -15,6 +14,20 @@ export function resolverQueries(film) {
   const names = titleNames(film).slice(0, 2), clean = s => s.replace(/["\\]/g, ' ');
   const query = name => [name, Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
   return names.length ? [query('"' + clean(names[0]) + '"'), query(names.length > 1 ? '"' + clean(names[1]) + '"' : clean(names[0]))] : [];
+}
+// A discovered but identity-refused card calls for disambiguation, not a
+// transport retry. Combine two independently established names and an exact
+// year token; this never supplies a slug, URL or identity evidence. Keep the
+// existing alternate query for the successful zero-admitted-results path.
+export function resolverRefusalQuery(film) {
+  const names = titleNames(film).slice(0, 2);
+  if (names.length < 2) return resolverQueries(film)[1];
+  const query = [...names.map(name => '"' + name.replace(/["\\]/g, ' ') + '"'),
+    Number.isInteger(film.year) ? '"' + film.year + '"' : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
+  // Do not double the previous single-title request bound or truncate an
+  // established name. Long combinations retain the existing alternate query.
+  const maximum = 500 + ['""', Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ').length;
+  return query.length <= maximum ? query : resolverQueries(film)[1];
 }
 // Existing admitted pointers only: a matching slug changes read order, never
 // supplies identity evidence or a generated URL. Ties retain search order.
@@ -100,7 +113,7 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
   };
 }
 
-export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, publicSearchFactory = kinobazaPublicSearch, onIdentityDiagnostic } = {}) {
+export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, onIdentityDiagnostic } = {}) {
   return async (film, { reserve, fetchImpl, calls, signal }) => {
     const queries = resolverQueries(film), cards = [], urls = new Set(), examined = new Set();
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
@@ -118,12 +131,12 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, p
       summary.searchCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
       try { const r = await fetchImpl(url, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('search-transport'); }
     };
-    const provider = searchFactory(apiKey, searchFetch), publicProvider = publicSearchFactory(searchFetch); let nextQuery = 0;
-    const searchNext = async (publicFallback = false) => {
-      activeProvider = publicFallback ? publicProvider : provider;
-      const query = publicFallback ? titleNames(film)[0] : queries[nextQuery]; nextQuery++;
+    const provider = searchFactory(apiKey, searchFetch); let nextQuery = 0;
+    const searchNext = async (afterIdentityRefusal = false) => {
+      activeProvider = provider;
+      const query = afterIdentityRefusal ? resolverRefusalQuery(film) : queries[nextQuery]; nextQuery++;
       const found = await activeProvider.search(query, { signal });
-      summary.searches.push({ ...safeSearchDiagnostic(found.status, found.diagnostics), provider: publicFallback ? 'kinobaza-public-search' : 'tavily' });
+      summary.searches.push({ ...safeSearchDiagnostic(found.status, found.diagnostics), provider: 'tavily' });
       if (found.status === 'ok') for (const url of (found.urls ?? []).map(admitKinobazaURL).filter(Boolean)) urls.add(url);
       return found.status;
     };
@@ -159,8 +172,9 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, p
       if (i === 0 && ['mismatch', 'unresolved'].includes(result.identity?.status) && nextQuery < queries.length) {
         if (signal?.aborted) break;
         // A successful search whose first card fails identity can spend the
-        // second search slot on the source's ordinary public title-search form.
-        // It replaces (never adds to) the alternate slot; no fallback on errors.
+        // second slot on Tavily's verified two-title/year disambiguation (or
+        // existing single-title alternative). Shared slot accounting with
+        // empty results: never a third search, source /search or error retry.
         const status = await searchNext(true);
         if (status !== 'ok') return done(status);
       }
