@@ -4580,7 +4580,9 @@ search-quality validation**. The upper block remains territory unknown at source
 Original film links remain exact and are not followed during this study.
 
 Accounting: **6 known direct source HTTP attempts =5 Kinobaza title GETs +1
-TMDb Details GET**, all successful200. Klaus accounts for3 GETs (two extra reads
+TMDb Details GET**. The5 Kinobaza responses were200; the TMDb runner returned a
+validated projection but did not expose its exact successful HTTP status.
+Klaus accounts for3 GETs (two extra reads
 while correcting a local inspector/Windows child-spawn issue), Alien1, Pursuit1.
 No automatic source retry, Tavily, person-profile, MOTN, Watch Providers or
 platform-destination request. Additionally3 public TMDb page-open operations
