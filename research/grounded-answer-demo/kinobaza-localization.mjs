@@ -14,11 +14,13 @@ function descendants(n) {
 }
 const text = n => clean(descendants(n).filter(p => p.nodeName === '#text').map(p => p.value).join(' '));
 const plainCaption = n => n.tagName === 'span' && !n.attrs?.length && (n.childNodes ?? []).every(c => c.nodeName === '#text');
-// This observed catalogue control is navigation, not a second film offer or
-// language evidence. Any different path/provider/label remains ambiguous.
+// These observed catalogue controls are navigation, not film offers or language
+// evidence. Match each whole path/title/label tuple: no generic query exemption.
 const catalogueControl = (n, provider) => provider.toLowerCase() === 'netflix' && n.tagName === 'a' &&
-  attr(n, 'href') === '/online/netflix' && attr(n, 'title') === 'Інші фільми з українськими субтитрами або аудіо на Netflix' &&
-  (n.childNodes ?? []).every(c => c.nodeName === '#text') && text(n) === 'Інші фільми →';
+  (n.childNodes ?? []).every(c => c.nodeName === '#text') && (
+    attr(n, 'href') === '/online/netflix' && attr(n, 'title') === 'Інші фільми з українськими субтитрами або аудіо на Netflix' && text(n) === 'Інші фільми →' ||
+    attr(n, 'href') === '/online/netflix?netflix_audio=1' && attr(n, 'title') === 'Інші фільми з українською доріжкою на Netflix' && text(n) === 'Інші з укр. аудіо →'
+  );
 function summarize(evidence) {
   const signs = new Set(evidence.filter(e => ['positive', 'negative'].includes(e.state)).map(e => e.state));
   // A negative for stereo does not contradict a positive for Dolby. Only the

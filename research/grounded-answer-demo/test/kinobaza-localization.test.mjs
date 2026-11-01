@@ -5,7 +5,7 @@ import { extractHtml, fetchHtmlCandidates, htmlScenario, canonicalKinobazaURL, c
 import { FILMS, selectRequest } from '../config.mjs';
 import { runDiscovery, authoredDiscoveryData, composeDiscovery } from '../discovery.mjs';
 import { prepareDraft, compactFields } from '../public/discovery-client.mjs';
-import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge, authoredDuneLanguageMarkup, netflixCatalogueBlock } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge, authoredDuneLanguageMarkup, netflixCatalogueBlock, netflixAudioCatalogueBlock } from './kinobaza-localization.fixture.mjs';
 
 const parse = (body, film = 'coherence') => extractHtml(body, FILMS[film]);
 const selection = film => htmlScenario(FILMS[film], { discovery: 'digital-ua' });
@@ -60,6 +60,81 @@ test('Netflix auxiliary catalogue can accompany a direct caption without adding 
   assert.equal(r.localization.blocks[0].audio.state, 'unknown');
   assert.equal(r.candidates.filter(c => c.provider === 'netflix').length, 1);
   assert.ok(!JSON.stringify(r.candidates).includes('/online/netflix'));
+});
+
+test('Netflix audio-filtered catalogue is navigation; only its own caption supplies both language claims', async () => {
+  const href = 'https://click.justwatch.com/a?authored=%2fEXACT&service=netflix';
+  const r = await parse(localizedMarkup(netflixAudioCatalogueBlock({ href: href.replace('&', '&amp;') })));
+  assert.equal(r.identity.status, 'matched');
+  const block = r.localization.blocks.find(b => b.provider === 'netflix');
+  assert.equal(block.audio.state, 'reported-positive'); assert.equal(block.subtitles.state, 'reported-positive');
+  assert.deepEqual(block.audio.evidence, [{ label: 'укр. аудіо', literal: 'укр. аудіо', state: 'positive' }]);
+  assert.deepEqual(block.subtitles.evidence, [{ label: 'укр. субтитри', literal: 'укр. субтитри', state: 'positive' }]);
+  assert.deepEqual(block.issues, []); assert.equal(block.href, href);
+  const netflix = r.candidates.filter(c => c.provider === 'netflix');
+  assert.equal(netflix.length, 1); assert.equal(netflix[0].href, href); assert.equal(netflix[0].blockId, block.blockId);
+  assert.ok(!r.candidates.some(c => c.href?.includes('/online/netflix')));
+  const row = compose(r).rows.find(row => row.provider.key === 'netflix');
+  assert.equal(row.link.href, href); assert.equal(row.link.kind, 'tracking-redirect');
+  assert.equal(row.kinobazaLocalization.audio.state, 'reported-positive'); assert.equal(row.kinobazaLocalization.subtitles.state, 'reported-positive');
+  assert.equal(row.country, null); assert.equal(row.audio.state, 'unknown'); assert.equal(row.subtitles.state, 'unknown');
+});
+
+test('Netflix audio-filtered catalogue label and tooltip do not invent missing caption languages', async () => {
+  for (const [caption, audio, subtitles] of [
+    ['', 'unknown', 'unknown'],
+    ['(укр. субтитри)', 'unknown', 'reported-positive'],
+    ['(укр. аудіо)', 'reported-positive', 'unknown'],
+  ]) {
+    const r = await parse(localizedMarkup(netflixAudioCatalogueBlock({ caption })));
+    const block = r.localization.blocks.find(b => b.provider === 'netflix');
+    assert.equal(block.audio.state, audio); assert.equal(block.subtitles.state, subtitles); assert.deepEqual(block.issues, []);
+    assert.equal(r.candidates.filter(c => c.provider === 'netflix').length, 1);
+    assert.ok(!r.candidates.some(c => c.href?.includes('/online/netflix')));
+  }
+});
+
+test('Netflix audio-filtered catalogue never substitutes for missing or unsafe film links', async () => {
+  for (const href of [null, 'javascript:alert(1)']) {
+    const r = await parse(localizedMarkup(netflixAudioCatalogueBlock({ href })));
+    const block = r.localization.blocks.find(b => b.provider === 'netflix');
+    assert.equal(block.href, null); assert.equal(block.audio.state, 'reported-positive'); assert.equal(block.subtitles.state, 'reported-positive');
+    const netflix = r.candidates.filter(c => c.provider === 'netflix');
+    assert.equal(netflix.length, 1); assert.equal(netflix[0].href, null);
+    assert.ok(!r.candidates.some(c => c.href?.includes('/online/netflix')));
+    const row = compose(r).rows.find(row => row.provider.key === 'netflix');
+    assert.equal(row.link.transferable, false); assert.equal(row.link.href, null);
+    assert.ok(!JSON.stringify(row).includes('javascript:alert'));
+  }
+});
+
+test('Netflix audio-filtered catalogue exemption rejects changed params, origins, provider labels and ambiguous boundaries', async () => {
+  const base = netflixAudioCatalogueBlock();
+  const catalogue = base.slice(base.indexOf('<a href="/online/netflix'));
+  const examples = [
+    netflixAudioCatalogueBlock({ catalogueHref: '/online/netflix?netflix_audio=0' }),
+    netflixAudioCatalogueBlock({ catalogueHref: '/online/netflix?netflix_audio=1&amp;extra=1' }),
+    netflixAudioCatalogueBlock({ catalogueHref: '/online/netflix?netflix_audio=%31' }),
+    netflixAudioCatalogueBlock({ catalogueHref: 'https://kinobazaua.com/online/netflix?netflix_audio=1' }),
+    netflixAudioCatalogueBlock({ catalogueHref: 'https://other.example/online/netflix?netflix_audio=1' }),
+    netflixAudioCatalogueBlock({ catalogueHref: '/online/megogo?netflix_audio=1' }),
+    base.replace('на Netflix', 'на MEGOGO'),
+    base.replace('Інші з укр. аудіо →', 'Інші фільми →'),
+    base.replace('Інші з укр. аудіо →', '<span>Інші з укр. аудіо →</span>'),
+    base.replace('</p>', catalogue),
+    base.replace('</p>', `${badge('megogo')}</p>`),
+    base.replace('</span>', '</span><span>(укр. аудіо)</span>'),
+    base.replace('<span>', '<span class="authored-unrecognized">'),
+    base.replace('(укр. аудіо, укр. субтитри)</span>', '<b>(укр. аудіо, укр. субтитри)</b></span>'),
+  ];
+  for (const [index, markup] of examples.entries()) {
+    const r = await parse(localizedMarkup(markup));
+    const block = r.localization.blocks.find(b => b.provider === 'netflix');
+    assert.ok(block, `case ${index}`); assert.equal(block.audio.state, 'unknown', `audio case ${index}`);
+    assert.equal(block.subtitles.state, 'unknown', `subtitles case ${index}`);
+    assert.ok(block.issues.some(issue => ['ambiguous-provider-block', 'unsupported-provider-block'].includes(issue)), `boundary case ${index}`);
+    assert.ok(!r.candidates.some(c => c.href?.includes('/online/')));
+  }
 });
 
 test('Netflix catalogue tooltip never supplies languages omitted from the own caption', async () => {
