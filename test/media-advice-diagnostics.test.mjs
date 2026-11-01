@@ -66,7 +66,7 @@ test('incomplete identity scan never reports comparison false as completed evide
 });
 test('HTTP ignores browser SHA/run/diagnostic callbacks; no extra source requests or ledger fields',async()=>{
   const uuid='00000000-0000-4000-8000-000000000001', calls=[];
-  const h=createMediaAdviceHandler({env:()=>'',client:{auth:{getUser:async()=>({data:{user:{id:uuid}}})},rpc:async(_,args)=>{calls.push(args);return{data:{id:uuid,attempts:[]}};}},run:async()=>({rows:[],runtime:{buildSha:'PRIVATE'}})});
+  const h=createMediaAdviceHandler({env:()=>'',client:{auth:{getUser:async()=>({data:{user:{id:uuid}}})},rpc:async(_,args)=>{calls.push(args);return{data:{id:uuid,attempts:[],mykola_media_advice:true,mykola_media_advice_diagnostics:true}};}},run:async()=>({rows:[],runtime:{buildSha:'PRIVATE'}})});
   const r=await h(new Request('https://app.example/.netlify/functions/media-advice',{method:'POST',headers:{origin:'https://app.example',authorization:'Bearer AUTHORED','content-type':'application/json'},body:JSON.stringify({action:'discover',groupId:uuid,formSession:uuid,imdbId:film.imdbId,buildSha:'a'.repeat(40),runtime:{runId:uuid},onIdentityDiagnostic:true})}));
   const data=await r.json();assert.equal(r.status,200);assert.equal(data.result.runtime.buildSha,null);assert.notEqual(data.result.runtime.runId,uuid);assert.deepEqual(calls.map(c=>c.p_op),['start','finish']);assert.doesNotMatch(JSON.stringify(calls),/buildSha|runtime|onIdentityDiagnostic/);
 });

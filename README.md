@@ -157,8 +157,11 @@ implemented or documented v1.3.1 scope.
   — [deployment execution runbook](docs/m4-media-advice.md#activation--operation-plan-not-executed),
   with its original prepared plan kept separate from later execution records.
 
-M4 default-off semantics and the existing deployment/access state are unchanged
-by this work. Narrow #192 apply/deadline/queued-reservation fixes were locally
+M4 [UA Beta access and private diagnostics](docs/m4-media-advice.md#ua-beta-access-and-private-diagnostics--2026-10-31)
+are prepared behind a new default-off server switch; no migration, assignment or
+activation is implied by the code. The [combined Beta/Tavily record](docs/m4-media-advice.md#beta-and-tavily-integration--2026-11-01)
+incorporates merged #217, owner observations and the scoped positive Tavily
+response for private Beta Researcher use. Narrow #192 apply/deadline/queued-reservation fixes were locally
 verified, including native PostgreSQL 17.6 concurrency; dated execution records
 describe actual activation separately from prepared plans.
 The [three-film pilot retrieval follow-up](docs/m4-media-advice.md#three-film-pilot-retrieval-follow-up--2026-10-28)

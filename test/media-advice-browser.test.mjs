@@ -131,7 +131,7 @@ async function assertSourceFooter(page, width) {
   const expected = [
     ['TMDb', 'https://www.themoviedb.org/'],
     ['JustWatch', 'https://www.justwatch.com/'],
-    ['Movie of the Night', 'https://www.movieofthenight.com/about/api'],
+    ['Streaming Availability API by Movie of the Night', 'https://www.movieofthenight.com/about/api'],
     ['Кінобаза', 'https://kinobazaua.com/'],
   ];
   assert.equal(await details.locator(':scope > footer').count(), 1, 'source links and attribution share one footer inside the expanded explanation');
@@ -140,7 +140,7 @@ async function assertSourceFooter(page, width) {
   assert.deepEqual(await links.evaluateAll(elements => elements.map(a => [a.target, a.rel])), expected.map(() => ['_blank', 'noopener noreferrer']));
   assert.equal(await footer.getByText('This product uses the TMDB API but is not endorsed or certified by TMDB.', { exact: true }).count(), 1);
   assert.deepEqual(await footer.locator('img').evaluate(image => [image.getAttribute('src'), image.alt, image.width]), ['/research/grounded-answer-demo/public/tmdb-logo.svg', 'TMDB', 110]);
-  assert.equal(await details.locator(':scope > p').count(), 4, 'the explanation is consolidated before the attribution footer');
+  assert.equal(await details.locator(':scope > p').count(), 5, 'the explanation and Beta scope precede the attribution footer');
   assert.equal(await footer.evaluate(element => element.scrollWidth <= element.clientWidth), true, 'the footer wraps without horizontal overflow');
   assert.equal(await details.evaluate(element => element.scrollWidth <= element.clientWidth), true);
   for (const link of await links.all()) {
@@ -209,7 +209,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       if (u.pathname === '/.netlify/functions/movie-lookup') return route.fulfill({json:{title:'Authored added film',year:2024,poster_url:null,overview:null}});
       if (u.pathname === '/.netlify/functions/media-advice') {
         const body = route.request().postDataJSON(); calls.push(body);
-        if (body.action === 'capability') return route.fulfill({ json: { mykola_media_advice: allowed } });
+        if (body.action === 'capability') return route.fulfill({ json: { mykola_media_advice: allowed, mykola_media_advice_diagnostics: allowed } });
         if (resolveDiscover) await new Promise(r => resolveDiscover = r);
         return route.fulfill({ json: { result: authored } });
       }

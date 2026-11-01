@@ -13,7 +13,7 @@ test('HTTP boundary verifies Auth, backend capability/context each action and fi
       calls.push(args);
       if (!allow) return { error: true };
       if (args.p_op === 'start') { if (started) return { error: true }; started = true; }
-      return { data: args.p_op === 'capability' ? { mykola_media_advice: true } : { id: form } };
+      return { data: { ...(args.p_op === 'capability' ? {} : { id: form }), mykola_media_advice: true, mykola_media_advice_diagnostics: false } };
     } };
   const handler = createMediaAdviceHandler({ client, env: () => '', run: async args => { runCalls++; await args.reserve('tmdb-find'); return { rows: [] }; } });
   assert.equal((await handler(request(input, { origin: 'https://foreign.example' }))).status, 403);

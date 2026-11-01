@@ -208,7 +208,7 @@ test('HTTP browser person IDs/aliases are ignored; resolver receives only server
   const handler = createMediaAdviceHandler({
     env: key => ({ TMDB_READ_ACCESS_TOKEN: 'AUTHORED_TMDB_KEY', MOTN_API_KEY: 'AUTHORED_MOTN_KEY' })[key] ?? '',
     client: { auth: { getUser: async () => ({ data: { user: { id: uuid } } }) }, rpc: async (_, args) => {
-      rpc.push(args); return { data: { id: uuid, attempts: [] } };
+      rpc.push(args); return { data: { id: uuid, attempts: [], mykola_media_advice: true, mykola_media_advice_diagnostics: true } };
     } },
     resolver: async selected => { selectedFilm = selected; return { status: 'not-evaluated-authored-resolver', result: null }; },
     fetchImpl: async (url, init) => {

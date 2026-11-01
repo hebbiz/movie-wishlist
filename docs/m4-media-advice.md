@@ -2,7 +2,11 @@
 
 Status: M4.1–M4.3 implemented; default-off semantics retained. Earlier deployment,
 assignment and cleanup evidence remains in its dated execution records below.
-The dated records distinguish earlier preparation from later execution.
+The dated records below distinguish earlier preparation from later execution.
+UA Beta code: [access and private diagnostics](#ua-beta-access-and-private-diagnostics--2026-10-31),
+updated with merged #217. Later authorized execution:
+[Beta migration applied, switch still off](#beta-migration-execution--2026-11-01).
+PR#216 is not merged; Beta/diagnostics activation and deployment remain separate.
 Current branch search strategy: **Tavily basic Search**, candidate URLs only,
 with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
 not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
@@ -3420,6 +3424,204 @@ lifecycle suites were not repeated because their components/dependencies did
 not change; no previous results are attributed to this new commit. No live
 discovery, Wishlist Save, merge or manual deployment was performed.
 
+## UA Beta access and private diagnostics — 2026-10-31
+
+Prepared against develop `21c7dbaba8ce63b12c4b7cca6f605def2da7af75` after #215.
+Updated on2026-11-01 with develop `9b5784055043099aaab7757096f9cb8c04831c02`
+after merged #217; see the [combined Beta record](#beta-and-tavily-integration--2026-11-01).
+This section supersedes the pilot's per-user access/search-count policy **only
+for the new Beta RPC/build**. Earlier source-use/evaluation records are history,
+not blanket approval. No production SQL, assignment, activation, source query,
+merge or deployment is performed for this preparation. MW-FUT-01 stays Discovery.
+
+### Access, region and compatibility boundary
+
+- `media_advice_private.user_regions` is the authoritative backend-only region,
+  not browser input or editable Auth metadata. Existing Auth users are backfilled
+  with UA; an independent Auth insert trigger gives new users UA. Both use
+  `ON CONFLICT DO NOTHING`, preserving explicit region values. A read-only
+  baseline check found no existing authoritative region column/metadata values;
+  stop and reconcile rather than overwrite if that changes before migration.
+  No IP lookup, location assertion, region UI or change to the existing profile
+  signup trigger is introduced. Region is an application preference, not proof
+  of physical location, residence or sanctions compliance.
+- `media_advice_private.beta_config.enabled`, seeded **false**, is the server
+  switch. A new service-role-only `public.media_advice_beta_action` requires it
+  plus region UA and current group owner/member rights on every action. Edit
+  still verifies list/group/movie IMDb linkage; add does not require a list row.
+  Authenticated anonymous sessions, visitors and foreign groups cannot use it.
+  The handler derives user identity from verified Supabase Auth, never browser
+  user/region/role/counter claims. Region/config tables have RLS and no client
+  grants; service_role can read, not update them. Configuration writes require
+  the separately authorised administrative operation.
+- The existing `media_advice_action` stays unchanged, including pilot permission
+  and its 20-session/24h quota. Old deployed code therefore cannot accidentally
+  give all-UA users its unrestricted diagnostic response after the migration.
+  The **Beta** handler uses only the new RPC. Its switch does not disable old
+  pilot deployments; those retain their existing backend pilot assignments.
+- Beta removes the per-user search-count quota. More than20 distinct form
+  sessions are allowed, including concurrently. One-shot form/stage reservations,
+  the shared atomic eight-attempt cap per search, 30min ledger TTL, source bounds,
+  no application retries/redirects and final authorization remain intact.
+  Authorization is rechecked **after** waiting for the advisory lock, before
+  cleanup/reservation/finish mutations. Timeout/lost replies do not refund or
+  replay a reservation. Handler entry-to-source window remains45s, finish ends
+  at53s and response allowance ends at55s, retaining headroom within the60s
+  synchronous host limit; Auth and RPC waits consume the same deadline.
+- Daily technical cleanup is unchanged: eligibility requires both24h since
+  creation and expired TTL; expected removal24–48h with a healthy scheduler,
+  not a guarantee during an outage. Read-only snapshot on2026-10-31 confirms
+  `mykola-media-advice-cleanup`, `15 2 * * *`, active; content-free heartbeat
+  `2026-10-31T02:15:00.25976Z`, overdue count0. No scheduler activation or new
+  monitoring service is performed. Existing retention/monitoring limitations
+  remain; no Wishlist, card, source-body or chat persistence is added.
+
+### Diagnostics and UI
+
+`mykola_media_advice_diagnostics` is a distinct backend permission with existing
+expiry/revocation semantics, not a prerequisite for ordinary advice. Read-only
+verification found exactly one current active, nonexpiring pilot assignment and
+confirmed it is the established test account; no name/first-user inference.
+Its identifier and personal data are deliberately absent from this record/PR.
+The migration creates **no** diagnostic assignment.
+
+Capability returns only two effective booleans. Fresh finish authorization
+selects the HTTP response: ordinary users receive only fields required for
+product presentation, scopes, safe original links and transfer; resolver/gate
+diagnostics, runtime/run/accounting details, source-card addresses and raw
+observations are withheld server-side. Diagnostics cannot be obtained by forging
+a client flag or requesting an alternate action. Product projection preserves
+separate offers, language evidence/unknowns/conflicts, Apple origin preference
+and exact-link policy; it does not create enrichment or join records.
+
+The controller separately guards the bubble, report, source-detail DOM and copy
+action, including late clipboard/authorization responses. Revoking diagnostics
+removes those details while preserving ordinary advice; revoking main access
+clears the context. A compact Beta badge and the agreed Ukrainian notice are
+added. Form-session memory, 30min stale-data behavior, pending-apply protection,
+preview/local-only transfer/ordinary Save and other Mykola contexts are unchanged.
+The only app integration change passes the capability object into this isolated
+controller. `initApp`, global lifecycle/auth handlers and their call order are
+not modified.
+
+### Current source-use and account prerequisites
+
+Official public terms/docs/pricing were reviewed on2026-10-31, **without API,
+search, card or destination calls**, account/secret inspection or paid purchases.
+Plan figures below describe published offers, not the owner's actual contract,
+balance or permission. They are not blanket legal approval.
+
+| Source | Confirmed public material | Still required before all-UA activation |
+| --- | --- | --- |
+| TMDb / JustWatch attribution | [TMDb FAQ](https://developer.themoviedb.org/docs/faq) distinguishes attributed noncommercial use from commercial licensing; [provider endpoint](https://developer.themoviedb.org/reference/movie-watch-providers) requires JustWatch attribution and is not a source of full deep links. [Rate guidance](https://developer.themoviedb.org/docs/rate-limiting) is changeable (around40requests/s); respect429. | Establish the applicable account agreement and commercial/noncommercial classification. Full API Terms were inaccessible to the reader; prior combined/derivative-use uncertainty is not declared resolved. Existing attribution remains. |
+| Movie of the Night | [Developer terms](https://developers.movieofthenight.com/terms-and-conditions) (§3–7, public page module) describe end-user app display, independent third-party rights and hard plan quotas. Linked credit is now “Streaming Availability API by Movie of the Night”. [Published pricing](https://www.movieofthenight.com/about/api/pricing): Free1000/month; Starter25k/$49, Growth100k/$99, Scale1M/$299. | Confirm actual plan, cycle, remaining quota and permitted application use. No quota overage/retry assumption; no source data used for AI training/evaluation. |
+| Tavily basic Search | [Terms](https://www.tavily.com/terms) (May4,2026), [AUP](https://www.tavily.com/acceptable-use-policy) (Oct21,2026), [credits](https://docs.tavily.com/documentation/api-credits) and [rates](https://docs.tavily.com/documentation/rate-limits) reviewed. Basic costs1credit/request; published free1000/month, PAYGO$0.008/credit; development100RPM/production1000RPM, subject to key tier. Only admitted URL candidates are used, not snippets/rank as identity evidence. A positive Tavily response for the described private Beta use of Researcher was reported on2026-11-01; [scope and evidence limits](#beta-and-tavily-integration--2026-11-01). | That response addresses the described private Beta scenario, not blanket public/commercial use or third-party content rights. Actual key tier, balance/credits and applicable territory/record obligations remain unverified; UA preference alone does not establish territorial eligibility (§17.1). Do not silently change retention or infer a quota waiver. No automatic fallback to another paid provider. |
+| Kinobaza | [Terms](https://kinobazaua.com/terms) do not establish an automated card-reuse licence. The2026-10-31 [robots.txt](https://kinobazaua.com/robots.txt) review found `/search`, `/search/` and `/search?*` disallowed. Merged #217 removes that runtime fallback: only admitted `/titles/<slug>` cards are read. | The former native-search activation concern is removed by the code change, not by assuming permission. Expanded automated card reuse/source rights remain unestablished. Robots is neither a licence nor proof that every title-card read is forbidden. |
+| Direct JustWatch | [Website terms](https://support.justwatch.com/article/just-watchs-terms-of-use) restrict scraping/data mining; [partner API](https://apis.justwatch.com/docs/api/) has a separate contractual path. | No new destination scraping/resolution is introduced; declared targets remain distinct from observed redirects. Neither Tavily nor another source grants rights to JustWatch/Kinobaza content. |
+
+For N explicit searches: TMDb≤3N, MOTN≤N, Tavily search
+slots≤2N, card GET≤2N; total application
+external attempts≤8N. Tavily basic credits≤2N; nominal PAYGO upper estimate
+$0.016×N is not an invoice or assurance about failed-request billing. Internal
+provider traffic is unknown. Provider/account quotas remain external limits,
+**not a new per-user MW search quota**. No application retry/fan-out increase.
+
+### Prepared migration, develop validation and release sequence
+
+New migration: `20261031135149_media_advice_beta_ua.sql`, generated with pinned
+Supabase CLI2.122.0. Dependencies are the **two actually applied** M4 versions
+`20261020205122`, `20261021072002`, Auth users/standard roles and existing
+group/card tables. The current read-only history contains exactly those two
+versions; engine is PostgreSQL17.6. No historical001–016 replay or RLS repair.
+
+1. Separately approve operational execution, recheck HEAD/base/required checks,
+   recovery checkpoint/scope, exact migration bytes and target project. Execute
+   [Beta preflight](../supabase/operations/media-advice-beta.preflight.sql)
+   read-only; compare all migration history, existing function/trigger names and
+   unchanged legacy RPC/table policies, not only row counts. Stop on collisions,
+   unexpected history, authoritative existing region data or dependency drift.
+2. Use the [isolated migration workdir procedure](#step-2--apply-only-the-two-m4-migrations-future-privileged-action),
+   now containing exactly the two unchanged applied M4 files **plus this new
+   file**, not001–016. Check CLI version/help and linked target privately. Before
+   `migration up --linked`, `migration list --linked` must show the first two
+   already applied and **only20261031135149 pending**. Never use general db push,
+   include-all, blanket history repair or a password-bearing command/URI.
+   On an error/lost reply stop and reconcile catalogs/definitions/history before
+   any targeted repair or rerun; do not assume transaction/history atomicity.
+3. Run [postchecks](../supabase/operations/media-advice-beta.postcheck.sql).
+   Require users_without_region0, region values/default/trigger correct, Beta
+   false, no diagnostics assignments, unchanged Auth/movie/list/member counts,
+   legacy RPC and historical RLS definitions. Check exact new history entry,
+   SECURITY DEFINER/empty search_path and RPC ACL (service_role only); private
+   region/config RLS and no client grants/self-writes. Counts alone do not prove
+   content equality: compare the established content-free baseline fingerprints
+   for existing MW objects/data privately. Do not print account identifiers.
+4. Separately approve merge/develop branch deploy; merge may trigger it
+   automatically. Verify deployed SHA, packaged handler/import and presence/
+   context of existing Functions credentials without values. Main stays on its
+   old pilot code/RPC until a separately approved production release. Before
+   switch-on, source-free smoke must deny unauthenticated/disabled/visitor/foreign
+   group access without discovery. New user/default-UA and non-UA scenarios are
+   already tested offline; no real user/Wishlist rows are created by preparation.
+5. Resolve the source/account prerequisites above before broad activation.
+   Privately reverify the established pilot assignment, then use prepared
+   [activation operation](../supabase/operations/media-advice-beta.activate.sql)
+   with that exact verified identifier supplied locally. It checks the sole
+   existing pilot assignment instead of selecting a first/name-matched user,
+   grants only that account diagnostics with its existing expiry semantics,
+   and enables the Beta switch. This is **not executed now**. Confirm ordinary
+   UA=true/diagnostics=false and test UA=true/diagnostics=true via authenticated
+   source-free capability checks; non-UA and revoked access must deny. A
+   diagnostic flag alone cannot grant media/group access.
+6. Controlled develop pilot/release are separate authorisations. Confirm cleanup
+   health and actual provider quota headroom for expanded usage; no owner manual
+   monitoring duty is assigned implicitly. Before production promotion recheck
+   code/migration versions, exact deployment target/main policy, source-use scope,
+   access separation and a successful develop smoke. Code completion is not
+   production readiness or permission to release.
+
+[Rollback](../supabase/operations/media-advice-beta.rollback.sql) is a prepared,
+non-destructive switch-off: deny new Beta actions/reservations/finish, retain
+explicit regions, permissions, ledger/cleanup and Wishlist/Auth data. If needed,
+revert the application by a normal reviewed commit separately; the old pilot RPC
+still has its old access/quota behavior. Do not drop region tables/trigger,
+delete history or replay old migrations as an automatic down-migration. If a
+transaction failed before commit, inspect actual state/history before recovery.
+
+### Validation status
+
+- Full offline/HTTP suite: `node --test --test-concurrency=1 test/*.test.mjs`:
+  **271passed,0failed,5explicit skips**. This includes7 isolated PGlite Beta
+  migration/ACL/rollout checks, adapter/identity/R1/R2/link/report regressions,
+  deadline tests and product-projection parity. The opt-in browser and two
+  native-engine wrappers skip in this command; they are not successes.
+- Separate Edge/Playwright browser run: **35/35pass**, desktop1280, tablet820,
+  iPhone X-size375×812 and Air-size420×912 plus responsive/fallback checks.
+  Ordinary Beta has no report; test permission has one; revocation while open,
+  closed or finishing removes it. Existing add/edit, context/isolation, expiry,
+  pending cancellation, exact preview/transfer, mocked ordinary Save and no
+  repeat discovery remain covered. This is viewport emulation, **not physical
+  iPhone, Safari or WebKit** validation.
+- Separate native PostgreSQL**17.6**: **7/7pass**,24 independent loopback
+  connections. More than20 concurrent distinct sessions succeed; identical
+  form/stage remains one-shot; all8 reservations are bounded. Queued region,
+  switch, membership and card revocation deny before mutation. New-user default,
+  no self-grant and finish denial pass. The first native run's6 functional
+  subcases passed but Windows temporary-directory removal failed; the harness
+  now performs bounded filesystem-only cleanup after engine stop and the full
+  rerun passes. This does not change SQL/runtime timeouts or retry policy.
+  The failed-run authored cluster was also removed; no user data was involved.
+- The old native pilot wrapper was not rerun: its SQL/cleanup/launcher is
+  unchanged, and current native evidence covers the new Beta action. No owner
+  demo/Windows launcher lifecycle rerun is warranted by these changed components.
+- Syntax, whitespace, local documentation links/anchors and independent focused
+  security review pass. No assertions/timeouts were weakened. Remote checks are
+  recorded in the PR separately; absent or skipped checks are not success.
+
+These are authored local databases and mocked browser accounts, not applied
+Supabase migration, real-user activation, live source quality or production
+release evidence. No new user identifiers/PII, credentials, snippets, raw source
+responses or persistent source history are committed.
 ## Tavily-only alternative search — 2026-10-31
 
 Base develop after #215: `21c7dbaba8ce63b12c4b7cca6f605def2da7af75`.
@@ -3520,12 +3722,9 @@ source-key-empty PR Preview. Deployment IDs/SHA/state and source-free smoke are
 recorded in the PR after publication; neither is called live discovery evidence.
 No merge, production deployment or Netlify secret/flag/access-control change.
 
-Beta#216 must later incorporate this resolver change through the normal reviewed
-parent advance/merge workflow, **not** copy Beta code into this PR. Reconcile the
-canonical document's two appended records; replace its native-search slots with
-Tavily≤2, remove only the now-obsolete `/search` activation concern, retain card-
-reuse/Tavily-account/terms/quota prerequisites. Rerun Beta projection/access tests
-on that actual combined tip; neither old checks nor this PR's checks attest it.
+At #217 preparation, Beta#216 was separate and still needed this parent advance.
+The [2026-11-01 integration](#beta-and-tavily-integration--2026-11-01) now records
+that update and its separate checks, without attributing #217 checks to Beta.
 MW-FUT-01 remains Discovery.
 
 Validation: targeted resolver/title-year/series42/42passed. Final full offline/
@@ -3535,3 +3734,161 @@ results are recorded in the PR after publication; no
 assertions or timeouts are weakened. Browser/UI and native SQL/Windows launcher
 lifecycles need no repeat because those components are unchanged; local credential
 pipe regressions remain included in the full offline suite.
+
+## Beta and Tavily integration — 2026-11-01
+
+PR#216 is updated from its previous head
+`fee9b391cc529aa19eea2cb73ba97f3c3219966c` with current develop
+`9b5784055043099aaab7757096f9cb8c04831c02` (merged #217), using a normal
+feature-branch merge, not a rebase or merge of #216 into develop. Both dated
+records above are retained. The prepared Beta migration/operations and access
+contracts are unchanged: server-owned UA region, default-off global switch,
+group/card authorization, separate effective diagnostics permission and ordinary
+product-only HTTP projection. No migration, assignment or activation is performed.
+
+### Resolver and owner observations
+
+Runtime no longer requests `kinobazaua.com/search`. The unused legacy module
+and old report labels are historical compatibility, not a network path. The
+unused second search slot is Tavily after first-card identity refusal, or after
+a successful first search without admitted URLs. These are the same two slots,
+not extra allowances: **Tavily≤2, admitted card GET≤2, full discovery≤8 external
+attempts**. Independent identity gates, stable-ID conflict priority, withholding,
+deadline/finish reserve, one-shot reservations and no retries/redirects remain.
+
+The owner reports testing **Alien, Mad Max, Dune: Part Two, Supergirl and
+Goodfellas on develop after #217**, with no observed loss of results. This is
+owner observation, separate from the earlier five local controls above. There
+is **no short report for this owner Alien run**: its search-slot usage and exact
+request counts are unknown. Do not infer that it used slot2 from the earlier
+local Alien control or from the implemented fallback. These observations do not
+establish catalogue accuracy, entitlement, offer-language binding or Save.
+
+### Scoped Tavily response
+
+A **positive response from Tavily for the described private Beta use of
+Researcher** was supplied in the owner instruction recorded on2026-11-01.
+The available record does not establish the responder's identity, communication
+channel, exact wording or response date; none is attributed or invented here.
+This records the received scope confirmation, not an independently retrieved
+correspondence or blanket legal approval for public/commercial usage, all
+territories, third-party content or different account terms.
+
+The previously open private-Beta applicability question is updated accordingly;
+actual account tier/balance/quotas and unverified territory/record requirements
+are not asserted resolved. The response does not grant Kinobaza/JustWatch content
+rights, waive service quotas or authorize new persistence. Search snippets/raw
+responses remain unarchived; URL resolution is still separate from identity and
+extraction. No new source/terms requests are needed or made for this update.
+
+### Combined validation and Preview boundary
+
+Validation on the combined tree: full offline/HTTP **277passed,0failed,5 explicit
+opt-in skips**; separate Edge/Playwright browser **35/35passed**, desktop/tablet/
+iPhone X-size/Air-size and responsive cases. Targeted Beta-response/resolver tests
+**30/30passed**, including two new authored integration regressions. Syntax and
+whitespace pass; documentation checker:470 local links/291 anchors,0 errors.
+The five full-command skips are the three browser and two native wrappers;
+browser wrappers were run separately, native evidence is reused as stated below.
+No skipped check is counted as success. No physical iPhone/Safari/WebKit run.
+Independent read-only integration review found no actionable defect.
+
+The new authored HTTP integration exercises the actual handler/discovery/resolver,
+Beta RPC contract, first-card refusal → second Tavily → matched card, diagnostic
+versus ordinary projection and denied access without source dispatch. Browser
+regressions use mocked accounts/sources, not live discovery or Wishlist writes.
+
+The Beta SQL, native ledger implementation and Windows launcher components are
+unchanged from the prepared #216 head. Native PostgreSQL17.6 concurrency evidence
+above is explicitly reused, not represented as a new native run. Current offline
+PGlite/access checks and the combined HTTP path are rerun; no timeout/assertion
+or migration is changed to pass validation.
+
+PR Preview is separate from develop/main. Its actual SHA/state and source-free
+smoke are checked after the ordinary feature-branch push. Existing source keys
+were confirmed **absent from Deploy Preview context** on2026-10-31; the Beta
+migration was not applied at that preparation checkpoint. A ready/static Preview does not attest
+authenticated Beta activation or live resolver quality. No secrets/context,
+flags, database, main or production deployment are changed by this update.
+
+## Beta migration execution — 2026-11-01
+
+**Applied only `20261031135149_media_advice_beta_ua.sql`; Beta remains off.**
+The owner explicitly authorized this migration step, not merge, deployment or
+activation. Execution source: PR#216 head
+`306cedd8c76cb58cd2f5780b20dc3189132412bf`; develop independently rechecked at
+`9b5784055043099aaab7757096f9cb8c04831c02`, main unchanged. Target independently
+verified as `mttkectgdqqmejpenkrn`, database postgres, PostgreSQL17.6.
+
+The existing encrypted checkpoint `checkpoint-20261021T221351Z-432dc0a6` and
+wrapped key remained available. Offline audit authenticated all retained
+artifacts/checksums and the existing scoped MW recovery assessment. This reuses
+the documented MW/Auth recovery evidence for this additive step; it does not
+turn the older checkpoint into a fresh data snapshot or full Supabase-project
+recovery guarantee. No new export/restore cycle was performed. Existing data,
+legacy functions/ACLs and schema fingerprints were captured before execution.
+
+Supabase CLI**2.122.0** was used in the prepared isolated migration workdir,
+outside owner checkout, with an explicit verified project ref and no credential
+arguments/debug output. Before execution, `migration list --linked` showed only
+the two previous M4 versions applied and **only20261031135149 pending**. The
+workdir contained exactly those three files, not001–016. The old execution files
+retain their original reviewed SHA256 values; their difference from the current
+checkout was verified as LF/CRLF only, not changed SQL. They were not rewritten.
+The new execution-file SHA256 was
+`0f00f47b8571302c8cd24790efab249b2bf201443f36ed579761a6d43142fa7e`.
+
+One `migration up --linked --project-ref` invocation completed with exit0 from
+**09:05:16 to09:05:20 UTC**. No db push, include-all, history repair, historical
+replay or manual insertion into migration history was used. There was no lost
+response or migration retry. Post-execution CLI listing and independent catalog
+reads agree on exactly these three entries, with no pending file:
+
+| Version | Name |
+| --- | --- |
+|20261020205122|media_advice_access_ledger|
+|20261021072002|media_advice_review_fixes|
+|20261031135149|media_advice_beta_ua|
+
+### Actual postchecks
+
+All14 prepared postcheck SELECTs and the supplemental effective-privilege,
+region and definition comparisons passed:
+
+- Every current Auth user has a region row; all backfilled regions are UA.
+  The default is UA, NOT NULL with the two-letter constraint, FK/primary key
+  intact. Exactly one enabled AFTER INSERT trigger calls the expected private
+  default-region function. No real user was inserted to probe it; new-user
+  behavior retains the earlier offline/native evidence, not a new live signup.
+- The singleton Beta switch is **false**. Diagnostics assignments and active
+  diagnostics assignments are both **0**; existing pilot permissions unchanged.
+- RLS is enabled on both new tables and remains enabled on permissions/sessions.
+  Effective anon/authenticated table/schema/RPC access is denied. service_role
+  has SELECT-only access to the new tables and EXECUTE on the Beta RPC, not the
+  private helpers; no client self-grant/write path or PUBLIC grant was added.
+  Complete ACL listings and effective non-SELECT privilege checks were reviewed.
+- Three new function signatures, invoker/definer modes, VOLATILE behavior and
+  empty search_path settings match the migration. All three stored function
+  bodies match the reviewed SQL after line-ending normalization only.
+- Counts and aggregate content fingerprints match for **15 existing tables**:
+  all existing public application tables, auth.users and private permissions.
+  **833 existing object fingerprints** match, including legacy pilot RPC/cleanup
+  bodies, owners, ACLs/settings, existing table definitions/RLS, policies,
+  indexes, constraints and triggers. The intentionally widened feature-key
+  constraint was checked separately against the two approved keys. New Beta
+  objects/trigger were checked separately, not excluded as unexplained drift.
+  No rows, user identifiers, credentials or raw data fingerprints are published.
+- Security advisors were read. The Beta-related INFO
+  [RLS enabled without policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)
+  is intentional for backend-only private tables with no client grants; it is
+  not resolved by adding a browser policy. Historical RLS work remains out of
+  scope and no unrelated permissions were changed.
+
+Only execution documentation is updated afterward; no runtime/schema bytes or
+test assertions change, so application/browser/native suites are not repeated.
+Migration postchecks are real target-DB evidence, separate from prior authored
+test results. PR#216 remains open. Beta and diagnostic activation, merge,
+develop/main deployment and authenticated Beta smoke are **not performed**.
+No source discovery, Wishlist writes, cleanup/secret changes, owner checkout/
+demo edits or production restore. The shared live database has the authorized
+additive schema/UA-backfill change; production deployment is untouched.

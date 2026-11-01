@@ -4122,6 +4122,7 @@ body.invite-page.app-ready .container {
 .media-advice-dialog [hidden] { display: none !important; }
 .media-advice-header { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 0 12px; background: #181818; border-bottom: 1px solid #3c3c3c; }
 .media-advice-header h2 { margin: 0; font-size: 21px; }
+.media-advice-beta { display: inline-block; margin-left: 7px; padding: 2px 5px; border: 1px solid #766440; border-radius: 5px; color: #d8bf7e; font-size: 10px; font-weight: 500; line-height: 1.2; vertical-align: middle; }
 .media-advice-film { margin: 5px 0 0; color: #c6bfae; font-size: 14px; }
 .media-advice-header button { flex-shrink: 0; background: #2a2a2a; color: #f4f4f4; }
 .media-advice-chat { gap: 14px; }

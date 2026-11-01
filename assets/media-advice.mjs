@@ -5,6 +5,11 @@ import { groupLinkChoices, preferredAppleLinkChoice } from './media-advice-link-
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
 const serviceIcons = Object.freeze({ apple: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
+// Old boolean capabilities permit advice only, never privileged pilot details.
+export function normalizeMediaCapabilities(value) {
+  const enabled = value === true || value?.mykola_media_advice === true;
+  return { mykola_media_advice: enabled, mykola_media_advice_diagnostics: enabled && value?.mykola_media_advice_diagnostics === true };
+}
 export function transferFor(row) {
   if (row?.identityStatus !== 'matched' || row?.providerConflict || !Object.hasOwn(media, row?.provider?.key)) return null;
   const link = classifyLink(row.link?.href, row.provider);
@@ -41,6 +46,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   const dialog = doc.createElement('dialog'); dialog.className = 'media-advice-dialog';
   dialog.setAttribute('aria-label', 'Поради носіїв від Миколи'); doc.body.append(dialog);
   let session = null, generation = 0, controller = null, capabilityGeneration = 0, selectionToken = null;
+  let access = normalizeMediaCapabilities(false);
   let returnFocus, viewReturnFocus, scrollY = 0, freshnessTimer, chat, preview, diagnostics, notice, staleNotice;
   // View freshness only. The server's 30-minute action ledger is NOT extended.
   const freshnessMs = 30 * 60 * 1000;
@@ -56,6 +62,21 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     if (text) body.append(node('p', text)); row.append(avatar, body); chat.append(row); return body;
   }
   function tell(text) { if (notice) { notice.textContent = text; notice.hidden = !text; } }
+  function diagnosticBubble() {
+    if (!access.mykola_media_advice_diagnostics || !chat || session?.loading || chat.querySelector('.media-advice-report-bubble')) return;
+    const last = bubble('Якщо щось не зійшлося, тут є подробиці для пілоту.'); last.classList.add('media-advice-report-bubble'); last.append(button('Діагностичний звіт', showReport));
+  }
+  function updateAccess(value) {
+    access = normalizeMediaCapabilities(value);
+    if (!access.mykola_media_advice_diagnostics) {
+      const reportWasOpen = diagnostics && !diagnostics.hidden;
+      diagnostics?.replaceChildren();
+      if (diagnostics) diagnostics.hidden = true;
+      chat?.querySelector('.media-advice-report-bubble')?.closest('.mykola-message-row')?.remove();
+      if (reportWasOpen && chat && !preview) { chat.hidden = false; if (dialog.open && valid()) dialog.scrollTop = session.chatScroll ?? 0; }
+    } else diagnosticBubble();
+    return access.mykola_media_advice;
+  }
   function returnToChat(message) {
     selectionToken = null; preview?.remove(); preview = null;
     if (diagnostics) diagnostics.hidden = true;
@@ -74,7 +95,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   }
   function invalidate() {
     clearTimeout(freshnessTimer); selectionToken = null; generation++; capabilityGeneration++;
-    controller?.abort(); controller = null; session = null; entry.hidden = true;
+    controller?.abort(); controller = null; session = null; access = normalizeMediaCapabilities(false); entry.hidden = true;
     if (dialog.open) dialog.close(); dialog.replaceChildren(); chat = preview = diagnostics = notice = staleNotice = viewReturnFocus = null;
   }
   function markStale(timerElapsed = false) {
@@ -99,7 +120,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     try {
       const ok = await capability(c);
       if (check !== capabilityGeneration) return;
-      if (key(context()) !== key(c) || ok !== true) return invalidate();
+      if (key(context()) !== key(c) || !updateAccess(ok)) return invalidate();
       markStale(); entry.hidden = false;
     } catch { if (check === capabilityGeneration) invalidate(); }
   }
@@ -108,7 +129,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const current = session, c = context(), epoch = generation; current.renewing = true;
     let ok = false; try { ok = await capability(c); } catch {}
     if (epoch !== generation || !valid() || current !== session || key(c) !== key(context())) return;
-    if (!ok) return invalidate();
+    if (!updateAccess(ok)) return invalidate();
     const next = renewContext();
     if (!next || key(next) !== key(context()) || ['userId', 'groupId', 'imdbId', 'listId', 'title', 'year'].some(k => (c[k] ?? null) !== (next[k] ?? null)) || next.formSession === c.formSession) return invalidate();
     clearTimeout(freshnessTimer); generation++; controller?.abort(); selectionToken = null;
@@ -122,6 +143,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   const reportText = () => safeMediaReport({ ...session.result, rows: rowsFor(), unmapped: [...(session.result?.unmapped ?? []), ...(session.choice?.unmapped ?? [])], filmLocalization: filmLocalizationFor() }, { applied: session.applied, filmContext: session.runContext, stale: session.stale === true });
   function showReport() {
     if (!valid()) return invalidate();
+    if (!access.mykola_media_advice_diagnostics) return;
     markStale(); selectionToken = null; session.chatScroll = dialog.scrollTop;
     viewReturnFocus = doc.activeElement;
     diagnostics.replaceChildren(node('h3', 'Діагностичний звіт'), node('p', 'Лише для пілоту. Звіт нікуди не надсилається автоматично.'), button('← До порад', () => returnToChat()));
@@ -129,14 +151,15 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const status = node('p'); status.setAttribute('role', 'status');
     diagnostics.append(button('Скопіювати короткий звіт', async () => {
       if (!valid()) return invalidate();
+      if (!access.mykola_media_advice_diagnostics) return;
       markStale(); const report = reportText(); text.value = report;
       const epoch = generation, current = session;
       try {
         if (!doc.defaultView.navigator.clipboard?.writeText) throw Error();
         await doc.defaultView.navigator.clipboard.writeText(report);
-        if (epoch === generation && current === session && valid()) status.textContent = 'Короткий звіт скопійовано.';
+        if (epoch === generation && current === session && valid() && access.mykola_media_advice_diagnostics) status.textContent = 'Короткий звіт скопійовано.';
       } catch {
-        if (epoch !== generation || current !== session || !valid()) return;
+        if (epoch !== generation || current !== session || !valid() || !access.mykola_media_advice_diagnostics) return;
         status.textContent = 'Буфер недоступний. Виділіть і скопіюйте текст.'; text.focus(); text.select();
       }
     }), text, status);
@@ -164,9 +187,10 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     details.append(node('p', 'Мовні дані та посилання можуть стосуватися різних пропозицій. Брак інформації не означає відсутності доріжки.'));
     details.append(node('p', 'Мовний блок сервісу на підтвердженій картці Кінобази враховуємо для України за правилом застосунку, не як перевірку платформи. «−» для окремого формату аудіо не виключає інших українських доріжок.'));
     details.append(node('p', 'Кінобаза й TMDb можуть використовувати спільні дані JustWatch, тож це не незалежні підтвердження. Деякі посилання ведуть через сторонній сервіс, що рахує переходи.'));
+    details.append(node('p', 'Поради Миколи щодо носіїв доступні в режимі бета-тестування для українського регіону'));
     const footer = node('footer'); footer.className = 'media-advice-source-footer';
     const links = node('nav'); links.className = 'media-advice-source-links'; links.setAttribute('aria-label', 'Джерела даних');
-    for (const [label, href] of [['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'], ['Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/']]) {
+    for (const [label, href] of [['TMDb', 'https://www.themoviedb.org/'], ['JustWatch', 'https://www.justwatch.com/'], ['Streaming Availability API by Movie of the Night', 'https://www.movieofthenight.com/about/api'], ['Кінобаза', 'https://kinobazaua.com/']]) {
       const a = node('a', label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a);
     }
     footer.append(links, node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'));
@@ -254,7 +278,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const hadFocus = dialog.open && dialog.contains(doc.activeElement);
     selectionToken = null; preview = null;
     const header = node('header'); header.className = 'media-advice-header';
-    const heading = node('div'); heading.append(node('h2', 'Поради Миколи'));
+    const heading = node('div'), title = node('h2', 'Поради Миколи'), beta = node('span', 'Beta'); beta.className = 'media-advice-beta'; title.append(beta); heading.append(title);
     const film = node('p', `${session.context.title || 'Фільм'}${session.context.year ? ` · ${session.context.year}` : ''}`); film.className = 'media-advice-film'; heading.append(film);
     header.append(heading, button('← До картки', close));
     chat = node('div'); chat.className = 'media-advice-chat mykola-chat';
@@ -291,8 +315,8 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     if (renewContext) {
       const update = button('Оновити вручну', renew); update.dataset.mediaRefresh = ''; update.hidden = !session.stale && !session.error; chat.append(update);
     }
-    // Last Mykola bubble is pilot-only diagnostics, never mixed into the answer.
-    const last = bubble('Якщо щось не зійшлося, тут є подробиці для пілоту.'); last.classList.add('media-advice-report-bubble'); last.append(button('Діагностичний звіт', showReport));
+    // Privileged pilot details are independent of ordinary Beta access.
+    diagnosticBubble();
     if (hadFocus) header.querySelector('button').focus({ preventScroll: true });
   }
   function review(row) {
@@ -317,7 +341,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       let permitted = false; try { permitted = await validateApply(c); } catch {}
       markStale();
       if (epoch !== generation || token !== selectionToken || !dialog.open || !valid()) return;
-      if (!permitted) return invalidate();
+      if (!updateAccess(permitted)) return invalidate();
       const changes = applyPreview(makePreview(row, before, { clearMissing }), readForm());
       if (!changes) return returnToChat('Поля змінилися або очищення не підтверджено. Оберіть варіант повторно.');
       writeForm(changes); session.applied = true; close();
@@ -335,6 +359,9 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const result = await discover(current.context, { signal: controller.signal });
       if (epoch !== generation || current !== session || !valid()) return;
       if (result?.film?.imdbId && result.film.imdbId !== current.context.imdbId) return invalidate();
+      // The server rechecks access at finish; an earlier capability cannot
+      // override a fresh revocation or diagnostics denial on the result.
+      if (result?.capabilities !== undefined && !updateAccess(result.capabilities)) return invalidate();
       current.result = result; current.loading = false; markStale(); render();
     } catch {
       if (epoch !== generation || current !== session || !valid()) return;
@@ -345,7 +372,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const c = context(), epoch = generation; if (!usable(c)) return invalidate();
     const check = ++capabilityGeneration; let ok = false; try { ok = await capability(c); } catch {}
     if (check !== capabilityGeneration || epoch !== generation || key(c) !== key(context())) return;
-    if (!ok) return invalidate();
+    if (!updateAccess(ok)) return invalidate();
     if (!session || session.key !== key(c)) { generation++; session = { context: { ...c }, key: key(c), used: false, result: null }; dialog.replaceChildren(); }
     returnFocus = doc.activeElement; scrollY = doc.defaultView.scrollY;
     markStale();
