@@ -159,7 +159,9 @@ implemented or documented v1.3.1 scope.
 
 M4 [UA Beta access and private diagnostics](docs/m4-media-advice.md#ua-beta-access-and-private-diagnostics--2026-10-31)
 are prepared behind a new default-off server switch; no migration, assignment or
-activation is implied by the code. Narrow #192 apply/deadline/queued-reservation fixes were locally
+activation is implied by the code. The [combined Beta/Tavily record](docs/m4-media-advice.md#beta-and-tavily-integration--2026-11-01)
+incorporates merged #217, owner observations and the scoped positive Tavily
+response for private Beta Researcher use. Narrow #192 apply/deadline/queued-reservation fixes were locally
 verified, including native PostgreSQL 17.6 concurrency; dated execution records
 describe actual activation separately from prepared plans.
 The [three-film pilot retrieval follow-up](docs/m4-media-advice.md#three-film-pilot-retrieval-follow-up--2026-10-28)
@@ -169,8 +171,9 @@ Current automatic Blade Runner1982/Mortal Kombat2021/Supergirl2026 checks matche
 all three cards locally; historical response causes, entitlement and general
 coverage remain unproven. No deployment or source-policy closure is implied.
 Tavily basic Search is the [current M4 resolver provider](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
-for candidate URLs only, with the [bounded public title-search fallback](docs/m4-media-advice.md#five-film-automatic-results--2026-10-24)
-on this branch. Five local controls do not establish general quality;
+for candidate URLs only, with a [bounded second Tavily search](docs/m4-media-advice.md#tavily-only-alternative-search--2026-10-31)
+on this branch; the former Kinobaza `/search` fallback is no longer used.
+Five local controls do not establish general quality;
 customer-app source-use conditions remain explicit. Brave research is preserved
 historically. Gemini Grounding stays excluded from URL → HTML extraction;
 no Brave/Gemini fallback or activation is introduced.

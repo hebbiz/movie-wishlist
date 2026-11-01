@@ -5,6 +5,10 @@ import { productMediaResult, mediaCapabilities } from '../netlify/lib/media-advi
 import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
 import { linkChoicesFor, makePreview } from '../assets/media-advice.mjs';
 import { authoredDuneMediaResult, authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
+import { createKinobazaResolver, resolverRefusalQuery } from '../netlify/lib/kinobaza-resolver.mjs';
+import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { detailsData, providersData, motnData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
 
 const user = '00000000-0000-4000-8000-000000000001', group = '00000000-0000-4000-8000-000000000002';
 const caps = diagnostics => ({ mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics });
@@ -83,4 +87,78 @@ test('public projection preserves ranking, source-language interpretation, Apple
     }
     assert.doesNotMatch(JSON.stringify(projected), /rawHref|sourceURL|receivedAt|runtime|metrics|resolver|amount|PRICE_SENTINEL/);
   }
+});
+
+test('Beta authorization and diagnostics remain independent of actual Tavily-only refusal fallback within eight reserved attempts', async () => {
+  // Authored source shapes, not a reconstruction of an owner/deployed run.
+  const first = 'https://kinobazaua.com/titles/authored-card';
+  const confirmed = 'https://kinobazaua.com/titles/authored-original-2001';
+  const stages = new Set(['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
+  const keys = { TMDB_READ_ACCESS_TOKEN: 'AUTHORED_TMDB_KEY', MOTN_API_KEY: 'AUTHORED_MOTN_KEY', TAVILY_API_KEY: 'AUTHORED_TAVILY_KEY' };
+  for (const diagnostics of [true, false]) {
+    const operations = [], reserved = [], sent = [];
+    let searches = 0;
+    const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) },
+      rpc: async (name, args) => {
+        assert.equal(name, 'media_advice_beta_action'); assert.equal(args.p_user, user); assert.equal(args.p_group, group);
+        operations.push(args);
+        if (args.p_op === 'reserve') {
+          assert.ok(stages.has(args.p_stage)); assert.ok(!reserved.includes(args.p_stage));
+          assert.ok(reserved.length < 8, 'the mocked durable ledger admits no ninth source attempt');
+          reserved.push(args.p_stage);
+        }
+        return { data: { id: user, attempts: [...reserved], ...caps(diagnostics) } };
+      } };
+    const fetchImpl = async (url, init) => {
+      assert.equal(init.redirect, 'manual'); assert.equal(init.credentials, 'omit'); sent.push(url);
+      assert.ok(!/^https:\/\/kinobazaua\.com\/search(?:[/?]|$)/.test(url), 'no Kinobaza public-search dispatch');
+      if (url === 'https://api.tavily.com/search') {
+        const search = ++searches;
+        assert.equal(init.method, 'POST'); assert.equal(init.headers.Authorization, `Bearer ${keys.TAVILY_API_KEY}`);
+        if (search === 2) assert.equal(JSON.parse(init.body).query, resolverRefusalQuery({ originalTitle: 'Authored original', identityTitle: 'Вигаданий фільм', year: 2001 }));
+        return Response.json({ results: [{ url: search === 1 ? first : confirmed,
+          content: 'PRIVATE_SEARCH_SNIPPET', title: 'PRIVATE_SEARCH_TITLE', score: 1 }] });
+      }
+      if (url.startsWith('https://kinobazaua.com/')) {
+        assert.ok([first, confirmed].includes(url)); assert.equal(init.headers.Authorization, undefined);
+        return new Response(markup({ url, ...(url === first ? { title: 'Wrong authored film' } : {}) }), { headers: { 'content-type': 'text/html' } });
+      }
+      assert.ok(['api.themoviedb.org', 'api.movieofthenight.com'].includes(new URL(url).hostname));
+      return Response.json(url.includes('/find/') ? { movie_results: [{ id: IDS[0], title: 'Вигаданий фільм', original_title: 'Authored original' }] }
+        : url.includes('/watch/providers') ? providersData(IDS[0]) : url.includes('movieofthenight') ? motnData(IDS[0]) : detailsData(IDS[0]));
+    };
+    const response = await createMediaAdviceHandler({ client, env: name => keys[name] ?? '', fetchImpl,
+      resolver: createKinobazaResolver({ apiKey: keys.TAVILY_API_KEY }) })(request({ imdbId: `tt${IDS[0]}`,
+      diagnostics: true, region: 'UA', mykola_media_advice_diagnostics: true }));
+    assert.equal(response.status, 200); const payload = await response.json();
+    assert.deepEqual(payload.result.capabilities, caps(diagnostics));
+    assert.equal(sent.length, 8); assert.equal(reserved.length, 8); assert.deepEqual(new Set(reserved), stages);
+    assert.deepEqual(reserved.slice(-4), ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
+    assert.deepEqual(sent.filter(url => url.startsWith('https://kinobazaua.com/')), [first, confirmed]);
+    assert.equal(searches, 2); assert.equal(operations[0].p_op, 'start'); assert.equal(operations.at(-1).p_op, 'finish');
+    assert.ok(payload.result.rows.some(row => row.id.startsWith('kinobaza:') && row.identityStatus === 'matched'));
+    if (diagnostics) {
+      assert.equal(payload.result.metrics.requestsMade, 8); assert.equal(payload.result.metrics.ledgerReservations, 8);
+      assert.equal(payload.result.metrics.requestBudget, 8);
+      assert.deepEqual(payload.result.resolver.searches.map(search => search.provider), ['tavily', 'tavily']);
+      assert.deepEqual(payload.result.resolver.cards.map(card => card.identity), ['mismatch', 'matched']);
+      assert.equal(payload.result.resolver.searchCalls, 2); assert.equal(payload.result.resolver.cardCalls, 2);
+      assert.match(safeMediaReport(payload.result), /Search 2: ok; candidates-admitted;[^\n]*provider tavily\./);
+    } else assert.doesNotMatch(JSON.stringify(payload.result), /"resolver"|"metrics"|"runtime"|"diagnostics"|"gates"|"cardRef"/);
+    assert.doesNotMatch(JSON.stringify(payload), /PRIVATE_SEARCH_|AUTHORED_TMDB_KEY|AUTHORED_MOTN_KEY|AUTHORED_TAVILY_KEY/);
+    assert.doesNotMatch(JSON.stringify(operations), /https?:|PRIVATE_SEARCH_|"region"|"diagnostics"|sourceURL|raw/);
+  }
+});
+
+test('server-denied Beta session cannot dispatch the actual resolver despite browser-supplied access and diagnostic flags', async () => {
+  const operations = [];
+  const client = { auth: { getUser: async () => ({ data: { user: { id: user,
+    user_metadata: { region: 'UA', mykola_media_advice: true, mykola_media_advice_diagnostics: true } } } }) },
+    rpc: async (name, args) => { assert.equal(name, 'media_advice_beta_action'); operations.push(args.p_op); return { error: true }; } };
+  const response = await createMediaAdviceHandler({ client, env: () => 'AUTHORED_KEY',
+    fetchImpl: async () => assert.fail('denied Beta access must reserve or dispatch no source attempt'),
+    resolver: createKinobazaResolver({ apiKey: 'AUTHORED_KEY' }) })(request({ imdbId: `tt${IDS[0]}`, region: 'UA',
+    mykola_media_advice: true, mykola_media_advice_diagnostics: true }));
+  assert.equal(response.status, 403); assert.deepEqual(operations, ['start']);
+  assert.doesNotMatch(await response.text(), /AUTHORED_KEY|"rows"|"resolver"/);
 });

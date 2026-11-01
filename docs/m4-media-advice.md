@@ -4,10 +4,11 @@ Status: M4.1–M4.3 implemented; default-off semantics retained. Earlier deploym
 assignment and cleanup evidence remains in its dated execution records below.
 The dated records below distinguish earlier preparation from later execution.
 Current preparation: [UA Beta access and private diagnostics](#ua-beta-access-and-private-diagnostics--2026-10-31),
-based on develop after #215; not migrated, enabled, merged or deployed by this task.
+updated with merged #217; not migrated, enabled or merged into develop by this task.
 Current branch search strategy: **Tavily basic Search**, candidate URLs only,
-with a bounded ordinary Kinobaza title-search fallback after first-card identity
-refusal. [Five locked local controls passed URL/identity checks](#five-film-automatic-results--2026-10-24);
+with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
+not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
+remain historical evidence;
 this is not catalogue-wide accuracy, track verification or new activation approval.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
@@ -3424,6 +3425,8 @@ discovery, Wishlist Save, merge or manual deployment was performed.
 ## UA Beta access and private diagnostics — 2026-10-31
 
 Prepared against develop `21c7dbaba8ce63b12c4b7cca6f605def2da7af75` after #215.
+Updated on2026-11-01 with develop `9b5784055043099aaab7757096f9cb8c04831c02`
+after merged #217; see the [combined Beta record](#beta-and-tavily-integration--2026-11-01).
 This section supersedes the pilot's per-user access/search-count policy **only
 for the new Beta RPC/build**. Earlier source-use/evaluation records are history,
 not blanket approval. No production SQL, assignment, activation, source query,
@@ -3510,12 +3513,12 @@ balance or permission. They are not blanket legal approval.
 | --- | --- | --- |
 | TMDb / JustWatch attribution | [TMDb FAQ](https://developer.themoviedb.org/docs/faq) distinguishes attributed noncommercial use from commercial licensing; [provider endpoint](https://developer.themoviedb.org/reference/movie-watch-providers) requires JustWatch attribution and is not a source of full deep links. [Rate guidance](https://developer.themoviedb.org/docs/rate-limiting) is changeable (around40requests/s); respect429. | Establish the applicable account agreement and commercial/noncommercial classification. Full API Terms were inaccessible to the reader; prior combined/derivative-use uncertainty is not declared resolved. Existing attribution remains. |
 | Movie of the Night | [Developer terms](https://developers.movieofthenight.com/terms-and-conditions) (§3–7, public page module) describe end-user app display, independent third-party rights and hard plan quotas. Linked credit is now “Streaming Availability API by Movie of the Night”. [Published pricing](https://www.movieofthenight.com/about/api/pricing): Free1000/month; Starter25k/$49, Growth100k/$99, Scale1M/$299. | Confirm actual plan, cycle, remaining quota and permitted application use. No quota overage/retry assumption; no source data used for AI training/evaluation. |
-| Tavily basic Search | [Terms](https://www.tavily.com/terms) (May4,2026), [AUP](https://www.tavily.com/acceptable-use-policy) (Oct21,2026), [credits](https://docs.tavily.com/documentation/api-credits) and [rates](https://docs.tavily.com/documentation/rate-limits) reviewed. Basic costs1credit/request; published free1000/month, PAYGO$0.008/credit; development100RPM/production1000RPM, subject to key tier. Only admitted URL candidates are used, not snippets/rank as identity evidence. | Reconcile Terms§2 third-party/internal-use language with§3.5 end-user scope and the actual Order Form/consent. Confirm key tier, credits and applicable territories; UA preference alone does not establish territorial eligibility (§17.1). Clarify§17.8 record obligations versus the existing content-free retention; do not silently change retention. No automatic fallback to another paid provider. |
-| Kinobaza | [Terms](https://kinobazaua.com/terms) do not establish an automated card-reuse licence. Current [robots.txt](https://kinobazaua.com/robots.txt) disallows `/search`, `/search/` and `/search?*`. Existing bounded native fallback requests `/search?q=…`. | **Concrete unresolved activation prerequisite:** resolve automated native-search fallback applicability/permission and expanded card reuse, or approve a separate narrowly scoped fallback change. Robots is neither a licence nor proof that every title-card read is forbidden. This Beta change does not silently alter search policy. |
+| Tavily basic Search | [Terms](https://www.tavily.com/terms) (May4,2026), [AUP](https://www.tavily.com/acceptable-use-policy) (Oct21,2026), [credits](https://docs.tavily.com/documentation/api-credits) and [rates](https://docs.tavily.com/documentation/rate-limits) reviewed. Basic costs1credit/request; published free1000/month, PAYGO$0.008/credit; development100RPM/production1000RPM, subject to key tier. Only admitted URL candidates are used, not snippets/rank as identity evidence. A positive Tavily response for the described private Beta use of Researcher was reported on2026-11-01; [scope and evidence limits](#beta-and-tavily-integration--2026-11-01). | That response addresses the described private Beta scenario, not blanket public/commercial use or third-party content rights. Actual key tier, balance/credits and applicable territory/record obligations remain unverified; UA preference alone does not establish territorial eligibility (§17.1). Do not silently change retention or infer a quota waiver. No automatic fallback to another paid provider. |
+| Kinobaza | [Terms](https://kinobazaua.com/terms) do not establish an automated card-reuse licence. The2026-10-31 [robots.txt](https://kinobazaua.com/robots.txt) review found `/search`, `/search/` and `/search?*` disallowed. Merged #217 removes that runtime fallback: only admitted `/titles/<slug>` cards are read. | The former native-search activation concern is removed by the code change, not by assuming permission. Expanded automated card reuse/source rights remain unestablished. Robots is neither a licence nor proof that every title-card read is forbidden. |
 | Direct JustWatch | [Website terms](https://support.justwatch.com/article/just-watchs-terms-of-use) restrict scraping/data mining; [partner API](https://apis.justwatch.com/docs/api/) has a separate contractual path. | No new destination scraping/resolution is introduced; declared targets remain distinct from observed redirects. Neither Tavily nor another source grants rights to JustWatch/Kinobaza content. |
 
-For N explicit searches: TMDb≤3N, MOTN≤N, combined Tavily/native-search
-slots≤2N (native fallback substitutes a slot), card GET≤2N; total application
+For N explicit searches: TMDb≤3N, MOTN≤N, Tavily search
+slots≤2N, card GET≤2N; total application
 external attempts≤8N. Tavily basic credits≤2N; nominal PAYGO upper estimate
 $0.016×N is not an invoice or assurance about failed-request billing. Internal
 provider traffic is unknown. Provider/account quotas remain external limits,
@@ -3617,3 +3620,191 @@ These are authored local databases and mocked browser accounts, not applied
 Supabase migration, real-user activation, live source quality or production
 release evidence. No new user identifiers/PII, credentials, snippets, raw source
 responses or persistent source history are committed.
+## Tavily-only alternative search — 2026-10-31
+
+Base develop after #215: `21c7dbaba8ce63b12c4b7cca6f605def2da7af75`.
+Separate branch `codex/m4-tavily-fallback`, not stacked on or including Beta#216.
+This supersedes the runtime public-search fallback recorded on2026-10-24;
+it does not rewrite that earlier investigation or its request accounting.
+
+### Runtime and query policy
+
+The resolver and both local control runners no longer import/invoke
+`kinobaza-public-search.mjs`. That module and its authored tests remain inert
+historical code, not a runtime network path. No automatic request to Kinobaza
+`/search` is made. Only exact admitted `/titles/<slug>` cards may be read.
+The earlier public-provider label stays allowlisted solely to read old reports;
+every new runtime search diagnostic/report says **tavily**.
+
+- Primary query remains quoted original title + year +
+  `site:kinobazaua.com/titles/`, with the existing independently restricted
+  domain, basic/auto_parameters=false/answer=false/raw_content=false and5 results.
+- A successful search with zero admitted URLs keeps the prior alternate-title
+  query, or unquoted same title when only one established name exists.
+- After the **first read card's** mismatch/unresolved identity, the unspent
+  second slot instead combines the first two distinct trusted TMDb title aliases
+  and quoted year: `"original title" "localized title" "year" site:kinobazaua.com/titles/`.
+  Names retain existing escaping and normalization; no director, invented slug,
+  prefilled card address or rejected-card content enters that query. With one
+  name, or a combination beyond the prior maximum single-title query length,
+  use the existing alternate query without truncating either name.
+- Both paths consume the **same** `search-2` reservation. If already spent,
+  denied, expired or aborted, there is no extra dispatch. HTTP/auth/quota/
+  transport/malformed-search failures are not retries or another provider.
+  Shared exact-URL Set, stable candidate ordering and examined Set remain.
+  A discovered URL/slug/snippet is not identity proof; all independent gates,
+  stable-ID conflict priority and withholding remain unchanged.
+- Budgets stay≤2 Tavily attempts,≤2 sequential card GETs and≤8 application
+  external attempts for full discovery. Baseline TMDb/MOTN independence,
+  entry deadline/finish reserve, one-shot ledger, manual redirects, no platform
+  requests and no automatic retries are unchanged. No migration, flag/access,
+  ranking, language, UI, retention or lifecycle/initApp change.
+
+### Current live controls, not historical reconstruction
+
+One memory-only credential session used the actual TMDb identity projection,
+Tavily adapter, URL admission and assisted identity/extraction functions. The
+local `tavily-fallback` study contains only five title/year pairs, no source URLs
+or movie IDs. Source output/snippets/HTML are not archived; the minimum public
+findings below are intentionally documented. No MOTN, Watch Providers,
+destination/platform requests or Wishlist writes occurred.
+
+| Control | Automatically discovered card | Identity / extraction | Actual TMDb / Tavily / card attempts |
+| --- | --- | --- | --- |
+| Alien(1979), tt0078748 | `https://kinobazaua.com/titles/alien` | Final matched / ok;29 extracted candidates,3 localization blocks,5 mapped rows | Initial2/2/2=6, final cached-identity0/2/2=4; total10 |
+| Mad Max: Fury Road(2015), tt1392190 | `https://kinobazaua.com/titles/mad-max-fury-road` | matched / partial;36 candidates,3 blocks,6 mapped rows |2/1/2=5 |
+| Dune: Part Two(2024), tt15239678 | `https://kinobazaua.com/titles/dune-part-two` | matched / ok;32 candidates,3 blocks,5 mapped rows |2/1/2=5 |
+| Blade Runner2049(2017), tt1856101 | `https://kinobazaua.com/titles/blade-runner-2049` | matched / partial;32 candidates,4 blocks,6 mapped rows |2/1/2=5 |
+| Mortal Kombat(2021), tt0293429 | `https://kinobazaua.com/titles/mortal-kombat-2021` | matched / ok;36 candidates,3 blocks,4 mapped rows |2/1/2=5 |
+
+Total **30 actual source HTTP attempts:10 TMDb +8 Tavily +12 card GETs**,
+including the initial unsuccessful Alien run. All received HTTP200; unsuccessful
+identity/extraction outcomes still count. Session receipt confirmed complete
+accounting and was stopped; keys were neither written to disk/env nor logged.
+Control session UTC start21:32:48; final Alien run
+`b26148a4-8815-40e4-ac7d-b432d55289be`, first run
+`df63a4b0-5d27-4d47-b51f-60fee4e13142`. Execution is **local-diagnostic** with
+buildSha unknown, not deployed runtime attestation. Controls ran on the base
+checkout plus these tracked changes; they are not retroactively assigned a
+Netlify build SHA.
+
+Alien's initial separate-title queries returned admitted sequels, not the1979
+card. The reads were `/titles/alien-3` (H1 year1992, H2 Alien³, David Fincher)
+and `/titles/prometheus` (2012, Prometheus), correctly refused. With the new
+general two-title query, `"Alien" "Чужий" "1979" site:kinobazaua.com/titles/`,
+the second search returned `/titles/alien` and the second card matched H1
+`Чужий (1979)`, H2 `Alien`,1979 and the established Ridley Scott person spelling.
+No known URL was injected. This observed improvement is not proof of general
+causality or catalogue coverage. Other four controls matched their first card,
+so their successful path is unchanged by the refusal-query refinement; no
+unnecessary live repeat was made for them. Extra candidates remain unexamined.
+Some second-card parser refusals/partial extraction remain unrelated limitations.
+Extracted source rows are not entitlement, verified platform availability or
+proof of any specific offer's language binding.
+
+### Preview configuration and Beta integration
+
+Read-only dashboard checks on2026-10-31 confirmed Node22.x, root publish dir,
+Functions directory `netlify/functions`, active builds and production branch
+**main**. TAVILY_API_KEY, TMDB_READ_ACCESS_TOKEN and MOTN_API_KEY are Secret,
+Functions-only, populated for Production and Branch deploys; Deploy Previews
+are **Empty**. No values were revealed/copied. Supabase keys are present in
+their existing four contexts; do not infer source-key presence from a successful
+static PR Preview.
+
+To provide a usable isolated preview without changing credentials or user
+permissions, only `codex/m4-tavily-fallback` was added to the explicit branch-
+deploy list, preserving develop, main and PR-preview policy. Its ordinary push
+may therefore create both a source-key-capable branch deploy and a separate
+source-key-empty PR Preview. Deployment IDs/SHA/state and source-free smoke are
+recorded in the PR after publication; neither is called live discovery evidence.
+No merge, production deployment or Netlify secret/flag/access-control change.
+
+At #217 preparation, Beta#216 was separate and still needed this parent advance.
+The [2026-11-01 integration](#beta-and-tavily-integration--2026-11-01) now records
+that update and its separate checks, without attributing #217 checks to Beta.
+MW-FUT-01 remains Discovery.
+
+Validation: targeted resolver/title-year/series42/42passed. Final full offline/
+HTTP suite:259passed,0failed,4 explicit browser/native opt-in skips. Documentation
+checker459local links/284anchors has0errors; syntax and whitespace pass. Preview
+results are recorded in the PR after publication; no
+assertions or timeouts are weakened. Browser/UI and native SQL/Windows launcher
+lifecycles need no repeat because those components are unchanged; local credential
+pipe regressions remain included in the full offline suite.
+
+## Beta and Tavily integration — 2026-11-01
+
+PR#216 is updated from its previous head
+`fee9b391cc529aa19eea2cb73ba97f3c3219966c` with current develop
+`9b5784055043099aaab7757096f9cb8c04831c02` (merged #217), using a normal
+feature-branch merge, not a rebase or merge of #216 into develop. Both dated
+records above are retained. The prepared Beta migration/operations and access
+contracts are unchanged: server-owned UA region, default-off global switch,
+group/card authorization, separate effective diagnostics permission and ordinary
+product-only HTTP projection. No migration, assignment or activation is performed.
+
+### Resolver and owner observations
+
+Runtime no longer requests `kinobazaua.com/search`. The unused legacy module
+and old report labels are historical compatibility, not a network path. The
+unused second search slot is Tavily after first-card identity refusal, or after
+a successful first search without admitted URLs. These are the same two slots,
+not extra allowances: **Tavily≤2, admitted card GET≤2, full discovery≤8 external
+attempts**. Independent identity gates, stable-ID conflict priority, withholding,
+deadline/finish reserve, one-shot reservations and no retries/redirects remain.
+
+The owner reports testing **Alien, Mad Max, Dune: Part Two, Supergirl and
+Goodfellas on develop after #217**, with no observed loss of results. This is
+owner observation, separate from the earlier five local controls above. There
+is **no short report for this owner Alien run**: its search-slot usage and exact
+request counts are unknown. Do not infer that it used slot2 from the earlier
+local Alien control or from the implemented fallback. These observations do not
+establish catalogue accuracy, entitlement, offer-language binding or Save.
+
+### Scoped Tavily response
+
+A **positive response from Tavily for the described private Beta use of
+Researcher** was supplied in the owner instruction recorded on2026-11-01.
+The available record does not establish the responder's identity, communication
+channel, exact wording or response date; none is attributed or invented here.
+This records the received scope confirmation, not an independently retrieved
+correspondence or blanket legal approval for public/commercial usage, all
+territories, third-party content or different account terms.
+
+The previously open private-Beta applicability question is updated accordingly;
+actual account tier/balance/quotas and unverified territory/record requirements
+are not asserted resolved. The response does not grant Kinobaza/JustWatch content
+rights, waive service quotas or authorize new persistence. Search snippets/raw
+responses remain unarchived; URL resolution is still separate from identity and
+extraction. No new source/terms requests are needed or made for this update.
+
+### Combined validation and Preview boundary
+
+Validation on the combined tree: full offline/HTTP **277passed,0failed,5 explicit
+opt-in skips**; separate Edge/Playwright browser **35/35passed**, desktop/tablet/
+iPhone X-size/Air-size and responsive cases. Targeted Beta-response/resolver tests
+**30/30passed**, including two new authored integration regressions. Syntax and
+whitespace pass; documentation checker:470 local links/291 anchors,0 errors.
+The five full-command skips are the three browser and two native wrappers;
+browser wrappers were run separately, native evidence is reused as stated below.
+No skipped check is counted as success. No physical iPhone/Safari/WebKit run.
+Independent read-only integration review found no actionable defect.
+
+The new authored HTTP integration exercises the actual handler/discovery/resolver,
+Beta RPC contract, first-card refusal → second Tavily → matched card, diagnostic
+versus ordinary projection and denied access without source dispatch. Browser
+regressions use mocked accounts/sources, not live discovery or Wishlist writes.
+
+The Beta SQL, native ledger implementation and Windows launcher components are
+unchanged from the prepared #216 head. Native PostgreSQL17.6 concurrency evidence
+above is explicitly reused, not represented as a new native run. Current offline
+PGlite/access checks and the combined HTTP path are rerun; no timeout/assertion
+or migration is changed to pass validation.
+
+PR Preview is separate from develop/main. Its actual SHA/state and source-free
+smoke are checked after the ordinary feature-branch push. Existing source keys
+were confirmed **absent from Deploy Preview context** on2026-10-31; the Beta
+migration is not applied. Therefore a ready/static Preview does not attest
+authenticated Beta activation or live resolver quality. No secrets/context,
+flags, database, main or production deployment are changed by this update.
