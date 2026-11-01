@@ -3,6 +3,7 @@ import { extractHtml, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS } from './html-source.mj
 import { identityGates } from '../../shared/media-advice-diagnostics.mjs';
 import { lookupDirectorAliases } from '../../shared/director-alias-crosswalk.mjs';
 import { releaseYearEvidence } from '../../shared/film-release-year.mjs';
+import { sameTerminalRomanTitle } from '../../shared/terminal-roman-title.mjs';
 
 export function admitKinobazaURL(value) {
   // Validate original spelling BEFORE URL normalization (default ports/dot paths).
@@ -13,6 +14,8 @@ export function admitKinobazaURL(value) {
 }
 const attr = (n, key) => n.attrs?.find(a => a.name === key)?.value;
 const normalize = s => typeof s === 'string' ? s.normalize('NFC').replace(/\s+/gu, ' ').trim().toLocaleLowerCase('uk-UA') : '';
+const titleMatch = (source, names) => names.some(name => normalize(name) && normalize(name) === normalize(source)) ? 'exact' :
+  names.some(name => sameTerminalRomanTitle(source, name)) ? 'terminal-roman-i' : null;
 const text = n => (n.childNodes ?? []).map(c => c.nodeName === '#text' ? c.value : ['script', 'style', 'template', 'noscript', 'iframe'].includes(c.tagName) ? '' : text(c)).join(' ').replace(/\s+/gu, ' ').trim();
 const excluded = n => { for (let p = n; p; p = p.parentNode) if (['nav', 'aside', 'footer', 'template', 'noscript', 'iframe'].includes(p.tagName)) return true; return false; };
 const year = n => Number.isInteger(n) && n >= 1000 && n <= 9999 ? n : null;
@@ -34,10 +37,11 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   const canonicals = active.filter(n => n.tagName === 'link' && (attr(n, 'rel') ?? '').split(/\s+/).includes('canonical')).map(n => attr(n, 'href'));
   const outcome = (status, reason) => {
     const counts = { headingCount: headings.length, originalTitleCount: originals.length, directorCount: directors.size, canonicalCount: canonicals.length, stableIdCount: stable.length };
-    const reasonGate = { 'source-identity-structure-limit':'structure-limit', 'source-canonical-conflict':'canonical-conflict', 'source-stable-id-conflict':'stable-id-conflict', 'malformed-source-stable-id':'stable-id-shape', 'source-canonical-ambiguous':'canonical-count', 'source-identity-structure-incomplete':'metadata-structure', 'source-title-year-missing':'heading-format', 'source-title-conflict':'heading-alias', 'source-original-title-scope-unestablished':'original-scope', 'source-original-title-unestablished':'original-alias', 'selected-year-missing':'selected-year', 'source-year-conflict-without-stable-crosswalk':'year-crosswalk', 'source-or-selected-director-missing':'director-presence', 'director-scope-unestablished':'director-scope', 'director-alias-unestablished':'director-alias' };
+    const reasonGate = { 'source-identity-structure-limit':'structure-limit', 'source-canonical-conflict':'canonical-conflict', 'source-stable-id-conflict':'stable-id-conflict', 'malformed-source-stable-id':'stable-id-shape', 'source-canonical-ambiguous':'canonical-count', 'source-identity-structure-incomplete':'metadata-structure', 'source-title-year-missing':'heading-format', 'source-title-conflict':'heading-alias', 'source-original-title-scope-unestablished':'original-scope', 'source-original-title-unestablished':'original-alias', 'selected-year-missing':'selected-year', 'source-year-conflict-without-stable-crosswalk':'year-crosswalk', 'source-year-conflict-terminal-roman-title':'year-crosswalk', 'source-or-selected-director-missing':'director-presence', 'director-scope-unestablished':'director-scope', 'director-alias-unestablished':'director-alias' };
     const failedGate = reasonGate[reason] ?? null, failedAt = identityGates.indexOf(failedGate);
     const parsed = headings.length === 1 ? /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]) : null;
     const names = [film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])], aliases = new Set(names.map(normalize).filter(Boolean));
+    const headingMatch = parsed ? titleMatch(parsed[1], names) : null;
     const directorAliases = new Set(directorNames.map(normalize).filter(Boolean));
     const expected = selectedIDs(film), sourceYear = parsed ? year(Number(parsed[2])) : null, selectedYear = year(film.year);
     const stableMatch = stable.some(s => s.filmScope && s.id && expected[s.namespace] === s.id);
@@ -46,11 +50,11 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
       canonicalMatch: canonicals.length === 1 ? canonicals[0] === sourceURL : null,
       stableIdMatch: stableMatch,
       stableIdConflict: stable.some(s => s.id && expected[s.namespace] && expected[s.namespace] !== s.id) || ['tmdb','imdb'].some(ns => new Set(stable.filter(s => s.id && s.namespace === ns).map(s => s.id)).size > 1),
-      headingAliasMatch: parsed ? aliases.has(normalize(parsed[1])) : null,
+      headingAliasMatch: parsed ? Boolean(headingMatch) : null,
       originalAliasMatch: originals.length === 1 ? aliases.has(normalize(originals[0])) : null,
       yearEqual: parsed && film.year ? Number(parsed[2]) === film.year : null,
       directorAliasMatch: directors.size && directorAliases.size ? [...directors].every(d => directorAliases.has(normalize(d))) : null },
-      strategy: status !== 'matched' ? null : directorBypassed ? 'stable-id-title-year' : stableMatch ? 'stable-id-title-director-year-variance' : sourceYear !== selectedYear ? 'title-release-year-director' : 'title-year-director',
+      strategy: status !== 'matched' ? null : headingMatch === 'terminal-roman-i' ? 'title-terminal-roman-year-director' : directorBypassed ? 'stable-id-title-year' : stableMatch ? 'stable-id-title-director-year-variance' : sourceYear !== selectedYear ? 'title-release-year-director' : 'title-year-director',
       years: { selected: selectedYear, source: sourceYear, delta: selectedYear !== null && sourceYear !== null ? sourceYear - selectedYear : null },
       gates: Object.fromEntries(identityGates.map((g,i) => [g, directorBypassed && g.startsWith('director-') ? 'not-evaluated' : status === 'matched' || i < failedAt ? 'pass' : i === failedAt ? status === 'mismatch' ? 'fail' : 'unresolved' : 'not-evaluated'])) };
     if (reason === 'source-identity-structure-limit') for (const key of Object.keys(diagnostics.comparisons)) diagnostics.comparisons[key] = null;
@@ -122,7 +126,8 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   const aliases = new Set([film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])].map(normalize).filter(Boolean));
   const heading = /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]);
   if (!heading || !year(Number(heading[2]))) return outcome('unresolved', 'source-title-year-missing');
-  if (!aliases.has(normalize(heading[1]))) return outcome('mismatch', 'source-title-conflict');
+  const headingMatch = titleMatch(heading[1], [film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])]);
+  if (!headingMatch) return outcome('mismatch', 'source-title-conflict');
   // Offsets only bound candidate H2s, not a proven semantic metadata container.
   // Never discard competing H2s just because one matches. Repeated identical
   // values are not a title conflict, but cannot justify a new multi-node scope
@@ -131,12 +136,16 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   if (!aliases.has(normalize(originals[0]))) return outcome('unresolved', 'source-original-title-unestablished');
   const stableMatch = stable.some(s => s.filmScope && expected[s.namespace] && s.id === expected[s.namespace]);
   if (!year(film.year)) return outcome('unresolved', 'selected-year-missing');
+  // A terminal glyph equivalence is weaker than an exact title alias. It must
+  // retain exact original-title evidence, the primary year and director proof;
+  // no stable-ID bypass or release-year exception is added for this new route.
+  if (headingMatch === 'terminal-roman-i' && Number(heading[2]) !== film.year) return outcome('mismatch', 'source-year-conflict-terminal-roman-title');
   const knownRelease = releaseYearEvidence(film, Number(heading[2])).length > 0;
   if (Number(heading[2]) !== film.year && !stableMatch && !knownRelease) return outcome('mismatch', 'source-year-conflict-without-stable-crosswalk');
   // Explicit same-system film ID plus independently matching title/year is a
   // stronger route than name spelling. Canonical, title/original scope, malformed
   // IDs and all proven ID conflicts have already been checked above.
-  if (stableMatch && Number(heading[2]) === film.year) return outcome('matched', 'explicit-stable-title-year-match');
+  if (headingMatch === 'exact' && stableMatch && Number(heading[2]) === film.year) return outcome('matched', 'explicit-stable-title-year-match');
   const directorAliases = new Set(directorNames.map(normalize).filter(Boolean));
   if (!directors.size || !directorAliases.size) return outcome('unresolved', 'source-or-selected-director-missing');
   // Flat aliases do not establish a multi-person group. Do not split source

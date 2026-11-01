@@ -4632,3 +4632,82 @@ Validation of this follow-up:
   change: SQL, ledger, platform dependencies and lifecycle/IPC components are
   unchanged. Existing source access/identity/budget tests reran; no production
   database operation or deployed authenticated smoke was performed here.
+
+### Terminal Roman numeral title spelling — 2026-11-02
+
+Follow-up from develop `290bf23ab607d6c9e5dae137ff31a79a5ba240a9` after #221.
+The owner confirmed the Klaus fix on real develop. The next refusal is different:
+the current [Gladiator II card](https://kinobazaua.com/titles/gladiator-2) has
+H1 `Гладіатор ІІ ( 2024 )` (U+0406), H2 `Gladiator II`, director `Рідлі Скотт`.
+The selected title uses ASCII `I` (U+0049). Existing NFC/whitespace/case
+normalization deliberately does not equate these alphabets, so the old H1 gate
+returns `source-title-conflict` before extraction. This current response is not
+an archive or reconstruction of the owner's earlier run.
+
+The new title-only fallback compares a separate **final uppercase canonical
+Roman token with 2–15 glyphs**, after whitespace and a nonempty title base.
+Only Ukrainian `І` is treated as Latin `I` inside that token; the rest of the
+title must match under the existing normalization. No alphabet-wide replacement,
+fuzzy matching, transliteration, `II`↔`2`, Unicode numeral-symbol conversion,
+attached/nonterminal token, lowercase cross-script word, single ambiguous letter
+or malformed numeral is accepted. Other Cyrillic lookalikes are not folded.
+The same rule applies across films/parts, not a Gladiator/URL exception.
+
+Exact title aliases retain their existing priority and cascade. Only the new
+H1 fallback additionally requires an **exact original H2 alias, identical primary
+year and verified single-director scope/name**. Matching film IDs cannot skip
+the director or allow release-year variance on this route. ID/canonical/title
+conflicts and original-title structure checks retain priority; unresolved proof
+withholds every source claim. Director normalization and person crosswalk are
+unchanged. Diagnostics name `title-terminal-roman-year-director` and the specific
+`source-year-conflict-terminal-roman-title` refusal without raw title content;
+ordinary Beta still receives no privileged diagnostic fields.
+
+Current fixed-card comparisons use identical in-memory responses against the
+pinned develop identity code and the patched code:
+
+| Film | Before → after | Result retained through both Beta projections |
+| --- | --- | --- |
+| Gladiator II (2024) | title mismatch, 0 rows → matched/ok | 31 extracted candidates, 6 mapped rows, 4 service groups; Apple/Rakuten/MEGOGO audio+ and subtitles+; Netflix audio unknown/subtitles+ |
+| Klaus (2019) | matched/partial → unchanged | 6 candidates, 2 rows; Netflix audio+/subtitles+, existing recommendation recovery notice |
+| Alien (1979) | matched/ok → unchanged | 29 candidates, 5 rows; source labels and format-negative audio distinctions preserved |
+| The Pursuit of Happyness (2006) | matched/ok → unchanged | 19 candidates, 3 rows; Netflix subtitle-only and MEGOGO audio/subtitle claims preserved |
+
+Gladiator's comparison uses the owner-selected localized/original title, 2024
+and director context; no unseen IMDb/TMDb film IDs are invented and no fresh
+TMDb projection is claimed. Controls reuse their previously verified identity
+contexts. These are fixed-card identity/extraction/projection checks, not proof
+of automatic resolver search quality or deployed runtime. Source/app UA scopes,
+`◐`, ranking and unknown states are unchanged; destination availability, offer
+binding, entitlement and actual platform tracks are not independently verified.
+
+**7 external attempts, all Kinobaza title GETs/200**: 1 Gladiator, 2 each Klaus,
+Alien and Pursuit. The initial 3 controls exposed a local baseline-wrapper
+composition error after successful reads; the corrected comparator ran only
+those 3 again. There was no source error retry, search, TMDb/MOTN/Watch Providers,
+person/profile or platform-destination request. Bodies existed only in process
+memory; processes exited without a raw response/archive. No keys were needed.
+Runtime adds 0 requests and leaves all existing source caps/deadlines/retry rules.
+
+Validation: **54/54 new authored tests**, included in **371/371 targeted** and
+the **980 passed, 0 failed, 19 skipped / 999 full offline/HTTP suite**. Fictional
+fixtures cover II/III/IV/VI/IX/XIV, different parts/bases, script lookalikes,
+noncanonical/lowercase/nonterminal forms, conflicting IDs, exact H2, primary-year
+requirements even with ID/release evidence, unknown/multiple directors and
+person-scoped aliases. HTML→adapter→composition→ordinary/diagnostic response→
+language table→exact-link preview is exercised without apply/Save or row mutation.
+
+**5/5 browser tests passed**, local Edge/Chromium with mocked Auth/source/DB and
+external requests blocked, including desktop/tablet/iPhone X 375×812 and
+Air 420×912 emulation, current Klaus-shaped recovery, report, exact links,
+preview/transfer isolation and reopening without discovery. Initial sandbox
+spawn denial was rerun with scoped local permission, not a passing test.
+Full-suite opt-in browser/native-PG skips are not success. Real iPhone/WebKit,
+deployed authenticated smoke and actual Wishlist Save were not performed.
+Native PostgreSQL and Windows lifecycle were not separately rerun: no SQL,
+ledger, dependencies, IPC or lifecycle component changed. No assertions/timeouts
+were relaxed. Syntax/whitespace and local links/anchors checked separately.
+
+No search/admission, link/language/ranking policy, retention, Beta permission,
+initApp/global lifecycle/auth/UI, migration/flag/secret or Wishlist change.
+No merge or manual deployment; owner checkout/demo and main remain unchanged.
