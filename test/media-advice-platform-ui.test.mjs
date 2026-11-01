@@ -73,6 +73,38 @@ test('fresh finish capability denies stale diagnostics or feature access despite
   assert.equal(denied.state.output, null); assert.equal(denied.state.calls, 1);
 });
 
+test('usable partial or failed sources have one inline caveat, with details and no extra failure bubble', async t => {
+  for (const status of ['ok', 'partial', 'error', 'stage-failed-no-retry', 'unavailable', 'timeout', 'blocked', 'unsupported-markup']) {
+    const sources = [{ source: 'kinobaza', status, identity: 'matched' }], before = JSON.stringify(sources);
+    const { control, state, button } = await harness(t, [ownBlock('apple')], { sources });
+    const answer = control.dialog.querySelector('.media-advice-answer').textContent;
+    const incomplete = status !== 'ok';
+    assert.equal(answer.includes('Деякі дані неповні, тож перевір умови на платформі.'), incomplete, status);
+    assert.equal(answer.includes('Інформація не завжди точна, тож варто перевіряти.'), !incomplete, status);
+    assert.doesNotMatch(control.dialog.textContent, /Частина відомостей неповна або не надійшла/);
+    assert.equal(control.dialog.querySelectorAll('.mykola-bubble').length, 3, 'answer, comparison and authorized report only');
+    assert.equal(control.dialog.querySelectorAll('.media-advice-row').length, 1);
+    await button('Діагностичний звіт').click();
+    const reportStatus = ['ok', 'partial', 'stage-failed-no-retry', 'unsupported-markup'].includes(status) ? status : 'unknown';
+    assert.ok(control.dialog.querySelector('textarea').value.includes(`kinobaza: identity matched; status ${reportStatus};`), `${status}: report keeps its existing status allowlist`);
+    assert.equal(JSON.stringify(sources), before); assert.equal(state.calls, 1); assert.equal(state.output, null);
+  }
+});
+
+test('no-result source failures stay visible in the first answer without asserting unavailability', async t => {
+  for (const status of ['partial', 'timeout', 'stage-failed-no-retry']) {
+    const { control, state } = await harness(t, [], { sources: [{ source: 'kinobaza', status, identity: 'unresolved' }] });
+    const answer = control.dialog.querySelector('.media-advice-answer').textContent;
+    assert.match(answer, /^Не вдалося отримати повні дані від джерел\. Поки не знайшов підтверджених варіантів/);
+    assert.match(answer, /Це не означає, що фільм недоступний/);
+    assert.doesNotMatch(answer, /Деякі дані неповні, тож перевір умови на платформі/);
+    assert.doesNotMatch(control.dialog.textContent, /Частина відомостей неповна або не надійшла/);
+    assert.equal(control.dialog.querySelectorAll('.media-advice-row').length, 0);
+    assert.equal(control.dialog.querySelectorAll('.mykola-bubble').length, 2, 'one honest answer and authorized report');
+    assert.equal(state.calls, 1); assert.equal(state.output, null);
+  }
+});
+
 test('diagnostics revocation clears existing report/copy/details and preserves ordinary result without repeating discovery', async t => {
   const { control, state, button } = await harness(t, [ownBlock('apple')]);
   await button('Діагностичний звіт').click();

@@ -3892,3 +3892,18 @@ develop/main deployment and authenticated Beta smoke are **not performed**.
 No source discovery, Wishlist writes, cleanup/secret changes, owner checkout/
 demo edits or production restore. The shared live database has the authorized
 additive schema/UA-backfill change; production deployment is untouched.
+
+## Inline incomplete-data notice — 2026-11-01
+
+The media-advice dialog no longer adds a separate partial-source bubble. When
+usable results exist, the first answer replaces its ordinary caveat with:
+«Деякі дані неповні, тож перевір умови на платформі». The existing source-status
+classification is unchanged. Without usable results, incomplete/failed sources
+are still called out in that same first answer; an entirely failed request and
+the visible stale-results notice retain their existing paths. Missing results
+still do not establish unavailability. Source limitations and separately
+authorized diagnostics remain available without adding a second caveat bubble.
+
+Only client presentation changes. No ranking, source statuses, links, Beta
+access, transfer/Save, session lifecycle or server/SQL changes; no live discovery,
+Wishlist writes, flag changes, merge or manual deployment.
