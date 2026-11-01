@@ -24,7 +24,7 @@ function markup({ apple = hrefs.apple, director = 'Authored Director', imdbId = 
     <tr><td colspan="2"><a${attribute(href)}>Перейти в ${provider}</a></td></tr></tbody></table></div>`;
   return `<!doctype html><html><head><link rel="canonical" href="${sourceURL}"></head><body>
     <h1>Authored Recovery Film (2015)</h1><h2>Authored Recovery Film</h2>
-    <table><tbody><tr><th>Режисер:</th><td>${director}</td></tr><tr><th>IMDb:</th><td>${imdbId}</td></tr></tbody></table>
+    <table><tbody><tr><th>Режисер:</th><td>${director}</td></tr>${imdbId === null ? '' : `<tr><th>IMDb:</th><td>${imdbId}</td></tr>`}</tbody></table>
     <div class="d-md-flex">${table('itunes', apple)}${table('rakuten', hrefs.rakuten)}</div>
     <p class="mt-2"><a title="Доступно в megogo"${attribute(hrefs.megogo)}><img alt="Доступно в megogo"></a> (укр. аудіо)</p>
     <div id="availabilityAccordion"><div class="accordion-item"><h2 class="accordion-header"><button data-bs-target="#collapseCZ">Доступно в Чехії</button></h2><div id="collapseCZ" data-bs-parent="#availabilityAccordion"></div></div></div>
@@ -45,6 +45,8 @@ async function pipeline(options) {
 test('authored recovered trailer markup preserves Apple/Rakuten tables and MEGOGO tokens through M4 presentation and preview', async () => {
   const { extracted, result, groups, requests } = await pipeline();
   assert.equal(requests, 1); assert.equal(extracted.identity.status, 'matched'); assert.equal(extracted.status, 'partial');
+  assert.equal(extracted.identity.reason, 'explicit-stable-title-year-match');
+  assert.equal(extracted.identity.diagnostics.gates['director-alias'], 'not-evaluated');
   assert.deepEqual(extracted.issues, ['missing-explicit-ukraine-section', 'noncritical-image-markup-recovered']);
   assert.equal(extracted.localization.blocks.length, 3); assert.equal(extracted.candidates.length, 3);
   assert.deepEqual(result.rows.map(row => row.provider.key), ['apple', 'rakuten', 'megogo']);
@@ -89,9 +91,9 @@ test('recovered page never promotes missing or unsafe Apple link to usable langu
   }
 });
 
-test('recovered irrelevant image errors do not bypass unresolved director or stable-ID conflict withholding', async () => {
+test('recovered irrelevant image errors do not bypass no-ID director requirements or stable-ID conflict withholding', async () => {
   for (const [options, status, reason] of [
-    [{ director: 'Unestablished Director Spelling' }, 'unresolved', 'director-alias-unestablished'],
+    [{ director: 'Unestablished Director Spelling', imdbId: null }, 'unresolved', 'director-alias-unestablished'],
     [{ imdbId: 'tt9999999' }, 'mismatch', 'source-stable-id-conflict'],
   ]) {
     const { extracted, result, groups, requests } = await pipeline(options);

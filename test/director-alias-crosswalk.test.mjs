@@ -210,6 +210,32 @@ test('existing exact selected alias still matches without a person ID or crosswa
   assert.equal(result.identity.status, 'matched'); assert.equal(result.identity.directorAliasEvidence, undefined);
 });
 
+test('same-year film ID route does not claim an unused director crosswalk or establish a different person', async () => {
+  const stable = `<tr><td>IMDb:</td><td>${film.imdbId}</td></tr>`;
+  for (const selected of [film, { ...film, directorPeople: [person({ personId: PERSON + 1 })] }]) {
+    const result = await identity({ selected, html: markup({ director: 'Vérified Person', stable }) });
+    assert.equal(result.identity.status, 'matched'); assert.equal(result.identity.reason, 'explicit-stable-title-year-match');
+    assert.equal(result.identity.diagnostics.strategy, 'stable-id-title-year');
+    assert.equal(result.identity.diagnostics.gates['director-presence'], 'not-evaluated');
+    assert.equal(result.identity.diagnostics.gates['director-scope'], 'not-evaluated');
+    assert.equal(result.identity.diagnostics.gates['director-alias'], 'not-evaluated');
+    assert.equal(result.identity.directorAliasEvidence, undefined);
+  }
+});
+
+test('different-year film ID route still requires the correct person-scoped director crosswalk', async () => {
+  const html = markup({ year: film.year + 1, director: 'Vérified Person', stable: `<tr><td>IMDb:</td><td>${film.imdbId}</td></tr>` });
+  const matched = await identity({ html });
+  assert.equal(matched.identity.status, 'matched'); assert.equal(matched.identity.reason, 'explicit-stable-and-structural-match');
+  assert.equal(matched.identity.diagnostics.strategy, 'stable-id-title-director-year-variance');
+  assert.deepEqual(matched.identity.diagnostics.years, { selected: film.year, source: film.year + 1, delta: 1 });
+  assert.equal(matched.identity.diagnostics.gates['director-alias'], 'pass');
+  assert.equal(matched.identity.directorAliasEvidence.personId, PERSON);
+  const unrelated = await identity({ selected: { ...film, directorPeople: [person({ personId: PERSON + 1 })] }, html });
+  assert.equal(unrelated.identity.status, 'unresolved'); assert.equal(unrelated.identity.reason, 'director-alias-unestablished');
+  assert.deepEqual(unrelated.candidates, []); assert.equal(unrelated.localization, undefined);
+});
+
 test('a person crosswalk works for another film, not a per-film title/year exception', async () => {
   const selected = { ...film, id: 'authored-second-film', tmdbId: IDS[1], imdbId: `tt${IDS[1]}`,
     identityTitle: 'Інший вигаданий фільм', originalTitle: 'Second authored original', year: 2009 };

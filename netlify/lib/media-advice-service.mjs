@@ -2,13 +2,15 @@ import { readTmdbJson, projectTmdbIdentityFor, projectTmdbProvidersFor } from '.
 import { fetchMotnFor } from '../../research/grounded-answer-demo/motn.mjs';
 import { composeDiscovery } from '../../research/grounded-answer-demo/discovery.mjs';
 import { projectDirectorPeople } from '../../shared/director-alias-crosswalk.mjs';
+import { projectFilmIdentityContext } from '../../shared/film-identity-context.mjs';
 const api = 'https://api.themoviedb.org/3';
 const append = 'external_ids,alternative_titles,credits,release_dates,translations';
 const val = f => f?.state === 'reported' ? f.value : null;
 const title = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s : null;
 
 // A single server request, no process-local session Map or shared chat state.
-export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetchImpl = fetch, resolver, signal }) {
+export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetchImpl = fetch, resolver, signal, sourceCap = 8 }) {
+  if (![8, 10].includes(sourceCap)) throw Error('invalid-source-cap');
   const calls = [];
   const once = (stage, target) => async (url, init) => {
     if (url !== target || init.method !== 'GET' || init.redirect !== 'manual' || calls.some(c => c.stage === stage)) throw Error('request-boundary');
@@ -39,7 +41,8 @@ export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetch
       film.directorCount = projection.metadata.directors.state === 'reported' ? directors.length : null;
       film.directorPeople = projectDirectorPeople(projection.metadata.directors);
       film.directorAliases = directors.flatMap(d => [title(val(d.name)), title(val(d.originalName))]).filter(Boolean);
-      film.titleAliases = [film.identityTitle, film.originalTitle, ...(projection.metadata.alternativeTitles.items ?? []).map(t => title(val(t.title)))].filter(Boolean);
+      film.identityContext = projectFilmIdentityContext(projection);
+      film.titleAliases = [...new Set([film.identityTitle, film.originalTitle, ...(film.identityContext?.titleEvidence ?? []).map(entry => entry.title)].filter(Boolean))];
     }
   }
   const providersURL = selected ? `${api}/movie/${selected.id}/watch/providers` : null;
@@ -52,8 +55,8 @@ export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetch
   ]);
   const providers = b.status === 'ok' ? projectTmdbProvidersFor(b.data, film) : { status: b.status };
   const stages = { tmdb: { status: `A: ${detailsStatus}; B: ${providers.status}`, result: { identity: projection, providers } }, motn: { status: motn.status, result: motn }, kinobaza: { status: 'not-evaluated-resolver-deferred', result: null } };
-  if (resolver && projection?.identity?.status === 'matched') stages.kinobaza = await resolver(film, { reserve, fetchImpl, calls, signal });
-  const result = composeDiscovery(film, stages, { sourceURLs: { tmdb: providersURL, motn: motnURL }, metrics: { requestsMade: calls.length, requestBudget: resolver ? 8 : 4, calls } });
+  if (resolver && projection?.identity?.status === 'matched') stages.kinobaza = await resolver(film, { reserve, fetchImpl, calls, signal, sourceCap, tmdbToken });
+  const result = composeDiscovery(film, stages, { sourceURLs: { tmdb: providersURL, motn: motnURL }, metrics: { requestsMade: calls.length, requestBudget: resolver ? sourceCap : 4, calls } });
   result.resolver = stages.kinobaza.resolver ?? null;
   result.cardChoices = (stages.kinobaza.choices ?? []).map((card, index) => {
     const projection = composeDiscovery(film, { ...stages, kinobaza: { status: card.status, result: card } }, { sourceURLs: { tmdb: providersURL, motn: motnURL } });

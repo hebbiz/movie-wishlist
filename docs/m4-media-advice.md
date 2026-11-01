@@ -6,7 +6,9 @@ The dated records below distinguish earlier preparation from later execution.
 UA Beta code: [access and private diagnostics](#ua-beta-access-and-private-diagnostics--2026-10-31),
 updated with merged #217. Later authorized execution:
 [Beta migration applied, switch still off](#beta-migration-execution--2026-11-01).
-PR#216 is not merged; Beta/diagnostics activation and deployment remain separate.
+The preparation/execution records below are dated evidence, not a live-state
+assertion. PR#220's additional preparation does not authorize deployment,
+migrations or activation; its current scope is recorded at the end of this file.
 Current branch search strategy: **Tavily basic Search**, candidate URLs only,
 with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
 not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
@@ -4010,3 +4012,508 @@ reads for PR #219 are 3 TMDb + 3 card GETs, plus the previously recorded web
 lookups with unknown internal traffic. Raw responses and credentials were not
 saved. No search policy, identity gate, budget, UI/auth lifecycle, Beta access,
 SQL, flags or source URL rewriting changes; no merge or manual deployment.
+
+## Cascaded card identity — implementation and live check, 2026-11-01
+
+Base: develop `5a9c3c38f892644d04988d9055e3463fc6b9b86b`, including merged
+#219. Work is on `codex/m4-cascade-card-identity`. The cascade is implemented;
+the live study below found no newly confirmed cards attributable to a shared
+movie ID. It does not establish improved catalogue coverage or accuracy.
+
+The assisted identity gate now applies this cascade after mandatory canonical,
+title/original-title structural checks and all explicit stable-ID conflict and
+malformed-ID refusals:
+
+| Evidence in the fetched card | Director requirement | Outcome |
+| --- | --- | --- |
+| Same-system film ID, known title, same year | Not required | `explicit-stable-title-year-match` |
+| Same-system film ID, known title, different year | Existing exact/confirmed person-name proof | `explicit-stable-and-structural-match`, or unresolved if director proof is missing |
+| No shared film ID, known title, same year | Existing exact/confirmed person-name proof | `explicit-title-year-director-match`, or unresolved if director proof is missing |
+| Conflicting film IDs or conflicting heading | Cannot override | Existing mismatch/withholding |
+
+IMDb compares only with IMDb, TMDb only with TMDb. A Kinobaza pointer, canonical
+URL, slug or person ID never establishes a shared movie ID. Agreeing evidence
+cannot erase another namespace's conflict or a malformed explicit ID. A stable
+ID cannot erase ambiguous original-title structure. Positive movie-ID authority
+is limited to labelled IMDb/TMDb rows in a table wholly between the unique H1
+and availability boundary; arbitrary later/body-table IDs cannot authorize a
+director bypass. Existing conservative refusal for explicit conflicting labelled
+IDs is preserved even when a critical boundary cannot be established.
+
+Reviewed person-level crosswalk records are unchanged. Without a shared movie
+ID, or when the year differs, unknown spellings and ambiguous/multiple directors
+still withhold claims. There is no fuzzy matching, transliteration, per-film
+exception, new source endpoint or browser-supplied person proof. Diagnostics
+retain the allowlisted cascade route, numeric selected/source years and their
+delta. Bypassed director gates are `not-evaluated`, not `pass`; unused crosswalk
+evidence is not claimed. Ordinary Beta responses still withhold diagnostics.
+
+### Profile lookup feasibility, not enabled in runtime
+
+The current server projection already retains the trusted TMDb director person
+ID/name association, but not that person's DOB, IMDb person ID or full alias
+record. A Kinobaza linked profile plus a TMDb person read would normally require
+two additional source requests. Full M4 is already bounded by 4 baseline reads
+(TMDb find/details/providers and MOTN), up to 2 Tavily searches and 2 card GETs.
+The durable reserve RPC also allowlists only those eight existing stage names.
+Charging a person read as a search/card would be false accounting; adding it
+silently would either exceed 8 or remove a current search/card opportunity.
+
+This implementation therefore adds **zero** profile requests to runtime and
+does not change the cap, stage allocation, deadline or finish-RPC reserve.
+Options for a later explicit decision are: keep reviewed zero-request person
+crosswalks; allocate the two remaining slots to profile proof instead of a
+second search/card when appropriate (with honest diagnostics and a reviewed
+ledger-stage migration); or redesign identity reuse before adding profile I/O.
+None is silently activated here. A future automated profile proof must establish
+profile ownership and use same-system person IDs, or sufficiently independent
+co-located profile facts; a similar name, slug or generic external link is not
+proof. Missing/conflicting/ambiguous evidence remains unresolved.
+
+Current linked-profile checks illustrate why name similarity is insufficient:
+
+- [Gabriele Muccino profile](https://kinobazaua.com/persons/gabriele-muccino),
+  reached from the labelled director row, co-locates H1 `Ґабріеле Муччіно`, H2
+  `Gabriele Muccino`, DOB 1967-05-20 and director role in the same `div.col-8`
+  header. [Current TMDb person20646](https://api.themoviedb.org/3/person/20646?language=uk-UA&append_to_response=external_ids)
+  has the exact English name, DOB 1967-05-20 and IMDb person `nm0610831`;
+  trusted current movie1402 credits retain person20646. This corroborates the
+  existing reviewed record, without reusing the film's title/year as proof.
+- [Tarsem Singh profile](https://kinobazaua.com/persons/tarsem-singh), reached
+  from The Fall's labelled row, co-locates `Тарсем Сінґ`, `Tarsem Singh`, director
+  role and **1961-05-26**. [Current TMDb person56512](https://api.themoviedb.org/3/person/56512?language=uk-UA&append_to_response=external_ids)
+  reports `Tarsem Singh`, alias `Tarsem Singh Dhandwar`, IMDb `nm0802248`, but
+  **1961-05-06**. No shared external person ID was observed on either checked
+  Kinobaza profile (their structured data was BreadcrumbList, not owned Person
+  identity). This discrepancy blocks automatic composite-profile confirmation;
+  it does not prove that the profiles describe different people. No new Tarsem
+  crosswalk is registered. Generic automatic profile verification is therefore
+  researched, not runtime-enabled or claimed universally reliable.
+
+### Current-response study and request accounting
+
+Initial public structural survey: 2 direct card GETs (Alien and The Pursuit of
+Happyness), both HTTP 200, no destination calls. Both expose a labelled director
+row with a `/persons/...` link; no external IMDb/TMDb movie anchor was observed
+in that survey. This is not a complete claim about every possible ID field or
+every catalogue card. Current responses are not archived pilot HTML.
+
+Nine title/year controls were identified with trusted TMDb projections and fed
+to the actual runtime resolver; no Kinobaza URLs or person aliases were prefilled.
+The local diagnostic uses an exact English search title when an original title
+is non-English, checks the same original title across search/details and rejects
+ambiguous matches. This is diagnostic selection only, not a runtime query change.
+Both the fixed develop baseline identity and new identity inspect the same
+current card bytes in memory. No duplicate HTTP call is made for that comparison.
+
+| Film | Actual resolver card / result before → after | Preserved mapped rows / localization blocks | TMDb / Tavily / card GET |
+| --- | --- | --- | --- |
+| Alien (1979) | [alien](https://kinobazaua.com/titles/alien), matched → matched, extraction ok | 5 / 3 | 2 / 1 / 2 |
+| Mad Max: Fury Road (2015) | [mad-max-fury-road](https://kinobazaua.com/titles/mad-max-fury-road), matched → matched, partial | 6 / 3 | 2 / 1 / 2 |
+| Dune: Part Two (2024) | [dune-part-two](https://kinobazaua.com/titles/dune-part-two), matched → matched, ok | 5 / 3 | 2 / 1 / 2 |
+| Supergirl (2026) | [supergirl-2026](https://kinobazaua.com/titles/supergirl-2026), matched → matched, ok | 3 / 1 | 2 / 1 / 2 |
+| Goodfellas (1990) | [goodfellas](https://kinobazaua.com/titles/goodfellas), matched → matched, ok | 6 / 3 | 2 / 1 / 2 |
+| The Pursuit of Happyness (2006) | [the-pursuit-of-happyness](https://kinobazaua.com/titles/the-pursuit-of-happyness), matched → matched, ok | 3 / 2 | 2 / 1 / 2 |
+| The Lives of Others (2006) | Actual reads were The Prestige / The Pursuit of Happyness; title conflicts remain rejected | 0 / 0 | 2 / 2 / 2 |
+| The Fall (TMDb 2008) | [the-fall](https://kinobazaua.com/titles/the-fall), year2006 vs selected2008, no shared ID; unchanged refusal | 0 / 0 | 2 / 2 / 2 |
+| The Prestige (2006) | [the-prestige](https://kinobazaua.com/titles/the-prestige), matched → matched, ok | 5 / 3 | 2 / 1 / 2 |
+
+All 18 card responses (15 distinct pointers) had no IDs in the supported labelled
+movie-metadata fields. This does not prove the absence of every possible ID shape
+or ID across the catalogue. The new shared-ID routes were exercised by authored
+fixtures only. The Lives of Others is a retrieval failure, not a false identity
+rejection of its own card and not proof that a card/offers do not exist. The Fall
+stops at year-crosswalk before director evaluation; its separate profile-DOB
+conflict is not presented as the cause of that year refusal. Unrelated titles,
+incomplete structures and unsupported markup remained withheld.
+
+Current claims retained include Netflix subtitles-positive/audio-unknown and
+MEGOGO audio/subtitles-positive for The Pursuit of Happyness; Apple audio-positive/
+subtitles-negative, Rakuten audio/subtitles-positive and MEGOGO positives for Dune.
+These remain source observations under the existing app-UA interpretation,
+not independently verified availability, entitlement or offer binding. None of
+the destinations was visited. The Mad Max card remains partial; this study does
+not silently broaden unrelated extraction policy.
+
+Actual new external attempts for this task: **53 = 20 TMDb + 11 Tavily + 20 card
+GET + 2 Kinobaza person GET**. The nine resolver controls account for 47 (18/11/18);
+add 2 TMDb person reads, the 2 preliminary card reads above and 2 linked-profile
+reads. All attempts returned HTTP200, including pages later rejected by parsing
+or identity. Final credential-session totals were 49; its `countsIncomplete` was
+false, and the session was explicitly stopped. The four additional public reads
+were outside that session. Search-provider internal traffic is unknown.
+
+New runtime request cost is zero; all two-search/two-card opportunities and the
+cap8/45s source deadline/finish reserve are unchanged. Profile verification would
+cost two extra requests and is not smuggled into existing stages. Recorded local
+parse times were about 13–339ms per policy/card; they include parse warm-up/order
+effects and do not establish a speedup, deployed latency or hosting validation.
+Runs are `local-diagnostic`, base checkout plus tracked changes; buildSha is null,
+not a server/deploy attestation. Raw HTML, search responses/snippets and keys were
+not archived, and present responses are not historical pilot reconstructions.
+
+Validation: 356/356 targeted offline/HTTP tests, 14/14
+local diagnostic-series tests, 2/2 native-pipe tests and 5/5 real-form browser regressions in
+Edge/Chromium desktop/tablet/iPhone X/Air-size emulation, zero skips.
+Authored cases cover both movie
+ID namespaces, conflicts, differing years, exact/reviewed/unverified directors,
+metadata boundaries, withholding, safe reports, ordinary Beta redaction,
+resolver caps/deadlines and unchanged preview/transfer protections. Native-pipe
+evidence is reused after the diagnostic-only English-title selection adjustment;
+the IPC protocol/security code is unchanged. Real iPhone/WebKit, live platforms,
+authenticated deployed-runtime checks and actual Wishlist Save were not run.
+No initApp/global lifecycle/auth/UI, source links/ranking, Beta flags, SQL,
+retention, Wishlist data, main or production changes; no merge/deployment.
+
+## Integrated Beta search and linked-person verification — 2026-11-01
+
+This extension of PR#220 supersedes the preceding **preparation choices** (no
+runtime query change/profile I/O/SQL), not its recorded observations. Base remains
+develop `5a9c3c38f892644d04988d9055e3463fc6b9b86b`; the extension was researched
+from PR head `21d1be24acf2b654254c38c9b252246ed8de1343` plus tracked changes.
+It is implementation ready for review, not permission to release production Beta.
+
+### Search and contextual years
+
+The existing validated TMDb Details already appends `alternative_titles`,
+`translations` and `release_dates`. The server now retains bounded typed title
+records with their actual language/country/type, and release events with literal
+date, country, type and optional language. These are not browser-supplied aliases
+or a flattened list of interchangeable release years. Conflicting parent/appended
+movie IDs withhold the projection. No additional TMDb movie request is added.
+
+Two Tavily basic slots remain shared between successful empty/all-rejected
+searches and first-card identity refusal. The first contextual query prefers an
+explicit English translation, otherwise the original/requested title. A country
+alone never establishes English. The second uses the known original/localized
+name and, for a single trusted director, an available exact Latin name as
+disambiguation. It retains escaping, bounded query length, `/titles/` site text,
+domain restriction and all existing basic/no-answer/no-raw-content parameters.
+Transport/auth/quota errors do not trigger retries/fallback. Exact admitted URL
+deduplication and stable candidate ordering remain; a slug/rank/snippet is never
+identity proof. There is no runtime Kinobaza `/search` or Tavily person search.
+
+For search, the first query uses the earliest supported premiere/theatrical year
+if present. The second uses the primary Details year, so a confirmed premiere2006
+and primary2008 do not consume both slots searching only2006. This applies to
+empty/all-rejected results, first-card refusal and the bounded-text fallback;
+the query still keeps known title/director context. For identity, a different source year without a shared movie
+ID must be that earliest contextual year (types1/2/3), with title/original-title
+and confirmed director still mandatory. Digital/physical/TV dates, later reissues,
+an arbitrary nearby year and an event belonging to another TMDb ID cannot do so.
+The selected film's year is not rewritten. Same-system movie-ID/title/year
+cascade and all canonical/ID/title/original-scope conflict priorities remain.
+
+The Fall has **actual** TMDb movie14784 release evidence
+`2006-09-09T00:00:00Z`, Canada, type1 (premiere), while its primary release date
+is in2008. This explains the source's2006 without guessing a year tolerance.
+The official [release-type contract](https://developer.themoviedb.org/reference/movie-release-dates)
+distinguishes premiere/theatrical from digital/physical/TV. Its director proof
+still fails below; contextual year evidence alone does not confirm the card.
+The Lives of Others has an explicitly English `en/US` translation in the same
+validated Details response; its German original and Ukrainian requested title
+retain their separate provenance.
+
+### Linked director proof, not fuzzy aliases
+
+Only a single exact `/persons/...` link in the card's labelled director row,
+inside the same bounded film metadata table, is eligible. No profile URL is
+guessed or taken from recommendations. Profile reads run only after the previous
+film gates have passed and the remaining failure is director-alias-unestablished.
+Existing reviewed person crosswalks/exact names and movie-ID bypasses need no
+profile requests. Unknown or multiple selected/source directors remain unresolved.
+
+The resolver defers eligible director-only refusals until its existing bounded
+card-reading loop ends. It allocates the single person pair using already-checked
+film metadata: scoped shared same-system film ID first, then exact primary year,
+then supported contextual-release variance. This is work allocation, not new
+identity proof. Titles, original-title scope, years, canonical and ID conflicts
+must already pass; search rank/snippet/slug do not decide which person to trust.
+Equally strong candidates with different profile URLs or normalized aliases have
+no evidence-based winner: `director-profile-candidates-ambiguous`, zero speculative
+profile requests, unresolved claims withheld. The same exact profile/normalized
+alias can share one bound proof, but each card reruns all gates independently;
+two confirmed cards remain explicit choices rather than being collapsed.
+
+One TMDb **person** GET uses the trusted credits ID and `language=en-US`; it does
+not trust a browser person ID or transliterate a credit. This obtains an exact
+Latin comparison name even where Ukrainian/credit projections use another script.
+One linked Kinobaza profile GET inspects a supported own header: native H1,
+Latin H2, full birth date and explicit director role, excluding filmography.
+Confirmation requires either an owned same-system person ID, or exact Latin
+name/alias **and** the same full birth date **and** role/native-name association.
+Any explicit person-ID or birth-date conflict has priority. Arbitrary external
+links, matching slugs, filmography, name resemblance and snippets do not prove a
+person. The resulting one-alias proof is scoped to that person ID and exact
+profile/card pointer; it is not registered globally or borrowed by another film.
+
+Actual A Separation and The Handmaiden profiles exposed a closed attribute-free
+style block before their single HTML doctype: style offsets0–663, doctype672–687,
+head707–713, all before their own person headers. parse5 reported missing-doctype,
+misplaced-doctype and misplaced-start-tag-for-head-element. The narrow recovery
+requires the **entire** bounded style-only preamble, exact located error spans,
+single standard doctype and immediate html/head openings; it uses the original
+bytes/tree. Text/script prefixes, other/critical errors, duplicate headers or
+conflicting semantic records remain refused. This does not broaden film-card
+markup policy. The shared extractor awaits its supplied identity callback and
+offers an internal one-shot blocked-identity continuation. The resolver can resume
+the same validated DOM and extraction function after allocating the pair, without
+a second card GET or parse. Fixed-card matching and markup rules are unchanged.
+Raw bytes/DOM/continuations stay invocation-local, never enter result/DTO, report,
+ledger, logs or persistent storage; unused continuations are disposed on exit.
+
+Current person evidence:
+
+- [Asghar Farhadi](https://kinobazaua.com/persons/asghar-farhadi), linked by the
+  actual A Separation director row: `Асґар Фархаді` / `Asghar Farhadi`, DOB1972-05-07,
+  director role. Trusted [TMDb person229931](https://api.themoviedb.org/3/person/229931?language=en-US&append_to_response=external_ids)
+  has the same exact Latin name and birth date; the Ukrainian person response did
+  not supply an exact Latin comparison, so it correctly did not confirm first.
+- [Chan-wook Park](https://kinobazaua.com/persons/chan-wook-park), linked by The
+  Handmaiden: `Пак Чхан-ук` / `Chan-wook Park`, DOB1963-08-23, director role;
+  [TMDb person10099](https://api.themoviedb.org/3/person/10099?language=en-US&append_to_response=external_ids)
+  supplies exact agreeing name/date evidence. Neither is a new per-film exception.
+- The Fall's linked Tarsem profile still reports1961-05-26, versus TMDb56512
+  1961-05-06. The final runtime diagnostic reports birthdayConflict=true and
+  remains unresolved/withheld. This is not proof of two different people.
+
+One research-only Tavily profile query for the trusted Gabriele Muccino person
+returned HTTP200 and5 search rows but **zero exact admitted profile pointers**.
+It read no profile/card or destinations. This single observation does not prove
+Tavily cannot find profiles; it establishes no added person evidence. Runtime
+already has the linked profile and does not spend a third search slot on it.
+Search output/snippets/generated answers never become person proof.
+
+### Budget decision and prepared migration
+
+| Design | Full-action HTTP cap | Preserves2 searches +2 cards | Linked-person proof |
+| --- | --- | --- | --- |
+| Existing ledger, unchanged |8|Yes|Disabled; no hidden use of search/card stages |
+| Spend existing slots on profiles |8|No|Rejected: silently reduces card/search opportunities |
+| Prepared per-session capability |10|Yes|At most1 TMDb person +1 Kinobaza person |
+
+The chosen bounded increase is **10 =4 baseline +2 Tavily +2 card +2 person**.
+The server trusts only its start receipt cap8/10, never browser counters/options.
+The new stages `tmdb-person` and `kinobaza-person` reserve atomically before I/O.
+Each has a5s header/body/reservation cutoff; the unchanged handler entry deadline
+still limits source work to45s and preserves finish up to53s plus response margin.
+The extra pair can consume up to10s of that shared time; preserving request slots
+does not guarantee all can finish before the deadline. Deferral reads/gates the
+available cards first, leaving less time for profile proof if earlier waits are
+slow. An initial director-only refusal may now spend the still-available second
+Tavily slot before person proof; this is at most one additional search compared
+with eager first-card success, not a new slot or retry. A failed second search
+does not discard an already-read eligible card: it can finish its bounded proof,
+return partial if confirmed, and preserve the exact provider error in diagnostics.
+No additional card is read after that search error. No retries or redirects.
+
+`supabase/migrations/20261101180436_media_advice_identity_budget.sql` was created
+with local Supabase CLI `migration new`, not applied remotely. It adds only a
+private `source_cap` (existing/legacy default8), changes the attempts constraint to
+the session cap, and replaces the Beta RPC with the same signature/grants and
+fresh post-advisory-lock authorization. New Beta starts explicitly receive10;
+old sessions keep8 and cannot reserve profile stages. Legacy pilot RPC, user
+search-count behavior, Beta/diagnostic permissions, flags, data,30-minute ledger
+TTL and24h cleanup eligibility are unchanged. No HTML/person content is stored
+in the ledger. A denied/uncertain reservation is not retried; timeout consumes an
+acknowledged reservation. Failed finish withholds results; no refund/re-fetch is
+implied. Existing session expiry remains in force.
+
+Future execution, **separately authorized**: verify exact reviewed SHA/project,
+the existing three M4 migration versions and recovery checkpoint; apply only
+version20261101180436 with the established isolated-file/history procedure, never
+general db push/repair/replay. Post-check default8 and allowed caps8/10, the
+per-session cardinality constraint, unchanged service-role-only Beta RPC signature
+and legacy function, fresh group/region/switch/diagnostic checks, unchanged
+flags/assignments and movie/list counts. Then deploy/review the exact build and
+source-free smoke before any independently agreed live activation. Code remains
+compatible with the old cap8 receipt if migration is not yet applied.
+
+Rollback: a normal code revert can leave the additive column/constraint in place;
+old code still spends at most8. Do not blindly restore an8-only constraint/drop
+the column while rows have9/10 attempts. A physical schema rollback requires
+separate authorization, stopped/drained new actions, retained accounting and a
+verified absence of >8 rows after normal retention cleanup, then restoration of
+the prior RPC/constraint transactionally. Do not erase accounting rows or mark
+migration history repaired simply to make rollback pass.
+
+### Current-response controls: before and after
+
+The live counts/times below belong to the preceding implementation checkpoint
+`790975b592c8d5559e927561ddd18faeb0aef0fa`, before the narrow follow-up below.
+They are retained evidence, not fresh live validation of the changed query/allocation.
+
+The fixed prior head21d1be2 identity inspects each current card in memory before
+the optional person proof; final results below come from the actual resolver,
+not manually seeded URLs. Two initial full-query controls for Lives/Fall also
+ran before the contextual query change. The diagnostic comparison initially kept
+the **new input aliases** for both policies: its matched Lives result therefore
+does not prove the prior production projection would accept that card. Checking
+the retained typed metadata establishes that old production aliases lack H2
+`The Lives of Others` and `The Handmaiden`; the new English translations supply
+them. The comparator is corrected to remove newly added translation/control
+aliases from prior-service input. The inferred earlier original-title refusals
+in the table are code/field comparisons, not new live old-service runs. Other
+before labels compare identity on the **same current card bytes**, not two
+equivalent search-provider runs. No raw
+HTML/search-response archive is retained; these are not historical reconstructions.
+
+Counts below are actual **TMDb / Tavily / card / person-page** requests in the
+listed final local operation; `*` means trusted movie identity was reused from
+this memory-only series, not a cold full action. MOTN and Watch Providers were not
+called. Times are local wall-clock observations, not deployed hosting latency.
+
+| Film / automatically found candidate | Prior identity → final | Mapped rows / blocks | Requests | Local time |
+| --- | --- | --- | --- | --- |
+| [Alien1979](https://kinobazaua.com/titles/alien) |matched → matched|5 /3|0/1/2/0*|1.74s |
+| [Mad Max2015](https://kinobazaua.com/titles/mad-max-fury-road) |matched → matched, partial|6 /3|2/1/2/0|5.73s |
+| [Dune Part Two2024](https://kinobazaua.com/titles/dune-part-two) |matched → matched|5 /3|2/1/2/0|7.61s |
+| [Supergirl2026](https://kinobazaua.com/titles/supergirl-2026) |matched → matched|3 /1|2/1/2/0|10.32s |
+| [Goodfellas1990](https://kinobazaua.com/titles/goodfellas) |matched → matched|6 /3|2/1/2/0|5.35s |
+| [Pursuit2006](https://kinobazaua.com/titles/the-pursuit-of-happyness) |matched → matched|3 /2|2/1/2/0|4.74s |
+| [Lives of Others2006](https://kinobazaua.com/titles/the-lives-of-others) |prior projection lacks English H2 alias (code/field comparison); current automatic retrieval + identity matched|0 /0|0/1/2/0*|3.69s |
+| [The Fall, selected2008](https://kinobazaua.com/titles/the-fall) |year refusal → year established, person DOB conflict unresolved|withheld|1/2/2/1*|2.04s |
+| [The Prestige2006](https://kinobazaua.com/titles/the-prestige) |matched → matched|5 /3|2/1/2/0|5.17s |
+| [A Separation2011](https://kinobazaua.com/titles/a-separation) |director alias unresolved → profile-confirmed|0 /0|1/1/2/1*|2.20s |
+| [The Handmaiden2016](https://kinobazaua.com/titles/the-handmaiden) |prior projection lacks English H2 alias; new titles alone then director-unresolved → profile-confirmed|1 /0|1/1/2/1*|2.11s |
+| [Amélie2001](https://kinobazaua.com/titles/amelie) |matched → matched, partial|2 /1|2/1/2/0|4.69s |
+
+Lives and A Separation confirm their cards but have no mapped UA rows in these
+responses; this is not failure to find the film or proof it is unavailable.
+Lives'17 foreign-context candidates remain outside UA offers. Previously useful
+Netflix subtitles/audio-unknown and MEGOGO positives for Pursuit, and all three
+independent Dune localization blocks remain. No track/territory/offer-binding
+confidence is promoted, and no destination was visited. Unrelated second cards
+(including The Last Laugh, Get Thrashed and The Walk), incomplete metadata and
+unsupported markup remain refused rather than chosen for more positive results.
+
+This extension consumed **122 external attempts =35 TMDb +30 Tavily +44 card
+GET +13 person GET**. The credential broker recorded119 (35/30/44/10),
+countsIncomplete=false, and was explicitly stopped;3 additional public profile
+markup inspections are included above. This includes intermediate refusals,
+rechecks and two completed operations whose full JSON handoff was not retained
+by the agent; later checks supply the final evidence. A failed local unsupported
+operation used0 source requests. Prior PR#220 study53 remains a separate batch
+(combined175), not a changed historical budget. Search-provider internal traffic
+is unknown. Keys, HTML, snippets, full source responses and personal application
+data were not saved; local diagnostics have no deployed-build attestation.
+
+The six requested regressions are preserved; two additional director spellings
+are now established live without a per-film exception.11/12 controls confirm a
+card; this deliberately selected sample is not catalogue accuracy or coverage.
+The Fall remains an evidence conflict, not a workaround invitation. Shared film-ID
+success routes, homonyms, malformed/conflicting profiles, ambiguous critical
+structure and unsupported release-year contexts are also checked by authored
+fixtures; those examples do not establish live catalogue facts.
+
+The existing Tavily private-Beta account response is not blanket permission for
+Kinobaza content or a production-publication approval. The linked-profile reads
+add a bounded source-use surface; applicable source/account terms and a reviewed
+exact deployment remain release prerequisites. No new service, key, tariff,
+flags, access assignments, retention policy or production data was changed here.
+
+### Validation of the integrated change
+
+These results record checkpoint790975b; the following subsection records the
+latest narrow follow-up validation separately.
+
+- Final complete offline/HTTP run: **891 passed,0 failed,1 skipped (892 total)**
+  across application and research regressions. The skipped optional research
+  synthetic mobile display is not counted as success. This includes contextual
+  title/year rules, stable-ID conflict priority, exact linked-person gates,
+  profile preamble recovery/critical negatives, secrets/report allowlists,
+  ordinary Beta diagnostic redaction, both cap8 and cap10 complete handler
+  pipelines, R1/R2, exact links and original-row/preview/transfer safeguards.
+- Prepared migration: **3/3 PGlite tests** (included above). Existing sessions
+  and legacy starts retain8, new Beta sessions10, no new user search quotas,
+  private permissions/default flags/diagnostic assignments/cleanup/data retained.
+- **Native PostgreSQL17.6:6/6 passed,0 skips**,24 verified distinct loopback
+  backend connections. Concurrent starts and repeated profile reservations each
+  succeed once; all ten distinct stages fit; queued region/switch/group/card
+  revocation denies mutation after lock acquisition. The test checks all eight
+  concurrent receipt cardinalities3–10 and the final DB cardinality10, not a
+  mistaken assumption that Promise.all submission order is commit order.
+  The authored temporary cluster was stopped/removed; no live database accessed.
+- **5/5 real-form browser regressions**, Edge/Chromium headless with mocked
+  Auth/source/DB and external requests blocked:1280×900 desktop,820×1180 tablet,
+ 375×812 iPhone X-size and420×912 Air-size emulation. They cover form transfer,
+  manual edits, pending apply, close/reopen and session isolation. This browser
+  fixture enables diagnostics; ordinary Beta/diagnostics-off is covered by the
+  separate server/pipeline tests, not claimed as a browser verification.
+- Local series **17/17** after correcting the prior-projection comparison;
+  **2/2 native Windows pipe** authorization/broker checks (IPC unchanged after
+  the study-only research extension). Source/migration syntax, whitespace and
+  canonical document42 local links/21 anchors passed.
+
+Not performed: real iPhone or WebKit, authenticated deployed-runtime smoke,
+live MOTN/Watch Providers/platforms, actual Wishlist Save, deployment, live
+migration, flag/permission changes or merge. The Windows application lifecycle
+suite is reused because launcher/lifecycle components are unchanged. initApp,
+global lifecycle/auth, other Mykola contexts, UI/ranking/preview/Save and link
+policies remain unchanged. Remote checks must be attached to the final exact
+commit; absent/skipped checks are not successful validation.
+
+### Two-year search and deferred person-pair follow-up — 2026-11-01
+
+Review reproduced two application defects using authored fixtures before fixes:
+both contextual queries emitted2006 despite a trusted primary2008 (2 assertions
+failed), and the first eligible card spent the person pair before a stronger
+second card could be examined (5 of8 initial selection regressions failed).
+The rules above now cover both cases without increasing the prepared cap10 or
+legacy cap8, changing the ledger/SQL, or borrowing search/card slots for profiles.
+
+The decisive selection regression has a first2006 premiere candidate and a
+second2008 primary-year candidate with different linked profiles. The second
+gets the only pair and confirms; the first remains withheld. Full-action counts
+are4 baseline +2 Tavily +2 cards +2 person =10. A scoped shared-film-ID candidate
+outranks a no-ID candidate even with a different year, but still must prove its
+director. A failed chosen profile never causes a second pair or relaxed proof.
+
+**Residual limit:** two equally supported different profiles cannot both be
+verified with one Kinobaza profile GET. A future option would reuse one TMDb
+person read and allow2 distinct Kinobaza person reads: at least3 person attempts,
+full cap11 and a new ledger stage/deadline assessment. It is not implemented or
+authorized by this follow-up. Alternatively retain bounded unresolved/manual
+narrowing; choosing the first profile by convenience is not identity evidence.
+
+Safe diagnostics expose only eligible/selected/unverified card counts, one-based
+card indexes and an allowlisted allocation basis/reason. Profile URLs, aliases,
+DOB, raw HTML and search content are not added. Ordinary Beta users still receive
+no privileged resolver diagnostics. The receipt time remains the original card
+read time, not the later proof-completion time; continuation is bounded by the
+same parent deadline and cannot revive results after abort.
+
+New external source HTTP attempts: **0**. Both changes are deterministic control
+flow/query defects reproduced offline; another source response is unnecessary
+to establish them. Earlier live observations, including The Fall DOB conflict,
+remain unchanged evidence, not claims of a new successful discovery or tracks.
+
+Follow-up validation on the completed runtime changes:
+
+- **911 passed,0 failed,1 skipped /912 offline+HTTP tests**, including20 new
+  authored regressions and the3 existing PGlite migration tests. The optional
+  research synthetic mobile-display skip is not success. The sandbox initially
+  denied child-process spawning (EPERM); the authorized local rerun passed,
+  without weakening assertions or timeouts.
+- **5/5 browser tests**, local Edge/Chromium, mocked Auth/source/DB, external
+  requests blocked: desktop1280×900, tablet820×1180, iPhone X375×812 and
+  Air420×912-size emulation. Preview/transfer, manual-edit/pending-apply guards,
+  report, close/reopen and isolated sessions remain covered; not real-device QA
+  or an actual Wishlist Save.
+- Independent review found and closed the alternate-search-error early-exit
+  regression;401 and15s mock timeout retain the first card with partial status
+  after valid proof,9 total authored attempts, no retry or second card GET.
+  No remaining code blocker was found in that review.
+- Syntax/whitespace and14-document local link/anchor audit passed
+  (471 links,292 anchors). initApp/global lifecycle/auth/UI, permissions,
+  ranking, links, historical SQL and the prepared migration are unchanged.
+- Native PostgreSQL17.6 evidence (**6/6**,24 loopback connections) and Windows
+  lifecycle/IPC evidence from checkpoint790975b are explicitly reused, not
+  rerun: no SQL, ledger RPC, database dependency, launcher or IPC component
+  changed. The full suite reran the existing local migration/access contracts.
+
+No live source calls, live database operations, flag changes, merge or manual
+deployment were performed. Automatic PR Preview/checks, if triggered by the
+existing Git integration, must be reported against the new exact SHA rather
+than inheriting checkpoint790975b statuses. Real iPhone/WebKit, deployed
+authenticated smoke and new live query/profile behavior remain unvalidated.

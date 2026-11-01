@@ -167,7 +167,7 @@ try {
   assert.equal(commit.status, 0, commit.stderr);
   const sha = commit.stdout.trim();
   assert.match(sha, /^[a-f0-9]{40}$/);
-  for (const study of ['practical-five','pilot-retrieval']) {
+  for (const study of ['practical-five','pilot-retrieval','tavily-fallback','cascade-identity','production-beta']) {
   const preflight = spawnSync(pwsh, ['-NoProfile', '-NonInteractive', '-File', helper, '-ExpectedCommit', sha, '-Study', study, '-CheckPrerequisites'], {
     cwd: repo, encoding: 'utf8', timeout: 30_000
   });
