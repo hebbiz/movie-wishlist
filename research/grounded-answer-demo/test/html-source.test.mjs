@@ -6,6 +6,8 @@ import { createDemo } from '../server.mjs';
 import { selectRequest, requestBody, FILMS } from '../config.mjs';
 import { syntheticHtml } from '../synthetic.mjs';
 import { extractHtml, fetchHtmlCandidates } from '../html-source.mjs';
+import { recommendationCarousel, quotedRecommendation } from './recommendation-markup.fixture.mjs';
+import { assistedIdentity } from '../assisted-kinobaza.mjs';
 
 const options = { retrieval: 'kinobaza-html', discovery: 'digital-ua', urlSource: 'kinobaza' };
 const select = (filmId = 'coherence') => selectRequest({ ...options, filmId });
@@ -141,6 +143,63 @@ test('duplicate and other attribute errors remain critical, including after many
     const result = await parse(body);
     assert.equal(result.status, 'unsupported-markup'); assert.deepEqual(result.issues, ['html-parse-errors']);
     assert.deepEqual(result.candidates, []);
+  }
+});
+
+test('closed post-viewing recommendation carousels recover only located anchor/image attribute errors without changing claims', async () => {
+  const expected = await parse(markup());
+  const body = afterViewing(recommendationCarousel() + recommendationCarousel());
+  const result = await parse(body);
+  assert.equal(result.identity.status, 'matched'); assert.equal(result.status, 'partial');
+  assert.deepEqual(result.candidates, expected.candidates); assert.deepEqual(result.localization, expected.localization);
+  assert.deepEqual(result.availabilitySignals, expected.availabilitySignals);
+  assert.deepEqual(result.issues, [...expected.issues, 'noncritical-recommendation-markup-recovered']);
+  assert.ok(!JSON.stringify(result).includes('authored-other-film'));
+});
+
+test('recommendation recovery does not accept critical, misplaced, unclosed, foster-parented or swallowed structures', async () => {
+  const carousel = recommendationCarousel();
+  const cases = [
+    afterViewing(quotedRecommendation), // A class on an item is not a proven boundary.
+    markup().replace('<h1>', `${carousel}<h1>`),
+    markup().replace('<div id="collapseUA"', `${carousel}<div id="collapseUA"`),
+    afterViewing(carousel.replace('scrolling-wrapper-flexbox"', 'unrecognized-wrapper"')),
+    afterViewing(carousel.replace('scrolling-wrapper-flexbox__item me-1', 'other-item')),
+    afterViewing(carousel.replace('</a>', '')),
+    afterViewing(carousel.replace('</div></div>', '')),
+    afterViewing(`<table><tbody><tr><td>${carousel}</td></tr></tbody></table>`),
+    afterViewing(`<table>${carousel}<tbody><tr><td>Foster-parented</td></tr></tbody></table>`),
+    ...['<h1>Other film (2020)</h1>', '<h2>Other title</h2>', '<table><tr><td>Director</td></tr></table>',
+      '<link rel="canonical" href="https://example.com/other">', '<div id="availabilityAccordion"></div>',
+      '<a title="Доступно в netflix" href="https://www.netflix.com/title/999999">Netflix</a>']
+      .map(critical => afterViewing(recommendationCarousel(quotedRecommendation + critical))),
+    afterViewing(carousel.replace('title="Authored "quoted" recommendation"', 'title="Authored "quoted <h1>swallowed</h1>"')),
+    afterViewing(carousel.replace('<a href=', '<a data-x="one" data-x="two" href=')),
+    afterViewing(carousel + '<img alt="duplicate" alt="duplicate">'),
+    afterViewing(recommendationCarousel(quotedRecommendation.repeat(100))),
+    afterViewing(carousel).replace('id="availabilityAccordion"', 'id="changed"'),
+    afterViewing(recommendationCarousel('<svg><a href="/authored" title="Authored "quoted" recommendation"></a></svg>')),
+  ];
+  for (const [index, body] of cases.entries()) {
+    let calls = 0;
+    const result = await extractHtml(body, FILMS.coherence, { identityCheck: () => { calls++; return { status: 'matched' }; } });
+    assert.equal(result.status, 'unsupported-markup', `unsafe recovery ${index}`);
+    assert.deepEqual(result.issues, ['html-parse-errors'], `unsafe recovery ${index}`);
+    assert.equal(calls, 0); assert.deepEqual(result.candidates, []); assert.equal(result.localization, undefined);
+  }
+});
+
+test('malformed recommendations cannot supply an inline director missing from film metadata', async () => {
+  for (const label of ['Режисер:', '<span>Режисер:</span>', '<strong>Режисер:</strong>', '<b>Режисер:</b>']) {
+    const film = { identityTitle: 'Coherence', originalTitle: 'Coherence', year: 2013, directorCount: 1, directorAliases: ['James Ward Byrkit'] };
+    const sourceURL = 'https://kinobazaua.com/titles/coherence';
+    const body = markup().replace('</head>', `<link rel="canonical" href="${sourceURL}"></head>`)
+      .replace('<table><tbody><tr><td>Режисер:</td><td>James Ward Byrkit</td></tr></tbody></table>', '')
+      .replace('</body>', `${recommendationCarousel(quotedRecommendation + `<div>${label}<a href="/persons/authored">James Ward Byrkit</a></div>`)}</body>`);
+    let calls = 0;
+    const result = await extractHtml(body, film, { identityCheck: all => { calls++; return assistedIdentity(all, film, sourceURL); } });
+    assert.equal(calls, 0); assert.equal(result.status, 'unsupported-markup');
+    assert.deepEqual(result.issues, ['html-parse-errors']); assert.deepEqual(result.candidates, []);
   }
 });
 

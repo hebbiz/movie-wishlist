@@ -6,7 +6,8 @@ import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { FILMS } from '../research/grounded-answer-demo/config.mjs';
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
-import { localizedMarkup, netflixCatalogueBlock, paragraphBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
+import { localizedMarkup, netflixCatalogueBlock, netflixAudioCatalogueBlock, paragraphBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
+import { recommendationCarousel } from '../research/grounded-answer-demo/test/recommendation-markup.fixture.mjs';
 
 class Element {
   constructor(tag = 'div', text = '') { this.tagName = tag.toUpperCase(); this.children = []; this.attributes = {}; this.listeners = {}; this.dataset = {}; this.hidden = false; this.open = false; this.isConnected = true; this.classList = { add: (...names) => { this.className = [...new Set([...(this.className?.split(' ') ?? []), ...names])].join(' '); } }; this.textContent = text; }
@@ -306,9 +307,11 @@ test('a film-level audio badge remains in diagnostics without adding a separate 
 // projection. These fictional film links are not captured Kinobaza responses.
 const netflixFilmHref = 'https://www.netflix.com/title/900001234';
 const megogoFilmHref = 'https://megogo.net/ua/view/900001235-authored.html?exact=%2f#Anchor';
-async function netflixCaptionResult(href = netflixFilmHref) {
+async function netflixCaptionResult(href = netflixFilmHref, audioCatalogue = false) {
   const film = { ...FILMS.coherence, imdbId: 'tt1234567', year: 2013 };
-  const html = localizedMarkup(netflixCatalogueBlock({ href }) + paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', megogoFilmHref), 'coherence', false);
+  const block = audioCatalogue ? netflixAudioCatalogueBlock : netflixCatalogueBlock;
+  const html = localizedMarkup(block({ href }) + paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', megogoFilmHref), 'coherence', false)
+    .replace('</body>', `${audioCatalogue ? recommendationCarousel() : ''}</body>`);
   const extracted = await extractHtml(html, film);
   assert.equal(extracted.identity.status, 'matched');
   const result = composeDiscovery(film, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: extracted, status: extracted.status } });
@@ -316,26 +319,27 @@ async function netflixCaptionResult(href = netflixFilmHref) {
 }
 
 test('Netflix caption reaches the same Beta table through ordinary and diagnostic projections without catalogue audio or link borrowing', async t => {
-  const { extracted, result } = await netflixCaptionResult();
+ for (const audioCatalogue of [false, true]) {
+  const { extracted, result } = await netflixCaptionResult(netflixFilmHref, audioCatalogue);
   const netflixBlock = extracted.localization.blocks.find(block => block.provider === 'netflix');
-  assert.equal(netflixBlock.audio.state, 'unknown'); assert.equal(netflixBlock.subtitles.state, 'reported-positive');
+  assert.equal(netflixBlock.audio.state, audioCatalogue ? 'reported-positive' : 'unknown'); assert.equal(netflixBlock.subtitles.state, 'reported-positive');
   const before = JSON.stringify(result);
-  for (const diagnostics of [false, true]) await t.test(diagnostics ? 'diagnostic user' : 'ordinary Beta user', async t => {
+  for (const diagnostics of [false, true]) await t.test(`${audioCatalogue ? 'audio-filtered catalogue' : 'Pursuit-shaped catalogue'} / ${diagnostics ? 'diagnostic user' : 'ordinary Beta user'}`, async t => {
     const capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics };
     const response = diagnostics ? { ...result, capabilities } : productMediaResult(result, capabilities);
     const netflix = response.rows.find(row => row.provider.key === 'netflix');
-    assert.equal(netflix.kinobazaLocalization.audio.state, 'unknown');
+    assert.equal(netflix.kinobazaLocalization.audio.state, audioCatalogue ? 'reported-positive' : 'unknown');
     assert.equal(netflix.kinobazaLocalization.subtitles.state, 'reported-positive');
     const { control, state, button } = await harness(t, response.rows, response, capabilities);
     const rows = control.dialog.querySelectorAll('.media-advice-row');
     assert.equal(rows.length, 2);
     const netflixRow = rows.find(row => row.dataset.providerKey === 'netflix');
-    assert.deepEqual(netflixRow.querySelectorAll('.media-advice-symbol').map(symbol => symbol.textContent), ['◐', '?', '+']);
+    assert.deepEqual(netflixRow.querySelectorAll('.media-advice-symbol').map(symbol => symbol.textContent), ['◐', audioCatalogue ? '+' : '?', '+']);
     assert.deepEqual(rows.find(row => row.dataset.providerKey === 'megogo').querySelectorAll('.media-advice-symbol').map(symbol => symbol.textContent), ['◐', '+', '+']);
     assert.equal(state.output, null); assert.deepEqual(state.opens, []);
     if (diagnostics) {
       await button('Діагностичний звіт').click();
-      assert.match(control.dialog.querySelector('textarea').value, /kinobaza\/netflix: territory unknown; Kinobaza provider-block audio unknown, subtitles reported-positive/);
+      assert.ok(control.dialog.querySelector('textarea').value.includes(`kinobaza/netflix: territory unknown; Kinobaza provider-block audio ${audioCatalogue ? 'reported-positive' : 'unknown'}, subtitles reported-positive`));
       assert.ok(control.dialog.querySelectorAll('pre').some(pre => pre.textContent.includes('"literal": "укр. субтитри"')));
       await button('← До порад').click();
     } else {
@@ -355,6 +359,7 @@ test('Netflix caption reaches the same Beta table through ordinary and diagnosti
     assert.equal(state.calls, 1);
   });
   assert.equal(JSON.stringify(result), before, 'projection/render/apply do not change source records');
+ }
 });
 
 test('Netflix catalogue never substitutes for missing or unsafe film URL; clearing an existing URL remains explicit', async t => {

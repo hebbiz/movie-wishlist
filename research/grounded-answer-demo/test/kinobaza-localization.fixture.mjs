@@ -14,6 +14,13 @@ export const netflixCatalogueBlock = ({
   href = 'https://www.netflix.com/title/900001234', caption = '(укр. субтитри)', catalogueHref = '/online/netflix',
 } = {}) => `<p class="mt-2 d-flex align-items-center"><a${href === null ? '' : ` href="${href}"`} title="Доступно в netflix" class="me-2"><img alt="Доступно в netflix"></a><span>${caption}</span><a href="${catalogueHref}" title="Інші фільми з українськими субтитрами або аудіо на Netflix">Інші фільми →</a></p>`;
 
+// Authored shape for a second, audio-filtered catalogue control. This is not a
+// captured/reconstructed Klaus response; the film target remains fictional.
+export const netflixAudioCatalogueBlock = ({
+  href = 'https://click.justwatch.com/a?authored=%2fONLY&service=netflix', caption = '(укр. аудіо, укр. субтитри)',
+  catalogueHref = '/online/netflix?netflix_audio=1',
+} = {}) => `<p class="mt-2 d-flex align-items-center"><a${href === null ? '' : ` href="${href}"`} title="Доступно в netflix" class="me-2"><img alt="Доступно в netflix"></a><span>${caption}</span><a href="${catalogueHref}" title="Інші фільми з українською доріжкою на Netflix" class="btn btn-sm btn-outline-secondary ms-3">Інші з укр. аудіо →</a></p>`;
+
 // Invented Dune (2024) source blocks, not captured public markup or a claim
 // about current platform availability, audio, subtitles or real card URLs.
 export const authoredDuneLanguageMarkup = ({

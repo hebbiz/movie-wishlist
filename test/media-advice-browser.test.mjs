@@ -5,6 +5,13 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { resolve, extname } from 'node:path';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
+import { FILMS } from '../research/grounded-answer-demo/config.mjs';
+import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
+import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { localizedMarkup, netflixAudioCatalogueBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
+import { recommendationCarousel } from '../research/grounded-answer-demo/test/recommendation-markup.fixture.mjs';
+import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
+import { safeExtractionDiagnostic } from '../shared/media-advice-diagnostics.mjs';
 
 const incompleteCaveat = 'Деякі дані неповні, тож перевір умови на платформі.';
 const ordinaryCaveat = 'Інформація не завжди точна, тож варто перевіряти.';
@@ -205,13 +212,28 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
   const origin = `http://127.0.0.1:${server.address().port}`;
   const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href);
   const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || 'msedge', headless: true }); t.after(() => browser.close());
+  // Fictional film/link: actual extractor and Beta projection, not retained live
+  // Klaus HTML, a source request or an assertion of real Netflix availability.
+  const recoveredNetflixHref = 'https://click.justwatch.com/a?authored=%2fEXACT&service=netflix';
+  const recoveredFilm = { ...FILMS.coherence, imdbId: 'tt1234567', year: 2013 };
+  const recoveredMarkup = localizedMarkup(netflixAudioCatalogueBlock({ href: recoveredNetflixHref.replace('&', '&amp;') }), 'coherence', false)
+    .replace('</body>', `${recommendationCarousel()}</body>`);
+  const recoveredExtraction = await extractHtml(recoveredMarkup, recoveredFilm);
+  assert.equal(recoveredExtraction.identity.status, 'matched');
+  assert.ok(recoveredExtraction.issues.includes('noncritical-recommendation-markup-recovered'));
+  const recoveredResult = composeDiscovery(recoveredFilm, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: recoveredExtraction, status: recoveredExtraction.status } });
+  // The real server's resolver supplies this allowlisted report envelope;
+  // composeDiscovery alone does not. No HTTP request is implied by this fixture.
+  recoveredResult.resolver = { cards: [{ identity: recoveredExtraction.identity.status,
+    extractionDiagnostic: safeExtractionDiagnostic({ status: recoveredExtraction.status, issues: recoveredExtraction.issues,
+      candidateCount: recoveredExtraction.candidates.length, blockCount: recoveredExtraction.localization.blocks.length }) }] };
   for (const [width, height] of [[1280, 900], [375, 812], [420, 912], [820, 1180]]) await t.test(`${width}x${height}`, async t => {
     const context = await browser.newContext({ viewport: { width, height }, serviceWorkers: 'block' }); t.after(() => context.close());
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw Error('AUTHORED denied'); } } });
       window.authoredOpened=[];window.open=(...args)=>{authoredOpened.push(args);return null;};
     });
-    let allowed = false, calls = [], resolveDiscover;
+    let allowed = false, diagnosticsAllowed = true, calls = [], resolveDiscover;
     t.after(() => { resolveDiscover?.(); resolveDiscover = null; });
     const trackingURL='https://itunes.apple.com/ua/movie/id123?at=&x=%2F&campaign='+ 'AUTHORED-long-original-pointer%2f'.repeat(24);
     const authored = { film: { title:'Authored film', originalTitle:'Authored original', year:2020, imdbId:'tt1234567' }, rows: [{ id: 'motn:1', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' }, country: 'UA', access: { state: 'reported', value: 'rental' }, provenance: { source: 'AUTHORED' }, link: { href: trackingURL } }], sources: [{ source: 'tmdb', status: 'partial', identity: 'matched' }], unmapped: [{ name: 'Plex', source: 'tmdb' }], metrics:{ requestsMade:4, requestBudget:8, ledgerReservations:4 } };
@@ -222,7 +244,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       if (u.pathname === '/.netlify/functions/movie-lookup') return route.fulfill({json:{title:'Authored added film',year:2024,poster_url:null,overview:null}});
       if (u.pathname === '/.netlify/functions/media-advice') {
         const body = route.request().postDataJSON(); calls.push(body);
-        if (body.action === 'capability') return route.fulfill({ json: { mykola_media_advice: allowed, mykola_media_advice_diagnostics: allowed } });
+        if (body.action === 'capability') return route.fulfill({ json: { mykola_media_advice: allowed, mykola_media_advice_diagnostics: allowed && diagnosticsAllowed } });
         if (resolveDiscover) await new Promise(r => resolveDiscover = r);
         return route.fulfill({ json: { result: authored } });
       }
@@ -1092,6 +1114,58 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeNoticeWrites);
       }
       authored.rows = savedRows; authored.sources = savedSources;
+    }
+    // Exercise recovered recommendation markup plus the audio-filtered Netflix
+    // catalogue through the real app on desktop, tablet and both phone sizes.
+    // Opening the catalogue is never an action; source data remain read-only.
+    for (const diagnostics of [false, true]) {
+      allowed = true; diagnosticsAllowed = diagnostics;
+      const capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics };
+      for (const key of Object.keys(authored)) delete authored[key];
+      Object.assign(authored, diagnostics ? { ...recoveredResult, capabilities } : productMediaResult(recoveredResult, capabilities));
+      await page.evaluate(() => {
+        currentUser = { id: 'user' }; currentRole = 'owner'; currentGroupId = 'group'; window.authoredLogin = true;
+        movies = [{ id: 'list', imdb_url: 'https://imdb.com/title/tt1234567', title: 'Authored film', year: 2013, status: 'wishlist', recommended_medium: 'DVD', purchase_url: 'https://old.example', added_by: 'Owner' }];
+        startEditMovie('list');
+      });
+      const beforeRecoveredCalls = calls.filter(call => call.action === 'discover').length;
+      const beforeRecoveredWrites = await page.evaluate(() => authoredDBWrites.length);
+      const beforeRecoveredOpens = await page.evaluate(() => authoredOpened.length);
+      await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-answer').waitFor();
+      const netflixRow = page.locator('.media-advice-row[data-provider-key="netflix"]');
+      assert.equal(await page.locator('.media-advice-row').count(), 1);
+      assert.deepEqual(await netflixRow.locator('.media-advice-symbol').allTextContents(), ['◐', '+', '+']);
+      assert.match(await page.locator('.media-advice-answer').innerText(), /Netflix.*українськ(?:е аудіо|ою доріжкою)/);
+      await assertServiceComparisonLayout(page, width);
+      assert.equal(await page.locator('.media-advice-link-select').count(), 0);
+      await page.getByText('Адреса обраного посилання', { exact: true }).click();
+      assert.equal(await page.locator('.media-advice-actions .media-advice-link-address p').innerText(), recoveredNetflixHref);
+      assert.doesNotMatch(await page.locator('.media-advice-actions').innerText(), /\/online\/netflix|Інші з укр\. аудіо/);
+      assert.equal(await page.evaluate(() => authoredOpened.length), beforeRecoveredOpens, 'rendering and expanding the address never open a destination');
+      assert.equal(await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).count(), diagnostics ? 1 : 0);
+      if (diagnostics) {
+        await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+        const report = await page.getByLabel('Короткий звіт для копіювання').inputValue();
+        assert.match(report, /noncritical-recommendation-markup-recovered/);
+        assert.match(report, /provider-block audio reported-positive, subtitles reported-positive/);
+        await page.getByRole('button', { name: '← До порад', exact: true }).click();
+      } else assert.equal(await page.locator('.media-advice-diagnostics pre,.media-advice-diagnostics textarea').count(), 0);
+      await page.getByRole('button', { name: 'Відкрити посилання', exact: true }).click();
+      assert.deepEqual(await page.evaluate(() => authoredOpened.at(-1)), [recoveredNetflixHref, '_blank', 'noopener,noreferrer']);
+      await page.getByRole('button', { name: 'Обрати', exact: true }).click();
+      await page.locator('.media-advice-preview').getByText('Повні адреси', { exact: true }).click();
+      assert.ok((await page.locator('.media-advice-preview details').innerText()).includes(recoveredNetflixHref));
+      assert.doesNotMatch(await page.locator('.media-advice-preview').innerText(), /\/online\/netflix/);
+      assert.equal(await page.locator('#purchase_url').inputValue(), 'https://old.example', 'preview does not transfer or save');
+      await page.getByRole('button', { name: 'Скасувати вибір', exact: true }).click();
+      await page.getByRole('button', { name: '← До картки', exact: true }).click();
+      await page.locator('#mediaAdviceEntry').click();
+      assert.deepEqual(await netflixRow.locator('.media-advice-symbol').allTextContents(), ['◐', '+', '+']);
+      assert.equal(calls.filter(call => call.action === 'discover').length, beforeRecoveredCalls + 1, 'diagnostics, preview and reopen reuse the one extracted result');
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), beforeRecoveredWrites, 'recovered source data never perform Save');
+      assert.equal(await page.evaluate(() => authoredOpened.length), beforeRecoveredOpens + 1, 'only the explicit open action opens the original pointer');
+      if (process.env.M4_SCREENSHOT_DIR && diagnostics) await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/authored-recovered-netflix-${width}.png`, animations: 'disabled' });
+      await page.getByRole('button', { name: '← До картки', exact: true }).click();
     }
     await page.evaluate(() => resetFormMode()); assert.equal(await page.locator('.media-advice-dialog').isVisible(), false);
     await page.evaluate(() => { Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true }); startEditMovie('list'); });

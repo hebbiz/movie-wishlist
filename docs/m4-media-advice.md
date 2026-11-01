@@ -4517,3 +4517,118 @@ deployment were performed. Automatic PR Preview/checks, if triggered by the
 existing Git integration, must be reported against the new exact SHA rather
 than inheriting checkpoint790975b statuses. Real iPhone/WebKit, deployed
 authenticated smoke and new live query/profile behavior remain unvalidated.
+
+### Klaus recommendation markup and Netflix caption — 2026-11-02
+
+Narrow follow-up from develop `f8c56851cce4da428dcdceb160bc4ce59a875090`.
+The owner-reported URL digest establishes the historical requested address,
+not its response HTML. The observations below concern current responses only;
+they do not reconstruct the pilot or independently verify Netflix availability,
+entitlement, territory or tracks on the destination platform.
+
+On the current [Klaus card](https://kinobazaua.com/titles/klaus), parse5 reports
+18 errors: six `missing-whitespace-between-attributes` and twelve
+`unexpected-character-in-attribute-name`. They are unescaped double quotes in
+recommendation anchor `title` and image `alt` attributes, in two carousels after
+the closed viewing accordion. In the inspected response the accordion ends at
+offset84763; affected carousels occupy149802–163191 and163386–174358, at
+lines2166/2177/2183 and2582/2593/2599. These are response-specific locations,
+not selectors or a runtime film exception. Previously even these unrelated
+anchor errors refused the whole page before identity.
+
+The new recovery accepts only those two located error codes in HTML `a`/`img`
+tokens inside an explicitly closed `scrolling-wrapper-flexbox__item` and its
+closed carousel, wholly after the unique closed viewing accordion. An anchor
+must itself be explicitly closed. Original source intervals and DOM ancestry
+must agree; critical headings, metadata tables, canonical links, provider
+anchors, viewing boundaries and supported inline director labels exclude
+recovery. A swallowed tag, unknown/duplicate attribute error, unclosed boundary,
+foreign target namespace or parser-event overflow still refuses before identity.
+HTML is neither rewritten nor reparsed through a different parser. The copied
+report names only `noncritical-recommendation-markup-recovered`, without source
+attributes, raw HTML or destination URLs. Existing image recovery remains
+separate; an image in a carousel cannot bypass its stricter boundary.
+
+A second independent issue was the upper Netflix paragraph: its own plain span
+contains `(укр. аудіо, укр. субтитри)`, followed by catalogue navigation. The exact
+additional navigation tuple is now recognized: `/online/netflix?netflix_audio=1`,
+title `Інші фільми з українською доріжкою на Netflix`, plain text
+`Інші з укр. аудіо →`. It supplies neither a film link nor languages. The original
+Pursuit catalogue tuple remains supported. Modified paths/parameters/hosts,
+provider labels, nested labels, competing anchors and duplicate controls remain
+ambiguous. Own table values still outrank a caption. Missing/unsafe film links
+are not replaced by catalogue links or promoted into usable language evidence.
+
+Current-response comparison used the same in-memory HTML with the pinned
+develop parser/localization code and the patched code; no extra source reads
+were needed for this comparison. Klaus uses the current server-adapter TMDb
+projection supplied through the hidden one-time runner: movie508965 /
+IMDbtt4729430,2019, sole director person124749, `Серджіо Пабло` / `Sergio Pablos`.
+It exactly matches the source's director; no new alias or identity relaxation.
+Alien/Pursuit reuse their previously established selected identity contexts,
+not a claim of newly fetched TMDb metadata.
+
+| Current fixed card | Before → after | Retained result |
+| --- | --- | --- |
+| Klaus2019 | `unsupported-markup/html-parse-errors`, identity not evaluated → matched / partial with recovery notice |6 extracted candidates;2 mapped rows, one Netflix group; ordinary and diagnostic projections both `◐ / + / +` |
+| [Alien1979](https://kinobazaua.com/titles/alien) | matched / ok → unchanged |29 extracted candidates,5 mapped rows; Apple/Rakuten subtitle claims and MEGOGO audio/subtitle claims retained; format-specific negative audio is not “no Ukrainian audio” |
+| [The Pursuit of Happyness2006](https://kinobazaua.com/titles/the-pursuit-of-happyness) | matched / ok → unchanged |19 extracted candidates,3 mapped rows; Netflix audio unknown/subtitles positive; MEGOGO audio/subtitles positive |
+
+These are fixed-card parser/identity/composition checks, **not automatic resolver
+search-quality validation**. The upper block remains territory unknown at source;
+`◐` and the app's existing Ukrainian-region language interpretation are unchanged.
+Original film links remain exact and are not followed during this study.
+
+Accounting: **6 known direct source HTTP attempts =5 Kinobaza title GETs +1
+TMDb Details GET**. The5 Kinobaza responses were200; the TMDb runner returned a
+validated projection but did not expose its exact successful HTTP status.
+Klaus accounts for3 GETs (two extra reads
+while correcting a local inspector/Windows child-spawn issue), Alien1, Pursuit1.
+No automatic source retry, Tavily, person-profile, MOTN, Watch Providers or
+platform-destination request. Additionally3 public TMDb page-open operations
+were attempted for initial identity orientation:2 returned cached public pages,
+1 was unavailable. The web tool's underlying network traffic is not attested;
+these operations are not hidden within the six directly counted attempts.
+Only the later current API projection is used for the Klaus identity check.
+Source HTML stayed in the local inspector's process memory; no source body,
+search snippet or key was archived. The inspector is stopped after verification.
+
+Authored fixtures are fictional structural regressions, not reconstructed owner
+HTML. They cover the new carousel and catalogue shape, all four inline director
+label forms, unsafe/missing film links, caption omissions, altered navigation,
+critical/ambiguous structures, table priority and unchanged source scopes.
+HTML → composition → ordinary/diagnostic Beta table, exact-link opening,
+preview/explicit transfer and no Save are covered separately from live reads.
+
+No changes to identity gates/crosswalk, search policy, source budgets/deadlines,
+link policy, ranking, retention, Beta access, session isolation, initApp or global
+lifecycle/auth. No migrations, flags, Wishlist writes, merge or manual deployment.
+
+Validation of this follow-up:
+
+- **355/355 targeted offline/HTTP regressions passed**, including parser,
+  localization, assisted identity/cascade, resolver, service, report and
+  HTML-to-Beta UI/preview contracts; no failures or skips in that selection.
+- **926 passed,0 failed,19 skipped /945 full offline/HTTP tests**. The19 opt-in
+  skips comprise research/product browser entries and native PostgreSQL entries;
+  they are not success. Relevant product browser tests were run separately.
+- **35/35 relevant browser tests passed**:30 pending-apply/retained-document
+  tests plus the final5-test desktop/tablet/iPhone X375×812/Air420×912 viewport
+  run. The latter includes both ordinary Beta and diagnostic projections of
+  authored recovered HTML, Netflix `◐ / + / +`, exact original tracking link,
+  no catalogue action, no writes on preview, and no discovery on reopen/report.
+  Local Edge/Chromium with mocked Auth/source/DB and external requests blocked;
+  not WebKit or real-device QA. Authored screenshots are local review artefacts,
+  not screenshots of a live source response or an actual Wishlist change.
+- A browser-fixture omission initially failed the recovery-code report assertion:
+  `composeDiscovery` alone does not attach the resolver envelope. Supplying the
+  actual allowlisted extraction diagnostic shape fixed the fixture; assertions
+  and timeouts were unchanged. A sandbox child-spawn denial was rerun with local
+  permission, not treated as a passing test.
+- Syntax and whitespace checks passed;14-document audit:471 local links and292
+  anchors,0 errors. Independent review found/closed the inline director-label
+  recovery hazard; no remaining actionable finding in the final runtime diff.
+- Native PostgreSQL/Windows lifecycle reruns are unnecessary for this parser
+  change: SQL, ledger, platform dependencies and lifecycle/IPC components are
+  unchanged. Existing source access/identity/budget tests reran; no production
+  database operation or deployed authenticated smoke was performed here.

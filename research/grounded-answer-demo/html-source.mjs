@@ -151,6 +151,45 @@ function noncriticalImageError(error, all, html) {
   return true;
 }
 
+function noncriticalRecommendationError(error, all, html) {
+  if (!IMAGE_ATTRIBUTE_RECOVERY.has(error.code)) return false;
+  const accordions = all.filter(n => attr(n, 'id') === 'availabilityAccordion');
+  const end = accordions.length === 1 ? accordions[0].sourceCodeLocation?.endTag?.endOffset : null;
+  if (!Number.isInteger(end)) return false;
+  const targets = all.filter(n => {
+    const s = n.sourceCodeLocation?.startTag;
+    return s && Number.isInteger(error.startOffset) && Number.isInteger(error.endOffset) &&
+      s.startOffset <= error.startOffset && error.startOffset < s.endOffset && error.endOffset <= s.endOffset;
+  });
+  if (targets.length !== 1) return false;
+  const node = targets[0], span = node.sourceCodeLocation.startTag;
+  if (!['a', 'img'].includes(node.tagName) || node.namespaceURI !== 'http://www.w3.org/1999/xhtml' ||
+      html.slice(span.startOffset + 1, span.endOffset).includes('<')) return false;
+  const closed = n => n?.sourceCodeLocation?.startTag && n.sourceCodeLocation.endTag &&
+    n.sourceCodeLocation.startTag.endOffset <= n.sourceCodeLocation.endTag.startOffset;
+  if (node.tagName === 'a' && !closed(node)) return false;
+  let item = node.parentNode;
+  while (item && !hasClass(item, 'scrolling-wrapper-flexbox__item')) item = item.parentNode;
+  const wrapper = item?.parentNode;
+  if (item?.tagName !== 'div' || wrapper?.tagName !== 'div' || !hasClass(wrapper, 'scrolling-wrapper-flexbox') ||
+      !closed(item) || !closed(wrapper) || wrapper.sourceCodeLocation.startOffset < end) return false;
+  const inside = (outer, inner) => outer.startTag.endOffset <= inner.startOffset && inner.endOffset <= outer.endTag.startOffset;
+  if (!inside(wrapper.sourceCodeLocation, item.sourceCodeLocation) || !inside(item.sourceCodeLocation, node.sourceCodeLocation)) return false;
+  const critical = n => ['h1', 'h2', 'table', 'tr', 'td', 'th', 'link'].includes(n.tagName) ||
+    attr(n, 'id') === 'availabilityAccordion' || n.tagName === 'a' && providerName(n) ||
+    // The identity reader also supports these inline director-label shapes.
+    // A recommendation cannot become their authority after markup recovery.
+    n.nodeName === '#text' && clean(n.value) === 'Режисер:' ||
+    ['span', 'strong', 'b'].includes(n.tagName) && text(n) === 'Режисер:';
+  // DOM ancestry is insufficient after parser foster-parenting. Reject critical
+  // structures both in the carousel tree and in its original source interval.
+  for (let p = node; p; p = p.parentNode) if (critical(p)) return false;
+  const w = wrapper.sourceCodeLocation, within = new Set(nodes(wrapper));
+  if (all.some(n => critical(n) && (within.has(n) || n.sourceCodeLocation &&
+      n.sourceCodeLocation.startOffset < w.endOffset && n.sourceCodeLocation.endOffset > w.startOffset))) return false;
+  return true;
+}
+
 // parse5 is lazy: existing Gemini modes still run without installing this parser.
 export async function extractHtml(html, film, { identityCheck, onIdentityBlocked } = {}) {
   if (typeof html !== 'string' || Buffer.byteLength(html) > HTML_LIMIT_BYTES) return { status: 'unsupported-markup', candidates: [], issues: ['html-size-limit'] };
@@ -164,7 +203,18 @@ export async function extractHtml(html, film, { identityCheck, onIdentityBlocked
     const all = nodes(doc), recoveries = errors.filter(e => e.code !== 'missing-doctype');
     // Never silently drop a late critical error behind the event bound. No HTML
     // repair/serialization: identity and extraction use the same parsed tree.
-    if (overflow || recoveries.some(e => !noncriticalImageError(e, all, html))) return { status: 'unsupported-markup', candidates: [], issues: ['html-parse-errors'] };
+    if (overflow) return { status: 'unsupported-markup', candidates: [], issues: ['html-parse-errors'] };
+    const imageRecovery = [], recommendationRecovery = [];
+    for (const error of recoveries) {
+      // A malformed image inside a recommendation must satisfy the entire
+      // carousel boundary, rather than falling through to generic image recovery.
+      let recommendation = false;
+      for (const n of all) if (hasClass(n, 'scrolling-wrapper-flexbox') &&
+          n.sourceCodeLocation?.startOffset <= error.startOffset && n.sourceCodeLocation?.endOffset >= error.endOffset) recommendation = true;
+      if (noncriticalRecommendationError(error, all, html)) recommendationRecovery.push(error);
+      else if (!recommendation && noncriticalImageError(error, all, html)) imageRecovery.push(error);
+      else return { status: 'unsupported-markup', candidates: [], issues: ['html-parse-errors'] };
+    }
     // Internal staged verification can resume extraction against this already
     // validated tree. No DOM, raw HTML or continuation is part of the result.
     const extractChecked = checked => {
@@ -222,7 +272,8 @@ export async function extractHtml(html, film, { identityCheck, onIdentityBlocked
     // Keep the established order and block IDs when all country sections parse.
     const candidates = [...(countryValid ? countryCandidates : []), ...independentCandidates];
     const issues = [...(countryValid ? countryIssues : []), ...independentIssues, ...(countryIssue ? [countryIssue] : []), ...localization.issues,
-      ...(recoveries.length ? ['noncritical-image-markup-recovered'] : [])];
+      ...(imageRecovery.length ? ['noncritical-image-markup-recovered'] : []),
+      ...(recommendationRecovery.length ? ['noncritical-recommendation-markup-recovered'] : [])];
     if (candidates.length > 100) return fail('candidate-count-limit');
     const availabilitySignals = candidates.filter(c => c.territory).map(c => ({ provider: c.provider, href: c.href, territory: c.territory,
       state: 'source-section-claim', value: 'available', access: 'unknown', upstream: 'JustWatch', basis: 'Explicit country heading/panel, not href presence or account entitlement.' }));
