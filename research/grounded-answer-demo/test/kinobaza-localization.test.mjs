@@ -5,7 +5,7 @@ import { extractHtml, fetchHtmlCandidates, htmlScenario, canonicalKinobazaURL, c
 import { FILMS, selectRequest } from '../config.mjs';
 import { runDiscovery, authoredDiscoveryData, composeDiscovery } from '../discovery.mjs';
 import { prepareDraft, compactFields } from '../public/discovery-client.mjs';
-import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge, authoredDuneLanguageMarkup } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge, authoredDuneLanguageMarkup, netflixCatalogueBlock } from './kinobaza-localization.fixture.mjs';
 
 const parse = (body, film = 'coherence') => extractHtml(body, FILMS[film]);
 const selection = film => htmlScenario(FILMS[film], { discovery: 'digital-ua' });
@@ -34,6 +34,104 @@ test('independent provider blocks retain exact hrefs, negative labels and litera
   assert.equal(megogo.audio.state, 'unknown'); assert.equal(megogo.subtitles.state, 'reported-positive');
   assert.equal(apple.href, 'https://example.com/fictional?x=%2F&y=1');
   assert.doesNotMatch(JSON.stringify(apple), /Atmos|5\.1|codec|channels/);
+});
+
+test('Netflix plain caption span belongs to its own film link, never the auxiliary catalogue', async () => {
+  const href = 'https://www.netflix.com/title/900001234?authored=%2fEXACT&x=1';
+  const r = await parse(localizedMarkup(netflixCatalogueBlock({ href: href.replace('&', '&amp;') })));
+  assert.equal(r.identity.status, 'matched');
+  const block = r.localization.blocks.find(b => b.provider === 'netflix');
+  assert.ok(block); assert.equal(block.audio.state, 'unknown'); assert.equal(block.subtitles.state, 'reported-positive');
+  assert.deepEqual(block.subtitles.evidence, [{ label: 'укр. субтитри', literal: 'укр. субтитри', state: 'positive' }]);
+  assert.equal(block.href, href); assert.deepEqual(block.issues, []);
+  const netflix = r.candidates.filter(c => c.provider === 'netflix');
+  assert.equal(netflix.length, 1); assert.equal(netflix[0].href, href); assert.equal(netflix[0].blockId, block.blockId);
+  assert.ok(!r.candidates.some(c => c.href?.includes('/online/netflix')));
+  const row = compose(r).rows.find(row => row.provider.key === 'netflix');
+  assert.ok(row); assert.equal(row.kinobazaLocalization.subtitles.state, 'reported-positive');
+  assert.equal(row.kinobazaLocalization.audio.state, 'unknown'); assert.equal(row.link.href, href);
+  assert.equal(row.country, null); assert.equal(row.availability.state, 'unknown'); assert.equal(row.audio.state, 'unknown');
+});
+
+test('Netflix auxiliary catalogue can accompany a direct caption without adding audio or a second film link', async () => {
+  const block = netflixCatalogueBlock().replace('<span>(укр. субтитри)</span>', ' (укр. субтитри) ');
+  const r = await parse(localizedMarkup(block));
+  assert.equal(r.localization.blocks[0].subtitles.state, 'reported-positive');
+  assert.equal(r.localization.blocks[0].audio.state, 'unknown');
+  assert.equal(r.candidates.filter(c => c.provider === 'netflix').length, 1);
+  assert.ok(!JSON.stringify(r.candidates).includes('/online/netflix'));
+});
+
+test('Netflix catalogue tooltip never supplies languages omitted from the own caption', async () => {
+  for (const caption of ['', '(укр. аудіо)']) {
+    const r = await parse(localizedMarkup(netflixCatalogueBlock({ caption }))), netflix = r.localization.blocks[0];
+    assert.equal(netflix.audio.state, caption ? 'reported-positive' : 'unknown');
+    assert.equal(netflix.subtitles.state, 'unknown');
+    assert.equal(r.candidates.filter(c => c.provider === 'netflix').length, 1);
+  }
+});
+
+test('Netflix missing or unsafe film href does not promote the catalogue into a playable URL', async () => {
+  for (const href of [null, 'javascript:alert(1)']) {
+    const r = await parse(localizedMarkup(netflixCatalogueBlock({ href })));
+    const block = r.localization.blocks.find(b => b.provider === 'netflix');
+    assert.ok(block); assert.equal(block.href, null);
+    assert.equal(block.audio.state, 'unknown'); assert.equal(block.subtitles.state, 'reported-positive');
+    const candidates = r.candidates.filter(c => c.provider === 'netflix');
+    assert.equal(candidates.length, 1); assert.equal(candidates[0].href, null);
+    assert.ok(!JSON.stringify(r.candidates).includes('/online/netflix'));
+    const row = compose(r).rows.find(row => row.provider.key === 'netflix');
+    assert.ok(row); assert.equal(row.link.href, null); assert.equal(row.kinobazaLocalization.subtitles.state, 'reported-positive');
+  }
+});
+
+test('Netflix caption remains unknown for ambiguous catalogue, provider, span or nested-element boundaries', async () => {
+  const base = netflixCatalogueBlock();
+  const examples = [
+    netflixCatalogueBlock({ catalogueHref: '/online/megogo' }),
+    netflixCatalogueBlock({ catalogueHref: '/online/netflix?authored=1' }),
+    base.replace('Інші фільми →', 'Інший сервіс →'),
+    base.replace('на Netflix', 'на MEGOGO'),
+    base.replace('</p>', `${badge('megogo')}</p>`),
+    base.replace('</span>', '</span><span>(укр. аудіо)</span>'),
+    base.replace('<span>', '<span class="authored-unrecognized">'),
+    base.replace('(укр. субтитри)</span>', '<b>(укр. субтитри)</b></span>'),
+    base.replace('<span>', '<em>').replace('</span>', '</em>'),
+  ];
+  for (const markup of examples) {
+    const r = await parse(localizedMarkup(markup));
+    const block = r.localization.blocks.find(b => b.provider === 'netflix');
+    assert.ok(block); assert.equal(block.audio.state, 'unknown'); assert.equal(block.subtitles.state, 'unknown');
+    assert.ok(block.issues.some(issue => ['ambiguous-provider-block', 'unsupported-provider-block'].includes(issue)));
+    assert.ok(!r.candidates.some(c => c.href?.startsWith('/online/')));
+  }
+});
+
+test('Netflix table values take priority over a positive caption even for negative, unknown or absent fields', async () => {
+  for (const [rows, audio, subtitles] of [
+    [[['Укр. звук', '-'], ['Укр. субтитри', '-']], 'reported-negative', 'reported-negative'],
+    [[['Укр. звук', '?'], ['Укр. субтитри', '']], 'unknown', 'unknown'],
+    [[['Мова оригіналу', 'українська']], 'unknown', 'unknown'],
+    [[], 'unknown', 'unknown'],
+  ]) {
+    const block = tableBlock('netflix', rows, 'https://www.netflix.com/title/900001234')
+      .replace('</table>', '</table> (укр. аудіо, укр. субтитри)');
+    const r = await parse(localizedMarkup(block)), netflix = r.localization.blocks[0];
+    assert.equal(netflix.audio.state, audio); assert.equal(netflix.subtitles.state, subtitles);
+    assert.ok(netflix.audio.evidence.every(item => item.label !== 'укр. аудіо'));
+    assert.ok(netflix.subtitles.evidence.every(item => item.label !== 'укр. субтитри'));
+  }
+});
+
+test('Netflix subtitles cannot enrich adjacent MEGOGO audio or bypass identity withholding', async () => {
+  const body = localizedMarkup(netflixCatalogueBlock() + paragraphBlock('megogo', '(укр. аудіо)', 'https://megogo.net/ua/view/900000-authored.html'));
+  const r = await parse(body), [netflix, megogo] = r.localization.blocks;
+  assert.equal(netflix.audio.state, 'unknown'); assert.equal(netflix.subtitles.state, 'reported-positive');
+  assert.equal(megogo.audio.state, 'reported-positive'); assert.equal(megogo.subtitles.state, 'unknown');
+  assert.deepEqual(megogo.issues, []);
+  const refused = await parse(body.replace('Coherence (2013)', 'Coherence (2020)'));
+  assert.equal(refused.identity.status, 'unresolved'); assert.deepEqual(refused.candidates, []); assert.equal(refused.localization, undefined);
+  assert.deepEqual(compose(refused).rows, []);
 });
 
 test('missing/unknown signs and original language do not become offered audio; conflicting identical labels stay conflicting', async () => {

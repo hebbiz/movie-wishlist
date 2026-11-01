@@ -3963,3 +3963,50 @@ stable-ID precedence, title/year conflicts and withholding; it is not live HTML.
 Browser/Windows lifecycle/native DB suites are not repeated: no UI, lifecycle,
 SQL, access, request-policy or link-policy components changed. No merge, manual
 deployment, flags/secrets changes or Wishlist writes.
+
+## Netflix caption/catalogue follow-up — 2026-11-01
+
+This supersedes the Netflix-unknown/extraction-partial snapshot above, not the
+person-profile evidence. A fresh read of the same card identifies the loss in
+`kinobaza-localization.mjs`, before composition or UI: the upper Netflix
+`p.mt-2.d-flex.align-items-center` contains a labelled film anchor, a plain
+`span` with `(укр. субтитри)`, and a separate `Інші фільми →` catalogue anchor.
+The old extractor treated the latter as another ambiguous link; independently,
+its caption branch accepted only one child element and direct text, not a span.
+
+The actual film href is `https://www.netflix.com/title/70044605`; the catalogue
+href is `/online/netflix`, with the title `Інші фільми з українськими субтитрами
+або аудіо на Netflix`. No destination was visited. The narrow shared extractor
+fix accepts at most one attribute-free, text-only caption span and ignores only
+that exact same-service catalogue route/title/text as auxiliary navigation.
+The catalogue is never a film candidate or language evidence. Unexpected links,
+provider mismatches, multiple/nested spans and other ambiguous structures remain
+withheld for language interpretation. The own table branch is unchanged and
+still takes precedence, including negative/conflicting/missing fields.
+
+After the fix, the current card is `matched`, extraction `ok`, 19 candidates,
+2 provider blocks and 3 mapped rows. Netflix retains its exact admitted film
+href and has unknown audio / reported-positive subtitles; the table displays
+`◐ / ? / +`. MEGOGO remains `◐ / + / +`. Both diagnostic and ordinary Beta
+projections produce the same comparison; actual source territory and offer
+binding remain unknown. These are source claims under the existing app-UA
+interpretation, not verified availability or entitlement. A missing/unsafe film
+href never becomes a catalogue link; existing no-link/explicit-clear handling
+is retained without relaxing link-bound language interpretation.
+
+Validation: 305/305 targeted offline/HTTP tests passed, 0 skips; 5/5 existing
+real-form browser tests passed on desktop, tablet and iPhone X/Air-size
+viewports (Edge/Chromium emulation, not a real iPhone/WebKit). Four initial
+authored regressions reproduced the pre-fix loss; all 7 new extraction cases
+now pass. HTML-to-table controller tests cover ordinary Beta vs diagnostic
+visibility, literal subtitle provenance, MEGOGO isolation, exact open/preview/
+apply, missing/unsafe film links, and explicit clearing of an existing URL.
+Fixtures are authored structural examples, not archived/reconstructed HTML.
+
+This follow-up consumed 2 direct card GETs (inspection and post-fix verification),
+both HTTP 200, 239167 bytes. TMDb/Tavily/MOTN/Watch Providers/catalogue/platform
+requests: 0. The earlier PR evidence ledger remains separate: cumulative direct
+reads for PR #219 are 3 TMDb + 3 card GETs, plus the previously recorded web
+lookups with unknown internal traffic. Raw responses and credentials were not
+saved. No search policy, identity gate, budget, UI/auth lifecycle, Beta access,
+SQL, flags or source URL rewriting changes; no merge or manual deployment.
