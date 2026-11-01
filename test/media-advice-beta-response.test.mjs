@@ -9,6 +9,9 @@ import { createKinobazaResolver, resolverRefusalQuery } from '../netlify/lib/kin
 import { safeMediaReport } from '../assets/media-advice-report.mjs';
 import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { detailsData, providersData, motnData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
+import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
+import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 
 const user = '00000000-0000-4000-8000-000000000001', group = '00000000-0000-4000-8000-000000000002';
 const caps = diagnostics => ({ mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics });
@@ -95,6 +98,12 @@ test('Beta authorization and diagnostics remain independent of actual Tavily-onl
   const confirmed = 'https://kinobazaua.com/titles/authored-original-2001';
   const stages = new Set(['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
   const keys = { TMDB_READ_ACCESS_TOKEN: 'AUTHORED_TMDB_KEY', MOTN_API_KEY: 'AUTHORED_MOTN_KEY', TAVILY_API_KEY: 'AUTHORED_TAVILY_KEY' };
+  const details = projectTmdbIdentityFor(detailsData(IDS[0]), { tmdbId: IDS[0], imdbId: `tt${IDS[0]}` });
+  const identityContext = projectFilmIdentityContext(details);
+  const queryFilm = { tmdbId: IDS[0], originalTitle: details.metadata.originalTitle.value,
+    identityTitle: details.metadata.requestedTitle.value, year: Number(details.metadata.releaseDate.value.slice(0, 4)),
+    directorCount: details.metadata.directors.items.length, directorPeople: projectDirectorPeople(details.metadata.directors),
+    titleAliases: identityContext.titleEvidence.map(entry => entry.title), identityContext };
   for (const diagnostics of [true, false]) {
     const operations = [], reserved = [], sent = [];
     let searches = 0;
@@ -115,7 +124,7 @@ test('Beta authorization and diagnostics remain independent of actual Tavily-onl
       if (url === 'https://api.tavily.com/search') {
         const search = ++searches;
         assert.equal(init.method, 'POST'); assert.equal(init.headers.Authorization, `Bearer ${keys.TAVILY_API_KEY}`);
-        if (search === 2) assert.equal(JSON.parse(init.body).query, resolverRefusalQuery({ originalTitle: 'Authored original', identityTitle: 'Вигаданий фільм', year: 2001 }));
+        if (search === 2) assert.equal(JSON.parse(init.body).query, resolverRefusalQuery(queryFilm));
         return Response.json({ results: [{ url: search === 1 ? first : confirmed,
           content: 'PRIVATE_SEARCH_SNIPPET', title: 'PRIVATE_SEARCH_TITLE', score: 1 }] });
       }

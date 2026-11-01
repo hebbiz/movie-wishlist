@@ -6,6 +6,7 @@ import { fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted
 import { CARD, markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
+import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
 
 test('recovered noncritical markup is named without retaining parser attributes or arbitrary issue content', () => {
   const report = safeMediaReport({ resolver: { cards: [{ identity: 'matched', extractionDiagnostic: {
@@ -321,4 +322,58 @@ test('ordinary Beta product projection omits cascade diagnostics independently o
   const projected=productMediaResult(result,{mykola_media_advice:true,mykola_media_advice_diagnostics:false});
   assert.doesNotMatch(JSON.stringify(projected),/resolver|strategy|years|gates|stableId|director|PRIVATE|explicit-stable-title-year-match/);
   const report=safeMediaReport(result);assert.match(report,/Identity route stable-id-title-year/);
+});
+
+test('linked director profile diagnostics/report keep exact allowlisted outcomes and counts without names, IDs, URLs or raw fields', () => {
+  const input = { status: 'confirmed', reason: 'confirmed-person-profile-facts', basis: 'exact-name-birthdate-role',
+    sourceAttempts: 2, reservationRequests: 2, reservationsAcknowledged: 2, tmdbPersonCalls: 1, kinobazaPersonCalls: 1,
+    attempts: [
+      { stage: 'tmdb-person', status: 'response-received', httpStatus: 200, name: 'PRIVATE_NAME', body: 'PRIVATE_BODY' },
+      { stage: 'kinobaza-person', status: 'response-received', httpStatus: 200, sourceURL: 'https://private.example/PRIVATE', html: 'PRIVATE_HTML' },
+      { stage: 'PRIVATE_STAGE', status: 'PRIVATE_STATUS', httpStatus: 999, secret: 'PRIVATE_KEY' },
+    ], accounting: 'reserved-attempts-spent-no-retry',
+    comparisons: { stableIdConflict: false, stableIdMatch: false, birthdayConflict: false, birthdayMatch: true, latinNameMatch: true, nativeAliasMatch: true, raw: 'PRIVATE_COMPARISON' },
+    tmdbPersonId: 'PRIVATE_PERSON_ID', imdbId: 'PRIVATE_IMDB', dateOfBirth: 'PRIVATE_BIRTHDAY',
+    name: 'PRIVATE_NAME', aliases: ['PRIVATE_ALIAS'], profileURL: 'https://private.example/PRIVATE',
+    sourceURL: 'https://private.example/?token=PRIVATE', rawHTML: 'PRIVATE_HTML', credentials: 'PRIVATE_KEY',
+  };
+  const before = JSON.stringify(input), safe = safeDirectorProfileDiagnostic(input);
+  assert.deepEqual(safe, { status: 'confirmed', reason: 'confirmed-person-profile-facts', basis: 'exact-name-birthdate-role',
+    sourceAttempts: 2, reservationRequests: 2, reservationsAcknowledged: 2, tmdbPersonCalls: 1, kinobazaPersonCalls: 1,
+    attempts: [{ stage: 'tmdb-person', status: 'response-received', httpStatus: 200 }, { stage: 'kinobaza-person', status: 'response-received', httpStatus: 200 }],
+    accounting: 'reserved-attempts-spent-no-retry',
+    comparisons: { stableIdConflict: false, stableIdMatch: false, birthdayConflict: false, birthdayMatch: true, latinNameMatch: true, nativeAliasMatch: true } });
+  assert.equal(JSON.stringify(input), before);
+  const report = safeMediaReport({ resolver: { directorProfile: input } });
+  assert.ok(report.includes(`Linked director profile: ${JSON.stringify(safe)}.`));
+  assert.doesNotMatch(report, /PRIVATE|https?:|rawHTML|profileURL|sourceURL|dateOfBirth|tmdbPersonId|imdbId|aliases|credentials/);
+  const product = productMediaResult({ rows: [], resolver: { directorProfile: input } }, { mykola_media_advice: true, mykola_media_advice_diagnostics: false });
+  assert.doesNotMatch(JSON.stringify(product), /directorProfile|PRIVATE|reason|basis|sourceAttempts/);
+});
+
+test('director diagnostic prefix injection and malformed counts/states never become allowed report content', () => {
+  const safe = safeDirectorProfileDiagnostic({ status: 'PRIVATE_STATUS', reason: 'director-profile-PRIVATE_ERROR', basis: 'PRIVATE_BASIS',
+    sourceAttempts: 3, reservationRequests: '2', reservationsAcknowledged: -1, tmdbPersonCalls: Infinity, kinobazaPersonCalls: null,
+    attempts: [{ stage: 'PRIVATE_STAGE', status: 'PRIVATE_STATUS', httpStatus: 999, sourceURL: 'https://private.example/PRIVATE' }],
+    accounting: 'PRIVATE_ACCOUNTING', comparisons: { birthdayMatch: 'true', latinNameMatch: 'PRIVATE_FLAG' }, raw: 'PRIVATE_BODY' });
+  assert.deepEqual(safe, { status: 'unknown', reason: 'unknown', basis: null, sourceAttempts: null, reservationRequests: null,
+    reservationsAcknowledged: null, tmdbPersonCalls: null, kinobazaPersonCalls: null,
+    attempts: [{ stage: 'unknown', status: 'unknown', httpStatus: null }], accounting: 'unknown',
+    comparisons: { stableIdConflict: null, stableIdMatch: null, birthdayConflict: null, birthdayMatch: null, latinNameMatch: null, nativeAliasMatch: null } });
+  const report = safeMediaReport({ resolver: { directorProfile: { ...safe, reason: 'profile-PRIVATE', sourceURL: 'https://private.example/PRIVATE' } } });
+  assert.match(report, /Linked director profile: \{"status":"unknown","reason":"unknown","basis":null/);
+  assert.doesNotMatch(report, /PRIVATE|https?:|sourceURL|raw|Infinity/);
+});
+
+test('contextual release-year confirmation is recognized separately from same-year and shared-ID routes in the short report', async () => {
+  const film = { ...cascadeFilm, year: 2008, identityContext: { tmdbId: cascadeFilm.tmdbId, titleEvidence: [],
+    releaseEvidence: [{ date: '2006-09-09T00:00:00.000Z', year: 2006, type: 1, country: 'CA', language: 'en' }] } };
+  const identity = await authoredCascadeIdentity({ film, html: markup({ year: 2006 }) });
+  assert.equal(identity.status, 'matched'); assert.equal(identity.reason, 'explicit-title-release-year-director-match');
+  const report = safeMediaReport({ resolver: { cards: [{ ...reportCard(identity), releaseYearEvidence: identity.releaseYearEvidence,
+    sourceURL: 'https://private.example/PRIVATE', personId: 'PRIVATE_PERSON' }] } });
+  assert.match(report, /Card: matched; reason explicit-title-release-year-director-match; gate none-or-unknown/);
+  assert.match(report, /Identity route title-release-year-director; years \{"selected":2008,"source":2006,"delta":-2\}/);
+  assert.match(report, /"yearEqual":false/); assert.match(report, /"director-alias":"pass"/);
+  assert.doesNotMatch(report, /PRIVATE|https?:|2006-09-09|releaseYearEvidence|sourceURL|personId/);
 });

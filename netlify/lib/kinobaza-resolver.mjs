@@ -1,6 +1,9 @@
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
 import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
 import { createHash } from 'node:crypto';
+import { initialReleaseEvidence } from '../../shared/film-release-year.mjs';
+import { createDirectorVerifier } from './kinobaza-director-verifier.mjs';
+import { safeDirectorProfileDiagnostic } from '../../shared/director-profile-diagnostics.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
 const titleNames = film => {
@@ -11,6 +14,23 @@ const titleNames = film => {
   });
 };
 export function resolverQueries(film) {
+  const context = film.identityContext;
+  if (Number.isSafeInteger(film.tmdbId) && film.tmdbId > 0 && context?.tmdbId === film.tmdbId && Array.isArray(context.titleEvidence)) {
+    const entries = context.titleEvidence;
+    const english = entries.find(e => e.source === 'translation' && e.language === 'en' && text(e.title));
+    const primary = text(english?.title) || text(film.originalTitle) || text(film.identityTitle);
+    if (!primary) return [];
+    const other = [film.identityTitle,film.originalTitle,...titleNames(film)].map(text)
+      .find(n => n && n.normalize('NFC').toLocaleLowerCase('uk-UA') !== primary.normalize('NFC').toLocaleLowerCase('uk-UA'));
+    const firstYear = initialReleaseEvidence(film)[0]?.year ?? film.year;
+    const quoted = s => '"' + s.replace(/["\\]/g,' ') + '"';
+    const build = parts => [...parts, Number.isInteger(firstYear) ? firstYear : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
+    const first = build([quoted(primary)]);
+    const person = film.directorCount === 1 && film.directorPeople?.length === 1 ? film.directorPeople[0] : null;
+    const director = person?.names?.map(text).find(n => /^[\p{Script=Latin}\p{M} .,'’()-]+$/u.test(n));
+    const second = build([quoted(primary),other ? quoted(other) : '',director ? quoted(director) : '']);
+    return [first,second.length <= 550 ? second : build([other ? quoted(other) : primary.replace(/["\\]/g,' ')])];
+  }
   const names = titleNames(film).slice(0, 2), clean = s => s.replace(/["\\]/g, ' ');
   const query = name => [name, Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
   return names.length ? [query('"' + clean(names[0]) + '"'), query(names.length > 1 ? '"' + clean(names[1]) + '"' : clean(names[0]))] : [];
@@ -20,6 +40,7 @@ export function resolverQueries(film) {
 // year token; this never supplies a slug, URL or identity evidence. Keep the
 // existing alternate query for the successful zero-admitted-results path.
 export function resolverRefusalQuery(film) {
+  if (Number.isSafeInteger(film.tmdbId) && film.tmdbId > 0 && film.identityContext?.tmdbId === film.tmdbId) return resolverQueries(film)[1];
   const names = titleNames(film).slice(0, 2);
   if (names.length < 2) return resolverQueries(film)[1];
   const query = [...names.map(name => '"' + name.replace(/["\\]/g, ' ') + '"'),
@@ -114,11 +135,13 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
 }
 
 export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, onIdentityDiagnostic } = {}) {
-  return async (film, { reserve, fetchImpl, calls, signal }) => {
+  return async (film, { reserve, fetchImpl, calls, signal, sourceCap = 8, tmdbToken }) => {
     const queries = resolverQueries(film), cards = [], urls = new Set(), examined = new Set();
+    const director = createDirectorVerifier({film,tmdbToken,sourceCap,reserve,fetchImpl,calls,signal});
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
     const done = (status, result = null, choices = []) => {
       summary.candidates = urls.size; summary.unexamined = urls.size - examined.size;
+      summary.directorProfile = safeDirectorProfileDiagnostic(director.diagnostic());
       summary.status = resolverStatuses.has(status) ? status : 'unknown'; return { status, result, choices, resolver: summary };
     };
     if (!apiKey) return done('not-evaluated-missing-search-key');
@@ -158,7 +181,8 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         summary.cardCalls++; examined.add(url); const call = { stage, status: 'attempt-reserved' }; calls.push(call);
         try { const r = await fetchImpl(target, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('card-transport'); }
       };
-      const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic });
+      const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic,
+        ...(sourceCap === 10 ? {verifyDirector:director.verify} : {}) });
       cards.push(result);
       summary.cards.push({ identity: result.identity?.status ?? 'unresolved', reason: result.identity?.reason ?? null, extraction: result.status, candidates: result.candidates?.length ?? 0,
         diagnostics: safeIdentityDiagnostic(result.identity?.diagnostics),

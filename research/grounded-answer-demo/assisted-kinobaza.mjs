@@ -2,6 +2,7 @@
 import { extractHtml, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS } from './html-source.mjs';
 import { identityGates } from '../../shared/media-advice-diagnostics.mjs';
 import { lookupDirectorAliases } from '../../shared/director-alias-crosswalk.mjs';
+import { releaseYearEvidence } from '../../shared/film-release-year.mjs';
 
 export function admitKinobazaURL(value) {
   // Validate original spelling BEFORE URL normalization (default ports/dot paths).
@@ -49,11 +50,12 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
       originalAliasMatch: originals.length === 1 ? aliases.has(normalize(originals[0])) : null,
       yearEqual: parsed && film.year ? Number(parsed[2]) === film.year : null,
       directorAliasMatch: directors.size && directorAliases.size ? [...directors].every(d => directorAliases.has(normalize(d))) : null },
-      strategy: status !== 'matched' ? null : directorBypassed ? 'stable-id-title-year' : stableMatch ? 'stable-id-title-director-year-variance' : 'title-year-director',
+      strategy: status !== 'matched' ? null : directorBypassed ? 'stable-id-title-year' : stableMatch ? 'stable-id-title-director-year-variance' : sourceYear !== selectedYear ? 'title-release-year-director' : 'title-year-director',
       years: { selected: selectedYear, source: sourceYear, delta: selectedYear !== null && sourceYear !== null ? sourceYear - selectedYear : null },
       gates: Object.fromEntries(identityGates.map((g,i) => [g, directorBypassed && g.startsWith('director-') ? 'not-evaluated' : status === 'matched' || i < failedAt ? 'pass' : i === failedAt ? status === 'mismatch' ? 'fail' : 'unresolved' : 'not-evaluated'])) };
     if (reason === 'source-identity-structure-limit') for (const key of Object.keys(diagnostics.comparisons)) diagnostics.comparisons[key] = null;
     const result = { status, reason, basis: 'selected TMDb projection versus explicit source identity; alias non-match is not independent proof of another film; no transliteration or user override', observed: counts, diagnostics };
+    if (status === 'matched' && sourceYear !== selectedYear && !stableMatch) result.releaseYearEvidence = releaseYearEvidence(film, sourceYear);
     if (status === 'matched' && !directorBypassed && crosswalk?.status === 'confirmed' && [...directors].some(d => !directDirectorAliases.has(normalize(d)))) {
       result.directorAliasEvidence = crosswalk.provenance;
     }
@@ -129,7 +131,8 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   if (!aliases.has(normalize(originals[0]))) return outcome('unresolved', 'source-original-title-unestablished');
   const stableMatch = stable.some(s => s.filmScope && expected[s.namespace] && s.id === expected[s.namespace]);
   if (!year(film.year)) return outcome('unresolved', 'selected-year-missing');
-  if (Number(heading[2]) !== film.year && !stableMatch) return outcome('mismatch', 'source-year-conflict-without-stable-crosswalk');
+  const knownRelease = releaseYearEvidence(film, Number(heading[2])).length > 0;
+  if (Number(heading[2]) !== film.year && !stableMatch && !knownRelease) return outcome('mismatch', 'source-year-conflict-without-stable-crosswalk');
   // Explicit same-system film ID plus independently matching title/year is a
   // stronger route than name spelling. Canonical, title/original scope, malformed
   // IDs and all proven ID conflicts have already been checked above.
@@ -144,10 +147,35 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   // Without a shared film ID, or with a differing year, director proof is still
   // required. A spelling difference is unresolved, not person-conflict evidence.
   if (![...directors].every(d => directorAliases.has(normalize(d)))) return outcome('unresolved', 'director-alias-unestablished');
-  return outcome('matched', stableMatch ? 'explicit-stable-and-structural-match' : 'explicit-title-year-director-match');
+  return outcome('matched', stableMatch ? 'explicit-stable-and-structural-match' : Number(heading[2]) !== film.year ? 'explicit-title-release-year-director-match' : 'explicit-title-year-director-match');
 }
 
-export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, signal, onIdentityDiagnostic, directorAliasLookup } = {}) {
+// A linked profile is eligible only in the same bounded labelled film metadata,
+// not a recommendation/person link elsewhere on the page. It is a pointer, not
+// proof of identity. No source URL is generated from a name or slug.
+export function linkedDirectorProfile(all) {
+  const active = all.filter(n => !excluded(n));
+  const headings = active.filter(n => n.tagName === 'h1');
+  const accordions = active.filter(n => attr(n,'id') === 'availabilityAccordion');
+  if (headings.length !== 1 || accordions.length !== 1) return null;
+  const rows = active.filter(n => n.tagName === 'tr').filter(row => {
+    const cells = (row.childNodes ?? []).filter(n => ['td','th'].includes(n.tagName));
+    return cells.length === 2 && text(cells[0]) === 'Режисер:';
+  });
+  if (rows.length !== 1) return null;
+  const row = rows[0], cells = row.childNodes.filter(n => ['td','th'].includes(n.tagName));
+  let table = row.parentNode; while (table && table.tagName !== 'table') table = table.parentNode;
+  if (!(table?.sourceCodeLocation?.startOffset >= headings[0].sourceCodeLocation?.endOffset &&
+      table.sourceCodeLocation?.endOffset <= accordions[0].sourceCodeLocation?.startOffset)) return null;
+  const links = [], stack = [cells[1]];
+  while (stack.length) { const n = stack.pop(); if (n.tagName === 'a') links.push(n); if (!['script','style','template','noscript','iframe'].includes(n.tagName)) stack.push(...n.childNodes ?? []); }
+  if (links.length !== 1 || !text(cells[1]) || text(cells[1]) !== text(links[0])) return null;
+  const href = attr(links[0],'href');
+  const url = typeof href === 'string' && /^\/persons\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(href) ? 'https://kinobazaua.com' + href : href;
+  return typeof url === 'string' && url.length <= 512 && /^https:\/\/kinobazaua\.com\/persons\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ? {sourceURL:url,sourceAlias:text(cells[1])} : null;
+}
+
+export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, signal, onIdentityDiagnostic, directorAliasLookup, verifyDirector } = {}) {
   if (!admitKinobazaURL(sourceURL)) throw new Error('Unadmitted source');
   const controller = new AbortController(); const abort = () => controller.abort(); signal?.addEventListener('abort', abort, { once: true });
   if (signal?.aborted) controller.abort();
@@ -167,8 +195,23 @@ export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeou
     reader = r.body.getReader(); const chunks = []; let bytes = 0;
     while (true) { const part = await bounded(reader.read()); if (part.done) break; bytes += part.value.byteLength; if (bytes > maxBytes) { void reader.cancel().catch(() => {}); return fail('response-too-large', r.status); } chunks.push(part.value); }
     const html = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
+    // Card body has finished. Optional person verification has its own bounded
+    // waits plus the handler's unchanged end-to-end deadline, not a second GET.
+    clearTimeout(timer);
     if (/captcha|cf-chl-|challenge-platform/i.test(html)) return fail('challenge-unsupported-no-retry', r.status);
-    const extracted = await extractHtml(html, film, { identityCheck: all => assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, directorAliasLookup }) });
+    const extracted = await bounded(extractHtml(html, film, { identityCheck: async all => {
+      const checked = assistedIdentity(all, film, sourceURL, {directorAliasLookup});
+      const pointer = checked.reason === 'director-alias-unestablished' && typeof verifyDirector === 'function' ? linkedDirectorProfile(all) : null;
+      let proof;
+      if (pointer && !controller.signal.aborted) { try { proof = await bounded(verifyDirector(pointer)); } catch {} }
+      const person = film.directorCount === 1 && film.directorPeople?.length === 1 ? film.directorPeople[0] : null;
+      const valid = person?.namespace === 'tmdb:person' && Number.isSafeInteger(person.personId) && person.personId > 0 &&
+        proof?.status === 'confirmed' && proof.provenance?.namespace === person.namespace &&
+        proof.provenance.personId === person.personId && proof.provenance.scope === 'kinobaza-director-identity' &&
+        proof.provenance.sourceURL === pointer?.sourceURL && proof.aliases?.length === 1 && normalize(proof.aliases[0]) === normalize(pointer.sourceAlias);
+      const lookup = valid ? candidate => candidate.namespace === person.namespace && candidate.personId === person.personId ? proof : {status:'unresolved'} : directorAliasLookup;
+      return assistedIdentity(all, film, sourceURL, {onIdentityDiagnostic,directorAliasLookup:lookup});
+    } }));
     const receivedAt = new Date().toISOString();
     if (extracted.localization) extracted.localization.provenance = { source: 'Kinobaza HTML', sourceURL, receivedAt, method: 'initial HTML source blocks; assisted card', upstream: 'not-established' };
     return { ...extracted, sourceURL, receivedAt, bytes, httpStatus: r.status, requestsMade: 1 };

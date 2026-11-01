@@ -22,11 +22,38 @@ test('cascade local comparison loads fixed baseline code and compares the same a
     directorCount: 1, directorAliases: ['Authored director'], titleAliases: [] };
   const html = markup({ director: 'Unverified authored spelling', stable: `<tr><td>IMDb:</td><td>${film.imdbId}</td></tr>` });
   const result = await compareCascadeCard(html, film, 'https://kinobazaua.com/titles/authored-card', baseline);
-  assert.equal(result.baselineSha, CASCADE_BASELINE_SHA); assert.equal(result.execution, 'same-current-response-policy-comparison');
+  assert.equal(result.baselineSha, CASCADE_BASELINE_SHA); assert.equal(result.execution, 'same-current-response-policy-comparison-before-optional-profile');
   assert.equal(result.before.identity, 'unresolved'); assert.equal(result.before.reason, 'director-alias-unestablished');
   assert.equal(result.after.identity, 'matched'); assert.equal(result.after.reason, 'explicit-stable-title-year-match');
   assert.ok(result.localParseMs.before >= 0); assert.ok(result.localParseMs.after >= 0);
   assert.doesNotMatch(JSON.stringify(result), /<html|<td|html-archive|AUTHORED_TMDB_KEY|AUTHORED_TAVILY_KEY/);
+});
+
+test('production comparison reconstructs the prior service title evidence instead of lending new translations to its baseline gate', async t => {
+  const baselineSha = '21d1be24acf2b654254c38c9b252246ed8de1343';
+  const baseline = await loadCascadeBaseline(baselineSha);
+  t.mock.method(globalThis, 'fetch', () => assert.fail('same authored-byte comparison performs no HTTP'));
+  const film = { tmdbId: IDS[0], imdbId: `tt${IDS[0]}`, identityTitle: 'Вигаданий фільм', originalTitle: 'Authored nichtenglischer Titel', year: 2001,
+    directorCount: 1, directorAliases: ['Authored director'],
+    titleAliases: ['Вигаданий фільм', 'Authored nichtenglischer Titel', 'Authored English translation', 'Authored historical alias', 'Local diagnostic control spelling'],
+    identityContext: { tmdbId: IDS[0], titleEvidence: [
+      { title: 'Authored nichtenglischer Titel', source: 'original' },
+      { title: 'Вигаданий фільм', source: 'requested' },
+      { title: 'Authored English translation', source: 'translation', language: 'en', country: 'GB' },
+      { title: 'Authored historical alias', source: 'alternative', country: 'US' },
+    ], releaseEvidence: [] } };
+  const before = structuredClone(film);
+  const result = await compareCascadeCard(markup({ original: 'Authored English translation' }), film, 'https://kinobazaua.com/titles/authored-card', baseline);
+  assert.equal(result.baselineSha, baselineSha);
+  assert.equal(result.execution, 'same-current-response-policy-comparison-before-optional-profile');
+  assert.equal(result.before.identity, 'unresolved'); assert.equal(result.before.reason, 'source-original-title-unestablished');
+  assert.equal(result.after.identity, 'matched'); assert.equal(result.after.reason, 'explicit-title-year-director-match');
+  assert.equal(result.before.candidates, 0); assert.ok(result.after.candidates > 0);
+  assert.deepEqual(film, before, 'baseline reconstruction must not remove current trusted context or mutate aliases');
+  const preserved = await compareCascadeCard(markup({ original: 'Authored historical alias' }), film, 'https://kinobazaua.com/titles/authored-card', baseline);
+  assert.equal(preserved.before.identity, 'matched', 'the previous service did retain alternative-title records');
+  assert.equal(preserved.after.identity, 'matched');
+  assert.doesNotMatch(JSON.stringify([result, preserved]), /<html|<table|Authored English translation|nichtenglischer|diagnostic control spelling|AUTHORED_TMDB_KEY|AUTHORED_TAVILY_KEY/);
 });
 
 test('local cascade observation consumes no additional HTTP slot and never exposes a source response body', async () => {
@@ -140,6 +167,45 @@ test('cascade study has nine title/year-only controls and retains the six-attemp
   assert.deepEqual(full.result.counts,{tmdb:2,search:2,cards:2,personPages:0,total:6});
 });
 
+test('production-Beta study admits twelve title/year-only controls with trusted contextual metadata and rejects out-of-study indices', async () => {
+  assert.deepEqual(practicalStudies['production-beta'], [
+    { title: 'Alien', year: 1979 }, { title: 'Mad Max: Fury Road', year: 2015 },
+    { title: 'Dune: Part Two', year: 2024 }, { title: 'Supergirl', year: 2026 },
+    { title: 'Goodfellas', year: 1990 }, { title: 'The Pursuit of Happyness', year: 2006 },
+    { title: 'The Lives of Others', year: 2006 }, { title: 'The Fall', year: 2008 },
+    { title: 'The Prestige', year: 2006 }, { title: 'A Separation', year: 2011 },
+    { title: 'The Handmaiden', year: 2016 }, { title: 'Amélie', year: 2001 },
+  ]);
+  for (const [index, control] of practicalStudies['production-beta'].entries()) {
+    assert.equal(Object.keys(control).sort().join(','), 'title,year');
+    let calls = 0;
+    const out = await practicalOperation({ ...keys, operation: { action: 'identify', film: index + 1 }, context: { study: 'production-beta' } }, async (url, init) => {
+      calls++; assert.equal(init.method, 'GET'); assert.equal(init.redirect, 'manual'); assert.equal(init.credentials, 'omit');
+      if (calls === 1) {
+        assert.equal(url, `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(control.title)}&language=en-US&include_adult=false&page=1&year=${control.year}`);
+        return Response.json({ results: [{ id: IDS[0], original_title: control.title, release_date: `${control.year}-01-01` }] });
+      }
+      assert.equal(url, `https://api.themoviedb.org/3/movie/${IDS[0]}?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations`);
+      return Response.json({ ...detailsData(IDS[0]), original_title: control.title, release_date: `${control.year}-01-01`,
+        translations: { translations: [{ iso_639_1: 'en', iso_3166_1: 'GB', data: { title: `${control.title} authored English label` } }] },
+        release_dates: { results: [{ iso_3166_1: 'CA', release_dates: [{ release_date: `${control.year}-01-01T00:00:00.000Z`, type: 1, iso_639_1: 'en' }] }] },
+      });
+    });
+    assert.equal(out.result.status, 'identity-established'); assert.equal(out.result.film, `${control.title} (${control.year})`);
+    assert.deepEqual(out.result.counts, { tmdb: 2, search: 0, cards: 0, personPages: 0, total: 2 });
+    assert.equal(calls, 2); assert.equal(out.result.identity.identityContext.tmdbId, IDS[0]);
+    assert.deepEqual(out.result.identity.identityContext.releaseEvidence, [{ date: `${control.year}-01-01T00:00:00.000Z`, year: control.year, type: 1, country: 'CA', language: 'en' }]);
+    assert.ok(out.result.identity.titleAliases.includes(`${control.title} authored English label`));
+    assert.ok(out.result.identity.identityContext.titleEvidence.some(entry => entry.title === `${control.title} authored English label` && entry.source === 'translation' && entry.language === 'en' && entry.country === 'GB'));
+    assert.doesNotMatch(JSON.stringify(out), /AUTHORED_TMDB_KEY|AUTHORED_TAVILY_KEY|biography|rawResponse/);
+  }
+  for (const film of [0, 13, -1, 1.5]) {
+    const out = await practicalOperation({ ...keys, operation: { action: 'resolve', film }, context: { study: 'production-beta' } },
+      () => assert.fail('out-of-study control must not dispatch'));
+    assert.equal(out.result.status, 'invalid-local-input'); assert.equal(out.result.counts.total, 0);
+  }
+});
+
 test('cascade English title selection verifies the non-English original against details without guessing aliases',async()=>{
   const selected={id:IDS[0],title:'The Lives of Others',original_title:'Das Leben der Anderen',release_date:'2006-03-23'};
   const run=async ({results=[selected],details={}}={})=>{
@@ -217,6 +283,57 @@ test('director inspection refuses root/appended API errors and malformed externa
   for(const external_ids of [undefined,null]){
     const accepted=await inspect({external_ids});
     assert.equal(accepted.status,'director-identity-inspected');assert.equal(accepted.directorIdentity.imdbNameId,'nm9999999');
+  }
+});
+
+test('production-Beta director inspection treats Tavily profile URLs only as ephemeral discovery and leaves legacy inspection at one GET', async () => {
+  const film = { directorCount: 1, directorPeople: [{ namespace: 'tmdb:person', personId: 999999, names: ['Authored director'] }] };
+  const personURL = 'https://api.themoviedb.org/3/person/999999?language=uk-UA&append_to_response=external_ids';
+  const profileURL = 'https://kinobazaua.com/persons/authored-director';
+  const data = { id: 999999, name: 'Authored director', also_known_as: [], birthday: '1970-02-28',
+    imdb_id: 'nm9999999', external_ids: { imdb_id: 'nm9999999' }, biography: 'AUTHORED_PRIVATE_BIOGRAPHY' };
+  for (const study of ['production-beta', 'practical-five', 'cascade-identity']) {
+    const calls = [], context = { study, films: { 1: structuredClone(film) } };
+    const before = structuredClone(context);
+    const out = await practicalOperation({ ...keys, operation: { action: 'inspect-director', film: 1 }, context }, async (url, init) => {
+      calls.push(url); assert.equal(init.redirect, 'manual'); assert.equal(init.credentials, 'omit');
+      if (url === personURL) {
+        assert.equal(init.method, 'GET'); assert.equal(init.headers.Authorization, `Bearer ${keys.tmdbToken}`);
+        return Response.json(data);
+      }
+      assert.equal(study, 'production-beta', 'legacy inspection cannot dispatch a search');
+      assert.equal(url, 'https://api.tavily.com/search', 'no profile/card/destination GET is authorized by a discovered pointer');
+      assert.equal(init.method, 'POST'); assert.equal(init.headers.Authorization, `Bearer ${keys.tavilyKey}`);
+      const payload = JSON.parse(init.body);
+      assert.equal(payload.query, '"Authored director" site:kinobazaua.com/persons/');
+      assert.equal(payload.search_depth, 'basic'); assert.equal(payload.auto_parameters, false);
+      assert.equal(payload.include_answer, false); assert.equal(payload.include_raw_content, false);
+      assert.deepEqual(payload.include_domains, ['kinobazaua.com']);
+      return Response.json({ results: [
+        { url: profileURL, content: 'AUTHORED_PRIVATE_SNIPPET', score: 1 },
+        { url: profileURL, title: 'AUTHORED_PRIVATE_SEARCH_TITLE', score: 0.9 },
+        { url: 'https://kinobazaua.com/titles/authored-director-film', content: 'AUTHORED_PRIVATE_FILM_SNIPPET' },
+        { url: `${profileURL}?token=AUTHORED_PRIVATE_QUERY`, content: 'AUTHORED_PRIVATE_QUERY_SNIPPET' },
+        { url: 'https://foreign.example/persons/authored-director', content: 'AUTHORED_PRIVATE_FOREIGN_SNIPPET' },
+      ], answer: 'AUTHORED_PRIVATE_ANSWER' });
+    });
+    assert.equal(out.result.status, 'director-identity-inspected');
+    assert.deepEqual(out.context, before, 'profile discovery must not add a person alias or proof to the film context');
+    if (study === 'production-beta') {
+      assert.deepEqual(calls, [personURL, 'https://api.tavily.com/search']);
+      assert.deepEqual(out.result.counts, { tmdb: 1, search: 1, cards: 0, personPages: 0, total: 2 });
+      assert.deepEqual(out.result.profileDiscovery.profileCandidates, [profileURL]);
+      assert.equal(out.result.profileDiscovery.providerStatus, 'ok');
+      assert.equal(out.result.profileDiscovery.cardOrPersonGET, 0);
+      assert.equal(out.result.profileDiscovery.proof, 'URL-discovery-only-not-person-identity');
+      assert.equal(out.result.profileDiscovery.identity, undefined);
+      assert.equal(out.result.identity, undefined); assert.equal(out.result.confirmed, undefined);
+    } else {
+      assert.deepEqual(calls, [personURL]);
+      assert.deepEqual(out.result.counts, { tmdb: 1, search: 0, cards: 0, personPages: 0, total: 1 });
+      assert.equal(out.result.profileDiscovery, undefined);
+    }
+    assert.doesNotMatch(JSON.stringify(out), /AUTHORED_PRIVATE|AUTHORED_TMDB_KEY|AUTHORED_TAVILY_KEY|biography|score|content|answer/);
   }
 });
 

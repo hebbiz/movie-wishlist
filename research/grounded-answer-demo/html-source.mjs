@@ -165,7 +165,7 @@ export async function extractHtml(html, film, { identityCheck } = {}) {
     // Never silently drop a late critical error behind the event bound. No HTML
     // repair/serialization: identity and extraction use the same parsed tree.
     if (overflow || recoveries.some(e => !noncriticalImageError(e, all, html))) return { status: 'unsupported-markup', candidates: [], issues: ['html-parse-errors'] };
-    const checked = identityCheck ? identityCheck(all) : identity(all, film);
+    const checked = identityCheck ? await identityCheck(all) : identity(all, film);
     const fail = issue => ({ status: 'unsupported-markup', identity: checked, candidates: [], issues: [issue] });
     if (checked.status !== 'matched') return { status: checked.status === 'mismatch' ? 'identity-mismatch' : 'identity-unresolved', identity: checked, candidates: [], issues: [checked.reason ?? 'title-year-director-not-unambiguous'] };
     const accordions = all.filter(n => attr(n, 'id') === 'availabilityAccordion');

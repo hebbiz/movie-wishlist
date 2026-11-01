@@ -8,16 +8,25 @@ import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs'
 import { safeMediaReport } from '../assets/media-advice-report.mjs';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
+import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
+import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
 const film = { id: 'authored', tmdbId: IDS[0], imdbId: `tt${IDS[0]}`, title: 'Вигаданий фільм', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: ['Вигаданий фільм','Authored original'], directorCount: 1, directorAliases: ['Authored director'] };
 const urls = ['https://kinobazaua.com/titles/authored-card', 'https://kinobazaua.com/titles/authored-second', 'https://kinobazaua.com/titles/unexamined'];
-function mock({ emptyFirst = false, status, mismatch = false, sameConfirmed = false, unsupported = false } = {}) {
+function serviceQueryFilm() {
+  // Same authored, server-validated Details projection used by discoverMedia;
+  // the new contextual second query legitimately includes its exact director.
+  const projection = projectTmdbIdentityFor(detailsData(IDS[0]), { tmdbId: film.tmdbId, imdbId: film.imdbId });
+  return { ...film, identityContext: projectFilmIdentityContext(projection), directorPeople: projectDirectorPeople(projection.metadata.directors) };
+}
+function mock({ emptyFirst = false, status, mismatch = false, sameConfirmed = false, unsupported = false, queryFilm = film } = {}) {
   let search = 0; const calls = [];
   const fetchImpl = async (url, init) => {
     calls.push(url); assert.equal(init.redirect, 'manual'); assert.equal(init.credentials, 'omit');
     if (url === 'https://api.tavily.com/search') {
       search++; assert.equal(init.headers.Authorization, 'Bearer AUTHORED_TAVILY_KEY');
       assert.equal(init.method, 'POST');
-      assert.deepEqual(JSON.parse(init.body), { query: search === 2 && mismatch && !emptyFirst ? resolverRefusalQuery(film) : resolverQueries(film)[search - 1],
+      assert.deepEqual(JSON.parse(init.body), { query: search === 2 && mismatch && !emptyFirst ? resolverRefusalQuery(queryFilm) : resolverQueries(queryFilm)[search - 1],
         search_depth: 'basic', topic: 'general', max_results: 5, auto_parameters: false,
         include_answer: false, include_raw_content: false, include_images: false,
         include_favicon: false, include_usage: false, include_domains: ['kinobazaua.com'], include_domains_mode: 'restrict' });
@@ -197,7 +206,7 @@ test('bounded Web Search invalid body/size and abort stop without retaining snip
   assert.equal(out.status, 'search-timeout-no-retry');
 });
 test('full action max8 attempts; baseline independence and candidate selection do not refetch', async () => {
-  const m = mock({ emptyFirst: true, sameConfirmed: true }), reserved = [];
+  const m = mock({ emptyFirst: true, sameConfirmed: true, queryFilm: serviceQueryFilm() }), reserved = [];
   const fetchImpl = async (url, init) => {
     if (url === 'https://api.tavily.com/search' || url.startsWith('https://kinobazaua.com/')) return m.fetchImpl(url, init);
     m.calls.push(url);
@@ -361,7 +370,7 @@ test('Tavily rejects content type and streaming oversize; HTTP errors discard un
 test('handler → projection → report/ledger: no search snippets, envelope, key, unexamined URL or logs', async t => {
   const logged = [];
   for (const method of ['log','info','warn','error','debug']) t.mock.method(console, method, (...args) => logged.push(args));
-  const rpc = [], reservations = [], sent = [], m = mock({ emptyFirst: true, sameConfirmed: true });
+  const rpc = [], reservations = [], sent = [], m = mock({ emptyFirst: true, sameConfirmed: true, queryFilm: serviceQueryFilm() });
   const fetchImpl = async (url, init) => {
     sent.push({ url, init });
     if (url === 'https://api.tavily.com/search') {

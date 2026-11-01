@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^[a-f0-9]{40}$')][string]$ExpectedCommit,
-    [ValidateSet('practical-five','pilot-retrieval','tavily-fallback','cascade-identity')][string]$Study = 'practical-five',
+    [ValidateSet('practical-five','pilot-retrieval','tavily-fallback','cascade-identity','production-beta')][string]$Study = 'practical-five',
     [switch]$CheckPrerequisites
 )
 
@@ -175,7 +175,7 @@ function ConvertTo-M4Operation([object]$Value) {
     if ($Value.action -isnot [string] -or $Value.action -cnotin @('identify', 'resolve', 'inspect-card', 'inspect-person', 'inspect-director', 'status', 'stop')) { throw 'operation-action' }
     $operation = @{ action = $Value.action }
     if ($Value.Contains('film')) {
-        $filmNames = if ($Study -ceq 'cascade-identity') { @('Alien', 'Mad Max: Fury Road', 'Dune: Part Two', 'Supergirl', 'Goodfellas', 'The Pursuit of Happyness', 'The Lives of Others', 'The Fall', 'The Prestige') } elseif ($Study -ceq 'tavily-fallback') { @('Alien', 'Mad Max: Fury Road', 'Dune: Part Two', 'Blade Runner 2049', 'Mortal Kombat') } elseif ($Study -ceq 'pilot-retrieval') { @('Blade Runner', 'Mortal Kombat', 'Supergirl') } else { @('Blade Runner 2049', 'Mortal Kombat', 'Alien', 'Oppenheimer', 'Dune: Part Two') }
+        $filmNames = if ($Study -ceq 'production-beta') { @('Alien', 'Mad Max: Fury Road', 'Dune: Part Two', 'Supergirl', 'Goodfellas', 'The Pursuit of Happyness', 'The Lives of Others', 'The Fall', 'The Prestige', 'A Separation', 'The Handmaiden', 'Amélie') } elseif ($Study -ceq 'cascade-identity') { @('Alien', 'Mad Max: Fury Road', 'Dune: Part Two', 'Supergirl', 'Goodfellas', 'The Pursuit of Happyness', 'The Lives of Others', 'The Fall', 'The Prestige') } elseif ($Study -ceq 'tavily-fallback') { @('Alien', 'Mad Max: Fury Road', 'Dune: Part Two', 'Blade Runner 2049', 'Mortal Kombat') } elseif ($Study -ceq 'pilot-retrieval') { @('Blade Runner', 'Mortal Kombat', 'Supergirl') } else { @('Blade Runner 2049', 'Mortal Kombat', 'Alien', 'Oppenheimer', 'Dune: Part Two') }
         if ($Value.film -is [string] -and $Value.film -cin $filmNames) { $operation.film = [Array]::IndexOf($filmNames, $Value.film) + 1 }
         elseif (($Value.film -is [int] -or $Value.film -is [long]) -and $Value.film -ge 1 -and $Value.film -le $filmNames.Count) { $operation.film = [int]$Value.film }
         else { throw 'operation-film' }

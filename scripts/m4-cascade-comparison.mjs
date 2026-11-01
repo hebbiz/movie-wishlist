@@ -7,17 +7,19 @@ import { assistedIdentity } from '../research/grounded-answer-demo/assisted-kino
 export const CASCADE_BASELINE_SHA = '5a9c3c38f892644d04988d9055e3463fc6b9b86b';
 const source = 'research/grounded-answer-demo/assisted-kinobaza.mjs';
 
-export async function loadCascadeBaseline() {
+export async function loadCascadeBaseline(sha = CASCADE_BASELINE_SHA) {
+  if (![CASCADE_BASELINE_SHA,'21d1be24acf2b654254c38c9b252246ed8de1343'].includes(sha)) throw Error('fixed-local-baseline-required');
   const root = new URL('../', import.meta.url), moduleURL = new URL(source, root);
   // The protected Windows worker intentionally has no inherited PATH. Use the
   // verified local Git executable, like the runner's fixed Node executable.
   const git = process.platform === 'win32' ? 'C:/Program Files/Git/cmd/git.exe' : 'git';
-  const baseline = execFileSync(git, ['show', `${CASCADE_BASELINE_SHA}:${source}`],
+  const baseline = execFileSync(git, ['show', `${sha}:${source}`],
     { cwd: fileURLToPath(root), encoding: 'utf8', maxBuffer: 128 * 1024, windowsHide: true, stdio: ['ignore','pipe','ignore'] });
   // Only this fixed committed module is loaded. Relative imports resolve to the
   // unchanged shared extractor/registry; no browser/env-selected code is loaded.
   const code = baseline.replace(/from '(\.[^']+)'/g, (_, path) => `from '${new URL(path, moduleURL).href}'`);
   const loaded = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+  loaded.assistedIdentity.baselineSha = sha;
   return loaded.assistedIdentity;
 }
 
@@ -25,10 +27,15 @@ export async function compareCascadeCard(html, film, sourceURL, beforeIdentity) 
   const summary = card => ({ identity: card.identity?.status ?? 'unresolved', reason: card.identity?.reason ?? null,
     extraction: card.status, candidates: card.candidates?.length ?? 0, providerBlocks: card.localization?.blocks?.length ?? 0 });
   const before = performance.now();
-  const oldCard = await extractHtml(html, film, { identityCheck: all => beforeIdentity(all, film, sourceURL) });
+  // The previous production service did not retain translations. Do not lend
+  // new English title evidence (or a diagnostic control spelling) to its gate.
+  const baselineFilm = beforeIdentity.baselineSha === '21d1be24acf2b654254c38c9b252246ed8de1343' && film.identityContext ?
+    { ...film, identityContext: undefined, titleAliases: [film.identityTitle,film.originalTitle,
+      ...film.identityContext.titleEvidence.filter(t=>t.source === 'alternative').map(t=>t.title)].filter(Boolean) } : film;
+  const oldCard = await extractHtml(html, baselineFilm, { identityCheck: all => beforeIdentity(all, baselineFilm, sourceURL) });
   const between = performance.now();
   const newCard = await extractHtml(html, film, { identityCheck: all => assistedIdentity(all, film, sourceURL) });
-  return { sourceURL, baselineSha: CASCADE_BASELINE_SHA, execution: 'same-current-response-policy-comparison',
+  return { sourceURL, baselineSha: beforeIdentity.baselineSha ?? CASCADE_BASELINE_SHA, execution: 'same-current-response-policy-comparison-before-optional-profile',
     before: summary(oldCard), after: summary(newCard),
     localParseMs: { before: Math.round((between - before) * 100) / 100, after: Math.round((performance.now() - between) * 100) / 100 } };
 }

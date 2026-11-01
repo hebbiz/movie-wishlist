@@ -1,5 +1,6 @@
 import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../shared/media-advice-diagnostics.mjs';
 import { groupMediaRows, presentMediaGroups } from './media-advice-presentation.mjs';
+import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
 const identities = new Set(['matched', 'mismatch', 'unresolved']);
 const platforms = new Set(['apple','prime','netflix','hbo','rakuten','megogo']);
 const accessKinds = new Set(['rent','rental','buy','purchase','subscription','flatrate','addon','free','ad-supported']);
@@ -11,8 +12,8 @@ const comparisonOutcomes = new Set(['non-comparable','possible-discrepancy']);
 const comparisonReasons = new Set(['package-scope-unresolved','version-scope-unresolved','package-differs','version-differs','same-declared-card-offer-scope-unknown','card-pointer-equivalence-unestablished']);
 const blockIssues = new Set(['provider-block-count-limit','ambiguous-provider-block','unsupported-provider-block','block-field-count-limit','conflicting-block-labels','possible-block-conflict-scope-unestablished']);
 const sourceLabels = new Map([['Kinobaza HTML','kinobaza'], ['Movie of the Night','motn'], ['TMDB / JustWatch','tmdb'], ['TMDb / JustWatch','tmdb']]);
-const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2'];
-const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-title-year-match','explicit-stable-and-structural-match','explicit-title-year-director-match']);
+const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2', 'tmdb-person', 'kinobaza-person'];
+const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-title-year-match','explicit-stable-and-structural-match','explicit-title-year-director-match','explicit-title-release-year-director-match']);
 const count = n => Number.isSafeInteger(n) && n >= 0 && n < 10000 ? n : 'unknown';
 const loc = s => ['reported-positive','reported-negative','conflicting'].includes(s) ? s : 'unknown';
 const fieldState = field => fieldStates.has(field?.state) ? field.state : 'unknown';
@@ -125,6 +126,7 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
   for (const stage of stages) lines.push(`${stage}: ${count(result?.metrics?.calls?.filter(c => c.stage === stage).length)} reserved.`);
   lines.push(`Kinobaza resolver: ${resolverStatuses.has(result?.resolver?.status) ? result.resolver.status : 'unknown'}.`);
   lines.push(`Kinobaza: search ${count(result?.resolver?.searchCalls)}; card GET ${count(result?.resolver?.cardCalls)}; unexamined ${count(result?.resolver?.unexamined)}.`);
+  if (result?.resolver?.directorProfile) lines.push(`Linked director profile: ${JSON.stringify(safeDirectorProfileDiagnostic(result.resolver.directorProfile))}.`);
   for (const [index, s] of (result?.resolver?.searches ?? []).slice(0,2).entries()) {
     const d = safeSearchDiagnostic(s.status, s);
     const provider = ['tavily','kinobaza-public-search'].includes(s.provider) ? s.provider : 'unknown';
