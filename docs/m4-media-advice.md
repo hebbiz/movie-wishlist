@@ -14,6 +14,9 @@ with a [second Tavily slot after first-card identity refusal](#tavily-only-alter
 not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
 remain historical evidence;
 this is not catalogue-wide accuracy, track verification or new activation approval.
+The current contextual second slot searches a distinct known localized title
+independently, not together with mandatory original-title/director terms:
+[Crimson Peak current-run evidence](#independent-localized-alternative-and-crimson-peak--2026-11-02).
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
@@ -4808,3 +4811,121 @@ UI, flags/secrets and owner checkout/demo remain unchanged. No migration,
 merge or manual deployment. Local prompt/operator aids remain outside Git and
 keep credentials/bodies in process memory only; no key or raw response is in this
 record or PR. Rollback is a normal revert of this follow-up commit.
+
+### Independent localized alternative and Crimson Peak — 2026-11-02
+
+Follow-up to #222 at `d03a1a4976e8cf25f463f3baefd917cf13ae1582`, with develop
+still `290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. This supersedes the combined
+second-query policy in the earlier production-Beta research record, not its
+identity gates or historical observations. No historical unexamined URLs are
+inferred from a digest or reconstructed from today's results.
+
+Current server-equivalent TMDb search/Details projection established Crimson
+Peak (2015), TMDb 201085 / IMDb tt2554274, localized title `Багряний пік`,
+director person 10828, `Ґільєрмо дель Торо` / `Guillermo del Toro`.
+The current first query was `"Crimson Peak" 2015 site:kinobazaua.com/titles/`;
+the old second added both the localized title and quoted Latin director.
+
+In run `600c5d09-624c-44ef-a365-45581db8bf78`, both Tavily calls returned five
+admitted URLs, six unique in their union. The correct card was **absent**, not
+hidden at a lower rank. All six pointers scored zero against established title
+slugs, so stable provider/insertion order spent the two GETs on Mad Max: Fury
+Road and The Walk. Both had different titles/directors and were correctly
+withheld. No language data was allowed through.
+
+The narrow general fix leaves the primary English/original query unchanged.
+If a distinct known title exists, the second contextual query independently
+uses that title and the primary Details year, for example
+`"Багряний пік" 2015 site:kinobazaua.com/titles/`. It does not add mandatory
+original-title/director terms. Without a distinct title, the existing
+primary-title/single-trusted-Latin-director disambiguation remains. Original /
+explicit-English / localized name selection, earlier confirmed premiere versus
+primary year, escaping, bounds and all Tavily basic/domain/no-answer/no-raw-content
+parameters remain. This changes discovery opportunity, not identity evidence.
+
+No candidate-ranking change was needed to solve the observed case. In run
+`f0482e33-e50f-4401-9fb9-07807920278b`, the unchanged first query again produced
+the same five unrelated pointers. The standalone localized second query returned
+the correct [Crimson Peak card](https://kinobazaua.com/titles/crimson-peak) first.
+Its exact original-title slug scored 1, ahead of the zero-score old candidates,
+so the second GET read it. H1, original H2, year and director all passed;
+extraction was `ok`, 25 candidates / four localization blocks / six mapped rows.
+The runtime did not receive or generate a prefilled URL. Search rank, score,
+snippet or a film-level audio badge never substituted for identity/offer proof.
+
+Final repeat `c28b8fa8-9588-48d8-8446-74f064554e14` found and confirmed the same
+card in the **unchanged first query**, without spending the second search slot.
+This demonstrates provider-result variability: the localized alternative rescued
+one observed refusal, but does not prove that the old formulation always fails,
+that strict boolean semantics caused the provider response, or that search quality
+is now guaranteed. The two bounded GETs and finite non-exhaustive result remain.
+
+| Crimson run | TMDb / Tavily / cards / profile | Local elapsed | Result |
+| --- | --- | --- | --- |
+| Before | 2 / 2 / 2 / 0 | 2.847 s | no confirmed card |
+| Localized alternative | 0 / 2 / 2 / 0 | 4.549 s | correct card matched, six rows |
+| Final repeat | 0 / 1 / 2 / 0 | 2.983 s | correct card matched, six rows |
+
+Later runs reuse the verified in-memory movie projection; these timings therefore
+are not an equal-work latency comparison. One separate GET checked the discovered
+card's current language/link projection. No source-error retry or destination
+request occurred. Raw responses were never written to disk.
+
+Both ordinary and diagnostic product projections show MEGOGO audio+/subtitles+,
+and Apple/Rakuten/Netflix audio unknown/subtitles+. Apple/Rakuten's source
+table negatives remain scoped to named audio formats, not a universal absence
+of Ukrainian audio. Admitted choices are respectively MEGOGO, iTunes,
+JustWatch tracking and Netflix links; exact preview equality passed for every
+offered choice. Film-level audio and the Netflix catalogue helper do not become
+film links or lend languages to other offers. No URL was rewritten, opened on
+a destination, transferred or saved during this control; no independent platform
+availability, entitlement or actual tracks are claimed.
+
+Current automatic regression runs also confirmed:
+
+| Film | Discovered card suffix | Mapped rows | Attempts |
+| --- | --- | --- | --- |
+| Gladiator II | gladiator-2 | 6 | 5 |
+| Kong: Skull Island | kong-skull-island | 6 | 8 |
+| Klaus | klaus | 2 | 5 |
+| Alien | alien | 5 | 5 |
+| Mad Max: Fury Road | mad-max-fury-road | 6 | 5 |
+| Dune: Part Two | dune-part-two | 5 | 5 |
+| Supergirl | supergirl-2026 | 3 | 5 |
+| Goodfellas | goodfellas | 6 | 5 |
+| The Pursuit of Happyness | the-pursuit-of-happyness | 3 | 5 |
+
+These are present source responses, not unchanged historical row-count promises.
+Kong still used the existing deferred pair and exact-name/birthdate/role proof;
+Gladiator's Roman and Kong's г/ґ title routes retained director checks. Ordinary
+and diagnostic language tables agreed; exact admitted preview links were retained.
+
+This follow-up made **62 source HTTP attempts**: 21 TMDb (including Kong person),
+15 Tavily basic calls, 25 title-card GETs, one linked-person GET. The broker's
+final cumulative accounting was complete; failures count too. Two separate web
+search queries located the manual research control, never seeded runtime input.
+Crimson accounts for 14 of the 62; the nine live regression films account for 48.
+No MOTN, Watch Providers, Kinobaza `/search`, platform destination or Wishlist
+request. Per-user runtime remains two searches, two title cards and cap10 with
+the optional existing pair (legacy cap8 unchanged); diagnostic metadata reuse
+does not change production accounting or bypass backend access.
+
+Validation: **16 new authored tests**, **207/207 targeted** query/resolver,
+Roman/г/ґ, deferred-person, server/access, UI contract and restored local-runner
+regressions, plus **42/42** diagnostic/report/HTML-to-product pipeline tests.
+Zero test failures/skips in these completed runs. Initial sandbox spawn EPERM
+was rerun with scoped permission and unchanged assertions/timeouts. Independent
+review found no actionable issue; syntax, whitespace and doc links checked.
+The earlier full-suite 980-pass/19-skip and five browser results above belong to
+the preceding follow-up, not a new full/browser execution for this query-only
+change. Real iPhone, deployed smoke, native PostgreSQL and actual Save were not
+rerun; UI/lifecycle/SQL/dependencies are unchanged.
+
+The existing memory-only credential broker was reused; the temporary film
+selection and product-summary instrumentation were removed after the run, leaving
+both scripts identical to HEAD. The final stop channel was already unavailable;
+a scoped process check confirmed no matching task credential helper remained.
+No key, raw body or bulk search-result archive was retained. No migration,
+flag/secret/user-data change, merge or manual deployment. Netlify Functions
+guidance informed the bounded server audit; existing deadlines/reservations and
+the form's isolation, link policy, preview/Save and diagnostics remain intact.

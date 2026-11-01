@@ -15,7 +15,7 @@ const film = { id: 'authored', tmdbId: IDS[0], imdbId: `tt${IDS[0]}`, title: 'В
 const urls = ['https://kinobazaua.com/titles/authored-card', 'https://kinobazaua.com/titles/authored-second', 'https://kinobazaua.com/titles/unexamined'];
 function serviceQueryFilm() {
   // Same authored, server-validated Details projection used by discoverMedia;
-  // the new contextual second query legitimately includes its exact director.
+  // the contextual second query independently searches its localized title.
   const projection = projectTmdbIdentityFor(detailsData(IDS[0]), { tmdbId: film.tmdbId, imdbId: film.imdbId });
   return { ...film, identityContext: projectFilmIdentityContext(projection), directorPeople: projectDirectorPeople(projection.metadata.directors) };
 }

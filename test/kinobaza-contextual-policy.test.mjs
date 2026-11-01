@@ -47,7 +47,7 @@ async function pointer(html) {
   return result;
 }
 
-test('contextual queries prefer explicitly English translation and retain localized name and Latin director for disambiguation', () => {
+test('contextual queries prefer explicitly English translation then independently search the known localized name', () => {
   const selected = context({ ...film, originalTitle: 'Authored German title', identityTitle: 'Вигадана локалізована назва', year: 2008,
     directorPeople: [{ namespace: 'tmdb:person', personId: PERSON, names: ['Авторський режисер', 'Authored director'] }] }, {
     titles: [
@@ -58,7 +58,7 @@ test('contextual queries prefer explicitly English translation and retain locali
   const queries = resolverQueries(selected);
   assert.deepEqual(queries, [
     '"Authored English title" 2006 site:kinobazaua.com/titles/',
-    '"Authored English title" "Вигадана локалізована назва" "Authored director" 2008 site:kinobazaua.com/titles/',
+    '"Вигадана локалізована назва" 2008 site:kinobazaua.com/titles/',
   ]);
   assert.equal(resolverRefusalQuery(selected), queries[1]);
 });
