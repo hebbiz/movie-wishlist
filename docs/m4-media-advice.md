@@ -3907,3 +3907,59 @@ authorized diagnostics remain available without adding a second caveat bubble.
 Only client presentation changes. No ranking, source statuses, links, Beta
 access, transfer/Save, session lifecycle or server/SQL changes; no live discovery,
 Wishlist writes, flag changes, merge or manual deployment.
+
+## Reviewed Muccino director alias — 2026-11-01
+
+The current exact-name refusal is reproduced without changing any identity gate.
+The owner-executed, memory-only TMDb check follows
+[IMDb find](https://api.themoviedb.org/3/find/tt0454921?external_source=imdb_id&language=uk-UA)
+to movie 1402. Its validated [movie details/credits](https://api.themoviedb.org/3/movie/1402?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations)
+contain one director, `tmdb:person:20646`, named `Gabriele Muccino`.
+[Person 20646](https://api.themoviedb.org/3/person/20646?language=uk-UA&append_to_response=external_ids)
+returns that same ID/name, birthday 1967-05-20, Rome/Italy, IMDb person nm0610831,
+and an empty `also_known_as`. The supplied safe result begins mid-report, so
+its run ID/attempt header is unknown; no missing fields are reconstructed.
+
+The linked [Kinobaza person profile](https://kinobazaua.com/persons/gabriele-muccino)
+co-locates H1 `Ґабріеле Муччіно`, English H2 `Gabriele Muccino`, full date
+20 May 1967, Rome/Lazio/Italy and director role. This reviewed person-profile
+composite establishes the alias, not the film's title/year, a slug, or spelling
+similarity. No shared external person ID was observed on Kinobaza; the TMDb
+IMDb person ID alone is not asserted to be a shared identifier. One frozen
+person-level record is added for 20646, scope `kinobaza-director-identity`, with
+these references and verification date. No film-specific lookup condition,
+automatic transliteration, fuzzy matching or runtime person request is added.
+
+One direct GET of the [current card](https://kinobazaua.com/titles/the-pursuit-of-happyness)
+returned HTTP 200, 239153 bytes. Its requested-URL SHA256 is
+`97bf5b80b31ed905f6d885ee2cbaff6ceca13810e3240c99a06886337d020c17`, matching
+the owner's address digest, not a historical HTML fingerprint. The same response
+was replayed in memory through the production adapter twice: without the new
+record, `unresolved / director-alias-unestablished`, 0 candidates and localization
+withheld; with the compiled record, `matched / explicit-title-year-director-match`,
+extraction `partial`, 19 candidates and 2 localization blocks. H1/original title/year
+match; the literal source director is the newly reviewed Ukrainian alias.
+
+The ordinary composition retains 3 mapped rows: Apple in a source UA section,
+Netflix and MEGOGO provider blocks with unknown source territory. MEGOGO has
+positive audio/subtitles claims under the existing application UA interpretation;
+Netflix language values remain unknown in the current projection. The film-level
+positive audio badge is not lent to either offer. No parser, ranking, link or
+offer-binding confidence is changed; `partial` and unknown values remain honest.
+No platform destination was visited, availability/entitlement independently
+verified, or historical response reconstructed.
+
+Request ledger for this task: 3 TMDb GETs from the fixed owner-run check (the person
+result is reached only after its find/details/person reads), 1 direct card GET;
+additionally 2 web-reader page reads (card/person) and 4 public web-search queries
+for evidence lookup. Internal reader/search-provider traffic is unknown and not
+presented as an exact wire-level total. Tavily, MOTN, Watch Providers and platform
+destination calls: 0. Raw HTML, API responses and credentials were not archived.
+
+Validation: 265/265 targeted offline/HTTP regressions passed, 0 skips, including
+35 crosswalk tests. New authored markup reproduces the refusal and verifies the
+record across 2 invented films, person isolation, unknown/multiple directors,
+stable-ID precedence, title/year conflicts and withholding; it is not live HTML.
+Browser/Windows lifecycle/native DB suites are not repeated: no UI, lifecycle,
+SQL, access, request-policy or link-policy components changed. No merge, manual
+deployment, flags/secrets changes or Wishlist writes.

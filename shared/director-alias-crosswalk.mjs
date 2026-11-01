@@ -17,6 +17,14 @@ export const CONFIRMED_DIRECTOR_ALIASES = Object.freeze([Object.freeze({
     reference: 'https://api.themoviedb.org/3/movie/1081003?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations | https://api.themoviedb.org/3/person/50767?language=uk-UA&append_to_response=external_ids | https://kinobazaua.com/persons/craig-gillespie',
     verifiedAt: '2026-10-28',
   }),
+}), Object.freeze({
+  namespace: 'tmdb:person', personId: 20646, aliases: Object.freeze(['Ґабріеле Муччіно']),
+  scope: 'kinobaza-director-identity',
+  evidence: Object.freeze({
+    source: 'Reviewed person profiles: Kinobaza header co-locates the Ukrainian alias, exact English name Gabriele Muccino, full birth date 1967-05-20 and director role. Trusted TMDb movie1402 credits identify sole director person20646; matching person details confirm the English name and birth date. No shared external person ID observed on Kinobaza.',
+    reference: 'https://api.themoviedb.org/3/movie/1402?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations | https://api.themoviedb.org/3/person/20646?language=uk-UA&append_to_response=external_ids | https://kinobazaua.com/persons/gabriele-muccino',
+    verifiedAt: '2026-11-01',
+  }),
 })]);
 const namespace = 'tmdb:person';
 const scope = 'kinobaza-director-identity';
