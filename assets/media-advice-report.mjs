@@ -12,7 +12,7 @@ const comparisonReasons = new Set(['package-scope-unresolved','version-scope-unr
 const blockIssues = new Set(['provider-block-count-limit','ambiguous-provider-block','unsupported-provider-block','block-field-count-limit','conflicting-block-labels','possible-block-conflict-scope-unestablished']);
 const sourceLabels = new Map([['Kinobaza HTML','kinobaza'], ['Movie of the Night','motn'], ['TMDB / JustWatch','tmdb'], ['TMDb / JustWatch','tmdb']]);
 const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2'];
-const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-and-structural-match','explicit-title-year-director-match']);
+const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-title-year-match','explicit-stable-and-structural-match','explicit-title-year-director-match']);
 const count = n => Number.isSafeInteger(n) && n >= 0 && n < 10000 ? n : 'unknown';
 const loc = s => ['reported-positive','reported-negative','conflicting'].includes(s) ? s : 'unknown';
 const fieldState = field => fieldStates.has(field?.state) ? field.state : 'unknown';
@@ -135,6 +135,7 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
     lines.push(`Card: ${identities.has(card.identity) ? card.identity : 'unresolved'}; reason ${knownReasons.has(card.reason) || card.reason === 'source-identity-structure-limit' ? card.reason : 'unknown'}; gate ${d.failedGate ?? 'none-or-unknown'}.`);
     if (card.reason === 'source-title-conflict') lines.push('Heading is not in known title aliases; not independent proof of a different film.');
     lines.push(`Identity structure ${JSON.stringify(d.counts)}; comparisons ${JSON.stringify(d.comparisons)}.`);
+    lines.push(`Identity route ${d.strategy ?? 'unconfirmed'}; years ${JSON.stringify(d.years)}; gates ${JSON.stringify(d.gates)}.`);
     const e = safeExtractionDiagnostic(card.extractionDiagnostic);
     const ref = typeof card.cardRef === 'string' && /^[a-f0-9]{64}$/.test(card.cardRef) ? card.cardRef : 'unknown';
     lines.push(`Extraction: ${e.status}; candidates ${e.candidateCount ?? 'unknown'}, foreign-context ${e.foreignCandidateCount ?? 'unknown'}, localization blocks ${e.blockCount ?? 'unknown'}, film audio ${e.filmAudioState}; issues ${JSON.stringify(e.issues)}; requested-card SHA256 ${ref}.`);

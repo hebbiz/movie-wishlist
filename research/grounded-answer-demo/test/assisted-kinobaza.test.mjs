@@ -67,28 +67,39 @@ test('missing viewing boundary stops original-title establishment before extract
 });
 
 // Author-written spelling/grouping cases, not live pages or person aliases.
+// Without a shared film ID these cases still exercise mandatory director proof;
+// the approved same-ID/title/year route is asserted separately below.
 for (const [name, expectedAliases, observed, directorCount, stable, status, reason] of [
-  ['exact returned alias', ['Denis Villeneuve'], 'Denis Villeneuve', 1, 'tt999900001', 'matched', 'explicit-stable-and-structural-match'],
-  ['exact supplied alias, not guessed transliteration', ['Denis Villeneuve', 'Дені Вільнев'], 'Дені Вільнев', 1, 'tt999900001', 'matched', 'explicit-stable-and-structural-match'],
-  ['Latin diacritic is unestablished', ['Denis Villeneuve'], 'Dénis Villeneuve', 1, 'tt999900001', 'unresolved', 'director-alias-unestablished'],
-  ['Cyrillic spelling is unestablished', ['Дені Вільнев'], 'Дені Вільньов', 1, 'tt999900001', 'unresolved', 'director-alias-unestablished'],
-  ['cross-script spelling is unestablished', ['Denis Villeneuve'], 'Дені Вільньов', 1, 'tt999900001', 'unresolved', 'director-alias-unestablished'],
-  ['different Latin name is not person-ID evidence', ['Denis Villeneuve'], 'Other director', 1, 'tt999900001', 'unresolved', 'director-alias-unestablished'],
-  ['missing aliases', [], 'Denis Villeneuve', 1, 'tt999900001', 'unresolved', 'source-or-selected-director-missing'],
-  ['combined names are not split', ['Author One', 'Author Two'], 'Author One / Author Two', 2, 'tt999900001', 'unresolved', 'director-scope-unestablished'],
-  ['partial observed group is not a full match', ['Author One', 'Author Two'], 'Author One', 2, 'tt999900001', 'unresolved', 'director-scope-unestablished'],
-  ['incomplete aliases with known multi-director scope', ['Author One'], 'Author One', 2, 'tt999900001', 'unresolved', 'director-scope-unestablished'],
-  ['unknown director scope is not a full match', ['Author One'], 'Author One', null, 'tt999900001', 'unresolved', 'director-scope-unestablished'],
+  ['exact returned alias', ['Denis Villeneuve'], 'Denis Villeneuve', 1, null, 'matched', 'explicit-title-year-director-match'],
+  ['exact supplied alias, not guessed transliteration', ['Denis Villeneuve', 'Дені Вільнев'], 'Дені Вільнев', 1, null, 'matched', 'explicit-title-year-director-match'],
+  ['Latin diacritic is unestablished', ['Denis Villeneuve'], 'Dénis Villeneuve', 1, null, 'unresolved', 'director-alias-unestablished'],
+  ['Cyrillic spelling is unestablished', ['Дені Вільнев'], 'Дені Вільньов', 1, null, 'unresolved', 'director-alias-unestablished'],
+  ['cross-script spelling is unestablished', ['Denis Villeneuve'], 'Дені Вільньов', 1, null, 'unresolved', 'director-alias-unestablished'],
+  ['different Latin name is not person-ID evidence', ['Denis Villeneuve'], 'Other director', 1, null, 'unresolved', 'director-alias-unestablished'],
+  ['missing aliases', [], 'Denis Villeneuve', 1, null, 'unresolved', 'source-or-selected-director-missing'],
+  ['combined names are not split', ['Author One', 'Author Two'], 'Author One / Author Two', 2, null, 'unresolved', 'director-scope-unestablished'],
+  ['partial observed group is not a full match', ['Author One', 'Author Two'], 'Author One', 2, null, 'unresolved', 'director-scope-unestablished'],
+  ['incomplete aliases with known multi-director scope', ['Author One'], 'Author One', 2, null, 'unresolved', 'director-scope-unestablished'],
+  ['unknown director scope is not a full match', ['Author One'], 'Author One', null, null, 'unresolved', 'director-scope-unestablished'],
   ['stable-ID conflict overrides unknown spelling', ['Denis Villeneuve'], 'Dénis Villeneuve', 1, 'tt999900002', 'mismatch', 'source-stable-id-conflict'],
   ['stable-ID conflict overrides unknown multi-director scope', ['Author One'], 'Author One / Author Two', 2, 'tt999900002', 'mismatch', 'source-stable-id-conflict'],
 ]) test(`director evidence semantics: ${name}`, async () => {
   let calls = 0;
   const r = await fetchAssistedKinobaza(CARD, { ...film, directorAliases: expectedAliases, directorCount }, async url => {
     calls++; assert.equal(url, CARD);
-    return response(markup({ director: observed, stable: `<tr><td>IMDb:</td><td>${stable}</td></tr>` }));
+    return response(markup({ director: observed, stable: stable ? `<tr><td>IMDb:</td><td>${stable}</td></tr>` : '' }));
   });
   assert.equal(r.identity.status, status); assert.equal(r.identity.reason, reason); assert.equal(calls, 1);
   if (status !== 'matched') { assert.deepEqual(r.candidates, []); assert.equal(r.localization, undefined); }
+});
+test('same-year explicit film ID permits an unknown director spelling without claiming person proof', async () => {
+  const r = await fetchAssistedKinobaza(CARD, film, async () => response(markup({ director: 'Unknown authored director',
+    stable: `<tr><td>IMDb:</td><td>${film.imdbId}</td></tr>` })));
+  assert.equal(r.identity.status, 'matched'); assert.equal(r.identity.reason, 'explicit-stable-title-year-match');
+  assert.equal(r.identity.diagnostics.comparisons.directorAliasMatch, false);
+  assert.equal(r.identity.diagnostics.gates['director-alias'], 'not-evaluated');
+  assert.equal(r.identity.directorAliasEvidence, undefined);
+  assert.ok(r.candidates.length > 0); assert.ok(r.localization);
 });
 test('separately formatted source director values do not prove a person conflict or complete group', async () => {
   const r = await fetchAssistedKinobaza(CARD, { ...film, directorCount: 1, directorAliases: ['Author One', 'Another supplied spelling'] }, async () => response(markup({
@@ -193,7 +204,9 @@ test('partial TMDb Watch Providers does not block independent MOTN or later assi
 });
 for (const kind of ['unestablished-spelling', 'multiple-directors', 'incomplete-director-aliases', 'id-conflict']) test(`withheld claims and safe report use selected projection: ${kind}`, async () => {
   const h = harness({ html: markup({ director: kind === 'unestablished-spelling' || kind === 'id-conflict' ? 'Áuthored director' : 'Authored director',
-    stable: `<tr><td>IMDb:</td><td>${kind === 'id-conflict' ? 'tt999900002' : 'tt999900001'}</td></tr>` }),
+    // Director refusals exercise the no-shared-ID route; the explicit conflict
+    // keeps its independent higher-priority withholding case.
+    stable: kind === 'id-conflict' ? '<tr><td>IMDb:</td><td>tt999900002</td></tr>' : '' }),
     apiOptions: { mutate(data, phase) { if (phase === 'preview' && ['multiple-directors', 'incomplete-director-aliases'].includes(kind)) data.credits.crew.push({ id: 999998, job: 'Director', ...(kind === 'multiple-directors' ? { name: 'Other authored director' } : {}) }); } },
   });
   const before = (await h.setup()).payload.result; const r = await h.read(), result = r.payload.result; result.accounting = r.payload.workflow;

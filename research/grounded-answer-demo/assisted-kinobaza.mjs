@@ -14,6 +14,9 @@ const attr = (n, key) => n.attrs?.find(a => a.name === key)?.value;
 const normalize = s => typeof s === 'string' ? s.normalize('NFC').replace(/\s+/gu, ' ').trim().toLocaleLowerCase('uk-UA') : '';
 const text = n => (n.childNodes ?? []).map(c => c.nodeName === '#text' ? c.value : ['script', 'style', 'template', 'noscript', 'iframe'].includes(c.tagName) ? '' : text(c)).join(' ').replace(/\s+/gu, ' ').trim();
 const excluded = n => { for (let p = n; p; p = p.parentNode) if (['nav', 'aside', 'footer', 'template', 'noscript', 'iframe'].includes(p.tagName)) return true; return false; };
+const year = n => Number.isInteger(n) && n >= 1000 && n <= 9999 ? n : null;
+const selectedIDs = film => ({ tmdb: /^[1-9]\d{0,9}$/.test(String(film.tmdbId ?? '')) ? String(film.tmdbId) : null,
+  imdb: /^tt\d{1,20}$/.test(film.imdbId ?? '') ? film.imdbId : null });
 
 export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, directorAliasLookup = lookupDirectorAliases } = {}) {
   const active = all.filter(n => !excluded(n));
@@ -35,19 +38,23 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
     const parsed = headings.length === 1 ? /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]) : null;
     const names = [film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])], aliases = new Set(names.map(normalize).filter(Boolean));
     const directorAliases = new Set(directorNames.map(normalize).filter(Boolean));
-    const expected = { tmdb: String(film.tmdbId), imdb: film.imdbId };
+    const expected = selectedIDs(film), sourceYear = parsed ? year(Number(parsed[2])) : null, selectedYear = year(film.year);
+    const stableMatch = stable.some(s => s.filmScope && s.id && expected[s.namespace] === s.id);
+    const directorBypassed = status === 'matched' && reason === 'explicit-stable-title-year-match';
     const diagnostics = { failedGate, counts, comparisons: {
       canonicalMatch: canonicals.length === 1 ? canonicals[0] === sourceURL : null,
-      stableIdMatch: stable.some(s => s.id && expected[s.namespace] === s.id),
+      stableIdMatch: stableMatch,
       stableIdConflict: stable.some(s => s.id && expected[s.namespace] && expected[s.namespace] !== s.id) || ['tmdb','imdb'].some(ns => new Set(stable.filter(s => s.id && s.namespace === ns).map(s => s.id)).size > 1),
       headingAliasMatch: parsed ? aliases.has(normalize(parsed[1])) : null,
       originalAliasMatch: originals.length === 1 ? aliases.has(normalize(originals[0])) : null,
       yearEqual: parsed && film.year ? Number(parsed[2]) === film.year : null,
       directorAliasMatch: directors.size && directorAliases.size ? [...directors].every(d => directorAliases.has(normalize(d))) : null },
-      gates: Object.fromEntries(identityGates.map((g,i) => [g, status === 'matched' || i < failedAt ? 'pass' : i === failedAt ? status === 'mismatch' ? 'fail' : 'unresolved' : 'not-evaluated'])) };
+      strategy: status !== 'matched' ? null : directorBypassed ? 'stable-id-title-year' : stableMatch ? 'stable-id-title-director-year-variance' : 'title-year-director',
+      years: { selected: selectedYear, source: sourceYear, delta: selectedYear !== null && sourceYear !== null ? sourceYear - selectedYear : null },
+      gates: Object.fromEntries(identityGates.map((g,i) => [g, directorBypassed && g.startsWith('director-') ? 'not-evaluated' : status === 'matched' || i < failedAt ? 'pass' : i === failedAt ? status === 'mismatch' ? 'fail' : 'unresolved' : 'not-evaluated'])) };
     if (reason === 'source-identity-structure-limit') for (const key of Object.keys(diagnostics.comparisons)) diagnostics.comparisons[key] = null;
     const result = { status, reason, basis: 'selected TMDb projection versus explicit source identity; alias non-match is not independent proof of another film; no transliteration or user override', observed: counts, diagnostics };
-    if (status === 'matched' && crosswalk?.status === 'confirmed' && [...directors].some(d => !directDirectorAliases.has(normalize(d)))) {
+    if (status === 'matched' && !directorBypassed && crosswalk?.status === 'confirmed' && [...directors].some(d => !directDirectorAliases.has(normalize(d)))) {
       result.directorAliasEvidence = crosswalk.provenance;
     }
     // Explicit local diagnostic hook only. Values are never attached to the
@@ -76,17 +83,25 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
     if (['Режисер:', 'IMDb:', 'TMDb:'].includes(label) && ++identityRows > 32) return outcome('unresolved', 'source-identity-structure-limit');
     if (label === 'Режисер:') directors.add(text(cells[1]));
     if (['IMDb:', 'TMDb:'].includes(label)) {
+      // A convenient ID in recommendations or another body table is not film
+      // authority. Keep existing explicit-conflict refusal even if the critical
+      // boundary is missing, but only this bounded table scope can confirm an ID.
+      let table = row.parentNode;
+      while (table && table.tagName !== 'table') table = table.parentNode;
+      const filmScope = headings.length === 1 && accordions.length === 1 &&
+        table?.sourceCodeLocation?.startOffset >= headingNode.sourceCodeLocation?.endOffset &&
+        table?.sourceCodeLocation?.endOffset <= accordion.sourceCodeLocation?.startOffset;
       const links = [], stack = [cells[1]];
       while (stack.length) { const n = stack.pop(); if (n.tagName === 'a') links.push(n); if (!['script', 'style', 'template', 'noscript', 'iframe'].includes(n.tagName)) stack.push(...(n.childNodes ?? [])); }
       if (links.length > 20) return outcome('unresolved', 'source-identity-structure-limit');
       for (const a of links) {
         const href = attr(a, 'href') ?? '';
         const match = label === 'IMDb:' ? /^https:\/\/(?:www\.)?imdb\.com\/title\/(tt\d{1,20})\/?$/.exec(href) : /^https:\/\/(?:www\.)?themoviedb\.org\/movie\/(\d{1,10})(?:-[a-z0-9-]+)?\/?$/.exec(href);
-        stable.push({ namespace: label === 'IMDb:' ? 'imdb' : 'tmdb', id: match?.[1] ?? null });
+        stable.push({ namespace: label === 'IMDb:' ? 'imdb' : 'tmdb', id: match?.[1] ?? null, filmScope });
       }
       if (text(cells[1]) && (!links.length || (label === 'IMDb:' ? /^tt\d{1,20}$/ : /^\d{1,10}$/).test(text(cells[1])))) {
         const literal = text(cells[1]);
-        stable.push({ namespace: label === 'IMDb:' ? 'imdb' : 'tmdb', id: (label === 'IMDb:' ? /^tt\d{1,20}$/ : /^\d{1,10}$/).test(literal) ? literal : null });
+        stable.push({ namespace: label === 'IMDb:' ? 'imdb' : 'tmdb', id: (label === 'IMDb:' ? /^tt\d{1,20}$/ : /^\d{1,10}$/).test(literal) ? literal : null, filmScope });
       }
     }
   }
@@ -96,7 +111,7 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
     if (next?.tagName === 'a') directors.add(text(next));
   }
   directors.delete('');
-  const expected = { tmdb: String(film.tmdbId), imdb: film.imdbId };
+  const expected = selectedIDs(film);
   if (canonicals.some(u => u && u !== sourceURL)) return outcome('mismatch', 'source-canonical-conflict');
   if (stable.some(s => s.id && expected[s.namespace] && s.id !== expected[s.namespace]) || ['tmdb', 'imdb'].some(ns => new Set(stable.filter(s => s.id && s.namespace === ns).map(s => s.id)).size > 1)) return outcome('mismatch', 'source-stable-id-conflict');
   if (stable.some(s => !s.id)) return outcome('unresolved', 'malformed-source-stable-id');
@@ -104,7 +119,7 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   if (headings.length !== 1 || !originals.length || canonicals.length !== 1 || canonicals[0] !== sourceURL) return outcome('unresolved', 'source-identity-structure-incomplete');
   const aliases = new Set([film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])].map(normalize).filter(Boolean));
   const heading = /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]);
-  if (!heading) return outcome('unresolved', 'source-title-year-missing');
+  if (!heading || !year(Number(heading[2]))) return outcome('unresolved', 'source-title-year-missing');
   if (!aliases.has(normalize(heading[1]))) return outcome('mismatch', 'source-title-conflict');
   // Offsets only bound candidate H2s, not a proven semantic metadata container.
   // Never discard competing H2s just because one matches. Repeated identical
@@ -112,9 +127,13 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   // or deduplication rule without source evidence. Do not guess selectors.
   if (originals.length !== 1) return outcome('unresolved', 'source-original-title-scope-unestablished');
   if (!aliases.has(normalize(originals[0]))) return outcome('unresolved', 'source-original-title-unestablished');
-  const stableMatch = stable.some(s => expected[s.namespace] && s.id === expected[s.namespace]);
-  if (!film.year) return outcome('unresolved', 'selected-year-missing');
+  const stableMatch = stable.some(s => s.filmScope && expected[s.namespace] && s.id === expected[s.namespace]);
+  if (!year(film.year)) return outcome('unresolved', 'selected-year-missing');
   if (Number(heading[2]) !== film.year && !stableMatch) return outcome('mismatch', 'source-year-conflict-without-stable-crosswalk');
+  // Explicit same-system film ID plus independently matching title/year is a
+  // stronger route than name spelling. Canonical, title/original scope, malformed
+  // IDs and all proven ID conflicts have already been checked above.
+  if (stableMatch && Number(heading[2]) === film.year) return outcome('matched', 'explicit-stable-title-year-match');
   const directorAliases = new Set(directorNames.map(normalize).filter(Boolean));
   if (!directors.size || !directorAliases.size) return outcome('unresolved', 'source-or-selected-director-missing');
   // Flat aliases do not establish a multi-person group. Do not split source
@@ -122,8 +141,8 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   // selected director records, never from aliases, script or browser input.
   if (film.directorCount !== 1 || directors.size !== 1 || film.directorPeople !== undefined &&
       (!Array.isArray(film.directorPeople) || film.directorPeople.length > 1)) return outcome('unresolved', 'director-scope-unestablished');
-  // A spelling/script difference is not person-ID evidence. Even an exact film
-  // ID cannot bypass this unresolved gate; no fuzzy/diacritic/transliteration repair.
+  // Without a shared film ID, or with a differing year, director proof is still
+  // required. A spelling difference is unresolved, not person-conflict evidence.
   if (![...directors].every(d => directorAliases.has(normalize(d)))) return outcome('unresolved', 'director-alias-unestablished');
   return outcome('matched', stableMatch ? 'explicit-stable-and-structural-match' : 'explicit-title-year-director-match');
 }

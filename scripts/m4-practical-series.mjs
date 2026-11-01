@@ -29,6 +29,19 @@ export const practicalStudies = Object.freeze({
     Object.freeze({ title: 'Blade Runner 2049', year: 2017 }),
     Object.freeze({ title: 'Mortal Kombat', year: 2021 }),
   ]),
+  'cascade-identity': Object.freeze([
+    Object.freeze({ title: 'Alien', year: 1979 }),
+    Object.freeze({ title: 'Mad Max: Fury Road', year: 2015 }),
+    Object.freeze({ title: 'Dune: Part Two', year: 2024 }),
+    Object.freeze({ title: 'Supergirl', year: 2026 }),
+    Object.freeze({ title: 'Goodfellas', year: 1990 }),
+    Object.freeze({ title: 'The Pursuit of Happyness', year: 2006 }),
+    Object.freeze({ title: 'The Lives of Others', year: 2006 }),
+    // The verified selected TMDb projection uses 2008; the source card's 2006
+    // nomination remains a separate observed year, never a seeded crosswalk.
+    Object.freeze({ title: 'The Fall', year: 2008 }),
+    Object.freeze({ title: 'The Prestige', year: 2006 }),
+  ]),
 });
 const normalize = s => typeof s === 'string' ? s.normalize('NFC').replace(/\s+/gu, ' ').trim().toLowerCase() : '';
 const val = f => f?.state === 'reported' ? f.value : null;
@@ -65,9 +78,22 @@ export function inspectPublicIdentity(html, url) {
   const all = nodes(html), headings = all.filter(n => (profile ? ['h1'] : ['h1','h2','h3']).includes(n.tagName));
   const rows = all.filter(n => n.tagName === 'tr').map(n => ({ label: text(n.childNodes?.find(c => ['td','th'].includes(c.tagName)) ?? {}), node: n }));
   const directors = rows.filter(r => r.label === 'Режисер:').slice(0,16).map(r => ({ text: text(r.node).slice(0, 700), links: r.node.childNodes.flatMap(function walk(n) { return n.tagName === 'a' ? [{ text: text(n).slice(0,500), title: attr(n,'title')?.slice(0,500) ?? null, href: attr(n,'href')?.match(/^\/persons\/[a-z0-9-]+$/)?.[0]?.slice(0,512) ?? null }] : (n.childNodes ?? []).flatMap(walk); }).slice(0,16) }));
+  // Observe labelled film-ID rows only. Invalid targets contribute a count, not
+  // a raw URL/query/token. This local diagnostic is not an identity decision.
+  const filmIds = rows.filter(r => ['IMDb:','TMDb:'].includes(r.label)).slice(0,16).map(r => {
+    const cells = (r.node.childNodes ?? []).filter(n => ['td','th'].includes(n.tagName));
+    if (cells.length !== 2) return { namespace:r.label === 'IMDb:' ? 'imdb:movie' : 'tmdb:movie', ids:[], malformed:1 };
+    const imdb = r.label === 'IMDb:', literalPattern = imdb ? /^tt\d{1,20}$/ : /^\d{1,10}$/;
+    const linkPattern = imdb ? /^https:\/\/(?:www\.)?imdb\.com\/title\/(tt\d{1,20})\/?$/ : /^https:\/\/(?:www\.)?themoviedb\.org\/movie\/(\d{1,10})(?:-[a-z0-9-]+)?\/?$/;
+    const links = (cells[1].childNodes ?? []).flatMap(function walk(n) { return n.tagName === 'a' ? [n] : (n.childNodes ?? []).flatMap(walk); });
+    const ids = [], literal = text(cells[1]); let malformed = Math.max(0,links.length - 20);
+    for (const link of links.slice(0,20)) { const id = linkPattern.exec(attr(link,'href') ?? '')?.[1]; if (id) ids.push(id); else malformed++; }
+    if (literal && (!links.length || literalPattern.test(literal))) { if (literalPattern.test(literal)) ids.push(literal); else malformed++; }
+    return { namespace:imdb ? 'imdb:movie' : 'tmdb:movie', ids:[...new Set(ids)], malformed };
+  });
   const main = all.find(n => n.tagName === 'h1');
   return { sourceURL: url, headings: headings.slice(0, 16).map(n => ({ tag: n.tagName, text: text(n).slice(0, 500), attributes: (n.attrs ?? []).filter(a => ['lang','class','data-copy-title'].includes(a.name)).map(a=>({name:a.name,value:a.value.slice(0,500)})) })),
-    canonical: all.filter(n => n.tagName === 'link' && attr(n,'rel') === 'canonical').map(n => attr(n,'href')).filter(u => u === url), directors,
+    canonical: all.filter(n => n.tagName === 'link' && attr(n,'rel') === 'canonical').map(n => attr(n,'href')).filter(u => u === url), directors, filmIds,
     // Never use the H1 parent: it can be BODY and include an entire biography.
     profileHeading: profile && main ? text(main).slice(0,500) : null,
     personLinks: all.filter(n => n.tagName === 'a' && /^https:\/\/(?:www\.)?(?:imdb\.com\/name\/nm\d+|themoviedb\.org\/person\/\d+)(?:[/-][a-z0-9-]*)?\/?$/i.test(attr(n,'href') ?? '')).slice(0, 8).map(n => ({ href: attr(n,'href'), label: text(n).slice(0, 200) })),
@@ -81,7 +107,7 @@ async function readHTML(url, send, signal) {
   return { status:'ok', httpStatus:r.status, bytes:size, html:new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks,size)) };
 }
 
-export async function practicalOperation({ tmdbToken, tavilyKey, operation, context = {} }, fetchImpl = fetch) {
+export async function practicalOperation({ tmdbToken, tavilyKey, operation, context = {} }, fetchImpl = fetch, { compareCard } = {}) {
   context ??= {};
   const counts = { tmdb:0, search:0, cards:0, personPages:0, total:0 }, attempts = [];
   const result = { execution:'local-diagnostic', buildSha:null, runId:randomUUID(), startedAt:new Date().toISOString(), action:operation?.action, counts, attempts };
@@ -126,20 +152,27 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
       return done('director-identity-inspected', { directorIdentity:{ personId:data.id, name:data.name, alsoKnownAs:data.also_known_as, dateOfBirth:data.birthday ?? null, imdbNameId:imdbIds[0] ?? null } });
     }
     if (!film) {
-      queryURL = `${api}/search/movie?query=${encodeURIComponent(control.title)}&language=uk-UA&include_adult=false&page=1&year=${control.year}`;
+      const searchLanguage = study === 'cascade-identity' ? 'en-US' : 'uk-UA';
+      queryURL = `${api}/search/movie?query=${encodeURIComponent(control.title)}&language=${searchLanguage}&include_adult=false&page=1&year=${control.year}`;
       const search = await readTmdbJson(queryURL, tmdbToken, send, {signal});
       if (search.status !== 'ok') return done(`tmdb-search-${search.status}`);
-      const found = search.data?.results?.filter(c => Number.isSafeInteger(c.id) && c.id > 0 && normalize(c.original_title) === normalize(control.title) && c.release_date?.slice(0,4) === String(control.year));
+      const found = search.data?.results?.filter(c => Number.isSafeInteger(c.id) && c.id > 0 &&
+        (normalize(c.original_title) === normalize(control.title) || study === 'cascade-identity' && normalize(c.title) === normalize(control.title)) &&
+        c.release_date?.slice(0,4) === String(control.year) && (study !== 'cascade-identity' || safeName(c.original_title)));
       if (found?.length !== 1) return done('tmdb-search-identity-not-unique');
       detailURL = `${api}/movie/${found[0].id}?language=uk-UA&append_to_response=${append}`;
       const detail = await readTmdbJson(detailURL, tmdbToken, send, {signal});
       if (detail.status !== 'ok' || !/^tt\d{7,10}$/.test(detail.data?.imdb_id ?? '')) return done('tmdb-details-unresolved');
       const p = projectTmdbIdentityFor(detail.data, {tmdbId:found[0].id, imdbId:detail.data.imdb_id});
-      if (p.identity.status !== 'matched' || normalize(val(p.metadata.originalTitle)) !== normalize(control.title) || val(p.metadata.releaseDate)?.slice(0,4) !== String(control.year)) return done('tmdb-details-identity-refused');
+      const expectedOriginal = study === 'cascade-identity' ? found[0].original_title : control.title;
+      if (p.identity.status !== 'matched' || normalize(val(p.metadata.originalTitle)) !== normalize(expectedOriginal) || val(p.metadata.releaseDate)?.slice(0,4) !== String(control.year)) return done('tmdb-details-identity-refused');
       const directors = p.metadata.directors.items ?? [];
       film = { id:`imdb:${detail.data.imdb_id}`,tmdbId:found[0].id,imdbId:detail.data.imdb_id,identityTitle:val(p.metadata.requestedTitle),originalTitle:val(p.metadata.originalTitle),year:control.year,
         directorCount:p.metadata.directors.state === 'reported' ? directors.length : null, directorPeople:projectDirectorPeople(p.metadata.directors),
-        directorAliases:directors.flatMap(d=>[val(d.name),val(d.originalName)]).filter(Boolean),titleAliases:[val(p.metadata.requestedTitle),val(p.metadata.originalTitle),...(p.metadata.alternativeTitles.items ?? []).map(a=>val(a.title))].filter(Boolean) };
+        directorAliases:directors.flatMap(d=>[val(d.name),val(d.originalName)]).filter(Boolean),titleAliases:[val(p.metadata.requestedTitle),val(p.metadata.originalTitle),
+          // Only this study's unique exact English search match establishes the
+          // control spelling; never invent it from the unrelated original name.
+          ...(study === 'cascade-identity' ? [control.title] : []),...(p.metadata.alternativeTitles.items ?? []).map(a=>val(a.title))].filter(Boolean) };
       context.films[operation.film] = film;
     }
     result.identity = film;
@@ -164,11 +197,34 @@ export async function practicalOperation({ tmdbToken, tavilyKey, operation, cont
       const card = await fetchAssistedKinobaza(operation.url, film, fetchCard, {signal,onIdentityDiagnostic});
       return done(card.identity?.status ?? card.status, { comparisons, publicIdentity:inspection, extraction:card.status, candidateCount:card.candidates?.length ?? 0, localizationBlocks:card.localization?.blocks?.length ?? 0, discovery:summarizeDiscovery(film,card) });
     }
-    const stages = new Set(), searchPointers = [];
+    const stages = new Set(), searchPointers = [], cardComparisons = [];
+    const observedFetch = async (url, init) => {
+      const response = await send(url, init);
+      // Local opt-in only. No second HTTP call, HTML file or response archive;
+      // compare the fixed old identity policy with the new one on these bytes.
+      if (study === 'cascade-identity' && typeof compareCard === 'function' && admitKinobazaURL(url) &&
+          response.ok && /^text\/html\b/i.test(response.headers.get('content-type') ?? '') && response.body) {
+        const reader = response.clone().body.getReader(), chunks = []; let bytes = 0;
+        try {
+          for (;;) {
+            const part = await reader.read();
+            if (part.done) {
+              const html = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
+              cardComparisons.push({ ...(await compareCard(html, film, url)), publicIdentity: inspectPublicIdentity(html, url) });
+              break;
+            }
+            bytes += part.value.byteLength;
+            if (bytes > 2 * 1024 * 1024) { void reader.cancel().catch(() => {}); cardComparisons.push({ sourceURL: url, status: 'comparison-size-bounded' }); break; }
+            chunks.push(part.value);
+          }
+        } catch { void reader.cancel().catch(() => {}); cardComparisons.push({ sourceURL: url, status: 'comparison-unavailable-no-retry' }); }
+      }
+      return response;
+    };
     const searchFactory = (key, sendSearch) => tavilySearch(key, sendSearch, { onCandidateURLs: urls => searchPointers.push(urls.map(url => describeCandidateURL(url, {secrets:[tmdbToken,tavilyKey]}))) });
-    const resolved = await createKinobazaResolver({ apiKey:tavilyKey,onIdentityDiagnostic,searchFactory })(film, { fetchImpl:send, signal, calls:[], reserve:async stage => { if(stages.has(stage)) throw Error('repeat-reservation'); stages.add(stage); } });
+    const resolved = await createKinobazaResolver({ apiKey:tavilyKey,onIdentityDiagnostic,searchFactory })(film, { fetchImpl:observedFetch, signal, calls:[], reserve:async stage => { if(stages.has(stage)) throw Error('repeat-reservation'); stages.add(stage); } });
     const confirmed = [resolved.result, ...(resolved.choices ?? [])].filter(Boolean).map(c => ({ sourceURL:c.sourceURL, identity:c.identity?.status, reason:c.identity?.reason, extraction:c.status, candidates:c.candidates?.length ?? 0, providerBlocks:c.localization?.blocks?.length ?? 0, discovery:summarizeDiscovery(film,c) }));
-    return done(resolved.status, { resolver:resolved.resolver, comparisons, searchPointers, confirmed,
+    return done(resolved.status, { resolver:resolved.resolver, comparisons, searchPointers, confirmed, ...(study === 'cascade-identity' ? { cardComparisons } : {}),
       discovery:{mappedCount:confirmed.reduce((n,c)=>n+c.discovery.mappedCount,0),unmappedCount:confirmed.reduce((n,c)=>n+c.discovery.unmappedCount,0)} });
   } catch { return done(signal.aborted ? 'local-deadline-no-retry' : 'local-operation-failed-no-retry'); }
 }
@@ -180,7 +236,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     let size = 0; const chunks = [];
     for await (const chunk of process.stdin) { size += chunk.length; if(size > 256*1024) throw Error(); chunks.push(chunk); }
     input = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    const out = await practicalOperation(input);
+    let comparison;
+    if (input.context?.study === 'cascade-identity' && input.operation?.action === 'resolve') {
+      const { loadCascadeBaseline, compareCascadeCard } = await import('./m4-cascade-comparison.mjs');
+      const beforeIdentity = await loadCascadeBaseline();
+      comparison = (html, film, url) => compareCascadeCard(html, film, url, beforeIdentity);
+    }
+    const out = await practicalOperation(input, fetch, { compareCard: comparison });
     const safe = JSON.stringify(out);
     if ([input.tmdbToken,input.tavilyKey].filter(Boolean).some(key=>safe.includes(key))) throw Error('secret-output-refused');
     process.stdout.write(safe+'\n');

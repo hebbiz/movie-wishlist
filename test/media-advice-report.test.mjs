@@ -2,6 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { safeMediaReport, mediaSourceDetails } from '../assets/media-advice-report.mjs';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
+import { fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { CARD, markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 
 test('recovered noncritical markup is named without retaining parser attributes or arbitrary issue content', () => {
   const report = safeMediaReport({ resolver: { cards: [{ identity: 'matched', extractionDiagnostic: {
@@ -245,4 +249,76 @@ test('row comparison diagnostics retain discrepancy versus non-comparable distin
   const report = safeMediaReport({ rows: [{ id: 'motn:0', provider: { key: 'prime' }, comparisons, comparisonsOmitted: 'PRIVATE_COUNT' }] });
   assert.equal((report.match(/price:non-comparable:package-differs/g) ?? []).length, 4);
   assert.match(report, /comparisons 8 \[/); assert.match(report, /comparisons omitted unknown/); assert.doesNotMatch(report, /PRIVATE/);
+});
+
+// Author-written film IDs/HTML only; not archived source pages or live evidence.
+const cascadeFilm = { id:'authored-cascade', tmdbId:IDS[0], imdbId:`tt${IDS[0]}`, identityTitle:'Вигаданий фільм',
+  originalTitle:'Authored original', year:2001, titleAliases:[], directorAliases:['Authored director'], directorCount:1 };
+const reportCard = identity => ({ identity:identity.status, reason:identity.reason, diagnostics:identity.diagnostics });
+async function authoredCascadeIdentity({ film = cascadeFilm, html = markup() } = {}) {
+  return (await fetchAssistedKinobaza(CARD,film,async () => new Response(html,{headers:{'content-type':'text/html'}}))).identity;
+}
+
+test('same-ID/title/year report recognizes the cascade route without claiming that skipped director gates passed',async()=>{
+  const identity=await authoredCascadeIdentity({html:markup({director:'Unconfirmed authored spelling',stable:`<tr><td>IMDb:</td><td>tt${IDS[0]}</td></tr>`})});
+  assert.equal(identity.status,'matched');assert.equal(identity.reason,'explicit-stable-title-year-match');
+  const report=safeMediaReport({resolver:{cards:[reportCard(identity)]}});
+  assert.match(report,/Card: matched; reason explicit-stable-title-year-match; gate none-or-unknown/);
+  assert.match(report,/Identity route stable-id-title-year; years \{"selected":2001,"source":2001,"delta":0\}/);
+  for(const gate of ['director-presence','director-scope','director-alias']){
+    assert.equal(identity.diagnostics.gates[gate],'not-evaluated');
+    assert.ok(report.includes(`"${gate}":"not-evaluated"`));assert.ok(!report.includes(`"${gate}":"pass"`));
+  }
+  assert.match(report,/"stableIdMatch":true/);assert.match(report,/"directorAliasMatch":false/);
+  assert.doesNotMatch(report,/Unconfirmed authored spelling|Authored director|https?:|tt999900001/);
+});
+
+test('different-year confirmation reports numeric selected/source/delta and actual director checks separately',async()=>{
+  for(const [selected,source,delta] of [[2008,2006,-2],[2006,2008,2]]){
+    const identity=await authoredCascadeIdentity({film:{...cascadeFilm,year:selected},html:markup({year:source,stable:`<tr><td>TMDb:</td><td>${IDS[0]}</td></tr>`})});
+    assert.equal(identity.status,'matched');assert.equal(identity.reason,'explicit-stable-and-structural-match');
+    const report=safeMediaReport({resolver:{cards:[reportCard(identity)]}});
+    assert.ok(report.includes(`Identity route stable-id-title-director-year-variance; years ${JSON.stringify({selected,source,delta})}`));
+    assert.match(report,/"yearEqual":false/);
+    for(const gate of ['director-presence','director-scope','director-alias'])assert.ok(report.includes(`"${gate}":"pass"`));
+  }
+});
+
+test('missing/invalid years and legacy diagnostics remain unknown rather than inventing a cascade route or fresh result',()=>{
+  const legacy=safeMediaReport({resolver:{cards:[{identity:'matched',reason:'explicit-title-year-director-match',diagnostics:{gates:{'director-alias':'pass'}}}]}},{stale:true});
+  assert.match(legacy,/reason explicit-title-year-director-match/);
+  assert.match(legacy,/Identity route unconfirmed; years \{"selected":null,"source":null,"delta":null\}/);
+  assert.match(legacy,/Result freshness: stale/);assert.match(legacy,/"director-presence":"not-evaluated"/);
+  for(const years of [undefined,null,{}, {selected:2001}, {source:2006}, {selected:'2001',source:'2006'},
+    {selected:0,source:10000},{selected:NaN,source:Infinity}]){
+    const report=safeMediaReport({resolver:{cards:[{identity:'unresolved',reason:'selected-year-missing',diagnostics:{years}}]}});
+    const selected=years?.selected===2001?2001:null,source=years?.source===2006?2006:null;
+    assert.ok(report.includes(`Identity route unconfirmed; years ${JSON.stringify({selected,source,delta:null})}`));
+    assert.doesNotMatch(report,/NaN|Infinity|\[object Object\]/);
+  }
+});
+
+test('cascade diagnostics withhold injected strategy/year/ID/URL/secret fields and recompute delta',()=>{
+  const malicious=['PRIVATE_STRATEGY','https://private.example/?token=PRIVATE','Bearer PRIVATE_TOKEN',{},['stable-id-title-year']];
+  for(const strategy of malicious){
+    const report=safeMediaReport({resolver:{cards:[{identity:'matched',reason:'explicit-stable-title-year-match',sourceURL:'https://private.example/PRIVATE_CARD',
+      tmdbId:'PRIVATE_TMDB_ID',imdbId:'PRIVATE_IMDB_ID',directorPersonId:'PRIVATE_PERSON_ID',rawHTML:'PRIVATE_HTML',
+      diagnostics:{strategy,years:{selected:'2001 token=PRIVATE',source:{raw:'PRIVATE_YEAR'},delta:'PRIVATE_DELTA'},
+        sourceURL:'https://private.example/PRIVATE',ids:{imdb:'PRIVATE_ID'},personId:'PRIVATE_PERSON',raw:'PRIVATE_BODY',
+        gates:{'director-alias':'PRIVATE_GATE',PRIVATE_GATE:'pass'},comparisons:{stableIdMatch:'PRIVATE_FLAG'},counts:{directorCount:'PRIVATE_COUNT'}}}]}});
+    assert.match(report,/Identity route unconfirmed; years \{"selected":null,"source":null,"delta":null\}/);
+    assert.match(report,/"director-alias":"not-evaluated"/);assert.match(report,/"stableIdMatch":null/);
+    assert.doesNotMatch(report,/PRIVATE|https?:|Bearer|token=|rawHTML|sourceURL|personId|tmdbId|imdbId/);
+  }
+  const recomputed=safeMediaReport({resolver:{cards:[{identity:'matched',diagnostics:{strategy:'stable-id-title-director-year-variance',years:{selected:2008,source:2006,delta:'PRIVATE_DELTA'}}}]}});
+  assert.match(recomputed,/years \{"selected":2008,"source":2006,"delta":-2\}/);assert.doesNotMatch(recomputed,/PRIVATE/);
+});
+
+test('ordinary Beta product projection omits cascade diagnostics independently of the matched route',async()=>{
+  const identity=await authoredCascadeIdentity({html:markup({director:'Unconfirmed authored spelling',stable:`<tr><td>IMDb:</td><td>tt${IDS[0]}</td></tr>`})});
+  const result={film:{id:'imdb:tt1234567',imdbId:'tt1234567',title:'Authored film',year:2001},rows:[],resolver:{cards:[reportCard(identity)]},
+    runtime:{runId:'PRIVATE_RUN'},metrics:{requestsMade:5,requestBudget:8}};
+  const projected=productMediaResult(result,{mykola_media_advice:true,mykola_media_advice_diagnostics:false});
+  assert.doesNotMatch(JSON.stringify(projected),/resolver|strategy|years|gates|stableId|director|PRIVATE|explicit-stable-title-year-match/);
+  const report=safeMediaReport(result);assert.match(report,/Identity route stable-id-title-year/);
 });
