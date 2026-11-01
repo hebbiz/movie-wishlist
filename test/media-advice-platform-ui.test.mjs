@@ -2,6 +2,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMediaAdvice } from '../assets/media-advice.mjs';
+import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
+import { FILMS } from '../research/grounded-answer-demo/config.mjs';
+import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
+import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { localizedMarkup, netflixCatalogueBlock, paragraphBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
 
 class Element {
   constructor(tag = 'div', text = '') { this.tagName = tag.toUpperCase(); this.children = []; this.attributes = {}; this.listeners = {}; this.dataset = {}; this.hidden = false; this.open = false; this.isConnected = true; this.classList = { add: (...names) => { this.className = [...new Set([...(this.className?.split(' ') ?? []), ...names])].join(' '); } }; this.textContent = text; }
@@ -38,13 +43,13 @@ function ownBlock(key, audio = 'reported-positive', subtitles = 'reported-positi
       audio: { state: audio, language: 'uk', evidence: [{ label: 'Укр. звук (стерео)', literal: audio === 'reported-positive' ? '+' : '−', state: audio === 'reported-positive' ? 'positive' : 'negative', formatLiteral: 'стерео' }] },
       subtitles: { state: subtitles, language: 'uk', evidence: [] } } };
 }
-async function harness(t, rows, extra = {}, capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: true }) {
+async function harness(t, rows, extra = {}, capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: true }, form = { recommended_medium: 'DVD', purchase_url: '' }) {
   const entry = new Element('button'), body = new Element('body'), state = { output: null, calls: 0, opens: [], capabilities };
   const doc = { body, activeElement: entry, createElement: tag => new Element(tag), createTextNode: text => new Element('text', text),
     defaultView: { scrollY: 0, scrollTo() {}, requestAnimationFrame(callback) { callback(); }, navigator: {}, open(...args) { state.opens.push(args); } } };
   const control = createMediaAdvice({ document: doc, entry, context: () => ({ userId: 'u', groupId: 'g', imdbId: 'tt1234567', formSession: 's', title: 'Authored film' }),
     capability: async () => state.capabilities, discover: async () => { state.calls++; return { rows, film: { id: filmId, imdbId: 'tt1234567' }, ...extra }; },
-    readForm: () => ({ recommended_medium: 'DVD', purchase_url: '' }), writeForm: fields => state.output = fields });
+    readForm: () => ({ ...form }), writeForm: fields => state.output = fields });
   t.after(() => control.invalidate());
   await entry.click(); await new Promise(resolve => setTimeout(resolve, 0));
   const button = text => control.dialog.querySelectorAll('button').find(element => element.textContent === text);
@@ -295,4 +300,87 @@ test('a film-level audio badge remains in diagnostics without adding a separate 
   await button('Діагностичний звіт').click();
   assert.match(control.dialog.querySelector('textarea').value, /Film-level UA audio badge: reported-positive/);
   assert.equal(state.calls, 1); assert.equal(state.output, null); assert.deepEqual(state.opens, []);
+});
+
+// Authored HTML through the actual extractor, discovery and ordinary-user
+// projection. These fictional film links are not captured Kinobaza responses.
+const netflixFilmHref = 'https://www.netflix.com/title/900001234';
+const megogoFilmHref = 'https://megogo.net/ua/view/900001235-authored.html?exact=%2f#Anchor';
+async function netflixCaptionResult(href = netflixFilmHref) {
+  const film = { ...FILMS.coherence, imdbId: 'tt1234567', year: 2013 };
+  const html = localizedMarkup(netflixCatalogueBlock({ href }) + paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', megogoFilmHref), 'coherence', false);
+  const extracted = await extractHtml(html, film);
+  assert.equal(extracted.identity.status, 'matched');
+  const result = composeDiscovery(film, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: extracted, status: extracted.status } });
+  return { extracted, result: { ...result, rows: result.rows.filter(row => row.kinobazaLocalization), unmapped: [] } };
+}
+
+test('Netflix caption reaches the same Beta table through ordinary and diagnostic projections without catalogue audio or link borrowing', async t => {
+  const { extracted, result } = await netflixCaptionResult();
+  const netflixBlock = extracted.localization.blocks.find(block => block.provider === 'netflix');
+  assert.equal(netflixBlock.audio.state, 'unknown'); assert.equal(netflixBlock.subtitles.state, 'reported-positive');
+  const before = JSON.stringify(result);
+  for (const diagnostics of [false, true]) await t.test(diagnostics ? 'diagnostic user' : 'ordinary Beta user', async t => {
+    const capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics };
+    const response = diagnostics ? { ...result, capabilities } : productMediaResult(result, capabilities);
+    const netflix = response.rows.find(row => row.provider.key === 'netflix');
+    assert.equal(netflix.kinobazaLocalization.audio.state, 'unknown');
+    assert.equal(netflix.kinobazaLocalization.subtitles.state, 'reported-positive');
+    const { control, state, button } = await harness(t, response.rows, response, capabilities);
+    const rows = control.dialog.querySelectorAll('.media-advice-row');
+    assert.equal(rows.length, 2);
+    const netflixRow = rows.find(row => row.dataset.providerKey === 'netflix');
+    assert.deepEqual(netflixRow.querySelectorAll('.media-advice-symbol').map(symbol => symbol.textContent), ['◐', '?', '+']);
+    assert.deepEqual(rows.find(row => row.dataset.providerKey === 'megogo').querySelectorAll('.media-advice-symbol').map(symbol => symbol.textContent), ['◐', '+', '+']);
+    assert.equal(state.output, null); assert.deepEqual(state.opens, []);
+    if (diagnostics) {
+      await button('Діагностичний звіт').click();
+      assert.match(control.dialog.querySelector('textarea').value, /kinobaza\/netflix: territory unknown; Kinobaza provider-block audio unknown, subtitles reported-positive/);
+      assert.ok(control.dialog.querySelectorAll('pre').some(pre => pre.textContent.includes('"literal": "укр. субтитри"')));
+      await button('← До порад').click();
+    } else {
+      assert.equal(button('Діагностичний звіт'), undefined);
+      assert.equal(control.dialog.querySelectorAll('pre').length, 0); assert.equal(control.dialog.querySelectorAll('textarea').length, 0);
+      assert.ok(netflix.kinobazaLocalization.subtitles.evidence.every(evidence => !Object.hasOwn(evidence, 'literal')));
+    }
+    await netflixRow.querySelector('button').click();
+    await button('Відкрити посилання').click();
+    assert.deepEqual(state.opens, [[netflixFilmHref, '_blank', 'noopener,noreferrer']]);
+    await button('Обрати').click();
+    assert.equal(state.output, null, 'preview does not update even the local form');
+    assert.ok(control.dialog.querySelector('.media-advice-preview').textContent.includes(netflixFilmHref));
+    assert.doesNotMatch(control.dialog.querySelector('.media-advice-preview').textContent, /\/online\/netflix/);
+    await button('Перенести в картку').click();
+    assert.deepEqual(state.output, { recommended_medium: 'Netflix', purchase_url: netflixFilmHref });
+    assert.equal(state.calls, 1);
+  });
+  assert.equal(JSON.stringify(result), before, 'projection/render/apply do not change source records');
+});
+
+test('Netflix catalogue never substitutes for missing or unsafe film URL; clearing an existing URL remains explicit', async t => {
+  for (const href of [null, 'javascript:alert(1)']) await t.test(href === null ? 'missing' : 'unsafe', async t => {
+    const { result } = await netflixCaptionResult(href);
+    for (const diagnostics of [false, true]) {
+      const capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics };
+      const response = diagnostics ? { ...result, capabilities } : productMediaResult(result, capabilities);
+      const { control, state, button } = await harness(t, response.rows, response, capabilities, { recommended_medium: 'DVD', purchase_url: 'https://manual.example/kept' });
+      const rows = control.dialog.querySelectorAll('.media-advice-row');
+      const netflixRow = rows.find(row => row.dataset.providerKey === 'netflix');
+      assert.deepEqual(netflixRow.querySelectorAll('.media-advice-symbol').map(symbol => symbol.textContent), ['?', '?', '?']);
+      assert.deepEqual(rows.find(row => row.dataset.providerKey === 'megogo').querySelectorAll('.media-advice-symbol').map(symbol => symbol.textContent), ['◐', '+', '+']);
+      await netflixRow.querySelector('button').click();
+      assert.equal(button('Відкрити посилання'), undefined);
+      assert.match(control.dialog.querySelector('.media-advice-actions').textContent, /Придатного посилання немає/);
+      await button('Обрати').click();
+      assert.match(control.dialog.querySelector('.media-advice-preview').textContent, /Явно очистити попереднє посилання/);
+      assert.equal(state.output, null); await button('Перенести в картку').click(); assert.equal(state.output, null);
+      await button('Обрати').click();
+      const check = control.dialog.querySelector('.media-advice-preview').querySelector('input');
+      check.checked = true; for (const callback of check.listeners.change) callback();
+      await button('Перенести в картку').click();
+      assert.deepEqual(state.output, { recommended_medium: 'Netflix', purchase_url: '' });
+      assert.deepEqual(state.opens, []); assert.equal(state.calls, 1);
+      assert.ok(!JSON.stringify(state.output).includes('/online/netflix'));
+    }
+  });
 });

@@ -7,6 +7,13 @@ export const tableBlock = (provider = 'itunes', rows = [['Укр. звук (ст
 export const paragraphBlock = (provider = 'megogo', tokens = '(укр. аудіо, укр. субтитри)', href) => `<p class="mt-2">${badge(provider, href)} ${tokens}</p>`;
 export const localizedMarkup = (blocks = '', filmId = 'coherence', general = true) => syntheticHtml(FILMS[filmId]).replace('<div id="availabilityAccordion">', `${general ? generalBadge : ''}${blocks}<div id="availabilityAccordion">`);
 
+// Authored structural regression: the supported Netflix paragraph contains one
+// film link, its own plain caption span and an auxiliary platform catalogue.
+// The film ID is deliberately fictional; this is not captured public HTML.
+export const netflixCatalogueBlock = ({
+  href = 'https://www.netflix.com/title/900001234', caption = '(укр. субтитри)', catalogueHref = '/online/netflix',
+} = {}) => `<p class="mt-2 d-flex align-items-center"><a${href === null ? '' : ` href="${href}"`} title="Доступно в netflix" class="me-2"><img alt="Доступно в netflix"></a><span>${caption}</span><a href="${catalogueHref}" title="Інші фільми з українськими субтитрами або аудіо на Netflix">Інші фільми →</a></p>`;
+
 // Invented Dune (2024) source blocks, not captured public markup or a claim
 // about current platform availability, audio, subtitles or real card URLs.
 export const authoredDuneLanguageMarkup = ({

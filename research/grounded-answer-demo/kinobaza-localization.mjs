@@ -13,6 +13,12 @@ function descendants(n) {
   return out;
 }
 const text = n => clean(descendants(n).filter(p => p.nodeName === '#text').map(p => p.value).join(' '));
+const plainCaption = n => n.tagName === 'span' && !n.attrs?.length && (n.childNodes ?? []).every(c => c.nodeName === '#text');
+// This observed catalogue control is navigation, not a second film offer or
+// language evidence. Any different path/provider/label remains ambiguous.
+const catalogueControl = (n, provider) => provider.toLowerCase() === 'netflix' && n.tagName === 'a' &&
+  attr(n, 'href') === '/online/netflix' && attr(n, 'title') === 'Інші фільми з українськими субтитрами або аудіо на Netflix' &&
+  (n.childNodes ?? []).every(c => c.nodeName === '#text') && text(n) === 'Інші фільми →';
 function summarize(evidence) {
   const signs = new Set(evidence.filter(e => ['positive', 'negative'].includes(e.state)).map(e => e.state));
   // A negative for stereo does not contradict a positive for Dolby. Only the
@@ -47,7 +53,8 @@ export function extractLocalization({ accordion, h1, identifyProvider, makeCandi
         upstream: 'not-established', audio: unknown(), subtitles: unknown(), issues: [],
         binding: 'Direct single provider anchor and its own table or parenthesized tokens in a recognized film-content block; never name-only offer matching.' };
       const tables = elements(container).filter(n => n.tagName === 'table');
-      const unsafeBoundary = ambiguous || tables.length > 1 || descendants(container).filter(n => n.tagName === 'table').length !== tables.length || descendants(container).some(n => n.tagName === 'a' && n !== anchor && attr(n, 'href') !== attr(anchor, 'href'));
+      const catalogue = container.tagName === 'p' ? elements(container).filter(n => n !== anchor && catalogueControl(n, provider)) : [];
+      const unsafeBoundary = ambiguous || catalogue.length > 1 || tables.length > 1 || descendants(container).filter(n => n.tagName === 'table').length !== tables.length || descendants(container).some(n => n.tagName === 'a' && n !== anchor && !catalogue.includes(n) && attr(n, 'href') !== attr(anchor, 'href'));
       if (unsafeBoundary) block.issues.push('ambiguous-provider-block');
       else if (tables.length === 1 && container.tagName === 'div' && hasClass(container.parentNode, 'd-md-flex') && elements(container).every(n => n === anchor || n === tables[0])) {
         const evidence = { audio: [], subtitles: [] };
@@ -65,10 +72,11 @@ export function extractLocalization({ accordion, h1, identifyProvider, makeCandi
             ...(audio?.[1] ? { formatLiteral: audio[1] } : {}), ...(subtitles?.[1] ? { typeLiteral: subtitles[1] } : {}) });
         }
         if (!block.issues.length) { block.audio = summarize(evidence.audio); block.subtitles = summarize(evidence.subtitles); }
-      } else if (!tables.length && container.tagName === 'p' && elements(container).length === 1) {
+      } else if (!tables.length && container.tagName === 'p' && elements(container).filter(plainCaption).length <= 1 &&
+          elements(container).every(n => n === anchor || catalogue.includes(n) || plainCaption(n))) {
         // This entire source-specific paragraph is the block. Arbitrary adjacent
-        // nodes or the anchor's generic audio/subtitle tooltip are not evidence.
-        const rest = clean((container.childNodes ?? []).filter(n => n.nodeName === '#text').map(n => n.value).join(' '));
+        // nodes, catalogue text or generic audio/subtitle tooltips are not evidence.
+        const rest = clean((container.childNodes ?? []).filter(n => n.nodeName === '#text' || plainCaption(n)).map(n => n.nodeName === '#text' ? n.value : text(n)).join(' '));
         const match = /^\((укр\. (?:аудіо|субтитри)(?:, укр\. (?:аудіо|субтитри))?)\)$/.exec(rest);
         if (match) for (const [key, token] of [['audio', 'укр. аудіо'], ['subtitles', 'укр. субтитри']]) {
           if (match[1].split(', ').includes(token)) block[key] = summarize([{ label: token, literal: token, state: 'positive' }]);

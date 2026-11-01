@@ -36,7 +36,7 @@ async function identity({ selected = film, html = markup({ director: 'Vérified 
 }
 
 test('reviewed real alias is immutable and person-scoped; authored films are not live coverage evidence', async () => {
-  assert.equal(CONFIRMED_DIRECTOR_ALIASES.length, 2); assert.equal(Object.isFrozen(CONFIRMED_DIRECTOR_ALIASES), true);
+  assert.equal(CONFIRMED_DIRECTOR_ALIASES.length, 3); assert.equal(Object.isFrozen(CONFIRMED_DIRECTOR_ALIASES), true);
   assert.deepEqual(CONFIRMED_DIRECTOR_ALIASES[0].aliases, ['Денні Вільньов']);
   const selected = { ...film, directorAliases: ['Дені Вільнев', 'Denis Villeneuve'],
     directorPeople: [person({ personId:137427, names: ['Дені Вільнев', 'Denis Villeneuve'] })] };
@@ -72,6 +72,67 @@ test('reviewed Gillespie spelling is person-scoped across films, never a Supergi
   }
   const ambiguous=await fetchAssistedKinobaza(CARD,{...selected,directorCount:2},async()=>htmlResponse(markup({director:'Крейґ Ґіллеспі'})));
   assert.equal(ambiguous.identity.reason,'director-scope-unestablished');assert.deepEqual(ambiguous.candidates,[]);assert.equal(ambiguous.localization,undefined);
+});
+
+test('reviewed Muccino alias resolves the authored spelling refusal across films, not only Pursuit of Happyness', async () => {
+  const reviewed = CONFIRMED_DIRECTOR_ALIASES.find(r => r.namespace === 'tmdb:person' && r.personId === 20646);
+  assert.deepEqual(reviewed.aliases, ['Ґабріеле Муччіно']);
+  assert.equal(reviewed.scope, 'kinobaza-director-identity');
+  assert.equal(reviewed.evidence.verifiedAt, '2026-11-01');
+  assert.match(reviewed.evidence.source, /Gabriele Muccino/);
+  assert.match(reviewed.evidence.source, /1967-05-20/);
+  assert.equal(Object.isFrozen(reviewed), true); assert.equal(Object.isFrozen(reviewed.aliases), true);
+  const withoutMuccino = createDirectorAliasLookup(CONFIRMED_DIRECTOR_ALIASES.filter(r => r.personId !== 20646));
+  for (let index = 0; index < 2; index++) {
+    const selected = { ...film, tmdbId: IDS[index], imdbId: `tt${IDS[index]}`,
+      identityTitle: `Авторський фільм Муччіно ${index}`, originalTitle: `Authored Muccino film ${index}`, year: 2001 + index,
+      directorAliases: ['Gabriele Muccino'], directorPeople: [person({ personId: 20646, names: ['Gabriele Muccino'] })] };
+    const html = markup({ title: selected.identityTitle, original: selected.originalTitle, year: selected.year, director: 'Ґабріеле Муччіно' });
+    const before = await fetchAssistedKinobaza(CARD, selected, async () => htmlResponse(html), { directorAliasLookup: withoutMuccino });
+    assert.equal(before.identity.status, 'unresolved'); assert.equal(before.identity.reason, 'director-alias-unestablished');
+    assert.deepEqual(before.candidates, []); assert.equal(before.localization, undefined);
+    const after = await fetchAssistedKinobaza(CARD, selected, async () => htmlResponse(html));
+    assert.equal(after.identity.status, 'matched'); assert.equal(after.identity.reason, 'explicit-title-year-director-match');
+    assert.equal(after.identity.directorAliasEvidence.personId, 20646);
+    assert.deepEqual(after.identity.directorAliasEvidence.evidence, reviewed.evidence);
+    assert.ok(after.candidates.length > 0); assert.ok(after.localization);
+  }
+});
+
+test('reviewed Muccino spelling is not shared with other people, unknown spellings or ambiguous director scopes', async () => {
+  const selected = { ...film, directorAliases: ['Gabriele Muccino'],
+    directorPeople: [person({ personId: 20646, names: ['Gabriele Muccino'] })] };
+  for (const [name, selection, director, reason] of [
+    ['other person', { ...selected, directorPeople: [person({ personId: 20647, names: ['Gabriele Muccino'] })] }, 'Ґабріеле Муччіно', 'director-alias-unestablished'],
+    ['missing person ID', { ...selected, directorPeople: [person({ personId: null, names: ['Gabriele Muccino'] })] }, 'Ґабріеле Муччіно', 'director-alias-unestablished'],
+    ['missing person projection', { ...selected, directorPeople: [] }, 'Ґабріеле Муччіно', 'director-alias-unestablished'],
+    ['unknown spelling', selected, 'Габріеле Муччіно', 'director-alias-unestablished'],
+    ['different person name', selected, 'Silvio Muccino', 'director-alias-unestablished'],
+    ['multiple selected directors', { ...selected, directorCount: 2, directorPeople: [...selected.directorPeople, person()] }, 'Ґабріеле Муччіно', 'director-scope-unestablished'],
+    ['ambiguous projected people', { ...selected, directorPeople: [...selected.directorPeople, person()] }, 'Ґабріеле Муччіно', 'director-scope-unestablished'],
+  ]) {
+    const result = await fetchAssistedKinobaza(CARD, selection, async () => htmlResponse(markup({ director })));
+    assert.equal(result.identity.status, 'unresolved', name); assert.equal(result.identity.reason, reason, name);
+    assert.deepEqual(result.candidates, [], name); assert.equal(result.localization, undefined, name);
+    assert.equal(result.identity.directorAliasEvidence, undefined, name);
+  }
+});
+
+test('reviewed Muccino alias does not override film ID, title or year conflicts and withholds claims', async () => {
+  const selected = { ...film, directorAliases: ['Gabriele Muccino'],
+    directorPeople: [person({ personId: 20646, names: ['Gabriele Muccino'] })] };
+  for (const [change, reason] of [
+    [{ stable: `<tr><td>IMDb:</td><td>tt${IDS[1]}</td></tr>` }, 'source-stable-id-conflict'],
+    [{ stable: `<tr><td>IMDb:</td><td>tt${IDS[1]}</td></tr>`, director: 'Unknown director' }, 'source-stable-id-conflict'],
+    [{ title: 'Different authored film' }, 'source-title-conflict'],
+    [{ year: 1999 }, 'source-year-conflict-without-stable-crosswalk'],
+  ]) {
+    const result = await fetchAssistedKinobaza(CARD, selected, async () => htmlResponse(markup({ director: 'Ґабріеле Муччіно', ...change })));
+    assert.equal(result.identity.status, 'mismatch'); assert.equal(result.identity.reason, reason);
+    assert.deepEqual(result.candidates, []); assert.equal(result.localization, undefined);
+    assert.equal(result.identity.directorAliasEvidence, undefined);
+    assert.equal(result.identity.diagnostics.gates['director-alias'], 'not-evaluated');
+  }
 });
 
 test('lookup is exact, namespaced, scoped and carries authored confirmation provenance', () => {

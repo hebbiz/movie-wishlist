@@ -3907,3 +3907,106 @@ authorized diagnostics remain available without adding a second caveat bubble.
 Only client presentation changes. No ranking, source statuses, links, Beta
 access, transfer/Save, session lifecycle or server/SQL changes; no live discovery,
 Wishlist writes, flag changes, merge or manual deployment.
+
+## Reviewed Muccino director alias — 2026-11-01
+
+The current exact-name refusal is reproduced without changing any identity gate.
+The owner-executed, memory-only TMDb check follows
+[IMDb find](https://api.themoviedb.org/3/find/tt0454921?external_source=imdb_id&language=uk-UA)
+to movie 1402. Its validated [movie details/credits](https://api.themoviedb.org/3/movie/1402?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations)
+contain one director, `tmdb:person:20646`, named `Gabriele Muccino`.
+[Person 20646](https://api.themoviedb.org/3/person/20646?language=uk-UA&append_to_response=external_ids)
+returns that same ID/name, birthday 1967-05-20, Rome/Italy, IMDb person nm0610831,
+and an empty `also_known_as`. The supplied safe result begins mid-report, so
+its run ID/attempt header is unknown; no missing fields are reconstructed.
+
+The linked [Kinobaza person profile](https://kinobazaua.com/persons/gabriele-muccino)
+co-locates H1 `Ґабріеле Муччіно`, English H2 `Gabriele Muccino`, full date
+20 May 1967, Rome/Lazio/Italy and director role. This reviewed person-profile
+composite establishes the alias, not the film's title/year, a slug, or spelling
+similarity. No shared external person ID was observed on Kinobaza; the TMDb
+IMDb person ID alone is not asserted to be a shared identifier. One frozen
+person-level record is added for 20646, scope `kinobaza-director-identity`, with
+these references and verification date. No film-specific lookup condition,
+automatic transliteration, fuzzy matching or runtime person request is added.
+
+One direct GET of the [current card](https://kinobazaua.com/titles/the-pursuit-of-happyness)
+returned HTTP 200, 239153 bytes. Its requested-URL SHA256 is
+`97bf5b80b31ed905f6d885ee2cbaff6ceca13810e3240c99a06886337d020c17`, matching
+the owner's address digest, not a historical HTML fingerprint. The same response
+was replayed in memory through the production adapter twice: without the new
+record, `unresolved / director-alias-unestablished`, 0 candidates and localization
+withheld; with the compiled record, `matched / explicit-title-year-director-match`,
+extraction `partial`, 19 candidates and 2 localization blocks. H1/original title/year
+match; the literal source director is the newly reviewed Ukrainian alias.
+
+The ordinary composition retains 3 mapped rows: Apple in a source UA section,
+Netflix and MEGOGO provider blocks with unknown source territory. MEGOGO has
+positive audio/subtitles claims under the existing application UA interpretation;
+Netflix language values remain unknown in the current projection. The film-level
+positive audio badge is not lent to either offer. No parser, ranking, link or
+offer-binding confidence is changed; `partial` and unknown values remain honest.
+No platform destination was visited, availability/entitlement independently
+verified, or historical response reconstructed.
+
+Request ledger for this task: 3 TMDb GETs from the fixed owner-run check (the person
+result is reached only after its find/details/person reads), 1 direct card GET;
+additionally 2 web-reader page reads (card/person) and 4 public web-search queries
+for evidence lookup. Internal reader/search-provider traffic is unknown and not
+presented as an exact wire-level total. Tavily, MOTN, Watch Providers and platform
+destination calls: 0. Raw HTML, API responses and credentials were not archived.
+
+Validation: 265/265 targeted offline/HTTP regressions passed, 0 skips, including
+35 crosswalk tests. New authored markup reproduces the refusal and verifies the
+record across 2 invented films, person isolation, unknown/multiple directors,
+stable-ID precedence, title/year conflicts and withholding; it is not live HTML.
+Browser/Windows lifecycle/native DB suites are not repeated: no UI, lifecycle,
+SQL, access, request-policy or link-policy components changed. No merge, manual
+deployment, flags/secrets changes or Wishlist writes.
+
+## Netflix caption/catalogue follow-up — 2026-11-01
+
+This supersedes the Netflix-unknown/extraction-partial snapshot above, not the
+person-profile evidence. A fresh read of the same card identifies the loss in
+`kinobaza-localization.mjs`, before composition or UI: the upper Netflix
+`p.mt-2.d-flex.align-items-center` contains a labelled film anchor, a plain
+`span` with `(укр. субтитри)`, and a separate `Інші фільми →` catalogue anchor.
+The old extractor treated the latter as another ambiguous link; independently,
+its caption branch accepted only one child element and direct text, not a span.
+
+The actual film href is `https://www.netflix.com/title/70044605`; the catalogue
+href is `/online/netflix`, with the title `Інші фільми з українськими субтитрами
+або аудіо на Netflix`. No destination was visited. The narrow shared extractor
+fix accepts at most one attribute-free, text-only caption span and ignores only
+that exact same-service catalogue route/title/text as auxiliary navigation.
+The catalogue is never a film candidate or language evidence. Unexpected links,
+provider mismatches, multiple/nested spans and other ambiguous structures remain
+withheld for language interpretation. The own table branch is unchanged and
+still takes precedence, including negative/conflicting/missing fields.
+
+After the fix, the current card is `matched`, extraction `ok`, 19 candidates,
+2 provider blocks and 3 mapped rows. Netflix retains its exact admitted film
+href and has unknown audio / reported-positive subtitles; the table displays
+`◐ / ? / +`. MEGOGO remains `◐ / + / +`. Both diagnostic and ordinary Beta
+projections produce the same comparison; actual source territory and offer
+binding remain unknown. These are source claims under the existing app-UA
+interpretation, not verified availability or entitlement. A missing/unsafe film
+href never becomes a catalogue link; existing no-link/explicit-clear handling
+is retained without relaxing link-bound language interpretation.
+
+Validation: 305/305 targeted offline/HTTP tests passed, 0 skips; 5/5 existing
+real-form browser tests passed on desktop, tablet and iPhone X/Air-size
+viewports (Edge/Chromium emulation, not a real iPhone/WebKit). Four initial
+authored regressions reproduced the pre-fix loss; all 7 new extraction cases
+now pass. HTML-to-table controller tests cover ordinary Beta vs diagnostic
+visibility, literal subtitle provenance, MEGOGO isolation, exact open/preview/
+apply, missing/unsafe film links, and explicit clearing of an existing URL.
+Fixtures are authored structural examples, not archived/reconstructed HTML.
+
+This follow-up consumed 2 direct card GETs (inspection and post-fix verification),
+both HTTP 200, 239167 bytes. TMDb/Tavily/MOTN/Watch Providers/catalogue/platform
+requests: 0. The earlier PR evidence ledger remains separate: cumulative direct
+reads for PR #219 are 3 TMDb + 3 card GETs, plus the previously recorded web
+lookups with unknown internal traffic. Raw responses and credentials were not
+saved. No search policy, identity gate, budget, UI/auth lifecycle, Beta access,
+SQL, flags or source URL rewriting changes; no merge or manual deployment.
