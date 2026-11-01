@@ -4711,3 +4711,100 @@ were relaxed. Syntax/whitespace and local links/anchors checked separately.
 No search/admission, link/language/ranking policy, retention, Beta permission,
 initApp/global lifecycle/auth/UI, migration/flag/secret or Wishlist change.
 No merge or manual deployment; owner checkout/demo and main remain unchanged.
+
+### Ukrainian г/ґ title bridge and Kong control — 2026-11-02
+
+Follow-up in the same #222 branch, after `da21f88e872f5a6b6e96fecc48695fe1cf4a249b`;
+develop remains `290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The current public
+[Kong: Skull Island card](https://kinobazaua.com/titles/kong-skull-island) is
+headed `Конґ: Острів черепа (2017)` / `Kong: Skull Island`, with director
+`Джордан Вот-Робертс`. A localized `г`/`ґ` difference is spelling evidence,
+not independent film identity proof or evidence of a different director.
+
+The new title-only helper compares bounded Cyrillic titles after the existing
+NFC/whitespace/case normalization, treating only `ґ` and `г` as equivalent.
+All other letters, numbers and punctuation remain significant; mixed Latin
+homoglyphs, unrelated words and different parts are not folded. Exact aliases
+retain priority; the terminal Roman rule above is unchanged. No per-film or
+director exception, transliteration, global normalization or crosswalk entry
+was added.
+
+This H1 bridge requires a single H2 equal to the **trusted original title**
+(not merely a convenient alternative/localized alias), identical primary year
+and confirmed single-director identity. Even a matching film ID cannot bypass
+the director or accept a release-year variance on this route. Canonical/film-ID
+conflicts, ambiguous originals/directors and insufficient profile proof remain
+withheld. Diagnostic strategy is `title-ukrainian-g-year-director`; its explicit
+year refusal is `source-year-conflict-ukrainian-g-title`. Ordinary Beta still
+receives product fields, not privileged identity/profile diagnostics.
+
+No resolver/controller change was required: a spelling-admitted card with
+`director-alias-unestablished` now reaches the existing bounded linked-profile
+selection. Both card opportunities remain available before one person pair is
+allocated. Equal-strength distinct profiles remain ambiguous. cap10 permits
+one trusted TMDb person GET and one admitted linked Kinobaza profile GET, with
+durable reservation and the existing stage/end-to-end deadlines; cap8 cannot
+dispatch either. No third search/card, retries, redirects or Kinobaza `/search`.
+
+The operator's returned **current Kong result tail** confirms profile facts for
+`tmdb:person:236539` and the card-linked
+[Jordan Vogt-Roberts profile](https://kinobazaua.com/persons/jordan-vogt-roberts):
+`exact-name-birthdate-role`, native alias association, exact Latin-name and
+birthdate matches, director role, no ID or birthday conflict. Both reserved
+person requests returned 200. This is not confirmation by similar names or slug.
+Extraction completed `ok`: **33 candidates, 6 mapped rows**; both ordinary and
+diagnostic projections show:
+
+| Service | Availability | Ukrainian audio | Ukrainian subtitles |
+| --- | --- | --- | --- |
+| Apple | ◐ | + | − |
+| Rakuten | ◐ | + | − |
+| MEGOGO | ◐ | + | unknown |
+| HBO | unknown | unknown | unknown |
+
+These retain source/app interpretation scopes, not independently verified
+platform availability/entitlement. The pasted message begins with an older Klaus
+projection and omits Kong's `counts`, exact comparison and `before` header.
+They are **not combined into one run**, nor are unreceived TMDb title aliases,
+baseline outcome or duration claimed as observed. The audited one-shot Kong
+success path necessarily uses four GETs (movie Details, card, TMDb person,
+linked profile); the returned tail directly confirms the latter pair. It has
+no search, body persistence or retry and needs only a hidden memory-only TMDb
+credential. No rerun was requested to recover the omitted console prefix.
+
+Separately, **4 direct Kinobaza GETs/200** rechecked Gladiator II, Klaus, Alien
+and The Pursuit of Happyness against pinned develop and the patched code using
+the same response per comparison. Gladiator remains matched with 6 rows / four
+services; Klaus retains matched/partial with 2 rows, Alien matched/ok with 5 and
+Pursuit matched/ok with 3. Existing language states, format-negative distinctions
+and subtitle-only Netflix are unchanged. Other prior controls remain offline
+regressions, not newly read live responses. This follow-up therefore has four
+agent GETs plus the four-GET operator success path (eight source GETs by code
+path), and one public web search for the Kong pointer, separate from the prior
+seven GETs. None reconstructs historical HTML or validates resolver search quality.
+
+Validation: **51 new authored tests passed**; combined relevant Roman, profile,
+deferred resolver, cap/access and server suites **185/185 passed, no skips**.
+The full pre-existing 999-test set reran against the changed runtime with
+**980 passed, 0 failed, 19 opt-in skips**; the newly created file was run
+separately, not claimed as included in that earlier-expanded file list.
+The new tests cover conflicting film/person IDs, wrong original/year, namesakes,
+missing/conflicting profile facts, ambiguous cards, real resolver/verifier
+reservation ordering at 10, cap8 refusal, withholding, ordinary/diagnostic
+language tables and exact-link preview without mutation or Save.
+
+**5/5 browser tests passed again**, Edge/Chromium desktop/tablet/iPhone X/Air
+viewport emulation, with source/Auth/DB mocks and external traffic blocked;
+not a real iPhone/WebKit/deployed smoke or actual Wishlist write. Initial test
+spawn EPERM was rerun with scoped local permission, not counted as passing.
+Independent runtime review found no actionable issue. No assertions/timeouts
+were relaxed. Existing native PostgreSQL opt-in tests remain skipped; no SQL,
+ledger definition, dependency or deployment configuration changed.
+
+The Netlify Functions skill guided the bounded server-path audit; its existing
+reservation/deadline mechanisms are reused, not replaced. Search policy,
+language/link/ranking rules, access, retention, initApp/global lifecycle/auth,
+UI, flags/secrets and owner checkout/demo remain unchanged. No migration,
+merge or manual deployment. Local prompt/operator aids remain outside Git and
+keep credentials/bodies in process memory only; no key or raw response is in this
+record or PR. Rollback is a normal revert of this follow-up commit.
