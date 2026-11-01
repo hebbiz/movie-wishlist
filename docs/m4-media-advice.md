@@ -3,8 +3,10 @@
 Status: M4.1–M4.3 implemented; default-off semantics retained. Earlier deployment,
 assignment and cleanup evidence remains in its dated execution records below.
 The dated records below distinguish earlier preparation from later execution.
-Current preparation: [UA Beta access and private diagnostics](#ua-beta-access-and-private-diagnostics--2026-10-31),
-updated with merged #217; not migrated, enabled or merged into develop by this task.
+UA Beta code: [access and private diagnostics](#ua-beta-access-and-private-diagnostics--2026-10-31),
+updated with merged #217. Later authorized execution:
+[Beta migration applied, switch still off](#beta-migration-execution--2026-11-01).
+PR#216 is not merged; Beta/diagnostics activation and deployment remain separate.
 Current branch search strategy: **Tavily basic Search**, candidate URLs only,
 with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
 not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
@@ -3805,6 +3807,88 @@ or migration is changed to pass validation.
 PR Preview is separate from develop/main. Its actual SHA/state and source-free
 smoke are checked after the ordinary feature-branch push. Existing source keys
 were confirmed **absent from Deploy Preview context** on2026-10-31; the Beta
-migration is not applied. Therefore a ready/static Preview does not attest
+migration was not applied at that preparation checkpoint. A ready/static Preview does not attest
 authenticated Beta activation or live resolver quality. No secrets/context,
 flags, database, main or production deployment are changed by this update.
+
+## Beta migration execution — 2026-11-01
+
+**Applied only `20261031135149_media_advice_beta_ua.sql`; Beta remains off.**
+The owner explicitly authorized this migration step, not merge, deployment or
+activation. Execution source: PR#216 head
+`306cedd8c76cb58cd2f5780b20dc3189132412bf`; develop independently rechecked at
+`9b5784055043099aaab7757096f9cb8c04831c02`, main unchanged. Target independently
+verified as `mttkectgdqqmejpenkrn`, database postgres, PostgreSQL17.6.
+
+The existing encrypted checkpoint `checkpoint-20261021T221351Z-432dc0a6` and
+wrapped key remained available. Offline audit authenticated all retained
+artifacts/checksums and the existing scoped MW recovery assessment. This reuses
+the documented MW/Auth recovery evidence for this additive step; it does not
+turn the older checkpoint into a fresh data snapshot or full Supabase-project
+recovery guarantee. No new export/restore cycle was performed. Existing data,
+legacy functions/ACLs and schema fingerprints were captured before execution.
+
+Supabase CLI**2.122.0** was used in the prepared isolated migration workdir,
+outside owner checkout, with an explicit verified project ref and no credential
+arguments/debug output. Before execution, `migration list --linked` showed only
+the two previous M4 versions applied and **only20261031135149 pending**. The
+workdir contained exactly those three files, not001–016. The old execution files
+retain their original reviewed SHA256 values; their difference from the current
+checkout was verified as LF/CRLF only, not changed SQL. They were not rewritten.
+The new execution-file SHA256 was
+`0f00f47b8571302c8cd24790efab249b2bf201443f36ed579761a6d43142fa7e`.
+
+One `migration up --linked --project-ref` invocation completed with exit0 from
+**09:05:16 to09:05:20 UTC**. No db push, include-all, history repair, historical
+replay or manual insertion into migration history was used. There was no lost
+response or migration retry. Post-execution CLI listing and independent catalog
+reads agree on exactly these three entries, with no pending file:
+
+| Version | Name |
+| --- | --- |
+|20261020205122|media_advice_access_ledger|
+|20261021072002|media_advice_review_fixes|
+|20261031135149|media_advice_beta_ua|
+
+### Actual postchecks
+
+All14 prepared postcheck SELECTs and the supplemental effective-privilege,
+region and definition comparisons passed:
+
+- Every current Auth user has a region row; all backfilled regions are UA.
+  The default is UA, NOT NULL with the two-letter constraint, FK/primary key
+  intact. Exactly one enabled AFTER INSERT trigger calls the expected private
+  default-region function. No real user was inserted to probe it; new-user
+  behavior retains the earlier offline/native evidence, not a new live signup.
+- The singleton Beta switch is **false**. Diagnostics assignments and active
+  diagnostics assignments are both **0**; existing pilot permissions unchanged.
+- RLS is enabled on both new tables and remains enabled on permissions/sessions.
+  Effective anon/authenticated table/schema/RPC access is denied. service_role
+  has SELECT-only access to the new tables and EXECUTE on the Beta RPC, not the
+  private helpers; no client self-grant/write path or PUBLIC grant was added.
+  Complete ACL listings and effective non-SELECT privilege checks were reviewed.
+- Three new function signatures, invoker/definer modes, VOLATILE behavior and
+  empty search_path settings match the migration. All three stored function
+  bodies match the reviewed SQL after line-ending normalization only.
+- Counts and aggregate content fingerprints match for **15 existing tables**:
+  all existing public application tables, auth.users and private permissions.
+  **833 existing object fingerprints** match, including legacy pilot RPC/cleanup
+  bodies, owners, ACLs/settings, existing table definitions/RLS, policies,
+  indexes, constraints and triggers. The intentionally widened feature-key
+  constraint was checked separately against the two approved keys. New Beta
+  objects/trigger were checked separately, not excluded as unexplained drift.
+  No rows, user identifiers, credentials or raw data fingerprints are published.
+- Security advisors were read. The Beta-related INFO
+  [RLS enabled without policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)
+  is intentional for backend-only private tables with no client grants; it is
+  not resolved by adding a browser policy. Historical RLS work remains out of
+  scope and no unrelated permissions were changed.
+
+Only execution documentation is updated afterward; no runtime/schema bytes or
+test assertions change, so application/browser/native suites are not repeated.
+Migration postchecks are real target-DB evidence, separate from prior authored
+test results. PR#216 remains open. Beta and diagnostic activation, merge,
+develop/main deployment and authenticated Beta smoke are **not performed**.
+No source discovery, Wishlist writes, cleanup/secret changes, owner checkout/
+demo edits or production restore. The shared live database has the authorized
+additive schema/UA-backfill change; production deployment is untouched.
