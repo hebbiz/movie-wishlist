@@ -364,6 +364,25 @@ test('natural advice keeps one brief caveat while preserving positive, subtitles
   }
 });
 
+test('incomplete sources replace only the first-answer caveat without changing ranked evidence', () => {
+  const groups = presentMediaGroups([row('tmdb:apple', 'apple'), block('rakuten')], { filmId });
+  const before = JSON.stringify(groups), full = summarizeMediaGroups(groups);
+  const partial = summarizeMediaGroups(groups, { sourcesIncomplete: true });
+  assert.equal(partial, full.replace('Інформація не завжди точна, тож варто перевіряти.', 'Деякі дані неповні, тож перевір умови на платформі.'));
+  assert.equal(partial.match(/Деякі дані неповні, тож перевір умови на платформі\./gu)?.length, 1);
+  assert.match(partial, /Мій вибір — Rakuten TV: є дані про українське аудіо/);
+  assert.equal(JSON.stringify(groups), before);
+});
+
+test('incomplete sources without usable results retain a visible failure in the same answer', () => {
+  const refused = view([block('apple', { identityStatus: 'unresolved' })], { filmId });
+  for (const groups of [[], [refused]]) {
+    const full = summarizeMediaGroups(groups);
+    assert.equal(summarizeMediaGroups(groups, { sourcesIncomplete: true }), `Не вдалося отримати повні дані від джерел. ${full}`);
+    assert.doesNotMatch(full, /Не вдалося|Деякі дані неповні/);
+  }
+});
+
 test('natural advice keeps mixed and conflict-only language uncertainty without inventing one common offer', () => {
   const audio = row('motn:audio', 'rakuten', { audio: { state: 'reported', ukrainian: [{ language: 'uk' }] } });
   const mixedAudio = view([audio, block('rakuten', {}, { audio: sign('reported-negative'), subtitles: unknown() })], { filmId });

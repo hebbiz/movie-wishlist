@@ -6,6 +6,19 @@ import { pathToFileURL } from 'node:url';
 import { resolve, extname } from 'node:path';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
 
+const incompleteCaveat = 'Деякі дані неповні, тож перевір умови на платформі.';
+const ordinaryCaveat = 'Інформація не завжди точна, тож варто перевіряти.';
+
+async function assertInlineIncompleteCaveat(page) {
+  const answer = await page.locator('.media-advice-answer').innerText();
+  const chat = await page.locator('.media-advice-chat').innerText();
+  assert.ok(answer.endsWith(incompleteCaveat), 'the first answer carries the concise partial-source caveat');
+  assert.equal(chat.split(incompleteCaveat).length - 1, 1, 'the partial-source caveat appears only once');
+  assert.doesNotMatch(chat, /Частина відомостей неповна або не надійшла/, 'there is no separate partial-source bubble');
+  assert.ok(!answer.includes(ordinaryCaveat), 'partial-source wording replaces rather than duplicates the ordinary caveat');
+  assert.equal(await page.locator('.media-advice-chat .mykola-bubble p').evaluateAll((paragraphs, text) => paragraphs.filter(p => p.textContent === text).length, incompleteCaveat), 0, 'the short caveat is part of the recommendation, not a standalone bubble');
+}
+
 async function assertColumnRhythm(page, viewportWidth, iconState = 'loaded') {
   await page.locator('.media-advice-comparison').evaluate(table => Promise.all(table.closest('.mykola-bubble').getAnimations().map(animation => animation.finished)));
   const geometry = await page.locator('.media-advice-comparison').evaluate(table => {
@@ -233,6 +246,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.ok(await page.locator('.media-advice-chat .mykola-bubble').count()>0);
     assert.equal(await page.locator('.media-advice-chat .user-bubble p').evaluate(e=>getComputedStyle(e).color),'rgb(17, 17, 17)');
     assert.equal(await page.locator('.media-advice-answer p').evaluate(e=>getComputedStyle(e).color),'rgb(244, 244, 244)');
+    await assertInlineIncompleteCaveat(page);
     assert.match(await page.locator('.media-advice-dialog').innerText(),/Authored film/);
     assert.doesNotMatch(await page.locator('.media-advice-chat').innerText(),/Джерельні HTTP|ledger|requestsMade|requestBudget|identity:|searchCalls/);
     assert.equal(await page.locator('.media-advice-link-select').count(),0,'a single admissible link is immediately available without a selector');
@@ -922,7 +936,9 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         }
         if (['no-results','identity-refusal','source-failed'].includes(kind)) assert.match(await page.locator('.media-advice-dialog').innerText(), /не означає, що фільм недоступний/);
         if(kind==='source-failed') {
-          assert.match(await page.locator('.media-advice-chat').innerText(),/Частина відомостей неповна або не надійшла/);
+          assert.match(await page.locator('.media-advice-answer').innerText(),/^Не вдалося отримати повні дані від джерел\./, 'an error without usable results remains visible in the first answer');
+          assert.doesNotMatch(await page.locator('.media-advice-chat').innerText(),/Частина відомостей неповна або не надійшла/);
+          assert.ok(!(await page.locator('.media-advice-answer').innerText()).includes(incompleteCaveat), 'a usable-results caveat does not replace the no-results error');
           assert.doesNotMatch(await page.locator('.media-advice-chat').innerText(),/stage-failed-no-retry/);
           await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
           const failedReport=await page.getByLabel('Короткий звіт для копіювання').inputValue();
@@ -1039,6 +1055,43 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(await page.evaluate(()=>mediaAdviceController.dialog.hasChildNodes()),false);
       assert.equal(await page.locator('#mediaAdviceEntry').isHidden(),true);
       assert.equal(calls.filter(c=>c.action==='discover').length,savedCalls);
+    }
+    if ([375,420].includes(width)) {
+      // The actual add/edit controller renders each authored source outcome on
+      // both phone sizes. Only a new explicit form session starts discovery;
+      // reopening the same result never does, regardless of source status.
+      allowed = true;
+      const savedRows = authored.rows, savedSources = authored.sources;
+      const beforeNoticeWrites = await page.evaluate(() => authoredDBWrites.length);
+      for (const status of ['ok', 'partial', 'api-http-error', 'timeout-no-retry', 'empty-error']) {
+        authored.rows = status === 'empty-error' ? [] : savedRows;
+        authored.sources = [{source:'kinobaza',status:status==='empty-error'?'api-http-error':status,identity:'matched'}];
+        const beforeNoticeCalls = calls.filter(call => call.action === 'discover').length;
+        await page.evaluate(() => startEditMovie('list'));
+        await page.locator('#mediaAdviceEntry').click();
+        await page.locator('.media-advice-answer').waitFor();
+        const answer = await page.locator('.media-advice-answer').innerText();
+        if (status === 'ok') {
+          assert.ok(answer.endsWith(ordinaryCaveat), 'complete results keep the ordinary caveat');
+          assert.ok(!answer.includes(incompleteCaveat));
+        } else if (status === 'empty-error') {
+          assert.match(answer,/^Не вдалося отримати повні дані від джерел\./);
+          assert.match(answer,/не означає, що фільм недоступний/);
+          assert.equal(await page.locator('.media-advice-row').count(),0);
+        } else await assertInlineIncompleteCaveat(page);
+        assert.doesNotMatch(await page.locator('.media-advice-chat').innerText(),/Частина відомостей неповна або не надійшла/);
+        assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog=>dialog.scrollWidth<=dialog.clientWidth),true);
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+        if (status==='timeout-no-retry' && process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/inline-partial-${width}.png`,animations:'disabled'});
+        if (status==='empty-error' && process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({path:`${process.env.M4_SCREENSHOT_DIR}/inline-empty-error-${width}.png`,animations:'disabled'});
+        await page.getByRole('button',{name:'← До картки',exact:true}).click();
+        await page.locator('#mediaAdviceEntry').click();
+        assert.equal(await page.locator('.media-advice-answer').innerText(),answer);
+        assert.equal(calls.filter(call=>call.action==='discover').length,beforeNoticeCalls+1,'the same form result is reused without retry on reopen');
+        await page.getByRole('button',{name:'← До картки',exact:true}).click();
+        assert.equal(await page.evaluate(()=>authoredDBWrites.length),beforeNoticeWrites);
+      }
+      authored.rows = savedRows; authored.sources = savedSources;
     }
     await page.evaluate(() => resetFormMode()); assert.equal(await page.locator('.media-advice-dialog').isVisible(), false);
     await page.evaluate(() => { Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true }); startEditMovie('list'); });

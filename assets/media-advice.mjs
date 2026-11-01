@@ -300,8 +300,8 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       bubble('Зараз не вдалося отримати відповідь. Спроба могла бути витрачена; повторного пошуку без вашої дії не буде.');
     } else {
       const rows = rowsFor(), groups = presentMediaGroups(rows, { filmId: session.result.film?.id });
-      const answer = bubble(summarizeMediaGroups(groups)); answer.classList.add('media-advice-answer');
-      if (session.result.sources?.some(s => /error|failed|unavailable|timeout|blocked|unsupported|partial/i.test(s.status ?? ''))) bubble('Частина відомостей неповна або не надійшла. Показую те, що вдалося отримати, без здогадок.');
+      const sourcesIncomplete = session.result.sources?.some(s => /error|failed|unavailable|timeout|blocked|unsupported|partial/i.test(s.status ?? ''));
+      const answer = bubble(summarizeMediaGroups(groups, { sourcesIncomplete })); answer.classList.add('media-advice-answer');
       for (const [index, choice] of (session.result.cardChoices ?? []).entries()) {
         if (!index) bubble('Знайшов кілька карток із підтвердженою відповідністю фільму. Оберіть, дані якої додати до відповіді.');
         chat.append(button(`Використати підтверджену картку ${index + 1}`, () => { if (!valid()) return invalidate(); session.choice = choice; render(); }));

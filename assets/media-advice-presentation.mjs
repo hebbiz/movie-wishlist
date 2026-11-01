@@ -268,12 +268,12 @@ export function presentMediaGroups(rows, { filmId } = {}) {
     .sort((a,b) => comparisonCategory(a.band) - comparisonCategory(b.band) || (servicePriority[a.group.key] ?? 4) - (servicePriority[b.group.key] ?? 4) || a.index - b.index);
 }
 const comparisonCategory = band => band === 'ua-audio' ? 0 : band === 'ua-subtitles' ? 1 : band === 'withheld' ? 3 : 2;
-export function summarizeMediaGroups(groups) {
+export function summarizeMediaGroups(groups, { sourcesIncomplete = false } = {}) {
   const choices = groups.filter(g => g.band !== 'withheld'), first = choices[0];
-  if (!first) return 'Поки не знайшов підтверджених варіантів для вибору. Це не означає, що фільм недоступний.';
+  if (!first) return `${sourcesIncomplete ? 'Не вдалося отримати повні дані від джерел. ' : ''}Поки не знайшов підтверджених варіантів для вибору. Це не означає, що фільм недоступний.`;
   const title = first.group.title;
   const lead = choices.length === 1 ? 'Знайшов один варіант.' : 'Знайшов кілька варіантів.';
-  const caveat = 'Інформація не завжди точна, тож варто перевіряти.';
+  const caveat = sourcesIncomplete ? 'Деякі дані неповні, тож перевір умови на платформі.' : 'Інформація не завжди точна, тож варто перевіряти.';
   const audio = first.comparison?.audio.state, subtitles = first.comparison?.subtitles.state;
   let advice;
   if (first.band === 'ua-audio' && audio === 'mixed') advice = `Я б перевірив ${title}: є згадка про українське аудіо, але дані різняться між варіантами.`;
