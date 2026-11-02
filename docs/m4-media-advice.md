@@ -5924,7 +5924,8 @@ was possible, and no common film ID/title/year/director confirmation is claimed
 for this person pointer. The earlier masked result may or may not have been the
 same address; this recheck cannot establish that.
 
-**Proposed next step, not implemented:** retain URL admission, query policy and
+**Proposed next step at that checkpoint (paired observation completed below):**
+retain URL admission, query policy and
 all identity gates. Test the reserve query's quoted original title plus year
 against that same query with director context in a separately bounded comparison,
 without replacing the first two search stages. A director profile being returned
@@ -5946,3 +5947,86 @@ series. Reading the two sanitized local reports and the independent code review
 made no source requests. Six authored helper safety tests passed offline; they
 are not live identity/extraction successes. No migration, merge, deployment,
 runtime search change, identity change or Wishlist write was performed.
+
+#### One controlled reserve exact-match pair: director versus no director
+
+The owner separately authorized one ordered pair for Meet the Fockers (2004),
+IMDb `tt0290002`. Run `eeace42c-fe31-43bb-b1f4-dbe61b48652a` completed once
+against implementation `a682afd4e0f502932800d8c8422ce73b1d91d31e`.
+This is a current local diagnostic, not a reconstruction of an earlier run,
+a deployed build or an attestation of the live server ledger.
+
+The existing adapter dispatched these queries in order:
+
+1. With director: `"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/`.
+2. Without director: `"Meet the Fockers" 2004 site:kinobazaua.com/titles/`.
+
+The actual outbound POST bodies were compared: **all options except query were
+identical**. Both used `exact_match:true`, `search_depth:basic`, `topic:general`,
+`max_results:5`, `auto_parameters:false`, and `include_domains:[kinobazaua.com]`
+with restrict mode. Answer/raw-content/images/favicon/usage inclusion remained
+false. No normal search stage, runtime query builder or URL policy was changed.
+
+| Observed field | With director | Without director |
+| --- | --- | --- |
+| HTTP status |200|200|
+| Tavily request_id |`4200f068-c405-4623-a1ae-c32d5fa6f8aa`|`9a8db7a3-2b3b-41fa-86bf-231434bde67e`|
+| response.query |`"Meet the Fockers" 2004 Jay Roach`|`"Meet the Fockers" 2004`|
+| Returned address count |1|5|
+| Address types |1 person-profile path|5 title-card paths|
+| URL-policy-admitted title cards |0|5|
+| Target `/titles/meet-the-fockers` returned / admitted |no / no|no / no|
+| Target identity check |not run: target absent|not run: target absent|
+| Search-call elapsed time |2710 ms|2518 ms|
+
+All returned hosts were `kinobazaua.com`. Safe address observations, in response
+order (original and parsed pathnames were equal):
+
+- With director: `/persons/jay-roach`; query present, parameter name `page`;
+  primary rejection `query`. Independently, it is not a permitted film-card path.
+  No fragment or credentials were present. No query value is retained or exposed.
+- Without director: `/titles/little-fockers`, `/titles/meet-the-parents`,
+  `/titles/the-absent-minded-professor`, `/titles/snow-dogs`,
+  `/titles/house-of-lies`. These five passed unchanged URL admission, with no
+  query, fragment or credentials. Their HTML was not read in this bounded test;
+  URL admission is not film-identity confirmation.
+
+The one optional card GET was allowed only for the exact target path actually
+returned and admitted by one of these responses. It could be shared between
+both variants, not fabricated from the known slug or obtained by stripping
+parameters. Because neither response contained the target, **no card GET or
+identity check occurred**. No person profile, platform or Kinobaza `/search`
+request was made. Previously verified TMDb film693/year2004/person6737 context
+was reused, not refreshed; its complete director evidence remained unchanged
+for any potential identity check. No current language/link result is claimed.
+
+**Observation:** dropping the director changed this pair's returned address
+types, but did not retrieve the required card. Neither variant demonstrated a
+successful film search. The no-director result must not be called an improvement
+merely because more URLs passed admission.
+
+**Limits and next step:** this is one sequential pair, with the director variant
+first, not repeated or randomized. It cannot isolate director context as a cause,
+establish indexing/ranking/cache behavior, explain the earlier hidden address or
+prove a general advantage for either query. The independently repeated profile
+pathname is a current observation, not recovery of the old masked URL. There is
+no evidence here to change the reserve query or relax admission/identity gates.
+A useful follow-up would be a provider-side investigation of these request IDs
+and the target page's discoverability; further live comparisons would require a
+separate scope and request accounting. No protective mechanism was implemented.
+
+**Accounting for the pair:2 external HTTP attempts** —2 Tavily HTTP200;
+Kinobaza cards/persons, TMDb and platforms:0. No retries or extra source requests
+were made while reading/reviewing the sanitized report. The pair adds2 to the
+preceding URL investigation's2 (4 across those separate follow-ups); the earlier
+45-request series remains separate. The two measured search calls total5228 ms,
+not end-to-end app latency. The report contains no raw responses, query-parameter
+values or credentials and retains current-user-only local access.
+
+Four authored pair-helper checks passed offline with no HTTP, covering payload
+equality, actual-target-only shared GET, rejection/no-target cases and error
+stop behavior. Independent review agreed with the counts and limits of inference.
+Application/browser/SQL suites were not rerun for this evidence-only edit;
+their previously recorded results above are not new live evidence. Only this
+documentation and the PR report change. No migration, search/identity change,
+merge, deployment, feature/access operation or Wishlist write was performed.
