@@ -19,6 +19,8 @@ titles and trusted single director name, after withdrawing the standalone-title
 experiment: [restoration and separate Tavily integrity research](#second-query-restoration-and-tavily-integrity-research--2026-11-02).
 The [Crimson Peak observations](#independent-localized-alternative-and-crimson-peak--2026-11-02)
 remain historical experiment evidence, not a demonstrated root-cause fix.
+The [paired current-response control](#paired-crimson-peak-queryresponse-control--2026-11-02)
+now captures actual POST/response correspondence; no new runtime guard is enabled.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
@@ -5012,11 +5014,15 @@ separate; no credentials, account logs, source or platform requests were used.
    run/search index, sanitized bounded provider `request_id`, HTTP status and
    returned-query comparison. Keep raw bodies/snippets/credentials out of reports
    and storage. Compare in memory; retain only safe derived states.
-2. Distinguish exact / conservative case-Unicode-whitespace equivalent /
-   mismatched / missing-invalid query. Do not strip meaningful titles, year,
-   quotes or site operators. A mismatched response must not admit URLs or spend
-   a card GET. Missing echo must not be represented as verified correspondence.
-   No automatic retries, new error fallback or third search slot.
+2. Initially proposed: distinguish exact / conservative case-Unicode-whitespace
+   equivalent / mismatched / missing-invalid query before a possible rejection
+   gate. **That syntactic rejection proposal is withdrawn pending clarification:**
+   the paired control below returned the correct film while Tavily omitted quotes
+   and `site:` from response `query`. Such a difference alone cannot identify a
+   cross-wired response. Capture the original payload and returned field, rather
+   than silently rewriting either or treating normalized output as another film.
+   Missing echo is not verified correspondence. No automatic retries, new error
+   fallback or third search slot is implemented.
 3. Treat a correctly correlated but unrelated result set as a separate relevance
    failure. Investigate using trusted title aliases against returned page titles
    and URL paths to prioritize actual candidates and recognize wholly unrelated
@@ -5050,3 +5056,120 @@ No live search, browser/iPhone, deployed smoke or actual Save was rerun for this
 query restoration. Earlier live results above belong to their recorded versions.
 No merge/deployment, live migration, flags/secrets, user data, source discovery,
 Wishlist write, UI/lifecycle or owner checkout/demo change.
+
+### Paired Crimson Peak query/response control — 2026-11-02
+
+Read-only diagnosis on PR#222 head
+`96f88f44b44b390f886c168f561e135a95a84ead`; develop/base remained
+`290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The runtime resolver is identical to
+its restored pre-experiment version. Gladiator II and Kong changes remain in the
+PR; no source-selection, identity, budget or query-policy change was made here.
+
+#### Inventory of the distinct earlier runs
+
+| Evidence | What is available | Missing evidence |
+| --- | --- | --- |
+| Failed local run `600c5d09-624c-44ef-a365-45581db8bf78`, checkout `d03a1a4` | Trusted Crimson identity, two five-pointer Tavily responses/six unique URLs; Mad Max and The Walk were actually read and title-rejected; six source attempts | Actual dispatched query/payload paired with returned query, provider request ID and cache metadata |
+| Owner-supplied successful **develop** report `21e54f7a-3ad3-4e42-97d5-5423a032310a` | Server build `290bf23`, deploy `6ae7bda7f8fb5d4070af6f0d`; one search/five admitted, two cards/three unexamined; seven attempts including TMDb providers and MOTN | Dispatched/returned queries, Tavily request ID and the five-URL list |
+| Earlier successful **local** repeat `c28b8fa8-9588-48d8-8446-74f064554e14` | Its own pointer list and local counters | Not a substitute for the develop run or its missing fields |
+
+Offline SHA256 comparison establishes that the develop report's first requested
+card digest `569c980504bf848f8fb0eee79063765d4bd7b0a9dd4e97b1c8c8f68fd2a9e6d4`
+matches `https://kinobazaua.com/titles/crimson-peak`, and its second digest
+`204b4750c63bdcb478170758abfbb81f25f3f46d56d6ccfd47e1ee106439f9ed` matches
+`https://kinobazaua.com/titles/sickle`. The first passed title/year/director and
+extracted 25 candidates/four localization blocks/six mapped rows. The second was
+withheld for incomplete identity structure. Digests do not reconstruct either
+HTML or the three unread URLs; those historical unread URLs remain unknown.
+
+#### One new local observation, not historical reconstruction
+
+Run `14701b4f-8458-4a77-8356-3823ebc38e64`, started
+`2026-11-02T11:59:09.139Z`, used fresh server-equivalent IMDb find/Details
+projection for `tt2554274` / TMDb201085. An external local harness imported the
+real query builder, adapter, admission and resolver. It observed the actual fetch
+body and a bounded response clone, returning the original Response unchanged.
+No endpoint instrumentation, deploy, body/snippet archive or persistent credential
+was created. Local runner SHA256:
+`c0a8f94fdf6c40ba2e20dd031673a0c5e4d21a086ccd323f2c96eeecc1b3afb7`.
+
+The generated first query and actual POST query were **exactly equal**:
+
+```text
+"Crimson Peak" 2015 site:kinobazaua.com/titles/
+```
+
+The actual body retained basic/general, max_results5, auto_parametersfalse,
+include_answerfalse, include_raw_contentfalse, images/favicon/usagefalse, and
+include_domains `["kinobazaua.com"]` with mode `restrict`. Actual UTF-8 body SHA256:
+`9ed7416afcb413fdb9a2b697645aeaeddf39d928cb256a598ac459f0bf3ce8f0`.
+The restored combined second query was generated but **not dispatched**: the
+first read card matched, so the second runtime search slot remained unused.
+
+| Call | HTTP | Actual sent query | Returned query | Tavily request ID |
+| --- | --- | --- | --- | --- |
+| Runtime-equivalent search1 | 200 | `"Crimson Peak" 2015 site:kinobazaua.com/titles/` | `Crimson Peak 2015` | `4d68bac9-3634-48a7-8242-bf03e7822ee5` |
+| One separate direct control | 200 | Byte-identical body, same query/parameters | `Crimson Peak 2015` | `828f81e9-5971-4c35-9526-eb19bcff1a2c` |
+
+Both calls returned the same five URLs in the same order, all under
+`https://kinobazaua.com`:
+
+1. `/titles/crimson-peak`
+2. `/titles/sickle`
+3. `/titles/the-uninvited-1944`
+4. `/titles/samhain-a-halloween-horror-movie`
+5. `/titles/hamartia`
+
+The captured response URL list, real adapter hook and admitted URL list were
+identical. The resolver read only Crimson Peak and Sickle. Crimson passed
+`explicit-title-year-director-match`, extraction `ok`, 25 candidates/four blocks/
+six mapped rows. Sickle remained `source-identity-structure-incomplete`; no claims
+were lent to Crimson. There was no current Mad Max/The Walk candidate or observed
+response substitution along adapter → admission → card selection.
+
+The observer's deliberately conservative comparison labelled the missing quotes/
+site operator a syntactic `mismatch`; this triggered the single allowed direct
+comparison. It is **not evidence of a different film query**: the paired direct
+call showed the same returned query and candidates. A rejection gate based only
+on that textual difference would have withheld a correct result. Neither query
+was rewritten by the harness. Removing `site:` from the returned field does not
+prove that the explicit domain restriction in the sent payload was ignored.
+
+No allowlisted cache-header evidence was captured. Different request IDs/body
+digests do not establish uncached computation; equal candidate lists do not
+establish a cache hit. Current sequential local success does not exclude an
+earlier provider relevance/index/cache/misrouting issue or a deployed-only fault.
+
+#### Accounting, limitations and next step
+
+**Six actual source HTTP attempts, all HTTP200**: two TMDb identity GETs, one
+ordinary resolver Tavily POST, two card GETs, and one separately counted direct
+Tavily POST. No automatic retries, redirects, `/search`, person queries, MOTN,
+Watch Providers, platform navigation or Wishlist writes. The normal resolver
+kept its two-search/two-card cap and optional cap10 person allowance. The direct
+call did not become a third runtime search; research stopped after it. Local
+3.952s includes the direct comparison and observation overhead, not deployed
+user latency. These six are separate from all earlier study accounting.
+
+Ten authored offline harness checks passed with no failures/skips: actual body
+capture, response/adapter equality, unchanged scheduling, optional single direct
+comparison, malformed/different/missing echoes, secret/query/fragment redaction,
+provider errors without retry, and zero requests without credentials. Independent
+review agreed with the evidence boundaries. Existing PR runtime regressions
+were not rerun for this documentation-only result record.
+
+The historical cause remains **unestablished**: neither old report contains the
+needed query/request-ID pair, and the new run cannot reconstruct it. A provider
+relevance/index variation, upstream cache problem or request interpretation remain
+possible explanations, not findings. No local search/HTML cache was identified;
+that is not a blanket exclusion of every historical/deployed failure mode.
+
+Recommended next step, **not implemented**: clarify Tavily's returned `query`
+semantics using these two current request IDs before designing any mismatch
+rejection. If an unrelated response recurs, capture this same request/response/
+candidate chain for that failing call and provide its ID for provider analysis.
+Current successful IDs do not identify the old bad request. Do not add cache
+busting, retries, query rewrites, stricter gates or budget increases on this
+evidence. No automatic feedback/support submission or account-log call occurred.
+Raw responses/keys remain unarchived; the credential process ended after the safe
+memory-only handoff. No merge or manual deployment was performed.
