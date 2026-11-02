@@ -5826,8 +5826,8 @@ before proposing any policy change; no such request or change was made here.
   Netflix audio unknown/subtitles+ survived; Dope Thief was refused.
 - Kong: the г/ґ route reached the single linked-person pair. Both profile GETs
   succeeded and exact Latin name, birthdate and director-role proof confirmed
-  the person. The first card then matched;2 searches,2 cards and2 person GETs,
-  total8 actual requests. Apple/Rakuten audio+/subtitles−, MEGOGO audio+/
+  the person. The first card then matched;2 TMDb film GETs +2 searches +2 cards
+  +2 person GETs =8 actual requests. Apple/Rakuten audio+/subtitles−, MEGOGO audio+/
   subtitles unknown retained. No reserve search or second person pair occurred.
 - Klaus: correct card matched with partial extraction; Netflix audio+/subtitles+
   and its admitted link survived. Noelle was refused, not merged into Klaus.
@@ -5839,8 +5839,8 @@ before proposing any policy change; no such request or change was made here.
   gated by `composeDiscovery` on matched identity; it is not a reconstructed
   copy of those missing diagnostic fields.
 
-Each listed source-block link has `hasURL:true` and `transferable:true` in the
-supplied projection. This verifies policy admission only, not navigation,
+For links with `hasURL:true` and `transferable:true` in the supplied projection,
+those flags verify policy admission only, not navigation,
 equivalence of offers, entitlement or platform tracks. Upper-block country null
 remains distinct from explicit UA regional rows; the existing application's
 Kinobaza interpretation is unchanged and does not join unrelated offers.
