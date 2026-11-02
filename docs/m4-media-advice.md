@@ -5869,3 +5869,80 @@ and5 browser tests above. This evidence-only follow-up changes no runtime or SQL
 only documentation and PR reporting are updated. No migration, feature/access
 operation, merge or deployment was performed. Runtime/browser suites were not
 rerun for this evidence-only documentation edit; `git diff --check` passed.
+
+#### Rejected reserve URL: one controlled observation and authorized recheck
+
+The earlier reserve response with request_id
+`150ade1c-9f6e-499e-a2f9-b6e55f4de780` is not recoverable from the local runner:
+it kept no raw-response archive, and the safe projection withheld the address.
+The following is a **new observation**, not proof of that earlier URL's spelling.
+
+The first permitted control, run `e65ddbf3-f324-489c-90df-0cc6d39daef5`, spent
+one Tavily attempt and returned HTTP401 / `search-auth-error`, with no candidates
+or request_id. The owner reported supplying the wrong key and explicitly
+authorized one additional control. No automatic retry was made and the first
+report was retained separately.
+
+Authorized recheck run `8bb8b81c-2ec8-4e12-bdf8-a51a6b82824f` returned HTTP200.
+It reused the actual reserve query and unchanged adapter/options:
+`"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/`, with
+`exact_match:true`. Tavily request_id:
+`22d5994f-4765-4cb5-9197-ee0b793607ce`; response.query:
+`"Meet the Fockers" 2004 Jay Roach`.
+
+| Safe field | Actual recheck result |
+| --- | --- |
+| Hostname | `kinobazaua.com` |
+| Original pathname | `/persons/jay-roach` |
+| Parsed pathname | `/persons/jay-roach` — unchanged |
+| Query parameter names | `page` |
+| Query / fragment / credentials present | yes / no / no |
+| Candidates returned / admitted / rejected |1 /0 /1|
+| Primary rejection category | `query` |
+| Independently allowed film-card path | no: `/persons/`, not `/titles/<slug>` |
+
+No parameter values, raw address with query, credentials, snippets or raw HTML
+were published or saved. The local report contains sanitized metadata only and
+inherits the study directory's current-user-only access rule. No key is saved.
+
+**The current pointer is not a usable film card.** Its pathname belongs to the
+person-profile namespace. This conclusion concerns the observed address type,
+not an HTML-based attestation of the profile's contents. No Kinobaza GET was
+sent because it was not a permitted title-card inspection target.
+
+The existing classifier chooses one primary reason: after scheme/host checks,
+it checks query presence before checking the supported title path. Consequently
+`query:1` is correct but does not show the independent wrong-path failure. Merely
+removing a query would not make `/persons/jay-roach` an admitted `/titles/` path;
+the runtime's full original-spelling admission also requires the title prefix.
+No actual URL was stripped, rewritten, resolved or followed to demonstrate this.
+
+The value/HTML effect of `page` was **not tested**. Its name suggests pagination,
+but that is an inference, not an observed behavior. It provides no evidence for
+the selected film's identity. No parameterized-versus-canonical card comparison
+was possible, and no common film ID/title/year/director confirmation is claimed
+for this person pointer. The earlier masked result may or may not have been the
+same address; this recheck cannot establish that.
+
+**Proposed next step, not implemented:** retain URL admission, query policy and
+all identity gates. Test the reserve query's quoted original title plus year
+against that same query with director context in a separately bounded comparison,
+without replacing the first two search stages. A director profile being returned
+makes director-context bias a plausible hypothesis, not a demonstrated cause;
+the earlier no-director primary search also omitted the desired card. Exact
+phrase matching alone does not prove a title-page result. Only independently
+confirmed cards should count toward a better query's success.
+
+Separately, protected diagnostics could retain the present primary category and
+add bounded independent flags such as `query-present` and `unsupported-card-path`.
+This would clarify failures without accepting a new address, exposing query
+values, altering identity or changing the per-search budget. No such runtime or
+diagnostic-policy change is included in this evidence-only update.
+
+**Accounting for this investigation:2 HTTP attempts total** — one HTTP401 Tavily
+control and one explicitly authorized HTTP200 Tavily control. Kinobaza card,
+person, TMDb and platform GETs:0. These are separate from the preceding45-request
+series. Reading the two sanitized local reports and the independent code review
+made no source requests. Six authored helper safety tests passed offline; they
+are not live identity/extraction successes. No migration, merge, deployment,
+runtime search change, identity change or Wishlist write was performed.
