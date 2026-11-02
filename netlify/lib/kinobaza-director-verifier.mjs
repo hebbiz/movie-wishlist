@@ -107,8 +107,9 @@ export function createDirectorVerifier({ film, tmdbToken, sourceCap, reserve, fe
   }
   function verify({ sourceURL, sourceAlias } = {}) {
     const decline = reason => Promise.resolve(finish(unresolved(reason)));
-    // The durable session capability, not a browser option, selects cap10.
-    if (sourceCap !== 10) return decline('director-profile-not-enabled-for-budget');
+    // The durable session capability, not a browser option, enables the same
+    // single pair for cap10/cap12. A reserve card does not grant a second pair.
+    if (sourceCap !== 10 && sourceCap !== 12) return decline('director-profile-not-enabled-for-budget');
     if (!trustedPerson) return decline('director-profile-trusted-single-person-required');
     if (!safeKey(tmdbToken)) return decline('director-profile-missing-tmdb-credential');
     if (typeof reserve !== 'function' || !Array.isArray(calls)) return decline('director-profile-ledger-required');

@@ -32,7 +32,7 @@ export function safeSearchCardURL(value, { secrets = [] } = {}) {
     !secretLike(value, secrets) && !/(?:^|[-/])(?:token|password|credential|api-key|secret)-[a-z\d]{16,}/i.test(value) ? value : null;
 }
 export function safePossibleIrrelevantSearch(value, { secrets = [] } = {}) {
-  if (!value || !Array.isArray(value.cards) || value.cards.length < 1 || value.cards.length > 2 ||
+  if (!value || !Array.isArray(value.cards) || value.cards.length < 1 || value.cards.length > 3 ||
       value.cards.some(card => card?.identity === 'matched')) return null;
   const cards = value.cards.map(card => {
     const title = safeText(card?.title, 500, secrets), originalTitle = safeText(card?.originalTitle, 500, secrets);
@@ -47,7 +47,7 @@ export function safePossibleIrrelevantSearch(value, { secrets = [] } = {}) {
   return { film: { title: safeText(film?.title, 500, secrets),
       year: Number.isInteger(film?.year) && film.year >= 1000 && film.year <= 9999 ? film.year : null,
       imdbId: typeof film?.imdbId === 'string' && /^tt\d{7,10}$/.test(film.imdbId) ? film.imdbId : null },
-    searches: (Array.isArray(value.searches) ? value.searches : []).slice(0, 2).map(search => safeSearchCorrelation(search, { secrets })), cards };
+    searches: (Array.isArray(value.searches) ? value.searches : []).slice(0, 3).map(search => safeSearchCorrelation(search, { secrets })), cards };
 }
 export function possibleIrrelevantSearch({ film, searches, cards, observations }, { secrets = [] } = {}) {
   if (!Array.isArray(cards) || !cards.length || cards.some(card => card?.result?.identity?.status === 'matched')) return null;

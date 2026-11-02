@@ -30,14 +30,15 @@ const accounting = new Set(['no-extra-attempts', 'reservation-may-have-committed
 const counts = ['sourceAttempts', 'reservationRequests', 'reservationsAcknowledged', 'tmdbPersonCalls', 'kinobazaPersonCalls'];
 const comparisons = ['stableIdConflict', 'stableIdMatch', 'birthdayConflict', 'birthdayMatch', 'latinNameMatch', 'nativeAliasMatch'];
 const count = n => Number.isSafeInteger(n) && n >= 0 && n <= 2 ? n : null;
+const cardCount = n => Number.isSafeInteger(n) && n >= 0 && n <= 3 ? n : null;
 const selectionBases = new Set(['scoped-film-id', 'selected-year', 'contextual-release-year', 'ambiguous-top-profiles', 'no-eligible-card']);
 
 export function safeDirectorProfileDiagnostic(d) {
   return { status: statuses.has(d?.status) ? d.status : 'unknown', reason: reasons.has(d?.reason) ? d.reason : 'unknown',
     basis: bases.has(d?.basis) ? d.basis : null,
     ...(d?.selection ? {selection: {
-      eligibleCards: count(d.selection.eligibleCards), unverifiedCards: count(d.selection.unverifiedCards),
-      selectedCards: Array.isArray(d.selection.selectedCards) ? [...new Set(d.selection.selectedCards.filter(n => n === 1 || n === 2))].slice(0,2) : [],
+      eligibleCards: cardCount(d.selection.eligibleCards), unverifiedCards: cardCount(d.selection.unverifiedCards),
+      selectedCards: Array.isArray(d.selection.selectedCards) ? [...new Set(d.selection.selectedCards.filter(n => n === 1 || n === 2 || n === 3))].slice(0,3) : [],
       basis: selectionBases.has(d.selection.basis) ? d.selection.basis : 'unknown',
     }} : {}),
     ...Object.fromEntries(counts.map(key => [key, count(d?.[key])])),

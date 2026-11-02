@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { fockersControl } from '../scripts/m4-fockers-control.mjs';
+import { fockersControl, cap12ControlSeries, cap12ControlFilms } from '../scripts/m4-fockers-control.mjs';
 import { rankedCandidates, resolverQueries, resolverRefusalQuery } from '../netlify/lib/kinobaza-resolver.mjs';
 import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 
@@ -98,4 +98,77 @@ test('one-shot entry point reads only stdin and never opens a report or credenti
   const script=await readFile(new URL('../scripts/m4-fockers-control.mjs',import.meta.url),'utf8');
   assert.match(script,/readControlCredentials\(process\.stdin\)/);assert.doesNotMatch(script,/process\.env|writeFile|appendFile|createWriteStream|console\.|api\.movieofthenight|watch\/providers/);
   assert.doesNotMatch(script,/titles\/(?:meet-the-fockers|little-fockers|meet-the-parents)/);
+});
+
+function seriesTransport({needReserve=false,brokenCardClone=false}={}){
+  const sent=[];let selected,searches=0;
+  const wrong2='https://kinobazaua.com/titles/authored-other-second';
+  return {sent,fetchImpl:async(url,init)=>{
+    sent.push({url,init});assert.equal(init.redirect,'manual');assert.equal(init.credentials,'omit');
+    const imdb=/\/find\/(tt\d+)\?/.exec(url)?.[1];
+    if(imdb){selected=cap12ControlFilms.find(film=>film.imdbId===imdb);assert.ok(selected);searches=0;return Response.json({movie_results:[{id:990001}]});}
+    if(url.includes('/movie/990001?'))return Response.json({...details(),imdb_id:selected.imdbId,external_ids:{imdb_id:selected.imdbId},release_date:`${selected.year}-12-01`});
+    if(url==='https://api.tavily.com/search'){
+      searches++;const payload=JSON.parse(init.body);assert.equal(payload.exact_match,searches===3?true:undefined);
+      const urls=needReserve?(searches===1?[wrong]:searches===2?[wrong2]:[correct,wrong]):[wrong,correct];
+      return Response.json({query:payload.query,request_id:requestId,results:urls.map(url=>({url,content:'NEVER_RETAIN_RAW_BODY_OR_SNIPPET'}))});
+    }
+    assert.ok([correct,wrong,wrong2].includes(url));
+    const response=new Response(markup({url,title:url===correct?'Авторський переклад':'A Different Authored Film',original:url===correct?'Authored original':'Other authored original',year:selected.year}),{headers:{'content-type':'text/html'}});
+    if(brokenCardClone&&url===wrong)response.clone=()=>{throw Error('authored-observation-unavailable');};return response;
+  }};
+}
+
+test('cap12 single live pass adds only exact reserve search/card and compares cap10 through RAM replay, not HTTP',async()=>{
+  const mocked=seriesTransport({needReserve:true}),out=await cap12ControlSeries(keys,mocked.fetchImpl,{films:[cap12ControlFilms[0]]}),result=out.cases[0];
+  assert.equal(mocked.sent.length,8);assert.deepEqual(result.counts,{tmdb:2,search:3,cards:3,tmdbPerson:0,kinobazaPerson:0,total:8});
+  assert.equal(result.configuredResolverCap,12);assert.equal(result.serverLedgerCapAttested,false);assert.deepEqual(result.omittedBaselineSources,['tmdb-providers','motn-title']);
+  assert.equal(result.attempts.length,8);assert.ok(result.attempts.every(attempt=>attempt.outcome==='response-received'&&attempt.httpStatus===200));
+  assert.deepEqual(result.reservations,['tmdb-find','tmdb-details','search-1','kinobaza-1','search-2','kinobaza-2','search-3','kinobaza-3']);
+  assert.deepEqual(result.searches.map(search=>search.mode),['normal','normal','reserve-exact']);
+  assert.deepEqual(result.readCards.map(card=>card.identity),['mismatch','mismatch','matched']);
+  assert.equal(result.readCards[2].candidatePool,'reserve-search-only');assert.deepEqual(result.readCards[2].eligibleUnreadBeforeRead,[correct]);
+  assert.equal(result.counterfactualCap10.execution,'memory-replay-current-first-two-slots-not-independent-live');assert.equal(result.counterfactualCap10.externalRequests,0);
+  assert.equal(result.counterfactualCap10.complete,true);assert.deepEqual(result.counterfactualCap10.confirmed,[]);
+  assert.equal(result.counterfactualCap10.replayedSourceReads,4);assert.equal(result.counterfactualCap10.cards.length,2);
+  assert.ok(!result.counterfactualCap10.reservations.includes('search-3'));assert.doesNotMatch(JSON.stringify(out),/NEVER_RETAIN|author-local-/);
+});
+
+test('all eight controls reuse one credential object but no previous-film response cache or additional live baseline calls',async()=>{
+  const mocked=seriesTransport(),emitted=[],out=await cap12ControlSeries(keys,mocked.fetchImpl,{onCase:result=>emitted.push(result)});
+  assert.equal(out.cases.length,8);assert.equal(emitted.length,8);assert.equal(mocked.sent.length,40);assert.equal(out.counts.total,40);
+  assert.deepEqual(out.cases.map(result=>result.film.imdbId),cap12ControlFilms.map(film=>film.imdbId));
+  assert.ok(out.cases.every(result=>result.counts.search===1&&result.counts.cards===2));
+  assert.ok(out.cases.every(result=>result.counterfactualCap10.complete&&result.counterfactualCap10.externalRequests===0&&result.counterfactualCap10.confirmed.includes(correct)));
+  assert.ok(emitted.every(result=>JSON.stringify(result).length<12*1024),'normal compact case fits a mobile-friendly line');
+  assert.ok(mocked.sent.every(item=>!item.url.includes('/search?')&&!/movieofthenight|watch\/providers|apple\.com/.test(item.url)));
+});
+
+test('unavailable RAM snapshot stays unknown rather than refetching or asserting a cap10 counterfactual failure',async()=>{
+  const mocked=seriesTransport({brokenCardClone:true}),out=await cap12ControlSeries(keys,mocked.fetchImpl,{films:[cap12ControlFilms[0]]}),result=out.cases[0];
+  assert.equal(mocked.sent.length,5);assert.equal(result.readCards[0].identity,'matched','diagnostic clone failure cannot alter the actual adapter body');
+  assert.equal(result.counterfactualCap10.externalRequests,0);assert.equal(result.counterfactualCap10.complete,false);
+  assert.equal(result.counterfactualCap10.status,'unknown-unrecorded-source');assert.deepEqual(result.counterfactualCap10.confirmed,[]);
+});
+
+test('identical normal query payloads replay their separate observed responses in call order, never a last-value cache',async()=>{
+  const mocked=seriesTransport({needReserve:true});
+  const send=async(url,init)=>{const response=await mocked.fetchImpl(url,init);if(!url.includes('/movie/990001?'))return response;
+    const value=await response.json();return Response.json({...value,title:value.original_title,alternative_titles:{titles:[]},credits:{crew:[]}});};
+  const out=await cap12ControlSeries(keys,send,{films:[cap12ControlFilms[0]]}),result=out.cases[0];
+  assert.equal(result.searches[0].query,result.searches[1].query);assert.equal(mocked.sent.length,8);
+  assert.deepEqual(result.counterfactualCap10.reads.filter(read=>read.type==='cards').map(read=>read.url),[wrong,'https://kinobazaua.com/titles/authored-other-second']);
+  assert.equal(result.counterfactualCap10.complete,true);assert.equal(result.counterfactualCap10.externalRequests,0);
+});
+
+test('a failed control retains its requested film and does not automatically rerun the case',async()=>{
+  let count=0;const out=await cap12ControlSeries(keys,async()=>{count++;throw Error('author-local-tmdb-key');},{films:[cap12ControlFilms[0]]});
+  assert.equal(count,1);assert.equal(out.counts.total,1);assert.equal(out.cases[0].requested.imdbId,'tt0290002');assert.equal(out.cases[0].counterfactualCap10.complete,false);
+  assert.deepEqual(out.cases[0].attempts,[{type:'tmdb',outcome:'transport-outcome-unknown',httpStatus:null}]);
+  assert.doesNotMatch(JSON.stringify(out),/author-local-tmdb-key/);
+});
+
+test('series film selection cannot expand beyond the approved fixed eight IMDb contexts',async()=>{
+  let calls=0;await assert.rejects(cap12ControlSeries(keys,()=>{calls++;},{films:[{title:'Other',year:2000,imdbId:'tt0000001'}]}),/invalid-local-study/);
+  await assert.rejects(cap12ControlSeries(keys,()=>{calls++;},{films:[cap12ControlFilms[0],cap12ControlFilms[0]]}),/invalid-local-study/);assert.equal(calls,0);
 });

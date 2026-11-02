@@ -13,7 +13,7 @@ const comparisonOutcomes = new Set(['non-comparable','possible-discrepancy']);
 const comparisonReasons = new Set(['package-scope-unresolved','version-scope-unresolved','package-differs','version-differs','same-declared-card-offer-scope-unknown','card-pointer-equivalence-unestablished']);
 const blockIssues = new Set(['provider-block-count-limit','ambiguous-provider-block','unsupported-provider-block','block-field-count-limit','conflicting-block-labels','possible-block-conflict-scope-unestablished']);
 const sourceLabels = new Map([['Kinobaza HTML','kinobaza'], ['Movie of the Night','motn'], ['TMDB / JustWatch','tmdb'], ['TMDb / JustWatch','tmdb']]);
-const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2', 'tmdb-person', 'kinobaza-person'];
+const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2', 'tmdb-person', 'kinobaza-person', 'search-3', 'kinobaza-3'];
 const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-year-conflict-terminal-roman-title','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-title-year-match','explicit-stable-and-structural-match','explicit-title-year-director-match','explicit-title-release-year-director-match']);
 const count = n => Number.isSafeInteger(n) && n >= 0 && n < 10000 ? n : 'unknown';
 knownReasons.add('source-year-conflict-ukrainian-g-title');
@@ -154,12 +154,13 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
   lines.push(`Kinobaza resolver: ${resolverStatuses.has(result?.resolver?.status) ? result.resolver.status : 'unknown'}.`);
   lines.push(`Kinobaza: search ${count(result?.resolver?.searchCalls)}; card GET ${count(result?.resolver?.cardCalls)}; unexamined ${count(result?.resolver?.unexamined)}.`);
   if (result?.resolver?.directorProfile) lines.push(`Linked director profile: ${JSON.stringify(safeDirectorProfileDiagnostic(result.resolver.directorProfile))}.`);
-  for (const [index, s] of (result?.resolver?.searches ?? []).slice(0,2).entries()) {
+  for (const [index, s] of (result?.resolver?.searches ?? []).slice(0,3).entries()) {
     const d = safeSearchDiagnostic(s.status, s);
     const provider = ['tavily','kinobaza-public-search'].includes(s.provider) ? s.provider : 'unknown';
     lines.push(`Search ${index + 1}: ${d.status}; ${d.outcome}; returned ${d.returned ?? 'unknown'}, admitted ${d.admitted ?? 'unknown'}, rejected ${d.rejected ?? 'unknown'}, duplicates ${d.duplicates ?? 'unknown'}; rejection categories ${JSON.stringify(d.rejectionCategories)}; provider ${provider}.`);
+    if (s.mode === 'reserve-exact' && s.exactMatch === true) lines.push('Reserve search: Tavily exact_match true; candidate discovery only, not film identity proof.');
   }
-  for (const card of result?.resolver?.cards?.slice(0,2) ?? []) {
+  for (const card of result?.resolver?.cards?.slice(0,3) ?? []) {
     const d = safeIdentityDiagnostic(card.diagnostics);
     lines.push(`Card: ${identities.has(card.identity) ? card.identity : 'unresolved'}; reason ${knownReasons.has(card.reason) || card.reason === 'source-identity-structure-limit' ? card.reason : 'unknown'}; gate ${d.failedGate ?? 'none-or-unknown'}.`);
     if (card.reason === 'source-title-conflict') lines.push('Heading is not in known title aliases; not independent proof of a different film.');

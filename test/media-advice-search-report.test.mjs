@@ -105,14 +105,35 @@ test('new report exception remains bounded and excludes unsupported arbitrary pa
   diagnostic.cards[0].snippet = 'PRIVATE_SNIPPET';
   diagnostic.searches[0].headers = { Authorization: 'Bearer PRIVATE_TOKEN' };
   diagnostic.searches.push({ ...diagnostic.searches[0], requestId: '8132e4b8-c24f-4b88-9326-d0e6fdb40ff8' });
-  diagnostic.searches.push({ query: 'PRIVATE_THIRD_QUERY', requestId: 'PRIVATE_THIRD_ID', responseQuery: 'PRIVATE_THIRD_RESPONSE' });
+  diagnostic.searches.push({ query: 'Authored reserve query', requestId: 'PRIVATE_THIRD_ID', responseQuery: 'Authored reserve response' });
+  diagnostic.searches.push({ query: 'PRIVATE_FOURTH_QUERY', requestId: 'PRIVATE_FOURTH_ID', responseQuery: 'PRIVATE_FOURTH_RESPONSE' });
   const report = safeMediaReport(reportResult(diagnostic));
   assert.ok(report.includes(HEADING));
   assert.equal((report.match(/^Пошук [12]:/gm) ?? []).length, 2);
+  assert.equal((report.match(/^Пошук 3:/gm) ?? []).length, 1);
   assert.equal((report.match(/^Прочитана картка [12]:/gm) ?? []).length, 2);
   assert.doesNotMatch(report, /PRIVATE|rawResponse|Authorization|snippet|Bearer/);
-  diagnostic.cards.push({ ...diagnostic.cards[0], title: 'PRIVATE_THIRD_CARD' });
+  diagnostic.cards.push({ ...diagnostic.cards[0], title: 'Authored third card' });
+  assert.ok(safeMediaReport(reportResult(diagnostic)).includes(HEADING));
+  diagnostic.cards.push({ ...diagnostic.cards[0], title: 'PRIVATE_FOURTH_CARD' });
   assert.ok(!safeMediaReport(reportResult(diagnostic)).includes(HEADING));
+});
+
+test('protected report retains the third reserve mode/card/stage while rejecting arbitrary mode labels', () => {
+  const result = reportResult();
+  result.metrics = { requestsMade: 12, requestBudget: 12, ledgerReservations: 12,
+    calls: [{ stage: 'search-3' }, { stage: 'kinobaza-3' }] };
+  result.resolver.searches = [0,1,2].map(i => ({ status:'ok', returned:1, admitted:1, rejected:0, duplicates:0,
+    rejectionCategories:{}, provider:'tavily', ...(i === 2 ? {mode:'reserve-exact',exactMatch:true} : {}) }));
+  result.resolver.cards = [0,1,2].map(() => ({ identity:'mismatch', reason:'source-title-conflict', cardRef:'a'.repeat(64) }));
+  const report = safeMediaReport(result);
+  assert.match(report, /Source HTTP attempts: 12\/12/);
+  assert.match(report, /search-3: 1 reserved/); assert.match(report, /kinobaza-3: 1 reserved/);
+  assert.equal((report.match(/^Search [123]:/gm) ?? []).length,3);
+  assert.equal((report.match(/^Card:/gm) ?? []).length,3);
+  assert.match(report,/Reserve search: Tavily exact_match true; candidate discovery only, not film identity proof/);
+  result.resolver.searches[2].mode = 'PRIVATE_MODE';
+  assert.doesNotMatch(safeMediaReport(result), /PRIVATE_MODE|Reserve search:/);
 });
 
 test('protected report withholds credential-shaped captured values and non-title-card addresses', () => {

@@ -55,6 +55,21 @@ export function resolverRefusalQuery(film) {
   const maximum = 500 + ['""', Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ').length;
   return query.length <= maximum ? query : resolverQueries(film)[1];
 }
+// A separately budgeted reserve stage, not a replacement for either established
+// query. Only the verified original title is an exact phrase. Year/director are
+// context, not required quoted spellings (the source may localize the person).
+export function resolverReserveQuery(film) {
+  const original = text(film.originalTitle);
+  if (!original) return null;
+  const person = film.directorCount === 1 && film.directorPeople?.length === 1 ? film.directorPeople[0] : null;
+  const director = person?.names?.map(text).find(name => /^[\p{Script=Latin}\p{M} .,'’()-]+$/u.test(name));
+  const clean = value => value.replace(/["\\]/g, ' ');
+  const parts = ['"' + clean(original) + '"', Number.isInteger(film.year) ? film.year : '', director ? clean(director) : '', 'site:kinobazaua.com/titles/'];
+  const query = parts.filter(Boolean).join(' ');
+  // Keep established text whole. If optional director context would exceed the
+  // existing contextual query bound, omit it rather than truncate a name.
+  return query.length <= 550 ? query : parts.filter((part, index) => part && index !== 2).join(' ');
+}
 // Existing admitted pointers only: a matching slug changes read order, never
 // supplies identity evidence or a generated URL. Ties retain search order.
 export function rankedCandidates(urls, film) {
@@ -95,13 +110,13 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
     accepts(url, init) {
       return url === ENDPOINT && init?.method === 'POST' && init.redirect === 'manual' && init.credentials === 'omit';
     },
-    async search(query, { signal, diagnostics = false, diagnosticSecrets = [] } = {}) {
+    async search(query, { signal, diagnostics = false, diagnosticSecrets = [], exactMatch = false } = {}) {
       if (!apiKey || /\s/.test(apiKey)) return { status: 'missing-or-invalid-search-key', urls: [] };
       if (signal?.aborted) return { status: 'search-timeout-no-retry', urls: [] };
       const payload = { query, search_depth: 'basic', topic: 'general', max_results: 5,
         auto_parameters: false, include_answer: false, include_raw_content: false,
         include_images: false, include_favicon: false, include_usage: false,
-        include_domains: ['kinobazaua.com'], include_domains_mode: 'restrict' };
+        include_domains: ['kinobazaua.com'], include_domains_mode: 'restrict', ...(exactMatch === true ? { exact_match: true } : {}) };
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15_000);
       const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
       const aborted = new Promise((_, reject) => { if (combined.aborted) reject(Error()); else combined.addEventListener('abort', () => reject(Error()), { once: true }); });
@@ -157,7 +172,8 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
     } : onIdentityDiagnostic;
     const director = createDirectorVerifier({film,tmdbToken,sourceCap,reserve,fetchImpl,calls,signal});
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
-    let selection, alternateFailure;
+    const reserveEnabled = sourceCap === 12;
+    let selection, alternateFailure, sourceFailure = false;
     const done = (status, result = null, choices = []) => {
       summary.candidates = urls.size; summary.unexamined = urls.size - examined.size;
       summary.directorProfile = safeDirectorProfileDiagnostic({...director.diagnostic(),
@@ -178,41 +194,40 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         blockCount:result.localization?.blocks?.length ?? 0,filmAudioState:result.localization?.film?.ukrainianAudio?.state}) });
     if (!apiKey) return done('not-evaluated-missing-search-key');
     if (!queries.length) return done('not-evaluated-no-established-title');
-    let activeProvider, sentSearchQuery;
+    let activeProvider, sentSearchQuery, reserveSearch = false;
     const searchFetch = async (url, init) => {
-      const stage = `search-${summary.searchCalls + 1}`;
-      if (summary.searchCalls >= 2 || signal?.aborted || activeProvider?.accepts?.(url, init) !== true) throw Error('search-boundary');
+      const stage = reserveSearch ? 'search-3' : `search-${summary.searchCalls + 1}`;
+      if (summary.searchCalls >= (reserveEnabled ? 3 : 2) || reserveSearch && !reserveEnabled || calls.some(call => call.stage === stage) ||
+          calls.length >= sourceCap || signal?.aborted || activeProvider?.accepts?.(url, init) !== true) throw Error('search-boundary');
       await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
       summary.searchCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
       if (capture) { try { sentSearchQuery = JSON.parse(init.body)?.query; } catch { sentSearchQuery = null; } }
       try { const r = await fetchImpl(url, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('search-transport'); }
     };
     const provider = searchFactory(apiKey, searchFetch); let nextQuery = 0;
-    const searchNext = async (afterIdentityRefusal = false) => {
+    const searchNext = async (afterIdentityRefusal = false, exactReserve = false) => {
       activeProvider = provider;
-      const query = afterIdentityRefusal ? resolverRefusalQuery(film) : queries[nextQuery]; nextQuery++;
+      reserveSearch = exactReserve;
+      const query = exactReserve ? resolverReserveQuery(film) : afterIdentityRefusal ? resolverRefusalQuery(film) : queries[nextQuery];
+      if (!exactReserve) nextQuery++;
       sentSearchQuery = null;
-      const found = await activeProvider.search(query, { signal, ...(capture ? { diagnostics: true, diagnosticSecrets: secrets } : {}) });
+      const found = await activeProvider.search(query, { signal, ...(exactReserve ? { exactMatch: true } : {}), ...(capture ? { diagnostics: true, diagnosticSecrets: secrets } : {}) });
       if (capture) searchObservations.push(safeSearchCorrelation({ query: sentSearchQuery,
         requestId: found.correlation?.requestId, responseQuery: found.correlation?.responseQuery }, { secrets }));
-      summary.searches.push({ ...safeSearchDiagnostic(found.status, found.diagnostics), provider: 'tavily' });
+      summary.searches.push({ ...safeSearchDiagnostic(found.status, found.diagnostics), provider: 'tavily', ...(exactReserve ? { mode: 'reserve-exact', exactMatch: true } : {}) });
       if (found.status === 'ok') for (const url of (found.urls ?? []).map(admitKinobazaURL).filter(Boolean)) urls.add(url);
-      return found.status;
+      else sourceFailure = true;
+      return found;
     };
     while (!urls.size && nextQuery < queries.length) {
       if (signal?.aborted) return done('resolver-deadline-bounded');
-      const status = await searchNext();
+      const { status } = await searchNext();
       if (status !== 'ok') return done(status); // No alternate for errors.
     }
-    if (!urls.size) return done('no-admitted-search-candidates');
-    for (let i = 0; i < 2; i++) {
-      if (signal?.aborted) break;
-      const url = rankedCandidates(urls, film).find(candidate => !examined.has(candidate));
-      if (!url) break;
-      const stage = `kinobaza-${summary.cardCalls + 1}`;
+    const readCard = async (url, stage) => {
       const priorCardCalls = summary.cardCalls;
       const cardFetch = async (target, init) => {
-        if (target !== url || !admitKinobazaURL(target) || signal?.aborted || init.method !== 'GET' || init.redirect !== 'manual' || calls.some(c => c.stage === stage)) throw Error('card-boundary');
+        if (target !== url || !admitKinobazaURL(target) || examined.has(url) || calls.length >= sourceCap || signal?.aborted || init.method !== 'GET' || init.redirect !== 'manual' || calls.some(c => c.stage === stage)) throw Error('card-boundary');
         await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
         summary.cardCalls++; examined.add(url); const call = { stage, status: 'attempt-reserved' }; calls.push(call);
         if (capture) readCards[index] = url;
@@ -220,20 +235,28 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
       };
       const index = cards.length;
       const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic: observeIdentity,
-        ...(sourceCap === 10 ? {verifyDirector:director.verify,onDeferredDirector:pending => deferred.push({...pending,index})} : {}) });
+        ...(sourceCap === 10 || reserveEnabled ? {verifyDirector:director.verify,onDeferredDirector:pending => deferred.push({...pending,index})} : {}) });
       cards.push(result);
       summary.cards.push(cardSummary(result,
         // Public-pointer digest for comparing a known URL offline, never a
         // capability, HTML hash, source archive or claim that a request succeeded.
         summary.cardCalls > priorCardCalls ? createHash('sha256').update(url).digest('hex') : null));
-      if (summary.cardCalls === priorCardCalls) break; // A denied reservation is not a retry opportunity.
+      if (summary.cardCalls === priorCardCalls || !['ok', 'partial', 'unresolved', 'unsupported-markup', 'identity-mismatch', 'identity-unresolved'].includes(result.status)) sourceFailure = true;
+      return { result, dispatched: summary.cardCalls > priorCardCalls };
+    };
+    for (let i = 0; i < 2; i++) {
+      if (signal?.aborted) break;
+      const url = rankedCandidates(urls, film).find(candidate => !examined.has(candidate));
+      if (!url) break;
+      const { result, dispatched } = await readCard(url, `kinobaza-${summary.cardCalls + 1}`);
+      if (!dispatched) break; // A denied reservation is not a retry opportunity.
       if (i === 0 && ['mismatch', 'unresolved'].includes(result.identity?.status) && nextQuery < queries.length) {
         if (signal?.aborted) break;
         // A successful search whose first card fails identity can spend the
         // second slot on Tavily's verified two-title/year disambiguation (or
         // existing single-title alternative). Shared slot accounting with
         // empty results: never a third search, source /search or error retry.
-        const status = await searchNext(true);
+        const { status } = await searchNext(true);
         if (status !== 'ok') {
           // A failed disambiguation cannot discard an already-read eligible
           // card. Finish its bounded proof, without retrying the search or
@@ -246,19 +269,47 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
     // Both bounded card reads retain their opportunities before the only person
     // pair is allocated. Resume the SAME validated DOM, never refetch a card or
     // infer proof from this ordering. Equal different profiles remain unresolved.
-    if (deferred.length) {
-      selection = selectDirectorCandidates(deferred);
+    const resumeDirectors = async pendingCards => {
+      selection = selectDirectorCandidates(pendingCards);
       for (const pending of selection.selected) {
         if (signal?.aborted) break;
         const result = await pending.resume();
         cards[pending.index] = result;
+        // Later reserve-card allocation must inspect the actual latest gate
+        // outcome, not the stale pre-profile identity held by the continuation.
+        pending.identity = result.identity;
         summary.cards[pending.index] = cardSummary(result, summary.cards[pending.index].cardRef);
+      }
+    };
+    if (deferred.length) await resumeDirectors(deferred);
+    // Reserve exact search is a last opportunity after the complete old path,
+    // including its one optional linked-person proof. It never hides a retry
+    // after a failed transport/reservation or changes a successful first pair.
+    const personDiagnostic = director.diagnostic();
+    const personSourceFailure = personDiagnostic.attempts.some(attempt => attempt.status !== 'response-received' ||
+      !Number.isInteger(attempt.httpStatus) || attempt.httpStatus < 200 || attempt.httpStatus >= 300) ||
+      /^director-(?:tmdb-|profile-(?:redirect|auth|access|not-returned|quota|http|invalid-content|response-too-large|challenge|timeout|network|verification)|reservation|deadline|unsafe)/.test(personDiagnostic.reason);
+    if (reserveEnabled && !cards.some(card => card.identity?.status === 'matched') && !sourceFailure && !personSourceFailure &&
+        !signal?.aborted && calls.length <= sourceCap - 2 && resolverReserveQuery(film)) {
+      const found = await searchNext(false, true);
+      if (found.status !== 'ok') return done(found.status);
+      // The extra read must be justified by this exact search. A duplicate-only
+      // or empty response does not authorize another old candidate/card read.
+      const reserveURLs = (found.urls ?? []).map(admitKinobazaURL).filter(url => url && !examined.has(url));
+      const url = rankedCandidates(reserveURLs, film)[0];
+      if (url && calls.length < sourceCap && !signal?.aborted) {
+        const deferredBefore = deferred.length;
+        await readCard(url, 'kinobaza-3');
+        // Exact search is not stronger film/person evidence. Reconsider all
+        // still-unconfirmed eligible cards together, preserving an earlier tie
+        // between different profiles rather than favoring the newest pointer.
+        if (deferred.length > deferredBefore) await resumeDirectors(deferred);
       }
     }
     summary.unexamined = urls.size - examined.size;
     const confirmed = cards.filter(c => c.identity?.status === 'matched');
     if (confirmed.length > 1) return done('multiple-confirmed-cards-choose', null, confirmed);
     if (confirmed.length === 1) return done(alternateFailure ? 'partial' : summary.unexamined ? 'one-confirmed-bounded-not-exhaustive' : confirmed[0].status, confirmed[0]);
-    return done(alternateFailure ?? (summary.unexamined ? 'bounded-unresolved' : 'no-confirmed-card'));
+    return done(alternateFailure ?? (!urls.size ? 'no-admitted-search-candidates' : summary.unexamined ? 'bounded-unresolved' : 'no-confirmed-card'));
   };
 }
