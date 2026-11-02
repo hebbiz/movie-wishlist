@@ -5745,12 +5745,127 @@ nor historical reconstruction. Live elapsed time and replay processing time
 are separate; the latter is not provider latency. Bodies/credentials are not
 archived, and one hidden credential entry serves the complete series.
 
-At this checkpoint, the new series has **not returned a live result**. Codex has
-dispatched **0 new source HTTP attempts**; any owner-run series still needs its
-safe result/counts reconciled before another invocation. Its success, candidate
-recall, observed languages/links and latency remain unverified; the earlier
-6-attempt Fockers control above remains the only completed automatic live control
-in this PR. Any subsequently received current-source evidence will be recorded
-in the PR update; absence of the result is not a reported live success.
-No migration, feature/access operation, merge, deployment or Wishlist write was
-performed. Source claims are not verified platform availability or entitlement.
+At implementation checkpoint `36d5775`, the new series had not yet returned a
+live result; no new request had been dispatched by the Codex process. The owner
+subsequently supplied the one-pass outputs below. These supersede that pending
+status, not the separate earlier6-attempt control or historical observations.
+
+#### Owner-forwarded cap12 series: actual results — 2026-11-02
+
+The owner supplied eight compact case outputs and the completed series summary.
+No new live request or automatic rerun was made to process this evidence. The
+credential command was pinned to implementation `36d57753a1d62f9e6841dc14042b0f00bdb1e9a6`;
+the JSON itself has `buildSha:null`, `execution:local-diagnostic` and
+`serverLedgerCapAttested:false`, not an independent build/deployment attestation.
+
+**Result: seven controls retain a confirmed card; Meet the Fockers remains
+unresolved. The reserve stage executed, but this series shows no additional
+confirmed film from cap12.** This does not establish that reserve exact search
+cannot help other responses or films.
+
+| Film | Confirmed current card | cap10 RAM replay → cap12 | Kinobaza mapped rows | Actual HTTP | Local elapsed ms |
+| --- | --- | --- | ---: | ---: | ---: |
+| Meet the Fockers (2004) | none | unresolved → unresolved |0|7|8712|
+| Alien (1979) | [alien](https://kinobazaua.com/titles/alien) | matched → matched |5|5|3627|
+| Mad Max: Fury Road (2015) | [mad-max-fury-road](https://kinobazaua.com/titles/mad-max-fury-road) | matched → matched |6|5|3559|
+| Dune: Part Two (2024) | [dune-part-two](https://kinobazaua.com/titles/dune-part-two) | matched → matched |5|5|3778|
+| Gladiator II (2024) | [gladiator-2](https://kinobazaua.com/titles/gladiator-2) | matched → matched |5|5|3479|
+| Kong: Skull Island (2017) | [kong-skull-island](https://kinobazaua.com/titles/kong-skull-island) | matched → matched |6|8|6224|
+| Klaus (2019) | [klaus](https://kinobazaua.com/titles/klaus) | matched → matched |2|5|3571|
+| The Pursuit of Happyness (2006) | [the-pursuit-of-happyness](https://kinobazaua.com/titles/the-pursuit-of-happyness) | matched replay → gated rows retained |3|5|3096|
+
+These are source rows, not unique offers or guaranteed platform availability.
+All eight cap10 replays report `complete:true`, with no external requests. They
+reuse the same current responses and current identity implementation, not a
+separate live baseline or the deployed historical resolver. The elapsed values
+sum to36046ms; they include local control/observation overhead and exclude the
+omitted Providers/MOTN, Auth and live ledger work. They are not production
+latency measurements. Seven unchanged controls do not prove catalogue-wide
+quality or causation for earlier source failures.
+
+**Meet the Fockers: the reserve opportunity was used, not successful.** Run
+`9f15ceab-fdfb-485f-93cf-43865ffaa6eb` used2 TMDb +3 Tavily +2 cards =7 requests,
+no person requests. All attempt records report HTTP200.
+
+| Search | Actual query | response.query / request_id | Observed outcome |
+| --- | --- | --- | --- |
+|1, unchanged | `"Meet the Fockers" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers 2004`; `8d777458-0510-4523-b851-d3aca848365f` | little-fockers → meet-the-parents → the-absent-minded-professor → house-of-lies → snow-dogs; all5 admitted |
+|2, unchanged | `"Meet the Fockers" "Знайомство з Факерами" "Jay Roach" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers Знайомство з Факерами Jay Roach 2004`; `d6d1ca0a-494b-4e3a-adaa-6bd4dfba2cb7` | avp-alien-vs-predator → primer → one-last-ride → doomsday → a-guide-to-recognizing-your-saints; all5 admitted |
+|3, reserve `exact_match:true` | `"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/` | `"Meet the Fockers" 2004 Jay Roach`; `150ade1c-9f6e-499e-a2f9-b6e55f4de780` | returned1, admitted0, rejected1, category `query`; safe URL projection is null |
+
+The two original card reads remained little-fockers and meet-the-parents; the
+complete cap10 replay confirms both were refused with `source-title-conflict`.
+The supplied live readCards fragment is incomplete, so missing heading/director
+fields are not reconstructed from this replay or previous runs. The reserve
+response's address/path and query values are **unknown**: it may not be assumed
+to be the correct film, a duplicate, a `/search` URL or a redirect. Only its
+query-related admission refusal is established. There was no admitted reserve
+candidate and therefore **no `kinobaza-3` GET**, rather than a skipped valid
+third-card opportunity. The ten admitted normal candidates left8 unread;
+`bounded-unresolved` and0 Kinobaza rows are correct withholding outcomes.
+
+Compared with this invocation's cap10 replay, cap12 spent one additional Tavily
+request and confirmed no additional card. Do not strip parameters, invent a
+replacement URL, weaken admission or alter either existing query to turn this
+observation into a success. A possible separate follow-up would capture a safe
+classification of that rejected URL's origin/path, without secret query values,
+before proposing any policy change; no such request or change was made here.
+
+**Other controls and retained source facts:**
+
+- Alien: the API's second pointer `alien` was ranked first by the existing
+  candidate logic and independently matched. Apple/Rakuten blocks report audio−,
+  subtitles+; MEGOGO reports audio+/subtitles+. No reserve search was used.
+- Mad Max: correct first card matched with partial extraction and6 rows. Apple
+  and Rakuten report audio+/subtitles−, MEGOGO audio+/subtitles unknown. The other
+  read's unsupported markup did not discard the confirmed card or trigger reserve.
+- Dune: Part Two: correct first card matched and5 rows retained; Apple audio+/
+  subtitles−, Rakuten and MEGOGO audio+/subtitles+. Dune1984 was refused.
+- Gladiator II: `Гладіатор ІІ` matched through the terminal-Roman route with
+  original/year/director confirmation. Apple/Rakuten audio+/subtitles+ and
+  Netflix audio unknown/subtitles+ survived; Dope Thief was refused.
+- Kong: the г/ґ route reached the single linked-person pair. Both profile GETs
+  succeeded and exact Latin name, birthdate and director-role proof confirmed
+  the person. The first card then matched;2 searches,2 cards and2 person GETs,
+  total8 actual requests. Apple/Rakuten audio+/subtitles−, MEGOGO audio+/
+  subtitles unknown retained. No reserve search or second person pair occurred.
+- Klaus: correct card matched with partial extraction; Netflix audio+/subtitles+
+  and its admitted link survived. Noelle was refused, not merged into Klaus.
+- Pursuit:3 gated Kinobaza rows remain, including Netflix audio unknown/
+  subtitles+ and MEGOGO audio+/subtitles+. The complete RAM replay confirms the
+  correct card and refuses the-whole-enchilada as structurally incomplete.
+  The live readCards/resolver middle is missing in the pasted text; its exact
+  omitted gate trace is unavailable. The mapped live projection is independently
+  gated by `composeDiscovery` on matched identity; it is not a reconstructed
+  copy of those missing diagnostic fields.
+
+Each listed source-block link has `hasURL:true` and `transferable:true` in the
+supplied projection. This verifies policy admission only, not navigation,
+equivalence of offers, entitlement or platform tracks. Upper-block country null
+remains distinct from explicit UA regional rows; the existing application's
+Kinobaza interpretation is unchanged and does not join unrelated offers.
+
+Case run IDs in series order:
+`9f15ceab-fdfb-485f-93cf-43865ffaa6eb`,
+`2084fca8-3d90-4518-83a0-cb94ca242d3a`,
+`834b19c7-c834-4c1d-a3cc-131e22e9784a`,
+`64db28ee-077a-4364-bddd-07b7bdde1725`,
+`494c94f6-a3a6-428c-ae28-fa4ca6ee9a00`,
+`fee0bed4-2d5d-4894-a23c-e71313503820`,
+`778fbc07-1d7a-4e84-9e11-870c17788bfd`,
+`35cdb04e-528a-4262-8f71-deed5f995beb`.
+
+**Reconciled source accounting:45 requests** =16 TMDb film +11 Tavily +16 card
+GETs +1 TMDb person +1 Kinobaza person. All visible attempt records report
+HTTP200. The aggregate exactly equals the eight per-case counts. Counterfactual
+replay adds0 HTTP. No Providers/MOTN/platform request, retry or Wishlist write
+occurred in this source-only series. The preceding6-attempt control and separate
+earlier1 card GET remain separate evidence (52 across those documented controls
+and this series), not additional requests made while reading this report.
+
+After implementation,161 additional HTML/localization/protected-relevance tests
+passed: **736 offline total**, plus the separately recorded12 native PostgreSQL
+and5 browser tests above. This evidence-only follow-up changes no runtime or SQL;
+only documentation and PR reporting are updated. No migration, feature/access
+operation, merge or deployment was performed. Runtime/browser suites were not
+rerun for this evidence-only documentation edit; `git diff --check` passed.
