@@ -8,7 +8,7 @@ import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advic
 import { FILMS } from '../research/grounded-answer-demo/config.mjs';
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
-import { localizedMarkup, netflixAudioCatalogueBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
+import { localizedMarkup, netflixAudioCatalogueBlock, paragraphBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
 import { recommendationCarousel } from '../research/grounded-answer-demo/test/recommendation-markup.fixture.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { safeExtractionDiagnostic } from '../shared/media-advice-diagnostics.mjs';
@@ -227,6 +227,11 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
   recoveredResult.resolver = { cards: [{ identity: recoveredExtraction.identity.status,
     extractionDiagnostic: safeExtractionDiagnostic({ status: recoveredExtraction.status, issues: recoveredExtraction.issues,
       candidateCount: recoveredExtraction.candidates.length, blockCount: recoveredExtraction.localization.blocks.length }) }] };
+  // Authored MEGOGO channel-format caption, not a stored/live Kong response.
+  const channelHref = 'https://megogo.net/ua/view/999999-authored.html?exact=%2f&x=1';
+  const channelExtraction = await extractHtml(localizedMarkup(paragraphBlock('megogo', '(укр. аудіо [5.1])', channelHref.replace('&', '&amp;')), 'coherence', false), recoveredFilm);
+  assert.equal(channelExtraction.identity.status, 'matched');
+  const channelResult = composeDiscovery(recoveredFilm, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: channelExtraction, status: channelExtraction.status } });
   for (const [width, height] of [[1280, 900], [375, 812], [420, 912], [820, 1180]]) await t.test(`${width}x${height}`, async t => {
     const context = await browser.newContext({ viewport: { width, height }, serviceWorkers: 'block' }); t.after(() => context.close());
     await context.addInitScript(() => {
@@ -1165,6 +1170,52 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       assert.equal(await page.evaluate(() => authoredDBWrites.length), beforeRecoveredWrites, 'recovered source data never perform Save');
       assert.equal(await page.evaluate(() => authoredOpened.length), beforeRecoveredOpens + 1, 'only the explicit open action opens the original pointer');
       if (process.env.M4_SCREENSHOT_DIR && diagnostics) await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/authored-recovered-netflix-${width}.png`, animations: 'disabled' });
+      await page.getByRole('button', { name: '← До картки', exact: true }).click();
+    }
+    // The channel suffix must yield audio+, subtitles? for both server response
+    // projections, without inventing subtitles or changing the selected URL.
+    for (const diagnostics of [false, true]) {
+      allowed = true; diagnosticsAllowed = diagnostics;
+      const capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics };
+      for (const key of Object.keys(authored)) delete authored[key];
+      Object.assign(authored, diagnostics ? { ...channelResult, capabilities } : productMediaResult(channelResult, capabilities));
+      await page.evaluate(() => {
+        currentUser = { id: 'user' }; currentRole = 'owner'; currentGroupId = 'group'; window.authoredLogin = true;
+        movies = [{ id: 'list', imdb_url: 'https://imdb.com/title/tt1234567', title: 'Authored film', year: 2013, status: 'wishlist', recommended_medium: 'DVD', purchase_url: 'https://old.example', added_by: 'Owner' }];
+        startEditMovie('list');
+      });
+      const beforeChannelCalls = calls.filter(call => call.action === 'discover').length;
+      const beforeChannelWrites = await page.evaluate(() => authoredDBWrites.length);
+      const beforeChannelOpens = await page.evaluate(() => authoredOpened.length);
+      await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-answer').waitFor();
+      const megogoRow = page.locator('.media-advice-row[data-provider-key="megogo"]');
+      assert.equal(await page.locator('.media-advice-row').count(), 1);
+      assert.deepEqual(await megogoRow.locator('.media-advice-symbol').allTextContents(), ['◐', '+', '?']);
+      assert.match(await page.locator('.media-advice-answer').innerText(), /MEGOGO.*українськ(?:е аудіо|ою доріжкою)/);
+      await assertServiceComparisonLayout(page, width);
+      assert.equal(await page.locator('.media-advice-link-select').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).count(), diagnostics ? 1 : 0);
+      if (diagnostics) {
+        await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+        const report = await page.getByLabel('Короткий звіт для копіювання').inputValue();
+        assert.match(report, /kinobaza\/megogo: territory unknown; Kinobaza provider-block audio reported-positive, subtitles unknown/);
+        assert.match(report, /"literal":"укр\. аудіо \[5\.1\]"/);
+        await page.getByRole('button', { name: '← До порад', exact: true }).click();
+      }
+      assert.equal(await page.evaluate(() => authoredOpened.length), beforeChannelOpens, 'rendering the source language never opens its link');
+      await page.getByRole('button', { name: 'Відкрити посилання', exact: true }).click();
+      assert.deepEqual(await page.evaluate(() => authoredOpened.at(-1)), [channelHref, '_blank', 'noopener,noreferrer']);
+      await page.getByRole('button', { name: 'Обрати', exact: true }).click();
+      assert.equal(await page.locator('#purchase_url').inputValue(), 'https://old.example', 'the preview is not a local transfer or a Save');
+      await page.getByRole('button', { name: 'Перенести в картку', exact: true }).click();
+      await page.waitForFunction(() => !mediaAdviceController.dialog.open);
+      assert.equal(await page.locator('#purchase_url').inputValue(), channelHref);
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), beforeChannelWrites, 'only the ordinary form Save may write');
+      await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-answer').waitFor();
+      assert.deepEqual(await megogoRow.locator('.media-advice-symbol').allTextContents(), ['◐', '+', '?']);
+      assert.equal(calls.filter(call => call.action === 'discover').length, beforeChannelCalls + 1, 'caption display, report, preview, transfer and reopen reuse the one extraction');
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
+      if (process.env.M4_SCREENSHOT_DIR && diagnostics) await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/authored-megogo-audio-format-${width}.png`, animations: 'disabled' });
       await page.getByRole('button', { name: '← До картки', exact: true }).click();
     }
     // Authored unrelated-card observations exercise only the protected report.

@@ -36,6 +36,81 @@ test('independent provider blocks retain exact hrefs, negative labels and litera
   assert.doesNotMatch(JSON.stringify(apple), /Atmos|5\.1|codec|channels/);
 });
 
+test('bounded audio channel suffix is own-block source evidence, never an inferred subtitle or codec', async () => {
+  // Authored examples of the observed paragraph shape, not saved Kong HTML.
+  const href = 'https://megogo.net/ua/view/900000-authored.html?exact=%2f&x=1';
+  for (const [caption, audio, subtitles, format] of [
+    ['(укр. аудіо)', 'reported-positive', 'unknown', null],
+    ['(укр. субтитри)', 'unknown', 'reported-positive', null],
+    ['(укр. аудіо, укр. субтитри)', 'reported-positive', 'reported-positive', null],
+    ['(укр. аудіо [5.1])', 'reported-positive', 'unknown', '5.1'],
+    ['(укр. аудіо [2.0])', 'reported-positive', 'unknown', '2.0'],
+    ['(укр. аудіо [7.1], укр. субтитри)', 'reported-positive', 'reported-positive', '7.1'],
+    ['(укр. субтитри, укр. аудіо [5.1])', 'reported-positive', 'reported-positive', '5.1'],
+  ]) {
+    const body = localizedMarkup(paragraphBlock('megogo', caption, href.replace('&', '&amp;')))
+      .replace('title="Доступно в megogo"', 'title="Доступно в megogo з українською аудіо доріжкою / субтитрами"');
+    const r = await parse(body), block = r.localization.blocks[0];
+    assert.equal(r.identity.status, 'matched'); assert.deepEqual(block.issues, []);
+    assert.equal(block.href, href); assert.equal(block.audio.state, audio); assert.equal(block.subtitles.state, subtitles);
+    assert.equal(block.audio.evidence[0]?.formatLiteral ?? null, format);
+    if (audio === 'reported-positive') assert.deepEqual(block.audio.evidence[0], {
+      label: 'укр. аудіо', literal: `укр. аудіо${format ? ` [${format}]` : ''}`, state: 'positive', ...(format ? { formatLiteral: format } : {}),
+    });
+    assert.equal(block.audio.completeness, 'unknown'); assert.equal(block.territory, null);
+    assert.doesNotMatch(JSON.stringify(block.audio), /"(?:codec|channels|availability|entitlement)":/);
+  }
+});
+
+test('format captions keep the existing plain-span, service and no-neighbour boundaries', async () => {
+  const span = paragraphBlock('megogo', '<span>(укр. аудіо [5.1])</span>');
+  const r = await parse(localizedMarkup(span + paragraphBlock('netflix', '(укр. субтитри)')));
+  assert.equal(r.localization.blocks[0].audio.state, 'reported-positive');
+  assert.equal(r.localization.blocks[0].subtitles.state, 'unknown');
+  assert.equal(r.localization.blocks[1].audio.state, 'unknown');
+  assert.equal(r.localization.blocks[1].subtitles.state, 'reported-positive');
+  const otherService = await parse(localizedMarkup(paragraphBlock('amazon prime', '(укр. аудіо [5.1])')));
+  assert.equal(otherService.localization.blocks[0].audio.state, 'reported-positive', 'not a MEGOGO/per-film exception');
+  for (const block of [
+    paragraphBlock('megogo', '(укр. аудіо [5.1])').replace('</p>', `${badge('netflix')}</p>`),
+    paragraphBlock('megogo', '<span>(укр. аудіо [5.1])</span><span>(укр. субтитри)</span>'),
+    paragraphBlock('megogo', '<span><b>(укр. аудіо [5.1])</b></span>'),
+    paragraphBlock('megogo', '(укр. аудіо [5.1])<a href="https://example.com/another">Another offer</a>'),
+    `<p class="mt-2">${badge('megogo')}</p><p>(укр. аудіо [5.1])</p>`,
+  ]) {
+    const parsed = await parse(localizedMarkup(block));
+    assert.ok(parsed.localization.blocks.every(b => b.audio.state === 'unknown' && b.subtitles.state === 'unknown'));
+  }
+});
+
+test('unrecognized format or extra caption text stays wholly unknown rather than yielding partial positives', async () => {
+  for (const caption of [
+    '(укр. аудіо [])', '(укр. аудіо [0.1])', '(укр. аудіо [12.1])', '(укр. аудіо [5.10])',
+    '(укр. аудіо [5.1.2])', '(укр. аудіо [Dolby])', '(укр. аудіо [5.1)', '(укр. аудіо [[5.1]])',
+    '(укр. субтитри [5.1])', '(укр. аудіо [5.1], невідомо)', '(укр. аудіо [5.1], укр. субтитри [5.1])',
+    '(укр. аудіо [5.1], укр. субтитри, укр. аудіо)', '(не укр. аудіо [5.1])',
+    '(укр. аудіо [5.1]) extra', '(укр. аудіо [Bearer private])', '(' + 'x'.repeat(101) + ')',
+  ]) {
+    const r = await parse(localizedMarkup(paragraphBlock('megogo', caption)));
+    assert.equal(r.localization.blocks[0].audio.state, 'unknown', caption);
+    assert.equal(r.localization.blocks[0].subtitles.state, 'unknown', caption);
+  }
+});
+
+test('table precedence over a format caption retains negative, unknown, missing and conflicting values', async () => {
+  for (const [rows, audio, subtitles] of [
+    [[['Укр. звук', '-'], ['Укр. субтитри', '-']], 'reported-negative', 'reported-negative'],
+    [[['Укр. звук', '?']], 'unknown', 'unknown'],
+    [[['Укр. субтитри', '+']], 'unknown', 'reported-positive'],
+    [[['Укр. звук', '+'], ['Укр. звук', '-']], 'conflicting', 'unknown'],
+  ]) {
+    const body = tableBlock('megogo', rows).replace('</table>', '</table> (укр. аудіо [5.1], укр. субтитри)');
+    const r = await parse(localizedMarkup(body)), block = r.localization.blocks[0];
+    assert.equal(block.audio.state, audio); assert.equal(block.subtitles.state, subtitles);
+    assert.ok(block.audio.evidence.every(e => !e.literal.includes('[5.1]')));
+  }
+});
+
 test('Netflix plain caption span belongs to its own film link, never the auxiliary catalogue', async () => {
   const href = 'https://www.netflix.com/title/900001234?authored=%2fEXACT&x=1';
   const r = await parse(localizedMarkup(netflixCatalogueBlock({ href: href.replace('&', '&amp;') })));
