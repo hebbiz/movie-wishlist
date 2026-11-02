@@ -5530,3 +5530,66 @@ absent pointer; no URL is prefilled to manufacture a success.
 No production migration, flag/access operation, merge or deployment was run.
 Offline identity acceptance does not independently verify real availability,
 purchase/rental entitlement or platform language tracks.
+
+### Approved reserve exact-match stage and cap12 — 2026-11-02
+
+**Owner-approved next contract, not implemented or activated.** The owner
+approved retaining the current first two search/card opportunities and adding
+one bounded strict-search opportunity only if that whole path fails to confirm
+a card. This supersedes the earlier prospective recommendation to keep all
+future search improvements within two search/card slots and cap10. Historical
+measurements, deployed behavior and the existing implementation in PR #224
+remain as recorded above; this documentation update does not change them.
+
+The agreed sequence is:
+
+1. Keep the existing primary search and first card check.
+2. Keep the existing alternative-search behavior and second card opportunity,
+   including verified title/release-year context. Do not replace the already
+   useful alternative with exact match or silently move it to a later stage.
+3. Only when the current path, including any available linked-director proof,
+   yields no confirmed card, permit one reserve Tavily search with
+   `exact_match:true` and one additional unread card check. A confirmed card
+   ends eligibility for this reserve stage. An authorization/rate-limit error
+   or exhausted deadline does not authorize a fallback retry.
+
+For the reserve query, quote the trusted original title. A verified year and
+the trusted director name can provide context; do not make an exact Latin
+director spelling or an additional localized title a required quoted phrase.
+Preserve the context of confirmed release dates rather than inventing a year.
+Exact match constrains the searched phrase, **not film identity**: a page can
+mention that phrase without being the right card, or the search can be empty.
+No live benefit of this reserve stage has yet been established.
+
+| Source attempts per complete search | Current Beta maximum | Approved next maximum |
+| --- | ---: | ---: |
+| Existing TMDb identity/providers and MOTN baseline | 4 | 4 |
+| Tavily search slots | 2 | 3 |
+| Kinobaza card GET slots | 2 | 3 |
+| Existing linked-director profile pair | 2 | 2 |
+| **Total source HTTP attempts** | **10** | **12** |
+
+These are ceilings, not targets. A third search is useful only if an unread
+candidate can still be checked. Share admission/deduplication across all slots;
+do not refetch previously read cards, prefill known URLs or reintroduce
+Kinobaza `/search`. The existing single person pair is not doubled: if it is
+already spent, a third card needing new unestablished person proof may remain
+unconfirmed. Conflicting IDs, title/year/person ambiguity, withholding and link policy remain unchanged;
+a strict-search result never bypasses independent identity checks.
+
+Implementation must reserve/account for the new search/card stages on the
+server, count failed dispatches and preserve lost-reservation/no-retry safety.
+Merely changing a client or diagnostic limit is insufficient. Prepare any
+required ledger migration and its recovery/application checks separately;
+existing sessions must not silently gain fresh attempts. Retain finite source
+timeouts and the end-to-end deadline; the reserve stage runs only with time
+and authorized capacity remaining. Beta rights, protected diagnostics, session
+isolation, preview/transfer/Save and the absence of user search-count quotas
+are unaffected by this per-search technical ceiling.
+
+The follow-up requires targeted budget/identity/error regressions and controlled
+before/after source checks, separately reporting the third stage's actual
+benefit, request count and latency. This approval does **not** apply a live
+migration, activate a flag, authorize merge/deployment, or claim that cap12 is
+already available. This increment edits documentation only: no runtime, schema,
+source request, live database or Wishlist operation was performed.
