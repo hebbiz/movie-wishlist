@@ -5533,13 +5533,14 @@ purchase/rental entitlement or platform language tracks.
 
 ### Approved reserve exact-match stage and cap12 — 2026-11-02
 
-**Owner-approved next contract, not implemented or activated.** The owner
+**Approval record at documentation checkpoint `c875489`; not an activation.** The owner
 approved retaining the current first two search/card opportunities and adding
 one bounded strict-search opportunity only if that whole path fails to confirm
 a card. This supersedes the earlier prospective recommendation to keep all
 future search improvements within two search/card slots and cap10. Historical
 measurements, deployed behavior and the existing implementation in PR #224
-remain as recorded above; this documentation update does not change them.
+remain as recorded above. The subsequent implementation is recorded in the
+next section; this approval-only checkpoint did not change them.
 
 The agreed sequence is:
 
@@ -5591,5 +5592,165 @@ The follow-up requires targeted budget/identity/error regressions and controlled
 before/after source checks, separately reporting the third stage's actual
 benefit, request count and latency. This approval does **not** apply a live
 migration, activate a flag, authorize merge/deployment, or claim that cap12 is
-already available. This increment edits documentation only: no runtime, schema,
-source request, live database or Wishlist operation was performed.
+already available. At the approval-only checkpoint this increment edited
+documentation only: no runtime, schema, source request, live database or
+Wishlist operation was performed.
+
+### Reserve exact-match implementation and prepared cap12 ledger — 2026-11-02
+
+**Implemented in PR #224, not activated in a live database or deployment.**
+This supersedes the approval-only implementation status above, not its recorded
+source observations. The existing primary/alternative queries, first two card
+opportunities and independent identity/link gates remain unchanged.
+
+#### Resolver and finite request contract
+
+- Only a trusted server receipt with numeric cap12 permits the reserve stage.
+  cap8/10 retain their existing stages; browser cap/counters/identity fields do
+  not authorize anything. The complete per-search ceiling is **12 =4 baseline
+  +3 Tavily +3 title cards +the same2 person requests**. No per-user search-count
+  quota, new person pair, fourth search/card or automatic retry is introduced.
+- After the whole first-two path, including available deferred person proof,
+  yields no matched card, reserve `search-3` before one Tavily basic POST with
+  `exact_match:true`. Only the trusted original title is quoted; selected TMDb
+  year and an established Latin director name are unquoted context. Escaping,
+  text bounds, domain restriction and `/titles/` scope remain. The original two
+  search payloads do not acquire `exact_match` or a different query.
+- At least two source attempts and unexpired source time must remain before
+  reserve search. An admitted unread pointer from that exact response can spend
+  `kinobaza-3`; empty/rejected/duplicate-only responses cannot justify reading
+  another old candidate. Shared admission, deduplication and ranking remain;
+  no URL is manufactured, no previously read card refetched, and no request is
+  sent to Kinobaza `/search` or a platform.
+- A matched first/second card suppresses reserve. Source transport, reservation,
+  auth/access/rate/quota, redirect, challenge, invalid/oversized response or
+  deadline failures are not fallback/retry opportunities. A valid HTTP200 card
+  with unsupported film markup may permit a different exact-response candidate;
+  its original failure remains visible. Failed/uncertain reservations are never
+  retried or refunded.
+- The one global person pair is unchanged. If spent, a later card cannot fetch
+  different profiles. Exact-search position is not stronger film evidence:
+  remaining deferred cards are compared together under the existing evidence
+  ordering. Equal evidence linked to different people remains ambiguous;
+  cached proof is reused only for the same validated person/profile/alias.
+- Source work still ends at45s from handler entry, finalization by53s and total
+  response budget55s. Search/card bounds and each person's5s deadline remain.
+  Extra capacity is not extra time: slow earlier sources may leave no reserve
+  opportunity, and a third eligible card may still be unresolved.
+
+[Tavily's API reference](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+documents exact matching as constraining quoted phrases, not film identity.
+It neither guarantees recall nor establishes that a result is the right film.
+New search/card diagnostics are bounded to three; source/identity details remain
+behind the independent diagnostics permission, with ordinary Beta redaction.
+Unknown values remain unknown, and no raw responses or credentials enter them.
+
+#### Prepared migration and mixed-version compatibility
+
+CLI-generated file:
+`supabase/migrations/20261102181617_media_advice_exact_reserve_budget.sql`.
+SHA256 (Git blob, LF): `afdb81fa9cb6c883731755ca5fd8c8d5bda920c3a25415372d647916f5aa110d`.
+It widens only the private session cap constraint to8/10/12 and replaces the
+same service-only Beta RPC signature. **It is not applied remotely.**
+Existing rows, attempts, caps, default8, pilot RPC, TTL/cleanup eligibility,
+Beta/diagnostic access checks, switch/assignments and Wishlist data are unchanged.
+The new slots are individually unique and legal only for cap12; valid slot gaps
+after empty searches do not fabricate prior HTTP attempts.
+
+The handler supplies constant `p_stage='reserve-exact-v1'` only on `start`.
+This is a server implementation contract, not a browser value or access flag.
+The new RPC gives marked new sessions12; missing/null marker still gives10 for
+older/frozen callers sharing the DB. Unknown nonnull markers fail before ledger
+mutation. Reservation calls cannot use this marker or raise an existing cap.
+
+| Handler | Database function | New Beta cap |
+| --- | --- | ---: |
+| Old, no marker | Previous |10|
+| New, server marker | Previous (ignores start marker) |10|
+| Old, no marker | Prepared version |10|
+| New, server marker | Prepared version |12|
+
+The session's immutable receipt remains authoritative thereafter. RPC ACL stays
+service-role-only; empty `search_path`, same-form replay protection, advisory/row
+locks and post-lock region/group/card/switch authorization remain. A capability
+marker never grants diagnostic or Beta access.
+
+**Later application, separately authorized:**
+
+1. Verify exact reviewed PR SHA, migration bytes/hash, intended project and live
+   history including predecessor20261101180436. Recheck the existing recovery
+   checkpoint and take/validate a fresh scoped backup if the application plan
+   requires one; this PR does not claim a fresh remote snapshot was taken.
+   Inspect active sessions before any RPC replacement and retain their accounting.
+2. Prefer cap12-aware code first, confirming old cap10 receipts source-free.
+   The matrix also protects older callers if SQL precedes code; do not infer
+   that either migration or a Git commit alone activated cap12 everywhere.
+3. Use the established isolated migration workdir/file/history procedure, with
+   this version as the only pending migration. No general `db push`, history
+   repair, replay or unrelated migrations. If the result is lost, inspect actual
+   history/function/constraint state before considering another invocation.
+4. Postcheck version20261102181617 exactly once; allowed8/10/12, default8 and
+   per-row attempt constraint; old row/cap preservation; missing-marker10 versus
+   marked12; stage3 unavailable to old sessions; service-only ACL/empty path,
+   unchanged pilot RPC, rights, switch/diagnostics assignments and data counts.
+   Use source-free checks, then separately approve any live release smoke.
+
+**Rollback:** roll code back normally; older callers create10 without changing
+existing12 rows. Keep the widened constraint/RPC while an in-flight cap12 action
+may reserve its new stages. Before restoring the preceding Beta RPC, stop/drain
+new marked actions and let active actions finish/expire. Retain ledger rows and
+migration history. Do not down-promote caps or force an8/10-only constraint while
+cap12 rows remain; a physical schema reversal needs separate reviewed SQL after
+state inspection, not a blind replay or deletion of accounting.
+
+#### Validation and current-source controls
+
+Targeted authored regressions cover original query/payload preservation,
+first/second success, empty/duplicate/rejected reserve results, errors/deadlines,
+ID/title/year/person withholding, ambiguous profile allocation, exact link and
+language projection, protected versus ordinary diagnostics, and legacy budgets.
+Local SQL tests apply the migration only to authored fixtures; native PostgreSQL
+checks exercise competing starts/reservations and access revoked while queued.
+They are not tests against the shared Supabase project or real user data.
+
+- **575/575 targeted offline tests passed**, no failures/skips: Kinobaza and
+  director suites, unchanged two-query behavior, reserve stage, source controls,
+  full server chain, redaction, projection/report and Beta/old/new ledger tests.
+  This includes the three new PGlite migration/compatibility tests.
+- **12/12 native PostgreSQL17.6 tests passed**, no failures/skips, using24
+  independent loopback connections and authored data only. Parallel starts and
+  reserve slots have one winner, all12 unique stages fit, old/mixed-version
+  callers stay compatible, and all eight queued region/switch/group/card
+  revocation cases deny the two reserve stages before mutation.
+- **5/5 source-free headless Edge browser tests passed**, no failures/skips,
+  at1280×900,820×1180,375×812 and420×912. These are viewport emulations, not
+  real iPhone/Safari or a real Wishlist Save. No product UI was changed by this
+  increment; subsequent edits concern SQL/handler negotiation and test/report
+  bounds. Independent runtime and SQL/compatibility reviews found no remaining
+  actionable issue. `git diff --check` passed; owner checkout/demo preserved.
+
+The prepared one-pass local series covers Meet the Fockers, Alien, Mad Max:
+Fury Road, Dune: Part Two, Gladiator II, Kong: Skull Island, Klaus and The Pursuit
+of Happyness. It invokes the actual resolver, not preselected URLs. The two
+Providers/MOTN baseline requests are omitted and represented only as headroom
+sentinels; actual per-film HTTP counts are at most10:2 TMDb film +3 Tavily
++3 cards +2 person. `configuredResolverCap:12` and
+`serverLedgerCapAttested:false` explicitly distinguish local verification from
+an applied server ledger/deployment.
+
+The same invocation can replay captured responses for a cap10 counterfactual
+entirely in RAM, with **zero additional HTTP**. Missing recorded responses yield
+unknown rather than a hidden fetch. This is neither an independent before-run
+nor historical reconstruction. Live elapsed time and replay processing time
+are separate; the latter is not provider latency. Bodies/credentials are not
+archived, and one hidden credential entry serves the complete series.
+
+At this checkpoint, the new series has **not returned a live result**. Codex has
+dispatched **0 new source HTTP attempts**; any owner-run series still needs its
+safe result/counts reconciled before another invocation. Its success, candidate
+recall, observed languages/links and latency remain unverified; the earlier
+6-attempt Fockers control above remains the only completed automatic live control
+in this PR. Any subsequently received current-source evidence will be recorded
+in the PR update; absence of the result is not a reported live success.
+No migration, feature/access operation, merge, deployment or Wishlist write was
+performed. Source claims are not verified platform availability or entitlement.

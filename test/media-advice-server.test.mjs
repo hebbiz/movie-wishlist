@@ -93,7 +93,8 @@ test('only the durable start receipt selects source cap; browser cap and identit
     const handler = createMediaAdviceHandler({ client, env: key => key === 'TMDB_READ_ACCESS_TOKEN' ? 'AUTHORED_SERVER_TMDB_KEY' : '',
       run: async args => { runArgs = args; return { rows: [] }; } });
     const response = await handler(request({ ...input, sourceCap: 100, cap: 100, counters: { remaining: 100 },
-      identityContext: { tmdbId: 123, titleEvidence: [{ title: 'Browser invented alias' }] }, tmdbToken: 'BROWSER_FAKE_KEY' }));
+      identityContext: { tmdbId: 123, titleEvidence: [{ title: 'Browser invented alias' }] }, tmdbToken: 'BROWSER_FAKE_KEY',
+      p_stage: 'BROWSER_FAKE_MARKER', startContract: 'BROWSER_FAKE_MARKER' }));
     assert.equal(response.status, 200);
     assert.equal(runArgs.sourceCap, cap ?? 8);
     assert.equal(runArgs.tmdbToken, 'AUTHORED_SERVER_TMDB_KEY');
@@ -101,6 +102,8 @@ test('only the durable start receipt selects source cap; browser cap and identit
     assert.doesNotMatch(JSON.stringify(operations), /sourceCap|"cap"|counters|identityContext|Browser|FAKE_KEY/);
     assert.doesNotMatch(await response.text(), /AUTHORED_SERVER_TMDB_KEY|BROWSER_FAKE_KEY/);
     assert.deepEqual(operations.map(args => args.p_op), ['start', 'finish']);
+    assert.equal(operations[0].p_stage, 'reserve-exact-v1');
+    assert.equal(operations[1].p_stage, undefined);
   }
 });
 

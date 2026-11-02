@@ -55,7 +55,10 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
         const capabilities = mediaCapabilities(await rpc('capability'));
         return capabilities.mykola_media_advice ? reply(200, capabilities) : reply(403, { status: 'access-unavailable' });
       }
-      session = await rpc('start');
+      // Server protocol capability, never a browser-selected cap or flag. Old
+      // SQL ignores the marker and still returns10; new SQL keeps older callers
+      // without it at10 while negotiating12 only with this compatible handler.
+      session = await rpc('start', { p_stage: 'reserve-exact-v1' });
       // The durable server ledger chooses the supported budget. Browser JSON,
       // counters and user metadata never authorize additional source attempts.
       const sourceCap = session.cap === undefined ? 8 : session.cap;
