@@ -4,7 +4,7 @@ const reasons = new Set(['source-canonical-conflict','source-stable-id-conflict'
   'malformed-source-stable-id','source-identity-structure-limit','source-identity-structure-incomplete',
   'source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict',
   'source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk',
-  'source-year-conflict-terminal-roman-title','source-year-conflict-ukrainian-g-title',
+  'source-year-conflict-terminal-roman-title','source-year-conflict-ukrainian-g-title','source-year-conflict-unknown-translation',
   'source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished']);
 function secretLike(value, secrets) {
   let decoded = value;
@@ -54,8 +54,14 @@ export function possibleIrrelevantSearch({ film, searches, cards, observations }
   return safePossibleIrrelevantSearch({ film: { title: film?.identityTitle ?? film?.originalTitle, year: film?.year, imdbId: film?.imdbId }, searches,
     cards: cards.map(({ result, url }) => {
       const observed = observations?.get(url), d = result?.identity?.diagnostics;
-      const heading = observed?.truncated === false && observed.sourceIdentity?.h1?.length === 1 && d?.counts?.headingCount === 1 ? observed.sourceIdentity.h1[0] : null;
-      const original = observed?.truncated === false && observed.sourceIdentity?.h2?.length === 1 && d?.counts?.originalTitleCount === 1 ? observed.sourceIdentity.h2[0] : null;
+      // Expected aliases are independently bounded in the diagnostic hook. An
+      // abbreviated alias list must not make complete source H1/H2 unknown.
+      // Legacy observers without per-field completeness retain the old strict
+      // fallback; malformed or explicitly incomplete fields never gain trust.
+      const complete = field => result?.identity?.reason !== 'source-identity-structure-limit' &&
+        (observed?.sourceTitleCompleteness === undefined ? observed?.truncated === false : observed.sourceTitleCompleteness?.[field] === true);
+      const heading = complete('h1') && observed.sourceIdentity?.h1?.length === 1 && d?.counts?.headingCount === 1 ? observed.sourceIdentity.h1[0] : null;
+      const original = complete('h2') && observed.sourceIdentity?.h2?.length === 1 && d?.counts?.originalTitleCount === 1 ? observed.sourceIdentity.h2[0] : null;
       const unique = heading !== null && original !== null;
       const titleMismatch = unique && result.identity?.reason === 'source-title-conflict' && d?.gates?.['heading-alias'] === 'fail' &&
         d?.comparisons?.headingAliasMatch === false && d?.comparisons?.originalAliasMatch === false;

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
-import { safeSearchCorrelation, safePossibleIrrelevantSearch, safeSearchCardURL } from '../shared/media-search-relevance-diagnostic.mjs';
+import { possibleIrrelevantSearch, safeSearchCorrelation, safePossibleIrrelevantSearch, safeSearchCardURL } from '../shared/media-search-relevance-diagnostic.mjs';
 
 const KEY = 'AUTHORED_PRIVATE_SEARCH_KEY', OTHER = 'AUTHORED_PRIVATE_OTHER_KEY';
 const SEARCH = 'https://api.tavily.com/search';
@@ -12,9 +12,9 @@ const FILM = { id:'imdb:tt999900001',imdbId:'tt999900001',tmdbId:999900001,
   identityTitle:'Вигаданий фільм',originalTitle:'Authored original',year:2001,
   titleAliases:['Відома інша назва','Known alternate title'],directorAliases:['Authored director'],directorCount:1 };
 const wrong = url => markup({url,title:'Інший авторський фільм',original:'Another authored original'});
-async function resolve({html=wrong,diagnostics=true,denySecond=false,searchError=false,missingCorrelation=false}={}) {
+async function resolve({html=wrong,film=FILM,diagnostics=true,denySecond=false,searchError=false,missingCorrelation=false,onIdentityDiagnostic}={}) {
   const sent=[],reserved=[],calls=[];let searches=0;
-  const result=await createKinobazaResolver({apiKey:KEY})(FILM,{calls,sourceCap:8,diagnostics,diagnosticSecrets:[OTHER],
+  const result=await createKinobazaResolver({apiKey:KEY,onIdentityDiagnostic})(film,{calls,sourceCap:8,diagnostics,diagnosticSecrets:[OTHER],
     reserve:async stage=>{if(denySecond&&stage==='kinobaza-2')throw Error('denied');assert.ok(!reserved.includes(stage));reserved.push(stage);},
     fetchImpl:async(url,init)=>{
       sent.push(url);assert.equal(init.redirect,'manual');assert.equal(init.credentials,'omit');
@@ -42,6 +42,51 @@ test('diagnostic observation never changes queries, order, identity, reservation
   assert.ok(possibleIrrelevantSearch);assert.deepEqual(summary,disabled.result.resolver);
   assert.deepEqual(enabled.sent,disabled.sent);assert.deepEqual(enabled.reserved,disabled.reserved);
   assert.equal(Object.hasOwn(disabled.result.resolver,'possibleIrrelevantSearch'),false);
+});
+test('a long expected alias list does not hide complete read headings from protected diagnostics',async()=>{
+  const observed=[],film={...FILM,titleAliases:Array.from({length:40},(_,i)=>`Authored alternate ${i}`)};
+  const {result}=await resolve({film,onIdentityDiagnostic:d=>observed.push(d)});
+  assert.ok(observed.length>0);assert.ok(observed.every(d=>d.truncated===true));
+  assert.ok(observed.every(d=>d.expected.titleAliases.length===32));
+  assert.ok(observed.every(d=>d.sourceTitleCompleteness.h1===true&&d.sourceTitleCompleteness.h2===true));
+  const cards=result.resolver.possibleIrrelevantSearch.cards;
+  assert.ok(cards.every(c=>c.title==='Інший авторський фільм (2001)'&&c.originalTitle==='Another authored original'&&c.titleMismatch===true));
+});
+test('an overlong expected alias cannot suppress a complete unrelated source title',async()=>{
+  const {result}=await resolve({film:{...FILM,titleAliases:[...FILM.titleAliases,'Authored '+ 'x'.repeat(501)]}});
+  assert.ok(result.resolver.possibleIrrelevantSearch.cards.every(c=>c.titleMismatch===true));
+});
+test('known aliases beyond the diagnostic display bound still suppress a false unrelated warning',async()=>{
+  const film={...FILM,titleAliases:[...Array.from({length:40},(_,i)=>`Authored alternate ${i}`),'Інший авторський фільм','Another authored original']};
+  const {result}=await resolve({film});
+  assert.equal(result.resolver.possibleIrrelevantSearch,undefined);
+});
+test('complete title observation does not add a diagnostic payload for an ordinary Beta result',async()=>{
+  const film={...FILM,titleAliases:Array.from({length:40},(_,i)=>`Authored alternate ${i}`)};
+  const enabled=await resolve({film}),ordinary=await resolve({film,diagnostics:false});
+  const {possibleIrrelevantSearch,...summary}=enabled.result.resolver;
+  assert.ok(possibleIrrelevantSearch);assert.deepEqual(summary,ordinary.result.resolver);
+  assert.deepEqual(enabled.sent,ordinary.sent);assert.deepEqual(enabled.reserved,ordinary.reserved);
+  assert.doesNotMatch(JSON.stringify(ordinary.result),/Інший авторський фільм|Another authored original|sourceTitleCompleteness|first-authored-card/);
+});
+for(const [name,transform,unknown] of [
+  ['overlong H1',html=>html.replace('Інший авторський фільм','Інший '+ 'я'.repeat(501)),'title'],
+  ['overlong H2',html=>html.replace('Another authored original','Another '+ 'x'.repeat(501)),'originalTitle'],
+  ['too many H1 values',html=>html.replace('<h1>',Array.from({length:33},(_,i)=>`<h1>Other ${i} (2001)</h1>`).join('')+'<h1>'),'title'],
+  ['too many H2 values',html=>html.replace('</h2>','</h2>'+Array.from({length:33},(_,i)=>`<h2>Other ${i}</h2>`).join('')),'originalTitle'],
+])test(`${name} stays unknown even when another card establishes the optional section`,async()=>{
+  const {result}=await resolve({html:url=>url===URLS[0]?wrong(url):transform(wrong(url))});
+  const cards=result.resolver.possibleIrrelevantSearch.cards;
+  assert.equal(cards[0].titleMismatch,true);assert.equal(cards[1][unknown],null);assert.equal(cards[1].titleMismatch,null);
+});
+test('legacy completeness is strict and explicit incomplete or malformed title evidence cannot fall back to global truncated',()=>{
+  const url=URLS[0],result={identity:{status:'mismatch',reason:'source-title-conflict',diagnostics:{counts:{headingCount:1,originalTitleCount:1},gates:{'heading-alias':'fail'},comparisons:{headingAliasMatch:false,originalAliasMatch:false}}}};
+  const run=observation=>possibleIrrelevantSearch({film:FILM,searches:[],cards:[{result,url}],observations:new Map([[url,observation]])});
+  const sourceIdentity={h1:['Unrelated (2001)'],h2:['Other original']};
+  assert.ok(run({truncated:false,sourceIdentity}));assert.equal(run({truncated:true,sourceIdentity}),null);
+  assert.ok(run({truncated:true,sourceTitleCompleteness:{h1:true,h2:true},sourceIdentity}));
+  for(const sourceTitleCompleteness of [null,{},false,{h1:true},{h1:false,h2:true},{h1:true,h2:false}])
+    assert.equal(run({truncated:false,sourceTitleCompleteness,sourceIdentity}),null);
 });
 test('one confirmed card suppresses the section even if another read card is unrelated',async()=>{
   const {result}=await resolve({html:url=>url===URLS[0]?markup({url}):wrong(url)});

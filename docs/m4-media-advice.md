@@ -5367,3 +5367,90 @@ retention policy, server stage, budget, migration or lifecycle/auth change.
 - **One external HTTP request total**, only the current Kong card GET. No live
   resolver rerun, fresh TMDb/person verification, platform navigation, Wishlist
   Save, real-device/iPhone/Safari check, merge or deployment was performed.
+
+### Meet the Fockers: scoped identity and complete source titles — 2026-11-02
+
+Base: develop `9ac354b5f4ed50d89d0ef2319b104ffe3fd12bc1`, including the
+merged Gladiator II/Kong title and MEGOGO format-caption fixes. New branch
+`codex/m4-localized-card-identity`; no changes to search query construction,
+candidate scores/order/deduplication, source budgets, access or link policy.
+
+#### Historical evidence versus current observations
+
+The owner's protected report for run
+`6dd4d20f-e379-4340-b5e7-87253c4c6bb9` records two Tavily searches, two
+card reads, eight admitted but unread candidates and eight total source
+attempts. The read-address digests correspond to `little-fockers` (2010) and
+`meet-the-parents` (2000); both failed title/original/year comparisons against
+the selected 2004 film. Neither was incorrectly confirmed. The report does
+**not** contain the historical queries, request IDs, full candidate URLs or
+expected-alias capture completeness. Whether `meet-the-fockers` was among
+those eight unread candidates remains unknown. It does not establish caching
+or a Tavily defect, nor the precise historical reason the optional warning was
+absent.
+
+A separate earlier investigation made one current Kinobaza card GET (HTTP200,
+279580 bytes), not an archive of that run. Its H1 was `Знайомство з Фокерами
+( 2004 )`, H2 `Meet the Fockers`. The film metadata identified `Джей Роуч`;
+later Ukrainian dubbing credits identified `Сергій Гаврилюк`. Previously the
+global director scan combined both people. Independently, a long list of
+expected aliases set a global diagnostic truncation flag and suppressed even
+complete, unique source H1/H2. Authored reproduction establishes those code
+defects, not unrecorded historical values.
+
+#### General, conservative changes
+
+- Source H1 and scoped H2 have independent completeness flags. The protected
+  possible-irrelevance section uses these, not expected-alias truncation.
+  Multiple/overlong/incomplete headings remain unknown; legacy observations
+  retain their strict fallback. The section still requires no confirmed card
+  and actual title non-match evidence, never alleges a proven provider error.
+- Directors and their linked-profile pointers are read only from labelled film
+  metadata between the unique H1 and availability block, with enclosing tables
+  wholly in that interval. Dubbing credits elsewhere are not film directors.
+  Competing people/values inside the interval remain unresolved; inline fields
+  cannot silently pick their first person. No name-to-profile URL is invented.
+- An unknown Cyrillic localization may continue only with **exact normalized
+  trusted original title**, the same selected year and a single confirmed
+  director. This is a separate `original-year-director-translation` route;
+  `headingAliasMatch` remains false and the alias gate is not claimed passed.
+  It performs no а/о replacement, transliteration or fuzzy matching. Latin or
+  mixed-script conflicting headings, explicit number differences and unknown
+  Roman-numbered bases remain refused. Existing base-preserving Roman/g/ґ
+  routes are unchanged. This intentionally does not solve all translations.
+- Stable-ID/canonical conflicts, competing H2s, missing or ambiguous directors
+  and unknown original/year evidence retain withholding. Even an agreeing film
+  ID cannot bypass director proof on this new route. A pending director spelling
+  can use the **same existing deferred person pair** after the preceding exact
+  original/year gates; tied different profiles stay ambiguous. No extra stage,
+  third card/search, retry or increase to cap10 is introduced.
+
+The ordinary Beta product projection still excludes protected search details.
+Diagnostics require the existing server flag/permission checks at both capture
+and final receipt. No raw source response, key, snippet or new persistent
+storage is introduced. Language evidence, exact selected links, ranking,
+preview/explicit transfer/ordinary Save and form-session isolation are unchanged.
+
+#### One-shot current control
+
+`scripts/m4-fockers-control.mjs` uses the actual TMDb projection, Tavily adapter,
+admission, ranking, resolver, card identity/extraction and optional person proof.
+It observes a bounded clone of the **same** Tavily response, recording actual
+sent query, available response query/request ID, candidate URL order, admitted
+union/rank before each dispatched card and the read card's identity fields.
+Missing/unsafe fields stay unknown. Search titles/snippets/raw bodies are not
+returned or archived. It never seeds a known card URL.
+
+The local control omits MOTN/Watch Providers/platform navigation and Wishlist;
+it is not deployed runtime or full discovery. Its maxima are two film TMDb
+GETs, two Tavily calls, two card GETs and the existing optional person pair
+(eight source attempts actually available, within unchanged cap10). Failed
+dispatches count; there are no redirects, retries or automatic reruns. Credentials
+are entered once in the existing local hidden-prompt pattern, passed only over
+child stdin, and not written to disk, argv, logs or environment variables.
+
+Current-control execution and final validation are pending the one authorized
+credential entry. No live source request has been made for this implementation
+yet; the earlier single card GET above is accounted separately. No live source
+availability, offer entitlement, production migration, merge or deployment is
+claimed by authored offline passing cases.

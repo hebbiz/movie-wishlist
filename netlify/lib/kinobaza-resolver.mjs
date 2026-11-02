@@ -57,7 +57,7 @@ export function resolverRefusalQuery(film) {
 }
 // Existing admitted pointers only: a matching slug changes read order, never
 // supplies identity evidence or a generated URL. Ties retain search order.
-function rankedCandidates(urls, film) {
+export function rankedCandidates(urls, film) {
   const slugs = titleNames(film).filter(name => /^[\x20-\x7e]+$/.test(name))
     .map(name => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')).filter(Boolean);
   const score = url => {
@@ -149,7 +149,10 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
     const secrets = [apiKey, tmdbToken, ...diagnosticSecrets].filter(s => typeof s === 'string' && s);
     const observeIdentity = capture ? diagnostic => {
       if (readCards.includes(diagnostic.sourceURL)) cardObservations.set(diagnostic.sourceURL, {
-        truncated: diagnostic.truncated, sourceIdentity: { h1: diagnostic.sourceIdentity?.h1?.slice(0, 2), h2: diagnostic.sourceIdentity?.h2?.slice(0, 2) } });
+        truncated: diagnostic.truncated,
+        ...(diagnostic.sourceTitleCompleteness === undefined ? {} : { sourceTitleCompleteness: {
+          h1: diagnostic.sourceTitleCompleteness?.h1 === true, h2: diagnostic.sourceTitleCompleteness?.h2 === true } }),
+        sourceIdentity: { h1: diagnostic.sourceIdentity?.h1?.slice(0, 2), h2: diagnostic.sourceIdentity?.h2?.slice(0, 2) } });
       if (typeof onIdentityDiagnostic === 'function') onIdentityDiagnostic(diagnostic);
     } : onIdentityDiagnostic;
     const director = createDirectorVerifier({film,tmdbToken,sourceCap,reserve,fetchImpl,calls,signal});

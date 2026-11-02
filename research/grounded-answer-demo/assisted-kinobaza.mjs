@@ -24,6 +24,27 @@ const year = n => Number.isInteger(n) && n >= 1000 && n <= 9999 ? n : null;
 const selectedIDs = film => ({ tmdb: /^[1-9]\d{0,9}$/.test(String(film.tmdbId ?? '')) ? String(film.tmdbId) : null,
   imdb: /^tt\d{1,20}$/.test(film.imdbId ?? '') ? film.imdbId : null });
 
+// A visibly localized heading can be unestablished without contradicting an
+// exact original title. This is only permission to check year/person evidence,
+// never alphabet folding, a fuzzy title match or a film-ID bypass.
+function unknownTranslationHeading(heading, film) {
+  if (typeof heading !== 'string' || heading.length > 500 || !normalize(film.originalTitle)) return false;
+  const clean = value => value.normalize('NFC').replace(/\s+/gu, ' ').trim();
+  const roman = value => /(?:^| )([IVXLCDMІ]{1,15})$/u.exec(clean(value))?.[1]?.replaceAll('І', 'I') ?? '';
+  const localized = clean(heading).replace(/ [IVXLCDMІ]{1,15}$/u, '');
+  if (!/\p{Script=Cyrillic}/u.test(localized) || !/^[\p{Script=Cyrillic}\p{N}\p{P} ]+$/u.test(localized)) return false;
+  const signature = value => JSON.stringify({ digits: clean(value).match(/\p{N}+/gu) ?? [], roman: roman(value) });
+  // Unknown translations do not erase or convert explicit sequel/title numbers.
+  // Known aliases and the established Roman/glyph routes are evaluated first.
+  const references = [film.identityTitle, film.originalTitle].filter(value => typeof value === 'string' && value.trim());
+  // Numbered Roman titles retain their existing, base-preserving route. An
+  // unknown base must not turn an equivalent sequel suffix into film proof.
+  if (roman(heading) || references.some(value => roman(value))) return false;
+  if (references.some(value => signature(value) !== signature(heading))) return false;
+  if (/\p{Script=Cyrillic}/u.test(film.originalTitle) && normalize(film.identityTitle) === normalize(film.originalTitle)) return false;
+  return true;
+}
+
 export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, directorAliasLookup = lookupDirectorAliases } = {}) {
   const active = all.filter(n => !excluded(n));
   const directDirectorNames = film.directorAliases ?? [];
@@ -41,10 +62,12 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
     const counts = { headingCount: headings.length, originalTitleCount: originals.length, directorCount: directors.size, canonicalCount: canonicals.length, stableIdCount: stable.length };
     const reasonGate = { 'source-identity-structure-limit':'structure-limit', 'source-canonical-conflict':'canonical-conflict', 'source-stable-id-conflict':'stable-id-conflict', 'malformed-source-stable-id':'stable-id-shape', 'source-canonical-ambiguous':'canonical-count', 'source-identity-structure-incomplete':'metadata-structure', 'source-title-year-missing':'heading-format', 'source-title-conflict':'heading-alias', 'source-original-title-scope-unestablished':'original-scope', 'source-original-title-unestablished':'original-alias', 'selected-year-missing':'selected-year', 'source-year-conflict-without-stable-crosswalk':'year-crosswalk', 'source-year-conflict-terminal-roman-title':'year-crosswalk', 'source-or-selected-director-missing':'director-presence', 'director-scope-unestablished':'director-scope', 'director-alias-unestablished':'director-alias' };
     reasonGate['source-year-conflict-ukrainian-g-title'] = 'year-crosswalk';
+    reasonGate['source-year-conflict-unknown-translation'] = 'year-crosswalk';
     const failedGate = reasonGate[reason] ?? null, failedAt = identityGates.indexOf(failedGate);
     const parsed = headings.length === 1 ? /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]) : null;
     const names = [film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])], aliases = new Set(names.map(normalize).filter(Boolean));
     const headingMatch = parsed ? titleMatch(parsed[1], names) : null;
+    const translation = parsed && !headingMatch && unknownTranslationHeading(parsed[1], film);
     const directorAliases = new Set(directorNames.map(normalize).filter(Boolean));
     const expected = selectedIDs(film), sourceYear = parsed ? year(Number(parsed[2])) : null, selectedYear = year(film.year);
     const stableMatch = stable.some(s => s.filmScope && s.id && expected[s.namespace] === s.id);
@@ -57,9 +80,10 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
       originalAliasMatch: originals.length === 1 ? headingMatch === 'ukrainian-g' ? Boolean(normalize(film.originalTitle)) && normalize(originals[0]) === normalize(film.originalTitle) : aliases.has(normalize(originals[0])) : null,
       yearEqual: parsed && film.year ? Number(parsed[2]) === film.year : null,
       directorAliasMatch: directors.size && directorAliases.size ? [...directors].every(d => directorAliases.has(normalize(d))) : null },
-      strategy: status !== 'matched' ? null : headingMatch === 'ukrainian-g' ? 'title-ukrainian-g-year-director' : headingMatch === 'terminal-roman-i' ? 'title-terminal-roman-year-director' : directorBypassed ? 'stable-id-title-year' : stableMatch ? 'stable-id-title-director-year-variance' : sourceYear !== selectedYear ? 'title-release-year-director' : 'title-year-director',
+      strategy: translation && (reason === 'explicit-original-year-director-translation-match' || reason === 'director-alias-unestablished') ? 'original-year-director-translation' : status !== 'matched' ? null : headingMatch === 'ukrainian-g' ? 'title-ukrainian-g-year-director' : headingMatch === 'terminal-roman-i' ? 'title-terminal-roman-year-director' : directorBypassed ? 'stable-id-title-year' : stableMatch ? 'stable-id-title-director-year-variance' : sourceYear !== selectedYear ? 'title-release-year-director' : 'title-year-director',
       years: { selected: selectedYear, source: sourceYear, delta: selectedYear !== null && sourceYear !== null ? sourceYear - selectedYear : null },
       gates: Object.fromEntries(identityGates.map((g,i) => [g, directorBypassed && g.startsWith('director-') ? 'not-evaluated' : status === 'matched' || i < failedAt ? 'pass' : i === failedAt ? status === 'mismatch' ? 'fail' : 'unresolved' : 'not-evaluated'])) };
+    if (translation && reason !== 'source-title-conflict') diagnostics.gates['heading-alias'] = 'not-evaluated';
     if (reason === 'source-identity-structure-limit') for (const key of Object.keys(diagnostics.comparisons)) diagnostics.comparisons[key] = null;
     const result = { status, reason, basis: 'selected TMDb projection versus explicit source identity; alias non-match is not independent proof of another film; no transliteration or user override', observed: counts, diagnostics };
     if (status === 'matched' && sourceYear !== selectedYear && !stableMatch) result.releaseYearEvidence = releaseYearEvidence(film, sourceYear);
@@ -71,7 +95,10 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
     // possible-search report may project a bounded, sanitized title subset.
     if (typeof onIdentityDiagnostic === 'function') {
       const bounded = values => values.slice(0, 32).map(s => typeof s === 'string' ? s.slice(0,500) : null);
+      const complete = values => reason !== 'source-identity-structure-limit' && values.length <= 32 &&
+        values.every(s => typeof s === 'string' && s.length <= 500);
       try { onIdentityDiagnostic({ ...result, sourceURL, sourceIdentity: { h1: bounded(headings), h2: bounded(originals), year: parsed ? Number(parsed[2]) : null, directors: bounded([...directors]) },
+        sourceTitleCompleteness: { h1: complete(headings), h2: complete(originals) },
         expected: { year: film.year ?? null, imdbId: film.imdbId, tmdbId: film.tmdbId, titleAliases: bounded(names), directorAliases: bounded(directorNames) },
         truncated: reason === 'source-identity-structure-limit' || [headings, originals, [...directors], names, directorNames].some(a => a.length > 32 || a.some(s => typeof s === 'string' && s.length > 500)) }); } catch {}
     }
@@ -81,17 +108,28 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   const headingNode = active.find(n => n.tagName === 'h1');
   const accordions = active.filter(n => attr(n, 'id') === 'availabilityAccordion');
   const accordion = accordions.length === 1 ? accordions[0] : null;
+  const inMetadata = node => headings.length === 1 && accordions.length === 1 &&
+    Number.isInteger(node.sourceCodeLocation?.startOffset) && Number.isInteger(node.sourceCodeLocation?.endOffset) &&
+    node.sourceCodeLocation.startOffset >= headingNode.sourceCodeLocation?.endOffset &&
+    node.sourceCodeLocation.endOffset <= accordion.sourceCodeLocation?.startOffset;
+  const inMetadataTable = node => {
+    let table = node.parentNode;
+    while (table && table.tagName !== 'table') table = table.parentNode;
+    return Boolean(table && inMetadata(table) && inMetadata(node));
+  };
   const originals = active.filter(n => n.tagName === 'h2' && n.sourceCodeLocation?.startOffset > headingNode?.sourceCodeLocation?.startOffset &&
     n.sourceCodeLocation?.startOffset < accordion?.sourceCodeLocation?.startOffset).map(text).filter(Boolean);
   const directors = new Set(), stable = [];
+  let directorFields = 0, ambiguousDirectorField = false;
   // IDs only in labelled film-metadata rows, not arbitrary recommendations/trailers.
   let identityRows = 0;
   for (const row of active.filter(n => n.tagName === 'tr')) {
     const cells = (row.childNodes ?? []).filter(n => ['td', 'th'].includes(n.tagName));
     if (cells.length !== 2) continue;
     const label = text(cells[0]);
+    if (label === 'Режисер:' && !inMetadataTable(row)) continue;
     if (['Режисер:', 'IMDb:', 'TMDb:'].includes(label) && ++identityRows > 32) return outcome('unresolved', 'source-identity-structure-limit');
-    if (label === 'Режисер:') directors.add(text(cells[1]));
+    if (label === 'Режисер:' && text(cells[1])) { directorFields++; directors.add(text(cells[1])); }
     if (['IMDb:', 'TMDb:'].includes(label)) {
       // A convenient ID in recommendations or another body table is not film
       // authority. Keep existing explicit-conflict refusal even if the critical
@@ -115,10 +153,27 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
       }
     }
   }
-  // Same inline source shape as the fixed extractor, without per-film aliases.
-  for (const n of active) if ((n.nodeName === '#text' && text({ childNodes: [n] }) === 'Режисер:') || (['span', 'strong', 'b'].includes(n.tagName) && text(n) === 'Режисер:')) {
+  // Inline labels must be inside the same film metadata interval too. A later
+  // dubbing-credit director is not a second director of the film.
+  for (const n of active) if (inMetadata(n) && ((n.nodeName === '#text' && text({ childNodes: [n] }) === 'Режисер:') || (['span', 'strong', 'b'].includes(n.tagName) && text(n) === 'Режисер:'))) {
     const siblings = n.parentNode?.childNodes ?? [], next = siblings.slice(siblings.indexOf(n) + 1).find(c => c.tagName || c.nodeName === '#text' && c.value.trim());
-    if (next?.tagName === 'a') directors.add(text(next));
+    let table = n.parentNode; while (table && table.tagName !== 'table') table = table.parentNode;
+    if (next?.tagName === 'a' && inMetadata(next) && inMetadata(n.parentNode) && (!table || inMetadata(table))) {
+      directorFields++;
+      // Do not silently select the first person in a labelled inline field.
+      // Keep every following name/unknown value until its explicit line break;
+      // extra directors or unscoped trailing text keep the identity unresolved.
+      const field = siblings.slice(siblings.indexOf(next));
+      let anchors = 0;
+      for (const value of field) {
+        if (value.tagName === 'br') break;
+        const stack = [value];
+        while (stack.length) { const item = stack.pop(); if (item.tagName === 'a') anchors++; if (!['script','style','template','noscript','iframe'].includes(item.tagName)) stack.push(...item.childNodes ?? []); }
+        const name = value.nodeName === '#text' ? value.value.replace(/\s+/gu, ' ').trim() : text(value);
+        if (name && !/^[,;/&]+$/u.test(name)) directors.add(name);
+      }
+      if (anchors > 1) ambiguousDirectorField = true;
+    }
   }
   directors.delete('');
   const expected = selectedIDs(film);
@@ -131,12 +186,18 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   const heading = /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]);
   if (!heading || !year(Number(heading[2]))) return outcome('unresolved', 'source-title-year-missing');
   const headingMatch = titleMatch(heading[1], [film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])]);
-  if (!headingMatch) return outcome('mismatch', 'source-title-conflict');
+  const possibleTranslation = !headingMatch && unknownTranslationHeading(heading[1], film);
+  if (!headingMatch && !possibleTranslation) return outcome('mismatch', 'source-title-conflict');
   // Offsets only bound candidate H2s, not a proven semantic metadata container.
   // Never discard competing H2s just because one matches. Repeated identical
   // values are not a title conflict, but cannot justify a new multi-node scope
   // or deduplication rule without source evidence. Do not guess selectors.
   if (originals.length !== 1) return outcome('unresolved', 'source-original-title-scope-unestablished');
+  // A new localization route exists only alongside the exact trusted original.
+  // An unrelated original plus an unknown heading remains the existing title
+  // refusal, including its protected possible-irrelevance diagnostics.
+  const translation = possibleTranslation && normalize(originals[0]) === normalize(film.originalTitle);
+  if (!headingMatch && !translation) return outcome('mismatch', 'source-title-conflict');
   if (!aliases.has(normalize(originals[0]))) return outcome('unresolved', 'source-original-title-unestablished');
   // A localized г/ґ spelling is only a bridge to the director gate, never film
   // proof. H2 must be the actual trusted original title, not another alias.
@@ -148,6 +209,7 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   // no stable-ID bypass or release-year exception is added for this new route.
   if (headingMatch === 'terminal-roman-i' && Number(heading[2]) !== film.year) return outcome('mismatch', 'source-year-conflict-terminal-roman-title');
   if (headingMatch === 'ukrainian-g' && Number(heading[2]) !== film.year) return outcome('mismatch', 'source-year-conflict-ukrainian-g-title');
+  if (translation && Number(heading[2]) !== film.year) return outcome('mismatch', 'source-year-conflict-unknown-translation');
   const knownRelease = releaseYearEvidence(film, Number(heading[2])).length > 0;
   if (Number(heading[2]) !== film.year && !stableMatch && !knownRelease) return outcome('mismatch', 'source-year-conflict-without-stable-crosswalk');
   // Explicit same-system film ID plus independently matching title/year is a
@@ -159,11 +221,12 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   // Flat aliases do not establish a multi-person group. Do not split source
   // formatting or guess membership/completeness. Count comes from the already
   // selected director records, never from aliases, script or browser input.
-  if (film.directorCount !== 1 || directors.size !== 1 || film.directorPeople !== undefined &&
+  if (film.directorCount !== 1 || directors.size !== 1 || directorFields !== 1 || ambiguousDirectorField || film.directorPeople !== undefined &&
       (!Array.isArray(film.directorPeople) || film.directorPeople.length > 1)) return outcome('unresolved', 'director-scope-unestablished');
   // Without a shared film ID, or with a differing year, director proof is still
   // required. A spelling difference is unresolved, not person-conflict evidence.
   if (![...directors].every(d => directorAliases.has(normalize(d)))) return outcome('unresolved', 'director-alias-unestablished');
+  if (translation) return outcome('matched', 'explicit-original-year-director-translation-match');
   return outcome('matched', stableMatch ? 'explicit-stable-and-structural-match' : Number(heading[2]) !== film.year ? 'explicit-title-release-year-director-match' : 'explicit-title-year-director-match');
 }
 
@@ -177,7 +240,10 @@ export function linkedDirectorProfile(all) {
   if (headings.length !== 1 || accordions.length !== 1) return null;
   const rows = active.filter(n => n.tagName === 'tr').filter(row => {
     const cells = (row.childNodes ?? []).filter(n => ['td','th'].includes(n.tagName));
-    return cells.length === 2 && text(cells[0]) === 'Режисер:';
+    let table = row.parentNode; while (table && table.tagName !== 'table') table = table.parentNode;
+    return cells.length === 2 && text(cells[0]) === 'Режисер:' &&
+      table?.sourceCodeLocation?.startOffset >= headings[0].sourceCodeLocation?.endOffset &&
+      table?.sourceCodeLocation?.endOffset <= accordions[0].sourceCodeLocation?.startOffset;
   });
   if (rows.length !== 1) return null;
   const row = rows[0], cells = row.childNodes.filter(n => ['td','th'].includes(n.tagName));

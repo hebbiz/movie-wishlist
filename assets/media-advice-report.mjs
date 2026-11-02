@@ -17,6 +17,8 @@ const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'se
 const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-year-conflict-terminal-roman-title','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-title-year-match','explicit-stable-and-structural-match','explicit-title-year-director-match','explicit-title-release-year-director-match']);
 const count = n => Number.isSafeInteger(n) && n >= 0 && n < 10000 ? n : 'unknown';
 knownReasons.add('source-year-conflict-ukrainian-g-title');
+knownReasons.add('source-year-conflict-unknown-translation');
+knownReasons.add('explicit-original-year-director-translation-match');
 const loc = s => ['reported-positive','reported-negative','conflicting'].includes(s) ? s : 'unknown';
 const fieldState = field => fieldStates.has(field?.state) ? field.state : 'unknown';
 function rowSource(row) {

@@ -27,7 +27,7 @@ export function safeIdentityDiagnostic(d) {
   const year = n => Number.isInteger(n) && n >= 1000 && n <= 9999 ? n : null;
   const selected = year(d?.years?.selected), source = year(d?.years?.source);
   return { failedGate: identityGates.includes(d?.failedGate) ? d.failedGate : null,
-    strategy: ['stable-id-title-year', 'stable-id-title-director-year-variance', 'title-year-director', 'title-release-year-director', 'title-terminal-roman-year-director', 'title-ukrainian-g-year-director'].includes(d?.strategy) ? d.strategy : null,
+    strategy: ['stable-id-title-year', 'stable-id-title-director-year-variance', 'title-year-director', 'title-release-year-director', 'title-terminal-roman-year-director', 'title-ukrainian-g-year-director', 'original-year-director-translation'].includes(d?.strategy) ? d.strategy : null,
     years: { selected, source, delta: selected !== null && source !== null ? source - selected : null },
     counts: Object.fromEntries(identityCounts.map(k => [k, safeCount(d?.counts?.[k])])),
     comparisons: Object.fromEntries(identityFlags.map(k => [k, typeof d?.comparisons?.[k] === 'boolean' ? d.comparisons[k] : null])),
