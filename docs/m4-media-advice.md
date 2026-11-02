@@ -31,6 +31,7 @@ and the preserved [Gemini finding](#gemini-primary-resolver-feasibility-2026-10-
 Canonical implementation record, not a second research architecture. Evidence and
 source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
 Latest narrow source-parser change: [Mad Max markup recovery](#mad-max-noncritical-image-markup-recovery--2026-10-31).
+Latest localization-caption change: [MEGOGO audio-format suffix](#megogo-audio-format-caption--2026-11-02).
 Latest link-choice decision: [declared destinations and duplicate navigation](#link-choice-equivalence-and-justwatch-inspection--2026-10-31).
 Apple UI preference now supersedes its multi-choice presentation:
 [one provenance-prioritized Apple link](#single-apple-link-preference--2026-10-31).
@@ -5264,3 +5265,105 @@ Validation for this increment:
   `git diff --check` passed. Owner checkout/demo/unrelated files preserved.
 - **Zero new live source HTTP requests** for this increment. No deployed smoke,
   real platform/track verification, actual Wishlist Save or real-device check.
+
+### MEGOGO audio-format caption — 2026-11-02
+
+Base: current develop `9fc5899199965d29a296b06fd02e817ad9f40fe8` (merged
+PR #222). Separate branch `codex/m4-kinobaza-audio-format`; no changes to the
+owner checkout/demo, shared history, access/flags, identity or search policy.
+
+#### Current evidence and actual loss point
+
+One explicit read-only GET of the
+[Kong: Skull Island card](https://kinobazaua.com/titles/kong-skull-island)
+returned HTTP200, 354252 bytes. No redirect/retry, credentials, Tavily/TMDb,
+profile, platform or Wishlist request was needed. This is the **current** source
+response, not retained/reconstructed HTML from the owner's earlier run. The
+owner's prior identity-matched result is context, not a new identity attestation.
+
+The MEGOGO block is a recognized `p.mt-2` before `availabilityAccordion`, with
+one direct provider anchor, a `megogo.net` href, and a direct text node
+`(укр. аудіо [5.1])`. The anchor's explicit title is
+`Доступно в megogo з українською аудіо доріжкою / субтитрами`; there is no table
+or second link in this block. That tooltip's subtitle wording is **not** track
+evidence. No subtitles are stated in the own caption.
+
+The real localization function and its existing provider/link/exclusion helpers
+were compared against the **same in-memory parsed response**. Before the fix,
+the block and exact href were found, without issues, but the full-caption regex
+accepted only bare `укр. аудіо`/`укр. субтитри`; `[5.1]` failed the caption and
+both fields stayed `unknown`. The omission is therefore at **localization
+extraction**, not downstream provider association or table rendering.
+
+After the fix on that same DOM:
+
+| MEGOGO block field | Before | After |
+| --- | --- | --- |
+| Ukrainian audio | unknown | reported-positive |
+| Ukrainian subtitles | unknown | unknown |
+| Source evidence | none | label `укр. аудіо`, literal `укр. аудіо [5.1]`, formatLiteral `5.1` |
+| Exact original href | present | unchanged |
+
+All other localization blocks were byte-for-byte equal as structured values.
+This live comparison isolates localization only: it does not rerun the full
+resolver, repeat linked-person proof, or independently confirm an offer or
+audio format on MEGOGO. Identity-to-product-to-UI checks below use authored data.
+
+#### Narrow general implementation
+
+`kinobaza-localization.mjs` now recognizes an optional bounded numeric
+`[N.M]` suffix **only after audio**, where N is 1–9 and M is 0–2. `[5.1]` is the
+observed spelling; other accepted numeric spellings are grammar-level authored
+coverage, not new live findings. The original literal and format are retained
+as source evidence without codec/channel/entitlement inference. Bare captions,
+audio with subtitles and reversed token order remain supported. No service or
+film-specific exception is introduced.
+
+The existing one-provider paragraph/plain-span boundary and whole-caption rule
+remain: arbitrary format text, malformed/nested brackets, subtitle formats,
+trailing prose, multiple captions/anchors or extra links cannot create positive
+claims. Tables still exclusively take precedence, including negative, unknown,
+missing and conflicting table fields. Caption parsing cannot fill their gaps.
+Neighbouring services/films never lend evidence to the MEGOGO row.
+
+The report's literal allowlist gains the same narrow numeric form. Arbitrary
+bracket text, credentials or URLs remain withheld; no raw HTML/search response
+is archived. Original href, link policy, UA interpretation, ranking, comparison
+symbols, preview/explicit transfer/ordinary Save, Beta/diagnostic permission and
+session lifetime are unchanged. Temporary local helper exports used for the
+memory-only comparison were removed; `html-source.mjs` has no diff.
+
+The current HTML and DOM were kept only in the inspection process memory and
+are discarded after comparison. There is no source snapshot, new storage,
+retention policy, server stage, budget, migration or lifecycle/auth change.
+
+#### Validation and limitations
+
+- **390 targeted offline tests passed**, zero failures/skips. These cover
+  localization, assisted identity/withholding, original/plain/formatted captions,
+  table precedence, ambiguity, provider scope, safe/unsafe/missing/different-
+  service hrefs, ordinary Beta versus diagnostic projection, presentation,
+  diagnostic redaction and exact preview addresses. The relevant Gladiator II,
+  Kong, recovered Netflix/Klaus-shape and earlier table/catalogue regressions
+  remain passing. Fixtures are authored, not archived live source responses.
+- The full authored extraction → composition → product projection → comparison
+  shows MEGOGO `◐ / + / ?` for ordinary Beta and diagnostic users; neither the
+  caption nor provider tooltip supplies absent subtitles or changes the source's
+  unknown territory/offer binding. Preview preserves the one exact href without
+  mutating/saving the form. ID conflicts and unproven directors still withhold
+  all language claims before projection.
+- Independent review found no blocking issue; its optional hostile-bracket
+  report test was added and passed in the final run. `node --check` for the two
+  changed runtime modules and `git diff --check` passed.
+- **5/5 existing browser-suite tests passed**, zero failures/skips, in headless
+  Edge at 1280×900, 375×812, 420×912 and 820×1180 (80.2s total). The added
+  extraction-backed authored case checks ordinary/diagnostic users, `◐ / + / ?`,
+  exact original URL on explicit open, preview → explicit local transfer without
+  Save, and reopen without another discovery or automatic navigation/write.
+  The first sandbox attempt failed to launch (`EPERM`), and the helper's
+  escalated attempt never returned a started process. The final successful run
+  used the existing browser/runtime with a non-secret local env-file; no install
+  or external service was added. Viewports are emulation, not real iPhone/Safari.
+- **One external HTTP request total**, only the current Kong card GET. No live
+  resolver rerun, fresh TMDb/person verification, platform navigation, Wishlist
+  Save, real-device/iPhone/Safari check, merge or deployment was performed.

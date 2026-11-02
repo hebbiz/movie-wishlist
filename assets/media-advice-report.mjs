@@ -186,7 +186,8 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
       const field = b[key], evidence = Array.isArray(field?.evidence) ? field.evidence : [];
       const literals = evidence.slice(0, 8).map(e => {
         const label = typeof e?.label === 'string' && /^(?:Укр\. (?:звук|субтитри)(?: \([^()\r\n]{1,80}\))?|укр\. (?:аудіо|субтитри))$/u.test(e.label) ? filmTitle(e.label) : null;
-        const literal = ['', '+', '-', '−', '?', 'укр. аудіо', 'укр. субтитри'].includes(e?.literal) ? e.literal : 'unknown';
+        const literal = ['', '+', '-', '−', '?', 'укр. аудіо', 'укр. субтитри'].includes(e?.literal) ||
+          typeof e?.literal === 'string' && /^укр\. аудіо \[[1-9]\.[0-2]\]$/.test(e.literal) ? e.literal : 'unknown';
         return { label: label ?? 'withheld', literal, state: ['positive','negative','unknown'].includes(e?.state) ? e.state : 'unknown' };
       });
       lines.push(`Kinobaza ${references.get(r) ?? 'unknown'} ${key} source values: ${loc(field?.state)}; evidence ${JSON.stringify(literals)}; omitted ${count(Math.max(0, evidence.length - literals.length))}.`);

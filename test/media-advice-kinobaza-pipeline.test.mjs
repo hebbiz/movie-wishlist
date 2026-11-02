@@ -7,6 +7,7 @@ import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs
 import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
 import { linkChoicesFor, makePreview } from '../assets/media-advice.mjs';
 import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 
 const sourceURL = 'https://kinobazaua.com/titles/authored-recovery-film';
 const film = { id: 'imdb:tt1234567', imdbId: 'tt1234567', tmdbId: 123, title: 'Authored Recovery Film',
@@ -18,7 +19,7 @@ const hrefs = {
   megogo: 'https://megogo.net/ua/view/999999-authored.html?exact=%2f&x=1',
 };
 const attribute = value => value === null ? '' : ` href="${value.replaceAll('&', '&amp;')}"`;
-function markup({ apple = hrefs.apple, director = 'Authored Director', imdbId = film.imdbId } = {}) {
+function markup({ apple = hrefs.apple, megogoHref = hrefs.megogo, megogoTokens = 'укр. аудіо', director = 'Authored Director', imdbId = film.imdbId } = {}) {
   const table = (provider, href) => `<div class="mt-2 me-4"><a title="Купити в ${provider} з українською аудіо доріжкою / субтитрами"${attribute(href)}><img alt="Доступно в ${provider}"></a><table><tbody>
     <tr><th>Укр. субтитри</th><td>-</td></tr><tr><th>Укр. звук (стерео)</th><td>+</td></tr><tr><th>Укр. звук (dolby)</th><td>+</td></tr>
     <tr><td colspan="2"><a${attribute(href)}>Перейти в ${provider}</a></td></tr></tbody></table></div>`;
@@ -26,7 +27,7 @@ function markup({ apple = hrefs.apple, director = 'Authored Director', imdbId = 
     <h1>Authored Recovery Film (2015)</h1><h2>Authored Recovery Film</h2>
     <table><tbody><tr><th>Режисер:</th><td>${director}</td></tr>${imdbId === null ? '' : `<tr><th>IMDb:</th><td>${imdbId}</td></tr>`}</tbody></table>
     <div class="d-md-flex">${table('itunes', apple)}${table('rakuten', hrefs.rakuten)}</div>
-    <p class="mt-2"><a title="Доступно в megogo"${attribute(hrefs.megogo)}><img alt="Доступно в megogo"></a> (укр. аудіо)</p>
+    <p class="mt-2"><a title="Доступно в megogo"${attribute(megogoHref)}><img alt="Доступно в megogo"></a> (${megogoTokens})</p>
     <div id="availabilityAccordion"><div class="accordion-item"><h2 class="accordion-header"><button data-bs-target="#collapseCZ">Доступно в Чехії</button></h2><div id="collapseCZ" data-bs-parent="#availabilityAccordion"></div></div></div>
     <div class="youtube-aspect"><img alt="Authored &quot;valid&quot; and "broken" trailer" src="https://example.com/authored-trailer.jpg"></div>
     </body></html>`;
@@ -96,10 +97,62 @@ test('recovered irrelevant image errors do not bypass no-ID director requirement
     [{ director: 'Unestablished Director Spelling', imdbId: null }, 'unresolved', 'director-alias-unestablished'],
     [{ imdbId: 'tt9999999' }, 'mismatch', 'source-stable-id-conflict'],
   ]) {
-    const { extracted, result, groups, requests } = await pipeline(options);
+    const { extracted, result, groups, requests } = await pipeline({ ...options, megogoTokens: 'укр. аудіо [5.1]' });
     assert.equal(requests, 1); assert.equal(extracted.identity.status, status); assert.equal(extracted.identity.reason, reason);
     assert.deepEqual(extracted.candidates, []); assert.equal(extracted.localization, undefined);
     assert.deepEqual(result.rows, []); assert.equal(result.filmLocalization, null); assert.deepEqual(groups, []);
+  }
+});
+
+test('authored numerical audio token survives extraction, ordinary Beta projection, comparison and exact local preview', async () => {
+  const { extracted, result, requests } = await pipeline({ megogoTokens: 'укр. аудіо [5.1]' });
+  assert.equal(requests, 1); assert.equal(extracted.identity.status, 'matched');
+  const block = extracted.localization.blocks.find(block => block.provider === 'megogo');
+  assert.equal(block.audio.state, 'reported-positive'); assert.equal(block.subtitles.state, 'unknown');
+  assert.deepEqual(block.audio.evidence, [{ label: 'укр. аудіо', literal: 'укр. аудіо [5.1]', state: 'positive', formatLiteral: '5.1' }]);
+  assert.deepEqual(block.subtitles.evidence, []);
+  for (const diagnostics of [false, true]) {
+    const capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics };
+    const response = diagnostics ? { ...result, capabilities } : productMediaResult(result, capabilities);
+    const groups = presentMediaGroups(response.rows, { filmId: film.id });
+    assert.deepEqual(groups.map(info => info.group.key), ['apple', 'rakuten', 'megogo']);
+    const info = groups.find(info => info.group.key === 'megogo'), row = info.group.rows[0];
+    assert.equal(info.kinobaza.applied, true); assert.equal(info.band, 'ua-audio');
+    assert.deepEqual([info.comparison.availability.symbol, info.comparison.audio.symbol, info.comparison.subtitles.symbol], ['◐', '+', '?']);
+    assert.equal(row.kinobazaLocalization.audio.evidence[0].formatLiteral, '5.1');
+    assert.equal(row.audio.state, 'unknown', 'an app interpretation never becomes a new platform-verified offer claim');
+    assert.equal(row.country, null); assert.equal(row.availability.state, 'unknown');
+    assert.deepEqual(linkChoicesFor(info).map(choice => choice.href), [hrefs.megogo]);
+    const form = { recommended_medium: 'DVD', purchase_url: 'https://example.com/manual' };
+    const preview = makePreview(linkChoicesFor(info)[0].row, form);
+    assert.equal(preview.after.purchase_url, hrefs.megogo);
+    assert.deepEqual(form, { recommended_medium: 'DVD', purchase_url: 'https://example.com/manual' }, 'preview never mutates or saves the form');
+    assert.ok(groups.filter(other => other.group.key !== 'megogo').every(other => other.comparison.audio.symbol === '+' && other.comparison.subtitles.symbol === '−'));
+    if (diagnostics) {
+      assert.equal(row.kinobazaLocalization.audio.evidence[0].literal, 'укр. аудіо [5.1]');
+      const report = safeMediaReport(response);
+      assert.match(report, /kinobaza\/megogo: territory unknown; Kinobaza provider-block audio reported-positive, subtitles unknown/);
+      assert.match(report, /"label":"укр\. аудіо","literal":"укр\. аудіо \[5\.1\]","state":"positive"/);
+    } else {
+      assert.equal('literal' in row.kinobazaLocalization.audio.evidence[0], false, 'ordinary Beta retains necessary format semantics, not raw source literals');
+      assert.equal('rawHref' in row, false);
+    }
+  }
+});
+
+test('audio format cannot make a missing, unsafe or different-service link usable for MEGOGO', async () => {
+  for (const megogoHref of [null, 'javascript:alert(1)', hrefs.apple]) {
+    const { extracted, result, groups, requests } = await pipeline({ megogoHref, megogoTokens: 'укр. аудіо [5.1]' });
+    assert.equal(requests, 1); assert.equal(extracted.identity.status, 'matched');
+    const row = result.rows.find(row => row.provider.key === 'megogo'), info = groups.find(info => info.group.key === 'megogo');
+    assert.equal(row.kinobazaLocalization.audio.state, 'reported-positive', 'recognized source wording is retained without granting link eligibility');
+    assert.equal(row.kinobazaLocalization.subtitles.state, 'unknown');
+    assert.equal(info.kinobaza.applied, false); assert.equal(info.comparison.audio.symbol, '?');
+    assert.equal(info.comparison.subtitles.symbol, '?');
+    assert.deepEqual(linkChoicesFor(info), []);
+    assert.equal(makePreview(info.transferRow, { recommended_medium: 'DVD', purchase_url: 'https://example.com/manual' }), null);
+    assert.ok(groups.filter(other => other.group.key !== 'megogo').every(other => other.kinobaza.applied && other.comparison.audio.symbol === '+'));
+    assert.doesNotMatch(JSON.stringify(result), /javascript:alert/);
   }
 });
 

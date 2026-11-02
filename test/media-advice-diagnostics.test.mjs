@@ -91,6 +91,16 @@ test('new contracts have no source-body persistence/logging; only build identifi
     const source=await readFile(new URL(path,import.meta.url),'utf8');assert.doesNotMatch(source,/console\.|localStorage|sessionStorage|writeFile|appendFile/);
   }
 });
+
+test('copied localization report permits bounded numeric audio suffix, not arbitrary bracket content',()=>{
+  for(const literal of ['укр. аудіо [5.1]','укр. аудіо [Bearer PRIVATE]','укр. аудіо [https://private.example/]','укр. аудіо [5.1] PRIVATE','укр. аудіо [5.10]']){
+    const report=safeMediaReport({rows:[{id:'kinobaza:authored',provider:{key:'megogo'},kinobazaLocalization:{
+      audio:{state:'reported-positive',evidence:[{label:'укр. аудіо',literal,state:'positive'}]},subtitles:{state:'unknown',evidence:[]},
+    }}]});
+    assert.ok(report.includes(`"literal":"${literal==='укр. аудіо [5.1]'?literal:'unknown'}"`));
+    assert.doesNotMatch(report,/PRIVATE|Bearer|private\.example|5\.10/);
+  }
+});
 test('local failed identity attempts consume count, never trigger provider search/retry or echo error bodies',async()=>{
   let calls=0;
   const r=await runControlDiagnostic({tmdbToken:'AUTHORED_TMDB_KEY',tavilyKey:'AUTHORED_TAVILY_KEY',fetchImpl:async()=>{calls++;throw Error('PRIVATE_TRANSPORT');}});

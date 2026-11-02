@@ -79,9 +79,21 @@ export function extractLocalization({ accordion, h1, identifyProvider, makeCandi
         // This entire source-specific paragraph is the block. Arbitrary adjacent
         // nodes, catalogue text or generic audio/subtitle tooltips are not evidence.
         const rest = clean((container.childNodes ?? []).filter(n => n.nodeName === '#text' || plainCaption(n)).map(n => n.nodeName === '#text' ? n.value : text(n)).join(' '));
-        const match = /^\((укр\. (?:аудіо|субтитри)(?:, укр\. (?:аудіо|субтитри))?)\)$/.exec(rest);
-        if (match) for (const [key, token] of [['audio', 'укр. аудіо'], ['subtitles', 'укр. субтитри']]) {
-          if (match[1].split(', ').includes(token)) block[key] = summarize([{ label: token, literal: token, state: 'positive' }]);
+        const match = rest.length <= 100 ? /^\(([^()]*)\)$/.exec(rest) : null;
+        const tokens = match?.[1].split(', ');
+        const claims = tokens?.length <= 2 ? tokens.map(token => {
+          // A bounded channel-format suffix describes this source audio claim,
+          // not subtitles, another service, an inferred codec or entitlement.
+          const audio = /^укр\. аудіо(?: \[([1-9]\.[0-2])\])?$/.exec(token);
+          return audio ? { key: 'audio', evidence: { label: 'укр. аудіо', literal: token, state: 'positive',
+            ...(audio[1] ? { formatLiteral: audio[1] } : {}) } } : token === 'укр. субтитри' ?
+            { key: 'subtitles', evidence: { label: token, literal: token, state: 'positive' } } : null;
+        }) : null;
+        // Keep the whole-caption rule: unknown remnants do not yield partial
+        // positives. Table presence still exclusively selects the branch above.
+        if (claims?.every(Boolean)) for (const key of ['audio', 'subtitles']) {
+          const evidence = claims.filter(claim => claim.key === key).map(claim => claim.evidence);
+          if (evidence.length) block[key] = summarize(evidence);
         }
       } else block.issues.push('unsupported-provider-block');
       if (block.audio.state === 'conflicting' || block.subtitles.state === 'conflicting') block.issues.push('conflicting-block-labels');
