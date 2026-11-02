@@ -9,7 +9,7 @@ import { safeMediaReport } from '../assets/media-advice-report.mjs';
 const SEARCH = 'https://api.tavily.com/search';
 const URLS = ['unrelated-first', 'unrelated-second', 'authored-original']
   .map(slug => `https://kinobazaua.com/titles/${slug}`);
-const FILM = { id: 'authored-independent-search', tmdbId: 999900001, imdbId: 'tt999900001',
+const FILM = { id: 'authored-second-search', tmdbId: 999900001, imdbId: 'tt999900001',
   identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001,
   titleAliases: ['Вигаданий фільм', 'Authored original'], directorCount: 1,
   directorAliases: ['Authored director'],
@@ -19,16 +19,16 @@ const FILM = { id: 'authored-independent-search', tmdbId: 999900001, imdbId: 'tt
     { title: 'Вигаданий фільм', source: 'requested' },
   ], releaseEvidence: [] } };
 
-test('contextual localized alternative is standalone while the primary query and domain/path restriction remain unchanged', () => {
+test('restored second query retains primary, localized title and trusted director with unchanged domain/path restriction', () => {
   assert.deepEqual(resolverQueries(FILM), [
     '"Authored original" 2001 site:kinobazaua.com/titles/',
-    '"Вигаданий фільм" 2001 site:kinobazaua.com/titles/',
+    '"Authored original" "Вигаданий фільм" "Authored director" 2001 site:kinobazaua.com/titles/',
   ]);
   assert.equal(resolverRefusalQuery(FILM), resolverQueries(FILM)[1]);
-  assert.doesNotMatch(resolverQueries(FILM)[1], /Authored original|Authored director/);
+  assert.match(resolverQueries(FILM)[1], /^"Authored original" "Вигаданий фільм" "Authored director" /);
 });
 
-test('an explicitly English translation remains primary while the selected localized title has its own slot', () => {
+test('an explicitly English translation remains primary and the combined second query retains the selected localized title', () => {
   const film = { ...FILM, originalTitle: 'Authored German original', identityContext: {
     ...FILM.identityContext, titleEvidence: [
       { title: 'Authored German original', source: 'original' },
@@ -37,7 +37,7 @@ test('an explicitly English translation remains primary while the selected local
   } };
   assert.deepEqual(resolverQueries(film), [
     '"Authored English translation" 2001 site:kinobazaua.com/titles/',
-    '"Вигаданий фільм" 2001 site:kinobazaua.com/titles/',
+    '"Authored English translation" "Вигаданий фільм" "Authored director" 2001 site:kinobazaua.com/titles/',
   ]);
 });
 
@@ -60,7 +60,7 @@ test('confirmed premiere and selected year remain separate query contexts', () =
   ] } };
   assert.deepEqual(resolverQueries(film), [
     '"Authored original" 2006 site:kinobazaua.com/titles/',
-    '"Вигаданий фільм" 2008 site:kinobazaua.com/titles/',
+    '"Authored original" "Вигаданий фільм" "Authored director" 2008 site:kinobazaua.com/titles/',
   ]);
   const unrelated = { ...film, identityContext: { ...film.identityContext, tmdbId: FILM.tmdbId + 1 } };
   assert.ok(resolverQueries(unrelated).every(query => query.includes(' 2008 ')));
@@ -69,7 +69,7 @@ test('confirmed premiere and selected year remain separate query contexts', () =
 test('known alternative title is escaped and bounded without a made-up URL or a new query slot', () => {
   const film = { ...FILM, identityTitle: 'A "quoted" \\ known name' };
   const queries = resolverQueries(film);
-  assert.equal(queries[1], '"A  quoted    known name" 2001 site:kinobazaua.com/titles/');
+  assert.equal(queries[1], '"Authored original" "A  quoted    known name" "Authored director" 2001 site:kinobazaua.com/titles/');
   const long = resolverQueries({ ...FILM, identityTitle: 'Y'.repeat(500) });
   assert.equal(long.length, 2);
   assert.ok(long.every(query => query.length <= 550));
@@ -128,7 +128,7 @@ async function run({ path = 'refused-first', change = {}, alternateStatus } = {}
   return { out, sent, reserved, calls, queries };
 }
 
-for (const path of ['empty-first', 'refused-first']) test(`${path}: standalone localized alternative discovers a pointer which still passes independent identity`, async () => {
+for (const path of ['empty-first', 'refused-first']) test(`${path}: restored combined second query shares its slot and still requires independent identity`, async () => {
   const result = await run({ path });
   assert.deepEqual(result.queries, resolverQueries(FILM));
   assert.equal(result.out.result.sourceURL, URLS[2]);

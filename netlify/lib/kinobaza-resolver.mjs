@@ -32,10 +32,7 @@ export function resolverQueries(film) {
     // A confirmed earlier premiere and the primary Details year are distinct
     // search contexts. Preserve both within the same two slots, including the
     // bounded-query fallback, rather than searching the premiere year twice.
-    // A localized title is an independent discovery opportunity, not another
-    // mandatory quoted term ANDed with the original title and director. The
-    // card still needs the unchanged independent title/year/person proof.
-    const second = build(other ? [quoted(other)] : [quoted(primary),director ? quoted(director) : ''], film.year);
+    const second = build([quoted(primary),other ? quoted(other) : '',director ? quoted(director) : ''], film.year);
     return [first,second.length <= 550 ? second : build([other ? quoted(other) : primary.replace(/["\\]/g,' ')], film.year)];
   }
   const names = titleNames(film).slice(0, 2), clean = s => s.replace(/["\\]/g, ' ');

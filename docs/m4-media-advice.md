@@ -14,9 +14,11 @@ with a [second Tavily slot after first-card identity refusal](#tavily-only-alter
 not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
 remain historical evidence;
 this is not catalogue-wide accuracy, track verification or new activation approval.
-The current contextual second slot searches a distinct known localized title
-independently, not together with mandatory original-title/director terms:
-[Crimson Peak current-run evidence](#independent-localized-alternative-and-crimson-peak--2026-11-02).
+The contextual second slot again combines the established primary/alternate
+titles and trusted single director name, after withdrawing the standalone-title
+experiment: [restoration and separate Tavily integrity research](#second-query-restoration-and-tavily-integrity-research--2026-11-02).
+The [Crimson Peak observations](#independent-localized-alternative-and-crimson-peak--2026-11-02)
+remain historical experiment evidence, not a demonstrated root-cause fix.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
@@ -4814,10 +4816,14 @@ record or PR. Rollback is a normal revert of this follow-up commit.
 
 ### Independent localized alternative and Crimson Peak — 2026-11-02
 
+**Historical experiment, withdrawn below at the owner's request.** Its live
+observations and accounting remain evidence, not the current second-query
+policy or a demonstrated fix for the unrelated provider response.
+
 Follow-up to #222 at `d03a1a4976e8cf25f463f3baefd917cf13ae1582`, with develop
-still `290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. This supersedes the combined
-second-query policy in the earlier production-Beta research record, not its
-identity gates or historical observations. No historical unexamined URLs are
+still `290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The experiment temporarily
+replaced the combined second-query policy in the earlier production-Beta record,
+not its identity gates or historical observations. No historical unexamined URLs are
 inferred from a digest or reconstructed from today's results.
 
 Current server-equivalent TMDb search/Details projection established Crimson
@@ -4833,7 +4839,7 @@ slugs, so stable provider/insertion order spent the two GETs on Mad Max: Fury
 Road and The Walk. Both had different titles/directors and were correctly
 withheld. No language data was allowed through.
 
-The narrow general fix leaves the primary English/original query unchanged.
+The experimental query change left the primary English/original query unchanged.
 If a distinct known title exists, the second contextual query independently
 uses that title and the primary Details year, for example
 `"Багряний пік" 2015 site:kinobazaua.com/titles/`. It does not add mandatory
@@ -4843,7 +4849,7 @@ explicit-English / localized name selection, earlier confirmed premiere versus
 primary year, escaping, bounds and all Tavily basic/domain/no-answer/no-raw-content
 parameters remain. This changes discovery opportunity, not identity evidence.
 
-No candidate-ranking change was needed to solve the observed case. In run
+No candidate-ranking change was made in this experiment. In run
 `f0482e33-e50f-4401-9fb9-07807920278b`, the unchanged first query again produced
 the same five unrelated pointers. The standalone localized second query returned
 the correct [Crimson Peak card](https://kinobazaua.com/titles/crimson-peak) first.
@@ -4929,3 +4935,118 @@ No key, raw body or bulk search-result archive was retained. No migration,
 flag/secret/user-data change, merge or manual deployment. Netlify Functions
 guidance informed the bounded server audit; existing deadlines/reservations and
 the form's isolation, link policy, preview/Save and diagnostics remain intact.
+
+### Second-query restoration and Tavily integrity research — 2026-11-02
+
+Owner decision: withdraw the standalone-localized second query from commit
+`8b40273b41b407893d31062cbd2e0dbaf9859df1`; do not substitute query tuning for
+investigating unrelated search responses. A new ordinary commit restores
+`netlify/lib/kinobaza-resolver.mjs` byte-for-byte to its pre-experiment version
+at `d03a1a4976e8cf25f463f3baefd917cf13ae1582`, without history rewriting.
+The Roman-numeral and Ukrainian г/ґ title fixes remain.
+
+The restored contextual second query combines the selected primary title,
+distinct established alternate title when available, trusted single Latin
+director name when available, and primary Details year. Its existing 550-character
+fallback is unchanged. For Crimson Peak this is
+`"Crimson Peak" "Багряний пік" "Guillermo del Toro" 2015 site:kinobazaua.com/titles/`.
+The primary query, premiere/primary-year contexts, successful-empty and
+first-card-identity-refusal triggers, deduplication, ranking, admission, identity
+gates, two-search/two-card caps, optional person pair, deadlines and cap8/cap10
+accounting are unchanged. No new Tavily runtime setting or integrity/relevance
+gate is activated by this restoration.
+
+#### What is established, and what is not
+
+In the earlier fresh local broker run, the trusted film was Crimson Peak and
+the initial identity cache was empty. The diagnostic hook observed Mad Max /
+The Walk URLs directly from parsed Tavily `results`, before candidate ranking.
+Each operation starts a new Node worker; only verified TMDb film metadata is
+retained between operations. Read-only inspection found no search/HTML-result
+cache or cross-film result reuse in that path. These facts do not attest the
+provider's internal processing or prove absence of upstream caching/misrouting.
+
+The dispatched query/payload was not captured alongside the provider-returned
+`query`, `request_id` or response cache headers. The exact cause of the unrelated
+first response therefore remains **unestablished**. Subsequent variation of the
+unchanged primary query is not proof of either normal relevance behavior or a
+cache defect. Two separate public GETs during the preceding diagnosis found no
+literal `Crimson Peak`, `Багряний пік` or `crimson-peak` in the then-current Mad Max
+or The Walk HTML; those bodies are not the historical indexed provider copies.
+
+An **authored offline contract probe**, not a live replay, dispatched four mocked
+responses through the real adapter: same returned query, capitalization-only
+query, different-film query, and missing query. Every response's two admitted
+URLs were accepted as `ok`. This confirms that current URL admission does not
+check response/query correspondence or textual relevance; it does not establish
+which of those states occurred in the earlier live response. External HTTP
+attempts for this restoration/research: **0**. Official documentation reads are
+separate; no credentials, account logs, source or platform requests were used.
+
+#### Verified provider options and limitations
+
+- [Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+  defines response `query` as the executed query and `request_id` as a support
+  identifier. Byte-for-byte echo is not promised; capitalization differs in the
+  documentation's request/response example. Domain restriction filters hosts,
+  not film identity. `exact_match` constrains quoted phrases but does not prove
+  that the page's main film is the requested film.
+- [Search best practices](https://docs.tavily.com/documentation/best-practices/best-practices-search)
+  warns that exact matching can reduce or empty results. Enabling it blindly on
+  the restored multi-title/director query could overconstrain discovery. Result
+  titles may inform relevance selection, never film/person identity or languages.
+- Search `max_age_hours` describes freshness of cached **page copies**, not a
+  documented reset of the query-to-results association. A cache-busting nonce,
+  forced live fetch or retry is not an evidenced fix for this anomaly. `advanced`
+  costs two credits instead of basic's one and adds latency; it is no correctness
+  guarantee and is not enabled.
+- [Usage logs](https://docs.tavily.com/documentation/api-reference/endpoint/logs)
+  are paid-plan gated, can expose request IDs/times, but explicitly exclude the
+  original inputs/outputs. They might recover a support reference for the earlier
+  timestamp, not reconstruct its missing request/response evidence. No log lookup
+  or feedback submission was performed.
+
+#### Recommended separate follow-up, not implemented
+
+1. Pair each generated query and non-secret payload fingerprint with its local
+   run/search index, sanitized bounded provider `request_id`, HTTP status and
+   returned-query comparison. Keep raw bodies/snippets/credentials out of reports
+   and storage. Compare in memory; retain only safe derived states.
+2. Distinguish exact / conservative case-Unicode-whitespace equivalent /
+   mismatched / missing-invalid query. Do not strip meaningful titles, year,
+   quotes or site operators. A mismatched response must not admit URLs or spend
+   a card GET. Missing echo must not be represented as verified correspondence.
+   No automatic retries, new error fallback or third search slot.
+3. Treat a correctly correlated but unrelated result set as a separate relevance
+   failure. Investigate using trusted title aliases against returned page titles
+   and URL paths to prioritize actual candidates and recognize wholly unrelated
+   sets **before** spending both card reads. If every first-set candidate is
+   demonstrably low-relevance, the existing second search could precede card
+   reads; after two unrelated sets, a clear unconfirmed result is preferable to
+   claiming success. This is a proposed policy change requiring validation, not
+   a new runtime rule. Unfamiliar/translated slugs and missing search titles must
+   stay distinct from explicit conflicts; absence of a slug match alone is not
+   sufficient to discard a potentially correct card.
+4. Preserve independent HTML identity checks even for promising search metadata.
+   Correlation adds zero HTTP attempts. Any relevance reordering must share the
+   same two searches/two cards and cap10, preserve both release-year contexts and
+   the person pair, and never reintroduce Kinobaza `/search`.
+5. Targeted cases: swapped concurrent film responses; meaningful title/year/site
+   changes; benign capitalization; missing/malformed/secret-like identifiers;
+   correct echo with unrelated titles; a valid localized/opaque slug; duplicate
+   pointers; stable-ID conflict; no extra dispatch or leaked raw content. Only
+   after capturing correspondence should a current-response comparison evaluate
+   exact matching or another provider setting. None was live-tested here.
+
+The restoration retains 16 authored second-query/identity/budget regressions,
+renamed to `test/kinobaza-second-query-policy.test.mjs`; examples remain fictional,
+not archived search evidence. The restored query tests first passed 52/52; the
+broader related search, Roman/г/ґ, cascade/person, server/access, diagnostic and
+HTML-to-product regressions passed **385/385, zero failures/skips** (the 52 are
+included, not additional). The initial sandbox spawn refusal was rerun with
+scoped permission, without relaxed assertions/timeouts. The runtime resolver and
+its two pre-existing query test files exactly match `d03a1a4`; whitespace checked.
+No live search, browser/iPhone, deployed smoke or actual Save was rerun for this
+query restoration. Earlier live results above belong to their recorded versions.
+No merge/deployment, live migration, flags/secrets, user data, source discovery,
+Wishlist write, UI/lifecycle or owner checkout/demo change.
