@@ -1,6 +1,7 @@
 import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../shared/media-advice-diagnostics.mjs';
 import { groupMediaRows, presentMediaGroups } from './media-advice-presentation.mjs';
 import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
+import { safePossibleIrrelevantSearch } from '../shared/media-search-relevance-diagnostic.mjs';
 const identities = new Set(['matched', 'mismatch', 'unresolved']);
 const platforms = new Set(['apple','prime','netflix','hbo','rakuten','megogo']);
 const accessKinds = new Set(['rent','rental','buy','purchase','subscription','flatrate','addon','free','ad-supported']);
@@ -13,8 +14,9 @@ const comparisonReasons = new Set(['package-scope-unresolved','version-scope-unr
 const blockIssues = new Set(['provider-block-count-limit','ambiguous-provider-block','unsupported-provider-block','block-field-count-limit','conflicting-block-labels','possible-block-conflict-scope-unestablished']);
 const sourceLabels = new Map([['Kinobaza HTML','kinobaza'], ['Movie of the Night','motn'], ['TMDB / JustWatch','tmdb'], ['TMDb / JustWatch','tmdb']]);
 const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2', 'tmdb-person', 'kinobaza-person'];
-const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-title-year-match','explicit-stable-and-structural-match','explicit-title-year-director-match','explicit-title-release-year-director-match']);
+const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-year-conflict-terminal-roman-title','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-title-year-match','explicit-stable-and-structural-match','explicit-title-year-director-match','explicit-title-release-year-director-match']);
 const count = n => Number.isSafeInteger(n) && n >= 0 && n < 10000 ? n : 'unknown';
+knownReasons.add('source-year-conflict-ukrainian-g-title');
 const loc = s => ['reported-positive','reported-negative','conflicting'].includes(s) ? s : 'unknown';
 const fieldState = field => fieldStates.has(field?.state) ? field.state : 'unknown';
 function rowSource(row) {
@@ -107,6 +109,29 @@ export function motnLanguageReport(f) {
   return 'unknown';
 }
 const id = s => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s) ? s : 'unknown';
+function possibleIrrelevantSearchLines(result, filmContext) {
+  // This is a narrowly scoped free-text/URL exception for the protected report.
+  // An ordinary Beta result must not expose it even if handed unsanitized data.
+  if (result?.capabilities?.mykola_media_advice_diagnostics !== true) return [];
+  const diagnostic = safePossibleIrrelevantSearch(result?.resolver?.possibleIrrelevantSearch);
+  if (!diagnostic) return [];
+  const diagnosticId = imdb(diagnostic.film.imdbId);
+  if (diagnosticId && [imdb(result?.film?.imdbId), imdb(result?.imdbId), imdb(filmContext?.imdbId)]
+    .some(boundId => boundId && boundId !== diagnosticId)) return [];
+  const value = field => field === null || field === undefined ? 'unknown' : JSON.stringify(field);
+  const lines = ['', 'Можливо, нерелевантні результати пошуку',
+    'Жодна прочитана картка не підтвердилася. Незбіг із відомими назвами є лише ознакою: він не доводить, що це інший фільм або помилка Tavily.',
+    'Відмінність query відповіді від надісланого запиту сама по собі не доводить переплутану відповідь; відсутні дані позначено як unknown.',
+    `Фільм цього запуску: ${value(diagnostic.film.title)}; рік ${diagnostic.film.year ?? 'unknown'}; IMDb ${diagnostic.film.imdbId ?? 'unknown'}.`];
+  for (const [index, search] of diagnostic.searches.entries()) {
+    lines.push(`Пошук ${index + 1}: фактично надісланий query ${value(search.query)}; request_id ${value(search.requestId)}; query відповіді Tavily ${value(search.responseQuery)}.`);
+  }
+  if (!diagnostic.searches.length) lines.push('Пошук: фактично надісланий query unknown; request_id unknown; query відповіді Tavily unknown.');
+  for (const [index, card] of diagnostic.cards.entries()) {
+    lines.push(`Прочитана картка ${index + 1}: назва ${value(card.title)}; оригінальна назва ${value(card.originalTitle)}; адреса ${value(card.url)}; identity ${card.identity ?? 'unknown'}; причина відхилення ${card.reason ?? 'unknown'}; ознака незбігу назв ${card.titleMismatch === true ? 'possible' : 'unknown'}.`);
+  }
+  return lines;
+}
 export function safeMediaReport(result, { applied = false, filmContext, stale } = {}) {
   const rows = result?.rows ?? [];
   const references = variantReferences(rows);
@@ -142,6 +167,7 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
     const ref = typeof card.cardRef === 'string' && /^[a-f0-9]{64}$/.test(card.cardRef) ? card.cardRef : 'unknown';
     lines.push(`Extraction: ${e.status}; candidates ${e.candidateCount ?? 'unknown'}, foreign-context ${e.foreignCandidateCount ?? 'unknown'}, localization blocks ${e.blockCount ?? 'unknown'}, film audio ${e.filmAudioState}; issues ${JSON.stringify(e.issues)}; requested-card SHA256 ${ref}.`);
   }
+  lines.push(...possibleIrrelevantSearchLines(result, filmContext));
   const kinoRows = Array.isArray(result?.rows) ? rows.filter(r=>r.id?.startsWith('kinobaza:') || r.id?.includes(':kinobaza:')).length : undefined;
   const kinoOther = Array.isArray(result?.unmapped) ? result.unmapped.filter(r=>r.source==='kinobaza').length : undefined;
   lines.push(`Kinobaza projection: mapped ${count(kinoRows)}; other platforms ${count(kinoOther)}; foreign-context candidates are not UA offers.`);

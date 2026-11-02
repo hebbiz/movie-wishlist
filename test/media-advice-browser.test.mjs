@@ -1167,6 +1167,69 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       if (process.env.M4_SCREENSHOT_DIR && diagnostics) await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/authored-recovered-netflix-${width}.png`, animations: 'disabled' });
       await page.getByRole('button', { name: '← До картки', exact: true }).click();
     }
+    // Authored unrelated-card observations exercise only the protected report.
+    // They are not retained Tavily/source replies or a reconstruction of Crimson Peak.
+    const possibleSearch = {
+      film: { title: 'Authored search film', year: 2015, imdbId: 'tt1234567' }, rows: [], unmapped: [],
+      sources: [{ source: 'kinobaza', status: 'bounded-unresolved', identity: 'unresolved' }],
+      metrics: { requestsMade: 6, requestBudget: 10, ledgerReservations: 6 },
+      resolver: { possibleIrrelevantSearch: {
+        film: { title: 'Authored search film', year: 2015, imdbId: 'tt1234567' },
+        searches: [
+          { query: '"Authored search film" 2015 site:kinobazaua.com/titles/', requestId: '11111111-2222-4333-8444-555555555555', responseQuery: 'Authored search film 2015' },
+          { query: '"Authored alternate" 2015 site:kinobazaua.com/titles/', requestId: null, responseQuery: null },
+        ],
+        cards: [
+          { title: 'Сторонній фільм (2015)', originalTitle: 'Unrelated authored film', url: 'https://kinobazaua.com/titles/unrelated-authored-film', identity: 'mismatch', reason: 'source-title-conflict', titleMismatch: true },
+          { title: null, originalTitle: null, url: 'https://kinobazaua.com/titles/another-authored-film', identity: 'unresolved', reason: 'source-identity-structure-incomplete', titleMismatch: null },
+        ],
+      } },
+    };
+    for (const diagnostics of [false, true]) {
+      allowed = true; diagnosticsAllowed = diagnostics;
+      const capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics };
+      for (const key of Object.keys(authored)) delete authored[key];
+      Object.assign(authored, diagnostics ? { ...possibleSearch, capabilities } : productMediaResult(possibleSearch, capabilities));
+      await page.evaluate(() => {
+        currentUser = { id: 'user' }; currentRole = 'owner'; currentGroupId = 'group'; window.authoredLogin = true;
+        movies = [{ id: 'list', imdb_url: 'https://imdb.com/title/tt1234567', title: 'Authored search film', year: 2015, status: 'wishlist', recommended_medium: 'DVD', purchase_url: 'https://old.example', added_by: 'Owner' }];
+        startEditMovie('list');
+      });
+      const beforeSearchCalls = calls.filter(call => call.action === 'discover').length;
+      const beforeSearchWrites = await page.evaluate(() => authoredDBWrites.length);
+      const beforeSearchOpens = await page.evaluate(() => authoredOpened.length);
+      await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-answer').waitFor();
+      assert.equal(await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).count(), diagnostics ? 1 : 0);
+      assert.doesNotMatch(await page.locator('.media-advice-chat').innerText(), /Можливо, нерелевантні результати пошуку|unrelated-authored-film|request_id|site:kinobazaua/);
+      if (diagnostics) {
+        await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+        const text = page.getByLabel('Короткий звіт для копіювання');
+        const report = await text.inputValue();
+        assert.match(report, /Можливо, нерелевантні результати пошуку/);
+        assert.match(report, /Фільм цього запуску: "Authored search film"; рік 2015; IMDb tt1234567/);
+        assert.ok(report.includes('фактично надісланий query "\\\"Authored search film\\\" 2015 site:kinobazaua.com/titles/"'));
+        assert.ok(report.includes('request_id "11111111-2222-4333-8444-555555555555"; query відповіді Tavily "Authored search film 2015"'));
+        assert.match(report, /request_id unknown; query відповіді Tavily unknown/);
+        assert.match(report, /Сторонній фільм \(2015\).*Unrelated authored film.*https:\/\/kinobazaua\.com\/titles\/unrelated-authored-film.*source-title-conflict/);
+        assert.match(report, /Прочитана картка 2: назва unknown; оригінальна назва unknown/);
+        assert.match(report, /не доводить, що це інший фільм або помилка Tavily/);
+        await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true }));
+        await page.getByRole('button', { name: 'Скопіювати короткий звіт', exact: true }).click();
+        assert.match(await page.locator('.media-advice-diagnostics [role="status"]').innerText(), /Буфер недоступний\. Виділіть і скопіюйте текст/);
+        assert.deepEqual(await text.evaluate(element => [document.activeElement === element, element.selectionStart, element.selectionEnd]), [true, 0, report.length], 'the complete diagnostic text is selectable when clipboard access is unavailable');
+        assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
+        await page.getByRole('button', { name: '← До порад', exact: true }).click();
+      } else {
+        assert.equal('resolver' in authored, false, 'ordinary Beta uses the server product projection, without privileged observations');
+        assert.equal(await page.locator('.media-advice-diagnostics textarea').count(), 0);
+      }
+      await page.getByRole('button', { name: '← До картки', exact: true }).click();
+      await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-answer').waitFor();
+      assert.equal(calls.filter(call => call.action === 'discover').length, beforeSearchCalls + 1, 'opening, copying and reopening the protected report do not issue another discovery');
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), beforeSearchWrites);
+      assert.equal(await page.evaluate(() => authoredOpened.length), beforeSearchOpens);
+      await page.getByRole('button', { name: '← До картки', exact: true }).click();
+    }
     await page.evaluate(() => resetFormMode()); assert.equal(await page.locator('.media-advice-dialog').isVisible(), false);
     await page.evaluate(() => { Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true }); startEditMovie('list'); });
     assert.equal(await page.locator('#mediaAdviceEntry').isHidden(), true);

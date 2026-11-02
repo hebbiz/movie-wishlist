@@ -14,6 +14,16 @@ with a [second Tavily slot after first-card identity refusal](#tavily-only-alter
 not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
 remain historical evidence;
 this is not catalogue-wide accuracy, track verification or new activation approval.
+The contextual second slot again combines the established primary/alternate
+titles and trusted single director name, after withdrawing the standalone-title
+experiment: [restoration and separate Tavily integrity research](#second-query-restoration-and-tavily-integrity-research--2026-11-02).
+The [Crimson Peak observations](#independent-localized-alternative-and-crimson-peak--2026-11-02)
+remain historical experiment evidence, not a demonstrated root-cause fix.
+The [paired current-response control](#paired-crimson-peak-queryresponse-control--2026-11-02)
+now captures actual POST/response correspondence; no new runtime guard is enabled.
+Crimson Peak is recorded as an **unreproduced issue with an unestablished cause**.
+The [protected possible-relevance report](#protected-possible-search-relevance-report--2026-11-02)
+adds observation only, not a search/identity guard or a finding against Tavily.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
@@ -4632,3 +4642,625 @@ Validation of this follow-up:
   change: SQL, ledger, platform dependencies and lifecycle/IPC components are
   unchanged. Existing source access/identity/budget tests reran; no production
   database operation or deployed authenticated smoke was performed here.
+
+### Terminal Roman numeral title spelling — 2026-11-02
+
+Follow-up from develop `290bf23ab607d6c9e5dae137ff31a79a5ba240a9` after #221.
+The owner confirmed the Klaus fix on real develop. The next refusal is different:
+the current [Gladiator II card](https://kinobazaua.com/titles/gladiator-2) has
+H1 `Гладіатор ІІ ( 2024 )` (U+0406), H2 `Gladiator II`, director `Рідлі Скотт`.
+The selected title uses ASCII `I` (U+0049). Existing NFC/whitespace/case
+normalization deliberately does not equate these alphabets, so the old H1 gate
+returns `source-title-conflict` before extraction. This current response is not
+an archive or reconstruction of the owner's earlier run.
+
+The new title-only fallback compares a separate **final uppercase canonical
+Roman token with 2–15 glyphs**, after whitespace and a nonempty title base.
+Only Ukrainian `І` is treated as Latin `I` inside that token; the rest of the
+title must match under the existing normalization. No alphabet-wide replacement,
+fuzzy matching, transliteration, `II`↔`2`, Unicode numeral-symbol conversion,
+attached/nonterminal token, lowercase cross-script word, single ambiguous letter
+or malformed numeral is accepted. Other Cyrillic lookalikes are not folded.
+The same rule applies across films/parts, not a Gladiator/URL exception.
+
+Exact title aliases retain their existing priority and cascade. Only the new
+H1 fallback additionally requires an **exact original H2 alias, identical primary
+year and verified single-director scope/name**. Matching film IDs cannot skip
+the director or allow release-year variance on this route. ID/canonical/title
+conflicts and original-title structure checks retain priority; unresolved proof
+withholds every source claim. Director normalization and person crosswalk are
+unchanged. Diagnostics name `title-terminal-roman-year-director` and the specific
+`source-year-conflict-terminal-roman-title` refusal without raw title content;
+ordinary Beta still receives no privileged diagnostic fields.
+
+Current fixed-card comparisons use identical in-memory responses against the
+pinned develop identity code and the patched code:
+
+| Film | Before → after | Result retained through both Beta projections |
+| --- | --- | --- |
+| Gladiator II (2024) | title mismatch, 0 rows → matched/ok | 31 extracted candidates, 6 mapped rows, 4 service groups; Apple/Rakuten/MEGOGO audio+ and subtitles+; Netflix audio unknown/subtitles+ |
+| Klaus (2019) | matched/partial → unchanged | 6 candidates, 2 rows; Netflix audio+/subtitles+, existing recommendation recovery notice |
+| Alien (1979) | matched/ok → unchanged | 29 candidates, 5 rows; source labels and format-negative audio distinctions preserved |
+| The Pursuit of Happyness (2006) | matched/ok → unchanged | 19 candidates, 3 rows; Netflix subtitle-only and MEGOGO audio/subtitle claims preserved |
+
+Gladiator's comparison uses the owner-selected localized/original title, 2024
+and director context; no unseen IMDb/TMDb film IDs are invented and no fresh
+TMDb projection is claimed. Controls reuse their previously verified identity
+contexts. These are fixed-card identity/extraction/projection checks, not proof
+of automatic resolver search quality or deployed runtime. Source/app UA scopes,
+`◐`, ranking and unknown states are unchanged; destination availability, offer
+binding, entitlement and actual platform tracks are not independently verified.
+
+**7 external attempts, all Kinobaza title GETs/200**: 1 Gladiator, 2 each Klaus,
+Alien and Pursuit. The initial 3 controls exposed a local baseline-wrapper
+composition error after successful reads; the corrected comparator ran only
+those 3 again. There was no source error retry, search, TMDb/MOTN/Watch Providers,
+person/profile or platform-destination request. Bodies existed only in process
+memory; processes exited without a raw response/archive. No keys were needed.
+Runtime adds 0 requests and leaves all existing source caps/deadlines/retry rules.
+
+Validation: **54/54 new authored tests**, included in **371/371 targeted** and
+the **980 passed, 0 failed, 19 skipped / 999 full offline/HTTP suite**. Fictional
+fixtures cover II/III/IV/VI/IX/XIV, different parts/bases, script lookalikes,
+noncanonical/lowercase/nonterminal forms, conflicting IDs, exact H2, primary-year
+requirements even with ID/release evidence, unknown/multiple directors and
+person-scoped aliases. HTML→adapter→composition→ordinary/diagnostic response→
+language table→exact-link preview is exercised without apply/Save or row mutation.
+
+**5/5 browser tests passed**, local Edge/Chromium with mocked Auth/source/DB and
+external requests blocked, including desktop/tablet/iPhone X 375×812 and
+Air 420×912 emulation, current Klaus-shaped recovery, report, exact links,
+preview/transfer isolation and reopening without discovery. Initial sandbox
+spawn denial was rerun with scoped local permission, not a passing test.
+Full-suite opt-in browser/native-PG skips are not success. Real iPhone/WebKit,
+deployed authenticated smoke and actual Wishlist Save were not performed.
+Native PostgreSQL and Windows lifecycle were not separately rerun: no SQL,
+ledger, dependencies, IPC or lifecycle component changed. No assertions/timeouts
+were relaxed. Syntax/whitespace and local links/anchors checked separately.
+
+No search/admission, link/language/ranking policy, retention, Beta permission,
+initApp/global lifecycle/auth/UI, migration/flag/secret or Wishlist change.
+No merge or manual deployment; owner checkout/demo and main remain unchanged.
+
+### Ukrainian г/ґ title bridge and Kong control — 2026-11-02
+
+Follow-up in the same #222 branch, after `da21f88e872f5a6b6e96fecc48695fe1cf4a249b`;
+develop remains `290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The current public
+[Kong: Skull Island card](https://kinobazaua.com/titles/kong-skull-island) is
+headed `Конґ: Острів черепа (2017)` / `Kong: Skull Island`, with director
+`Джордан Вот-Робертс`. A localized `г`/`ґ` difference is spelling evidence,
+not independent film identity proof or evidence of a different director.
+
+The new title-only helper compares bounded Cyrillic titles after the existing
+NFC/whitespace/case normalization, treating only `ґ` and `г` as equivalent.
+All other letters, numbers and punctuation remain significant; mixed Latin
+homoglyphs, unrelated words and different parts are not folded. Exact aliases
+retain priority; the terminal Roman rule above is unchanged. No per-film or
+director exception, transliteration, global normalization or crosswalk entry
+was added.
+
+This H1 bridge requires a single H2 equal to the **trusted original title**
+(not merely a convenient alternative/localized alias), identical primary year
+and confirmed single-director identity. Even a matching film ID cannot bypass
+the director or accept a release-year variance on this route. Canonical/film-ID
+conflicts, ambiguous originals/directors and insufficient profile proof remain
+withheld. Diagnostic strategy is `title-ukrainian-g-year-director`; its explicit
+year refusal is `source-year-conflict-ukrainian-g-title`. Ordinary Beta still
+receives product fields, not privileged identity/profile diagnostics.
+
+No resolver/controller change was required: a spelling-admitted card with
+`director-alias-unestablished` now reaches the existing bounded linked-profile
+selection. Both card opportunities remain available before one person pair is
+allocated. Equal-strength distinct profiles remain ambiguous. cap10 permits
+one trusted TMDb person GET and one admitted linked Kinobaza profile GET, with
+durable reservation and the existing stage/end-to-end deadlines; cap8 cannot
+dispatch either. No third search/card, retries, redirects or Kinobaza `/search`.
+
+The operator's returned **current Kong result tail** confirms profile facts for
+`tmdb:person:236539` and the card-linked
+[Jordan Vogt-Roberts profile](https://kinobazaua.com/persons/jordan-vogt-roberts):
+`exact-name-birthdate-role`, native alias association, exact Latin-name and
+birthdate matches, director role, no ID or birthday conflict. Both reserved
+person requests returned 200. This is not confirmation by similar names or slug.
+Extraction completed `ok`: **33 candidates, 6 mapped rows**; both ordinary and
+diagnostic projections show:
+
+| Service | Availability | Ukrainian audio | Ukrainian subtitles |
+| --- | --- | --- | --- |
+| Apple | ◐ | + | − |
+| Rakuten | ◐ | + | − |
+| MEGOGO | ◐ | + | unknown |
+| HBO | unknown | unknown | unknown |
+
+These retain source/app interpretation scopes, not independently verified
+platform availability/entitlement. The pasted message begins with an older Klaus
+projection and omits Kong's `counts`, exact comparison and `before` header.
+They are **not combined into one run**, nor are unreceived TMDb title aliases,
+baseline outcome or duration claimed as observed. The audited one-shot Kong
+success path necessarily uses four GETs (movie Details, card, TMDb person,
+linked profile); the returned tail directly confirms the latter pair. It has
+no search, body persistence or retry and needs only a hidden memory-only TMDb
+credential. No rerun was requested to recover the omitted console prefix.
+
+Separately, **4 direct Kinobaza GETs/200** rechecked Gladiator II, Klaus, Alien
+and The Pursuit of Happyness against pinned develop and the patched code using
+the same response per comparison. Gladiator remains matched with 6 rows / four
+services; Klaus retains matched/partial with 2 rows, Alien matched/ok with 5 and
+Pursuit matched/ok with 3. Existing language states, format-negative distinctions
+and subtitle-only Netflix are unchanged. Other prior controls remain offline
+regressions, not newly read live responses. This follow-up therefore has four
+agent GETs plus the four-GET operator success path (eight source GETs by code
+path), and one public web search for the Kong pointer, separate from the prior
+seven GETs. None reconstructs historical HTML or validates resolver search quality.
+
+Validation: **51 new authored tests passed**; combined relevant Roman, profile,
+deferred resolver, cap/access and server suites **185/185 passed, no skips**.
+The full pre-existing 999-test set reran against the changed runtime with
+**980 passed, 0 failed, 19 opt-in skips**; the newly created file was run
+separately, not claimed as included in that earlier-expanded file list.
+The new tests cover conflicting film/person IDs, wrong original/year, namesakes,
+missing/conflicting profile facts, ambiguous cards, real resolver/verifier
+reservation ordering at 10, cap8 refusal, withholding, ordinary/diagnostic
+language tables and exact-link preview without mutation or Save.
+
+**5/5 browser tests passed again**, Edge/Chromium desktop/tablet/iPhone X/Air
+viewport emulation, with source/Auth/DB mocks and external traffic blocked;
+not a real iPhone/WebKit/deployed smoke or actual Wishlist write. Initial test
+spawn EPERM was rerun with scoped local permission, not counted as passing.
+Independent runtime review found no actionable issue. No assertions/timeouts
+were relaxed. Existing native PostgreSQL opt-in tests remain skipped; no SQL,
+ledger definition, dependency or deployment configuration changed.
+
+The Netlify Functions skill guided the bounded server-path audit; its existing
+reservation/deadline mechanisms are reused, not replaced. Search policy,
+language/link/ranking rules, access, retention, initApp/global lifecycle/auth,
+UI, flags/secrets and owner checkout/demo remain unchanged. No migration,
+merge or manual deployment. Local prompt/operator aids remain outside Git and
+keep credentials/bodies in process memory only; no key or raw response is in this
+record or PR. Rollback is a normal revert of this follow-up commit.
+
+### Independent localized alternative and Crimson Peak — 2026-11-02
+
+**Historical experiment, withdrawn below at the owner's request.** Its live
+observations and accounting remain evidence, not the current second-query
+policy or a demonstrated fix for the unrelated provider response.
+
+Follow-up to #222 at `d03a1a4976e8cf25f463f3baefd917cf13ae1582`, with develop
+still `290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The experiment temporarily
+replaced the combined second-query policy in the earlier production-Beta record,
+not its identity gates or historical observations. No historical unexamined URLs are
+inferred from a digest or reconstructed from today's results.
+
+Current server-equivalent TMDb search/Details projection established Crimson
+Peak (2015), TMDb 201085 / IMDb tt2554274, localized title `Багряний пік`,
+director person 10828, `Ґільєрмо дель Торо` / `Guillermo del Toro`.
+The current first query was `"Crimson Peak" 2015 site:kinobazaua.com/titles/`;
+the old second added both the localized title and quoted Latin director.
+
+In run `600c5d09-624c-44ef-a365-45581db8bf78`, both Tavily calls returned five
+admitted URLs, six unique in their union. The correct card was **absent**, not
+hidden at a lower rank. All six pointers scored zero against established title
+slugs, so stable provider/insertion order spent the two GETs on Mad Max: Fury
+Road and The Walk. Both had different titles/directors and were correctly
+withheld. No language data was allowed through.
+
+The experimental query change left the primary English/original query unchanged.
+If a distinct known title exists, the second contextual query independently
+uses that title and the primary Details year, for example
+`"Багряний пік" 2015 site:kinobazaua.com/titles/`. It does not add mandatory
+original-title/director terms. Without a distinct title, the existing
+primary-title/single-trusted-Latin-director disambiguation remains. Original /
+explicit-English / localized name selection, earlier confirmed premiere versus
+primary year, escaping, bounds and all Tavily basic/domain/no-answer/no-raw-content
+parameters remain. This changes discovery opportunity, not identity evidence.
+
+No candidate-ranking change was made in this experiment. In run
+`f0482e33-e50f-4401-9fb9-07807920278b`, the unchanged first query again produced
+the same five unrelated pointers. The standalone localized second query returned
+the correct [Crimson Peak card](https://kinobazaua.com/titles/crimson-peak) first.
+Its exact original-title slug scored 1, ahead of the zero-score old candidates,
+so the second GET read it. H1, original H2, year and director all passed;
+extraction was `ok`, 25 candidates / four localization blocks / six mapped rows.
+The runtime did not receive or generate a prefilled URL. Search rank, score,
+snippet or a film-level audio badge never substituted for identity/offer proof.
+
+Final repeat `c28b8fa8-9588-48d8-8446-74f064554e14` found and confirmed the same
+card in the **unchanged first query**, without spending the second search slot.
+This demonstrates provider-result variability: the localized alternative rescued
+one observed refusal, but does not prove that the old formulation always fails,
+that strict boolean semantics caused the provider response, or that search quality
+is now guaranteed. The two bounded GETs and finite non-exhaustive result remain.
+
+| Crimson run | TMDb / Tavily / cards / profile | Local elapsed | Result |
+| --- | --- | --- | --- |
+| Before | 2 / 2 / 2 / 0 | 2.847 s | no confirmed card |
+| Localized alternative | 0 / 2 / 2 / 0 | 4.549 s | correct card matched, six rows |
+| Final repeat | 0 / 1 / 2 / 0 | 2.983 s | correct card matched, six rows |
+
+Later runs reuse the verified in-memory movie projection; these timings therefore
+are not an equal-work latency comparison. One separate GET checked the discovered
+card's current language/link projection. No source-error retry or destination
+request occurred. Raw responses were never written to disk.
+
+Both ordinary and diagnostic product projections show MEGOGO audio+/subtitles+,
+and Apple/Rakuten/Netflix audio unknown/subtitles+. Apple/Rakuten's source
+table negatives remain scoped to named audio formats, not a universal absence
+of Ukrainian audio. Admitted choices are respectively MEGOGO, iTunes,
+JustWatch tracking and Netflix links; exact preview equality passed for every
+offered choice. Film-level audio and the Netflix catalogue helper do not become
+film links or lend languages to other offers. No URL was rewritten, opened on
+a destination, transferred or saved during this control; no independent platform
+availability, entitlement or actual tracks are claimed.
+
+Current automatic regression runs also confirmed:
+
+| Film | Discovered card suffix | Mapped rows | Attempts |
+| --- | --- | --- | --- |
+| Gladiator II | gladiator-2 | 6 | 5 |
+| Kong: Skull Island | kong-skull-island | 6 | 8 |
+| Klaus | klaus | 2 | 5 |
+| Alien | alien | 5 | 5 |
+| Mad Max: Fury Road | mad-max-fury-road | 6 | 5 |
+| Dune: Part Two | dune-part-two | 5 | 5 |
+| Supergirl | supergirl-2026 | 3 | 5 |
+| Goodfellas | goodfellas | 6 | 5 |
+| The Pursuit of Happyness | the-pursuit-of-happyness | 3 | 5 |
+
+These are present source responses, not unchanged historical row-count promises.
+Kong still used the existing deferred pair and exact-name/birthdate/role proof;
+Gladiator's Roman and Kong's г/ґ title routes retained director checks. Ordinary
+and diagnostic language tables agreed; exact admitted preview links were retained.
+
+This follow-up made **62 source HTTP attempts**: 21 TMDb (including Kong person),
+15 Tavily basic calls, 25 title-card GETs, one linked-person GET. The broker's
+final cumulative accounting was complete; failures count too. Two separate web
+search queries located the manual research control, never seeded runtime input.
+Crimson accounts for 14 of the 62; the nine live regression films account for 48.
+No MOTN, Watch Providers, Kinobaza `/search`, platform destination or Wishlist
+request. Per-user runtime remains two searches, two title cards and cap10 with
+the optional existing pair (legacy cap8 unchanged); diagnostic metadata reuse
+does not change production accounting or bypass backend access.
+
+Validation: **16 new authored tests**, **207/207 targeted** query/resolver,
+Roman/г/ґ, deferred-person, server/access, UI contract and restored local-runner
+regressions, plus **42/42** diagnostic/report/HTML-to-product pipeline tests.
+Zero test failures/skips in these completed runs. Initial sandbox spawn EPERM
+was rerun with scoped permission and unchanged assertions/timeouts. Independent
+review found no actionable issue; syntax, whitespace and doc links checked.
+The earlier full-suite 980-pass/19-skip and five browser results above belong to
+the preceding follow-up, not a new full/browser execution for this query-only
+change. Real iPhone, deployed smoke, native PostgreSQL and actual Save were not
+rerun; UI/lifecycle/SQL/dependencies are unchanged.
+
+The existing memory-only credential broker was reused; the temporary film
+selection and product-summary instrumentation were removed after the run, leaving
+both scripts identical to HEAD. The final stop channel was already unavailable;
+a scoped process check confirmed no matching task credential helper remained.
+No key, raw body or bulk search-result archive was retained. No migration,
+flag/secret/user-data change, merge or manual deployment. Netlify Functions
+guidance informed the bounded server audit; existing deadlines/reservations and
+the form's isolation, link policy, preview/Save and diagnostics remain intact.
+
+### Second-query restoration and Tavily integrity research — 2026-11-02
+
+Owner decision: withdraw the standalone-localized second query from commit
+`8b40273b41b407893d31062cbd2e0dbaf9859df1`; do not substitute query tuning for
+investigating unrelated search responses. A new ordinary commit restores
+`netlify/lib/kinobaza-resolver.mjs` byte-for-byte to its pre-experiment version
+at `d03a1a4976e8cf25f463f3baefd917cf13ae1582`, without history rewriting.
+The Roman-numeral and Ukrainian г/ґ title fixes remain.
+
+The restored contextual second query combines the selected primary title,
+distinct established alternate title when available, trusted single Latin
+director name when available, and primary Details year. Its existing 550-character
+fallback is unchanged. For Crimson Peak this is
+`"Crimson Peak" "Багряний пік" "Guillermo del Toro" 2015 site:kinobazaua.com/titles/`.
+The primary query, premiere/primary-year contexts, successful-empty and
+first-card-identity-refusal triggers, deduplication, ranking, admission, identity
+gates, two-search/two-card caps, optional person pair, deadlines and cap8/cap10
+accounting are unchanged. No new Tavily runtime setting or integrity/relevance
+gate is activated by this restoration.
+
+#### What is established, and what is not
+
+In the earlier fresh local broker run, the trusted film was Crimson Peak and
+the initial identity cache was empty. The diagnostic hook observed Mad Max /
+The Walk URLs directly from parsed Tavily `results`, before candidate ranking.
+Each operation starts a new Node worker; only verified TMDb film metadata is
+retained between operations. Read-only inspection found no search/HTML-result
+cache or cross-film result reuse in that path. These facts do not attest the
+provider's internal processing or prove absence of upstream caching/misrouting.
+
+The dispatched query/payload was not captured alongside the provider-returned
+`query`, `request_id` or response cache headers. The exact cause of the unrelated
+first response therefore remains **unestablished**. Subsequent variation of the
+unchanged primary query is not proof of either normal relevance behavior or a
+cache defect. Two separate public GETs during the preceding diagnosis found no
+literal `Crimson Peak`, `Багряний пік` or `crimson-peak` in the then-current Mad Max
+or The Walk HTML; those bodies are not the historical indexed provider copies.
+
+An **authored offline contract probe**, not a live replay, dispatched four mocked
+responses through the real adapter: same returned query, capitalization-only
+query, different-film query, and missing query. Every response's two admitted
+URLs were accepted as `ok`. This confirms that current URL admission does not
+check response/query correspondence or textual relevance; it does not establish
+which of those states occurred in the earlier live response. External HTTP
+attempts for this restoration/research: **0**. Official documentation reads are
+separate; no credentials, account logs, source or platform requests were used.
+
+#### Verified provider options and limitations
+
+- [Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+  defines response `query` as the executed query and `request_id` as a support
+  identifier. Byte-for-byte echo is not promised; capitalization differs in the
+  documentation's request/response example. Domain restriction filters hosts,
+  not film identity. `exact_match` constrains quoted phrases but does not prove
+  that the page's main film is the requested film.
+- [Search best practices](https://docs.tavily.com/documentation/best-practices/best-practices-search)
+  warns that exact matching can reduce or empty results. Enabling it blindly on
+  the restored multi-title/director query could overconstrain discovery. Result
+  titles may inform relevance selection, never film/person identity or languages.
+- Search `max_age_hours` describes freshness of cached **page copies**, not a
+  documented reset of the query-to-results association. A cache-busting nonce,
+  forced live fetch or retry is not an evidenced fix for this anomaly. `advanced`
+  costs two credits instead of basic's one and adds latency; it is no correctness
+  guarantee and is not enabled.
+- [Usage logs](https://docs.tavily.com/documentation/api-reference/endpoint/logs)
+  are paid-plan gated, can expose request IDs/times, but explicitly exclude the
+  original inputs/outputs. They might recover a support reference for the earlier
+  timestamp, not reconstruct its missing request/response evidence. No log lookup
+  or feedback submission was performed.
+
+#### Recommended separate follow-up, not implemented
+
+1. Pair each generated query and non-secret payload fingerprint with its local
+   run/search index, sanitized bounded provider `request_id`, HTTP status and
+   returned-query comparison. Keep raw bodies/snippets/credentials out of reports
+   and storage. Compare in memory; retain only safe derived states.
+2. Initially proposed: distinguish exact / conservative case-Unicode-whitespace
+   equivalent / mismatched / missing-invalid query before a possible rejection
+   gate. **That syntactic rejection proposal is withdrawn pending clarification:**
+   the paired control below returned the correct film while Tavily omitted quotes
+   and `site:` from response `query`. Such a difference alone cannot identify a
+   cross-wired response. Capture the original payload and returned field, rather
+   than silently rewriting either or treating normalized output as another film.
+   Missing echo is not verified correspondence. No automatic retries, new error
+   fallback or third search slot is implemented.
+3. Treat a correctly correlated but unrelated result set as a separate relevance
+   failure. Investigate using trusted title aliases against returned page titles
+   and URL paths to prioritize actual candidates and recognize wholly unrelated
+   sets **before** spending both card reads. If every first-set candidate is
+   demonstrably low-relevance, the existing second search could precede card
+   reads; after two unrelated sets, a clear unconfirmed result is preferable to
+   claiming success. This is a proposed policy change requiring validation, not
+   a new runtime rule. Unfamiliar/translated slugs and missing search titles must
+   stay distinct from explicit conflicts; absence of a slug match alone is not
+   sufficient to discard a potentially correct card.
+4. Preserve independent HTML identity checks even for promising search metadata.
+   Correlation adds zero HTTP attempts. Any relevance reordering must share the
+   same two searches/two cards and cap10, preserve both release-year contexts and
+   the person pair, and never reintroduce Kinobaza `/search`.
+5. Targeted cases: swapped concurrent film responses; meaningful title/year/site
+   changes; benign capitalization; missing/malformed/secret-like identifiers;
+   correct echo with unrelated titles; a valid localized/opaque slug; duplicate
+   pointers; stable-ID conflict; no extra dispatch or leaked raw content. Only
+   after capturing correspondence should a current-response comparison evaluate
+   exact matching or another provider setting. None was live-tested here.
+
+The restoration retains 16 authored second-query/identity/budget regressions,
+renamed to `test/kinobaza-second-query-policy.test.mjs`; examples remain fictional,
+not archived search evidence. The restored query tests first passed 52/52; the
+broader related search, Roman/г/ґ, cascade/person, server/access, diagnostic and
+HTML-to-product regressions passed **385/385, zero failures/skips** (the 52 are
+included, not additional). The initial sandbox spawn refusal was rerun with
+scoped permission, without relaxed assertions/timeouts. The runtime resolver and
+its two pre-existing query test files exactly match `d03a1a4`; whitespace checked.
+No live search, browser/iPhone, deployed smoke or actual Save was rerun for this
+query restoration. Earlier live results above belong to their recorded versions.
+No merge/deployment, live migration, flags/secrets, user data, source discovery,
+Wishlist write, UI/lifecycle or owner checkout/demo change.
+
+### Paired Crimson Peak query/response control — 2026-11-02
+
+Read-only diagnosis on PR#222 head
+`96f88f44b44b390f886c168f561e135a95a84ead`; develop/base remained
+`290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The runtime resolver is identical to
+its restored pre-experiment version. Gladiator II and Kong changes remain in the
+PR; no source-selection, identity, budget or query-policy change was made here.
+
+#### Inventory of the distinct earlier runs
+
+| Evidence | What is available | Missing evidence |
+| --- | --- | --- |
+| Failed local run `600c5d09-624c-44ef-a365-45581db8bf78`, checkout `d03a1a4` | Trusted Crimson identity, two five-pointer Tavily responses/six unique URLs; Mad Max and The Walk were actually read and title-rejected; six source attempts | Actual dispatched query/payload paired with returned query, provider request ID and cache metadata |
+| Owner-supplied successful **develop** report `21e54f7a-3ad3-4e42-97d5-5423a032310a` | Server build `290bf23`, deploy `6ae7bda7f8fb5d4070af6f0d`; one search/five admitted, two cards/three unexamined; seven attempts including TMDb providers and MOTN | Dispatched/returned queries, Tavily request ID and the five-URL list |
+| Earlier successful **local** repeat `c28b8fa8-9588-48d8-8446-74f064554e14` | Its own pointer list and local counters | Not a substitute for the develop run or its missing fields |
+
+Offline SHA256 comparison establishes that the develop report's first requested
+card digest `569c980504bf848f8fb0eee79063765d4bd7b0a9dd4e97b1c8c8f68fd2a9e6d4`
+matches `https://kinobazaua.com/titles/crimson-peak`, and its second digest
+`204b4750c63bdcb478170758abfbb81f25f3f46d56d6ccfd47e1ee106439f9ed` matches
+`https://kinobazaua.com/titles/sickle`. The first passed title/year/director and
+extracted 25 candidates/four localization blocks/six mapped rows. The second was
+withheld for incomplete identity structure. Digests do not reconstruct either
+HTML or the three unread URLs; those historical unread URLs remain unknown.
+
+#### One new local observation, not historical reconstruction
+
+Run `14701b4f-8458-4a77-8356-3823ebc38e64`, started
+`2026-11-02T11:59:09.139Z`, used fresh server-equivalent IMDb find/Details
+projection for `tt2554274` / TMDb201085. An external local harness imported the
+real query builder, adapter, admission and resolver. It observed the actual fetch
+body and a bounded response clone, returning the original Response unchanged.
+No endpoint instrumentation, deploy, body/snippet archive or persistent credential
+was created. Local runner SHA256:
+`c0a8f94fdf6c40ba2e20dd031673a0c5e4d21a086ccd323f2c96eeecc1b3afb7`.
+
+The generated first query and actual POST query were **exactly equal**:
+
+```text
+"Crimson Peak" 2015 site:kinobazaua.com/titles/
+```
+
+The actual body retained basic/general, max_results5, auto_parametersfalse,
+include_answerfalse, include_raw_contentfalse, images/favicon/usagefalse, and
+include_domains `["kinobazaua.com"]` with mode `restrict`. Actual UTF-8 body SHA256:
+`9ed7416afcb413fdb9a2b697645aeaeddf39d928cb256a598ac459f0bf3ce8f0`.
+The restored combined second query was generated but **not dispatched**: the
+first read card matched, so the second runtime search slot remained unused.
+
+| Call | HTTP | Actual sent query | Returned query | Tavily request ID |
+| --- | --- | --- | --- | --- |
+| Runtime-equivalent search1 | 200 | `"Crimson Peak" 2015 site:kinobazaua.com/titles/` | `Crimson Peak 2015` | `4d68bac9-3634-48a7-8242-bf03e7822ee5` |
+| One separate direct control | 200 | Byte-identical body, same query/parameters | `Crimson Peak 2015` | `828f81e9-5971-4c35-9526-eb19bcff1a2c` |
+
+Both calls returned the same five URLs in the same order, all under
+`https://kinobazaua.com`:
+
+1. `/titles/crimson-peak`
+2. `/titles/sickle`
+3. `/titles/the-uninvited-1944`
+4. `/titles/samhain-a-halloween-horror-movie`
+5. `/titles/hamartia`
+
+The captured response URL list, real adapter hook and admitted URL list were
+identical. The resolver read only Crimson Peak and Sickle. Crimson passed
+`explicit-title-year-director-match`, extraction `ok`, 25 candidates/four blocks/
+six mapped rows. Sickle remained `source-identity-structure-incomplete`; no claims
+were lent to Crimson. There was no current Mad Max/The Walk candidate or observed
+response substitution along adapter → admission → card selection.
+
+The observer's deliberately conservative comparison labelled the missing quotes/
+site operator a syntactic `mismatch`; this triggered the single allowed direct
+comparison. It is **not evidence of a different film query**: the paired direct
+call showed the same returned query and candidates. A rejection gate based only
+on that textual difference would have withheld a correct result. Neither query
+was rewritten by the harness. Removing `site:` from the returned field does not
+prove that the explicit domain restriction in the sent payload was ignored.
+
+No allowlisted cache-header evidence was captured. Different request IDs/body
+digests do not establish uncached computation; equal candidate lists do not
+establish a cache hit. Current sequential local success does not exclude an
+earlier provider relevance/index/cache/misrouting issue or a deployed-only fault.
+
+#### Accounting, limitations and next step
+
+**Six actual source HTTP attempts, all HTTP200**: two TMDb identity GETs, one
+ordinary resolver Tavily POST, two card GETs, and one separately counted direct
+Tavily POST. No automatic retries, redirects, `/search`, person queries, MOTN,
+Watch Providers, platform navigation or Wishlist writes. The normal resolver
+kept its two-search/two-card cap and optional cap10 person allowance. The direct
+call did not become a third runtime search; research stopped after it. Local
+3.952s includes the direct comparison and observation overhead, not deployed
+user latency. These six are separate from all earlier study accounting.
+
+Ten authored offline harness checks passed with no failures/skips: actual body
+capture, response/adapter equality, unchanged scheduling, optional single direct
+comparison, malformed/different/missing echoes, secret/query/fragment redaction,
+provider errors without retry, and zero requests without credentials. Independent
+review agreed with the evidence boundaries. Existing PR runtime regressions
+were not rerun for this documentation-only result record.
+
+The historical cause remains **unestablished**: neither old report contains the
+needed query/request-ID pair, and the new run cannot reconstruct it. A provider
+relevance/index variation, upstream cache problem or request interpretation remain
+possible explanations, not findings. No local search/HTML cache was identified;
+that is not a blanket exclusion of every historical/deployed failure mode.
+
+Recommended next step, **not implemented**: clarify Tavily's returned `query`
+semantics using these two current request IDs before designing any mismatch
+rejection. If an unrelated response recurs, capture this same request/response/
+candidate chain for that failing call and provide its ID for provider analysis.
+Current successful IDs do not identify the old bad request. Do not add cache
+busting, retries, query rewrites, stricter gates or budget increases on this
+evidence. No automatic feedback/support submission or account-log call occurred.
+Raw responses/keys remain unarchived; the credential process ended after the safe
+memory-only handoff. No merge or manual deployment was performed.
+
+### Protected possible-search relevance report — 2026-11-02
+
+Owner decision: **Crimson Peak is an unreproduced issue with an unestablished
+cause**, not a proved Tavily defect. The historical failures remain recorded
+above; neither the later successful develop report nor the paired local control
+reconstructs their missing request/response correlation. No historical query,
+request ID, URL list or response body is backfilled from a later run.
+
+The protected report now conditionally includes
+**«Можливо, нерелевантні результати пошуку»**. It appears only if **none of the
+actually requested cards is identity-matched** and at least one card has all of:
+
+- One unambiguously extracted H1 and original-title H2, within existing bounds.
+- Existing identity reason `source-title-conflict` and failed `heading-alias` gate.
+- Both existing title comparisons explicitly false against the trusted film's
+  known aliases, including the retained terminal Roman and Ukrainian г/ґ paths.
+
+This is a possible-relevance signal, not another identity decision or proof that
+the candidate is a different film. A known alternative/original title match,
+director-only or year-only refusal, conflicting ID, missing original title or
+ambiguous structure alone cannot trigger it. One confirmed card suppresses it
+even if another card is unrelated. Unparseable/ambiguous titles remain unknown;
+if another card supplies the qualifying signal, independently known single
+headings from a partially parsed card can still be reported without labelling
+that card a mismatch. A missing section is **not** assurance of relevant search.
+
+For such runs only, the report contains the trusted run film title/year/IMDb,
+each actual dispatched POST `query`, the available UUID-shaped Tavily
+`request_id` and returned `query`, and the read cards' bounded H1/H2, exact
+admitted title URL, identity status and allowlisted rejection reason. Actual
+query capture occurs at dispatch after reservation, not from the browser or a
+planned query. An unknown response field, unsupported identifier shape,
+unavailable title or redacted value is `unknown`. Undispatched candidates and
+denied card reservations do not become "read cards". The returned query is
+recorded as supplied: dropping quotes/site operators is not automatically
+classified as a wrong response or used to reject candidates.
+
+Authorization is server-side and unchanged: capture requires the diagnostic
+capability from the durable start receipt; returning the details additionally
+requires it in the final receipt. Ordinary Beta output uses the existing product
+allowlist and receives no resolver/correlation/card-title fields. Browser flags
+and Auth user metadata do not grant access. Revocation before completion strips
+the new diagnostic, and a late grant cannot recover uncaptured fields. The
+client report additionally checks the diagnostic capability and film-context
+binding. The section is plain report text, not an automatic navigation/action.
+
+The exception is restricted to bounded query/correlation/title fields and exact
+allowlisted card URLs. Credentials and credential-shaped/encoded echoes,
+arbitrary URLs, snippets, scores, generated answers, raw HTML/responses and
+untrusted error text are not included. Values stay in the existing in-memory
+form/result/report lifecycle; no log, ledger field, server archive, browser
+storage, report upload, migration or retention-policy change is introduced.
+
+Queries (including the restored second query), candidate ordering/deduplication,
+identity gates, extraction, ranking, link policy, reservations, cap8/cap10,
+timeouts and retry/redirect rules are unchanged. Gladiator II/Kong fixes remain
+in PR #222. No source request is added by this diagnostic. Validation for this
+increment uses authored fixtures and mocked HTTP only; these are not new live
+relevance or track-availability findings. No merge or deployment is authorized.
+
+Validation for this increment:
+
+- **439/439 targeted offline regressions passed**, no failures/skips: resolver,
+  query restoration/contextual years, title bridges, director identity and
+  allocation, extraction/pipeline/report, server authorization/product
+  projection and diagnostic redaction. This includes 30 new tests across
+  `media-search-relevance-diagnostic`, `media-advice-search-report` and
+  `media-advice-search-security`, not 30 additional live samples.
+- Diagnostic on/off parity preserves actual requests, order, reservations and
+  existing results. Authored cap8/cap10 full-handler cases each spend exactly
+  eight normal attempts (four baseline, two searches, two cards), no diagnostic
+  stage. Denied later reservations do not invent a read URL.
+- Alternate titles, known H2 despite unknown H1, director/year/ID-only refusals,
+  missing/duplicate/multiple headings and one matched card cannot generate the
+  signal alone. A mixed complete/partial case retains independently known text
+  without upgrading the partial card's conclusion.
+- **5/5 existing browser-suite tests passed**, no failures/skips: headless Edge
+  at 1280×900, 375×812, 420×912 and 820×1180. The added authored case checks the
+  protected section, exact selected text/unknowns, unavailable-clipboard manual
+  selection, no ordinary-Beta diagnostic bubble/payload, and report/reopen without
+  another discovery, navigation or write. These are viewport simulations, not
+  real iPhone/Safari testing.
+- Independent review found one missing-partial-title diagnostic issue, fixed
+  and covered before the final run; no remaining search/auth/budget issue found.
+  `git diff --check` passed. Owner checkout/demo/unrelated files preserved.
+- **Zero new live source HTTP requests** for this increment. No deployed smoke,
+  real platform/track verification, actual Wishlist Save or real-device check.

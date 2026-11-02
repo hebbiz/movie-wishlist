@@ -63,7 +63,8 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
       const result = await deadline.wait(signal => run({ imdbId: data.imdbId, tmdbToken: env('TMDB_READ_ACCESS_TOKEN'), motnKey: env('MOTN_API_KEY'),
         reserve: stage => rpc('reserve', { p_session: session.id, p_stage: stage }),
         fetchImpl: (url, init = {}) => deadline.wait(s => fetchImpl(url, { ...init, signal: AbortSignal.any([s, init.signal, signal].filter(Boolean)) }), { maxMs: deadline.remaining(), signal: init.signal ?? signal }),
-        resolver, signal, sourceCap }), { maxMs: deadline.remaining() });
+        resolver, signal, sourceCap, diagnostics: mediaCapabilities(session).mykola_media_advice_diagnostics,
+        diagnosticSecrets: [token, ...['SUPABASE_SERVICE_ROLE_KEY', 'TMDB_READ_ACCESS_TOKEN', 'MOTN_API_KEY', 'TAVILY_API_KEY'].map(env)].filter(Boolean) }), { maxMs: deadline.remaining() });
       const receipt = await finish(); // Revocation suppresses late results too.
       result.metrics ??= {};
       result.metrics.ledgerReservations = Array.isArray(receipt.attempts) ? receipt.attempts.length : null;
