@@ -5449,8 +5449,84 @@ dispatches count; there are no redirects, retries or automatic reruns. Credentia
 are entered once in the existing local hidden-prompt pattern, passed only over
 child stdin, and not written to disk, argv, logs or environment variables.
 
-Current-control execution and final validation are pending the one authorized
-credential entry. No live source request has been made for this implementation
-yet; the earlier single card GET above is accounted separately. No live source
-availability, offer entitlement, production migration, merge or deployment is
-claimed by authored offline passing cases.
+#### Current control results and limitations
+
+The owner ran the one-shot hidden prompt against implementation commit
+`72ea6edfd2d4639dba410865404c0fd4c569f57a` and supplied its safe diagnostic
+output. Local run `e1cdd854-afdf-4c60-8672-1a731cbc622b`, started
+2026-11-02T17:32:10.483Z, has no server build attestation (`buildSha:null`).
+The pasted middle of the JSON is incomplete; the complete query/candidate,
+read-card, counts and final projection fields below are present. Missing text
+is not reconstructed and is not a reason to rerun the search.
+
+| Actual Tavily POST query | Response query / request ID | Returned candidates, in source order |
+| --- | --- | --- |
+| `"Meet the Fockers" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers 2004`; `7b0eae3d-73cb-49f2-a3c9-83658abd007a` | `little-fockers`, `meet-the-parents`, `the-absent-minded-professor`, `snow-dogs`, `peeples` |
+| `"Meet the Fockers" "Знайомство з Факерами" "Jay Roach" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers Знайомство з Факерами Jay Roach 2004`; `36806962-addc-411b-9b12-745376c40429` | empty list |
+
+Each listed slug is an actual admitted `https://kinobazaua.com/titles/` URL,
+not an inferred URL. All five remained in that order under the **unchanged**
+ranking before each card read; the second read excludes the already read card.
+`meet-the-fockers` was absent from **both current responses**. Rearranging the
+returned candidates therefore could not find it in this run. A candidate URL
+is not identity proof and the three unread cards' actual contents are unknown.
+
+| Dispatched read | Actual source H1 / H2 | Outcome |
+| --- | --- | --- |
+| [little-fockers](https://kinobazaua.com/titles/little-fockers) | `Знайомство з Факерами 2 ( 2010 )` / `Little Fockers` | mismatch, `source-title-conflict`; original and year differ |
+| [meet-the-parents](https://kinobazaua.com/titles/meet-the-parents) | `Знайомство з батьками ( 2000 )` / `Meet the Parents` | mismatch, `source-title-conflict`; original and year differ even though director matches |
+
+The trusted TMDb projection reports movie 693, selected year 2004, original
+`Meet the Fockers`, director `tmdb:person` 6737 with `Джей Роуч` / `Jay Roach`,
+and 48 distinct title aliases. Both read cards have complete H1/H2 and
+`truncated:true` for the broader capture. The new `possibleIrrelevantSearch`
+section is present, with actual queries/correlation/addresses and both title
+refusals. This directly exercises the completeness separation without implying
+a proven provider defect. Ordinary Beta users still do not receive that section.
+
+Final current resolver status is `bounded-unresolved`, with **zero Kinobaza
+rows**, not a successful automatic discovery. The correct card was not read in
+this control; its new translation/director/language route is covered by authored
+tests, not claimed as a new live success. The response-query omission of quotes
+and `site:` is recorded literally; its cause or effect is not established.
+The two historical wrong cards recurring now does not reconstruct the old
+candidate list or prove why Tavily omitted the correct card.
+
+**Source accounting: 6 attempts, all HTTP200:** two TMDb film GETs, two Tavily
+POSTs, two Kinobaza card GETs. Optional person requests: zero. The prior
+investigation's single card GET is separate (seven current-source requests
+across the investigation plus this implementation control); historical runtime
+attempts are not replayed or charged again. No retries, redirects, platform
+navigation, MOTN, Watch Providers, Wishlist writes or additional live searches.
+
+No query/ranking change is included. The evidence establishes a current
+candidate-recall gap, but not a verified better replacement query. A next
+separate bounded comparison can test a less-constrained alternate/known-title
+query against the present combined second query, still within two slots and
+with independent card identity. Changing ranking alone cannot recover an
+absent pointer; no URL is prefilled to manufacture a success.
+
+#### Final checks
+
+- **456 targeted offline identity/resolver/extraction/diagnostic/control tests
+  passed**, no failures/skips. This includes all three Fockers parts,
+  same-title/different-year/person films, ID/canonical contradictions, original
+  and year requirements, missing/ambiguous directors, long aliases and prior
+  Gladiator II, Kong, Klaus-shaped and earlier control regressions. Fixtures
+  are authored, not retained live HTML or track/offer attestations.
+- **43 additional server/product/report tests passed**, no failures/skips:
+  Beta/diagnostic capability and revocation, search redaction, cap10 and
+  server-authorized projection. No shared database was accessed or changed.
+- **5 existing browser-suite tests passed**, no failures/skips: source-free
+  headless Edge with desktop/tablet/mobile viewports (1280×900, 820×1180,
+  375×812 and 420×912), protected versus ordinary report behavior, exact links,
+  local preview/explicit transfer and reopen without another discovery. These
+  are viewport simulations, not real iPhone/Safari checks or a Wishlist Save.
+- Independent review found first-anchor selection and same-name/different-person
+  pointer ambiguity; both were corrected and covered by five further negative
+  cases before the final 456-test run. `git diff --check` passed. Owner checkout,
+  demo and unrelated files remain unchanged.
+
+No production migration, flag/access operation, merge or deployment was run.
+Offline identity acceptance does not independently verify real availability,
+purchase/rental entitlement or platform language tracks.
