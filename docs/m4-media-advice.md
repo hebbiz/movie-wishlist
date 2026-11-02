@@ -21,6 +21,9 @@ The [Crimson Peak observations](#independent-localized-alternative-and-crimson-p
 remain historical experiment evidence, not a demonstrated root-cause fix.
 The [paired current-response control](#paired-crimson-peak-queryresponse-control--2026-11-02)
 now captures actual POST/response correspondence; no new runtime guard is enabled.
+Crimson Peak is recorded as an **unreproduced issue with an unestablished cause**.
+The [protected possible-relevance report](#protected-possible-search-relevance-report--2026-11-02)
+adds observation only, not a search/identity guard or a finding against Tavily.
 Gemini Google Search Grounding remains excluded from URL → HTML extraction.
 See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
@@ -5173,3 +5176,91 @@ busting, retries, query rewrites, stricter gates or budget increases on this
 evidence. No automatic feedback/support submission or account-log call occurred.
 Raw responses/keys remain unarchived; the credential process ended after the safe
 memory-only handoff. No merge or manual deployment was performed.
+
+### Protected possible-search relevance report — 2026-11-02
+
+Owner decision: **Crimson Peak is an unreproduced issue with an unestablished
+cause**, not a proved Tavily defect. The historical failures remain recorded
+above; neither the later successful develop report nor the paired local control
+reconstructs their missing request/response correlation. No historical query,
+request ID, URL list or response body is backfilled from a later run.
+
+The protected report now conditionally includes
+**«Можливо, нерелевантні результати пошуку»**. It appears only if **none of the
+actually requested cards is identity-matched** and at least one card has all of:
+
+- One unambiguously extracted H1 and original-title H2, within existing bounds.
+- Existing identity reason `source-title-conflict` and failed `heading-alias` gate.
+- Both existing title comparisons explicitly false against the trusted film's
+  known aliases, including the retained terminal Roman and Ukrainian г/ґ paths.
+
+This is a possible-relevance signal, not another identity decision or proof that
+the candidate is a different film. A known alternative/original title match,
+director-only or year-only refusal, conflicting ID, missing original title or
+ambiguous structure alone cannot trigger it. One confirmed card suppresses it
+even if another card is unrelated. Unparseable/ambiguous titles remain unknown;
+if another card supplies the qualifying signal, independently known single
+headings from a partially parsed card can still be reported without labelling
+that card a mismatch. A missing section is **not** assurance of relevant search.
+
+For such runs only, the report contains the trusted run film title/year/IMDb,
+each actual dispatched POST `query`, the available UUID-shaped Tavily
+`request_id` and returned `query`, and the read cards' bounded H1/H2, exact
+admitted title URL, identity status and allowlisted rejection reason. Actual
+query capture occurs at dispatch after reservation, not from the browser or a
+planned query. An unknown response field, unsupported identifier shape,
+unavailable title or redacted value is `unknown`. Undispatched candidates and
+denied card reservations do not become "read cards". The returned query is
+recorded as supplied: dropping quotes/site operators is not automatically
+classified as a wrong response or used to reject candidates.
+
+Authorization is server-side and unchanged: capture requires the diagnostic
+capability from the durable start receipt; returning the details additionally
+requires it in the final receipt. Ordinary Beta output uses the existing product
+allowlist and receives no resolver/correlation/card-title fields. Browser flags
+and Auth user metadata do not grant access. Revocation before completion strips
+the new diagnostic, and a late grant cannot recover uncaptured fields. The
+client report additionally checks the diagnostic capability and film-context
+binding. The section is plain report text, not an automatic navigation/action.
+
+The exception is restricted to bounded query/correlation/title fields and exact
+allowlisted card URLs. Credentials and credential-shaped/encoded echoes,
+arbitrary URLs, snippets, scores, generated answers, raw HTML/responses and
+untrusted error text are not included. Values stay in the existing in-memory
+form/result/report lifecycle; no log, ledger field, server archive, browser
+storage, report upload, migration or retention-policy change is introduced.
+
+Queries (including the restored second query), candidate ordering/deduplication,
+identity gates, extraction, ranking, link policy, reservations, cap8/cap10,
+timeouts and retry/redirect rules are unchanged. Gladiator II/Kong fixes remain
+in PR #222. No source request is added by this diagnostic. Validation for this
+increment uses authored fixtures and mocked HTTP only; these are not new live
+relevance or track-availability findings. No merge or deployment is authorized.
+
+Validation for this increment:
+
+- **439/439 targeted offline regressions passed**, no failures/skips: resolver,
+  query restoration/contextual years, title bridges, director identity and
+  allocation, extraction/pipeline/report, server authorization/product
+  projection and diagnostic redaction. This includes 30 new tests across
+  `media-search-relevance-diagnostic`, `media-advice-search-report` and
+  `media-advice-search-security`, not 30 additional live samples.
+- Diagnostic on/off parity preserves actual requests, order, reservations and
+  existing results. Authored cap8/cap10 full-handler cases each spend exactly
+  eight normal attempts (four baseline, two searches, two cards), no diagnostic
+  stage. Denied later reservations do not invent a read URL.
+- Alternate titles, known H2 despite unknown H1, director/year/ID-only refusals,
+  missing/duplicate/multiple headings and one matched card cannot generate the
+  signal alone. A mixed complete/partial case retains independently known text
+  without upgrading the partial card's conclusion.
+- **5/5 existing browser-suite tests passed**, no failures/skips: headless Edge
+  at 1280×900, 375×812, 420×912 and 820×1180. The added authored case checks the
+  protected section, exact selected text/unknowns, unavailable-clipboard manual
+  selection, no ordinary-Beta diagnostic bubble/payload, and report/reopen without
+  another discovery, navigation or write. These are viewport simulations, not
+  real iPhone/Safari testing.
+- Independent review found one missing-partial-title diagnostic issue, fixed
+  and covered before the final run; no remaining search/auth/budget issue found.
+  `git diff --check` passed. Owner checkout/demo/unrelated files preserved.
+- **Zero new live source HTTP requests** for this increment. No deployed smoke,
+  real platform/track verification, actual Wishlist Save or real-device check.

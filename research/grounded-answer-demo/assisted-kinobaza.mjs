@@ -66,8 +66,9 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
     if (status === 'matched' && !directorBypassed && crosswalk?.status === 'confirmed' && [...directors].some(d => !directDirectorAliases.has(normalize(d)))) {
       result.directorAliasEvidence = crosswalk.provenance;
     }
-    // Explicit local diagnostic hook only. Values are never attached to the
-    // normal result, report, ledger, log or a browser-controlled option.
+    // Explicit diagnostic hook, never a browser-controlled identity option.
+    // Normal products/ledger/logs exclude these values; the server-authorized
+    // possible-search report may project a bounded, sanitized title subset.
     if (typeof onIdentityDiagnostic === 'function') {
       const bounded = values => values.slice(0, 32).map(s => typeof s === 'string' ? s.slice(0,500) : null);
       try { onIdentityDiagnostic({ ...result, sourceURL, sourceIdentity: { h1: bounded(headings), h2: bounded(originals), year: parsed ? Number(parsed[2]) : null, directors: bounded([...directors]) },

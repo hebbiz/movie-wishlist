@@ -9,7 +9,7 @@ const val = f => f?.state === 'reported' ? f.value : null;
 const title = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s : null;
 
 // A single server request, no process-local session Map or shared chat state.
-export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetchImpl = fetch, resolver, signal, sourceCap = 8 }) {
+export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetchImpl = fetch, resolver, signal, sourceCap = 8, diagnostics = false, diagnosticSecrets = [] }) {
   if (![8, 10].includes(sourceCap)) throw Error('invalid-source-cap');
   const calls = [];
   const once = (stage, target) => async (url, init) => {
@@ -55,7 +55,8 @@ export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetch
   ]);
   const providers = b.status === 'ok' ? projectTmdbProvidersFor(b.data, film) : { status: b.status };
   const stages = { tmdb: { status: `A: ${detailsStatus}; B: ${providers.status}`, result: { identity: projection, providers } }, motn: { status: motn.status, result: motn }, kinobaza: { status: 'not-evaluated-resolver-deferred', result: null } };
-  if (resolver && projection?.identity?.status === 'matched') stages.kinobaza = await resolver(film, { reserve, fetchImpl, calls, signal, sourceCap, tmdbToken });
+  if (resolver && projection?.identity?.status === 'matched') stages.kinobaza = await resolver(film, { reserve, fetchImpl, calls, signal, sourceCap, tmdbToken,
+    ...(diagnostics === true ? { diagnostics: true, diagnosticSecrets: [tmdbToken, motnKey, ...diagnosticSecrets].filter(Boolean) } : {}) });
   const result = composeDiscovery(film, stages, { sourceURLs: { tmdb: providersURL, motn: motnURL }, metrics: { requestsMade: calls.length, requestBudget: resolver ? sourceCap : 4, calls } });
   result.resolver = stages.kinobaza.resolver ?? null;
   result.cardChoices = (stages.kinobaza.choices ?? []).map((card, index) => {

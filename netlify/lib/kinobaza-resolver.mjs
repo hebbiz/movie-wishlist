@@ -5,6 +5,7 @@ import { initialReleaseEvidence } from '../../shared/film-release-year.mjs';
 import { createDirectorVerifier } from './kinobaza-director-verifier.mjs';
 import { safeDirectorProfileDiagnostic } from '../../shared/director-profile-diagnostics.mjs';
 import { selectDirectorCandidates } from './director-candidate-selection.mjs';
+import { possibleIrrelevantSearch, safeSearchCorrelation } from '../../shared/media-search-relevance-diagnostic.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
 const titleNames = film => {
@@ -94,7 +95,7 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
     accepts(url, init) {
       return url === ENDPOINT && init?.method === 'POST' && init.redirect === 'manual' && init.credentials === 'omit';
     },
-    async search(query, { signal } = {}) {
+    async search(query, { signal, diagnostics = false, diagnosticSecrets = [] } = {}) {
       if (!apiKey || /\s/.test(apiKey)) return { status: 'missing-or-invalid-search-key', urls: [] };
       if (signal?.aborted) return { status: 'search-timeout-no-retry', urls: [] };
       const payload = { query, search_depth: 'basic', topic: 'general', max_results: 5,
@@ -120,8 +121,9 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
         const body = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
         if (body.includes(apiKey)) return { status: 'unsafe-source-content-withheld', urls: [] };
         const data = JSON.parse(body);
-        // Only results[].url crosses the provider boundary. Missing/malformed
-        // results is not a successful empty search. Content/score are discarded.
+        // Only results[].url informs candidates; privileged bounded correlation
+        // is observational only. Missing/malformed results is not a successful
+        // empty search. Content/score are discarded.
         const valid = data && !Array.isArray(data) && Array.isArray(data.results) && data.results.length <= 5 &&
           data.results.every(item => item && typeof item === 'object' && !Array.isArray(item) && typeof item.url === 'string');
         const accepted = valid ? candidateDiagnostics(data.results) : null;
@@ -131,7 +133,9 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
         if (accepted && typeof onCandidateURLs === 'function') {
           try { onCandidateURLs(data.results.map(item => item.url)); } catch {}
         }
-        return accepted ? { status: 'ok', urls: accepted.urls, diagnostics: accepted.diagnostics } : { status: 'search-invalid-response', urls: [] };
+        const correlation = diagnostics === true ? { correlation: safeSearchCorrelation({ query: payload.query,
+          requestId: data?.request_id, responseQuery: data?.query }, { secrets: [apiKey, ...diagnosticSecrets] }) } : {};
+        return accepted ? { status: 'ok', urls: accepted.urls, diagnostics: accepted.diagnostics, ...correlation } : { status: 'search-invalid-response', urls: [], ...correlation };
       } catch { if (reader) void reader.cancel().catch(() => {}); return { status: combined.aborted ? 'search-timeout-no-retry' : 'search-transport-or-json-error', urls: [] }; }
       finally { clearTimeout(timer); }
     },
@@ -139,8 +143,15 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
 }
 
 export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, onIdentityDiagnostic } = {}) {
-  return async (film, { reserve, fetchImpl, calls, signal, sourceCap = 8, tmdbToken }) => {
+  return async (film, { reserve, fetchImpl, calls, signal, sourceCap = 8, tmdbToken, diagnostics = false, diagnosticSecrets = [] }) => {
     const queries = resolverQueries(film), cards = [], deferred = [], urls = new Set(), examined = new Set();
+    const capture = diagnostics === true, searchObservations = [], cardObservations = new Map(), readCards = [];
+    const secrets = [apiKey, tmdbToken, ...diagnosticSecrets].filter(s => typeof s === 'string' && s);
+    const observeIdentity = capture ? diagnostic => {
+      if (readCards.includes(diagnostic.sourceURL)) cardObservations.set(diagnostic.sourceURL, {
+        truncated: diagnostic.truncated, sourceIdentity: { h1: diagnostic.sourceIdentity?.h1?.slice(0, 2), h2: diagnostic.sourceIdentity?.h2?.slice(0, 2) } });
+      if (typeof onIdentityDiagnostic === 'function') onIdentityDiagnostic(diagnostic);
+    } : onIdentityDiagnostic;
     const director = createDirectorVerifier({film,tmdbToken,sourceCap,reserve,fetchImpl,calls,signal});
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
     let selection, alternateFailure;
@@ -150,6 +161,11 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         ...(selection ? {selection:selection.diagnostic} : {}),
         ...(selection?.ambiguous ? {status:'unresolved',reason:'director-profile-candidates-ambiguous'} : {})});
       for (const pending of deferred) pending.dispose();
+      if (capture) {
+        const possible = possibleIrrelevantSearch({ film, searches: searchObservations,
+          cards: cards.map((result, index) => ({ result, url: readCards[index] })).filter(card => typeof card.url === 'string'), observations: cardObservations }, { secrets });
+        if (possible) summary.possibleIrrelevantSearch = possible;
+      }
       summary.status = resolverStatuses.has(status) ? status : 'unknown'; return { status, result, choices, resolver: summary };
     };
     const cardSummary = (result, cardRef) => ({ identity: result.identity?.status ?? 'unresolved', reason: result.identity?.reason ?? null,
@@ -159,19 +175,23 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         blockCount:result.localization?.blocks?.length ?? 0,filmAudioState:result.localization?.film?.ukrainianAudio?.state}) });
     if (!apiKey) return done('not-evaluated-missing-search-key');
     if (!queries.length) return done('not-evaluated-no-established-title');
-    let activeProvider;
+    let activeProvider, sentSearchQuery;
     const searchFetch = async (url, init) => {
       const stage = `search-${summary.searchCalls + 1}`;
       if (summary.searchCalls >= 2 || signal?.aborted || activeProvider?.accepts?.(url, init) !== true) throw Error('search-boundary');
       await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
       summary.searchCalls++; const call = { stage, status: 'attempt-reserved' }; calls.push(call);
+      if (capture) { try { sentSearchQuery = JSON.parse(init.body)?.query; } catch { sentSearchQuery = null; } }
       try { const r = await fetchImpl(url, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('search-transport'); }
     };
     const provider = searchFactory(apiKey, searchFetch); let nextQuery = 0;
     const searchNext = async (afterIdentityRefusal = false) => {
       activeProvider = provider;
       const query = afterIdentityRefusal ? resolverRefusalQuery(film) : queries[nextQuery]; nextQuery++;
-      const found = await activeProvider.search(query, { signal });
+      sentSearchQuery = null;
+      const found = await activeProvider.search(query, { signal, ...(capture ? { diagnostics: true, diagnosticSecrets: secrets } : {}) });
+      if (capture) searchObservations.push(safeSearchCorrelation({ query: sentSearchQuery,
+        requestId: found.correlation?.requestId, responseQuery: found.correlation?.responseQuery }, { secrets }));
       summary.searches.push({ ...safeSearchDiagnostic(found.status, found.diagnostics), provider: 'tavily' });
       if (found.status === 'ok') for (const url of (found.urls ?? []).map(admitKinobazaURL).filter(Boolean)) urls.add(url);
       return found.status;
@@ -192,10 +212,11 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         if (target !== url || !admitKinobazaURL(target) || signal?.aborted || init.method !== 'GET' || init.redirect !== 'manual' || calls.some(c => c.stage === stage)) throw Error('card-boundary');
         await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
         summary.cardCalls++; examined.add(url); const call = { stage, status: 'attempt-reserved' }; calls.push(call);
+        if (capture) readCards[index] = url;
         try { const r = await fetchImpl(target, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('card-transport'); }
       };
       const index = cards.length;
-      const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic,
+      const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic: observeIdentity,
         ...(sourceCap === 10 ? {verifyDirector:director.verify,onDeferredDirector:pending => deferred.push({...pending,index})} : {}) });
       cards.push(result);
       summary.cards.push(cardSummary(result,
