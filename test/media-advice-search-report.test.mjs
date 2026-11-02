@@ -124,14 +124,14 @@ test('protected report retains the third reserve mode/card/stage while rejecting
   result.metrics = { requestsMade: 12, requestBudget: 12, ledgerReservations: 12,
     calls: [{ stage: 'search-3' }, { stage: 'kinobaza-3' }] };
   result.resolver.searches = [0,1,2].map(i => ({ status:'ok', returned:1, admitted:1, rejected:0, duplicates:0,
-    rejectionCategories:{}, provider:'tavily', ...(i === 2 ? {mode:'reserve-exact',exactMatch:true} : {}) }));
+    rejectionCategories:{}, provider:'tavily', ...(i === 2 ? {mode:'reserve-exact',exactMatch:true,searchDepth:'advanced'} : {}) }));
   result.resolver.cards = [0,1,2].map(() => ({ identity:'mismatch', reason:'source-title-conflict', cardRef:'a'.repeat(64) }));
   const report = safeMediaReport(result);
   assert.match(report, /Source HTTP attempts: 12\/12/);
   assert.match(report, /search-3: 1 reserved/); assert.match(report, /kinobaza-3: 1 reserved/);
   assert.equal((report.match(/^Search [123]:/gm) ?? []).length,3);
   assert.equal((report.match(/^Card:/gm) ?? []).length,3);
-  assert.match(report,/Reserve search: Tavily exact_match true; candidate discovery only, not film identity proof/);
+  assert.match(report,/Reserve search: Tavily exact_match true; depth advanced; candidate discovery only, not film identity proof/);
   result.resolver.searches[2].mode = 'PRIVATE_MODE';
   assert.doesNotMatch(safeMediaReport(result), /PRIVATE_MODE|Reserve search:/);
 });

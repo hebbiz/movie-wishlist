@@ -52,28 +52,30 @@ async function run({ sourceCap = 12, searches = [[URLS[0], URLS[1]], [], [URLS[2
   return { out, calls, requests, reserved, payloads };
 }
 
-test('the reserve query quotes only the established original title and retains domain/year/director context', () => {
-  assert.equal(resolverReserveQuery(FILM), '"Authored original" 2001 Authored Director site:kinobazaua.com/titles/');
+test('the reserve query quotes only the established original title with year/domain, never a director', () => {
+  assert.equal(resolverReserveQuery(FILM), '"Authored original" 2001 site:kinobazaua.com/titles/');
   assert.equal(resolverReserveQuery({ ...FILM, directorCount: 2 }), '"Authored original" 2001 site:kinobazaua.com/titles/');
   assert.equal(resolverReserveQuery({ ...FILM, originalTitle: '' }), null);
-  assert.equal(resolverReserveQuery({ ...FILM, originalTitle: 'Authored "quoted"\\title' }), '"Authored  quoted  title" 2001 Authored Director site:kinobazaua.com/titles/');
+  assert.equal(resolverReserveQuery({ ...FILM, originalTitle: 'Authored "quoted"\\title' }), '"Authored  quoted  title" 2001 site:kinobazaua.com/titles/');
   const long = { ...FILM, originalTitle: 'a'.repeat(500), directorPeople: [{ names: ['D'.repeat(500)] }] };
   assert.equal(resolverReserveQuery(long), '"' + 'a'.repeat(500) + '" 2001 site:kinobazaua.com/titles/');
   assert.ok(resolverReserveQuery(long).length <= 550);
 });
 
-test('reserve exact_match is absent from both existing payloads and true only on search-3 after two refused cards', async () => {
+test('only reserve search-3 uses Advanced exact_match; both existing Basic payloads remain unchanged', async () => {
   const result = await run();
   assert.deepEqual(result.payloads.map(p => p.query), [resolverQueries(FILM)[0], resolverRefusalQuery(FILM), resolverReserveQuery(FILM)]);
   assert.deepEqual(result.payloads.map(p => Object.hasOwn(p, 'exact_match') ? p.exact_match : null), [null, null, true]);
-  for (const payload of result.payloads) assert.deepEqual(Object.fromEntries(Object.entries(payload).filter(([key]) => !['query', 'exact_match'].includes(key))), {
-    search_depth: 'basic', topic: 'general', max_results: 5, auto_parameters: false,
+  assert.deepEqual(result.payloads.map(p => p.search_depth), ['basic', 'basic', 'advanced']);
+  for (const payload of result.payloads) assert.deepEqual(Object.fromEntries(Object.entries(payload).filter(([key]) => !['query', 'exact_match', 'search_depth'].includes(key))), {
+    topic: 'general', max_results: 5, auto_parameters: false,
     include_answer: false, include_raw_content: false, include_images: false,
     include_favicon: false, include_usage: false, include_domains: ['kinobazaua.com'], include_domains_mode: 'restrict' });
   assert.deepEqual(result.reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2', 'search-3', 'kinobaza-3']);
   assert.equal(result.out.result.sourceURL, URLS[2]); assert.equal(result.out.result.identity.status, 'matched');
   assert.ok(result.out.result.candidates.length > 0); assert.equal(result.calls.length, 10);
   assert.deepEqual(result.out.resolver.searches.map(search => [search.provider, search.exactMatch ?? false]), [['tavily', false], ['tavily', false], ['tavily', true]]);
+  assert.equal(result.out.resolver.searches[2].searchDepth, 'advanced');
 });
 
 test('a matched first or second card never triggers reserve or changes the first-two read order', async () => {
@@ -89,6 +91,7 @@ test('legacy cap8/cap10 preserve two-search/two-card behavior and cannot acquire
   for (const sourceCap of [8, 10]) {
     const result = await run({ sourceCap });
     assert.equal(result.out.result, null); assert.equal(result.payloads.length, 2); assert.equal(result.out.resolver.cardCalls, 2);
+    assert.ok(result.payloads.every(payload => payload.search_depth === 'basic' && !Object.hasOwn(payload, 'exact_match')));
     assert.deepEqual(result.reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']); assert.equal(result.calls.length, 8);
   }
 });
@@ -261,4 +264,12 @@ test('the adapter never makes exact mode true for false, string, or missing opti
   const provider = tavilySearch(KEY, async (_url, init) => { payloads.push(JSON.parse(init.body)); return Response.json({ results: [] }); });
   for (const exactMatch of [undefined, false, 'true', 1, true]) await provider.search('"Authored original" 2001', { exactMatch });
   assert.deepEqual(payloads.map(payload => payload.exact_match ?? null), [null, null, null, null, true]);
+});
+
+test('only the explicit advanced depth changes the adapter default; unknown depth never enables auto parameters', async () => {
+  const payloads = [];
+  const provider = tavilySearch(KEY, async (_url, init) => { payloads.push(JSON.parse(init.body)); return Response.json({ results: [] }); });
+  for (const searchDepth of [undefined, 'basic', 'advanced', true, 'ADVANCED', 'unknown']) await provider.search('"Authored original" 2001', { searchDepth });
+  assert.deepEqual(payloads.map(payload => payload.search_depth), ['basic', 'basic', 'advanced', 'basic', 'basic', 'basic']);
+  assert.ok(payloads.every(payload => payload.auto_parameters === false && payload.include_usage === false));
 });

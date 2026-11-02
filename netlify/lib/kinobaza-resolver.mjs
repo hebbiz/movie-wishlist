@@ -56,19 +56,13 @@ export function resolverRefusalQuery(film) {
   return query.length <= maximum ? query : resolverQueries(film)[1];
 }
 // A separately budgeted reserve stage, not a replacement for either established
-// query. Only the verified original title is an exact phrase. Year/director are
-// context, not required quoted spellings (the source may localize the person).
+// query. Only the verified original title is an exact phrase; the selected year
+// is context. Director evidence remains an identity gate, not reserve search text.
 export function resolverReserveQuery(film) {
   const original = text(film.originalTitle);
   if (!original) return null;
-  const person = film.directorCount === 1 && film.directorPeople?.length === 1 ? film.directorPeople[0] : null;
-  const director = person?.names?.map(text).find(name => /^[\p{Script=Latin}\p{M} .,'’()-]+$/u.test(name));
   const clean = value => value.replace(/["\\]/g, ' ');
-  const parts = ['"' + clean(original) + '"', Number.isInteger(film.year) ? film.year : '', director ? clean(director) : '', 'site:kinobazaua.com/titles/'];
-  const query = parts.filter(Boolean).join(' ');
-  // Keep established text whole. If optional director context would exceed the
-  // existing contextual query bound, omit it rather than truncate a name.
-  return query.length <= 550 ? query : parts.filter((part, index) => part && index !== 2).join(' ');
+  return ['"' + clean(original) + '"', Number.isInteger(film.year) ? film.year : '', 'site:kinobazaua.com/titles/'].filter(Boolean).join(' ');
 }
 // Existing admitted pointers only: a matching slug changes read order, never
 // supplies identity evidence or a generated URL. Ties retain search order.
@@ -110,10 +104,10 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
     accepts(url, init) {
       return url === ENDPOINT && init?.method === 'POST' && init.redirect === 'manual' && init.credentials === 'omit';
     },
-    async search(query, { signal, diagnostics = false, diagnosticSecrets = [], exactMatch = false } = {}) {
+    async search(query, { signal, diagnostics = false, diagnosticSecrets = [], exactMatch = false, searchDepth = 'basic' } = {}) {
       if (!apiKey || /\s/.test(apiKey)) return { status: 'missing-or-invalid-search-key', urls: [] };
       if (signal?.aborted) return { status: 'search-timeout-no-retry', urls: [] };
-      const payload = { query, search_depth: 'basic', topic: 'general', max_results: 5,
+      const payload = { query, search_depth: searchDepth === 'advanced' ? 'advanced' : 'basic', topic: 'general', max_results: 5,
         auto_parameters: false, include_answer: false, include_raw_content: false,
         include_images: false, include_favicon: false, include_usage: false,
         include_domains: ['kinobazaua.com'], include_domains_mode: 'restrict', ...(exactMatch === true ? { exact_match: true } : {}) };
@@ -211,10 +205,10 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
       const query = exactReserve ? resolverReserveQuery(film) : afterIdentityRefusal ? resolverRefusalQuery(film) : queries[nextQuery];
       if (!exactReserve) nextQuery++;
       sentSearchQuery = null;
-      const found = await activeProvider.search(query, { signal, ...(exactReserve ? { exactMatch: true } : {}), ...(capture ? { diagnostics: true, diagnosticSecrets: secrets } : {}) });
+      const found = await activeProvider.search(query, { signal, ...(exactReserve ? { exactMatch: true, searchDepth: 'advanced' } : {}), ...(capture ? { diagnostics: true, diagnosticSecrets: secrets } : {}) });
       if (capture) searchObservations.push(safeSearchCorrelation({ query: sentSearchQuery,
         requestId: found.correlation?.requestId, responseQuery: found.correlation?.responseQuery }, { secrets }));
-      summary.searches.push({ ...safeSearchDiagnostic(found.status, found.diagnostics), provider: 'tavily', ...(exactReserve ? { mode: 'reserve-exact', exactMatch: true } : {}) });
+      summary.searches.push({ ...safeSearchDiagnostic(found.status, found.diagnostics), provider: 'tavily', ...(exactReserve ? { mode: 'reserve-exact', exactMatch: true, searchDepth: 'advanced' } : {}) });
       if (found.status === 'ok') for (const url of (found.urls ?? []).map(admitKinobazaURL).filter(Boolean)) urls.add(url);
       else sourceFailure = true;
       return found;

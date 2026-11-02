@@ -266,7 +266,8 @@ test('server-authorized cap12 completes third search/card/person proof in twelve
       if(url==='https://api.tavily.com/search'){
         const body=JSON.parse(init.body);searches++;
         assert.equal(body.exact_match,searches===3?true:undefined);assert.equal(body.include_domains_mode,'restrict');
-        if(searches===3){assert.match(body.query,/^"Authored original" 2001 Authored director site:/);assert.equal(cap,12);}
+        assert.equal(body.search_depth,searches===3?'advanced':'basic');
+        if(searches===3){assert.equal(body.query,'"Authored original" 2001 site:kinobazaua.com/titles/');assert.equal(cap,12);}
         return Response.json({query:body.query,request_id:'a0000000-0000-4000-8000-000000000001',results:[{url:pointers[searches-1],content:'PRIVATE_SEARCH_SNIPPET'}]});
       }
       if(pointers.includes(url))return new Response(markup({url,...(url===pointers[2]?{director:`<a href="/persons/authored-director">${alias}</a>`}:{title:'Different authored title',original:'Different authored original'})}),{headers:{'content-type':'text/html'}});
@@ -284,6 +285,7 @@ test('server-authorized cap12 completes third search/card/person proof in twelve
       assert.equal(payload.result.resolver.cardCalls,cap===12?3:2);
       if(cap===12){
         assert.deepEqual(reserved,stages);assert.equal(payload.result.resolver.searches[2].mode,'reserve-exact');assert.equal(payload.result.resolver.searches[2].exactMatch,true);
+        assert.equal(payload.result.resolver.searches[2].searchDepth,'advanced');
         assert.equal(payload.result.resolver.cards[2].identity,'matched');assert.equal(payload.result.resolver.directorProfile.sourceAttempts,2);
         assert.deepEqual(payload.result.resolver.directorProfile.selection.selectedCards,[3]);
       }

@@ -158,7 +158,7 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
     const d = safeSearchDiagnostic(s.status, s);
     const provider = ['tavily','kinobaza-public-search'].includes(s.provider) ? s.provider : 'unknown';
     lines.push(`Search ${index + 1}: ${d.status}; ${d.outcome}; returned ${d.returned ?? 'unknown'}, admitted ${d.admitted ?? 'unknown'}, rejected ${d.rejected ?? 'unknown'}, duplicates ${d.duplicates ?? 'unknown'}; rejection categories ${JSON.stringify(d.rejectionCategories)}; provider ${provider}.`);
-    if (s.mode === 'reserve-exact' && s.exactMatch === true) lines.push('Reserve search: Tavily exact_match true; candidate discovery only, not film identity proof.');
+    if (s.mode === 'reserve-exact' && s.exactMatch === true) lines.push(`Reserve search: Tavily exact_match true; depth ${s.searchDepth === 'advanced' ? 'advanced' : 'unknown'}; candidate discovery only, not film identity proof.`);
   }
   for (const card of result?.resolver?.cards?.slice(0,3) ?? []) {
     const d = safeIdentityDiagnostic(card.diagnostics);

@@ -9,9 +9,12 @@ updated with merged #217. Later authorized execution:
 The preparation/execution records below are dated evidence, not a live-state
 assertion. PR#220's additional preparation does not authorize deployment,
 migrations or activation; its current scope is recorded at the end of this file.
-Current branch search strategy: **Tavily basic Search**, candidate URLs only,
+Current branch search strategy: **two unchanged Tavily Basic slots, then one
+Advanced exact-match reserve if the complete earlier path fails**, candidate URLs only,
 with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
-not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
+not Kinobaza `/search`. The reserve uses original title and selected year,
+without a director name: [Advanced reserve update](#advanced-reserve-search-update--2026-11-02).
+[Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
 remain historical evidence;
 this is not catalogue-wide accuracy, track verification or new activation approval.
 The contextual second slot again combines the established primary/alternate
@@ -5611,9 +5614,11 @@ opportunities and independent identity/link gates remain unchanged.
   +3 Tavily +3 title cards +the same2 person requests**. No per-user search-count
   quota, new person pair, fourth search/card or automatic retry is introduced.
 - After the whole first-two path, including available deferred person proof,
-  yields no matched card, reserve `search-3` before one Tavily basic POST with
+  yields no matched card, reserve `search-3` before one Tavily Advanced POST with
   `exact_match:true`. Only the trusted original title is quoted; selected TMDb
-  year and an established Latin director name are unquoted context. Escaping,
+  year is unquoted context and no director name is added. This is the later
+  [Advanced update](#advanced-reserve-search-update--2026-11-02); earlier Basic
+  measurements below retain their original settings. Escaping,
   text bounds, domain restriction and `/titles/` scope remain. The original two
   search payloads do not acquire `exact_match` or a different query.
 - At least two source attempts and unexpired source time must remain before
@@ -6030,3 +6035,78 @@ Application/browser/SQL suites were not rerun for this evidence-only edit;
 their previously recorded results above are not new live evidence. Only this
 documentation and the PR report change. No migration, search/identity change,
 merge, deployment, feature/access operation or Wishlist write was performed.
+
+### Advanced reserve search update — 2026-11-02
+
+The owner authorized replacing only the reserve stage's search settings after
+the completed Basic pair above. This is an explicit product decision, not a
+claim that the pair proved causality, a cache failure or Advanced recall.
+
+- `search-1` and `search-2` keep their existing text, selected/premiere-year
+  contexts, Basic payloads, URL admission, candidate order and card opportunities.
+- When the complete old path (including any eligible linked-person proof)
+  fails to confirm a card, `search-3` uses `search_depth:advanced` and
+  `exact_match:true`. Query: quoted verified original title, selected TMDb year,
+  `site:kinobazaua.com/titles/`; no director or extra localized title is required.
+  For Meet the Fockers: `"Meet the Fockers" 2004 site:kinobazaua.com/titles/`.
+- The adapter's default stays Basic. Only the explicit server-owned reserve
+  call opts into Advanced; unknown depth values do not enable it. All remaining
+  request parameters, including `auto_parameters:false` and `include_usage:false`,
+  are unchanged. The latter keeps both earlier payloads byte-for-byte compatible;
+  actual account charges must not be inferred when usage is absent.
+- The Advanced response remains candidate discovery only. A third GET must be
+  admitted, unread and present in that reserve response. URL parameters are not
+  stripped, a known slug is not supplied, and the original/title/year/director,
+  stable-ID conflict and ambiguity gates still decide whether claims survive.
+  Withholding, language binding, links and preview/transfer/Save are unchanged.
+- **12 HTTP attempts remain the ceiling**, not12 credits:4 baseline +3 searches
+  +3 title cards +one existing person pair. A failed search or reservation is not
+  retried. The existing45/53/55-second deadlines and15-second search bound are
+  unchanged; Advanced does not buy additional time or a fourth candidate read.
+- cap8/cap10 retain their Basic-only first-two behavior. The existing prepared
+  `reserve-exact-v1` negotiation and migration file are unchanged; no new SQL
+  stage, database operation or live migration is required for changing depth.
+  The prepared cap12 migration still has **not** been applied.
+- Only authorized diagnostics identify the reserve depth. Ordinary Beta results
+  gain no search metadata or new diagnostic access.
+
+According to the current [Tavily credits documentation](https://docs.tavily.com/documentation/api-credits),
+Basic costs1 credit per search and Advanced costs2. Therefore the maximum
+documented search cost for a successful full three-search path is **4 credits
+(2 Basic +2 Advanced)**, instead of3 for the previous all-Basic path. This is a
+depth-rate calculation, not an account invoice, confirmation of error charging
+or a claim about available Researcher balance. No automatic tier/payment change
+or quota waiver is made. [Search API reference](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+describes usage as optional; absent/malformed usage remains unknown.
+
+The local source-only control now records actual outbound Basic/Advanced depth,
+per-search elapsed time, documented-rate credits and separately allowlisted
+numeric `usage.credits` if returned. RAM cap10 replay is explicitly excluded from
+HTTP and credit counts. Times include local response inspection; they are not
+production end-to-end latency. Prior Basic runs and the earlier paired result
+are not relabeled as Advanced or counted as new live evidence.
+
+Live validation is pending one new, separately guarded four-film series:
+Meet the Fockers, Alien, Dune: Part Two and Kong. It uses the current resolver
+without prefilled card URLs and observes URL → admission → card read → identity
+→ gated language/link projection. Two Providers/MOTN baseline slots are reserved
+as headroom but not dispatched; every actual source attempt is counted. A found
+URL alone is not success. If the target is absent or a gate fails, the report
+must retain that outcome rather than manufacture a full-path success.
+
+Prepared validation:682 non-browser/non-native tests in `test/` plus206
+HTML/localization/discovery/matching tests passed (**888 offline**, zero failures
+or skips). After adding explicit per-depth accounting and byte-for-byte legacy
+payload assertions, the affected60-test subset passed again; it is included in,
+not added to, the888. Four separate outside-repository wrapper safety tests also
+passed without HTTP: fixed film scope, checkpoint/one-shot report, auth stop,
+Advanced reserve and RAM-only comparison. Independent runtime/compatibility review
+found no blocking issue. Native PostgreSQL tests have not been rerun for this
+depth-only change; the prepared migration bytes are unchanged.
+
+Source-free headless Edge browser regression: **35/35 passed**, zero failures or
+skips, with external network blocked. It covers desktop1280×900, tablet820×1180,
+iPhone-X-size375×812 and Air-size420×912, form preview/explicit local transfer,
+report access/revocation, pending selection, retained/stale results, context
+boundaries and no discovery replay. These are viewport emulations, not real
+iPhone/Safari tests or a real Wishlist Save. The live source pass remains pending.

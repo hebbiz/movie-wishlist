@@ -28,6 +28,39 @@ const val = field => field?.state === 'reported' ? field.value : null;
 const caps = Object.freeze({ tmdb:2, search:2, cards:2, tmdbPerson:1, kinobazaPerson:1, total:10 });
 const safeKey = value => typeof value === 'string' && value.length > 0 && value.length <= 4096 && !/[\s\p{C}]/u.test(value);
 const safeCode = value => typeof value === 'string' && /^[a-z0-9-]{1,120}$/.test(value) ? value : null;
+// Tavily's documented depth rates, not a claim about charges for a particular
+// failed call or account invoice. Actual response usage stays separate/unknown.
+const declaredDepthCredits=Object.freeze({basic:1,advanced:2});
+function requestAccounting(body){
+  let payload;try{payload=JSON.parse(body);}catch{}
+  const searchDepth=typeof payload?.search_depth==='string'&&Object.hasOwn(declaredDepthCredits,payload.search_depth)?payload.search_depth:'unknown';
+  return {searchDepth,declaredCreditsPerRequest:declaredDepthCredits[searchDepth]??null,
+    mode:payload?.exact_match===true?'reserve-exact':'normal',exactMatch:payload?.exact_match===true};
+}
+function returnedAccounting(data){
+  const usage=data?.usage,credits=usage?.credits;
+  const valid=typeof credits==='number'&&Number.isFinite(credits)&&credits>=0&&credits<=1000;
+  const invalid=usage!==undefined&&usage!==null&&(!usage||typeof usage!=='object'||Array.isArray(usage)||credits!==undefined&&credits!==null&&!valid);
+  const responseTime=data?.response_time;
+  return {returnedUsage:{state:valid?'reported':invalid?'invalid':'not-returned',credits:valid?credits:null},
+    providerResponseTimeSeconds:typeof responseTime==='number'&&Number.isFinite(responseTime)&&responseTime>=0&&responseTime<=3600?responseTime:null};
+}
+function summarizeTavily(searches){
+  const depthAttempts={basic:0,advanced:0,unknown:0};let knownCredits=0,reportedRequests=0,reportedCredits=0,elapsedMs=0;
+  for(const search of searches){const depth=Object.hasOwn(depthAttempts,search.searchDepth??'')?search.searchDepth:'unknown';depthAttempts[depth]++;
+    knownCredits+=declaredDepthCredits[depth]??0;if(search.returnedUsage?.state==='reported'){reportedRequests++;reportedCredits+=search.returnedUsage.credits;}
+    if(Number.isFinite(search.elapsedMs))elapsedMs+=search.elapsedMs;}
+  const depthAccounting=Object.fromEntries(Object.entries(depthAttempts).map(([depth,attempts])=>{
+    const entries=searches.filter(search=>(Object.hasOwn(depthAttempts,search.searchDepth??'')?search.searchDepth:'unknown')===depth),reported=entries.filter(search=>search.returnedUsage?.state==='reported');
+    return [depth,{attempts,declaredCreditsSubtotal:declaredDepthCredits[depth]===undefined?null:attempts*declaredDepthCredits[depth],
+      elapsedMs:entries.reduce((sum,search)=>sum+(Number.isFinite(search.elapsedMs)?search.elapsedMs:0),0),
+      returnedUsage:{reportedRequests:reported.length,unknownRequests:attempts-reported.length,reportedCreditsSubtotal:reported.reduce((sum,search)=>sum+search.returnedUsage.credits,0),complete:reported.length===attempts}}];
+  }));
+  return {scope:'actual-source-http-attempts-only-replay-excluded',attempts:searches.length,depthAttempts,depthAccounting,
+    declaredCredits:{basis:'documented-depth-rate-not-billed-usage',knownSubtotal:knownCredits,total:depthAttempts.unknown?null:knownCredits},
+    returnedUsage:{reportedRequests,unknownRequests:searches.length-reportedRequests,reportedCreditsSubtotal:reportedCredits,complete:reportedRequests===searches.length},
+    elapsedMs};
+}
 function literal(value, secrets) {
   return typeof value === 'string' && value.trim() && value.length <= 500 && !/[\p{C}<>]/u.test(value) &&
     !/https?:|\b(?:authorization|bearer|api[_ -]?key|token|password|secret)\s*[=: ]/i.test(value) &&
@@ -36,7 +69,8 @@ function literal(value, secrets) {
 // Read a clone only; leave the original adapter body/decision intact. A local
 // observation failure does not authorize another request or change admission.
 async function searchObservation(response, query, secrets, signal) {
-  const observation = { ...safeSearchCorrelation({ query }, { secrets }), returnedURLs:[], responseObservation:'unknown' };
+  const observation = { ...safeSearchCorrelation({ query }, { secrets }), returnedURLs:[], responseObservation:'unknown',
+    returnedUsage:{state:'unavailable',credits:null},providerResponseTimeSeconds:null };
   if (!response.ok || !/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type') ?? '') || !response.body ||
       Number(response.headers.get('content-length')) > 512 * 1024) return observation;
   let reader;try{reader=response.clone().body.getReader();}catch{return observation;}
@@ -53,10 +87,11 @@ async function searchObservation(response, query, secrets, signal) {
     if (secrets.some(secret => body.includes(secret))) return { ...observation, responseObservation:'unsafe-source-content-withheld' };
     const data = JSON.parse(body);
     const valid = data && !Array.isArray(data) && Array.isArray(data.results) && data.results.length <= 5 && data.results.every(item => item && !Array.isArray(item) && typeof item.url === 'string');
-    if (!valid) return observation;
+    const accounting=returnedAccounting(data);
+    if (!valid) return {...observation,...accounting};
     return { ...safeSearchCorrelation({query,requestId:data.request_id,responseQuery:data.query},{secrets}),
       returnedURLs:data.results.map((item,index) => ({ index:index+1,url:safeSearchCardURL(item.url,{secrets}), admitted:admitKinobazaURL(item.url)!==null })),
-      responseObservation:'bounded-current-response' };
+      responseObservation:'bounded-current-response',...accounting };
   } catch { return observation; }
   finally { void reader.cancel().catch(()=>{}); for (const chunk of chunks) chunk.fill(0); }
 }
@@ -90,7 +125,7 @@ async function filmControl({tmdbToken,tavilyKey}, fetchImpl, control, {sourceCap
   const started = performance.now(), signal = AbortSignal.timeout(sourceDeadlineMs), secrets=[tmdbToken,tavilyKey].filter(safeKey);
   if(compareCap10)result.sourceDeadlineMs=sourceDeadlineMs;
   let film, detailsURL, latestSearchURLs=[]; const admittedUnion = new Set(), calls=[], snapshots=new Map();
-  const done = (status,extra={}) => ({...result,status,elapsedMs:Math.round(performance.now()-started),...extra});
+  const done = (status,extra={}) => ({...result,status,elapsedMs:Math.round(performance.now()-started),tavilyAccounting:summarizeTavily(searches),...extra});
   if (![tmdbToken,tavilyKey].every(safeKey)) return done('invalid-local-credentials-no-requests');
   const findURL = `${API}/find/${IMDb}?external_source=imdb_id&language=uk-UA`;
   const reserve = async stage => {
@@ -112,6 +147,7 @@ async function filmControl({tmdbToken,tavilyKey}, fetchImpl, control, {sourceCap
         ...(compareCap10?{candidatePool:reserveExact?'reserve-search-only':'normal-shared-union',eligibleUnreadBeforeRead:ranked.filter(candidate=>!alreadyRead.has(candidate)).map(candidate=>safeSearchCardURL(candidate,{secrets}))}:{})});}
     let query = null;
     if (type === 'search') try { query=JSON.parse(init.body)?.query; } catch {}
+    const searchRequest=type==='search'?requestAccounting(init.body):null,attemptStarted=performance.now();
     const record=compareCap10&&['search','cards','tmdbPerson','kinobazaPerson'].includes(type)&&(!['search','cards'].includes(type)||counts[type]<=2);
     let recorded=false;
     const recordSnapshot=snapshot=>{const key=requestKey(url,init),queue=snapshots.get(key)??[];queue.push(snapshot);snapshots.set(key,queue);recorded=true;};
@@ -119,9 +155,10 @@ async function filmControl({tmdbToken,tavilyKey}, fetchImpl, control, {sourceCap
       const response=await fetchImpl(url,{...init,signal:AbortSignal.any([signal,init.signal].filter(Boolean))});
       attempt.httpStatus=response.status;attempt.outcome='response-received';
       if(record)recordSnapshot(await responseSnapshot(response,AbortSignal.any([signal,init.signal].filter(Boolean)),type==='search'?512*1024:2*1024*1024));
-      if (type === 'search') {const observation=await searchObservation(response,query,secrets,signal);if(compareCap10){let exact=false;try{exact=JSON.parse(init.body)?.exact_match===true;}catch{}observation.mode=exact?'reserve-exact':'normal';observation.exactMatch=exact;}searches.push(observation);}
+      if (type === 'search') searches.push({...await searchObservation(response,query,secrets,signal),...searchRequest,elapsedMs:Math.round(performance.now()-attemptStarted)});
       return response;
-    } catch { attempt.outcome='transport-outcome-unknown';if(record&&!recorded)recordSnapshot({transportError:true}); if(type==='search') searches.push({...safeSearchCorrelation({query},{secrets}),returnedURLs:[],responseObservation:'unknown'}); throw Error('control-transport'); }
+    } catch { attempt.outcome='transport-outcome-unknown';if(record&&!recorded)recordSnapshot({transportError:true}); if(type==='search') searches.push({...safeSearchCorrelation({query},{secrets}),returnedURLs:[],responseObservation:'unknown',
+      ...searchRequest,elapsedMs:Math.round(performance.now()-attemptStarted),returnedUsage:{state:'unavailable',credits:null},providerResponseTimeSeconds:null}); throw Error('control-transport'); }
   };
   const read = async (stage,url) => {await reserve(stage);const call={stage,status:'attempt-reserved'};calls.push(call);const response=await readTmdbJson(url,tmdbToken,send,{signal});call.status=response.status;return response;};
   try {
@@ -192,7 +229,7 @@ export const fockersControl=(credentials,fetchImpl=fetch)=>filmControl(credentia
 function compactControl(result){return {execution:result.execution,historicalReconstruction:false,buildSha:null,runId:result.runId,requested:result.requested,
   film:result.film?{imdbId:result.film.imdbId,tmdbId:result.film.tmdbId,title:result.film.title,originalTitle:result.film.originalTitle,year:result.film.year,
     directorPeople:result.film.directorPeople,titleAliasCount:result.film.titleAliasCount}:null,status:result.status,configuredResolverCap:12,serverLedgerCapAttested:false,omittedBaselineSources:result.omittedBaselineSources,
-  counts:result.counts,sourceDeadlineMs:result.sourceDeadlineMs,attempts:result.attempts.map(attempt=>({type:attempt.type,outcome:attempt.outcome,httpStatus:attempt.httpStatus??null})),liveElapsedMs:result.liveElapsedMs??result.elapsedMs,reservations:result.reservations,searches:result.searches,
+  counts:result.counts,tavilyAccounting:result.tavilyAccounting,sourceDeadlineMs:result.sourceDeadlineMs,attempts:result.attempts.map(attempt=>({type:attempt.type,outcome:attempt.outcome,httpStatus:attempt.httpStatus??null})),liveElapsedMs:result.liveElapsedMs??result.elapsedMs,reservations:result.reservations,searches:result.searches,
   readCards:result.readCards.map(card=>({url:card.url,candidatePool:card.candidatePool,rankedCandidatesBeforeRead:card.rankedCandidatesBeforeRead,eligibleUnreadBeforeRead:card.eligibleUnreadBeforeRead,
     identity:card.identity??'unknown',reason:card.reason??null,extraction:card.extraction??'unknown',observed:card.observed??null,
     failedGate:card.diagnostics?.failedGate??null,strategy:card.diagnostics?.strategy??null,comparisons:card.diagnostics?.comparisons??null})),
@@ -206,7 +243,8 @@ export async function cap12ControlSeries(credentials,fetchImpl=fetch,{onCase,fil
   const cases=[],counts={tmdb:0,search:0,cards:0,tmdbPerson:0,kinobazaPerson:0,total:0};
   for(const film of films){const full=await filmControl(credentials,fetchImpl,film,{sourceCap:12,compareCap10:true}),compact=compactControl(full);
     cases.push(compact);for(const type of Object.keys(counts))counts[type]+=full.counts[type];if(typeof onCase==='function')await onCase(compact);}
-  return {execution:'local-diagnostic',historicalReconstruction:false,buildSha:null,status:'completed-one-pass-cap12-series-no-automatic-rerun',counts,cases};
+  return {execution:'local-diagnostic',historicalReconstruction:false,buildSha:null,status:'completed-one-pass-cap12-series-no-automatic-rerun',counts,
+    tavilyAccounting:summarizeTavily(cases.flatMap(result=>result.searches)),cases};
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){

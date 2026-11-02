@@ -100,7 +100,7 @@ test('one-shot entry point reads only stdin and never opens a report or credenti
   assert.doesNotMatch(script,/titles\/(?:meet-the-fockers|little-fockers|meet-the-parents)/);
 });
 
-function seriesTransport({needReserve=false,brokenCardClone=false}={}){
+function seriesTransport({needReserve=false,brokenCardClone=false,usages,providerTimes}={}){
   const sent=[];let selected,searches=0;
   const wrong2='https://kinobazaua.com/titles/authored-other-second';
   return {sent,fetchImpl:async(url,init)=>{
@@ -110,8 +110,13 @@ function seriesTransport({needReserve=false,brokenCardClone=false}={}){
     if(url.includes('/movie/990001?'))return Response.json({...details(),imdb_id:selected.imdbId,external_ids:{imdb_id:selected.imdbId},release_date:`${selected.year}-12-01`});
     if(url==='https://api.tavily.com/search'){
       searches++;const payload=JSON.parse(init.body);assert.equal(payload.exact_match,searches===3?true:undefined);
+      assert.equal(payload.search_depth,searches===3?'advanced':'basic');assert.equal(payload.include_usage,false);
+      if(searches<3)assert.equal(init.body,JSON.stringify({query:payload.query,search_depth:'basic',topic:'general',max_results:5,auto_parameters:false,
+        include_answer:false,include_raw_content:false,include_images:false,include_favicon:false,include_usage:false,include_domains:['kinobazaua.com'],include_domains_mode:'restrict'}),
+      'the two established Tavily payloads retain their exact original JSON bytes and property order');
       const urls=needReserve?(searches===1?[wrong]:searches===2?[wrong2]:[correct,wrong]):[wrong,correct];
-      return Response.json({query:payload.query,request_id:requestId,results:urls.map(url=>({url,content:'NEVER_RETAIN_RAW_BODY_OR_SNIPPET'}))});
+      return Response.json({query:payload.query,request_id:requestId,...(usages?{usage:usages[searches-1]}:{}),...(providerTimes?{response_time:providerTimes[searches-1]}:{}),
+        results:urls.map(url=>({url,content:'NEVER_RETAIN_RAW_BODY_OR_SNIPPET'}))});
     }
     assert.ok([correct,wrong,wrong2].includes(url));
     const response=new Response(markup({url,title:url===correct?'Авторський переклад':'A Different Authored Film',original:url===correct?'Authored original':'Other authored original',year:selected.year}),{headers:{'content-type':'text/html'}});
@@ -126,6 +131,10 @@ test('cap12 single live pass adds only exact reserve search/card and compares ca
   assert.equal(result.attempts.length,8);assert.ok(result.attempts.every(attempt=>attempt.outcome==='response-received'&&attempt.httpStatus===200));
   assert.deepEqual(result.reservations,['tmdb-find','tmdb-details','search-1','kinobaza-1','search-2','kinobaza-2','search-3','kinobaza-3']);
   assert.deepEqual(result.searches.map(search=>search.mode),['normal','normal','reserve-exact']);
+  assert.deepEqual(result.searches.map(search=>search.searchDepth),['basic','basic','advanced']);assert.deepEqual(result.searches.map(search=>search.declaredCreditsPerRequest),[1,1,2]);
+  assert.deepEqual(result.tavilyAccounting.depthAttempts,{basic:2,advanced:1,unknown:0});assert.equal(result.tavilyAccounting.declaredCredits.total,4);
+  assert.equal(result.tavilyAccounting.returnedUsage.unknownRequests,3);assert.equal(result.tavilyAccounting.returnedUsage.reportedCreditsSubtotal,0);
+  assert.equal(result.tavilyAccounting.returnedUsage.complete,false);assert.equal(out.tavilyAccounting.attempts,3,'RAM replay adds no billable-attempt claim');
   assert.deepEqual(result.readCards.map(card=>card.identity),['mismatch','mismatch','matched']);
   assert.equal(result.readCards[2].candidatePool,'reserve-search-only');assert.deepEqual(result.readCards[2].eligibleUnreadBeforeRead,[correct]);
   assert.equal(result.counterfactualCap10.execution,'memory-replay-current-first-two-slots-not-independent-live');assert.equal(result.counterfactualCap10.externalRequests,0);
@@ -171,4 +180,48 @@ test('a failed control retains its requested film and does not automatically rer
 test('series film selection cannot expand beyond the approved fixed eight IMDb contexts',async()=>{
   let calls=0;await assert.rejects(cap12ControlSeries(keys,()=>{calls++;},{films:[{title:'Other',year:2000,imdbId:'tt0000001'}]}),/invalid-local-study/);
   await assert.rejects(cap12ControlSeries(keys,()=>{calls++;},{films:[cap12ControlFilms[0],cap12ControlFilms[0]]}),/invalid-local-study/);assert.equal(calls,0);
+});
+
+test('declared depth credits remain distinct from returned numeric usage and provider response timing',async()=>{
+  const mocked=seriesTransport({needReserve:true,usages:[{credits:1},{credits:0},{credits:2}],providerTimes:[0.25,0.3,0.4]}),
+    out=await cap12ControlSeries(keys,mocked.fetchImpl,{films:[cap12ControlFilms[0]]}),result=out.cases[0];
+  assert.equal(mocked.sent.length,8);assert.deepEqual(result.searches.map(search=>search.returnedUsage),[
+    {state:'reported',credits:1},{state:'reported',credits:0},{state:'reported',credits:2}]);
+  assert.deepEqual(result.searches.map(search=>search.providerResponseTimeSeconds),[0.25,0.3,0.4]);
+  assert.ok(result.searches.every(search=>Number.isInteger(search.elapsedMs)&&search.elapsedMs>=0));
+  assert.equal(result.tavilyAccounting.declaredCredits.total,4);assert.equal(result.tavilyAccounting.returnedUsage.reportedCreditsSubtotal,3,'do not replace returned usage with a scheduled-cost estimate');
+  assert.equal(result.tavilyAccounting.returnedUsage.complete,true);assert.equal(result.tavilyAccounting.elapsedMs,result.searches.reduce((sum,search)=>sum+search.elapsedMs,0));
+  assert.deepEqual(out.tavilyAccounting,result.tavilyAccounting);assert.match(result.tavilyAccounting.declaredCredits.basis,/not-billed-usage/);
+  const split=result.tavilyAccounting.depthAccounting;
+  assert.equal(split.basic.attempts,2);assert.equal(split.advanced.attempts,1);assert.equal(split.basic.declaredCreditsSubtotal,2);assert.equal(split.advanced.declaredCreditsSubtotal,2);
+  assert.equal(split.basic.returnedUsage.reportedCreditsSubtotal,1);assert.equal(split.advanced.returnedUsage.reportedCreditsSubtotal,2);
+  assert.equal(split.basic.elapsedMs,result.searches[0].elapsedMs+result.searches[1].elapsedMs);assert.equal(split.advanced.elapsedMs,result.searches[2].elapsedMs);
+});
+
+test('missing, invalid and unbounded returned usage never becomes zero actual billed usage or leaks raw telemetry',async()=>{
+  const mocked=seriesTransport({needReserve:true,usages:[undefined,{credits:'PRIVATE_USAGE_STRING_NEVER_OUTPUT',private:'PRIVATE_USAGE_OBJECT_NEVER_OUTPUT'},{credits:1001}],providerTimes:[undefined,'PRIVATE_RESPONSE_TIME_NEVER_OUTPUT',-1]}),
+    out=await cap12ControlSeries(keys,mocked.fetchImpl,{films:[cap12ControlFilms[0]]}),result=out.cases[0];
+  assert.deepEqual(result.searches.map(search=>search.returnedUsage.state),['not-returned','invalid','invalid']);
+  assert.ok(result.searches.every(search=>search.returnedUsage.credits===null&&search.providerResponseTimeSeconds===null));
+  assert.equal(result.tavilyAccounting.returnedUsage.reportedRequests,0);assert.equal(result.tavilyAccounting.returnedUsage.unknownRequests,3);
+  assert.equal(result.tavilyAccounting.returnedUsage.complete,false);assert.equal(result.tavilyAccounting.declaredCredits.total,4);
+  assert.doesNotMatch(JSON.stringify(out),/PRIVATE_USAGE|PRIVATE_RESPONSE|Infinity|NEVER_RETAIN/);
+});
+
+test('four-film subset sums only actual Basic/Advanced attempts without changing series selection or automatic retries',async()=>{
+  const films=[cap12ControlFilms[0],cap12ControlFilms[1],cap12ControlFilms[3],cap12ControlFilms[5]],mocked=seriesTransport({needReserve:true}),
+    out=await cap12ControlSeries(keys,mocked.fetchImpl,{films});
+  assert.equal(mocked.sent.length,32);assert.equal(out.counts.search,12);assert.deepEqual(out.tavilyAccounting.depthAttempts,{basic:8,advanced:4,unknown:0});
+  assert.equal(out.tavilyAccounting.declaredCredits.total,16);assert.equal(out.tavilyAccounting.returnedUsage.unknownRequests,12);assert.equal(out.tavilyAccounting.returnedUsage.complete,false);
+  assert.equal(out.tavilyAccounting.depthAccounting.basic.declaredCreditsSubtotal,8);assert.equal(out.tavilyAccounting.depthAccounting.advanced.declaredCreditsSubtotal,8);
+  assert.equal(out.tavilyAccounting.depthAccounting.basic.returnedUsage.unknownRequests,8);assert.equal(out.tavilyAccounting.depthAccounting.advanced.returnedUsage.unknownRequests,4);
+  assert.deepEqual(out.cases.map(result=>result.requested.imdbId),films.map(film=>film.imdbId));
+  assert.ok(out.cases.every(result=>result.counterfactualCap10.externalRequests===0));
+});
+
+test('failed Tavily dispatch retains its actual depth, declared rate and unknown usage without another attempt',async()=>{
+  const mocked=transport({throwSearch:true}),out=await fockersControl(keys,mocked.fetchImpl);
+  assert.equal(out.counts.search,1);assert.deepEqual(out.tavilyAccounting.depthAttempts,{basic:1,advanced:0,unknown:0});
+  assert.equal(out.tavilyAccounting.declaredCredits.total,1);assert.equal(out.tavilyAccounting.returnedUsage.unknownRequests,1);
+  assert.deepEqual(out.searches[0].returnedUsage,{state:'unavailable',credits:null});assert.ok(Number.isInteger(out.searches[0].elapsedMs));
 });
