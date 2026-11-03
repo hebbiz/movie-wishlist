@@ -6367,3 +6367,183 @@ still applies: do not discard or down-promote future12-cap accounting rows.
 Only this authorized migration was applied; merge and deployment still require
 separate approval. A later documentation-only commit records this evidence and
 does not imply that the reviewed application head was deployed.
+
+### Linked-person plot markup recovery — Lucky Number Slevin, 2026-11-03
+
+Baseline: fetched `origin/develop`
+`26c025872e0b19ebf546a5d08b0e7f2123e3c4b0` (merged PR224). Work is on a
+separate branch; the owner's detached checkout/untracked research and temp
+directories are untouched. No SQL, flags, authentication/lifecycle, source
+search strategy, ranking, quotas, links, session or Save implementation changes.
+
+#### Historical evidence supplied by the owner
+
+The complete copied report identifies run
+`6041498d-a41a-49fd-9442-28b08067a0ae`, deploy
+`6ae9e57bd622f9e89c1f670e`, the baseline server build stamp above, IMDb
+`tt0425210`, title `Щасливе число Слевіна`, year2006. It records12/12 attempts:
+the four baseline stages, three Tavily searches, three card GETs and the same
+single linked-person pair. The first card's H1/H2 and year comparisons passed;
+the director gate remained `director-alias-unestablished`. Person selection
+points to card1, both person HTTP statuses are200, and the profile outcome is
+`profile-html-parse-errors`. Kinobaza rows were withheld, not treated as proof
+that the film/languages were unavailable.
+
+Read card1 is explicitly recorded as
+`https://kinobazaua.com/titles/lucky-number-slevin`; the other two are
+`/titles/knockaround-guys` (2001) and `/titles/the-samaritan` (2012), both title
+conflicts. Search3 is explicitly marked Advanced/exact_match. Its query and
+request ID are present in the protected report, but the full candidate lists
+and historical response bodies are not. We do not reconstruct those lists or
+assert which precise malformed historical tag caused the profile failure.
+
+#### Current page observations, not historical HTML
+
+Read-only inspection of the current film page finds a labelled film director
+row `Пол Макґіґан` linking to `/persons/paul-mcguigan`, and a MEGOGO paragraph
+with `(укр. аудіо, укр. субтитри)`. The actual linked profile has one scoped
+header: native name `Пол Макґіґан`, Latin name `Paul McGuigan`, full birthdate
+1963-09-19, and an explicit director role.
+
+On the current response, parse5 reports9 errors. The first3 are the already
+supported bounded style-before-doctype preamble. The remaining6 are two
+instances of a broken plot-footnote template, each emitting the exact start
+tag shape `<a href="…"<br />` with an explicit `</a>` and text-only content.
+They occur in direct `details.js-plot > em.nobr > a` scopes in the repeated
+mobile/desktop synopsis, not in the person facts or owned JSON-LD.
+
+In the observed response the profile header spans offsets24774–26945.
+Malformed start tags span288426–288516 (line4170) and293712–293802 (line4248).
+For each tag the located batch is:
+
+- `missing-whitespace-between-attributes` at the second `<`;
+- `unexpected-character-in-attribute-name` at that same offset;
+- `non-void-html-element-start-tag-with-trailing-solidus` spanning that tag.
+
+Offsets/line numbers describe these current bytes only. The old parser returns
+`profile-html-parse-errors`; the patched parser returns `scoped-profile-evidence`
+on a subsequent current read, recovering6 plot errors and3 preamble errors.
+Reading a profile successfully is not by itself a film or person confirmation.
+
+#### Bounded recovery and unchanged identity requirements
+
+The parser tolerates only that entire exact located three-error batch. It
+requires a closed plot and footnote after the validated, explicitly closed
+person header; exact two parsed attributes (`href` and the malformed `<br`),
+one text child, original start-tag spelling and explicit anchor end tag. It
+does not repair/follow a link, extract plot names/dates/IDs, add an alias,
+transliterate a director or ignore other errors. Existing size/depth/node/error
+limits, canonical/header/semantic ownership, exact name/full birthdate/role
+comparison and stable-ID/date conflict priority remain in force.
+
+`recoveredPlotErrors` is a content-free local inspector count, not a new field
+in the browser's protected profile diagnostic. The existing protected report
+continues to receive the allowlisted profile outcome/comparisons, not raw HTML.
+
+#### Mixed search diagnostic: assessment and proposed follow-up
+
+The historical section is explained by its current predicate: no read card is
+`matched` and **at least one** read card has complete, incompatible H1/H2.
+Cards2/3 meet that predicate even though card1 passed title/year gates and was
+blocked by director verification. The section does not prove a Tavily error,
+but its broad heading is easy to misread. Also, `titleMismatch:false` currently
+prints `unknown`; that false value alone is not proof of both title/year matches.
+
+Proposed report-only follow-up: use a neutral mixed-case heading such as
+`Пошук і підтвердження карток` and explain that a title/year-compatible card
+is awaiting director confirmation, while retaining the unrelated cards and
+their individual refusal reasons. Derive compatibility from the safe per-card
+identity gates/comparisons, not from `titleMismatch:false` alone. Associate a
+specific profile refusal only through its selected-card references. Keep the
+existing possible-irrelevance wording for title-conflict-only cases; unknown
+fields stay unknown and no compatible card is called confirmed prematurely.
+
+This task **assesses/proposes** that change: report/search predicates and UI
+wording have not been changed without further agreement. Characterization
+tests preserve all mixed-case evidence, ordinary-Beta redaction and matched-card
+suppression. After genuine person/film confirmation the existing predicate
+naturally suppresses the speculative section.
+
+#### Validation and request accounting
+
+- 705/705 root non-browser/non-native tests pass, including11 authored plot
+  parser tests,7 full resolver→person→extraction→table/link/preview tests and5
+  mixed diagnostic characterization tests. cap8 remains unable to request a
+  profile pair/reserve; cap10/cap12 success stays within the original pair and
+  does not dispatch search3 after confirmation. Movie/person ID conflicts,
+  missing/conflicting dates, malformed/ambiguous facts and unsafe links retain
+  refusal/withholding.
+- 498/498 executed research/HTML tests pass; the existing mobile-viewport test
+  is skipped in that invocation without Playwright configuration. Includes
+  prior Kong, Klaus, Fockers-series, Roman-number, title/year and localization
+  authored regressions; these are not new live responses for those films.
+- Initial broad parallel runs hit an existing IPC-helper process timeout and
+  an existing CLI child-process timeout. Both complete sets pass with test
+  concurrency2; no test timeout or product code was changed to hide them.
+- Before the separate TMDb control, current public inspection used exactly
+  **5 HTTP GETs**: film+linked profile, one targeted profile syntax inspection,
+  and film+profile after the parser change. All returned200. No Tavily,
+  platform visits, Wishlist writes, `/search`, retries or DB operations.
+- The local credential-broker status check performed no source HTTP and found
+  no available prior credential session. The owner then ran one separately
+  bounded TMDb-only control with hidden input; its result is recorded below,
+  not inferred from the authored tests or the historical12-attempt report.
+
+#### Completed current TMDb→profile→MEGOGO control
+
+The one-shot sanitized local report has
+`status:current-slevin-fixed-card-control`, `historicalReconstruction:false`,
+`buildSha:null`, `serverLedgerCapAttested:false`. It used **5 GET**, all200:
+TMDb find by IMDb, the unique movie Details, the observed film card, the trusted
+TMDb director person and the card's actual linked Kinobaza profile. Total local
+elapsed2104ms, not production latency. No search/provider/MOTN call or platform
+navigation occurred; this starts from a previously observed card, not a new
+search-recall test.
+
+The current trusted projection gives TMDb movie186, IMDbtt0425210, original
+`Lucky Number Slevin`, year2006, and director TMDb person2291 `Paul McGuigan`.
+No film ID was manually supplied in place of the `/find` result. The existing
+person pair confirms `Пол Макґіґан` using exact Latin name, equal full birthdate
+and director role (`exact-name-birthdate-role`); no common person ID is claimed.
+The existing film gates then return `explicit-title-year-director-match`,
+route `title-year-director`; no failed gate, shared film ID or ID conflict.
+
+Extraction is partial, with14 candidates. The resulting MEGOGO block has
+reported-positive Ukrainian audio and subtitles. Both ordinary-Beta and
+diagnostic local product projections show the same MEGOGO comparison
+**availability◐ / audio+ / subtitles+**, plus an Apple row with unknown values.
+This is the agreed app interpretation of an incomplete upper block, not
+independent platform availability or entitlement proof.
+
+MEGOGO exposes one policy-admitted choice: domain `megogo.net`, path
+`/ua/view/1326391`, no query parameters or fragment. The helper compares the
+original href in memory: preview and explicit local apply both preserve it
+exactly, and preview leaves the initial form unchanged. No automatic Save or
+real Wishlist write was performed; the platform URL was not opened.
+
+The ordinary local projection contains no resolver, source identity evidence
+or protected profile outcome; the diagnostic projection contains the allowed
+outcome. Neither has the speculative search section after genuine confirmation.
+These are local projection checks, **not a live server-authorization or browser
+Save attestation**; the existing server-rights regressions remain separate.
+
+This task's current external total is therefore **10 HTTP GETs**:5 public
+markup investigation GETs above +5 full-path control GETs. Tavily0, platform0,
+Wishlist writes0, retries0. The one-shot safe report stores no credential,
+raw body or URL parameter values; it is not committed. The prior historical
+12 attempts remain a separate observation.
+
+Historical12 attempts are not added to this task's new-request count. No
+merge/deployment, live migration or feature activation is authorized here.
+
+#### Browser limitation for this branch
+
+The attempted existing source-free Edge browser set (dialog, retained-session
+and pending-request tests) failed at sandbox process creation with `spawn EPERM`
+before browser cases ran. The escalated invocation required separate approval
+and was interrupted without test output or a process/session ID. Therefore
+**zero completed browser cases are attested for this branch**. Mobile, tablet,
+desktop, actual iPhone/Safari and live Save are not newly verified here; the
+previous PR's browser results are not substituted. No browser suite was silently
+restarted after that interruption. The705 root and498 executed research tests
+above remain independently completed offline checks.
