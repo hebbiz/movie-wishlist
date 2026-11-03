@@ -82,6 +82,41 @@ function noncriticalImageError(error, all, header, html) {
     loc.startOffset >= header.sourceCodeLocation.endOffset && !html.slice(loc.startOffset + 1, loc.endOffset).includes('<');
 }
 
+function plotLinkErrors(html, errors, all, header) {
+  // A plot footnote template can emit `<a href="..."<br />label</a>`.
+  // Recover only its complete located three-error batch, inside an explicitly
+  // closed plot/footnote after the established person header. These links and
+  // their text never supply person facts/IDs. Do not repair or follow the href.
+  const recovered = new Set(), headerEnd = header.sourceCodeLocation?.endOffset;
+  for (const n of all) {
+    const loc = n.sourceCodeLocation, start = loc?.startTag, end = loc?.endTag;
+    if (n.tagName !== 'a' || n.namespaceURI !== 'http://www.w3.org/1999/xhtml' ||
+        !start || !end || !(start.startOffset >= headerEnd) ||
+        html.slice(end.startOffset, end.endOffset) !== '</a>' ||
+        children(n).length !== 1 || children(n)[0].nodeName !== '#text') continue;
+    const footnote = n.parentNode, plot = footnote?.parentNode;
+    if (footnote?.tagName !== 'em' || !hasClass(footnote, 'nobr') || plot?.tagName !== 'details' || !hasClass(plot, 'js-plot') ||
+        !footnote.sourceCodeLocation?.endTag || !plot.sourceCodeLocation?.endTag ||
+        !(plot.sourceCodeLocation.startOffset >= headerEnd) ||
+        !(start.startOffset >= footnote.sourceCodeLocation.startTag.endOffset && end.endOffset <= footnote.sourceCodeLocation.endTag.startOffset) ||
+        !(footnote.sourceCodeLocation.startOffset >= plot.sourceCodeLocation.startTag.endOffset && footnote.sourceCodeLocation.endOffset <= plot.sourceCodeLocation.endTag.startOffset)) continue;
+    const raw = html.slice(start.startOffset, start.endOffset);
+    if (!/^<a href="[^"<>]+"<br\s+\/>$/u.test(raw) || n.attrs?.length !== 2 ||
+        !n.attrs.some(a => a.name === 'href') || !n.attrs.some(a => a.name === '<br' && a.value === '')) continue;
+    const bracket = start.startOffset + raw.indexOf('<br');
+    const expected = [
+      ['missing-whitespace-between-attributes', bracket, bracket],
+      ['unexpected-character-in-attribute-name', bracket, bracket],
+      ['non-void-html-element-start-tag-with-trailing-solidus', start.startOffset, start.endOffset],
+    ];
+    const located = errors.filter(e => e.startOffset >= start.startOffset && e.startOffset < start.endOffset);
+    if (located.length !== expected.length || !expected.every(([code, begin, finish]) =>
+      located.filter(e => e.code === code && e.startOffset === begin && e.endOffset === finish).length === 1)) continue;
+    for (const error of located) recovered.add(error);
+  }
+  return recovered;
+}
+
 function stylePreambleErrors(html, errors, header) {
   // Observed person-profile template emits one closed, attribute-free style
   // before its HTML doctype. parse5 retains the profile tree but reports these
@@ -129,7 +164,7 @@ export async function inspectDirectorProfile(html, sourceURL, sourceAlias) {
     const canonical = active.filter(n => n.tagName === 'link' && (attr(n, 'rel') ?? '').split(/\s+/).includes('canonical'));
     const headings = active.filter(n => n.tagName === 'h1');
     const diagnostics = { canonicalCount: canonical.length, headingCount: headings.length, latinHeadingCount: 0, birthdayCount: 0, roleCount: 0, ownedPersonCount: 0,
-      recoveredImageErrors: 0, recoveredPreambleErrors: 0, nativeAliasMatch: false };
+      recoveredImageErrors: 0, recoveredPreambleErrors: 0, recoveredPlotErrors: 0, nativeAliasMatch: false };
     if (canonical.length !== 1 || attr(canonical[0], 'href') !== sourceURL) return fail('profile-canonical-conflict-or-ambiguous', diagnostics);
     if (headings.length !== 1 || !hasClass(headings[0], 'h2')) return fail('profile-heading-ambiguous', diagnostics);
     const heading = headings[0], header = heading.parentNode;
@@ -151,10 +186,12 @@ export async function inspectDirectorProfile(html, sourceURL, sourceAlias) {
     if (!director) return fail('profile-director-role-unestablished', diagnostics);
     if (errors.length >= 100) return fail('profile-html-error-limit', diagnostics);
     const preambleErrors = stylePreambleErrors(html, errors, header);
+    const plotErrors = plotLinkErrors(html, errors, all, header);
     const firstDoctype = /<!doctype\b[^>]*>/i.exec(html);
     if (firstDoctype && html.slice(0, firstDoctype.index).trim() && !preambleErrors.size) return fail('profile-html-parse-errors', diagnostics);
     for (const error of errors) {
       if (preambleErrors.has(error)) { diagnostics.recoveredPreambleErrors++; continue; }
+      if (plotErrors.has(error)) { diagnostics.recoveredPlotErrors++; continue; }
       if (error.code === 'missing-doctype') continue;
       if (!noncriticalImageError(error, all, header, html)) return fail('profile-html-parse-errors', diagnostics);
       diagnostics.recoveredImageErrors++;

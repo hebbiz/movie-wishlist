@@ -85,7 +85,7 @@ export async function inspectProfileMarkup(html, sourceURL) {
   return { status: 'profile-markup-inspected-not-identity-confirmation', ownHeader: headerFacts, activeH1Count: h1.length, leadingStructure: leadingStructure(html),
     parseErrorCount: errorCount, omittedErrors: Math.max(0, errorCount - details.length), errors: details,
     inspector: { status: ['ok', 'unresolved'].includes(inspected.status) ? inspected.status : 'unknown', reason: typeof inspected.reason === 'string' && /^[a-z-]{1,100}$/.test(inspected.reason) ? inspected.reason : 'unknown',
-      counts: Object.fromEntries(['canonicalCount', 'headingCount', 'latinHeadingCount', 'birthdayCount', 'roleCount', 'ownedPersonCount', 'recoveredImageErrors', 'recoveredPreambleErrors'].map(k => [k, count(diagnostic[k])])),
+      counts: Object.fromEntries(['canonicalCount', 'headingCount', 'latinHeadingCount', 'birthdayCount', 'roleCount', 'ownedPersonCount', 'recoveredImageErrors', 'recoveredPreambleErrors', 'recoveredPlotErrors'].map(k => [k, count(diagnostic[k])])),
       nativeAliasMatch: typeof diagnostic.nativeAliasMatch === 'boolean' ? diagnostic.nativeAliasMatch : null,
       aliasBinding: 'own-h1-for-markup-inspection-not-card-attested' } };
 }
