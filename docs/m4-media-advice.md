@@ -6535,3 +6535,15 @@ raw body or URL parameter values; it is not committed. The prior historical
 
 Historical12 attempts are not added to this task's new-request count. No
 merge/deployment, live migration or feature activation is authorized here.
+
+#### Browser limitation for this branch
+
+The attempted existing source-free Edge browser set (dialog, retained-session
+and pending-request tests) failed at sandbox process creation with `spawn EPERM`
+before browser cases ran. The escalated invocation required separate approval
+and was interrupted without test output or a process/session ID. Therefore
+**zero completed browser cases are attested for this branch**. Mobile, tablet,
+desktop, actual iPhone/Safari and live Save are not newly verified here; the
+previous PR's browser results are not substituted. No browser suite was silently
+restarted after that interruption. The705 root and498 executed research tests
+above remain independently completed offline checks.
