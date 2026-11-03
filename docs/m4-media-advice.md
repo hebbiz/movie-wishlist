@@ -6086,7 +6086,7 @@ HTTP and credit counts. Times include local response inspection; they are not
 production end-to-end latency. Prior Basic runs and the earlier paired result
 are not relabeled as Advanced or counted as new live evidence.
 
-Live validation is pending one new, separately guarded four-film series:
+At that preparation checkpoint, live validation awaited one separately guarded four-film series:
 Meet the Fockers, Alien, Dune: Part Two and Kong. It uses the current resolver
 without prefilled card URLs and observes URL → admission → card read → identity
 → gated language/link projection. Two Providers/MOTN baseline slots are reserved
@@ -6109,4 +6109,139 @@ skips, with external network blocked. It covers desktop1280×900, tablet820×118
 iPhone-X-size375×812 and Air-size420×912, form preview/explicit local transfer,
 report access/revocation, pending selection, retained/stale results, context
 boundaries and no discovery replay. These are viewport emulations, not real
-iPhone/Safari tests or a real Wishlist Save. The live source pass remains pending.
+iPhone/Safari tests or a real Wishlist Save. The subsequent source report is
+recorded below; it does not establish live Advanced behavior.
+
+### Four-film current-source report received — 2026-11-03
+
+The owner completed the guarded control once; its sanitized local report was
+read directly, without copying raw responses or repeating a source request.
+Worker run `e98ecb62-7551-45e8-82bb-3fa6c0e4b1ce` has status
+`completed-one-pass-no-automatic-repeat`, four finished cases and reconciled
+counts. The checked-out implementation and PR head at execution handoff were
+`3adbe6439428ca5aa68cb953ddbc5d26910de26d`. `buildSha:null` and
+`serverLedgerCapAttested:false` mean **local source control**, not a deployed
+build/live-cap12 attestation or an historical HTML reconstruction.
+
+**All four correct cards matched before reserve. Advanced was never called.**
+Do not attribute the newly successful Fockers search to Advanced or the extra
+slots: its unchanged first Basic request now returned the right card. That
+current observation cannot explain the earlier omitted candidate, determine
+provider indexing/cache/ranking internals or establish repeatable recall.
+
+| Film | Correct card / identity route | Source rows | Actual HTTP | Local live elapsed | Basic search elapsed |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Meet the Fockers (2004) | `/titles/meet-the-fockers`; original-year-director-translation |5|5|6222 ms|3817 ms|
+| Alien (1979) | `/titles/alien`; title-year-director |5|5|3819 ms|2354 ms|
+| Dune: Part Two (2024) | `/titles/dune-part-two`; title-year-director |5|5|3720 ms|2464 ms|
+| Kong: Skull Island (2017) | `/titles/kong-skull-island`; г/ґ route plus confirmed linked person |6|8|5277 ms|3794 ms (two calls)|
+
+#### Meet the Fockers: observed URL through gated language/link projection
+
+Case run `8a5ccec4-f9b4-41ee-bf88-8959021134b4` used the actual first Basic POST:
+`"Meet the Fockers" 2004 site:kinobazaua.com/titles/`, no exact-match option.
+Tavily request_id `0a94a9fd-246e-4112-afe0-3f3eaa52fc36`, response.query
+`Meet the Fockers 2004`;5 results, all admitted by the unchanged URL policy.
+In response and runtime ranking order:
+`meet-the-fockers`, `little-fockers`, `meet-the-parents`,
+`the-absent-minded-professor`, `snow-dogs` (all under the exact title namespace).
+No URL was prefilled or derived from the expected slug.
+
+The first read was the actually returned
+`https://kinobazaua.com/titles/meet-the-fockers`. H1 is
+`Знайомство з Фокерами ( 2004 )`, selected title `Знайомство з Факерами`;
+H2 `Meet the Fockers`, year2004 and director `Джей Роуч` matched the trusted
+TMDb context. No shared film ID was present and no stable-ID conflict was
+observed. Identity matched as
+`explicit-original-year-director-translation-match`, with exact original/year
+and confirmed director, **not** a blanket а/о replacement or title similarity.
+H1/H2 completeness remained true despite diagnostic alias-list truncation.
+Extraction was `ok`; no person pair was necessary.
+
+The second GET was `little-fockers`: H2 `Little Fockers`, year2010 and director
+`Пол Вайц`. It was refused with `source-title-conflict`, its differing original,
+year and director remained visible, and no claims were projected from it.
+`meet-the-parents` was returned but **not read in this live case**; its separate
+refusal and all-three-parts identity checks remain authored regression evidence,
+not an additional live GET in this report.
+
+The confirmed card produced5 source rows, across4 services (Rakuten has two
+distinct source scopes; they are not collapsed into a false single offer):
+
+| Retained source scope | Ukrainian audio | Ukrainian subtitles | Link policy observation |
+| --- | --- | --- | --- |
+| Rakuten regional UA row |unknown|unknown|tracking pointer, present and transferable|
+| Apple regional UA row |unknown|unknown|tracking pointer, present and transferable|
+| Rakuten upper provider block |reported-negative|reported-positive|tracking pointer, present and transferable|
+| Netflix upper provider block |unknown|reported-positive|card pointer, present and transferable|
+| MEGOGO upper provider block |reported-positive|reported-positive|card pointer, present and transferable|
+
+Upper-block country remains null in the source row; the already agreed
+application interpretation for Ukraine is unchanged, not a new source territory
+claim. Languages are not copied into the separate regional offer records or
+between services. The current report preserves language states and link
+`kind/hasURL/transferable`, but intentionally does **not** retain exact platform
+hrefs. Thus it verifies gated link projection/admission, not an independent
+byte-for-byte recheck of platform URLs or actual navigation. Exact-address
+transfer/preview and ordinary Save isolation are covered by the separately
+recorded automated tests. No platform was opened and no Wishlist record written.
+All these source statements remain non-entitlement/non-track guarantees.
+
+#### Retained controls and current negative reads
+
+- Alien: existing ranking promoted the returned second pointer `alien` to the
+  first read; it matched. `gigers-alien` remained structurally incomplete, not
+  a confirmed1979 movie. Apple/Rakuten audio− and subtitles+, MEGOGO audio+ and
+  subtitles+ survived in their own blocks.
+- Dune: correct card matched; Dune1984 was refused, not mixed into Dune2024.
+  Apple audio+/subtitles−, Rakuten and MEGOGO audio+/subtitles+ remained. One
+  extra returned pointer was withheld as unsupported-path; its exact spelling
+  is not recoverable from this sanitized report and is not guessed.
+- Kong: the correctly discovered card reached the existing global profile pair;
+  exact Latin name/birthdate/director-role facts confirmed the selected person,
+  and the г/ґ route matched. Apple/Rakuten audio+/subtitles− and MEGOGO audio+
+  with subtitles unknown survived. `love-amongst-friends` was read but stayed
+  structurally incomplete. The second Basic result contained unrelated pointers;
+  none replaced the correctly confirmed first card or supplied film identity.
+
+#### Actual Basic/Advanced queries, credits and timing
+
+| Depth | Actual calls | Documented-rate credits | Local search-call elapsed | Returned billed usage |
+| --- | ---: | ---: | --- | --- |
+| Basic |5|5|12429 ms total|unknown for all5; usage not returned|
+| Advanced |0|0 attributable to dispatched calls|not measured: never invoked|no Advanced response|
+
+The first three query strings are the quoted original titles shown in the table
+with their years and `site:kinobazaua.com/titles/`. Kong used both:
+`"Kong: Skull Island" 2017 site:kinobazaua.com/titles/` and
+`"Kong: Skull Island" "Конг: Острів черепа" "Jordan Vogt-Roberts" 2017 site:kinobazaua.com/titles/`.
+Its call times were2483 and1311 ms. Remaining request IDs in order:
+Alien `4ebab1a5-9574-4410-8d6f-fe541d200976`;
+Dune `43000442-ec13-4799-9542-39cedf8e00b6`;
+Kong first `9fb23231-c24b-45a6-ab40-4f9cd1e63f20`,
+second `8b3d5762-9783-4580-9924-89691a47eb4f`.
+No request had `search-3`, `kinobaza-3`, `exactMatch:true` or Advanced depth.
+No Advanced latency, live benefit or Advanced search failure is claimed.
+
+**Reconciled external source total:23 HTTP** =8 TMDb film +5 Tavily Basic
++8 title cards +1 TMDb person +1 Kinobaza person; all23 attempts received
+HTTP200. `Providers` and MOTN were omitted, with their2 ordinary runtime slots
+held as headroom per case. There were no retries, Kinobaza `/search`, platform
+requests or source calls during this report review. The sum of per-film live
+elapsed values is19038 ms, **not** worker wall time or production app latency;
+it excludes setup/serialization and1117 ms of separate RAM replay.
+
+All four cap10 comparisons completed using the **same current captured
+responses**, with0 extra HTTP and the same four confirmed cards. These are not
+independent live before-runs or credit/latency comparisons against deployed
+cap10. They support that current success did not require the new reserve path.
+
+Independent evidence review reconciled case/global counts, language scopes,
+link limits and timings without HTTP. The previous888 offline/35 browser/4
+wrapper results remain separately recorded; those suites were not rerun for
+this evidence-only documentation change. `git diff --check` passed. Advanced
+dispatch/failure/gates remain covered by authored tests, but its **live reserve
+behavior and recall remain untested by this series**. No forced failure or
+additional direct Advanced control was introduced to bypass the eligibility
+guard. Migration bytes, runtime, flags, access, production, merge and deployment
+were not changed during this reporting follow-up.
