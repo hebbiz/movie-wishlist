@@ -5656,7 +5656,9 @@ CLI-generated file:
 `supabase/migrations/20261102181617_media_advice_exact_reserve_budget.sql`.
 SHA256 (Git blob, LF): `afdb81fa9cb6c883731755ca5fd8c8d5bda920c3a25415372d647916f5aa110d`.
 It widens only the private session cap constraint to8/10/12 and replaces the
-same service-only Beta RPC signature. **It is not applied remotely.**
+same service-only Beta RPC signature. It was unapplied at this preparation
+checkpoint; the later authorized [execution record](#cap12-migration-execution--2026-11-03)
+now confirms the single remote application. That does not authorize deployment.
 Existing rows, attempts, caps, default8, pilot RPC, TTL/cleanup eligibility,
 Beta/diagnostic access checks, switch/assignments and Wishlist data are unchanged.
 The new slots are individually unique and legal only for cap12; valid slot gaps
@@ -6066,7 +6068,8 @@ claim that the pair proved causality, a cache failure or Advanced recall.
 - cap8/cap10 retain their Basic-only first-two behavior. The existing prepared
   `reserve-exact-v1` negotiation and migration file are unchanged; no new SQL
   stage, database operation or live migration is required for changing depth.
-  The prepared cap12 migration still has **not** been applied.
+  At this preparation checkpoint the cap12 migration had **not** been applied;
+  see the subsequent [execution record](#cap12-migration-execution--2026-11-03).
 - Only authorized diagnostics identify the reserve depth. Ordinary Beta results
   gain no search metadata or new diagnostic access.
 
@@ -6245,3 +6248,122 @@ behavior and recall remain untested by this series**. No forced failure or
 additional direct Advanced control was introduced to bypass the eligibility
 guard. Migration bytes, runtime, flags, access, production, merge and deployment
 were not changed during this reporting follow-up.
+
+### Cap12 migration execution — 2026-11-03
+
+The owner explicitly authorized **only**
+`20261102181617_media_advice_exact_reserve_budget.sql`. Reviewed PR#224 head
+was `722fc2e4127abd0d4ec5a6907e2e8532f797009b`, with clean task checkout;
+current `develop` was `9ac354b5f4ed50d89d0ef2319b104ffe3fd12bc1`.
+The original Git/file SHA256 matched
+`afdb81fa9cb6c883731755ca5fd8c8d5bda920c3a25415372d647916f5aa110d`.
+The established Movie Wishlist project identity, region and PG17 endpoint were
+rechecked against the linked CLI target; no project was selected by list order.
+No owner checkout/demo, Git history, feature assignment or application source
+was changed for this operation.
+
+#### Preflight and local recovery
+
+- Remote history contained exactly the four expected M4 versions, including
+  predecessor20261101180436 once and target20261102181617 zero times. There were
+  **0 unfinished/unexpired sessions** and10 existing rows, all cap10, with valid
+  unique attempts within each row's cap. Default source_cap remained8.
+- The actual live Beta RPC body was hashed against the immutable predecessor
+  SQL before replacement, not trusted solely because history listed its version.
+  Empty search_path, service-only execution, private RLS/ACL and the current
+  schema/constraint shape also passed preflight.
+- The retained20261021 checkpoint's pinned hashes, manifest and34 AES-GCM
+  artifacts authenticated again; DPAPI unwrap and native archive-list read
+  succeeded. Its earlier scoped recovery qualification is retained, not upgraded
+  to a full-project round-trip guarantee. It predates M4 and does not contain its
+  ledger, so it was not used alone as a current-state backup.
+- The earlier M4 supplement independently decrypted and validated. A **fresh
+  pre-cap12 supplement** was then captured in a read-only repeatable-read
+  transaction, encrypted with AES-256-GCM and a separate DPAPI CurrentUser-wrapped
+  key, and independently reloaded using the persisted key. Checksums,
+  authentication, JSON/SQL readability, row counts, primary keys and data
+  fingerprints passed. NTFS access was restricted to the current owner/SYSTEM;
+  no utilities or Windows updates were installed.
+- The new supplement covers the five M4-private tables (including complete
+  session/attempt/cap data), private/public M4 functions, ACL/RLS/constraints,
+  region trigger, cleanup configuration and existing migration history.
+  Numbered restore SQL is operator-only and never runs against the source.
+  Core/Auth rows, Storage files/services and secrets are not included; only
+  dependency-presence checks and referenced-Auth validity are recorded. This
+  fresh copy was **readability-verified, not newly restore-tested**.
+- Private local artifact roots (not attached to the PR):
+  `%LOCALAPPDATA%/MovieWishlist/Recovery/<verified-project>/m4-pre-cap12-20261103T094354Z-f9aa75a2`
+  and its separate key under `MovieWishlist/RecoveryKeys`.
+
+#### Single isolated application
+
+Installed CLI2.122.0 was used without installing its advertised update. A new
+private isolated workdir
+`%LOCALAPPDATA%/MovieWishlist/M4Deployment/exact-reserve-20261103T094354Z-f9aa75a2`
+contained exactly the four already-applied migration files plus the approved
+target. File roster/checksums matched the reviewed source; only the target was
+pending. Immediately before dispatch, recovery readability, SHA/file, history,
+RPC body, active-session absence and preflight fingerprints were rechecked.
+
+There was **one** guarded `migration up --linked` invocation in this workdir,
+explicitly pinned to the verified project, with bounded lock/statement timeouts.
+Its exclusive invocation marker was written before dispatch. No general
+`db push`, `--include-all`, history repair, manual migration-history insertion,
+unrelated SQL migration or replay was used. CLI success was received:
+2026-11-03 **09:46:50–09:46:53 UTC**. No retry or lost-response recovery was needed.
+
+#### Independent postchecks and rollback-only smoke
+
+All aggregate postchecks passed, then passed again after the functional smoke:
+
+- Exact version/name20261102181617 / media_advice_exact_reserve_budget appears
+  **once**; predecessor and complete prior-history fingerprint are unchanged.
+- All10 original session rows, caps and attempts match their full-row digest;
+  the10 cap10 rows were not promoted. No persisted cap12 test session remains.
+  The default8 and attempts≤own source_cap constraint are unchanged; only the
+  allowed-cap set widened to8/10/12. Other session columns/indexes/constraints
+  are unchanged; invalid and active-session counts remained0.
+- The installed Beta body matches the exact reviewed migration's normalized
+  body hash. Function identity/owner/settings/ACL metadata remains unchanged for
+  all five M4 functions, with unchanged bodies for pilot RPC, access checker,
+  cleanup and default-region trigger function. Beta RPC remains SECURITY DEFINER,
+  empty search_path, service_role EXECUTE only; anon/authenticated cannot call it.
+- Full fingerprints of M4 permissions/regions/config/health, sessions, movies,
+  movie-group lists, membership, profiles and Auth IDs match preflight. Private
+  schema/table ACLs and RLS, region trigger and cleanup configuration also match.
+  Beta was already enabled and stayed enabled; the same single diagnostic
+  assignment remains. No new user assignment or flag operation was performed.
+- One source-free probe selected the **existing unique verified pilot
+  assignment** and an authorized existing group/movie context privately. It
+  confirmed missing start marker→cap10, `reserve-exact-v1`→cap12, third-slot
+  refusal at10 and one-time search-3/kinobaza-3 at12. Duplicate reservation and
+  unsupported marker were refused. All temporary starts, reservations and
+  ordinary start cleanup ran inside an explicit transaction ending **ROLLBACK**;
+  the subsequent fingerprints confirm that none persisted. No source search,
+  platform navigation, Wishlist write or user-ID output occurred.
+
+The new compatible handler is now **DB-supported**, not deployed: older callers
+continue receiving10, and cap12 was proved only with the compatible protocol in
+the rollback-only smoke. No merge, branch/production deployment or source smoke
+was executed. Existing cap8 has no live row in this snapshot; its default/pilot
+body/constraints remain unchanged, with separately recorded authored/native
+compatibility coverage rather than a fabricated live cap8 record.
+
+#### Deviations and residual limits
+
+No application/postcheck deviation or new security-advisor finding was observed.
+Existing advisories were identical before/after:5 private-table RLS/no-policy
+INFOs (intentional service-only boundary),12 anon-executable and17
+authenticated-executable SECURITY DEFINER warnings on **other existing RPCs**,
+and disabled leaked-password protection. Neither M4 action RPC was in those
+warnings. These unrelated settings were not changed under this authorization.
+References: [anonymous RPC warning](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable),
+[authenticated RPC warning](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable),
+[password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Recovery remains a local owner/machine-dependent copy, not an off-device backup
+or a new full restore test. The compatibility/no-blind-rollback guidance above
+still applies: do not discard or down-promote future12-cap accounting rows.
+Only this authorized migration was applied; merge and deployment still require
+separate approval. A later documentation-only commit records this evidence and
+does not imply that the reviewed application head was deployed.
