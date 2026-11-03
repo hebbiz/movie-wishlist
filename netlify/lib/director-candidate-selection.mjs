@@ -7,8 +7,18 @@ const strength = candidate => {
   const identity = candidate.identity, d = identity?.diagnostics;
   if (identity?.status !== 'unresolved' || identity.reason !== 'director-alias-unestablished' ||
       d?.comparisons?.stableIdConflict !== false || d.comparisons.canonicalMatch !== true ||
-      d.comparisons.headingAliasMatch !== true || d.comparisons.originalAliasMatch !== true ||
+      d.comparisons.originalAliasMatch !== true ||
       d.gates?.['year-crosswalk'] !== 'pass') return 0;
+  // An unknown localized heading is only eligible for the same bounded person
+  // proof after the explicit exact-original/selected-year route has passed all
+  // preceding gates. It does not prove a person or spend a pair sooner.
+  if (d.strategy === 'original-year-director-translation') {
+    if (d.comparisons.headingAliasMatch !== false || d.comparisons.yearEqual !== true ||
+        d.gates['heading-alias'] !== 'not-evaluated' ||
+        ['structure-limit','canonical-conflict','stable-id-conflict','stable-id-shape','canonical-count',
+          'metadata-structure','heading-format','original-scope','original-alias','selected-year',
+          'director-presence','director-scope'].some(gate => d.gates[gate] !== 'pass')) return 0;
+  } else if (d.comparisons.headingAliasMatch !== true) return 0;
   return d.comparisons.stableIdMatch === true ? 3 : d.comparisons.yearEqual === true ? 2 : 1;
 };
 const bases = { 3: 'scoped-film-id', 2: 'selected-year', 1: 'contextual-release-year' };

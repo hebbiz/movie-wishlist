@@ -4,7 +4,7 @@ const reasons = new Set(['source-canonical-conflict','source-stable-id-conflict'
   'malformed-source-stable-id','source-identity-structure-limit','source-identity-structure-incomplete',
   'source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict',
   'source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk',
-  'source-year-conflict-terminal-roman-title','source-year-conflict-ukrainian-g-title',
+  'source-year-conflict-terminal-roman-title','source-year-conflict-ukrainian-g-title','source-year-conflict-unknown-translation',
   'source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished']);
 function secretLike(value, secrets) {
   let decoded = value;
@@ -32,7 +32,7 @@ export function safeSearchCardURL(value, { secrets = [] } = {}) {
     !secretLike(value, secrets) && !/(?:^|[-/])(?:token|password|credential|api-key|secret)-[a-z\d]{16,}/i.test(value) ? value : null;
 }
 export function safePossibleIrrelevantSearch(value, { secrets = [] } = {}) {
-  if (!value || !Array.isArray(value.cards) || value.cards.length < 1 || value.cards.length > 2 ||
+  if (!value || !Array.isArray(value.cards) || value.cards.length < 1 || value.cards.length > 3 ||
       value.cards.some(card => card?.identity === 'matched')) return null;
   const cards = value.cards.map(card => {
     const title = safeText(card?.title, 500, secrets), originalTitle = safeText(card?.originalTitle, 500, secrets);
@@ -47,15 +47,21 @@ export function safePossibleIrrelevantSearch(value, { secrets = [] } = {}) {
   return { film: { title: safeText(film?.title, 500, secrets),
       year: Number.isInteger(film?.year) && film.year >= 1000 && film.year <= 9999 ? film.year : null,
       imdbId: typeof film?.imdbId === 'string' && /^tt\d{7,10}$/.test(film.imdbId) ? film.imdbId : null },
-    searches: (Array.isArray(value.searches) ? value.searches : []).slice(0, 2).map(search => safeSearchCorrelation(search, { secrets })), cards };
+    searches: (Array.isArray(value.searches) ? value.searches : []).slice(0, 3).map(search => safeSearchCorrelation(search, { secrets })), cards };
 }
 export function possibleIrrelevantSearch({ film, searches, cards, observations }, { secrets = [] } = {}) {
   if (!Array.isArray(cards) || !cards.length || cards.some(card => card?.result?.identity?.status === 'matched')) return null;
   return safePossibleIrrelevantSearch({ film: { title: film?.identityTitle ?? film?.originalTitle, year: film?.year, imdbId: film?.imdbId }, searches,
     cards: cards.map(({ result, url }) => {
       const observed = observations?.get(url), d = result?.identity?.diagnostics;
-      const heading = observed?.truncated === false && observed.sourceIdentity?.h1?.length === 1 && d?.counts?.headingCount === 1 ? observed.sourceIdentity.h1[0] : null;
-      const original = observed?.truncated === false && observed.sourceIdentity?.h2?.length === 1 && d?.counts?.originalTitleCount === 1 ? observed.sourceIdentity.h2[0] : null;
+      // Expected aliases are independently bounded in the diagnostic hook. An
+      // abbreviated alias list must not make complete source H1/H2 unknown.
+      // Legacy observers without per-field completeness retain the old strict
+      // fallback; malformed or explicitly incomplete fields never gain trust.
+      const complete = field => result?.identity?.reason !== 'source-identity-structure-limit' &&
+        (observed?.sourceTitleCompleteness === undefined ? observed?.truncated === false : observed.sourceTitleCompleteness?.[field] === true);
+      const heading = complete('h1') && observed.sourceIdentity?.h1?.length === 1 && d?.counts?.headingCount === 1 ? observed.sourceIdentity.h1[0] : null;
+      const original = complete('h2') && observed.sourceIdentity?.h2?.length === 1 && d?.counts?.originalTitleCount === 1 ? observed.sourceIdentity.h2[0] : null;
       const unique = heading !== null && original !== null;
       const titleMismatch = unique && result.identity?.reason === 'source-title-conflict' && d?.gates?.['heading-alias'] === 'fail' &&
         d?.comparisons?.headingAliasMatch === false && d?.comparisons?.originalAliasMatch === false;

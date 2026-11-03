@@ -44,7 +44,7 @@ test('two bounded exact requests confirm the linked person without acquiring or 
 
 test('cap8, invalid server cap, missing credential and untrusted/multi-person context make zero source reservations', async () => {
   for (const config of [
-    { sourceCap: 8 }, { sourceCap: 12 }, { sourceCap: '10' },
+    { sourceCap: 8 }, { sourceCap: 11 }, { sourceCap: '10' }, { sourceCap: '12' },
     { tmdbToken: '' }, { tmdbToken: 'a b' }, { tmdbToken: 'x'.repeat(4097) },
     { film: {} }, { film: { ...FILM, directorCount: 2 } }, { film: { ...FILM, directorPeople: [...FILM.directorPeople, ...FILM.directorPeople] } },
     { film: { directorCount: 1, directorPeople: [{ ...FILM.directorPeople[0], personId: '900001' }] } },

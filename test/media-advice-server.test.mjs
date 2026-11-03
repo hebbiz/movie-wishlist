@@ -85,7 +85,7 @@ test('unmapped Plex/MUBI literal claims retained read-only, no invented medium o
 });
 
 test('only the durable start receipt selects source cap; browser cap and identity context are ignored', async () => {
-  for (const cap of [8, 10, undefined]) {
+  for (const cap of [8, 10, 12, undefined]) {
     const operations = []; let runArgs;
     const client = { auth: { getUser: async () => ({ data: { user: { id: user, user_metadata: { sourceCap: 100 } } } }) },
       rpc: async (_, args) => { operations.push(args); return { data: { id: form, ...(cap === undefined ? {} : { cap }), attempts: [],
@@ -93,7 +93,8 @@ test('only the durable start receipt selects source cap; browser cap and identit
     const handler = createMediaAdviceHandler({ client, env: key => key === 'TMDB_READ_ACCESS_TOKEN' ? 'AUTHORED_SERVER_TMDB_KEY' : '',
       run: async args => { runArgs = args; return { rows: [] }; } });
     const response = await handler(request({ ...input, sourceCap: 100, cap: 100, counters: { remaining: 100 },
-      identityContext: { tmdbId: 123, titleEvidence: [{ title: 'Browser invented alias' }] }, tmdbToken: 'BROWSER_FAKE_KEY' }));
+      identityContext: { tmdbId: 123, titleEvidence: [{ title: 'Browser invented alias' }] }, tmdbToken: 'BROWSER_FAKE_KEY',
+      p_stage: 'BROWSER_FAKE_MARKER', startContract: 'BROWSER_FAKE_MARKER' }));
     assert.equal(response.status, 200);
     assert.equal(runArgs.sourceCap, cap ?? 8);
     assert.equal(runArgs.tmdbToken, 'AUTHORED_SERVER_TMDB_KEY');
@@ -101,11 +102,13 @@ test('only the durable start receipt selects source cap; browser cap and identit
     assert.doesNotMatch(JSON.stringify(operations), /sourceCap|"cap"|counters|identityContext|Browser|FAKE_KEY/);
     assert.doesNotMatch(await response.text(), /AUTHORED_SERVER_TMDB_KEY|BROWSER_FAKE_KEY/);
     assert.deepEqual(operations.map(args => args.p_op), ['start', 'finish']);
+    assert.equal(operations[0].p_stage, 'reserve-exact-v1');
+    assert.equal(operations[1].p_stage, undefined);
   }
 });
 
 test('unsupported or malformed server source cap fails closed before source work and is finished once', async () => {
-  for (const cap of [0, 9, 11, 100, '10', null]) {
+  for (const cap of [0, 9, 11, 13, 100, '10', '12', null]) {
     const operations = [];
     const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) },
       rpc: async (_, args) => { operations.push(args.p_op); return { data: { id: form, cap, mykola_media_advice: true } }; } };
@@ -117,7 +120,7 @@ test('unsupported or malformed server source cap fails closed before source work
 });
 
 test('matched server Details propagate contextual title/release metadata and source cap to the resolver without extra GETs', async () => {
-  for (const sourceCap of [8, 10]) {
+  for (const sourceCap of [8, 10, 12]) {
     const mock = sourceFixture((data, stage) => {
       if (stage !== 'details') return;
       data.translations.translations = [
@@ -155,7 +158,7 @@ test('Details stable-ID conflict withholds context/resolver, and unsupported ser
     reserve: async () => {}, fetchImpl: mock.fetchImpl, resolver: async () => assert.fail('unmatched parent metadata must not reach resolver') });
   assert.equal(result.film.identityContext, undefined);
   assert.equal(mock.calls.length, 4);
-  for (const sourceCap of [0, 9, 11, '10', null]) await assert.rejects(discoverMedia({ imdbId: input.imdbId, sourceCap,
+  for (const sourceCap of [0, 9, 11, 13, '10', '12', null]) await assert.rejects(discoverMedia({ imdbId: input.imdbId, sourceCap,
     fetchImpl: async () => assert.fail('invalid service cap cannot dispatch') }), /invalid-source-cap/);
 });
 
@@ -236,5 +239,59 @@ test('actual handler/service/resolver preserves two searches/cards at cap8 and u
     assert.doesNotMatch(JSON.stringify(payload), /PRIVATE_|AUTHORED_TMDB_KEY|AUTHORED_MOTN_KEY|AUTHORED_TAVILY_KEY|1967-05-20/);
     assert.doesNotMatch(JSON.stringify(operations), /https?:|PRIVATE_|sourceURL|identityContext|sourceCap/);
     assert.equal(operations[0].p_op, 'start'); assert.equal(operations.at(-1).p_op, 'finish');
+  }
+});
+
+test('server-authorized cap12 completes third search/card/person proof in twelve attempts without exposing it to ordinary Beta', async () => {
+  // Authored complete HTTP path, not current source responses or user records.
+  const pointers = ['authored-wrong-one','authored-wrong-two','authored-reserve-card'].map(slug => 'https://kinobazaua.com/titles/'+slug);
+  const profileURL='https://kinobazaua.com/persons/authored-director';
+  const personURL='https://api.themoviedb.org/3/person/999999?language=en-US&append_to_response=external_ids';
+  const alias='Авторський режисер', keys={TMDB_READ_ACCESS_TOKEN:'AUTHORED_TMDB_KEY',MOTN_API_KEY:'AUTHORED_MOTN_KEY',TAVILY_API_KEY:'AUTHORED_TAVILY_KEY'};
+  const profile=`<!doctype html><html><head><link rel="canonical" href="${profileURL}"></head><body><div class="col-8"><h1 class="h2">${alias}</h1><h2 class="h3 text-muted">Authored director</h2><p>Дата народження: 20 травня 1967</p><p>Ролі: режисер</p></div></body></html>`;
+  const stages=['tmdb-find','tmdb-details','tmdb-providers','motn-title','search-1','kinobaza-1','search-2','kinobaza-2','search-3','kinobaza-3','tmdb-person','kinobaza-person'];
+  for(const cap of [8,10,12])for(const diagnostics of [false,true]){
+    let searches=0;const sent=[],reserved=[],ops=[];
+    const client={auth:{getUser:async()=>({data:{user:{id:user}}})},rpc:async(_,args)=>{
+      ops.push(args);
+      if(args.p_op==='reserve'){
+        assert.ok(stages.includes(args.p_stage));assert.ok(!reserved.includes(args.p_stage));assert.ok(reserved.length<cap);
+        if(cap<12)assert.ok(!['search-3','kinobaza-3','tmdb-person','kinobaza-person'].includes(args.p_stage));
+        reserved.push(args.p_stage);
+      }
+      return{data:{id:form,cap,attempts:[...reserved],mykola_media_advice:true,mykola_media_advice_diagnostics:diagnostics}};
+    }};
+    const fetchImpl=async(url,init)=>{
+      sent.push(url);assert.equal(init.redirect,'manual');assert.equal(init.credentials,'omit');
+      if(url==='https://api.tavily.com/search'){
+        const body=JSON.parse(init.body);searches++;
+        assert.equal(body.exact_match,searches===3?true:undefined);assert.equal(body.include_domains_mode,'restrict');
+        assert.equal(body.search_depth,searches===3?'advanced':'basic');
+        if(searches===3){assert.equal(body.query,'"Authored original" 2001 site:kinobazaua.com/titles/');assert.equal(cap,12);}
+        return Response.json({query:body.query,request_id:'a0000000-0000-4000-8000-000000000001',results:[{url:pointers[searches-1],content:'PRIVATE_SEARCH_SNIPPET'}]});
+      }
+      if(pointers.includes(url))return new Response(markup({url,...(url===pointers[2]?{director:`<a href="/persons/authored-director">${alias}</a>`}:{title:'Different authored title',original:'Different authored original'})}),{headers:{'content-type':'text/html'}});
+      if(url===personURL)return Response.json({id:999999,name:'Authored director',also_known_as:[],birthday:'1967-05-20',imdb_id:'nm9999999',external_ids:{imdb_id:'nm9999999'}});
+      if(url===profileURL)return new Response(profile,{headers:{'content-type':'text/html'}});
+      assert.ok(['api.themoviedb.org','api.movieofthenight.com'].includes(new URL(url).hostname),'no destination/source-search request');
+      return Response.json(url.includes('/find/')?{movie_results:[{id:IDS[0],title:'Вигаданий фільм',original_title:'Authored original'}]}:url.includes('/watch/providers')?providersData(IDS[0]):url.includes('movieofthenight')?motnData(IDS[0]):detailsData(IDS[0]));
+    };
+    const response=await createMediaAdviceHandler({client,env:key=>keys[key]??'',fetchImpl,resolver:createKinobazaResolver({apiKey:keys.TAVILY_API_KEY})})(request({...input,sourceCap:12,cap:12,diagnostics:true}));
+    assert.equal(response.status,200);const payload=await response.json(),expected=cap===12?12:8;
+    assert.equal(sent.length,expected);assert.equal(reserved.length,expected);assert.equal(searches,cap===12?3:2);
+    assert.equal(payload.result.rows.some(row=>row.id.startsWith('kinobaza:')),cap===12);
+    if(diagnostics){
+      assert.equal(payload.result.metrics.requestBudget,cap);assert.equal(payload.result.metrics.requestsMade,expected);assert.equal(payload.result.metrics.ledgerReservations,expected);
+      assert.equal(payload.result.resolver.cardCalls,cap===12?3:2);
+      if(cap===12){
+        assert.deepEqual(reserved,stages);assert.equal(payload.result.resolver.searches[2].mode,'reserve-exact');assert.equal(payload.result.resolver.searches[2].exactMatch,true);
+        assert.equal(payload.result.resolver.searches[2].searchDepth,'advanced');
+        assert.equal(payload.result.resolver.cards[2].identity,'matched');assert.equal(payload.result.resolver.directorProfile.sourceAttempts,2);
+        assert.deepEqual(payload.result.resolver.directorProfile.selection.selectedCards,[3]);
+      }
+    }else assert.doesNotMatch(JSON.stringify(payload),/resolver|metrics|exactMatch|requestId|directorProfile|directorAliasEvidence|identityContext|sourceCap/);
+    assert.doesNotMatch(JSON.stringify(payload),/PRIVATE_|AUTHORED_.*KEY|1967-05-20/);
+    assert.deepEqual(ops.filter(op=>op.p_op!=='reserve').map(op=>op.p_op),['start','finish']);
+    assert.ok(ops.every(op=>!Object.hasOwn(op,'cap')&&!Object.hasOwn(op,'sourceCap')));
   }
 });

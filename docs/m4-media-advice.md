@@ -9,9 +9,12 @@ updated with merged #217. Later authorized execution:
 The preparation/execution records below are dated evidence, not a live-state
 assertion. PR#220's additional preparation does not authorize deployment,
 migrations or activation; its current scope is recorded at the end of this file.
-Current branch search strategy: **Tavily basic Search**, candidate URLs only,
+Current branch search strategy: **two unchanged Tavily Basic slots, then one
+Advanced exact-match reserve if the complete earlier path fails**, candidate URLs only,
 with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
-not Kinobaza `/search`. [Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
+not Kinobaza `/search`. The reserve uses original title and selected year,
+without a director name: [Advanced reserve update](#advanced-reserve-search-update--2026-11-02).
+[Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
 remain historical evidence;
 this is not catalogue-wide accuracy, track verification or new activation approval.
 The contextual second slot again combines the established primary/alternate
@@ -5367,3 +5370,1000 @@ retention policy, server stage, budget, migration or lifecycle/auth change.
 - **One external HTTP request total**, only the current Kong card GET. No live
   resolver rerun, fresh TMDb/person verification, platform navigation, Wishlist
   Save, real-device/iPhone/Safari check, merge or deployment was performed.
+
+### Meet the Fockers: scoped identity and complete source titles — 2026-11-02
+
+Base: develop `9ac354b5f4ed50d89d0ef2319b104ffe3fd12bc1`, including the
+merged Gladiator II/Kong title and MEGOGO format-caption fixes. New branch
+`codex/m4-localized-card-identity`; no changes to search query construction,
+candidate scores/order/deduplication, source budgets, access or link policy.
+
+#### Historical evidence versus current observations
+
+The owner's protected report for run
+`6dd4d20f-e379-4340-b5e7-87253c4c6bb9` records two Tavily searches, two
+card reads, eight admitted but unread candidates and eight total source
+attempts. The read-address digests correspond to `little-fockers` (2010) and
+`meet-the-parents` (2000); both failed title/original/year comparisons against
+the selected 2004 film. Neither was incorrectly confirmed. The report does
+**not** contain the historical queries, request IDs, full candidate URLs or
+expected-alias capture completeness. Whether `meet-the-fockers` was among
+those eight unread candidates remains unknown. It does not establish caching
+or a Tavily defect, nor the precise historical reason the optional warning was
+absent.
+
+A separate earlier investigation made one current Kinobaza card GET (HTTP200,
+279580 bytes), not an archive of that run. Its H1 was `Знайомство з Фокерами
+( 2004 )`, H2 `Meet the Fockers`. The film metadata identified `Джей Роуч`;
+later Ukrainian dubbing credits identified `Сергій Гаврилюк`. Previously the
+global director scan combined both people. Independently, a long list of
+expected aliases set a global diagnostic truncation flag and suppressed even
+complete, unique source H1/H2. Authored reproduction establishes those code
+defects, not unrecorded historical values.
+
+#### General, conservative changes
+
+- Source H1 and scoped H2 have independent completeness flags. The protected
+  possible-irrelevance section uses these, not expected-alias truncation.
+  Multiple/overlong/incomplete headings remain unknown; legacy observations
+  retain their strict fallback. The section still requires no confirmed card
+  and actual title non-match evidence, never alleges a proven provider error.
+- Directors and their linked-profile pointers are read only from labelled film
+  metadata between the unique H1 and availability block, with enclosing tables
+  wholly in that interval. Dubbing credits elsewhere are not film directors.
+  Competing people/values inside the interval remain unresolved; inline fields
+  cannot silently pick their first person. No name-to-profile URL is invented.
+- An unknown Cyrillic localization may continue only with **exact normalized
+  trusted original title**, the same selected year and a single confirmed
+  director. This is a separate `original-year-director-translation` route;
+  `headingAliasMatch` remains false and the alias gate is not claimed passed.
+  It performs no а/о replacement, transliteration or fuzzy matching. Latin or
+  mixed-script conflicting headings, explicit number differences and unknown
+  Roman-numbered bases remain refused. Existing base-preserving Roman/g/ґ
+  routes are unchanged. This intentionally does not solve all translations.
+- Stable-ID/canonical conflicts, competing H2s, missing or ambiguous directors
+  and unknown original/year evidence retain withholding. Even an agreeing film
+  ID cannot bypass director proof on this new route. A pending director spelling
+  can use the **same existing deferred person pair** after the preceding exact
+  original/year gates; tied different profiles stay ambiguous. No extra stage,
+  third card/search, retry or increase to cap10 is introduced.
+
+The ordinary Beta product projection still excludes protected search details.
+Diagnostics require the existing server flag/permission checks at both capture
+and final receipt. No raw source response, key, snippet or new persistent
+storage is introduced. Language evidence, exact selected links, ranking,
+preview/explicit transfer/ordinary Save and form-session isolation are unchanged.
+
+#### One-shot current control
+
+`scripts/m4-fockers-control.mjs` uses the actual TMDb projection, Tavily adapter,
+admission, ranking, resolver, card identity/extraction and optional person proof.
+It observes a bounded clone of the **same** Tavily response, recording actual
+sent query, available response query/request ID, candidate URL order, admitted
+union/rank before each dispatched card and the read card's identity fields.
+Missing/unsafe fields stay unknown. Search titles/snippets/raw bodies are not
+returned or archived. It never seeds a known card URL.
+
+The local control omits MOTN/Watch Providers/platform navigation and Wishlist;
+it is not deployed runtime or full discovery. Its maxima are two film TMDb
+GETs, two Tavily calls, two card GETs and the existing optional person pair
+(eight source attempts actually available, within unchanged cap10). Failed
+dispatches count; there are no redirects, retries or automatic reruns. Credentials
+are entered once in the existing local hidden-prompt pattern, passed only over
+child stdin, and not written to disk, argv, logs or environment variables.
+
+#### Current control results and limitations
+
+The owner ran the one-shot hidden prompt against implementation commit
+`72ea6edfd2d4639dba410865404c0fd4c569f57a` and supplied its safe diagnostic
+output. Local run `e1cdd854-afdf-4c60-8672-1a731cbc622b`, started
+2026-11-02T17:32:10.483Z, has no server build attestation (`buildSha:null`).
+The pasted middle of the JSON is incomplete; the complete query/candidate,
+read-card, counts and final projection fields below are present. Missing text
+is not reconstructed and is not a reason to rerun the search.
+
+| Actual Tavily POST query | Response query / request ID | Returned candidates, in source order |
+| --- | --- | --- |
+| `"Meet the Fockers" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers 2004`; `7b0eae3d-73cb-49f2-a3c9-83658abd007a` | `little-fockers`, `meet-the-parents`, `the-absent-minded-professor`, `snow-dogs`, `peeples` |
+| `"Meet the Fockers" "Знайомство з Факерами" "Jay Roach" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers Знайомство з Факерами Jay Roach 2004`; `36806962-addc-411b-9b12-745376c40429` | empty list |
+
+Each listed slug is an actual admitted `https://kinobazaua.com/titles/` URL,
+not an inferred URL. All five remained in that order under the **unchanged**
+ranking before each card read; the second read excludes the already read card.
+`meet-the-fockers` was absent from **both current responses**. Rearranging the
+returned candidates therefore could not find it in this run. A candidate URL
+is not identity proof and the three unread cards' actual contents are unknown.
+
+| Dispatched read | Actual source H1 / H2 | Outcome |
+| --- | --- | --- |
+| [little-fockers](https://kinobazaua.com/titles/little-fockers) | `Знайомство з Факерами 2 ( 2010 )` / `Little Fockers` | mismatch, `source-title-conflict`; original and year differ |
+| [meet-the-parents](https://kinobazaua.com/titles/meet-the-parents) | `Знайомство з батьками ( 2000 )` / `Meet the Parents` | mismatch, `source-title-conflict`; original and year differ even though director matches |
+
+The trusted TMDb projection reports movie 693, selected year 2004, original
+`Meet the Fockers`, director `tmdb:person` 6737 with `Джей Роуч` / `Jay Roach`,
+and 48 distinct title aliases. Both read cards have complete H1/H2 and
+`truncated:true` for the broader capture. The new `possibleIrrelevantSearch`
+section is present, with actual queries/correlation/addresses and both title
+refusals. This directly exercises the completeness separation without implying
+a proven provider defect. Ordinary Beta users still do not receive that section.
+
+Final current resolver status is `bounded-unresolved`, with **zero Kinobaza
+rows**, not a successful automatic discovery. The correct card was not read in
+this control; its new translation/director/language route is covered by authored
+tests, not claimed as a new live success. The response-query omission of quotes
+and `site:` is recorded literally; its cause or effect is not established.
+The two historical wrong cards recurring now does not reconstruct the old
+candidate list or prove why Tavily omitted the correct card.
+
+**Source accounting: 6 attempts, all HTTP200:** two TMDb film GETs, two Tavily
+POSTs, two Kinobaza card GETs. Optional person requests: zero. The prior
+investigation's single card GET is separate (seven current-source requests
+across the investigation plus this implementation control); historical runtime
+attempts are not replayed or charged again. No retries, redirects, platform
+navigation, MOTN, Watch Providers, Wishlist writes or additional live searches.
+
+No query/ranking change is included. The evidence establishes a current
+candidate-recall gap, but not a verified better replacement query. A next
+separate bounded comparison can test a less-constrained alternate/known-title
+query against the present combined second query, still within two slots and
+with independent card identity. Changing ranking alone cannot recover an
+absent pointer; no URL is prefilled to manufacture a success.
+
+#### Final checks
+
+- **456 targeted offline identity/resolver/extraction/diagnostic/control tests
+  passed**, no failures/skips. This includes all three Fockers parts,
+  same-title/different-year/person films, ID/canonical contradictions, original
+  and year requirements, missing/ambiguous directors, long aliases and prior
+  Gladiator II, Kong, Klaus-shaped and earlier control regressions. Fixtures
+  are authored, not retained live HTML or track/offer attestations.
+- **43 additional server/product/report tests passed**, no failures/skips:
+  Beta/diagnostic capability and revocation, search redaction, cap10 and
+  server-authorized projection. No shared database was accessed or changed.
+- **5 existing browser-suite tests passed**, no failures/skips: source-free
+  headless Edge with desktop/tablet/mobile viewports (1280×900, 820×1180,
+  375×812 and 420×912), protected versus ordinary report behavior, exact links,
+  local preview/explicit transfer and reopen without another discovery. These
+  are viewport simulations, not real iPhone/Safari checks or a Wishlist Save.
+- Independent review found first-anchor selection and same-name/different-person
+  pointer ambiguity; both were corrected and covered by five further negative
+  cases before the final 456-test run. `git diff --check` passed. Owner checkout,
+  demo and unrelated files remain unchanged.
+
+No production migration, flag/access operation, merge or deployment was run.
+Offline identity acceptance does not independently verify real availability,
+purchase/rental entitlement or platform language tracks.
+
+### Approved reserve exact-match stage and cap12 — 2026-11-02
+
+**Approval record at documentation checkpoint `c875489`; not an activation.** The owner
+approved retaining the current first two search/card opportunities and adding
+one bounded strict-search opportunity only if that whole path fails to confirm
+a card. This supersedes the earlier prospective recommendation to keep all
+future search improvements within two search/card slots and cap10. Historical
+measurements, deployed behavior and the existing implementation in PR #224
+remain as recorded above. The subsequent implementation is recorded in the
+next section; this approval-only checkpoint did not change them.
+
+The agreed sequence is:
+
+1. Keep the existing primary search and first card check.
+2. Keep the existing alternative-search behavior and second card opportunity,
+   including verified title/release-year context. Do not replace the already
+   useful alternative with exact match or silently move it to a later stage.
+3. Only when the current path, including any available linked-director proof,
+   yields no confirmed card, permit one reserve Tavily search with
+   `exact_match:true` and one additional unread card check. A confirmed card
+   ends eligibility for this reserve stage. An authorization/rate-limit error
+   or exhausted deadline does not authorize a fallback retry.
+
+For the reserve query, quote the trusted original title. A verified year and
+the trusted director name can provide context; do not make an exact Latin
+director spelling or an additional localized title a required quoted phrase.
+Preserve the context of confirmed release dates rather than inventing a year.
+Exact match constrains the searched phrase, **not film identity**: a page can
+mention that phrase without being the right card, or the search can be empty.
+No live benefit of this reserve stage has yet been established.
+
+| Source attempts per complete search | Current Beta maximum | Approved next maximum |
+| --- | ---: | ---: |
+| Existing TMDb identity/providers and MOTN baseline | 4 | 4 |
+| Tavily search slots | 2 | 3 |
+| Kinobaza card GET slots | 2 | 3 |
+| Existing linked-director profile pair | 2 | 2 |
+| **Total source HTTP attempts** | **10** | **12** |
+
+These are ceilings, not targets. A third search is useful only if an unread
+candidate can still be checked. Share admission/deduplication across all slots;
+do not refetch previously read cards, prefill known URLs or reintroduce
+Kinobaza `/search`. The existing single person pair is not doubled: if it is
+already spent, a third card needing new unestablished person proof may remain
+unconfirmed. Conflicting IDs, title/year/person ambiguity, withholding and link policy remain unchanged;
+a strict-search result never bypasses independent identity checks.
+
+Implementation must reserve/account for the new search/card stages on the
+server, count failed dispatches and preserve lost-reservation/no-retry safety.
+Merely changing a client or diagnostic limit is insufficient. Prepare any
+required ledger migration and its recovery/application checks separately;
+existing sessions must not silently gain fresh attempts. Retain finite source
+timeouts and the end-to-end deadline; the reserve stage runs only with time
+and authorized capacity remaining. Beta rights, protected diagnostics, session
+isolation, preview/transfer/Save and the absence of user search-count quotas
+are unaffected by this per-search technical ceiling.
+
+The follow-up requires targeted budget/identity/error regressions and controlled
+before/after source checks, separately reporting the third stage's actual
+benefit, request count and latency. This approval does **not** apply a live
+migration, activate a flag, authorize merge/deployment, or claim that cap12 is
+already available. At the approval-only checkpoint this increment edited
+documentation only: no runtime, schema, source request, live database or
+Wishlist operation was performed.
+
+### Reserve exact-match implementation and prepared cap12 ledger — 2026-11-02
+
+**Implemented in PR #224, not activated in a live database or deployment.**
+This supersedes the approval-only implementation status above, not its recorded
+source observations. The existing primary/alternative queries, first two card
+opportunities and independent identity/link gates remain unchanged.
+
+#### Resolver and finite request contract
+
+- Only a trusted server receipt with numeric cap12 permits the reserve stage.
+  cap8/10 retain their existing stages; browser cap/counters/identity fields do
+  not authorize anything. The complete per-search ceiling is **12 =4 baseline
+  +3 Tavily +3 title cards +the same2 person requests**. No per-user search-count
+  quota, new person pair, fourth search/card or automatic retry is introduced.
+- After the whole first-two path, including available deferred person proof,
+  yields no matched card, reserve `search-3` before one Tavily Advanced POST with
+  `exact_match:true`. Only the trusted original title is quoted; selected TMDb
+  year is unquoted context and no director name is added. This is the later
+  [Advanced update](#advanced-reserve-search-update--2026-11-02); earlier Basic
+  measurements below retain their original settings. Escaping,
+  text bounds, domain restriction and `/titles/` scope remain. The original two
+  search payloads do not acquire `exact_match` or a different query.
+- At least two source attempts and unexpired source time must remain before
+  reserve search. An admitted unread pointer from that exact response can spend
+  `kinobaza-3`; empty/rejected/duplicate-only responses cannot justify reading
+  another old candidate. Shared admission, deduplication and ranking remain;
+  no URL is manufactured, no previously read card refetched, and no request is
+  sent to Kinobaza `/search` or a platform.
+- A matched first/second card suppresses reserve. Source transport, reservation,
+  auth/access/rate/quota, redirect, challenge, invalid/oversized response or
+  deadline failures are not fallback/retry opportunities. A valid HTTP200 card
+  with unsupported film markup may permit a different exact-response candidate;
+  its original failure remains visible. Failed/uncertain reservations are never
+  retried or refunded.
+- The one global person pair is unchanged. If spent, a later card cannot fetch
+  different profiles. Exact-search position is not stronger film evidence:
+  remaining deferred cards are compared together under the existing evidence
+  ordering. Equal evidence linked to different people remains ambiguous;
+  cached proof is reused only for the same validated person/profile/alias.
+- Source work still ends at45s from handler entry, finalization by53s and total
+  response budget55s. Search/card bounds and each person's5s deadline remain.
+  Extra capacity is not extra time: slow earlier sources may leave no reserve
+  opportunity, and a third eligible card may still be unresolved.
+
+[Tavily's API reference](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+documents exact matching as constraining quoted phrases, not film identity.
+It neither guarantees recall nor establishes that a result is the right film.
+New search/card diagnostics are bounded to three; source/identity details remain
+behind the independent diagnostics permission, with ordinary Beta redaction.
+Unknown values remain unknown, and no raw responses or credentials enter them.
+
+#### Prepared migration and mixed-version compatibility
+
+CLI-generated file:
+`supabase/migrations/20261102181617_media_advice_exact_reserve_budget.sql`.
+SHA256 (Git blob, LF): `afdb81fa9cb6c883731755ca5fd8c8d5bda920c3a25415372d647916f5aa110d`.
+It widens only the private session cap constraint to8/10/12 and replaces the
+same service-only Beta RPC signature. It was unapplied at this preparation
+checkpoint; the later authorized [execution record](#cap12-migration-execution--2026-11-03)
+now confirms the single remote application. That does not authorize deployment.
+Existing rows, attempts, caps, default8, pilot RPC, TTL/cleanup eligibility,
+Beta/diagnostic access checks, switch/assignments and Wishlist data are unchanged.
+The new slots are individually unique and legal only for cap12; valid slot gaps
+after empty searches do not fabricate prior HTTP attempts.
+
+The handler supplies constant `p_stage='reserve-exact-v1'` only on `start`.
+This is a server implementation contract, not a browser value or access flag.
+The new RPC gives marked new sessions12; missing/null marker still gives10 for
+older/frozen callers sharing the DB. Unknown nonnull markers fail before ledger
+mutation. Reservation calls cannot use this marker or raise an existing cap.
+
+| Handler | Database function | New Beta cap |
+| --- | --- | ---: |
+| Old, no marker | Previous |10|
+| New, server marker | Previous (ignores start marker) |10|
+| Old, no marker | Prepared version |10|
+| New, server marker | Prepared version |12|
+
+The session's immutable receipt remains authoritative thereafter. RPC ACL stays
+service-role-only; empty `search_path`, same-form replay protection, advisory/row
+locks and post-lock region/group/card/switch authorization remain. A capability
+marker never grants diagnostic or Beta access.
+
+**Later application, separately authorized:**
+
+1. Verify exact reviewed PR SHA, migration bytes/hash, intended project and live
+   history including predecessor20261101180436. Recheck the existing recovery
+   checkpoint and take/validate a fresh scoped backup if the application plan
+   requires one; this PR does not claim a fresh remote snapshot was taken.
+   Inspect active sessions before any RPC replacement and retain their accounting.
+2. Prefer cap12-aware code first, confirming old cap10 receipts source-free.
+   The matrix also protects older callers if SQL precedes code; do not infer
+   that either migration or a Git commit alone activated cap12 everywhere.
+3. Use the established isolated migration workdir/file/history procedure, with
+   this version as the only pending migration. No general `db push`, history
+   repair, replay or unrelated migrations. If the result is lost, inspect actual
+   history/function/constraint state before considering another invocation.
+4. Postcheck version20261102181617 exactly once; allowed8/10/12, default8 and
+   per-row attempt constraint; old row/cap preservation; missing-marker10 versus
+   marked12; stage3 unavailable to old sessions; service-only ACL/empty path,
+   unchanged pilot RPC, rights, switch/diagnostics assignments and data counts.
+   Use source-free checks, then separately approve any live release smoke.
+
+**Rollback:** roll code back normally; older callers create10 without changing
+existing12 rows. Keep the widened constraint/RPC while an in-flight cap12 action
+may reserve its new stages. Before restoring the preceding Beta RPC, stop/drain
+new marked actions and let active actions finish/expire. Retain ledger rows and
+migration history. Do not down-promote caps or force an8/10-only constraint while
+cap12 rows remain; a physical schema reversal needs separate reviewed SQL after
+state inspection, not a blind replay or deletion of accounting.
+
+#### Validation and current-source controls
+
+Targeted authored regressions cover original query/payload preservation,
+first/second success, empty/duplicate/rejected reserve results, errors/deadlines,
+ID/title/year/person withholding, ambiguous profile allocation, exact link and
+language projection, protected versus ordinary diagnostics, and legacy budgets.
+Local SQL tests apply the migration only to authored fixtures; native PostgreSQL
+checks exercise competing starts/reservations and access revoked while queued.
+They are not tests against the shared Supabase project or real user data.
+
+- **575/575 targeted offline tests passed**, no failures/skips: Kinobaza and
+  director suites, unchanged two-query behavior, reserve stage, source controls,
+  full server chain, redaction, projection/report and Beta/old/new ledger tests.
+  This includes the three new PGlite migration/compatibility tests.
+- **12/12 native PostgreSQL17.6 tests passed**, no failures/skips, using24
+  independent loopback connections and authored data only. Parallel starts and
+  reserve slots have one winner, all12 unique stages fit, old/mixed-version
+  callers stay compatible, and all eight queued region/switch/group/card
+  revocation cases deny the two reserve stages before mutation.
+- **5/5 source-free headless Edge browser tests passed**, no failures/skips,
+  at1280×900,820×1180,375×812 and420×912. These are viewport emulations, not
+  real iPhone/Safari or a real Wishlist Save. No product UI was changed by this
+  increment; subsequent edits concern SQL/handler negotiation and test/report
+  bounds. Independent runtime and SQL/compatibility reviews found no remaining
+  actionable issue. `git diff --check` passed; owner checkout/demo preserved.
+
+The prepared one-pass local series covers Meet the Fockers, Alien, Mad Max:
+Fury Road, Dune: Part Two, Gladiator II, Kong: Skull Island, Klaus and The Pursuit
+of Happyness. It invokes the actual resolver, not preselected URLs. The two
+Providers/MOTN baseline requests are omitted and represented only as headroom
+sentinels; actual per-film HTTP counts are at most10:2 TMDb film +3 Tavily
++3 cards +2 person. `configuredResolverCap:12` and
+`serverLedgerCapAttested:false` explicitly distinguish local verification from
+an applied server ledger/deployment.
+
+The same invocation can replay captured responses for a cap10 counterfactual
+entirely in RAM, with **zero additional HTTP**. Missing recorded responses yield
+unknown rather than a hidden fetch. This is neither an independent before-run
+nor historical reconstruction. Live elapsed time and replay processing time
+are separate; the latter is not provider latency. Bodies/credentials are not
+archived, and one hidden credential entry serves the complete series.
+
+At implementation checkpoint `36d5775`, the new series had not yet returned a
+live result; no new request had been dispatched by the Codex process. The owner
+subsequently supplied the one-pass outputs below. These supersede that pending
+status, not the separate earlier6-attempt control or historical observations.
+
+#### Owner-forwarded cap12 series: actual results — 2026-11-02
+
+The owner supplied eight compact case outputs and the completed series summary.
+No new live request or automatic rerun was made to process this evidence. The
+credential command was pinned to implementation `36d57753a1d62f9e6841dc14042b0f00bdb1e9a6`;
+the JSON itself has `buildSha:null`, `execution:local-diagnostic` and
+`serverLedgerCapAttested:false`, not an independent build/deployment attestation.
+
+**Result: seven controls retain a confirmed card; Meet the Fockers remains
+unresolved. The reserve stage executed, but this series shows no additional
+confirmed film from cap12.** This does not establish that reserve exact search
+cannot help other responses or films.
+
+| Film | Confirmed current card | cap10 RAM replay → cap12 | Kinobaza mapped rows | Actual HTTP | Local elapsed ms |
+| --- | --- | --- | ---: | ---: | ---: |
+| Meet the Fockers (2004) | none | unresolved → unresolved |0|7|8712|
+| Alien (1979) | [alien](https://kinobazaua.com/titles/alien) | matched → matched |5|5|3627|
+| Mad Max: Fury Road (2015) | [mad-max-fury-road](https://kinobazaua.com/titles/mad-max-fury-road) | matched → matched |6|5|3559|
+| Dune: Part Two (2024) | [dune-part-two](https://kinobazaua.com/titles/dune-part-two) | matched → matched |5|5|3778|
+| Gladiator II (2024) | [gladiator-2](https://kinobazaua.com/titles/gladiator-2) | matched → matched |5|5|3479|
+| Kong: Skull Island (2017) | [kong-skull-island](https://kinobazaua.com/titles/kong-skull-island) | matched → matched |6|8|6224|
+| Klaus (2019) | [klaus](https://kinobazaua.com/titles/klaus) | matched → matched |2|5|3571|
+| The Pursuit of Happyness (2006) | [the-pursuit-of-happyness](https://kinobazaua.com/titles/the-pursuit-of-happyness) | matched replay → gated rows retained |3|5|3096|
+
+These are source rows, not unique offers or guaranteed platform availability.
+All eight cap10 replays report `complete:true`, with no external requests. They
+reuse the same current responses and current identity implementation, not a
+separate live baseline or the deployed historical resolver. The elapsed values
+sum to36046ms; they include local control/observation overhead and exclude the
+omitted Providers/MOTN, Auth and live ledger work. They are not production
+latency measurements. Seven unchanged controls do not prove catalogue-wide
+quality or causation for earlier source failures.
+
+**Meet the Fockers: the reserve opportunity was used, not successful.** Run
+`9f15ceab-fdfb-485f-93cf-43865ffaa6eb` used2 TMDb +3 Tavily +2 cards =7 requests,
+no person requests. All attempt records report HTTP200.
+
+| Search | Actual query | response.query / request_id | Observed outcome |
+| --- | --- | --- | --- |
+|1, unchanged | `"Meet the Fockers" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers 2004`; `8d777458-0510-4523-b851-d3aca848365f` | little-fockers → meet-the-parents → the-absent-minded-professor → house-of-lies → snow-dogs; all5 admitted |
+|2, unchanged | `"Meet the Fockers" "Знайомство з Факерами" "Jay Roach" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers Знайомство з Факерами Jay Roach 2004`; `d6d1ca0a-494b-4e3a-adaa-6bd4dfba2cb7` | avp-alien-vs-predator → primer → one-last-ride → doomsday → a-guide-to-recognizing-your-saints; all5 admitted |
+|3, reserve `exact_match:true` | `"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/` | `"Meet the Fockers" 2004 Jay Roach`; `150ade1c-9f6e-499e-a2f9-b6e55f4de780` | returned1, admitted0, rejected1, category `query`; safe URL projection is null |
+
+The two original card reads remained little-fockers and meet-the-parents; the
+complete cap10 replay confirms both were refused with `source-title-conflict`.
+The supplied live readCards fragment is incomplete, so missing heading/director
+fields are not reconstructed from this replay or previous runs. The reserve
+response's address/path and query values are **unknown**: it may not be assumed
+to be the correct film, a duplicate, a `/search` URL or a redirect. Only its
+query-related admission refusal is established. There was no admitted reserve
+candidate and therefore **no `kinobaza-3` GET**, rather than a skipped valid
+third-card opportunity. The ten admitted normal candidates left8 unread;
+`bounded-unresolved` and0 Kinobaza rows are correct withholding outcomes.
+
+Compared with this invocation's cap10 replay, cap12 spent one additional Tavily
+request and confirmed no additional card. Do not strip parameters, invent a
+replacement URL, weaken admission or alter either existing query to turn this
+observation into a success. A possible separate follow-up would capture a safe
+classification of that rejected URL's origin/path, without secret query values,
+before proposing any policy change; no such request or change was made here.
+
+**Other controls and retained source facts:**
+
+- Alien: the API's second pointer `alien` was ranked first by the existing
+  candidate logic and independently matched. Apple/Rakuten blocks report audio−,
+  subtitles+; MEGOGO reports audio+/subtitles+. No reserve search was used.
+- Mad Max: correct first card matched with partial extraction and6 rows. Apple
+  and Rakuten report audio+/subtitles−, MEGOGO audio+/subtitles unknown. The other
+  read's unsupported markup did not discard the confirmed card or trigger reserve.
+- Dune: Part Two: correct first card matched and5 rows retained; Apple audio+/
+  subtitles−, Rakuten and MEGOGO audio+/subtitles+. Dune1984 was refused.
+- Gladiator II: `Гладіатор ІІ` matched through the terminal-Roman route with
+  original/year/director confirmation. Apple/Rakuten audio+/subtitles+ and
+  Netflix audio unknown/subtitles+ survived; Dope Thief was refused.
+- Kong: the г/ґ route reached the single linked-person pair. Both profile GETs
+  succeeded and exact Latin name, birthdate and director-role proof confirmed
+  the person. The first card then matched;2 TMDb film GETs +2 searches +2 cards
+  +2 person GETs =8 actual requests. Apple/Rakuten audio+/subtitles−, MEGOGO audio+/
+  subtitles unknown retained. No reserve search or second person pair occurred.
+- Klaus: correct card matched with partial extraction; Netflix audio+/subtitles+
+  and its admitted link survived. Noelle was refused, not merged into Klaus.
+- Pursuit:3 gated Kinobaza rows remain, including Netflix audio unknown/
+  subtitles+ and MEGOGO audio+/subtitles+. The complete RAM replay confirms the
+  correct card and refuses the-whole-enchilada as structurally incomplete.
+  The live readCards/resolver middle is missing in the pasted text; its exact
+  omitted gate trace is unavailable. The mapped live projection is independently
+  gated by `composeDiscovery` on matched identity; it is not a reconstructed
+  copy of those missing diagnostic fields.
+
+For links with `hasURL:true` and `transferable:true` in the supplied projection,
+those flags verify policy admission only, not navigation,
+equivalence of offers, entitlement or platform tracks. Upper-block country null
+remains distinct from explicit UA regional rows; the existing application's
+Kinobaza interpretation is unchanged and does not join unrelated offers.
+
+Case run IDs in series order:
+`9f15ceab-fdfb-485f-93cf-43865ffaa6eb`,
+`2084fca8-3d90-4518-83a0-cb94ca242d3a`,
+`834b19c7-c834-4c1d-a3cc-131e22e9784a`,
+`64db28ee-077a-4364-bddd-07b7bdde1725`,
+`494c94f6-a3a6-428c-ae28-fa4ca6ee9a00`,
+`fee0bed4-2d5d-4894-a23c-e71313503820`,
+`778fbc07-1d7a-4e84-9e11-870c17788bfd`,
+`35cdb04e-528a-4262-8f71-deed5f995beb`.
+
+**Reconciled source accounting:45 requests** =16 TMDb film +11 Tavily +16 card
+GETs +1 TMDb person +1 Kinobaza person. All visible attempt records report
+HTTP200. The aggregate exactly equals the eight per-case counts. Counterfactual
+replay adds0 HTTP. No Providers/MOTN/platform request, retry or Wishlist write
+occurred in this source-only series. The preceding6-attempt control and separate
+earlier1 card GET remain separate evidence (52 across those documented controls
+and this series), not additional requests made while reading this report.
+
+After implementation,161 additional HTML/localization/protected-relevance tests
+passed: **736 offline total**, plus the separately recorded12 native PostgreSQL
+and5 browser tests above. This evidence-only follow-up changes no runtime or SQL;
+only documentation and PR reporting are updated. No migration, feature/access
+operation, merge or deployment was performed. Runtime/browser suites were not
+rerun for this evidence-only documentation edit; `git diff --check` passed.
+
+#### Rejected reserve URL: one controlled observation and authorized recheck
+
+The earlier reserve response with request_id
+`150ade1c-9f6e-499e-a2f9-b6e55f4de780` is not recoverable from the local runner:
+it kept no raw-response archive, and the safe projection withheld the address.
+The following is a **new observation**, not proof of that earlier URL's spelling.
+
+The first permitted control, run `e65ddbf3-f324-489c-90df-0cc6d39daef5`, spent
+one Tavily attempt and returned HTTP401 / `search-auth-error`, with no candidates
+or request_id. The owner reported supplying the wrong key and explicitly
+authorized one additional control. No automatic retry was made and the first
+report was retained separately.
+
+Authorized recheck run `8bb8b81c-2ec8-4e12-bdf8-a51a6b82824f` returned HTTP200.
+It reused the actual reserve query and unchanged adapter/options:
+`"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/`, with
+`exact_match:true`. Tavily request_id:
+`22d5994f-4765-4cb5-9197-ee0b793607ce`; response.query:
+`"Meet the Fockers" 2004 Jay Roach`.
+
+| Safe field | Actual recheck result |
+| --- | --- |
+| Hostname | `kinobazaua.com` |
+| Original pathname | `/persons/jay-roach` |
+| Parsed pathname | `/persons/jay-roach` — unchanged |
+| Query parameter names | `page` |
+| Query / fragment / credentials present | yes / no / no |
+| Candidates returned / admitted / rejected |1 /0 /1|
+| Primary rejection category | `query` |
+| Independently allowed film-card path | no: `/persons/`, not `/titles/<slug>` |
+
+No parameter values, raw address with query, credentials, snippets or raw HTML
+were published or saved. The local report contains sanitized metadata only and
+inherits the study directory's current-user-only access rule. No key is saved.
+
+**The current pointer is not a usable film card.** Its pathname belongs to the
+person-profile namespace. This conclusion concerns the observed address type,
+not an HTML-based attestation of the profile's contents. No Kinobaza GET was
+sent because it was not a permitted title-card inspection target.
+
+The existing classifier chooses one primary reason: after scheme/host checks,
+it checks query presence before checking the supported title path. Consequently
+`query:1` is correct but does not show the independent wrong-path failure. Merely
+removing a query would not make `/persons/jay-roach` an admitted `/titles/` path;
+the runtime's full original-spelling admission also requires the title prefix.
+No actual URL was stripped, rewritten, resolved or followed to demonstrate this.
+
+The value/HTML effect of `page` was **not tested**. Its name suggests pagination,
+but that is an inference, not an observed behavior. It provides no evidence for
+the selected film's identity. No parameterized-versus-canonical card comparison
+was possible, and no common film ID/title/year/director confirmation is claimed
+for this person pointer. The earlier masked result may or may not have been the
+same address; this recheck cannot establish that.
+
+**Proposed next step at that checkpoint (paired observation completed below):**
+retain URL admission, query policy and
+all identity gates. Test the reserve query's quoted original title plus year
+against that same query with director context in a separately bounded comparison,
+without replacing the first two search stages. A director profile being returned
+makes director-context bias a plausible hypothesis, not a demonstrated cause;
+the earlier no-director primary search also omitted the desired card. Exact
+phrase matching alone does not prove a title-page result. Only independently
+confirmed cards should count toward a better query's success.
+
+Separately, protected diagnostics could retain the present primary category and
+add bounded independent flags such as `query-present` and `unsupported-card-path`.
+This would clarify failures without accepting a new address, exposing query
+values, altering identity or changing the per-search budget. No such runtime or
+diagnostic-policy change is included in this evidence-only update.
+
+**Accounting for this investigation:2 HTTP attempts total** — one HTTP401 Tavily
+control and one explicitly authorized HTTP200 Tavily control. Kinobaza card,
+person, TMDb and platform GETs:0. These are separate from the preceding45-request
+series. Reading the two sanitized local reports and the independent code review
+made no source requests. Six authored helper safety tests passed offline; they
+are not live identity/extraction successes. No migration, merge, deployment,
+runtime search change, identity change or Wishlist write was performed.
+
+#### One controlled reserve exact-match pair: director versus no director
+
+The owner separately authorized one ordered pair for Meet the Fockers (2004),
+IMDb `tt0290002`. Run `eeace42c-fe31-43bb-b1f4-dbe61b48652a` completed once
+against implementation `a682afd4e0f502932800d8c8422ce73b1d91d31e`.
+This is a current local diagnostic, not a reconstruction of an earlier run,
+a deployed build or an attestation of the live server ledger.
+
+The existing adapter dispatched these queries in order:
+
+1. With director: `"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/`.
+2. Without director: `"Meet the Fockers" 2004 site:kinobazaua.com/titles/`.
+
+The actual outbound POST bodies were compared: **all options except query were
+identical**. Both used `exact_match:true`, `search_depth:basic`, `topic:general`,
+`max_results:5`, `auto_parameters:false`, and `include_domains:[kinobazaua.com]`
+with restrict mode. Answer/raw-content/images/favicon/usage inclusion remained
+false. No normal search stage, runtime query builder or URL policy was changed.
+
+| Observed field | With director | Without director |
+| --- | --- | --- |
+| HTTP status |200|200|
+| Tavily request_id |`4200f068-c405-4623-a1ae-c32d5fa6f8aa`|`9a8db7a3-2b3b-41fa-86bf-231434bde67e`|
+| response.query |`"Meet the Fockers" 2004 Jay Roach`|`"Meet the Fockers" 2004`|
+| Returned address count |1|5|
+| Address types |1 person-profile path|5 title-card paths|
+| URL-policy-admitted title cards |0|5|
+| Target `/titles/meet-the-fockers` returned / admitted |no / no|no / no|
+| Target identity check |not run: target absent|not run: target absent|
+| Search-call elapsed time |2710 ms|2518 ms|
+
+All returned hosts were `kinobazaua.com`. Safe address observations, in response
+order (original and parsed pathnames were equal):
+
+- With director: `/persons/jay-roach`; query present, parameter name `page`;
+  primary rejection `query`. Independently, it is not a permitted film-card path.
+  No fragment or credentials were present. No query value is retained or exposed.
+- Without director: `/titles/little-fockers`, `/titles/meet-the-parents`,
+  `/titles/the-absent-minded-professor`, `/titles/snow-dogs`,
+  `/titles/house-of-lies`. These five passed unchanged URL admission, with no
+  query, fragment or credentials. Their HTML was not read in this bounded test;
+  URL admission is not film-identity confirmation.
+
+The one optional card GET was allowed only for the exact target path actually
+returned and admitted by one of these responses. It could be shared between
+both variants, not fabricated from the known slug or obtained by stripping
+parameters. Because neither response contained the target, **no card GET or
+identity check occurred**. No person profile, platform or Kinobaza `/search`
+request was made. Previously verified TMDb film693/year2004/person6737 context
+was reused, not refreshed; its complete director evidence remained unchanged
+for any potential identity check. No current language/link result is claimed.
+
+**Observation:** dropping the director changed this pair's returned address
+types, but did not retrieve the required card. Neither variant demonstrated a
+successful film search. The no-director result must not be called an improvement
+merely because more URLs passed admission.
+
+**Limits and next step:** this is one sequential pair, with the director variant
+first, not repeated or randomized. It cannot isolate director context as a cause,
+establish indexing/ranking/cache behavior, explain the earlier hidden address or
+prove a general advantage for either query. The independently repeated profile
+pathname is a current observation, not recovery of the old masked URL. There is
+no evidence here to change the reserve query or relax admission/identity gates.
+A useful follow-up would be a provider-side investigation of these request IDs
+and the target page's discoverability; further live comparisons would require a
+separate scope and request accounting. No protective mechanism was implemented.
+
+**Accounting for the pair:2 external HTTP attempts** —2 Tavily HTTP200;
+Kinobaza cards/persons, TMDb and platforms:0. No retries or extra source requests
+were made while reading/reviewing the sanitized report. The pair adds2 to the
+preceding URL investigation's2 (4 across those separate follow-ups); the earlier
+45-request series remains separate. The two measured search calls total5228 ms,
+not end-to-end app latency. The report contains no raw responses, query-parameter
+values or credentials and retains current-user-only local access.
+
+Four authored pair-helper checks passed offline with no HTTP, covering payload
+equality, actual-target-only shared GET, rejection/no-target cases and error
+stop behavior. Independent review agreed with the counts and limits of inference.
+Application/browser/SQL suites were not rerun for this evidence-only edit;
+their previously recorded results above are not new live evidence. Only this
+documentation and the PR report change. No migration, search/identity change,
+merge, deployment, feature/access operation or Wishlist write was performed.
+
+### Advanced reserve search update — 2026-11-02
+
+The owner authorized replacing only the reserve stage's search settings after
+the completed Basic pair above. This is an explicit product decision, not a
+claim that the pair proved causality, a cache failure or Advanced recall.
+
+- `search-1` and `search-2` keep their existing text, selected/premiere-year
+  contexts, Basic payloads, URL admission, candidate order and card opportunities.
+- When the complete old path (including any eligible linked-person proof)
+  fails to confirm a card, `search-3` uses `search_depth:advanced` and
+  `exact_match:true`. Query: quoted verified original title, selected TMDb year,
+  `site:kinobazaua.com/titles/`; no director or extra localized title is required.
+  For Meet the Fockers: `"Meet the Fockers" 2004 site:kinobazaua.com/titles/`.
+- The adapter's default stays Basic. Only the explicit server-owned reserve
+  call opts into Advanced; unknown depth values do not enable it. All remaining
+  request parameters, including `auto_parameters:false` and `include_usage:false`,
+  are unchanged. The latter keeps both earlier payloads byte-for-byte compatible;
+  actual account charges must not be inferred when usage is absent.
+- The Advanced response remains candidate discovery only. A third GET must be
+  admitted, unread and present in that reserve response. URL parameters are not
+  stripped, a known slug is not supplied, and the original/title/year/director,
+  stable-ID conflict and ambiguity gates still decide whether claims survive.
+  Withholding, language binding, links and preview/transfer/Save are unchanged.
+- **12 HTTP attempts remain the ceiling**, not12 credits:4 baseline +3 searches
+  +3 title cards +one existing person pair. A failed search or reservation is not
+  retried. The existing45/53/55-second deadlines and15-second search bound are
+  unchanged; Advanced does not buy additional time or a fourth candidate read.
+- cap8/cap10 retain their Basic-only first-two behavior. The existing prepared
+  `reserve-exact-v1` negotiation and migration file are unchanged; no new SQL
+  stage, database operation or live migration is required for changing depth.
+  At this preparation checkpoint the cap12 migration had **not** been applied;
+  see the subsequent [execution record](#cap12-migration-execution--2026-11-03).
+- Only authorized diagnostics identify the reserve depth. Ordinary Beta results
+  gain no search metadata or new diagnostic access.
+
+According to the current [Tavily credits documentation](https://docs.tavily.com/documentation/api-credits),
+Basic costs1 credit per search and Advanced costs2. Therefore the maximum
+documented search cost for a successful full three-search path is **4 credits
+(2 Basic +2 Advanced)**, instead of3 for the previous all-Basic path. This is a
+depth-rate calculation, not an account invoice, confirmation of error charging
+or a claim about available Researcher balance. No automatic tier/payment change
+or quota waiver is made. [Search API reference](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+describes usage as optional; absent/malformed usage remains unknown.
+
+The local source-only control now records actual outbound Basic/Advanced depth,
+per-search elapsed time, documented-rate credits and separately allowlisted
+numeric `usage.credits` if returned. RAM cap10 replay is explicitly excluded from
+HTTP and credit counts. Times include local response inspection; they are not
+production end-to-end latency. Prior Basic runs and the earlier paired result
+are not relabeled as Advanced or counted as new live evidence.
+
+At that preparation checkpoint, live validation awaited one separately guarded four-film series:
+Meet the Fockers, Alien, Dune: Part Two and Kong. It uses the current resolver
+without prefilled card URLs and observes URL → admission → card read → identity
+→ gated language/link projection. Two Providers/MOTN baseline slots are reserved
+as headroom but not dispatched; every actual source attempt is counted. A found
+URL alone is not success. If the target is absent or a gate fails, the report
+must retain that outcome rather than manufacture a full-path success.
+
+Prepared validation:682 non-browser/non-native tests in `test/` plus206
+HTML/localization/discovery/matching tests passed (**888 offline**, zero failures
+or skips). After adding explicit per-depth accounting and byte-for-byte legacy
+payload assertions, the affected60-test subset passed again; it is included in,
+not added to, the888. Four separate outside-repository wrapper safety tests also
+passed without HTTP: fixed film scope, checkpoint/one-shot report, auth stop,
+Advanced reserve and RAM-only comparison. Independent runtime/compatibility review
+found no blocking issue. Native PostgreSQL tests have not been rerun for this
+depth-only change; the prepared migration bytes are unchanged.
+
+Source-free headless Edge browser regression: **35/35 passed**, zero failures or
+skips, with external network blocked. It covers desktop1280×900, tablet820×1180,
+iPhone-X-size375×812 and Air-size420×912, form preview/explicit local transfer,
+report access/revocation, pending selection, retained/stale results, context
+boundaries and no discovery replay. These are viewport emulations, not real
+iPhone/Safari tests or a real Wishlist Save. The subsequent source report is
+recorded below; it does not establish live Advanced behavior.
+
+### Four-film current-source report received — 2026-11-03
+
+The owner completed the guarded control once; its sanitized local report was
+read directly, without copying raw responses or repeating a source request.
+Worker run `e98ecb62-7551-45e8-82bb-3fa6c0e4b1ce` has status
+`completed-one-pass-no-automatic-repeat`, four finished cases and reconciled
+counts. The checked-out implementation and PR head at execution handoff were
+`3adbe6439428ca5aa68cb953ddbc5d26910de26d`. `buildSha:null` and
+`serverLedgerCapAttested:false` mean **local source control**, not a deployed
+build/live-cap12 attestation or an historical HTML reconstruction.
+
+**All four correct cards matched before reserve. Advanced was never called.**
+Do not attribute the newly successful Fockers search to Advanced or the extra
+slots: its unchanged first Basic request now returned the right card. That
+current observation cannot explain the earlier omitted candidate, determine
+provider indexing/cache/ranking internals or establish repeatable recall.
+
+| Film | Correct card / identity route | Source rows | Actual HTTP | Local live elapsed | Basic search elapsed |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Meet the Fockers (2004) | `/titles/meet-the-fockers`; original-year-director-translation |5|5|6222 ms|3817 ms|
+| Alien (1979) | `/titles/alien`; title-year-director |5|5|3819 ms|2354 ms|
+| Dune: Part Two (2024) | `/titles/dune-part-two`; title-year-director |5|5|3720 ms|2464 ms|
+| Kong: Skull Island (2017) | `/titles/kong-skull-island`; г/ґ route plus confirmed linked person |6|8|5277 ms|3794 ms (two calls)|
+
+#### Meet the Fockers: observed URL through gated language/link projection
+
+Case run `8a5ccec4-f9b4-41ee-bf88-8959021134b4` used the actual first Basic POST:
+`"Meet the Fockers" 2004 site:kinobazaua.com/titles/`, no exact-match option.
+Tavily request_id `0a94a9fd-246e-4112-afe0-3f3eaa52fc36`, response.query
+`Meet the Fockers 2004`;5 results, all admitted by the unchanged URL policy.
+In response and runtime ranking order:
+`meet-the-fockers`, `little-fockers`, `meet-the-parents`,
+`the-absent-minded-professor`, `snow-dogs` (all under the exact title namespace).
+No URL was prefilled or derived from the expected slug.
+
+The first read was the actually returned
+`https://kinobazaua.com/titles/meet-the-fockers`. H1 is
+`Знайомство з Фокерами ( 2004 )`, selected title `Знайомство з Факерами`;
+H2 `Meet the Fockers`, year2004 and director `Джей Роуч` matched the trusted
+TMDb context. No shared film ID was present and no stable-ID conflict was
+observed. Identity matched as
+`explicit-original-year-director-translation-match`, with exact original/year
+and confirmed director, **not** a blanket а/о replacement or title similarity.
+H1/H2 completeness remained true despite diagnostic alias-list truncation.
+Extraction was `ok`; no person pair was necessary.
+
+The second GET was `little-fockers`: H2 `Little Fockers`, year2010 and director
+`Пол Вайц`. It was refused with `source-title-conflict`, its differing original,
+year and director remained visible, and no claims were projected from it.
+`meet-the-parents` was returned but **not read in this live case**; its separate
+refusal and all-three-parts identity checks remain authored regression evidence,
+not an additional live GET in this report.
+
+The confirmed card produced5 source rows, across4 services (Rakuten has two
+distinct source scopes; they are not collapsed into a false single offer):
+
+| Retained source scope | Ukrainian audio | Ukrainian subtitles | Link policy observation |
+| --- | --- | --- | --- |
+| Rakuten regional UA row |unknown|unknown|tracking pointer, present and transferable|
+| Apple regional UA row |unknown|unknown|tracking pointer, present and transferable|
+| Rakuten upper provider block |reported-negative|reported-positive|tracking pointer, present and transferable|
+| Netflix upper provider block |unknown|reported-positive|card pointer, present and transferable|
+| MEGOGO upper provider block |reported-positive|reported-positive|card pointer, present and transferable|
+
+Upper-block country remains null in the source row; the already agreed
+application interpretation for Ukraine is unchanged, not a new source territory
+claim. Languages are not copied into the separate regional offer records or
+between services. The current report preserves language states and link
+`kind/hasURL/transferable`, but intentionally does **not** retain exact platform
+hrefs. Thus it verifies gated link projection/admission, not an independent
+byte-for-byte recheck of platform URLs or actual navigation. Exact-address
+transfer/preview and ordinary Save isolation are covered by the separately
+recorded automated tests. No platform was opened and no Wishlist record written.
+All these source statements remain non-entitlement/non-track guarantees.
+
+#### Retained controls and current negative reads
+
+- Alien: existing ranking promoted the returned second pointer `alien` to the
+  first read; it matched. `gigers-alien` remained structurally incomplete, not
+  a confirmed1979 movie. Apple/Rakuten audio− and subtitles+, MEGOGO audio+ and
+  subtitles+ survived in their own blocks.
+- Dune: correct card matched; Dune1984 was refused, not mixed into Dune2024.
+  Apple audio+/subtitles−, Rakuten and MEGOGO audio+/subtitles+ remained. One
+  extra returned pointer was withheld as unsupported-path; its exact spelling
+  is not recoverable from this sanitized report and is not guessed.
+- Kong: the correctly discovered card reached the existing global profile pair;
+  exact Latin name/birthdate/director-role facts confirmed the selected person,
+  and the г/ґ route matched. Apple/Rakuten audio+/subtitles− and MEGOGO audio+
+  with subtitles unknown survived. `love-amongst-friends` was read but stayed
+  structurally incomplete. The second Basic result contained unrelated pointers;
+  none replaced the correctly confirmed first card or supplied film identity.
+
+#### Actual Basic/Advanced queries, credits and timing
+
+| Depth | Actual calls | Documented-rate credits | Local search-call elapsed | Returned billed usage |
+| --- | ---: | ---: | --- | --- |
+| Basic |5|5|12429 ms total|unknown for all5; usage not returned|
+| Advanced |0|0 attributable to dispatched calls|not measured: never invoked|no Advanced response|
+
+The first three query strings are the quoted original titles shown in the table
+with their years and `site:kinobazaua.com/titles/`. Kong used both:
+`"Kong: Skull Island" 2017 site:kinobazaua.com/titles/` and
+`"Kong: Skull Island" "Конг: Острів черепа" "Jordan Vogt-Roberts" 2017 site:kinobazaua.com/titles/`.
+Its call times were2483 and1311 ms. Remaining request IDs in order:
+Alien `4ebab1a5-9574-4410-8d6f-fe541d200976`;
+Dune `43000442-ec13-4799-9542-39cedf8e00b6`;
+Kong first `9fb23231-c24b-45a6-ab40-4f9cd1e63f20`,
+second `8b3d5762-9783-4580-9924-89691a47eb4f`.
+No request had `search-3`, `kinobaza-3`, `exactMatch:true` or Advanced depth.
+No Advanced latency, live benefit or Advanced search failure is claimed.
+
+**Reconciled external source total:23 HTTP** =8 TMDb film +5 Tavily Basic
++8 title cards +1 TMDb person +1 Kinobaza person; all23 attempts received
+HTTP200. `Providers` and MOTN were omitted, with their2 ordinary runtime slots
+held as headroom per case. There were no retries, Kinobaza `/search`, platform
+requests or source calls during this report review. The sum of per-film live
+elapsed values is19038 ms, **not** worker wall time or production app latency;
+it excludes setup/serialization and1117 ms of separate RAM replay.
+
+All four cap10 comparisons completed using the **same current captured
+responses**, with0 extra HTTP and the same four confirmed cards. These are not
+independent live before-runs or credit/latency comparisons against deployed
+cap10. They support that current success did not require the new reserve path.
+
+Independent evidence review reconciled case/global counts, language scopes,
+link limits and timings without HTTP. The previous888 offline/35 browser/4
+wrapper results remain separately recorded; those suites were not rerun for
+this evidence-only documentation change. `git diff --check` passed. Advanced
+dispatch/failure/gates remain covered by authored tests, but its **live reserve
+behavior and recall remain untested by this series**. No forced failure or
+additional direct Advanced control was introduced to bypass the eligibility
+guard. Migration bytes, runtime, flags, access, production, merge and deployment
+were not changed during this reporting follow-up.
+
+### Cap12 migration execution — 2026-11-03
+
+The owner explicitly authorized **only**
+`20261102181617_media_advice_exact_reserve_budget.sql`. Reviewed PR#224 head
+was `722fc2e4127abd0d4ec5a6907e2e8532f797009b`, with clean task checkout;
+current `develop` was `9ac354b5f4ed50d89d0ef2319b104ffe3fd12bc1`.
+The original Git/file SHA256 matched
+`afdb81fa9cb6c883731755ca5fd8c8d5bda920c3a25415372d647916f5aa110d`.
+The established Movie Wishlist project identity, region and PG17 endpoint were
+rechecked against the linked CLI target; no project was selected by list order.
+No owner checkout/demo, Git history, feature assignment or application source
+was changed for this operation.
+
+#### Preflight and local recovery
+
+- Remote history contained exactly the four expected M4 versions, including
+  predecessor20261101180436 once and target20261102181617 zero times. There were
+  **0 unfinished/unexpired sessions** and10 existing rows, all cap10, with valid
+  unique attempts within each row's cap. Default source_cap remained8.
+- The actual live Beta RPC body was hashed against the immutable predecessor
+  SQL before replacement, not trusted solely because history listed its version.
+  Empty search_path, service-only execution, private RLS/ACL and the current
+  schema/constraint shape also passed preflight.
+- The retained20261021 checkpoint's pinned hashes, manifest and34 AES-GCM
+  artifacts authenticated again; DPAPI unwrap and native archive-list read
+  succeeded. Its earlier scoped recovery qualification is retained, not upgraded
+  to a full-project round-trip guarantee. It predates M4 and does not contain its
+  ledger, so it was not used alone as a current-state backup.
+- The earlier M4 supplement independently decrypted and validated. A **fresh
+  pre-cap12 supplement** was then captured in a read-only repeatable-read
+  transaction, encrypted with AES-256-GCM and a separate DPAPI CurrentUser-wrapped
+  key, and independently reloaded using the persisted key. Checksums,
+  authentication, JSON/SQL readability, row counts, primary keys and data
+  fingerprints passed. NTFS access was restricted to the current owner/SYSTEM;
+  no utilities or Windows updates were installed.
+- The new supplement covers the five M4-private tables (including complete
+  session/attempt/cap data), private/public M4 functions, ACL/RLS/constraints,
+  region trigger, cleanup configuration and existing migration history.
+  Numbered restore SQL is operator-only and never runs against the source.
+  Core/Auth rows, Storage files/services and secrets are not included; only
+  dependency-presence checks and referenced-Auth validity are recorded. This
+  fresh copy was **readability-verified, not newly restore-tested**.
+- Private local artifact roots (not attached to the PR):
+  `%LOCALAPPDATA%/MovieWishlist/Recovery/<verified-project>/m4-pre-cap12-20261103T094354Z-f9aa75a2`
+  and its separate key under `MovieWishlist/RecoveryKeys`.
+
+#### Single isolated application
+
+Installed CLI2.122.0 was used without installing its advertised update. A new
+private isolated workdir
+`%LOCALAPPDATA%/MovieWishlist/M4Deployment/exact-reserve-20261103T094354Z-f9aa75a2`
+contained exactly the four already-applied migration files plus the approved
+target. File roster/checksums matched the reviewed source; only the target was
+pending. Immediately before dispatch, recovery readability, SHA/file, history,
+RPC body, active-session absence and preflight fingerprints were rechecked.
+
+There was **one** guarded `migration up --linked` invocation in this workdir,
+explicitly pinned to the verified project, with bounded lock/statement timeouts.
+Its exclusive invocation marker was written before dispatch. No general
+`db push`, `--include-all`, history repair, manual migration-history insertion,
+unrelated SQL migration or replay was used. CLI success was received:
+2026-11-03 **09:46:50–09:46:53 UTC**. No retry or lost-response recovery was needed.
+
+#### Independent postchecks and rollback-only smoke
+
+All aggregate postchecks passed, then passed again after the functional smoke:
+
+- Exact version/name20261102181617 / media_advice_exact_reserve_budget appears
+  **once**; predecessor and complete prior-history fingerprint are unchanged.
+- All10 original session rows, caps and attempts match their full-row digest;
+  the10 cap10 rows were not promoted. No persisted cap12 test session remains.
+  The default8 and attempts≤own source_cap constraint are unchanged; only the
+  allowed-cap set widened to8/10/12. Other session columns/indexes/constraints
+  are unchanged; invalid and active-session counts remained0.
+- The installed Beta body matches the exact reviewed migration's normalized
+  body hash. Function identity/owner/settings/ACL metadata remains unchanged for
+  all five M4 functions, with unchanged bodies for pilot RPC, access checker,
+  cleanup and default-region trigger function. Beta RPC remains SECURITY DEFINER,
+  empty search_path, service_role EXECUTE only; anon/authenticated cannot call it.
+- Full fingerprints of M4 permissions/regions/config/health, sessions, movies,
+  movie-group lists, membership, profiles and Auth IDs match preflight. Private
+  schema/table ACLs and RLS, region trigger and cleanup configuration also match.
+  Beta was already enabled and stayed enabled; the same single diagnostic
+  assignment remains. No new user assignment or flag operation was performed.
+- One source-free probe selected the **existing unique verified pilot
+  assignment** and an authorized existing group/movie context privately. It
+  confirmed missing start marker→cap10, `reserve-exact-v1`→cap12, third-slot
+  refusal at10 and one-time search-3/kinobaza-3 at12. Duplicate reservation and
+  unsupported marker were refused. All temporary starts, reservations and
+  ordinary start cleanup ran inside an explicit transaction ending **ROLLBACK**;
+  the subsequent fingerprints confirm that none persisted. No source search,
+  platform navigation, Wishlist write or user-ID output occurred.
+
+The new compatible handler is now **DB-supported**, not deployed: older callers
+continue receiving10, and cap12 was proved only with the compatible protocol in
+the rollback-only smoke. No merge, branch/production deployment or source smoke
+was executed. Existing cap8 has no live row in this snapshot; its default/pilot
+body/constraints remain unchanged, with separately recorded authored/native
+compatibility coverage rather than a fabricated live cap8 record.
+
+#### Deviations and residual limits
+
+No application/postcheck deviation or new security-advisor finding was observed.
+Existing advisories were identical before/after:5 private-table RLS/no-policy
+INFOs (intentional service-only boundary),12 anon-executable and17
+authenticated-executable SECURITY DEFINER warnings on **other existing RPCs**,
+and disabled leaked-password protection. Neither M4 action RPC was in those
+warnings. These unrelated settings were not changed under this authorization.
+References: [anonymous RPC warning](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable),
+[authenticated RPC warning](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable),
+[password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Recovery remains a local owner/machine-dependent copy, not an off-device backup
+or a new full restore test. The compatibility/no-blind-rollback guidance above
+still applies: do not discard or down-promote future12-cap accounting rows.
+Only this authorized migration was applied; merge and deployment still require
+separate approval. A later documentation-only commit records this evidence and
+does not imply that the reviewed application head was deployed.

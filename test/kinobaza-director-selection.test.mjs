@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
+import { selectDirectorCandidates } from '../netlify/lib/director-candidate-selection.mjs';
 import { safeMediaReport } from '../assets/media-advice-report.mjs';
 import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 
@@ -130,7 +131,7 @@ test('a scoped shared film ID outranks a no-ID card while still requiring person
 });
 
 test('stable-ID or title conflicts never become person candidates or leak withheld film claims', async () => {
-  const result = await run({ cards: [{ stable: conflictingId }, { title: 'A different authored film' }] });
+  const result = await run({ cards: [{ stable: conflictingId }, { title: 'A different authored film', original: 'A different authored original' }] });
   assert.deepEqual(profileRequests(result), []); assert.equal(result.out.result, null); assert.deepEqual(result.out.choices, []);
   assert.deepEqual(result.out.resolver.cards.map(card => card.reason), ['source-stable-id-conflict', 'source-title-conflict']);
   assert.ok(result.out.resolver.cards.every(card => card.identity === 'mismatch' && card.candidates === 0));
@@ -141,6 +142,64 @@ test('legacy cap8 still reserves both search/card slots but cannot acquire the o
   assert.equal(result.calls.length, 8); assert.deepEqual(profileRequests(result), []);
   assert.deepEqual(result.reserved, ['search-1', 'kinobaza-1', 'search-2', 'kinobaza-2']);
   assert.equal(result.out.result, null); assert.ok(result.out.resolver.cards.every(card => card.identity === 'unresolved' && card.candidates === 0));
+});
+
+test('an exact-original selected-year unknown translation can use the existing deferred cap10 person pair', async () => {
+  const result = await run({ cards: [{ title: 'Невідомий переклад назви' }, { stable: conflictingId }], profiles: { [PROFILES[0]]: {} } });
+  assertDeferred(result);assert.equal(result.calls.length,10);
+  assert.deepEqual(profileRequests(result),[TMDB_PERSON,PROFILES[0]]);
+  assert.equal(result.out.result.sourceURL,URLS[0]);assert.equal(result.out.result.identity.status,'matched');
+  assert.equal(result.out.result.identity.diagnostics.strategy,'original-year-director-translation');
+  assert.equal(result.out.result.identity.diagnostics.comparisons.headingAliasMatch,false);
+  assert.equal(result.out.result.identity.diagnostics.comparisons.originalAliasMatch,true);
+  assert.equal(result.out.resolver.cards[1].reason,'source-stable-id-conflict');
+});
+
+test('unknown translation stays unconfirmed under cap8 or conflicting linked-person facts',async()=>{
+  for(const [sourceCap,profiles] of [[8,{}],[10,{[PROFILES[0]]:{birthday:'26 травня 1967'}}]]){
+    const result=await run({sourceCap,cards:[{title:'Невідомий переклад назви'},{stable:conflictingId}],profiles});
+    assert.equal(result.out.result,null);assert.deepEqual(result.out.choices,[]);
+    assert.equal(result.out.resolver.cards[0].identity,'unresolved');
+    assert.equal(result.out.resolver.cards[0].reason,'director-alias-unestablished');
+    assert.equal(result.calls.length,sourceCap);
+  }
+});
+
+test('equally supported unknown translations linked to different people remain ambiguous without a speculative pair',async()=>{
+  const result=await run({cards:[{title:'Невідомий переклад один'},{title:'Невідомий переклад два'}]});
+  assert.deepEqual(profileRequests(result),[]);assert.equal(result.calls.length,8);
+  assert.equal(result.out.result,null);assert.equal(result.out.resolver.directorProfile.reason,'director-profile-candidates-ambiguous');
+});
+
+test('a matching scoped film ID does not bypass person proof for an unknown translation',async()=>{
+  const result=await run({cards:[{title:'Невідомий переклад назви',stable:sharedId},{stable:conflictingId}],profiles:{[PROFILES[0]]:{birthday:'26 травня 1967'}}});
+  assertDeferred(result);assert.equal(result.calls.length,10);
+  assert.deepEqual(profileRequests(result),[TMDB_PERSON,PROFILES[0]]);
+  assert.equal(result.out.result,null);assert.deepEqual(result.out.choices,[]);
+  assert.equal(result.out.resolver.cards[0].identity,'unresolved');
+  assert.equal(result.out.resolver.cards[0].diagnostics.comparisons.stableIdMatch,true);
+  assert.equal(result.out.resolver.directorProfile.reason,'director-person-birthday-conflict');
+});
+
+function translationCandidate({comparisons={},gates={},strategy='original-year-director-translation'}={}){
+  return {index:0,pointer:{sourceURL:PROFILES[0],sourceAlias:ALIAS},identity:{status:'unresolved',reason:'director-alias-unestablished',diagnostics:{strategy,
+    comparisons:{stableIdConflict:false,canonicalMatch:true,headingAliasMatch:false,originalAliasMatch:true,yearEqual:true,stableIdMatch:false,...comparisons},
+    gates:{...Object.fromEntries(['structure-limit','canonical-conflict','stable-id-conflict','stable-id-shape','canonical-count','metadata-structure','heading-format',
+      'original-scope','original-alias','selected-year','year-crosswalk','director-presence','director-scope'].map(gate=>[gate,'pass'])),'heading-alias':'not-evaluated','director-alias':'unresolved',...gates}}}};
+}
+test('only the explicit fully gated exact-original selected-year route may allocate a profile pair',()=>{
+  const candidate=translationCandidate(),selected=selectDirectorCandidates([candidate]);
+  assert.deepEqual(selected.selected,[candidate]);assert.equal(selected.diagnostic.basis,'selected-year');
+  for(const overrides of [
+    {strategy:null},{strategy:'title-year-director'},
+    {comparisons:{yearEqual:false}},{comparisons:{yearEqual:null}},
+    {comparisons:{originalAliasMatch:false}},{comparisons:{originalAliasMatch:null}},
+    {comparisons:{headingAliasMatch:true}},{comparisons:{stableIdConflict:true}},
+    {comparisons:{canonicalMatch:false}},
+    ...['structure-limit','canonical-conflict','stable-id-conflict','stable-id-shape','canonical-count','metadata-structure','heading-format',
+      'original-scope','original-alias','selected-year','year-crosswalk','director-presence','director-scope'].map(gate=>({gates:{[gate]:'fail'}})),
+    {gates:{'heading-alias':'pass'}},{gates:{'heading-alias':'fail'}},
+  ])assert.deepEqual(selectDirectorCandidates([translationCandidate(overrides)]).selected,[],JSON.stringify(overrides));
 });
 
 test('alternate-search auth failure or timeout retains an eligible first card and its bounded person proof without retries', async t => {

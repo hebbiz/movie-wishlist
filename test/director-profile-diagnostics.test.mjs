@@ -66,3 +66,12 @@ test('the projection is browser-safe with no Node/network/storage dependency', a
   const code = await readFile(new URL('../shared/director-profile-diagnostics.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(code, /\bimport\s|\bBuffer\b|\bprocess\b|\bfetch\s*\(|localStorage|sessionStorage|console\./);
 });
+
+test('third-card selection is bounded independently of the unchanged two person attempts', () => {
+  const raw = {...fixture(), selection:{eligibleCards:3, unverifiedCards:2, selectedCards:[3,4,'3',3], basis:'selected-year'}};
+  const d = safeDirectorProfileDiagnostic(raw);
+  assert.deepEqual(d.selection,{eligibleCards:3,unverifiedCards:2,selectedCards:[3],basis:'selected-year'});
+  assert.equal(d.sourceAttempts,2); assert.equal(d.attempts.length,2);
+  const malformed = safeDirectorProfileDiagnostic({...raw,sourceAttempts:3,selection:{...raw.selection,eligibleCards:4}});
+  assert.equal(malformed.sourceAttempts,null); assert.equal(malformed.selection.eligibleCards,null);
+});
