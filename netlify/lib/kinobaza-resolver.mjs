@@ -6,6 +6,7 @@ import { createDirectorVerifier } from './kinobaza-director-verifier.mjs';
 import { safeDirectorProfileDiagnostic } from '../../shared/director-profile-diagnostics.mjs';
 import { selectDirectorCandidates } from './director-candidate-selection.mjs';
 import { possibleIrrelevantSearch, safeSearchCorrelation } from '../../shared/media-search-relevance-diagnostic.mjs';
+import { predictedKinobazaURL } from './kinobaza-predicted-url.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';
 const titleNames = film => {
@@ -154,7 +155,7 @@ export function tavilySearch(apiKey, fetchImpl = fetch, { onCandidateURLs } = {}
 export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, onIdentityDiagnostic } = {}) {
   return async (film, { reserve, fetchImpl, calls, signal, sourceCap = 8, tmdbToken, diagnostics = false, diagnosticSecrets = [] }) => {
     const queries = resolverQueries(film), cards = [], deferred = [], urls = new Set(), examined = new Set();
-    const capture = diagnostics === true, searchObservations = [], cardObservations = new Map(), readCards = [];
+    const capture = diagnostics === true, searchObservations = [], cardObservations = new Map(), readCards = [], readStages = [];
     const secrets = [apiKey, tmdbToken, ...diagnosticSecrets].filter(s => typeof s === 'string' && s);
     const observeIdentity = capture ? diagnostic => {
       if (readCards.includes(diagnostic.sourceURL)) cardObservations.set(diagnostic.sourceURL, {
@@ -166,17 +167,24 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
     } : onIdentityDiagnostic;
     const director = createDirectorVerifier({film,tmdbToken,sourceCap,reserve,fetchImpl,calls,signal});
     const summary = { searchCalls: 0, cardCalls: 0, candidates: 0, unexamined: 0, searches: [], cards: [] };
-    const reserveEnabled = sourceCap === 12;
+    const reserveEnabled = sourceCap === 12 || sourceCap === 14;
+    const predictedEnabled = sourceCap === 14;
+    if (predictedEnabled) summary.predicted = { status: 'not-attempted', reason: 'prior-route-pending' };
     let selection, alternateFailure, sourceFailure = false;
     const done = (status, result = null, choices = []) => {
+      if (summary.predicted?.reason === 'prior-route-pending') summary.predicted = { status: 'not-attempted', reason: 'prior-route-stopped' };
       summary.candidates = urls.size; summary.unexamined = urls.size - examined.size;
       summary.directorProfile = safeDirectorProfileDiagnostic({...director.diagnostic(),
         ...(selection ? {selection:selection.diagnostic} : {}),
         ...(selection?.ambiguous ? {status:'unresolved',reason:'director-profile-candidates-ambiguous'} : {})});
       for (const pending of deferred) pending.dispose();
-      if (capture) {
+      if (capture && !cards.some(card => card.identity?.status === 'matched')) {
         const possible = possibleIrrelevantSearch({ film, searches: searchObservations,
-          cards: cards.map((result, index) => ({ result, url: readCards[index] })).filter(card => typeof card.url === 'string'), observations: cardObservations }, { secrets });
+          // A generated URL is not a Tavily result. Its title mismatch must not
+          // create a warning about search responses; the fourth card still has
+          // its own identity/extraction diagnostics and prediction outcome.
+          cards: cards.map((result, index) => ({ result, url: readCards[index], stage: readStages[index] }))
+            .filter(card => typeof card.url === 'string' && card.stage !== 'kinobaza-predicted'), observations: cardObservations }, { secrets });
         if (possible) summary.possibleIrrelevantSearch = possible;
       }
       summary.status = resolverStatuses.has(status) ? status : 'unknown'; return { status, result, choices, resolver: summary };
@@ -224,12 +232,13 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         if (target !== url || !admitKinobazaURL(target) || examined.has(url) || calls.length >= sourceCap || signal?.aborted || init.method !== 'GET' || init.redirect !== 'manual' || calls.some(c => c.stage === stage)) throw Error('card-boundary');
         await reserve(stage); if (signal?.aborted) throw Error('resolver-deadline');
         summary.cardCalls++; examined.add(url); const call = { stage, status: 'attempt-reserved' }; calls.push(call);
-        if (capture) readCards[index] = url;
+        if (capture) { readCards[index] = url; readStages[index] = stage; }
         try { const r = await fetchImpl(target, init); call.httpStatus = r.status; call.status = 'response-received'; return r; } catch { call.status = 'transport-outcome-unknown'; throw Error('card-transport'); }
       };
       const index = cards.length;
-      const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic: observeIdentity,
-        ...(sourceCap === 10 || reserveEnabled ? {verifyDirector:director.verify,onDeferredDirector:pending => deferred.push({...pending,index})} : {}) });
+      const result = await fetchAssistedKinobaza(url, film, cardFetch, { signal, onIdentityDiagnostic: observeIdentity, directorConflictLookup:director.knownConflict,
+        ...(sourceCap === 10 || reserveEnabled ? {verifyDirector:stage === 'kinobaza-predicted' ? director.verifyPredicted : director.verify,
+          onDeferredDirector:pending => deferred.push({...pending,index})} : {}) });
       cards.push(result);
       summary.cards.push(cardSummary(result,
         // Public-pointer digest for comparing a known URL offline, never a
@@ -298,6 +307,34 @@ export function createKinobazaResolver({ apiKey, searchFactory = tavilySearch, o
         // still-unconfirmed eligible cards together, preserving an earlier tie
         // between different profiles rather than favoring the newest pointer.
         if (deferred.length > deferredBefore) await resumeDirectors(deferred);
+      }
+    }
+    if (predictedEnabled) {
+      const predicted = predictedKinobazaURL(film.originalTitle);
+      const currentPerson = director.diagnostic();
+      const failedPersonSource = currentPerson.attempts.some(attempt => attempt.status !== 'response-received' ||
+        !Number.isInteger(attempt.httpStatus) || attempt.httpStatus < 200 || attempt.httpStatus >= 300) ||
+        /^director-(?:tmdb-|profile-(?:redirect|auth|access|not-returned|quota|http|invalid-content|response-too-large|challenge|timeout|network|verification)|reservation|deadline|unsafe)/.test(currentPerson.reason);
+      const skip = reason => { summary.predicted = { status: 'skipped', reason }; };
+      if (cards.some(card => card.identity?.status === 'matched')) skip('prior-card-confirmed');
+      else if (sourceFailure || failedPersonSource) skip('source-boundary');
+      else if (signal?.aborted) skip('deadline');
+      else if (!predicted) skip('no-safe-original-title-prediction');
+      else if (examined.has(predicted)) skip('already-read');
+      else if (calls.length >= sourceCap) skip('budget');
+      else {
+        // Candidate allocation happens only after all old opportunities. Add it
+        // to the union for honest counts, never feed it back into Tavily order.
+        urls.add(predicted);
+        const deferredBefore = deferred.length;
+        const { dispatched, result } = await readCard(predicted, 'kinobaza-predicted');
+        summary.predicted = { status: dispatched ? 'read' : 'not-dispatched', reason: dispatched ? 'awaiting-identity' : 'reservation-or-deadline' };
+        // The same evidence selection still sees all eligible previous cards;
+        // a generated pointer cannot break a person-profile ambiguity/tie.
+        if (dispatched && deferred.length > deferredBefore) await resumeDirectors(deferred);
+        const outcome = cards.at(-1) ?? result;
+        if (dispatched) summary.predicted = { status: outcome.identity?.status === 'matched' ? 'matched' : 'unconfirmed',
+          reason: outcome.identity?.status === 'matched' ? 'identity-confirmed' : 'identity-or-markup-unconfirmed' };
       }
     }
     summary.unexamined = urls.size - examined.size;

@@ -342,7 +342,8 @@ test('linked director profile diagnostics/report keep exact allowlisted outcomes
   const before = JSON.stringify(input), safe = safeDirectorProfileDiagnostic(input);
   assert.deepEqual(safe, { status: 'confirmed', reason: 'confirmed-person-profile-facts', basis: 'exact-name-birthdate-role',
     sourceAttempts: 2, reservationRequests: 2, reservationsAcknowledged: 2, tmdbPersonCalls: 1, kinobazaPersonCalls: 1,
-    attempts: [{ stage: 'tmdb-person', status: 'response-received', httpStatus: 200 }, { stage: 'kinobaza-person', status: 'response-received', httpStatus: 200 }],
+    attempts: [{ stage: 'tmdb-person', status: 'response-received', httpStatus: 200 }, { stage: 'kinobaza-person', status: 'response-received', httpStatus: 200 },
+      { stage: 'unknown', status: 'unknown', httpStatus: null }],
     accounting: 'reserved-attempts-spent-no-retry',
     comparisons: { stableIdConflict: false, stableIdMatch: false, birthdayConflict: false, birthdayMatch: true, latinNameMatch: true, nativeAliasMatch: true } });
   assert.equal(JSON.stringify(input), before);
@@ -355,7 +356,7 @@ test('linked director profile diagnostics/report keep exact allowlisted outcomes
 
 test('director diagnostic prefix injection and malformed counts/states never become allowed report content', () => {
   const safe = safeDirectorProfileDiagnostic({ status: 'PRIVATE_STATUS', reason: 'director-profile-PRIVATE_ERROR', basis: 'PRIVATE_BASIS',
-    sourceAttempts: 3, reservationRequests: '2', reservationsAcknowledged: -1, tmdbPersonCalls: Infinity, kinobazaPersonCalls: null,
+    sourceAttempts: 4, reservationRequests: '2', reservationsAcknowledged: -1, tmdbPersonCalls: Infinity, kinobazaPersonCalls: null,
     attempts: [{ stage: 'PRIVATE_STAGE', status: 'PRIVATE_STATUS', httpStatus: 999, sourceURL: 'https://private.example/PRIVATE' }],
     accounting: 'PRIVATE_ACCOUNTING', comparisons: { birthdayMatch: 'true', latinNameMatch: 'PRIVATE_FLAG' }, raw: 'PRIVATE_BODY' });
   assert.deepEqual(safe, { status: 'unknown', reason: 'unknown', basis: null, sourceAttempts: null, reservationRequests: null,
@@ -375,7 +376,7 @@ test('profile pair allocation diagnostics retain safe card indexes/basis but no 
   assert.match(report,/"eligibleCards":2,"unverifiedCards":2,"selectedCards":\[\],"basis":"ambiguous-top-profiles"/);
   assert.doesNotMatch(report,/PRIVATE|https?:|profileURL|aliases/);
   const safe = safeDirectorProfileDiagnostic({...input,selection:{eligibleCards:99,unverifiedCards:'2',selectedCards:[1,2,2,'1',3,4,'PRIVATE'],basis:'PRIVATE'}});
-  assert.deepEqual(safe.selection,{eligibleCards:null,unverifiedCards:null,selectedCards:[1,2,3],basis:'unknown'});
+  assert.deepEqual(safe.selection,{eligibleCards:null,unverifiedCards:null,selectedCards:[1,2,3,4],basis:'unknown'});
   const product = productMediaResult({rows:[],resolver:{directorProfile:input}},{mykola_media_advice:true,mykola_media_advice_diagnostics:false});
   assert.doesNotMatch(JSON.stringify(product),/directorProfile|selection|ambiguous-top-profiles|PRIVATE/);
 });

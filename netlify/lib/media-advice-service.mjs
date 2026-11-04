@@ -10,7 +10,7 @@ const title = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(
 
 // A single server request, no process-local session Map or shared chat state.
 export async function discoverMedia({ imdbId, tmdbToken, motnKey, reserve, fetchImpl = fetch, resolver, signal, sourceCap = 8, diagnostics = false, diagnosticSecrets = [] }) {
-  if (![8, 10, 12].includes(sourceCap)) throw Error('invalid-source-cap');
+  if (![8, 10, 12, 14].includes(sourceCap)) throw Error('invalid-source-cap');
   const calls = [];
   const once = (stage, target) => async (url, init) => {
     if (url !== target || init.method !== 'GET' || init.redirect !== 'manual' || calls.some(c => c.stage === stage)) throw Error('request-boundary');

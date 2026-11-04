@@ -33,14 +33,17 @@ test('unknown labels, prefix lookalikes and all data-bearing fields are discarde
   assert.deepEqual(Object.keys(d.comparisons), ['stableIdConflict', 'stableIdMatch', 'birthdayConflict', 'birthdayMatch', 'latinNameMatch', 'nativeAliasMatch']);
 });
 
-test('all five counters permit only integers 0..2 without coercion and attempts are bounded to two', () => {
-  for (const value of [0, 1, 2, -1, 3, 1.1, Infinity, NaN, '1', true, null, {}, ['2']]) {
+test('person counters are stage-bounded without coercion and at most three attempts are retained', () => {
+  const limits = { sourceAttempts: 3, reservationRequests: 3, reservationsAcknowledged: 3, tmdbPersonCalls: 1, kinobazaPersonCalls: 2 };
+  for (const value of [0, 1, 2, 3, -1, 4, 1.1, Infinity, NaN, '1', true, null, {}, ['2']]) {
     const raw = fixture(); for (const key of ['sourceAttempts', 'reservationRequests', 'reservationsAcknowledged', 'tmdbPersonCalls', 'kinobazaPersonCalls']) raw[key] = value;
     const d = safeDirectorProfileDiagnostic(raw);
-    for (const key of ['sourceAttempts', 'reservationRequests', 'reservationsAcknowledged', 'tmdbPersonCalls', 'kinobazaPersonCalls']) assert.equal(d[key], Number.isSafeInteger(value) && value >= 0 && value <= 2 ? value : null);
+    for (const key of Object.keys(limits)) assert.equal(d[key], Number.isSafeInteger(value) && value >= 0 && value <= limits[key] ? value : null);
   }
-  const d = safeDirectorProfileDiagnostic({ ...fixture(), attempts: [...fixture().attempts, { stage: 'PRIVATE_THIRD', status: 'PRIVATE_SECRET', httpStatus: 200 }] });
-  assert.equal(d.attempts.length, 2); assert.doesNotMatch(JSON.stringify(d), /PRIVATE/);
+  const d = safeDirectorProfileDiagnostic({ ...fixture(), attempts: [...fixture().attempts,
+    { stage: 'kinobaza-person-predicted', status: 'response-received', httpStatus: 200 },
+    { stage: 'PRIVATE_FOURTH', status: 'PRIVATE_SECRET', httpStatus: 200 }] });
+  assert.equal(d.attempts.length, 3); assert.equal(d.attempts[2].stage, 'kinobaza-person-predicted'); assert.doesNotMatch(JSON.stringify(d), /PRIVATE/);
 });
 
 test('HTTP status and boolean flags are not derived from text or truthiness', () => {
@@ -67,11 +70,14 @@ test('the projection is browser-safe with no Node/network/storage dependency', a
   assert.doesNotMatch(code, /\bimport\s|\bBuffer\b|\bprocess\b|\bfetch\s*\(|localStorage|sessionStorage|console\./);
 });
 
-test('third-card selection is bounded independently of the unchanged two person attempts', () => {
-  const raw = {...fixture(), selection:{eligibleCards:3, unverifiedCards:2, selectedCards:[3,4,'3',3], basis:'selected-year'}};
+test('fourth-card selection and one reused-projection profile attempt remain separately bounded', () => {
+  const raw = {...fixture(), selection:{eligibleCards:4, unverifiedCards:2, selectedCards:[3,4,5,'3',3], basis:'selected-year'}};
   const d = safeDirectorProfileDiagnostic(raw);
-  assert.deepEqual(d.selection,{eligibleCards:3,unverifiedCards:2,selectedCards:[3],basis:'selected-year'});
+  assert.deepEqual(d.selection,{eligibleCards:4,unverifiedCards:2,selectedCards:[3,4],basis:'selected-year'});
   assert.equal(d.sourceAttempts,2); assert.equal(d.attempts.length,2);
-  const malformed = safeDirectorProfileDiagnostic({...raw,sourceAttempts:3,selection:{...raw.selection,eligibleCards:4}});
+  const malformed = safeDirectorProfileDiagnostic({...raw,sourceAttempts:4,selection:{...raw.selection,eligibleCards:5}});
   assert.equal(malformed.sourceAttempts,null); assert.equal(malformed.selection.eligibleCards,null);
+  for (const reason of ['director-profile-predicted-not-enabled-for-budget', 'director-profile-predicted-projection-unavailable', 'director-profile-predicted-reuse-unavailable']) {
+    assert.equal(safeDirectorProfileDiagnostic({...raw,status:'unresolved',reason}).reason,reason);
+  }
 });

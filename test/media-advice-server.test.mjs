@@ -85,7 +85,7 @@ test('unmapped Plex/MUBI literal claims retained read-only, no invented medium o
 });
 
 test('only the durable start receipt selects source cap; browser cap and identity context are ignored', async () => {
-  for (const cap of [8, 10, 12, undefined]) {
+  for (const cap of [8, 10, 12, 14, undefined]) {
     const operations = []; let runArgs;
     const client = { auth: { getUser: async () => ({ data: { user: { id: user, user_metadata: { sourceCap: 100 } } } }) },
       rpc: async (_, args) => { operations.push(args); return { data: { id: form, ...(cap === undefined ? {} : { cap }), attempts: [],
@@ -102,13 +102,13 @@ test('only the durable start receipt selects source cap; browser cap and identit
     assert.doesNotMatch(JSON.stringify(operations), /sourceCap|"cap"|counters|identityContext|Browser|FAKE_KEY/);
     assert.doesNotMatch(await response.text(), /AUTHORED_SERVER_TMDB_KEY|BROWSER_FAKE_KEY/);
     assert.deepEqual(operations.map(args => args.p_op), ['start', 'finish']);
-    assert.equal(operations[0].p_stage, 'reserve-exact-v1');
+    assert.equal(operations[0].p_stage, 'predicted-card-v1');
     assert.equal(operations[1].p_stage, undefined);
   }
 });
 
 test('unsupported or malformed server source cap fails closed before source work and is finished once', async () => {
-  for (const cap of [0, 9, 11, 13, 100, '10', '12', null]) {
+  for (const cap of [0, 9, 11, 13, 15, 100, '10', '12', '14', null]) {
     const operations = [];
     const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) },
       rpc: async (_, args) => { operations.push(args.p_op); return { data: { id: form, cap, mykola_media_advice: true } }; } };
@@ -119,8 +119,46 @@ test('unsupported or malformed server source cap fails closed before source work
   }
 });
 
+test('an older SQL contract rejection cannot trigger a second start or a downgrade retry', async () => {
+  const operations = [];
+  const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) },
+    rpc: async (_, args) => { operations.push(args); return { error: { message: 'unsupported-start-contract' } }; } };
+  const response = await createMediaAdviceHandler({ client, env: () => '',
+    run: async () => assert.fail('rejected contract must dispatch no source') })(request());
+  assert.equal(response.status, 403); assert.equal(operations.length, 1);
+  assert.equal(operations[0].p_op, 'start'); assert.equal(operations[0].p_stage, 'predicted-card-v1');
+});
+
+test('actual cap14 handler/service path reads one predicted card after unchanged searches and redacts ordinary Beta', async () => {
+  const pointer = 'https://kinobazaua.com/titles/authored-original';
+  const keys = { TMDB_READ_ACCESS_TOKEN: 'AUTHORED_TMDB_KEY', MOTN_API_KEY: 'AUTHORED_MOTN_KEY', TAVILY_API_KEY: 'AUTHORED_TAVILY_KEY' };
+  for (const diagnostics of [false, true]) {
+    const reserved = [], requests = [], searches = [];
+    const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) },
+      rpc: async (_, args) => { if (args.p_op === 'reserve') { assert.ok(!reserved.includes(args.p_stage)); reserved.push(args.p_stage); }
+        return { data: { id: form, cap: 14, attempts: [...reserved], mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics } }; } };
+    const fetchImpl = async (url, init) => {
+      requests.push(url); assert.equal(init.redirect, 'manual'); assert.equal(init.credentials, 'omit');
+      if (url === 'https://api.tavily.com/search') { searches.push(JSON.parse(init.body)); return Response.json({ results: [] }); }
+      if (url === pointer) return new Response(markup({ url: pointer }), { headers: { 'content-type': 'text/html' } });
+      assert.ok(['api.themoviedb.org', 'api.movieofthenight.com'].includes(new URL(url).hostname));
+      return Response.json(url.includes('/find/') ? { movie_results: [{ id: IDS[0], title: 'Вигаданий фільм', original_title: 'Authored original' }] } :
+        url.includes('/watch/providers') ? providersData(IDS[0]) : url.includes('movieofthenight') ? motnData(IDS[0]) : detailsData(IDS[0]));
+    };
+    const response = await createMediaAdviceHandler({ client, env: key => keys[key] ?? '', fetchImpl,
+      resolver: createKinobazaResolver({ apiKey: keys.TAVILY_API_KEY }) })(request({ ...input, sourceCap: 999, diagnostics: true }));
+    assert.equal(response.status, 200); const payload = await response.json();
+    assert.equal(requests.length, 8); assert.equal(reserved.length, 8); assert.equal(reserved.at(-1), 'kinobaza-predicted');
+    assert.deepEqual(searches.map(item => [item.search_depth, item.exact_match ?? false]), [['basic', false], ['basic', false], ['advanced', true]]);
+    assert.ok(payload.result.rows.some(row => row.id.startsWith('kinobaza:')));
+    if (diagnostics) { assert.equal(payload.result.metrics.requestBudget, 14); assert.equal(payload.result.resolver.predicted.status, 'matched'); }
+    else assert.doesNotMatch(JSON.stringify(payload), /resolver|metrics|predicted|sameAs|directorPeople|identityContext/);
+    assert.doesNotMatch(JSON.stringify(payload), /AUTHORED_.*KEY/);
+  }
+});
+
 test('matched server Details propagate contextual title/release metadata and source cap to the resolver without extra GETs', async () => {
-  for (const sourceCap of [8, 10, 12]) {
+  for (const sourceCap of [8, 10, 12, 14]) {
     const mock = sourceFixture((data, stage) => {
       if (stage !== 'details') return;
       data.translations.translations = [
