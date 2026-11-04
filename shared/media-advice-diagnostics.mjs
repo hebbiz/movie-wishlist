@@ -31,5 +31,20 @@ export function safeIdentityDiagnostic(d) {
     years: { selected, source, delta: selected !== null && source !== null ? source - selected : null },
     counts: Object.fromEntries(identityCounts.map(k => [k, safeCount(d?.counts?.[k])])),
     comparisons: Object.fromEntries(identityFlags.map(k => [k, typeof d?.comparisons?.[k] === 'boolean' ? d.comparisons[k] : null])),
-    gates: Object.fromEntries(identityGates.map(k => [k, ['pass','fail','unresolved','not-evaluated'].includes(d?.gates?.[k]) ? d.gates[k] : 'not-evaluated'])) };
+    gates: Object.fromEntries(identityGates.map(k => [k, ['pass','fail','unresolved','not-evaluated'].includes(d?.gates?.[k]) ? d.gates[k] : 'not-evaluated'])),
+    ...(d?.movieSameAs ? {movieSameAs:safeMovieSameAsDiagnostic(d.movieSameAs)} : {}) };
+}
+const semanticReasons = new Set(['canonical-not-established','semantic-script-limit','semantic-json-unavailable','no-owned-movie',
+  'semantic-context-unsupported','semantic-mixed-type','semantic-own-id-conflict','semantic-name-source-conflict','semantic-owned-movie-ambiguous',
+  'semantic-sameas-shape','semantic-movie-id-shape','semantic-multiple-ids','owned-movie-sameas','sameas-without-film-id','semantic-json-duplicate-key']);
+export function safeMovieSameAsDiagnostic(d) {
+  const date = typeof d?.datePublished === 'string' && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2}))?$/.test(d.datePublished) ? d.datePublished : null;
+  return { status:['available','unavailable','ambiguous','conflict'].includes(d?.status)?d.status:'unknown',
+    reason:semanticReasons.has(d?.reason)?d.reason:'unknown',movieCount:safeCount(d?.movieCount),idCount:safeCount(d?.idCount),
+    datePublished:date,yearAuthority:'none' };
+}
+export function safePredictedDiagnostic(d) {
+  return {status:['not-attempted','skipped','not-dispatched','matched','unconfirmed'].includes(d?.status)?d.status:'unknown',
+    reason:['prior-route-stopped','prior-card-confirmed','source-boundary','deadline','no-safe-original-title-prediction','already-read','budget',
+      'reservation-or-deadline','identity-confirmed','identity-or-markup-unconfirmed'].includes(d?.reason)?d.reason:'unknown'};
 }

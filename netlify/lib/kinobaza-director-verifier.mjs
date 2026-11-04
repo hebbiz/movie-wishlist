@@ -9,10 +9,14 @@ const normalize = s => typeof s === 'string' ? s.normalize('NFC').replace(/\s+/g
 const safeText = s => typeof s === 'string' && s.trim().length > 0 && s.length <= 500 && !/[\p{C}]/u.test(s);
 const safeKey = s => typeof s === 'string' && s.length > 0 && s.length <= 4096 && !/[\s\p{C}]/u.test(s);
 const validID = n => Number.isSafeInteger(n) && n > 0;
-const stages = new Set(['tmdb-person', 'kinobaza-person']);
+const stages = new Set(['tmdb-person', 'kinobaza-person', 'kinobaza-person-predicted']);
 const transportReasons = new Set(['redirect-not-followed', 'api-auth-error', 'api-access-denied', 'title-not-returned', 'quota-or-rate-limit', 'api-http-error',
   'invalid-content-type', 'response-too-large', 'invalid-response', 'unsafe-response-withheld', 'timeout-no-retry', 'invalid-or-network-response-no-retry']);
 const unresolved = reason => ({ status: 'unresolved', reason, aliases: [] });
+// Only established, scoped person-ID/DOB contradictions can withhold a later
+// strong Movie-ID route. Transport, markup and spelling failures are unknown.
+const hardPersonConflicts = new Set(['director-person-id-conflict', 'director-person-birthday-conflict',
+  'profile-person-id-conflict', 'profile-birthday-conflict']);
 
 function wait(promise, signal) {
   if (signal.aborted) return Promise.reject(Error('director-deadline'));
@@ -48,10 +52,14 @@ async function readProfile(url, send, signal) {
 
 export function createDirectorVerifier({ film, tmdbToken, sourceCap, reserve, fetchImpl = fetch, calls = [], signal } = {}) {
   const expected = film?.directorCount === 1 && Array.isArray(film.directorPeople) && film.directorPeople.length === 1 ? film.directorPeople[0] : null;
-  const trustedPerson = expected?.namespace === 'tmdb:person' && validID(expected.personId) && Array.isArray(expected.names) && expected.names.length > 0 && expected.names.length <= 32 && expected.names.every(safeText) ? expected : null;
+  // Keep the trusted credits identity fixed for this invocation. A later film
+  // object mutation cannot retarget a cached projection/proof to another person.
+  const trustedPerson = expected?.namespace === 'tmdb:person' && validID(expected.personId) && Array.isArray(expected.names) && expected.names.length > 0 && expected.names.length <= 32 && expected.names.every(safeText)
+    ? Object.freeze({ namespace: expected.namespace, personId: expected.personId, names: Object.freeze([...expected.names]) }) : null;
   const summary = { status: 'not-requested', reason: 'not-requested', sourceAttempts: 0, reservationRequests: 0, reservationsAcknowledged: 0, tmdbPersonCalls: 0, kinobazaPersonCalls: 0, attempts: [],
     accounting: 'no-extra-attempts' };
-  const cache = new Map(); let pairUsed = false;
+  const cache = new Map(), settledConflicts = new Map(), attemptedProfileURLs = new Set();
+  let pairUsed = false, predictedProfileUsed = false, projectedPerson = null;
   const finish = result => {
     summary.status = result.status; summary.reason = result.reason;
     if (result.basis) summary.basis = result.basis;
@@ -59,9 +67,9 @@ export function createDirectorVerifier({ film, tmdbToken, sourceCap, reserve, fe
     return result;
   };
   async function dispatch(stage, target, url, init, stageSignal) {
-    if (!stages.has(stage) || url !== target || init.method !== 'GET' || init.redirect !== 'manual' || init.credentials !== 'omit' || stageSignal.aborted || signal?.aborted ||
+    if (!stages.has(stage) || stage === 'kinobaza-person-predicted' && sourceCap !== 14 || url !== target || init.method !== 'GET' || init.redirect !== 'manual' || init.credentials !== 'omit' || stageSignal.aborted || signal?.aborted ||
         !Array.isArray(calls) || calls.length >= sourceCap || calls.some(c => c.stage === stage)) throw Error('director-boundary');
-    if (stage === 'kinobaza-person' && (!admitDirectorProfileURL(url) || new Headers(init.headers).has('authorization') || new Headers(init.headers).has('cookie'))) throw Error('director-boundary');
+    if (stage !== 'tmdb-person' && (!admitDirectorProfileURL(url) || new Headers(init.headers).has('authorization') || new Headers(init.headers).has('cookie'))) throw Error('director-boundary');
     const attempt = { stage, status: 'reservation-pending' }; summary.attempts.push(attempt); summary.reservationRequests++;
     try { await wait(Promise.resolve().then(() => reserve(stage)), stageSignal); }
     catch {
@@ -83,33 +91,41 @@ export function createDirectorVerifier({ film, tmdbToken, sourceCap, reserve, fe
       call.status = attempt.status = 'transport-outcome-unknown'; throw Error('director-transport');
     }
   }
-  async function run(sourceURL, sourceAlias) {
+  async function run(sourceURL, sourceAlias, profileStage = 'kinobaza-person') {
     // English person names provide an exact cross-script comparison without
     // inventing a transliteration. The trusted credits person ID stays fixed.
-    const tmdbURL = `https://api.themoviedb.org/3/person/${trustedPerson.personId}?language=en-US&append_to_response=external_ids`;
-    const tmdbSignal = AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)].filter(Boolean));
-    const tmdb = await readTmdbJson(tmdbURL, tmdbToken, (url, init) => dispatch('tmdb-person', tmdbURL, url, init, tmdbSignal), { timeoutMs: TIMEOUT_MS, maxBytes: 512 * 1024, signal: tmdbSignal });
-    if (tmdb.status !== 'ok') return finish(unresolved(summary.attempts.at(-1)?.status === 'reservation-denied' || summary.attempts.at(-1)?.status === 'reservation-outcome-unknown' ? 'director-reservation-unavailable' : tmdbSignal.aborted ? 'director-tmdb-timeout-no-retry' : `director-tmdb-${transportReasons.has(tmdb.status) ? tmdb.status : 'invalid-response'}`));
-    const projected = projectTmdbPerson(tmdb.data, trustedPerson);
-    if (projected.status !== 'ok') return finish(unresolved(projected.reason));
+    if (profileStage === 'kinobaza-person') {
+      const tmdbURL = `https://api.themoviedb.org/3/person/${trustedPerson.personId}?language=en-US&append_to_response=external_ids`;
+      const tmdbSignal = AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)].filter(Boolean));
+      const tmdb = await readTmdbJson(tmdbURL, tmdbToken, (url, init) => dispatch('tmdb-person', tmdbURL, url, init, tmdbSignal), { timeoutMs: TIMEOUT_MS, maxBytes: 512 * 1024, signal: tmdbSignal });
+      if (tmdb.status !== 'ok') return finish(unresolved(summary.attempts.at(-1)?.status === 'reservation-denied' || summary.attempts.at(-1)?.status === 'reservation-outcome-unknown' ? 'director-reservation-unavailable' : tmdbSignal.aborted ? 'director-tmdb-timeout-no-retry' : `director-tmdb-${transportReasons.has(tmdb.status) ? tmdb.status : 'invalid-response'}`));
+      const projected = projectTmdbPerson(tmdb.data, trustedPerson);
+      if (projected.status !== 'ok') return finish(unresolved(projected.reason));
+      // Only this validated, fixed-person projection is reusable. Neither raw
+      // data nor a profile's aliases/proof can authorize another person's GET.
+      projectedPerson = Object.freeze({ ...projected, names: Object.freeze([...projected.names]) });
+    }
+    if (!projectedPerson || projectedPerson.personId !== trustedPerson.personId) return finish(unresolved('director-profile-predicted-projection-unavailable'));
     if (signal?.aborted) return finish(unresolved('director-deadline-bounded'));
     const profileSignal = AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)].filter(Boolean));
-    const page = await readProfile(sourceURL, (url, init) => dispatch('kinobaza-person', sourceURL, url, init, profileSignal), profileSignal);
+    const page = await readProfile(sourceURL, (url, init) => dispatch(profileStage, sourceURL, url, init, profileSignal), profileSignal);
     if (page.status !== 'ok') return finish(unresolved(summary.attempts.at(-1)?.status === 'reservation-denied' || summary.attempts.at(-1)?.status === 'reservation-outcome-unknown' ? 'director-reservation-unavailable' : `director-${page.status}`));
     if (page.html.includes(tmdbToken)) return finish(unresolved('director-unsafe-source-content-withheld'));
     const inspected = await inspectDirectorProfile(page.html, sourceURL, sourceAlias);
     if (signal?.aborted) return finish(unresolved('director-deadline-bounded'));
-    const result = compareDirectorProfile(inspected, projected);
+    const result = compareDirectorProfile(inspected, projectedPerson);
     // The alias/provenance is server-internal. diagnostic() deliberately omits
     // source URLs, names, birth dates, profile bodies and credentials.
     if (JSON.stringify(result).includes(tmdbToken)) return finish(unresolved('director-unsafe-source-content-withheld'));
     return finish({ ...result, aliases: result.status === 'confirmed' ? result.aliases : [] });
   }
-  function verify({ sourceURL, sourceAlias } = {}) {
+  function verifyPointer({ sourceURL, sourceAlias } = {}, predicted = false) {
     const decline = reason => Promise.resolve(finish(unresolved(reason)));
-    // The durable session capability, not a browser option, enables the same
-    // single pair for cap10/cap12. A reserve card does not grant a second pair.
-    if (sourceCap !== 10 && sourceCap !== 12) return decline('director-profile-not-enabled-for-budget');
+    // The durable server session capability, not a browser flag, enables the
+    // original pair. Only the resolver's explicit predicted phase can use the
+    // one extra profile stage, never a second TMDb person request.
+    if (sourceCap !== 10 && sourceCap !== 12 && sourceCap !== 14) return decline('director-profile-not-enabled-for-budget');
+    if (predicted && sourceCap !== 14) return decline('director-profile-predicted-not-enabled-for-budget');
     if (!trustedPerson) return decline('director-profile-trusted-single-person-required');
     if (!safeKey(tmdbToken)) return decline('director-profile-missing-tmdb-credential');
     if (typeof reserve !== 'function' || !Array.isArray(calls)) return decline('director-profile-ledger-required');
@@ -117,12 +133,35 @@ export function createDirectorVerifier({ film, tmdbToken, sourceCap, reserve, fe
     if (signal?.aborted) return decline('director-deadline-bounded');
     const key = `${trustedPerson.personId}\u0000${sourceURL}\u0000${normalize(sourceAlias)}`;
     if (cache.has(key)) return cache.get(key);
-    if (pairUsed || calls.some(c => stages.has(c.stage)) || calls.length > sourceCap - 2) return decline('director-profile-pair-unavailable');
+    // An alias change is not permission to repeat a previously attempted URL.
+    // Exact-key failures and concurrent calls share the original cached Promise.
+    if (attemptedProfileURLs.has(sourceURL)) return decline('director-profile-predicted-reuse-unavailable');
+    const priorPersonStage = calls.some(c => stages.has(c.stage));
+    let profileStage = 'kinobaza-person';
+    if (pairUsed || priorPersonStage) {
+      if (!predicted) return decline('director-profile-pair-unavailable');
+      if (!projectedPerson || projectedPerson.personId !== trustedPerson.personId) return decline('director-profile-predicted-projection-unavailable');
+      if (predictedProfileUsed || calls.some(c => c.stage === 'kinobaza-person-predicted') || calls.length >= sourceCap) return decline('director-profile-predicted-reuse-unavailable');
+      profileStage = 'kinobaza-person-predicted';
+    } else if (calls.length > sourceCap - 2) return decline('director-profile-pair-unavailable');
     // Lock before the first await. Parallel candidates cannot reserve a second
     // pair; even a timeout/denied stage is not an opportunity for an app retry.
-    pairUsed = true;
-    const pending = run(sourceURL, sourceAlias).catch(() => finish(unresolved('director-profile-verification-error')));
+    if (profileStage === 'kinobaza-person') pairUsed = true;
+    else predictedProfileUsed = true;
+    attemptedProfileURLs.add(sourceURL);
+    const pending = run(sourceURL, sourceAlias, profileStage).catch(() => finish(unresolved('director-profile-verification-error'))).then(result => {
+      // Capture the settled classification, not a caller-mutable result. It is
+      // usable only with this exact trusted person, admitted URL and alias key.
+      settledConflicts.set(key, hardPersonConflicts.has(result.reason));
+      return result;
+    });
     cache.set(key, pending); return pending;
   }
-  return { verify, diagnostic: () => structuredClone(summary) };
+  function knownConflict({ sourceURL, sourceAlias } = {}) {
+    if (!trustedPerson || !admitDirectorProfileURL(sourceURL) || !safeText(sourceAlias)) return false;
+    const key = `${trustedPerson.personId}\u0000${sourceURL}\u0000${normalize(sourceAlias)}`;
+    return settledConflicts.get(key) === true;
+  }
+  return { verify: pointer => verifyPointer(pointer), verifyPredicted: pointer => verifyPointer(pointer, true),
+    knownConflict, diagnostic: () => structuredClone(summary) };
 }

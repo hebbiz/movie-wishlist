@@ -5,6 +5,7 @@ import { lookupDirectorAliases } from '../../shared/director-alias-crosswalk.mjs
 import { releaseYearEvidence } from '../../shared/film-release-year.mjs';
 import { sameTerminalRomanTitle } from '../../shared/terminal-roman-title.mjs';
 import { sameUkrainianGTitle } from '../../shared/ukrainian-g-title.mjs';
+import { movieSameAsEvidence } from '../../shared/kinobaza-movie-identity.mjs';
 
 export function admitKinobazaURL(value) {
   // Validate original spelling BEFORE URL normalization (default ports/dot paths).
@@ -45,7 +46,7 @@ function unknownTranslationHeading(heading, film) {
   return true;
 }
 
-export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, directorAliasLookup = lookupDirectorAliases } = {}) {
+export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, directorAliasLookup = lookupDirectorAliases, directorConflictLookup } = {}) {
   const active = all.filter(n => !excluded(n));
   const directDirectorNames = film.directorAliases ?? [];
   const directDirectorAliases = new Set(directDirectorNames.map(normalize).filter(Boolean));
@@ -58,11 +59,13 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   }
   const directorNames = [...directDirectorNames, ...(crosswalk?.status === 'confirmed' ? crosswalk.aliases : [])];
   const canonicals = active.filter(n => n.tagName === 'link' && (attr(n, 'rel') ?? '').split(/\s+/).includes('canonical')).map(n => attr(n, 'href'));
+  const semantic = movieSameAsEvidence(all, sourceURL);
   const outcome = (status, reason) => {
     const counts = { headingCount: headings.length, originalTitleCount: originals.length, directorCount: directors.size, canonicalCount: canonicals.length, stableIdCount: stable.length };
     const reasonGate = { 'source-identity-structure-limit':'structure-limit', 'source-canonical-conflict':'canonical-conflict', 'source-stable-id-conflict':'stable-id-conflict', 'malformed-source-stable-id':'stable-id-shape', 'source-canonical-ambiguous':'canonical-count', 'source-identity-structure-incomplete':'metadata-structure', 'source-title-year-missing':'heading-format', 'source-title-conflict':'heading-alias', 'source-original-title-scope-unestablished':'original-scope', 'source-original-title-unestablished':'original-alias', 'selected-year-missing':'selected-year', 'source-year-conflict-without-stable-crosswalk':'year-crosswalk', 'source-year-conflict-terminal-roman-title':'year-crosswalk', 'source-or-selected-director-missing':'director-presence', 'director-scope-unestablished':'director-scope', 'director-alias-unestablished':'director-alias' };
     reasonGate['source-year-conflict-ukrainian-g-title'] = 'year-crosswalk';
     reasonGate['source-year-conflict-unknown-translation'] = 'year-crosswalk';
+    reasonGate['director-known-person-conflict'] = 'director-alias';
     const failedGate = reasonGate[reason] ?? null, failedAt = identityGates.indexOf(failedGate);
     const parsed = headings.length === 1 ? /^(.*?)\s*\(\s*(\d{4})\s*\)\s*$/.exec(headings[0]) : null;
     const names = [film.identityTitle, film.originalTitle, ...(film.titleAliases ?? [])], aliases = new Set(names.map(normalize).filter(Boolean));
@@ -82,6 +85,8 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
       directorAliasMatch: directors.size && directorAliases.size ? [...directors].every(d => directorAliases.has(normalize(d))) : null },
       strategy: translation && (reason === 'explicit-original-year-director-translation-match' || reason === 'director-alias-unestablished') ? 'original-year-director-translation' : status !== 'matched' ? null : headingMatch === 'ukrainian-g' ? 'title-ukrainian-g-year-director' : headingMatch === 'terminal-roman-i' ? 'title-terminal-roman-year-director' : directorBypassed ? 'stable-id-title-year' : stableMatch ? 'stable-id-title-director-year-variance' : sourceYear !== selectedYear ? 'title-release-year-director' : 'title-year-director',
       years: { selected: selectedYear, source: sourceYear, delta: selectedYear !== null && sourceYear !== null ? sourceYear - selectedYear : null },
+      movieSameAs: { status: semantic.status, reason: semantic.reason, movieCount: semantic.movieCount,
+        idCount: semantic.records.length, datePublished: semantic.datePublished, yearAuthority: 'none' },
       gates: Object.fromEntries(identityGates.map((g,i) => [g, directorBypassed && g.startsWith('director-') ? 'not-evaluated' : status === 'matched' || i < failedAt ? 'pass' : i === failedAt ? status === 'mismatch' ? 'fail' : 'unresolved' : 'not-evaluated'])) };
     if (translation && reason !== 'source-title-conflict') diagnostics.gates['heading-alias'] = 'not-evaluated';
     if (reason === 'source-identity-structure-limit') for (const key of Object.keys(diagnostics.comparisons)) diagnostics.comparisons[key] = null;
@@ -119,9 +124,12 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   };
   const originals = active.filter(n => n.tagName === 'h2' && n.sourceCodeLocation?.startOffset > headingNode?.sourceCodeLocation?.startOffset &&
     n.sourceCodeLocation?.startOffset < accordion?.sourceCodeLocation?.startOffset).map(text).filter(Boolean);
-  const directors = new Set(), stable = [];
+  // Typed semantic records retain their source/scope; never fabricate labelled
+  // rows or allow IDs from another graph object to enter the film contract.
+  const directors = new Set(), stable = [...semantic.records];
   let directorFields = 0, ambiguousDirectorField = false;
-  // IDs only in labelled film-metadata rows, not arbitrary recommendations/trailers.
+  // The existing DOM ID route reads labelled film-metadata rows only, never
+  // arbitrary recommendations/trailers. Semantic IDs above have their own scope.
   let identityRows = 0;
   for (const row of active.filter(n => n.tagName === 'tr')) {
     const cells = (row.childNodes ?? []).filter(n => ['td', 'th'].includes(n.tagName));
@@ -129,7 +137,15 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
     const label = text(cells[0]);
     if (label === 'Режисер:' && !inMetadataTable(row)) continue;
     if (['Режисер:', 'IMDb:', 'TMDb:'].includes(label) && ++identityRows > 32) return outcome('unresolved', 'source-identity-structure-limit');
-    if (label === 'Режисер:' && text(cells[1])) { directorFields++; directors.add(text(cells[1])); }
+    if (label === 'Режисер:' && text(cells[1])) {
+      directorFields++; directors.add(text(cells[1]));
+      const stack = [cells[1]]; let anchors = 0;
+      while (stack.length) {
+        const node = stack.pop(); if (node.tagName === 'a') anchors++;
+        if (!['script', 'style', 'template', 'noscript', 'iframe'].includes(node.tagName)) stack.push(...node.childNodes ?? []);
+      }
+      if (anchors > 1) ambiguousDirectorField = true;
+    }
     if (['IMDb:', 'TMDb:'].includes(label)) {
       // A convenient ID in recommendations or another body table is not film
       // authority. Keep existing explicit-conflict refusal even if the critical
@@ -212,6 +228,27 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   if (translation && Number(heading[2]) !== film.year) return outcome('mismatch', 'source-year-conflict-unknown-translation');
   const knownRelease = releaseYearEvidence(film, Number(heading[2])).length > 0;
   if (Number(heading[2]) !== film.year && !stableMatch && !knownRelease) return outcome('mismatch', 'source-year-conflict-without-stable-crosswalk');
+  // Optional malformed JSON cannot donate positive IDs. Actually ambiguous
+  // owned Movie metadata/duplicate-key authority is a critical refusal; earlier
+  // explicit ID/title/year conflicts retain their existing mismatch priority.
+  if (semantic.status === 'ambiguous') return outcome('unresolved',
+    ['semantic-sameas-shape', 'semantic-movie-id-shape'].includes(semantic.reason) ? 'malformed-source-stable-id' : 'source-identity-structure-incomplete');
+  // Unlike a spelling difference, a proven multi-director scope is explicit
+  // ambiguity. New JSON-LD proof must not silently erase it. The historical
+  // labelled-ID contract is left unchanged.
+  const semanticMatch = stable.some(s => s.provenance === 'jsonld-owned-movie-sameas' && s.filmScope && expected[s.namespace] && s.id === expected[s.namespace]);
+  const labelledMatch = stable.some(s => s.provenance !== 'jsonld-owned-movie-sameas' && s.filmScope && expected[s.namespace] && s.id === expected[s.namespace]);
+  if (semanticMatch && !labelledMatch && (directors.size > 1 || directorFields > 1 || ambiguousDirectorField ||
+      film.directorCount > 1 || Array.isArray(film.directorPeople) && film.directorPeople.length > 1)) return outcome('unresolved', 'director-scope-unestablished');
+  // Only a trusted server verifier can remember a *proven* person-ID/birthday
+  // conflict. Its exact person/profile/alias key is checked without I/O; mere
+  // spelling differences, parse errors and prior failures are not conflicts.
+  if (semanticMatch && headingMatch === 'exact' && Number(heading[2]) === film.year && typeof directorConflictLookup === 'function') {
+    const pointer = linkedDirectorProfile(all);
+    let knownConflict = false;
+    if (pointer) { try { knownConflict = directorConflictLookup(pointer) === true; } catch {} }
+    if (knownConflict) return outcome('unresolved', 'director-known-person-conflict');
+  }
   // Explicit same-system film ID plus independently matching title/year is a
   // stronger route than name spelling. Canonical, title/original scope, malformed
   // IDs and all proven ID conflicts have already been checked above.
@@ -258,7 +295,7 @@ export function linkedDirectorProfile(all) {
   return typeof url === 'string' && url.length <= 512 && /^https:\/\/kinobazaua\.com\/persons\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ? {sourceURL:url,sourceAlias:text(cells[1])} : null;
 }
 
-export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, signal, onIdentityDiagnostic, directorAliasLookup, verifyDirector, onDeferredDirector } = {}) {
+export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, signal, onIdentityDiagnostic, directorAliasLookup, directorConflictLookup, verifyDirector, onDeferredDirector } = {}) {
   if (!admitKinobazaURL(sourceURL)) throw new Error('Unadmitted source');
   const controller = new AbortController(); const abort = () => controller.abort(); signal?.addEventListener('abort', abort, { once: true });
   if (signal?.aborted) controller.abort();
@@ -292,7 +329,7 @@ export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeou
     };
     let deferredPointer, resumeExtraction;
     const verifyIdentity = async all => {
-      const checked = assistedIdentity(all, film, sourceURL, {directorAliasLookup});
+      const checked = assistedIdentity(all, film, sourceURL, {directorAliasLookup,directorConflictLookup});
       const pointer = checked.reason === 'director-alias-unestablished' && typeof verifyDirector === 'function' ? linkedDirectorProfile(all) : null;
       let proof;
       if (pointer && !combined.aborted) { try { proof = await bounded(verifyDirector(pointer)); } catch {} }
@@ -302,14 +339,14 @@ export async function fetchAssistedKinobaza(sourceURL, film, fetchImpl, { timeou
         proof.provenance.personId === person.personId && proof.provenance.scope === 'kinobaza-director-identity' &&
         proof.provenance.sourceURL === pointer?.sourceURL && proof.aliases?.length === 1 && normalize(proof.aliases[0]) === normalize(pointer.sourceAlias);
       const lookup = valid ? candidate => candidate.namespace === person.namespace && candidate.personId === person.personId ? proof : {status:'unresolved'} : directorAliasLookup;
-      return assistedIdentity(all, film, sourceURL, {onIdentityDiagnostic,directorAliasLookup:lookup});
+      return assistedIdentity(all, film, sourceURL, {onIdentityDiagnostic,directorAliasLookup:lookup,directorConflictLookup});
     };
     const extracted = await bounded(extractHtml(html, film, { identityCheck: async all => {
-      const checked = assistedIdentity(all, film, sourceURL, {directorAliasLookup});
+      const checked = assistedIdentity(all, film, sourceURL, {directorAliasLookup,directorConflictLookup});
       const pointer = checked.reason === 'director-alias-unestablished' && typeof verifyDirector === 'function' && typeof onDeferredDirector === 'function' ? linkedDirectorProfile(all) : null;
       if (pointer) {
         deferredPointer = pointer;
-        return assistedIdentity(all, film, sourceURL, {onIdentityDiagnostic,directorAliasLookup});
+        return assistedIdentity(all, film, sourceURL, {onIdentityDiagnostic,directorAliasLookup,directorConflictLookup});
       }
       return verifyIdentity(all);
     }, onIdentityBlocked: resume => { if (deferredPointer) resumeExtraction = resume; } }));

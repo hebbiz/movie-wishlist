@@ -5,7 +5,8 @@ const reasons = new Set(['source-canonical-conflict','source-stable-id-conflict'
   'source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict',
   'source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk',
   'source-year-conflict-terminal-roman-title','source-year-conflict-ukrainian-g-title','source-year-conflict-unknown-translation',
-  'source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished']);
+  'source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished',
+  'director-known-person-conflict','source-semantic-movie-ambiguous','source-semantic-movie-conflict']);
 function secretLike(value, secrets) {
   let decoded = value;
   for (let i = 0; i < 4; i++) {

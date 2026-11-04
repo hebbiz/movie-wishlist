@@ -21,16 +21,18 @@ const reasons = new Set([
   'director-profile-network-or-decoding-error', 'director-unsafe-source-content-withheld', 'director-profile-not-enabled-for-budget',
   'director-profile-trusted-single-person-required', 'director-profile-missing-tmdb-credential', 'director-profile-ledger-required',
   'director-profile-pointer-rejected', 'director-profile-pair-unavailable', 'director-profile-verification-error', 'director-profile-candidates-ambiguous',
+  'director-profile-predicted-not-enabled-for-budget', 'director-profile-predicted-projection-unavailable', 'director-profile-predicted-reuse-unavailable',
 ]);
 const bases = new Set(['shared-person-id', 'exact-name-birthdate-role']);
-const stageNames = new Set(['tmdb-person', 'kinobaza-person']);
+const stageNames = new Set(['tmdb-person', 'kinobaza-person', 'kinobaza-person-predicted']);
 const attemptStates = new Set(['reservation-pending', 'reservation-outcome-unknown', 'reservation-denied', 'reserved-deadline-no-dispatch',
   'attempt-reserved', 'dispatched', 'response-received', 'transport-outcome-unknown']);
 const accounting = new Set(['no-extra-attempts', 'reservation-may-have-committed-no-retry', 'reserved-attempts-spent-no-retry']);
 const counts = ['sourceAttempts', 'reservationRequests', 'reservationsAcknowledged', 'tmdbPersonCalls', 'kinobazaPersonCalls'];
+const countLimits = { sourceAttempts: 3, reservationRequests: 3, reservationsAcknowledged: 3, tmdbPersonCalls: 1, kinobazaPersonCalls: 2 };
 const comparisons = ['stableIdConflict', 'stableIdMatch', 'birthdayConflict', 'birthdayMatch', 'latinNameMatch', 'nativeAliasMatch'];
-const count = n => Number.isSafeInteger(n) && n >= 0 && n <= 2 ? n : null;
-const cardCount = n => Number.isSafeInteger(n) && n >= 0 && n <= 3 ? n : null;
+const count = (n, limit) => Number.isSafeInteger(n) && n >= 0 && n <= limit ? n : null;
+const cardCount = n => count(n, 4);
 const selectionBases = new Set(['scoped-film-id', 'selected-year', 'contextual-release-year', 'ambiguous-top-profiles', 'no-eligible-card']);
 
 export function safeDirectorProfileDiagnostic(d) {
@@ -38,11 +40,11 @@ export function safeDirectorProfileDiagnostic(d) {
     basis: bases.has(d?.basis) ? d.basis : null,
     ...(d?.selection ? {selection: {
       eligibleCards: cardCount(d.selection.eligibleCards), unverifiedCards: cardCount(d.selection.unverifiedCards),
-      selectedCards: Array.isArray(d.selection.selectedCards) ? [...new Set(d.selection.selectedCards.filter(n => n === 1 || n === 2 || n === 3))].slice(0,3) : [],
+      selectedCards: Array.isArray(d.selection.selectedCards) ? [...new Set(d.selection.selectedCards.filter(n => n === 1 || n === 2 || n === 3 || n === 4))].slice(0,4) : [],
       basis: selectionBases.has(d.selection.basis) ? d.selection.basis : 'unknown',
     }} : {}),
-    ...Object.fromEntries(counts.map(key => [key, count(d?.[key])])),
-    attempts: (Array.isArray(d?.attempts) ? d.attempts : []).slice(0, 2).map(a => ({
+    ...Object.fromEntries(counts.map(key => [key, count(d?.[key], countLimits[key])])),
+    attempts: (Array.isArray(d?.attempts) ? d.attempts : []).slice(0, 3).map(a => ({
       stage: stageNames.has(a?.stage) ? a.stage : 'unknown', status: attemptStates.has(a?.status) ? a.status : 'unknown',
       httpStatus: Number.isInteger(a?.httpStatus) && a.httpStatus >= 100 && a.httpStatus <= 599 ? a.httpStatus : null,
     })),

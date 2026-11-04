@@ -1,4 +1,4 @@
-import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../shared/media-advice-diagnostics.mjs';
+import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, safePredictedDiagnostic, resolverStatuses } from '../shared/media-advice-diagnostics.mjs';
 import { groupMediaRows, presentMediaGroups } from './media-advice-presentation.mjs';
 import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
 import { safePossibleIrrelevantSearch } from '../shared/media-search-relevance-diagnostic.mjs';
@@ -13,12 +13,15 @@ const comparisonOutcomes = new Set(['non-comparable','possible-discrepancy']);
 const comparisonReasons = new Set(['package-scope-unresolved','version-scope-unresolved','package-differs','version-differs','same-declared-card-offer-scope-unknown','card-pointer-equivalence-unestablished']);
 const blockIssues = new Set(['provider-block-count-limit','ambiguous-provider-block','unsupported-provider-block','block-field-count-limit','conflicting-block-labels','possible-block-conflict-scope-unestablished']);
 const sourceLabels = new Map([['Kinobaza HTML','kinobaza'], ['Movie of the Night','motn'], ['TMDB / JustWatch','tmdb'], ['TMDb / JustWatch','tmdb']]);
-const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2', 'tmdb-person', 'kinobaza-person', 'search-3', 'kinobaza-3'];
+const stages = ['tmdb-find', 'tmdb-details', 'tmdb-providers', 'motn-title', 'search-1', 'search-2', 'kinobaza-1', 'kinobaza-2', 'tmdb-person', 'kinobaza-person', 'search-3', 'kinobaza-3','kinobaza-predicted','kinobaza-person-predicted'];
 const knownReasons = new Set(['source-canonical-conflict','source-stable-id-conflict','source-canonical-ambiguous','malformed-source-stable-id','source-identity-structure-incomplete','source-original-title-unestablished','source-original-title-scope-unestablished','source-title-conflict','source-title-year-missing','selected-year-missing','source-year-conflict-without-stable-crosswalk','source-year-conflict-terminal-roman-title','source-or-selected-director-missing','director-scope-unestablished','director-alias-unestablished','explicit-stable-title-year-match','explicit-stable-and-structural-match','explicit-title-year-director-match','explicit-title-release-year-director-match']);
 const count = n => Number.isSafeInteger(n) && n >= 0 && n < 10000 ? n : 'unknown';
 knownReasons.add('source-year-conflict-ukrainian-g-title');
 knownReasons.add('source-year-conflict-unknown-translation');
 knownReasons.add('explicit-original-year-director-translation-match');
+knownReasons.add('director-known-person-conflict');
+for (const reason of ['semantic-context-unsupported','semantic-mixed-type','semantic-own-id-conflict','semantic-name-source-conflict','semantic-owned-movie-ambiguous',
+  'semantic-sameas-shape','semantic-movie-id-shape','semantic-multiple-ids','semantic-json-duplicate-key']) knownReasons.add(reason);
 const loc = s => ['reported-positive','reported-negative','conflicting'].includes(s) ? s : 'unknown';
 const fieldState = field => fieldStates.has(field?.state) ? field.state : 'unknown';
 function rowSource(row) {
@@ -153,6 +156,7 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
   for (const stage of stages) lines.push(`${stage}: ${count(result?.metrics?.calls?.filter(c => c.stage === stage).length)} reserved.`);
   lines.push(`Kinobaza resolver: ${resolverStatuses.has(result?.resolver?.status) ? result.resolver.status : 'unknown'}.`);
   lines.push(`Kinobaza: search ${count(result?.resolver?.searchCalls)}; card GET ${count(result?.resolver?.cardCalls)}; unexamined ${count(result?.resolver?.unexamined)}.`);
+  if (result?.resolver?.predicted) lines.push(`Predicted original-title card: ${JSON.stringify(safePredictedDiagnostic(result.resolver.predicted))}; candidate pointer only, never identity proof.`);
   if (result?.resolver?.directorProfile) lines.push(`Linked director profile: ${JSON.stringify(safeDirectorProfileDiagnostic(result.resolver.directorProfile))}.`);
   for (const [index, s] of (result?.resolver?.searches ?? []).slice(0,3).entries()) {
     const d = safeSearchDiagnostic(s.status, s);
@@ -160,12 +164,13 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
     lines.push(`Search ${index + 1}: ${d.status}; ${d.outcome}; returned ${d.returned ?? 'unknown'}, admitted ${d.admitted ?? 'unknown'}, rejected ${d.rejected ?? 'unknown'}, duplicates ${d.duplicates ?? 'unknown'}; rejection categories ${JSON.stringify(d.rejectionCategories)}; provider ${provider}.`);
     if (s.mode === 'reserve-exact' && s.exactMatch === true) lines.push(`Reserve search: Tavily exact_match true; depth ${s.searchDepth === 'advanced' ? 'advanced' : 'unknown'}; candidate discovery only, not film identity proof.`);
   }
-  for (const card of result?.resolver?.cards?.slice(0,3) ?? []) {
+  for (const card of result?.resolver?.cards?.slice(0,4) ?? []) {
     const d = safeIdentityDiagnostic(card.diagnostics);
     lines.push(`Card: ${identities.has(card.identity) ? card.identity : 'unresolved'}; reason ${knownReasons.has(card.reason) || card.reason === 'source-identity-structure-limit' ? card.reason : 'unknown'}; gate ${d.failedGate ?? 'none-or-unknown'}.`);
     if (card.reason === 'source-title-conflict') lines.push('Heading is not in known title aliases; not independent proof of a different film.');
     lines.push(`Identity structure ${JSON.stringify(d.counts)}; comparisons ${JSON.stringify(d.comparisons)}.`);
     lines.push(`Identity route ${d.strategy ?? 'unconfirmed'}; years ${JSON.stringify(d.years)}; gates ${JSON.stringify(d.gates)}.`);
+    if (d.movieSameAs) lines.push(`Movie.sameAs: ${JSON.stringify(d.movieSameAs)}; owned source IDs only; datePublished is not the film year.`);
     const e = safeExtractionDiagnostic(card.extractionDiagnostic);
     const ref = typeof card.cardRef === 'string' && /^[a-f0-9]{64}$/.test(card.cardRef) ? card.cardRef : 'unknown';
     lines.push(`Extraction: ${e.status}; candidates ${e.candidateCount ?? 'unknown'}, foreign-context ${e.foreignCandidateCount ?? 'unknown'}, localization blocks ${e.blockCount ?? 'unknown'}, film audio ${e.filmAudioState}; issues ${JSON.stringify(e.issues)}; requested-card SHA256 ${ref}.`);
