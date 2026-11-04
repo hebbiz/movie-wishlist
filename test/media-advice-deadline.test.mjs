@@ -78,3 +78,27 @@ test('Tavily search inherits the handler entry deadline and still leaves one bou
   assert.deepEqual(ops, ['start', 'reserve', 'finish']); assert.equal(searches, 1);
   assert.equal(c.count(), 0);
 });
+
+test('cap14 predicted GET cannot restart the entry deadline after all three search slots', async () => {
+  const c = clock(), ops = [], stages = [], requests = []; let sourceSignal;
+  const client = { auth: { getUser: async () => ({ data: { user: { id: 'authored' } } }) },
+    rpc: async (_, args) => { ops.push(args.p_op); if (args.p_op === 'reserve') stages.push(args.p_stage);
+      return { data: { id: 'authored', cap: 14 } }; } };
+  const resolver = createKinobazaResolver({ apiKey: 'AUTHORED_TAVILY_KEY' });
+  const pending = createMediaAdviceHandler({ client, env: () => '', deadlineOptions: c.options,
+    run: async ({ signal, reserve, fetchImpl, sourceCap }) => resolver({ originalTitle: 'Authored film', year: 2001 },
+      { signal, reserve, fetchImpl, sourceCap, calls: [] }),
+    fetchImpl: async (url, init) => {
+      requests.push(url);
+      if (url === 'https://api.tavily.com/search') return Response.json({ results: [] });
+      assert.equal(url, 'https://kinobazaua.com/titles/authored-film');
+      sourceSignal = init.signal; c.advance(44_000); return new Promise(() => {});
+    },
+  })(request());
+  for (let i = 0; i < 20 && !sourceSignal; i++) await drain();
+  assert.equal(requests.length, 4); assert.equal(c.next(), 1000);
+  c.advance(1000); await drain();
+  assert.equal((await pending).status, 504); assert.equal(sourceSignal.aborted, true);
+  assert.deepEqual(stages, ['search-1', 'search-2', 'search-3', 'kinobaza-predicted']);
+  assert.equal(ops.filter(op => op === 'finish').length, 1); assert.equal(c.count(), 0);
+});

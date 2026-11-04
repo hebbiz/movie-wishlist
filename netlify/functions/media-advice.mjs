@@ -56,13 +56,14 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
         return capabilities.mykola_media_advice ? reply(200, capabilities) : reply(403, { status: 'access-unavailable' });
       }
       // Server protocol capability, never a browser-selected cap or flag. Old
-      // SQL ignores the marker and still returns10; new SQL keeps older callers
-      // without it at10 while negotiating12 only with this compatible handler.
-      session = await rpc('start', { p_stage: 'reserve-exact-v1' });
+      // SQL that rejects an unknown contract fails closed: deploy the prepared
+      // migration first, never retry start with a weaker marker after an error.
+      // Migrated SQL preserves old callers/sessions and negotiates14 only here.
+      session = await rpc('start', { p_stage: 'predicted-card-v1' });
       // The durable server ledger chooses the supported budget. Browser JSON,
       // counters and user metadata never authorize additional source attempts.
       const sourceCap = session.cap === undefined ? 8 : session.cap;
-      if (![8, 10, 12].includes(sourceCap)) throw Error('invalid-source-cap');
+      if (![8, 10, 12, 14].includes(sourceCap)) throw Error('invalid-source-cap');
       const result = await deadline.wait(signal => run({ imdbId: data.imdbId, tmdbToken: env('TMDB_READ_ACCESS_TOKEN'), motnKey: env('MOTN_API_KEY'),
         reserve: stage => rpc('reserve', { p_session: session.id, p_stage: stage }),
         fetchImpl: (url, init = {}) => deadline.wait(s => fetchImpl(url, { ...init, signal: AbortSignal.any([s, init.signal, signal].filter(Boolean)) }), { maxMs: deadline.remaining(), signal: init.signal ?? signal }),

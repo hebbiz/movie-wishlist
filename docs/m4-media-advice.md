@@ -6547,3 +6547,287 @@ desktop, actual iPhone/Safari and live Save are not newly verified here; the
 previous PR's browser results are not substituted. No browser suite was silently
 restarted after that interruption. The705 root and498 executed research tests
 above remain independently completed offline checks.
+
+### Predicted-card reserve and owned Movie.sameAs (2026-11-04)
+
+Implementation base: develop `7a9754d6431426a86ea9c3843a11c97f28210c4c`.
+This section supersedes the earlier **proposal-only** scope for these changes,
+not the historical evidence or earlier run accounting. No shared DB, flag,
+merge or deployment is changed during PR preparation.
+
+#### Search order and refusal boundaries
+
+Both existing Basic requests, candidate admission/ranking and the third
+Advanced exact_match request are unchanged. Their existing card and optional
+director-proof opportunities run first. Only a server-negotiated cap14 session
+may then read one predicted `/titles/…` URL if no card confirmed, the address
+was not already read, and source budget/deadline remain. Prediction uses only
+the trusted original title: decomposed accents, apostrophe removal and ASCII
+word separators. Unsupported non-Latin originals produce no guess. There is
+no alias/year/series-number URL enumeration, no redirect following, no automatic
+retry and no Kinobaza `/search` request. A predicted URL is only a pointer;
+it supplies no identity or language evidence.
+
+Existing transport/access/quota/challenge failures and uncertain reservations
+remain fail-closed, not opportunities to bypass a source restriction. Safe
+HTTP200 markup/identity refusals may proceed to the reserve. A successful old
+route is not replaced or refreshed; a refused already-read URL is not fetched
+again. cap8/10/12 retain their old search/card opportunities and cannot acquire
+the new stages.
+
+#### Main Movie.sameAs authority
+
+Only one bounded root/root-array/immediate-graph Movie is supported. Its own
+URL must equal the opened, uniquely canonical Kinobaza card; its name must
+agree with the source H1 or sole metadata H2. Nested recommendations, Person,
+navigation and unrelated Movies cannot donate film IDs. No remote JSON-LD
+context is fetched. Duplicate JSON keys, competing owned Movies, mixed types,
+conflicting own IDs and malformed authority are not resolved by selecting a
+convenient value. Optional unparseable JSON cannot provide positive proof;
+observed owned-ID conflicts remain refusals.
+
+IMDb IDs compare only to IMDb; TMDb movie IDs only to TMDb movie IDs. The
+Kinobaza URL/slug is not a shared film ID. All observed film-ID conflicts retain
+priority over matching titles, years or director spelling. With a reliable
+shared ID, an exactly known title and equal primary year, the existing strong
+ID route no longer requires identical director spelling. A year difference
+still requires director proof. Terminal Roman glyph, Ukrainian г/ґ and unknown
+translation routes retain their narrower exact-original/primary-year/director
+requirements. Explicit multi-director ambiguity is not erased by the new
+semantic proof, including multiple people linked inside one metadata cell.
+An already proven contradiction for the exact bound director profile also
+cannot be bypassed. A different spelling alone is not that contradiction.
+
+Without reliable semantic IDs the existing title/year/director route remains.
+`datePublished` is retained only as a diagnostic date, never silently used as
+the film year; the visible H1 and trusted TMDb release context keep their roles.
+Extraction, per-service language binding, link policy and UI ranking are not
+changed. A verified film ID is not platform availability or entitlement proof.
+
+#### cap14 and time envelope
+
+| Source opportunity | Maximum HTTP attempts |
+| --- | ---: |
+| TMDb find/details/providers + MOTN | 4 |
+| Existing Basic/Basic/Advanced searches | 3 |
+| Existing discovered-card reads | 3 |
+| Original director person pair | 2 |
+| One unread predicted card | 1 |
+| One further bound Kinobaza director profile, reusing the same valid TMDb person | 1 |
+| Total | 14 |
+
+The extra profile is **not** a second pair. Reuse is invocation-local and bound
+to the fixed trusted TMDb person ID/names; every new Kinobaza pointer must
+independently prove that person. Exact profile/alias repeats reuse their settled
+result, including failure, without another request. A different person's data,
+a failed/missing TMDb projection or an already spent extra profile cannot be
+substituted. Such cases stay unresolved; cap14 does not promise confirmation.
+When the original pair was unused, the predicted card may use it within13
+total attempts. Equal competing profile candidates stay ambiguous.
+
+No user search quota is introduced. Three searches still cost at most4 nominal
+Tavily credits (Basic1 + Basic1 + Advanced2); the predicted/profile GETs add no
+Tavily credits. Actual billed usage is not inferred from that nominal rate.
+Source work still stops45 seconds from handler entry (including Auth/SQL time),
+finish stops at53 seconds and response/platform headroom remains. Individual
+timeouts do not stack into a larger invocation allowance. Thus a slow old path
+may leave no time for the reserve, even with unused HTTP slots. No Netlify limit
+or runtime timeout is raised. Current official references: [Tavily credit
+costs](https://docs.tavily.com/documentation/api-credits) and [Netlify function
+configuration](https://docs.netlify.com/build/functions/configuration/).
+
+#### Evidence and remaining control gaps
+
+The saved36-film study has SHA256
+`ed86b24af7a21f969b065272b5c7158bc8bb0a74aa117e9d95c33f526faf17a8`.
+It is a prior current-source observation, not an archive of the owner's
+historical runs. Its admitted Tavily pointers are available; full responses,
+HTML and person/API bodies were not retained. The later77-GET prototype study
+therefore cannot supply missing raw bytes. In particular, Dune's first GET
+returned200 but the local summarizer failed before producing its result;
+the saved digest cannot repair that lost HTML. Existing normalized earlier
+Dune extraction can be cited as earlier evidence only. Kong's short projection
+omits the person data needed to establish its current linked director proof.
+
+`scripts/m4-predicted-controls.mjs` supplies an explicit one-pass completion
+control: fresh trusted TMDb metadata/current HTML and bound profiles, comparing
+the fixed old cap12 resolver with cap14 on the same RAM-held source bytes.
+Previously admitted Tavily pointers replay only when the actual query and
+mode match; unknown traces are **unknown**, not fabricated empty results.
+This is not a fresh Tavily-recall or historical-response reconstruction. It
+does not call paid search, platforms, Wishlist or the shared ledger. Its
+logical stage counts and local RAM-replay timing are not live server budget
+or production latency attestation. Credentials and raw source bodies are not
+persisted; an owner-only sanitized report records actual HTTP separately.
+
+Protected diagnostics show the predicted outcome, fourth-card gate results
+and bounded sameAs authority/date status. Generated-card mismatches do not
+accuse Tavily of unrelated results, and any confirmed card suppresses the
+speculative search warning. Ordinary Beta responses still receive none of
+these privileged fields. Preview → explicit apply → ordinary Save, retained
+dialog isolation and Beta/group/edit authorization remain unchanged.
+
+#### Completed current-source / frozen-search comparison
+
+The owner completed the one-shot control on2026-11-04,21:04:08–21:05:11UTC,
+reviewed core SHA `88d71c8537014ff5c624cf1ff7d93e6115eede6d`.
+Sanitized report SHA256:
+`4b52cb10684c31395e24a506ddfd089f87b7f3763eff93c47430c2141eb20706`.
+All36 metadata controls finished;35 have complete query-matched frozen-search
+comparisons. On those current source bytes the old route confirms31 films,
+the new route34. All31 previous projection objects (rows/groups/link
+descriptors) are identical;0 lost confirmations and0 observed wrong matches.
+This finite sample is not independent proof of zero false-positive risk.
+
+New confirmations: **Parasite** and **All We Imagine as Light** through owned
+Movie.sameAs, and **Renfield** through the post-Tavily predicted card, then the
+same ID/title/year gates. Parasite yields one Apple record with unknown tracks;
+All We Imagine as Light confirms identity but has0 mapped records. Neither is
+misreported as a new streaming offer. Renfield yields4 records: Rakuten,
+Netflix and MEGOGO each show incomplete availability◐ and reported Ukrainian
+audio+/subtitles+, with policy-admitted links. No platform was opened.
+
+Dune's current gap is now closed **by a new response**, not by reconstructing
+the lost body: both routes confirm `/titles/dune-part-two`, produce5 rows and
+the same Apple+/−, Rakuten+/+, MEGOGO+/+ groups. The new route also observes
+owned IMDb/TMDb IDs. Kong now has fresh full trusted metadata and both bound
+person responses: exact Latin name/full birthdate/director role confirms the
+same person. Its г/ґ route still requires that proof even with matching film
+IDs; Apple+/−, Rakuten+/− and MEGOGO+/? survive. Slevin retains MEGOGO+/+;
+the new strong-ID route needs no person pair for it.
+
+**Unresolved/unknown:** The Fall's selected2008 versus source2006 still needs
+director proof; the current person comparison has a birthdate conflict and
+remains unresolved despite matching film IDs. Its predicted URL was already
+read and is not retried. Coherence's fresh TMDb primary year2014 and contextual
+premiere2013 are recorded, but no matching old Tavily pointer observation
+exists: both route comparisons are explicitly incomplete. No empty search or
+new confirmation is invented for that gap.
+
+The new route's76 read-card observations comprise34 matched,38 mismatched
+(film-ID conflicts), and4 unresolved (one director gate, three markup cases).
+Wrong franchise/homonym candidates remain withheld. The Thing1982/2011,
+Girl with the Dragon Tattoo2009/2011 and all three Fockers-series films keep
+their distinct cards. The possible ambiguous/wrong predicted slugs for
+Mortal Kombat, Oppenheimer, Supergirl and Roman-II titles are additionally
+covered by authored refusal tests; live successful old routes correctly skip
+prediction rather than probing them unnecessarily.
+
+| Film (requested year) | Current old → new confirmation | New language groups: audio/subtitles | New HTTP in shared control |
+| --- | --- | --- | ---: |
+| Coherence (2013) | unknown → unknown | comparison gap | 2 |
+| Dune: Part Two (2024) | yes → yes | Apple+/−; Rakuten+/+; MEGOGO+/+; HBO?/? | 4 |
+| Blade Runner (1982) | yes → yes | MEGOGO+/+; Apple?/+ | 4 |
+| Kingdom of Heaven (2005) | yes → yes | Apple?/? | 5 |
+| The Thing (1982) | yes → yes | MEGOGO+/+; Apple?/? | 4 |
+| The Thing (2011) | yes → yes | Apple?/? | 5 |
+| Parasite (2019) | no → yes | Apple?/? | 6 |
+| The Lives of Others (2006) | yes → yes | no mapped rows | 4 |
+| The Girl with the Dragon Tattoo (2009) | yes → yes | no mapped rows | 7 |
+| The Girl with the Dragon Tattoo (2011) | yes → yes | Apple+/−; Rakuten+/−; MEGOGO+/?; Netflix?/+ | 3 |
+| Perfect Days (2023) | yes → yes | MEGOGO+/? | 4 |
+| The Man from Earth (2007) | yes → yes | no mapped rows | 5 |
+| The Fall (2008) | no → no | director birthdate conflict | 7 |
+| Anatomy of a Fall (2023) | yes → yes | MEGOGO+/? | 4 |
+| All We Imagine as Light (2024) | no → yes | no mapped rows | 6 |
+| Blade Runner 2049 (2017) | yes → yes | Apple+/+; Rakuten+/+; MEGOGO+/?; Netflix?/+ | 4 |
+| Mortal Kombat (2021) | yes → yes | Apple+/+; MEGOGO+/+; Rakuten?/+ | 4 |
+| Alien (1979) | yes → yes | MEGOGO+/+; Apple?/+; Rakuten?/+ | 4 |
+| Oppenheimer (2023) | yes → yes | Rakuten+/+; MEGOGO+/+; Netflix?/+ | 4 |
+| Supergirl (2026) | yes → yes | Rakuten+/+; MEGOGO+/?; HBO?/? | 4 |
+| Mad Max: Fury Road (2015) | yes → yes | Apple+/−; Rakuten+/−; MEGOGO+/?; HBO?/? | 4 |
+| Goodfellas (1990) | yes → yes | MEGOGO+/?; Apple?/+; Rakuten?/+; HBO?/? | 4 |
+| The Pursuit of Happyness (2006) | yes → yes | MEGOGO+/+; Netflix?/+; Apple?/? | 3 |
+| The Prestige (2006) | yes → yes | MEGOGO+/?; Apple?/+; Rakuten?/+ | 4 |
+| A Separation (2011) | yes → yes | no mapped rows | 6 |
+| The Handmaiden (2016) | yes → yes | Apple?/? | 6 |
+| Amélie (2001) | yes → yes | Apple?/? | 4 |
+| Klaus (2019) | yes → yes | Netflix+/+ | 4 |
+| Gladiator II (2024) | yes → yes | Apple+/+; Rakuten+/+; Netflix?/+ | 4 |
+| Kong: Skull Island (2017) | yes → yes | Apple+/−; Rakuten+/−; MEGOGO+/?; HBO?/? | 6 |
+| Crimson Peak (2015) | yes → yes | MEGOGO+/+; Apple?/+; Rakuten?/+; Netflix?/+ | 4 |
+| Meet the Fockers (2004) | yes → yes | MEGOGO+/+; Rakuten?/+; Netflix?/+; Apple?/? | 4 |
+| Lucky Number Slevin (2006) | yes → yes | MEGOGO+/+; Apple?/? | 6 |
+| Renfield (2023) | no → yes | Rakuten+/+; Netflix+/+; MEGOGO+/+ | 6 |
+| Meet the Parents (2000) | yes → yes | MEGOGO+/+; Rakuten?/+; Netflix?/+; Apple?/? | 3 |
+| Little Fockers (2010) | yes → yes | Rakuten+/+; MEGOGO+/+; Netflix?/+; Apple?/? | 2 |
+
+These language symbols are source claims under the existing UA application
+rule, not independent availability/track/entitlement validation. `?` is not
+absence. No mapped row is not proof that no platform offer exists.
+
+Actual new external source requests: **160 GET, all200** =72 TMDb movie +70
+Kinobaza card +9 TMDb person +9 Kinobaza person. Maximum actual requests per
+film7;85 RAM response reuses incur no HTTP. No shared-address digest differs
+between routes. Tavily Basic0/Advanced0 requests,0 new credits; no `/search`,
+platform, Wishlist or shared-DB requests. Metadata/person/card requests from
+earlier research are **not** included in these new160.
+
+The physical series took63.029s, across36 independent cases. HTTP wire sums:
+TMDb11.732s, cards18.176s, TMDb persons1.444s, Kinobaza persons2.879s. Local
+route execution sums33.365s before and15.465s after include parsing/cache
+misses; they are **not independent latency benchmarks**. Frozen search stages
+were48 Basic/7 Advanced before,43 Basic/5 Advanced after, including one unknown
+Basic query in each; these are logical replays, not new calls, credits or current
+Tavily timing. The largest live-control logical budget was12; the full14-attempt
+case and exhausted/missing-projection cases are authored tests, not live-ledger
+attestations. A mid-case process crash can leave persisted counts incomplete;
+the one-shot fence then requires checking existing state, not automatic rerun.
+
+#### Migration/release order (prepared only)
+
+CLI-generated migration: `20261104210025_media_advice_predicted_card_budget.sql`.
+The new RPC accepts `predicted-card-v1 →14`, the old `reserve-exact-v1 →12`,
+and an omitted marker→10. Existing8/10/12 rows and the pilot default8 do not
+change. New stages are14-only; no second TMDb-person stage exists. Access
+checks, short advisory/row locks, private ACL and service-role-only execution
+are preserved. Preparation followed the Supabase least-privilege/short-
+transaction guidance; no source I/O is inside a database transaction.
+
+Before a separately authorized application: verify exact PR SHA/SQL hash,
+target project, actual migration history (predecessor20261102181617 once and
+new version absent), unfinished sessions and a fresh readable local recovery
+of M4 definitions/schema/ledger/config/permissions. Use an isolated workdir
+with **only this migration**, not general `db push` or history repair. Do not
+publish user IDs, recovery contents or keys.
+
+Apply migration **before** deploying the new handler: cap12 SQL rejects the
+new marker, and the handler deliberately does not retry/downgrade `start`.
+Postcheck one history version, unchanged old session caps/attempts, default8,
+all three new/old negotiation contracts,14-only unique stages, revoked user
+access, denied anon/authenticated RPC, unchanged private ACL/flags/diagnostic
+assignments/cards/pilot RPC. Any lost apply response requires inspecting actual
+history/schema/rows before considering another action.
+
+Rollback application first to the old reserve-exact handler, which remains
+compatible and receives12. Retain the widened constraint/RPC until every14
+session has finished/expired; never clamp a cap, erase attempts or repair
+history. A later SQL rollback needs separate reviewed predecessor definitions
+and recovery/state checks. This PR does **not** apply, merge, activate or deploy.
+
+#### Executed verification
+
+- Root M4 run:811 tests,804 passed,0 failed,7 opt-in skips; isolated HTML/research
+  run:498 executed passed,0 failed,13 opt-in skips. The new one-shot control
+  helper's11 tests use authored responses and no network.
+- Separate existing native PostgreSQL17 suites:31/31; new cap14 native suite:
+  11/11, including concurrent unique-stage allocation and queued region,
+  global-switch, membership and card revocation. New PGlite migration tests3/3.
+  All use authored loopback/in-memory schemas, not a shared project or history
+  attestation.
+- Source-free Edge dialog/session/pending suites:35/35, including desktop,
+  iPhone X/Air-sized and tablet viewports, one discovery, retained reopen,
+  diagnostic revocation, explicit preview/apply and regular-save workflow.
+  This is not a new physical iPhone/Safari test or live Wishlist write.
+- Authored negatives cover wrong/shared namespaces and film IDs, competing
+  Movies, duplicate/escaped JSON keys, nested/recommended entities, invalid or
+  missing dates, title/year/director contradictions, same-name people, multiple
+  linked directors, ambiguous candidates, unsafe/redirected/duplicate URLs,
+  withheld languages and source/time/reservation failures. Independent review
+  found a same-cell multi-director bypass and generated-pointer diagnostic
+  causality error; both were fixed and regression-tested before the control.
+- An initial broad run had one outdated three/four-card diagnostic fixture;
+  search-only observation retains its original three-card bound and the later
+  full run above passes. The first deadline test needed bounded microtask
+  draining before asserting a dispatched predicted GET; product deadlines were
+  not relaxed. No failure was hidden by a source retry.
