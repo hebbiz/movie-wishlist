@@ -24,6 +24,30 @@ const excluded = n => { for (let p = n; p; p = p.parentNode) if (['nav', 'aside'
 const year = n => Number.isInteger(n) && n >= 1000 && n <= 9999 ? n : null;
 const selectedIDs = film => ({ tmdb: /^[1-9]\d{0,9}$/.test(String(film.tmdbId ?? '')) ? String(film.tmdbId) : null,
   imdb: /^tt\d{1,20}$/.test(film.imdbId ?? '') ? film.imdbId : null });
+const directorLabel = value => value === 'Режисер:' || value === 'Режисери:';
+
+// Structure only, NOT a person/group identity proof. One bounded credits field
+// can legitimately contain several explicitly linked people. Opaque combined
+// text, foreign/catalogue URLs or extra unscoped text cannot establish that
+// structure. No profile is fetched and names are never split or transliterated.
+function directorFieldPeople(field) {
+  const pointers = []; let visited = 0;
+  const visit = node => {
+    if (++visited > 256) return false;
+    if (node.nodeName === '#text') return /^[\s,;/&]*$/u.test(node.value);
+    if (node.nodeName === '#comment' || node.tagName === 'br') return true;
+    if (node.tagName === 'a') {
+      const href = attr(node, 'href'), name = text(node);
+      const url = typeof href === 'string' && /^\/persons\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(href) ? 'https://kinobazaua.com' + href : href;
+      if (typeof url !== 'string' || url.length > 512 || !/^https:\/\/kinobazaua\.com\/persons\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+          !name || name.length > 500 || /[\p{C}<>]/u.test(name) || pointers.length >= 32) return false;
+      pointers.push({ sourceURL: url, sourceAlias: name }); return true;
+    }
+    return ['span','strong','b','em','i','small'].includes(node.tagName) && (node.childNodes ?? []).every(visit);
+  };
+  if (!(field.childNodes ?? []).every(visit) || !pointers.length || new Set(pointers.map(p => p.sourceURL)).size !== pointers.length) return null;
+  return pointers;
+}
 
 // A visibly localized heading can be unestablished without contradicting an
 // exact original title. This is only permission to check year/person evidence,
@@ -127,7 +151,8 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   // Typed semantic records retain their source/scope; never fabricate labelled
   // rows or allow IDs from another graph object to enter the film contract.
   const directors = new Set(), stable = [...semantic.records];
-  let directorFields = 0, ambiguousDirectorField = false;
+  let directorFields = 0, ambiguousDirectorField = false, opaqueDirectorGroup = false;
+  const directorPointers = [];
   // The existing DOM ID route reads labelled film-metadata rows only, never
   // arbitrary recommendations/trailers. Semantic IDs above have their own scope.
   let identityRows = 0;
@@ -135,16 +160,20 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
     const cells = (row.childNodes ?? []).filter(n => ['td', 'th'].includes(n.tagName));
     if (cells.length !== 2) continue;
     const label = text(cells[0]);
-    if (label === 'Режисер:' && !inMetadataTable(row)) continue;
-    if (['Режисер:', 'IMDb:', 'TMDb:'].includes(label) && ++identityRows > 32) return outcome('unresolved', 'source-identity-structure-limit');
-    if (label === 'Режисер:' && text(cells[1])) {
-      directorFields++; directors.add(text(cells[1]));
+    if (directorLabel(label) && !inMetadataTable(row)) continue;
+    if ((directorLabel(label) || ['IMDb:', 'TMDb:'].includes(label)) && ++identityRows > 32) return outcome('unresolved', 'source-identity-structure-limit');
+    if (directorLabel(label) && text(cells[1])) {
+      directorFields++;
+      const people = directorFieldPeople(cells[1]);
+      if (people) { directorPointers.push(...people); for (const pointer of people) directors.add(pointer.sourceAlias); }
+      else directors.add(text(cells[1]));
       const stack = [cells[1]]; let anchors = 0;
       while (stack.length) {
         const node = stack.pop(); if (node.tagName === 'a') anchors++;
         if (!['script', 'style', 'template', 'noscript', 'iframe'].includes(node.tagName)) stack.push(...node.childNodes ?? []);
       }
-      if (anchors > 1) ambiguousDirectorField = true;
+      if (!people && anchors > 1) ambiguousDirectorField = true;
+      if (!people && (label === 'Режисери:' || /[,;/&]/u.test(text(cells[1])))) opaqueDirectorGroup = true;
     }
     if (['IMDb:', 'TMDb:'].includes(label)) {
       // A convenient ID in recommendations or another body table is not film
@@ -171,15 +200,17 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   }
   // Inline labels must be inside the same film metadata interval too. A later
   // dubbing-credit director is not a second director of the film.
-  for (const n of active) if (inMetadata(n) && ((n.nodeName === '#text' && text({ childNodes: [n] }) === 'Режисер:') || (['span', 'strong', 'b'].includes(n.tagName) && text(n) === 'Режисер:'))) {
+  for (const n of active) if (inMetadata(n) && ((n.nodeName === '#text' && directorLabel(text({ childNodes: [n] }))) || (['span', 'strong', 'b'].includes(n.tagName) && directorLabel(text(n))))) {
     const siblings = n.parentNode?.childNodes ?? [], next = siblings.slice(siblings.indexOf(n) + 1).find(c => c.tagName || c.nodeName === '#text' && c.value.trim());
     let table = n.parentNode; while (table && table.tagName !== 'table') table = table.parentNode;
     if (next?.tagName === 'a' && inMetadata(next) && inMetadata(n.parentNode) && (!table || inMetadata(table))) {
+      if (++identityRows > 32) return outcome('unresolved', 'source-identity-structure-limit');
       directorFields++;
       // Do not silently select the first person in a labelled inline field.
       // Keep every following name/unknown value until its explicit line break;
       // extra directors or unscoped trailing text keep the identity unresolved.
-      const field = siblings.slice(siblings.indexOf(next));
+      const rest = siblings.slice(siblings.indexOf(next)), end = rest.findIndex(value => value.tagName === 'br');
+      const field = end < 0 ? rest : rest.slice(0, end);
       let anchors = 0;
       for (const value of field) {
         if (value.tagName === 'br') break;
@@ -188,7 +219,9 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
         const name = value.nodeName === '#text' ? value.value.replace(/\s+/gu, ' ').trim() : text(value);
         if (name && !/^[,;/&]+$/u.test(name)) directors.add(name);
       }
-      if (anchors > 1) ambiguousDirectorField = true;
+      const people = directorFieldPeople({ childNodes: field });
+      if (people) directorPointers.push(...people);
+      else if (anchors > 1 || field.map(value => value.nodeName === '#text' ? value.value : text(value)).join(' ').trim() !== text(next)) ambiguousDirectorField = true;
     }
   }
   directors.delete('');
@@ -233,20 +266,22 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   // explicit ID/title/year conflicts retain their existing mismatch priority.
   if (semantic.status === 'ambiguous') return outcome('unresolved',
     ['semantic-sameas-shape', 'semantic-movie-id-shape'].includes(semantic.reason) ? 'malformed-source-stable-id' : 'source-identity-structure-incomplete');
-  // Unlike a spelling difference, a proven multi-director scope is explicit
-  // ambiguity. New JSON-LD proof must not silently erase it. The historical
-  // labelled-ID contract is left unchanged.
+  // Multiple credited people are not multiple competing film identities. Keep
+  // genuine field ambiguity blocked, but let the existing strong exact
+  // ID/title/year route ignore director cardinality, as it ignores spelling.
+  // No-ID, differing-year and weaker-title routes still need the unchanged
+  // single-person proof below. The labelled-ID contract is left unchanged.
   const semanticMatch = stable.some(s => s.provenance === 'jsonld-owned-movie-sameas' && s.filmScope && expected[s.namespace] && s.id === expected[s.namespace]);
   const labelledMatch = stable.some(s => s.provenance !== 'jsonld-owned-movie-sameas' && s.filmScope && expected[s.namespace] && s.id === expected[s.namespace]);
-  if (semanticMatch && !labelledMatch && (directors.size > 1 || directorFields > 1 || ambiguousDirectorField ||
-      film.directorCount > 1 || Array.isArray(film.directorPeople) && film.directorPeople.length > 1)) return outcome('unresolved', 'director-scope-unestablished');
+  if (semanticMatch && !labelledMatch && (directorFields > 1 || ambiguousDirectorField ||
+      headingMatch === 'exact' && Number(heading[2]) === film.year && opaqueDirectorGroup)) return outcome('unresolved', 'director-scope-unestablished');
   // Only a trusted server verifier can remember a *proven* person-ID/birthday
   // conflict. Its exact person/profile/alias key is checked without I/O; mere
   // spelling differences, parse errors and prior failures are not conflicts.
   if (semanticMatch && headingMatch === 'exact' && Number(heading[2]) === film.year && typeof directorConflictLookup === 'function') {
-    const pointer = linkedDirectorProfile(all);
+    const pointers = directorPointers.length ? directorPointers : [linkedDirectorProfile(all)].filter(Boolean);
     let knownConflict = false;
-    if (pointer) { try { knownConflict = directorConflictLookup(pointer) === true; } catch {} }
+    for (const pointer of pointers) { try { if (directorConflictLookup(pointer) === true) knownConflict = true; } catch {} }
     if (knownConflict) return outcome('unresolved', 'director-known-person-conflict');
   }
   // Explicit same-system film ID plus independently matching title/year is a
@@ -258,7 +293,7 @@ export function assistedIdentity(all, film, sourceURL, { onIdentityDiagnostic, d
   // Flat aliases do not establish a multi-person group. Do not split source
   // formatting or guess membership/completeness. Count comes from the already
   // selected director records, never from aliases, script or browser input.
-  if (film.directorCount !== 1 || directors.size !== 1 || directorFields !== 1 || ambiguousDirectorField || film.directorPeople !== undefined &&
+  if (film.directorCount !== 1 || directors.size !== 1 || directorFields !== 1 || directorPointers.length > 1 || ambiguousDirectorField || film.directorPeople !== undefined &&
       (!Array.isArray(film.directorPeople) || film.directorPeople.length > 1)) return outcome('unresolved', 'director-scope-unestablished');
   // Without a shared film ID, or with a differing year, director proof is still
   // required. A spelling difference is unresolved, not person-conflict evidence.
