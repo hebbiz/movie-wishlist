@@ -25,11 +25,13 @@ export function discoveryScenario(film, { discovery, amazonRegion, urlSource, ki
 
 const providers = {
   apple: { name: 'Apple TV Store', medium: 'Apple TV / iTunes' }, rakuten: { name: 'Rakuten TV', medium: 'Rakuten TV' },
+  appletvplus: { name: 'Apple TV+', medium: 'Apple TV / iTunes' },
   hbo: { name: 'HBO Max', medium: 'HBO Max' }, netflix: { name: 'Netflix', medium: 'Netflix' },
   prime: { name: 'Prime Video', medium: 'Prime Video' }, megogo: { name: 'MEGOGO', medium: 'Megogo' },
 };
 const aliases = new Map([
   ['apple tv store', 'apple'], ['itunes', 'apple'], ['apple tv / itunes', 'apple'],
+  ['apple tv+', 'appletvplus'], ['apple tv plus', 'appletvplus'],
   ['rakuten tv', 'rakuten'], ['rakuten', 'rakuten'], ['hbo max', 'hbo'], ['netflix', 'netflix'],
   ['prime video', 'prime'], ['amazon prime video', 'prime'], ['amazon prime', 'prime'], ['megogo', 'megogo'],
 ]);
@@ -51,23 +53,28 @@ export function tmdbShapeDiagnostics(details) {
 }
 export function mapProvider(source, id, name, access) {
   let key = typeof name === 'string' ? aliases.get(name.trim().toLowerCase()) : undefined;
-  // The exact Apple TV label is ambiguous on its own; only the known store ID
-  // or apple rent/buy context makes this alias a Store, never a subscription.
-  if (typeof name === 'string' && name.trim().toLowerCase() === 'apple tv' &&
-      (source === 'tmdb' && id === 2 || source === 'motn' && id === 'apple' && ['rent', 'buy'].includes(access))) key = 'apple';
-  if (!key) return null;
-  if (source === 'tmdb' && (id === 2 && key !== 'apple' || key === 'apple' && id !== 2)) return null;
-  if (source === 'motn') {
-    const ids = { apple: 'apple', prime: 'prime', netflix: 'netflix' };
-    if (ids[key] !== id || key === 'apple' && !['rent', 'buy'].includes(access)) return null;
+  // Apple TV is a shared brand, not an offer identity. Disambiguate only by
+  // explicit source provider ID/access, never by a link's host or parameters.
+  if (typeof name === 'string' && name.trim().toLowerCase() === 'apple tv') {
+    if (source === 'tmdb' && id === 2 || source === 'motn' && id === 'apple' && ['rent', 'buy'].includes(access)) key = 'apple';
+    if (access === 'subscription' && (source === 'tmdb' && id === 350 || source === 'motn' && id === 'apple' || source === 'kinobaza')) key = 'appletvplus';
   }
+  if (!key) return null;
+  if (source === 'tmdb' && (id === 2 && key !== 'apple' || key === 'apple' && (id !== 2 || access === 'subscription') ||
+      id === 350 && key !== 'appletvplus' || key === 'appletvplus' && (id !== 350 || access !== 'subscription'))) return null;
+  if (source === 'motn') {
+    const ids = { apple: 'apple', appletvplus: 'apple', prime: 'prime', netflix: 'netflix' };
+    if (ids[key] !== id || key === 'apple' && !['rent', 'buy'].includes(access) || key === 'appletvplus' && access !== 'subscription') return null;
+  }
+  if (source === 'kinobaza' && key === 'appletvplus' && access !== undefined && access !== 'subscription') return null;
+  if (source === 'kinobaza' && key === 'apple' && access === 'subscription') return null;
   return { key, ...providers[key], sourceId: id === undefined ? null : `${source}:provider:${id}`, sourceName: name };
 }
 
 // Compare only explicit source IDs and recognized canonical labels. This is not
 // an offer join: compatible aliases/access buckets stay distinct observations.
 export function conflictingProviderIds(claims) {
-  const platforms = new Map();
+  const platforms = new Map(), observations = new Map();
   for (const { source, id, name, access } of claims) {
     if (!(Number.isSafeInteger(id) && id > 0 || typeof id === 'string' && id.length > 0)) continue;
     const key = typeof name === 'string' ? aliases.get(name.trim().toLowerCase()) ?? mapProvider(source, id, name, access)?.key : undefined;
@@ -75,8 +82,18 @@ export function conflictingProviderIds(claims) {
     const sourceId = `${source}:provider:${id}`;
     if (!platforms.has(sourceId)) platforms.set(sourceId, new Set());
     platforms.get(sourceId).add(key);
+    if (!observations.has(sourceId)) observations.set(sourceId, []);
+    observations.get(sourceId).push({ source, id, name, access });
   }
-  return new Map([...platforms].filter(([, keys]) => keys.size > 1).map(([id, keys]) => [id, [...keys]]));
+  return new Map([...platforms].filter(([id, keys]) => {
+    if (keys.size < 2) return false;
+    // MOTN legitimately reuses service ID apple for rent/buy and subscription.
+    // Exempt only fully consistent, independently mapped observations. A Store
+    // subscription or another platform with that same ID remains a conflict.
+    const distinctAppleProducts = id === 'motn:provider:apple' && keys.size === 2 && keys.has('apple') && keys.has('appletvplus') &&
+      observations.get(id).every(c => ['apple', 'appletvplus'].includes(mapProvider(c.source, c.id, c.name, c.access)?.key));
+    return !distinctAppleProducts;
+  }).map(([id, keys]) => [id, [...keys]]));
 }
 
 import { classifyLink } from '../../shared/media-link-policy.mjs';
@@ -118,8 +135,9 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
           provenance: { source: 'TMDB / JustWatch', upstream: 'JustWatch', method: 'API results.UA', country: 'UA', sourceURL: tmdbURL(), receivedAt: tmdb.providers.receivedAt } });
         continue; // No canonical platform/access/availability row or draft medium.
       }
-      const provider = mapProvider('tmdb', val(p.id), val(p.name));
-      if (!provider) { unmapped.push({ source: 'tmdb', id: val(p.id) ?? null, name: val(p.name) ?? null, access: b.access, reason: 'provider-mapping-unresolved' }); continue; }
+      const provider = mapProvider('tmdb', val(p.id), val(p.name), b.access);
+      if (!provider) { unmapped.push({ source: 'tmdb', id: val(p.id) ?? null, name: val(p.name) ?? null, access: b.access,
+        observation: p, sourceBucket: b.name, reason: 'provider-mapping-unresolved' }); continue; }
       const r = rowBase('tmdb', film, provider, rows.length, { source: 'TMDB / JustWatch', upstream: 'JustWatch', method: 'API results.UA',
         sourceURL: tmdbURL(), receivedAt: tmdb.providers.receivedAt, observationTime: null });
       r.access = { state: 'reported', value: b.access, sourceBucket: b.name };
@@ -136,7 +154,8 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
       continue;
     }
     const provider = mapProvider('motn', val(o.service.id), val(o.service.name), val(o.access));
-    if (!provider) { unmapped.push({ source: 'motn', id: val(o.service.id) ?? null, name: val(o.service.name) ?? null, access: o.access, reason: 'provider-mapping-unresolved' }); continue; }
+    if (!provider) { unmapped.push({ source: 'motn', id: val(o.service.id) ?? null, name: val(o.service.name) ?? null, access: o.access,
+      observation: o, reason: 'provider-mapping-unresolved' }); continue; }
     const r = rowBase('motn', film, provider, i, { source: 'Movie of the Night', upstream: 'not-established', method: 'API streamingOptions.ua',
       sourceURL: motnURL(), receivedAt: motn.receivedAt, observationTime: null });
     r.access = { ...o.access }; r.package = { ...o.addon }; r.audio = o.ukrainianAudio; r.subtitles = o.ukrainianSubtitles;
@@ -145,14 +164,16 @@ export function composeDiscovery(film, stages, { synthetic = false, metrics = {}
   }
   if (kino?.identity?.status === 'matched') for (const [i, c] of (kino.candidates ?? []).entries()) {
     if (c.territory && c.territory.code !== 'UA') continue;
-    const provider = mapProvider('kinobaza', undefined, c.provider);
-    if (!provider) { unmapped.push({ source: 'kinobaza', name: c.provider, territory: c.territory, extractionIssue: c.issue ?? null, reason: 'provider-mapping-unresolved' }); continue; }
+    const provider = mapProvider('kinobaza', undefined, c.provider, c.access?.state === 'invalid' ? 'unsupported' : c.access?.value);
+    if (!provider) { unmapped.push({ source: 'kinobaza', name: c.provider, territory: c.territory, observation: c,
+      extractionIssue: c.issue ?? null, reason: 'provider-mapping-unresolved' }); continue; }
     const r = rowBase('kinobaza', film, provider, i, { source: 'Kinobaza HTML', upstream: c.territory ? 'JustWatch section (shared with TMDb)' : 'not-established',
       method: 'initial HTML href / source block', sourceURL: kino.sourceURL ?? htmlScenario(film, { discovery: 'digital-ua' }).sourceURL, receivedAt: kino.receivedAt ?? stages.kinobaza.receivedAt,
       receiptBasis: 'Local source-operation completion, not provider update time', observationTime: null });
     r.kind = 'candidate-link'; r.country = c.territory?.code ?? null;
     r.territoryBasis = c.territory ? 'Explicit Ukrainian section; not entitlement' : 'Outside territory section';
     r.availability = unknown('Link presence does not establish availability');
+    if (c.access?.state === 'reported') r.access = { ...c.access };
     r.countrySignal = (kino.availabilitySignals ?? []).find(s => s.href === c.href && s.provider === c.provider && s.territory.code === c.territory?.code) ?? null;
     // Only a parser-issued block ID associates this source claim with this
     // candidate. No provider-name join to MOTN or to a country-section row.

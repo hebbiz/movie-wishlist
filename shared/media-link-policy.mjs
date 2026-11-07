@@ -18,6 +18,7 @@ export function classifyLink(href, provider) {
   const megogoIdCard = ['megogo.net', 'www.megogo.net'].includes(host) && /^\/ua\/view\/\d+$/.test(u.pathname);
   const exact = {
     apple: host === 'tv.apple.com' && /^\/[a-z]{2}\/movie\/[^/]+\/umc\.cmc\.[a-z0-9]+$/i.test(u.pathname) || itunesCard,
+    appletvplus: host === 'tv.apple.com' && /^\/[a-z]{2}\/movie\/[^/]+\/umc\.cmc\.[a-z0-9]+$/i.test(u.pathname),
     prime: ['primevideo.com', 'www.primevideo.com'].includes(host) && /^\/(?:[^/]+\/)?detail\/[a-z0-9]+\/?$/i.test(u.pathname) || primeReferral,
     netflix: ['netflix.com', 'www.netflix.com'].includes(host) && /^\/(?:[a-z]{2}\/)?title\/\d+\/?$/i.test(u.pathname),
     rakuten: ['rakuten.tv', 'www.rakuten.tv'].includes(host) && /^\/ua\/movies\/[^/]+\/?$/i.test(u.pathname),
@@ -26,7 +27,7 @@ export function classifyLink(href, provider) {
   if (!Object.hasOwn(exact, provider?.key) || !exact[provider.key]) return result;
   // Presence of exact decoded key "at" is conservative even when empty/repeated.
   // The original query stays untouched; no extra markers/hosts/routes inferred.
-  const referral = primeReferral || provider.key === 'apple' && u.searchParams.has('at');
+  const referral = primeReferral || ['apple', 'appletvplus'].includes(provider.key) && u.searchParams.has('at');
   return { ...result, kind: 'exact-card-unverified', transferable: true,
     ...(referral ? { referral: 'provider-native', acknowledgementRequired: true } : {}) };
 }

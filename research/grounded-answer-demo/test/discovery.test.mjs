@@ -162,7 +162,7 @@ test('explicit provider mapping preserves namespaces; Apple subscription/unknown
   assert.equal(mapProvider('tmdb', 1, 'Apple TV Store'), null); assert.equal(mapProvider('tmdb', 2, 'Netflix'), null);
   assert.equal(mapProvider('motn', 'apple', 'Apple TV Store', 'subscription'), null);
   assert.equal(mapProvider('motn', 'apple', 'Apple TV', 'rent').key, 'apple');
-  assert.equal(mapProvider('motn', 'apple', 'Apple TV', 'subscription'), null);
+  assert.equal(mapProvider('motn', 'apple', 'Apple TV', 'subscription').key, 'appletvplus');
   assert.equal(mapProvider('kinobaza', undefined, 'Apple TV'), null);
   assert.equal(mapProvider('motn', 'unknown', 'Prime Video', 'rent'), null);
   assert.equal(mapProvider('kinobaza', undefined, 'Prime'), null);

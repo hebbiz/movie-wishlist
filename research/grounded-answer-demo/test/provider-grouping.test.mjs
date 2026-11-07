@@ -74,9 +74,9 @@ test('missing href, unsupported label, unresolved mapping and unassociated block
   assert.equal(row.linkAudit.extraction.hrefValue, 'not-reported-or-empty');
   const unsupported = await projected(localizedMarkup(paragraphBlock('unrecognized badge')));
   assert.equal(unsupported.stages.kinobaza.result.localization.blocks.length, 0);
-  const mapping = await projected(localizedMarkup().replaceAll('Example UA', 'Apple TV+'));
-  assert.ok(mapping.unmapped.some(m => m.name === 'Apple TV+' && m.reason === 'provider-mapping-unresolved'));
-  assert.ok(mapping.rows.every(r => r.provider.name !== 'Apple TV+'));
+  const mapping = await projected(localizedMarkup().replaceAll('Example UA', 'Unknown service'));
+  assert.ok(mapping.unmapped.some(m => m.name === 'Unknown service' && m.reason === 'provider-mapping-unresolved'));
+  assert.ok(mapping.rows.every(r => r.provider.name !== 'Unknown service'));
   const plain = await projected(localizedMarkup().replaceAll('Example UA', 'Apple TV Store'));
   assert.equal(plain.rows.find(r => r.id.startsWith('kinobaza:')).linkAudit.blockAssociation, 'not-a-provider-block');
 });

@@ -1,13 +1,13 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 // Presentation of already projected source rows only. No joins, inference from
 // provider names/URLs, or promotion of film badges and separate source blocks.
-const providers = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'MEGOGO', rakuten: 'Rakuten TV' });
+const providers = Object.freeze({ apple: 'Apple TV / iTunes', appletvplus: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'MEGOGO', rakuten: 'Rakuten TV' });
 const accessLabels = Object.freeze({ rent: 'Оренда', rental: 'Оренда', buy: 'Купівля', purchase: 'Купівля', subscription: 'Передплата', flatrate: 'Передплата', addon: 'Додатковий пакет', free: 'Безкоштовний доступ', 'ad-supported': 'З рекламою' });
 const bands = Object.freeze({ 'ua-audio': 0, 'ua-subtitles': 1, ua: 2, supplemental: 3, withheld: 4 });
 // A preference between services is applied only after the language category.
 // Equal services retain the supplied order; original source-row ranking stays
 // independent of this display-only preference.
-const servicePriority = Object.freeze({ apple: 0, rakuten: 1, netflix: 2, hbo: 2, prime: 2, megogo: 3 });
+const servicePriority = Object.freeze({ apple: 0, rakuten: 1, appletvplus: 2, netflix: 2, hbo: 2, prime: 2, megogo: 3 });
 const value = field => field?.state === 'reported' ? field.value : null;
 const ukrainian = language => typeof language === 'string' && ['uk', 'ukr'].includes(language.toLowerCase());
 const hasConflicts = row => Boolean(row?.providerConflict || row?.conflicts?.length || ['audio', 'subtitles'].some(key => row?.[key]?.state === 'conflicting'));
@@ -49,7 +49,9 @@ export function groupMediaRows(rows) {
       groups.push({ key: `unresolved:${index}`, title: presentMediaRow(row).title, rows: [row], primary: row, readOnly: true });
       continue;
     }
-    const key = row.provider.key;
+    // One user-facing Apple service; the original product key/access/source
+    // stay on every row. This container does not establish offer equivalence.
+    const key = row.provider.key === 'appletvplus' ? 'apple' : row.provider.key;
     if (!canonical.has(key)) {
       const group = { key, title: providers[key], rows: [], primary: row, readOnly: false };
       canonical.set(key, group); groups.push(group);
@@ -224,7 +226,7 @@ function comparisonLanguage(rows, kinoRows, key) {
   if (sources.includes('unknown-scope') && state === 'mixed') label = `${subject}: є позитивний запис для України та суперечлива згадка з невстановленою країною або областю застосування; записи не об'єднано в одну пропозицію`;
   return { state, symbol, label, sources };
 }
-export function presentMediaGroup(group, { filmId } = {}) {
+function presentGroupRows(group, { filmId } = {}) {
   const rows = (group?.rows ?? []).filter(row => !filmId || row.filmId === filmId);
   const safe = rows.filter(eligible);
   const linked = safe.filter(r => classifyLink(r.link?.href, r.provider).transferable);
@@ -259,6 +261,22 @@ export function presentMediaGroup(group, { filmId } = {}) {
     warnings: [ ...presentMediaRow(evidence).warnings.filter(warning => !inferred || !['Країну доступу не встановлено.', 'Для цієї пропозиції ще не перевірено.'].includes(warning)),
       ...(inferred ? ['Це правило інтерпретації, не перевірка доступності на платформі.'] : []),
       ...(rows.some(hasConflicts) || [kinoAudio, kinoSubtitles].includes('conflicting') ? ['У джерелах є суперечливі дані.'] : []) ] };
+}
+export function presentMediaGroup(group, { filmId, selectedRow } = {}) {
+  const rows = (group?.rows ?? []).filter(row => !filmId || row.filmId === filmId);
+  const scopedApple = group?.key === 'apple' && (selectedRow !== undefined || rows.some(row => row.provider?.key === 'appletvplus'));
+  if (!scopedApple) return presentGroupRows(group, { filmId });
+  // An explicit navigation variant must never inherit another offer's tracks,
+  // region, conditions or link. An out-of-group row has no authority here.
+  let selected = selectedRow;
+  if (selectedRow === undefined) {
+    const options = rows.map((row, index) => ({ row, index, info: presentGroupRows({ ...group, rows: [row], primary: row }, { filmId }) }));
+    options.sort((a, b) => comparisonCategory(a.info.band) - comparisonCategory(b.info.band) ||
+      Number(classifyLink(b.row.link?.href, b.row.provider).transferable) - Number(classifyLink(a.row.link?.href, a.row.provider).transferable) || a.index - b.index);
+    selected = options[0]?.row;
+  }
+  const scoped = rows.includes(selected) ? [selected] : [];
+  return { ...presentGroupRows({ ...group, rows: scoped, primary: scoped[0] }, { filmId }), group, variantScoped: true };
 }
 export function presentMediaGroups(rows, { filmId } = {}) {
   const filmIds = new Set((Array.isArray(rows) ? rows : []).map(row => row?.filmId).filter(id => typeof id === 'string' && id));
