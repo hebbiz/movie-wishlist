@@ -259,7 +259,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         for (const [index, link] of links.entries()) {
           const presented = presentMediaRow(link.row);
           const label = group.key === 'apple'
-            ? `${link.row?.provider?.key === 'appletvplus' ? 'Apple TV+' : 'Apple TV Store'} · ${presented.accessLabel} · ${presented.sourceLabel} · ${new URL(link.href).hostname}`
+            ? `${link.row?.provider?.key === 'appletvplus' ? 'Apple TV+' : 'Apple TV Store'} · ${presented.accessLabel} · ${presented.sourceLabel} · ${new URL(link.href).hostname} · посилання ${index + 1}`
             : `Посилання ${index + 1} · ${new URL(link.href).hostname}`;
           const option = node('option', label);
           option.value = String(index); option.selected = link === chosen; select.append(option);

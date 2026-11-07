@@ -7180,3 +7180,147 @@ root + research test command. Changed JavaScript/browser-fixture syntax and
 `git diff --check` pass. The final independent review found no remaining
 concrete issue. No migration, merge, deployment, flag activation or live
 database operation was performed.
+
+## Established-card link choices — 2026-11-07
+
+Base develop `ab5a0a74a64cb5a0ae645fd09ca49d6f9ef2789e`, after #228.
+This change is client navigation presentation only: it does not repeat discovery,
+follow a redirect, rewrite a URL, merge offers or change source interpretation.
+
+### Historical The Lost Bus: known and unavailable evidence
+
+The owner reports three choices (one MOTN and two Kinobaza) in run
+`c2fee1f0-9426-4bf0-918b-d8ae70e3cc10`, develop `ab5a0a7`, deploy
+`6aef28360b64ffad83d239c1`. The two Kinobaza labels look equal. Their full
+addresses, and the MOTN address, are unavailable; the owner has closed that
+search. No retained source response for that run was located. A repeat would
+be a new observation, not recovery of those three URLs.
+
+Therefore byte equality, embedded targets, qualifiers, actual redirects and
+card/offer equivalence of the **three historical choices remain unknown**.
+Neither the equal labels nor the earlier capture below establishes them.
+In particular, this PR does not claim that the historical three choices become
+one or that the historical MOTN pointer is a duplicate.
+
+### Same-input saved-response control, not a new live response
+
+The retained Kinobaza body from `2026-11-07T10:29:16Z`, SHA256
+`150f1c4ff7075c327d49bd8784e1fb4ac429ac8b8b8396a575611a19205cd435`,
+has a top Apple TV+ block (line 1087, Ukrainian subtitles) and a separate UA
+Apple TV / Subscription observation (line 1125, tracks unknown). Both original
+addresses are `click.justwatch.com/a` with keys `cx`, `r`, `uct_country`.
+They are not literal-equal, but differ only in `cx`; their complete declared
+`r` targets are equal, including query. The target has host `tv.apple.com`,
+an explicit `/ua/movie/` route with a percent-UTF-8 Ukrainian slug and the same
+UMC card ID, and keys `at`, `ct`, `itscg`, `itsct`. Query values are not copied
+into this report. No redirect was requested or attested by this comparison.
+
+The actual extractor and composition return two original `appletvplus` rows.
+Replaying the **same rows/HTML** against base and new link presentation gives
+**2 choices → 1**. Both original rows remain; the chosen original caption row
+keeps audio `?`, subtitles `+`, its source and its exact wrapper URL through
+preview/apply. The regional observation does not receive caption tracks.
+Ordinary Beta and authorized diagnostic projections agree on the public result.
+Lost Bus metadata here uses the owner IMDb/original title/year and declared
+Ukrainian title; it is not a fresh TMDb projection or deployed-runtime check.
+
+Two independent omissions caused this saved case to remain separate before:
+
+1. `directPointer` understood Apple Store (`apple`) and Rakuten, not the newer
+   internal subscription product (`appletvplus`). Plus thus got literal-only
+   grouping, even for strict wrappers declaring one admitted Apple card.
+2. The strict comparison rejected every percent escape in a path. The legitimate
+   localized Apple slug was already percent-UTF-8 encoded; assigning a Store key
+   alone still did not group it.
+
+### Shared principle and retained provider-specific boundaries
+
+One established navigation pointer produces one choice, selecting an original
+representative row and keeping all original members. It is **not** an offer or
+language join. Default representative preference and the frozen per-view choice
+cache remain; changing another choice cannot replace a subtitle-bearing record
+with a peer whose tracks are unknown. Opening and transfer use the selected
+original href, not a normalized key or a decoded redirect parameter.
+
+| Product/service | Sufficient comparison evidence | Deliberately not equated |
+| --- | --- | --- |
+| Apple Store and Plus, separately | Admitted `tv.apple.com` movie UMC + explicit URL country + retained content/unknown qualifiers; reviewed Apple `at`, `ct`, `itscg`, `itsct` are comparison-only exclusions | Store vs Plus offers; iTunes vs UMC namespaces; different/missing `playableId`, country or unknown qualifiers |
+| iTunes Store | Existing UA numeric-card namespace and the same retained qualifier rules | Numeric overlap with `playableId` or an observed one-film redirect |
+| Rakuten | Existing exact admitted regional host/path and raw qualifiers | Host aliases, slugs, trailing slash, versions or packages |
+| Netflix / Prime | Exact admitted native host/path and raw qualifiers, with compatible row/wrapper market context | Locale-looking prefixes as countries; alternate hosts, locale paths, IDs or trailing slash |
+| MEGOGO | Exact admitted UA native host/path and raw qualifiers | ID-only vs slug routes, host or slug aliases, other versions |
+| HBO | Literal equality where current policy admits the original pointer | No native HBO route is currently admitted by shared policy, so different opaque wrappers cannot be proved equivalent |
+
+Every service still collapses literal-equal admitted URLs into one navigation
+action; differing observations/conditions remain raw records. Other semantic
+joins require the strict existing JustWatch shape: HTTPS `click.justwatch.com/a`,
+exactly one each of `cx`, `r`, `uct_country`, explicit UA, no extra/encoded or
+duplicate keys, fragments, nested wrappers, unsafe/normalized routes or
+wrong-provider targets. Each declared target must independently pass the
+unchanged native link policy. A declared `r` is not a verified redirect.
+
+For regionless Netflix/Prime native routes, a strict wrapper contributes only
+its declared UA context; direct records need matching source context to join.
+A direct unknown-country record or an explicit conflicting country does not
+silently inherit UA. No source record's country is modified.
+
+The Apple-only localized-slug allowance accepts valid literal Unicode or UTF-8
+percent serialization within the admitted movie slug. Encoded ASCII (including
+separators, dot, percent or space), malformed/overlong/nested escapes, encoded
+IDs, explicit ports, fragments and path normalization do not establish a join.
+Country, UMC and qualifiers still matter; similar slug text proves nothing.
+The shared admission policy is unchanged; an opaque admissible original may
+remain a separate choice rather than being reinterpreted.
+
+Unknown query spelling/value/order, `playableId`, cut/version/package evidence
+and explicit country conflicts remain significant. A literal group with
+incompatible members cannot bridge to a third semantic pointer. Grouping never
+copies audio, subtitles, prices, quality, conditions or links between members.
+
+The #215 Store rule remains an explicit exception: top-block TV → top iTunes →
+UA TV → eligible existing preference/stable order. It chooses one original
+Store row for UI convenience, **not because its alternatives are equivalent**.
+It does not apply to Plus. Subscription and Store remain distinct internal
+product/access choices even with an equal href, within the existing single
+Apple TV / iTunes UI service/medium. No rental/purchase toggle is introduced.
+Remaining Apple options have a stable `посилання N` suffix so equal source/access
+labels are distinguishable without asserting distinct offers or card identity.
+
+### Verification and request accounting
+
+- Same saved-input extractor → identity → composition → choice → preview/apply
+  control: Lost Bus as above; Sin City (3 raw rows), Renfield (4), Lucky Number
+  Slevin (2), Meet the Fockers (5), Meet the Parents (5) keep matched identity,
+  all raw rows, original URLs and language results. Control metadata is retained
+  prior data, not fresh TMDb. No unchanged backend result is attributed to a new
+  source fetch. No platform availability/track entitlement is independently tested.
+- New authored tests cover all supported products: literal/declared/native
+  pointers, different cards, unresolved equivalence, host/market/qualifier/edition
+  conflicts, UTF-8 versus dangerous escapes, exact preview/apply and no mutation.
+  Ordinary/diagnostic UI tests keep all records and source-only tracks while
+  switching grouped Kino, uncertain MOTN and Store repeatedly without discovery.
+- Real local Edge/Playwright browser fixture: **6/6 tests/subtests pass**, zero
+  failures/skips; ordinary Beta and authorized diagnostics at 375×812 and
+  1280×900, plus Store-only Mad Max-shaped priority. Its authored Lost Bus-shaped
+  three Plus rows become two choices (the MOTN qualifier is intentionally unknown),
+  with a distinct Store product retained. Netflix/MEGOGO/Prime same-card wrapper
+  pairs group; separate cards remain selectable. Exact explicit open (intercepted
+  locally), preview/apply, all 13 diagnostic records, hidden ordinary diagnostics,
+  reopen/isolation, four-column rhythm and no overflow pass. Screenshots were
+  generated and visually checked. This supersedes a browser-blocked environment
+  assumption; it is not physical Safari/iPhone or an authenticated deployed test.
+- Full default regression: **1422 tests: 1399 passed, 0 failed, 23 opt-in
+  skips** (root + research suites, serial test files). Browser/native-DB skips
+  are not treated as executed checks; the separate opt-in browser run above
+  passed 6/6. Syntax and whitespace checks pass; independent review found no
+  concrete remaining P1/P2 blocker.
+
+**New source HTTP: 0. Tavily Basic/Advanced: 0 calls, 0 credits.** Saved-body
+replays and authored browser tests make no external source/platform/DB requests.
+No new TMDb/MOTN keys were requested and no live API result is claimed. The two
+earlier Kinobaza GETs that produced the retained body belong to the prior #228
+study, not this task. Platform navigation was intercepted only; real Wishlist
+Save and shared DB writes: 0. Identity gates, link admission, source search and
+ranking, request/time budgets, Beta/diagnostic permissions, session/global
+lifecycle/auth, migrations/flags and production remain unchanged. Merge and
+manual deployment are separate approvals and were not performed.

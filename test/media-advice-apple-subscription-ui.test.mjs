@@ -71,7 +71,7 @@ test('subscription and Store share the existing Apple display group even with th
   assert.equal(JSON.stringify(rows), before);
 });
 
-test('Apple TV+ uses ordinary distinct link choices, never Store single-link preference or new semantic equivalence', () => {
+test('Apple TV+ keeps opaque and distinct card links without the Store single-link preference', () => {
   const rows = [subscription(), subscription('kinobaza:same'), subscription('motn:different', href.replace('umc.cmc.authored', 'umc.cmc.different'))];
   const plus = presentMediaGroups(rows, { filmId })[0], before = JSON.stringify(rows);
   const choices = linkChoicesFor(plus);
@@ -79,6 +79,49 @@ test('Apple TV+ uses ordinary distinct link choices, never Store single-link pre
   assert.equal(choices[0].href, href); assert.equal(choices[1].href, rows[2].link.href);
   for (const choice of choices) assert.equal(makePreview(choice.row, { recommended_medium: 'DVD', purchase_url: '' }).after.purchase_url, choice.href);
   assert.equal(JSON.stringify(rows), before);
+});
+
+test('same declared Plus card groups navigation only and keeps unknown MOTN, Store and caption rows isolated', async t => {
+  for (const diagnostics of [false, true]) await t.test(diagnostics ? 'diagnostic' : 'ordinary Beta', async t => {
+    const target = 'https://tv.apple.com/ua/movie/%D0%B0%D0%B2%D1%82%D0%BE%D0%B1%D1%83%D1%81/umc.cmc.authored?at=AUTHORED&ct=CAMPAIGN';
+    const wrapped = value => `https://click.justwatch.com/a?cx=${value}&r=${encodeURIComponent(target)}&uct_country=ua`;
+    const kino = subscription('kinobaza:caption', wrapped('TOP'));
+    const regional = subscription('kinobaza:regional', wrapped('REGIONAL'));
+    regional.country = 'UA'; delete regional.kinobazaLocalization; delete regional.linkAudit;
+    const unknown = subscription('motn:unknown', target + '&offer=unestablished');
+    unknown.country = 'UA'; unknown.provenance = { source: 'Movie of the Night' };
+    delete unknown.kinobazaLocalization; delete unknown.linkAudit;
+    const shop = store(target); shop.audio = { state: 'unknown' };
+    const rows = [unknown, regional, kino, shop], snapshot = JSON.stringify(rows);
+    const { control, state, button, entry } = await harness(t, { film: { id: filmId, imdbId: 'tt21103218' }, rows, unmapped: [] }, diagnostics);
+    const row = () => control.dialog.querySelector('.media-advice-row');
+    assert.equal(row().dataset.rowId, kino.id);
+    const choose = async prefix => {
+      const selector = control.dialog.querySelector('.media-advice-link-select'), options = selector.querySelectorAll('option');
+      assert.equal(options.length, 3, 'two proven same-card Kino links collapse, not the unknown MOTN or separate Store product');
+      assert.equal(new Set(options.map(option => option.textContent)).size, 3, 'remaining labels are distinguishable');
+      const option = options.find(option => option.textContent.includes(prefix)); assert.ok(option);
+      selector.value = option.value; for (const callback of selector.listeners.change) await callback({ target: selector });
+    };
+    for (const [label, expected] of [['Movie of the Night', unknown], ['Apple TV Store', shop], ['Кінобаза', kino], ['Apple TV Store', shop], ['Кінобаза', kino]]) {
+      // Store is also MOTN; select the subscription by its full product/access label.
+      await choose(label === 'Movie of the Night' ? 'Apple TV+ · Передплата · Movie of the Night' : label);
+      assert.equal(row().dataset.rowId, expected.id);
+      assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), expected === kino ? ['◐', '?', '+'] : ['●', '?', '?']);
+    }
+    await button('Відкрити посилання').click(); assert.deepEqual(state.opens, [[kino.link.href, '_blank', 'noopener,noreferrer']]);
+    await button('Обрати').click(); const preview = control.dialog.querySelector('.media-advice-preview').textContent;
+    assert.ok(preview.includes(kino.link.href)); assert.match(preview, /Українські субтитри: джерело повідомляє наявність/);
+    await button('Перенести в картку').click();
+    assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: kino.link.href });
+    await entry.click(); assert.equal(state.calls, 1); assert.equal(row().dataset.rowId, kino.id);
+    if (diagnostics) {
+      await button('Діагностичний звіт').click();
+      assert.equal(control.dialog.querySelectorAll('pre').length, 4, 'grouping removes no source records from diagnostics');
+      for (const original of rows) assert.ok(control.dialog.textContent.includes(original.link.href));
+    } else assert.equal(button('Діагностичний звіт'), undefined);
+    assert.equal(JSON.stringify(rows), snapshot);
+  });
 });
 
 test('one Apple group keeps a subscription and Store navigation choice even if exact URLs match', () => {
