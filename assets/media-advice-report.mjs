@@ -3,7 +3,7 @@ import { groupMediaRows, presentMediaGroups } from './media-advice-presentation.
 import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
 import { safePossibleIrrelevantSearch } from '../shared/media-search-relevance-diagnostic.mjs';
 const identities = new Set(['matched', 'mismatch', 'unresolved']);
-const platforms = new Set(['apple','prime','netflix','hbo','rakuten','megogo']);
+const platforms = new Set(['apple','appletvplus','prime','netflix','hbo','rakuten','megogo']);
 const accessKinds = new Set(['rent','rental','buy','purchase','subscription','flatrate','addon','free','ad-supported']);
 const fieldStates = new Set(['unknown','reported','not-reported','invalid','missing','null','reported-empty']);
 const conflictFields = new Set(['audio','subtitles','quality','price','localization','provider','identity','access','territory','link','package','cut','version']);

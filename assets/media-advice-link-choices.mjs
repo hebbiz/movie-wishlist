@@ -1,6 +1,6 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 
-const platforms = new Set(['apple', 'netflix', 'hbo', 'prime', 'megogo', 'rakuten']);
+const platforms = new Set(['apple', 'appletvplus', 'netflix', 'hbo', 'prime', 'megogo', 'rakuten']);
 const editionFields = ['cut', 'package', 'version'];
 
 // Navigation comparison only. No destination fetch, URL replacement or offer

@@ -38,6 +38,8 @@ Latest localization-caption change: [MEGOGO audio-format suffix](#megogo-audio-f
 Latest link-choice decision: [declared destinations and duplicate navigation](#link-choice-equivalence-and-justwatch-inspection--2026-10-31).
 Apple UI preference now supersedes its multi-choice presentation:
 [one provenance-prioritized Apple link](#single-apple-link-preference--2026-10-31).
+That preference applies to the Store only; [Apple TV+ subscription support](#apple-tv-subscription-source-mapping--2026-11-07)
+keeps subscription observations and choices separate.
 
 ## Reviewed baseline and sequence
 
@@ -6979,3 +6981,122 @@ The first broad run exposed three changed refusal reasons for opaque single
 values; the fix now scopes the new opaque-group veto to the strong semantic
 route and preserves those legacy alias refusals. No fixture was weakened to
 hide those failures, and no source response was fetched again for the rerun.
+
+### Apple TV+ subscription source mapping — 2026-11-07
+
+Prepared from `develop` e04ecff821c9c67f4755ca503bc4cfa8514ce22a. No
+migration, flag change, merge or deployment is authorized by this record.
+
+#### Historical evidence versus current evidence
+
+The owner supplied the complete protected report for The Lost Bus (2025),
+IMDb tt21103218, run c3ca0a1c-c00e-499f-9f8e-ddf52bd4e1a3, deploy
+6aeeecceea767b4dae3c1389. It attests 7/14 source attempts, 0 mapped rows,
+3 other-platform rows (1 Kinobaza), a matched owned-ID/title/year card,
+8 extracted candidates (7 foreign-context), and 0 localization blocks.
+The second card was independently rejected for conflicting stable IDs.
+These are facts about that run. The report does not contain the raw API
+provider IDs/options, the exact three other-platform records, or its HTML.
+It does not prove three identical offers. Their individual historical URLs,
+IDs and access fields cannot be reconstructed from those totals.
+The report's first requested-card digest matches the SHA256 of the exact
+`/titles/the-lost-bus` address; it does not recover the response body.
+
+One current card capture, `https://kinobazaua.com/titles/the-lost-bus`,
+at 2026-11-07T10:29:16Z has SHA256
+`150f1c4ff7075c327d49bd8784e1fb4ac429ac8b8b8396a575611a19205cd435`.
+The report's requested-card digest identifies an address, not a body; no
+historical body checksum or HTML is available for comparison. This capture
+is not a recovered historical response. It contains a top paragraph with title/image alt
+`Доступно в apple tv+`, followed by `(укр. субтитри)`. Separately, the
+Ukraine accordion contains an Apple TV provider anchor with its own
+`Subscription` child label. Both have original JustWatch tracking links.
+The parser previously recognized neither the Plus badge nor the regional
+subscription mapping. The footer's native Apple movie pointer is not borrowed
+as a provider-block link, and JSON-LD film-level subtitleLanguage is not
+promoted to provider tracks.
+
+#### Implementation boundaries
+
+- Existing `apple` remains Apple TV Store / `Apple TV / iTunes`, including
+  its one-link provenance preference. New `appletvplus` / `Apple TV+` is a
+  separate subscription service and form medium, not an alias for the Store.
+- TMDb provider 2 remains Store; provider 350 + explicit subscription access
+  identifies Plus, including the shared display label Apple TV. TMDb watch
+  links remain watch pages, not usable platform deep links or track evidence.
+- MOTN service `apple` is split only by its explicit access type: rent/buy
+  versus subscription. Valid mixed types retain separate source observations.
+  Contrary recognized names/IDs/access stay unmapped/conflicting; a shared
+  service ID is not blanket immunity from conflict detection. Add-on/channel,
+  free, missing and unknown ambiguous Apple access are not guessed.
+- Kinobaza Plus badges retain their exact source name, href and parser-issued
+  block binding. Bare Apple TV needs an unambiguous `Subscription` child in
+  that exact anchor, not neighboring text, encoded redirect parameters or a
+  foreign section. A Store subscription or Plus purchase contradiction does
+  not acquire subscription authority. Table-over-caption precedence remains.
+- Ukrainian subtitles in the top block stay attached to that block. They do
+  not fill the separate regional record, TMDb/MOTN row, Store offer, audio,
+  or a missing/unsafe/ambiguous block. Group comparison uses the existing
+  reviewed UA interpretation, not confirmed offer equivalence or entitlement.
+- Plus permits the existing narrow native tv.apple.com movie route and
+  reviewed tracking links, never iTunes Store or a channel/catalogue URL.
+  URLs are opened/transferred verbatim, without stripping query parameters,
+  decoding redirect destinations, following redirects or semantic URL joins.
+  Different Plus pointers remain distinct choices; Store-only normalization
+  and single-link preference do not apply to Plus.
+- Repeated other-platform *notice text* is suppressed by normalized exact
+  name only. No source records, original pointers, access variants or protected
+  observations are deduplicated. The old loop printed one identical sentence
+  per raw record; that explains repeated text without proving offer duplicates.
+- Ordinary/owned form selects, streaming labels and local Save/readback now
+  recognize Apple TV+. Schema fields are existing text fields; no migration
+  is needed. Beta/server capabilities, diagnostics authorization, identity
+  gates, search/ranking/budgets, session isolation and global lifecycle/auth
+  remain unchanged. Subscription is a source claim, never account entitlement.
+
+#### Same-input results and verification scope
+
+Replaying the current card against the pinned baseline and changed extractor
+and composition yields 0 -> 2 mapped Kinobaza Plus records. Both tables
+(ordinary Beta projection and diagnostic projection) display Apple TV+ with
+audio `?`, subtitles `+`. The top subtitle block and regional subscription
+remain separate rows/links; neither is declared the same offer. Both original
+pointers pass link policy and preserve exact spelling through explicit
+preview/apply. No automatic Save or source refresh is introduced.
+
+Five retained 2026-11-07 card bodies, with retained control metadata rather
+than fresh TMDb requests, replay identically before/after this change:
+Sin City 3 rows, Renfield 4, Lucky Number Slevin 2, Meet the Fockers 5,
+Meet the Parents 5. Their identity, languages, links and preview results are
+unchanged. These are current/saved-response comparisons, not historical
+reconstructions, independent platform verification or a fresh Tavily search.
+
+Authored regressions additionally cover mixed subscription/rental/purchase,
+conflicting IDs/names/types, incomplete access/track data, provider and
+language isolation, unsafe links, ambiguous blocks, exact URL transfer,
+protected versus ordinary rendering, and ordinary form payload/readback.
+
+Measured new source traffic so far: 2 GET (Kinobaza robots.txt + card), both 200;
+GET wire times 399ms + 156ms. Tavily Basic 0/Advanced 0 and 0 credits; no platform
+visits, person-profile reads, source searches or Wishlist/shared-DB writes.
+The saved-body replays make 0 additional external requests. Current TMDb/MOTN
+source comparison is pending the separately requested memory-only credential
+control; fixtures are not a claim about their live response or historical IDs.
+
+Final default regression command (`node --test --test-concurrency=1
+test/*.test.mjs research/grounded-answer-demo/test/*.test.mjs`) reports
+**1387 tests: 1365 passed, 0 failed, 22 opt-in skips**. The new mapping file
+has 13 passing authored tests, including the actual `discoverMedia` service
+entry with five mocked source reads/reservations, unchanged cap14, separate
+source rows and ordinary-product diagnostic withholding. The new UI file
+has 9 passing tests/subtests for subscription/Store separation, accessible
+labels/fallback, exact preview/apply and actual ordinary-form payload/readback.
+The latter is local/mocked, not a live successful database Save. The default
+skips include browser and native PostgreSQL suites; they are not silently
+counted as executed. `git diff --check` and changed JavaScript syntax checks
+pass. An independent code review found no actionable issue.
+The additional opt-in real-browser fixture did not execute successfully: its
+initial process launch was denied and the approval retry ended without an
+execution result. No browser screenshots, physical iPhone verification or
+browser/database Save success is claimed. No source request was repeated to
+compensate for that missing verification.

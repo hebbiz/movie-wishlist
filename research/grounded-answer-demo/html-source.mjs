@@ -90,19 +90,26 @@ function identity(all, film) {
 const territories = Object.freeze({
   UA: 'Доступно в Україні', PL: 'Доступно в Польщі', CZ: 'Доступно в Чехії', DE: 'Доступно в Німеччині',
 });
+const appleSubscriptionLabel = name => typeof name === 'string' && ['apple tv+', 'apple tv plus'].includes(clean(name).toLowerCase());
 function providerName(a) {
   const label = attr(a, 'title') ?? '';
   const explicit = /^Дивитись \/ Купити на (.+)$/.exec(label);
   if (explicit) {
     const image = nodes(a).find(n => n.tagName === 'img');
     if (image && attr(image, 'alt') !== explicit[1]) return { unsupported: true };
-    return { name: explicit[1] };
+    // Access belongs to this exact provider anchor, not its accordion, sibling
+    // or query parameters. Unknown/contradictory labels do not disambiguate TV.
+    const labels = children(a).filter(n => n.tagName === 'div').map(text);
+    const subscription = labels.length === 2 && labels[0] === explicit[1] && labels[1] === 'Subscription';
+    return { name: explicit[1], ...(subscription ? { subscription: true } : {}),
+      ...(appleSubscriptionLabel(explicit[1]) && labels.length && !subscription ? { unsupportedAccess: true } : {}) };
   }
   const badges = [label, attr(a, 'aria-label') ?? '', text(a),
     ...nodes(a).filter(n => n.tagName === 'img').map(n => attr(n, 'alt') ?? '')];
-  const matches = badges.map(s => /^(?:Доступно (?:в|у)|Купити в) (itunes|rakuten|megogo|netflix|prime video|amazon prime)(?: з українською аудіо доріжкою \/ субтитрами)?$/i.exec(clean(s))).filter(Boolean);
+  const matches = badges.map(s => /^(?:Доступно (?:в|у)|Купити в) (itunes|apple tv\+|rakuten|megogo|netflix|prime video|amazon prime)(?: з українською аудіо доріжкою \/ субтитрами)?$/i.exec(clean(s))).filter(Boolean);
   if (new Set(matches.map(m => m[1].toLowerCase())).size > 1) return { unsupported: true };
-  return matches.length ? { name: matches[0][1] } : null;
+  return matches.length ? { name: matches[0][1],
+    ...(matches[0][1].toLowerCase() === 'apple tv+' && badges.some(s => /^Купити в apple tv\+(?: |$)/i.test(clean(s))) ? { unsupportedAccess: true } : {}) } : null;
 }
 function candidate(a, territory, html, provider) {
   const href = attr(a, 'href');
@@ -111,6 +118,11 @@ function candidate(a, territory, html, provider) {
   const raw = /^href\s*=\s*(?:"([\s\S]*)"|'([\s\S]*)'|([^\s>]+))$/i.exec(spelling);
   const rawHref = raw ? (raw[1] ?? raw[2] ?? raw[3]) : null;
   const entry = { provider, territory, href: href ?? null, rawHref, hrefKind: 'missing', status: 'unresolved' };
+  const identity = providerName(a);
+  if (identity?.name === provider && identity.unsupportedAccess) entry.access = { state: 'invalid', basis: 'unsupported-or-contradictory-provider-access-label' };
+  else if (identity?.name === provider && (identity.subscription || appleSubscriptionLabel(provider))) {
+    entry.access = { state: 'reported', value: 'subscription', basis: identity.subscription ? 'same-provider-anchor-Subscription-label' : 'explicit-Apple-TV+-service-label' };
+  }
   if (!href) return { ...entry, issue: 'missing-href' };
   if (href.length > 16384 || /[\\\s\p{C}]/u.test(href) || /[\p{C}]/u.test(provider)) return { ...entry, href: null, rawHref: null, issue: 'unsafe-url-or-label' };
   const scheme = /^([a-z][a-z\d+.-]*):/i.exec(href);

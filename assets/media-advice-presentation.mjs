@@ -1,13 +1,13 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 // Presentation of already projected source rows only. No joins, inference from
 // provider names/URLs, or promotion of film badges and separate source blocks.
-const providers = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'MEGOGO', rakuten: 'Rakuten TV' });
+const providers = Object.freeze({ apple: 'Apple TV / iTunes', appletvplus: 'Apple TV+', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'MEGOGO', rakuten: 'Rakuten TV' });
 const accessLabels = Object.freeze({ rent: 'Оренда', rental: 'Оренда', buy: 'Купівля', purchase: 'Купівля', subscription: 'Передплата', flatrate: 'Передплата', addon: 'Додатковий пакет', free: 'Безкоштовний доступ', 'ad-supported': 'З рекламою' });
 const bands = Object.freeze({ 'ua-audio': 0, 'ua-subtitles': 1, ua: 2, supplemental: 3, withheld: 4 });
 // A preference between services is applied only after the language category.
 // Equal services retain the supplied order; original source-row ranking stays
 // independent of this display-only preference.
-const servicePriority = Object.freeze({ apple: 0, rakuten: 1, netflix: 2, hbo: 2, prime: 2, megogo: 3 });
+const servicePriority = Object.freeze({ apple: 0, rakuten: 1, appletvplus: 2, netflix: 2, hbo: 2, prime: 2, megogo: 3 });
 const value = field => field?.state === 'reported' ? field.value : null;
 const ukrainian = language => typeof language === 'string' && ['uk', 'ukr'].includes(language.toLowerCase());
 const hasConflicts = row => Boolean(row?.providerConflict || row?.conflicts?.length || ['audio', 'subtitles'].some(key => row?.[key]?.state === 'conflicting'));

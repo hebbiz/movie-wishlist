@@ -1,10 +1,21 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
-import { groupMediaRows, presentMediaGroups, summarizeMediaGroups } from './media-advice-presentation.mjs';
+import { groupMediaRows, presentMediaGroups, presentMediaRow, summarizeMediaGroups } from './media-advice-presentation.mjs';
 import { groupLinkChoices, preferredAppleLinkChoice } from './media-advice-link-choices.mjs';
 
-const media = Object.freeze({ apple: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
-const serviceIcons = Object.freeze({ apple: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
+const media = Object.freeze({ apple: 'Apple TV / iTunes', appletvplus: 'Apple TV+', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
+const serviceIcons = Object.freeze({ apple: 'appletv', appletvplus: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
+// Only repeated notice text is collapsed. The original observations, their
+// distinct offers and URLs remain in the result and privileged source details.
+export function otherPlatformLabels(rows) {
+  const labels = new Map();
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const name = typeof row?.name === 'string' ? row.name.normalize('NFC').replace(/\s+/gu, ' ').trim() : '';
+    const label = name || 'назву не встановлено', key = label.toLowerCase();
+    if (!labels.has(key)) labels.set(key, label);
+  }
+  return [...labels.values()];
+}
 // Old boolean capabilities permit advice only, never privileged pilot details.
 export function normalizeMediaCapabilities(value) {
   const enabled = value === true || value?.mykola_media_advice === true;
@@ -224,6 +235,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const row = chosen?.row ?? info.transferRow;
       const item = controls.find(item => item.info === info); if (item && row) item.tr.dataset.rowId = row.id;
       actions.append(node('p', `Обраний сервіс: ${group.title}`));
+      if (group.key === 'appletvplus') actions.append(node('p', `Тип доступу: ${presentMediaRow(row).accessLabel}.`));
       if (links.length > 1) {
         const label = node('label', 'Посилання сервісу'), select = node('select'); select.className = 'media-advice-link-select';
         select.setAttribute('aria-label', `Посилання сервісу ${group.title}`);
@@ -261,7 +273,11 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         const fallbackName = () => { icon.hidden = true; slot.hidden = true; choose.dataset.iconState = 'failed'; };
         icon.addEventListener('load', () => { if (icon.naturalWidth > 0) choose.dataset.iconState = 'loaded'; else fallbackName(); });
         icon.addEventListener('error', fallbackName);
-        icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; slot.append(icon); choose.append(slot);
+        icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; slot.append(icon);
+        // Keep the subscription service visibly distinct from the Store even
+        // on small screens where the full accessible name is visually hidden.
+        if (info.group.key === 'appletvplus') slot.append(node('span', '+'));
+        choose.append(slot);
       }
       const name = node('span', info.group.title); name.className = 'media-advice-service-name'; choose.append(name);
       cell.append(choose); tr.append(cell);
@@ -307,8 +323,8 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         chat.append(button(`Використати підтверджену картку ${index + 1}`, () => { if (!valid()) return invalidate(); session.choice = choice; render(); }));
       }
       comparison(groups);
-      for (const row of [...(session.result.unmapped ?? []), ...(session.choice?.unmapped ?? [])]) {
-        const other = node('p', `Інші платформи — ${row.name ?? 'назву не встановлено'}: лише для перегляду. Тип доступу й умови потрібно перевірити окремо.`); other.className = 'media-advice-other'; chat.append(other);
+      for (const label of otherPlatformLabels([...(session.result.unmapped ?? []), ...(session.choice?.unmapped ?? [])])) {
+        const other = node('p', `Інші платформи — ${label}: лише для перегляду. Тип доступу й умови потрібно перевірити окремо.`); other.className = 'media-advice-other'; chat.append(other);
       }
       attribution();
     }
@@ -329,6 +345,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     preview?.remove(); diagnostics.hidden = true; chat.hidden = true;
     preview = node('section'); preview.className = 'media-advice-preview';
     preview.append(node('h3', 'Перевірте зміни'), node('p', `Рекомендований носій: ${before.recommended_medium || '—'} → ${transfer.medium}`), node('p', linkPreview(before.purchase_url, transfer.url)), node('p', 'Статус, придбаний носій, назва, рік і автор не змінюються. Збереження — звичайною кнопкою форми.'));
+    if (row.provider?.key === 'appletvplus') preview.append(node('p', `Тип доступу: ${presentMediaRow(row).accessLabel}.`));
     if (before.purchase_url || transfer.url) {
       const details = node('details'); details.className = 'media-advice-preview-links';
       details.append(node('summary', 'Повні адреси'), node('p', `Зараз: ${before.purchase_url || 'відсутнє'}`), node('p', `Обране: ${transfer.url || 'відсутнє'}`)); preview.append(details);
