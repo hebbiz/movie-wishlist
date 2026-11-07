@@ -249,10 +249,6 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         if (group.key === 'apple') for (const field of ['availability', 'audio', 'subtitles']) item.cells[field].replaceChildren(symbol(selectedInfo.comparison?.[field] ?? fallback));
       }
       actions.append(node('p', `Обраний сервіс: ${group.title}`));
-      if (group.key === 'apple') {
-        const presented = presentMediaRow(row), product = row?.provider?.key === 'appletvplus' ? 'Apple TV+' : 'Apple TV Store';
-        actions.append(node('p', `Тип доступу: ${presented.accessLabel} · ${product}. Джерело: ${presented.sourceLabel}.`));
-      }
       if (links.length > 1) {
         const label = node('label', 'Посилання сервісу'), select = node('select'); select.className = 'media-advice-link-select';
         select.setAttribute('aria-label', `Посилання сервісу ${group.title}`);
@@ -314,7 +310,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     }
     table.append(rows); body.append(table);
     const legend = node('details'); legend.className = 'media-advice-legend';
-    legend.append(node('summary', 'Що означають позначки'), node('p', '● — джерело вказує Україну; ◐ — неповні дані сервісу; ◇ — інша країна. Мови: + — вказано; − — явно позначено відсутність; ? — невідомо; ± — дані різняться.'));
+    legend.append(node('summary', 'Що означають позначки'), node('p', '● — джерело вказує Україну; ◐ — неповні дані сервісу; ◇ — інша країна. Мови: + — вказано; − — явно позначено відсутність у зазначеному записі; −* — позначено відсутність лише в зазначених форматах, інші доріжки й пропозиції не перевірено; ? — невідомо; ± — дані різняться.'));
     body.append(legend, actions); showActions(selected);
   }
   function render() {

@@ -78,7 +78,9 @@ test('One Apple TV / iTunes real app form: mixed offer selection, own tracks, pr
     };
     await selectOffer('Apple TV+');
     assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['◐', '?', '+']);
-    assert.match(await page.locator('.media-advice-actions').innerText(), /Тип доступу: Передплата/);
+    assert.match(await page.locator('.media-advice-actions').innerText(), /Обраний сервіс: Apple TV \/ iTunes/);
+    assert.doesNotMatch(await page.locator('.media-advice-actions').innerText(), /Тип доступу:|Джерело:/);
+    assert.match(await page.locator('.media-advice-link-select option:checked').innerText(), /Apple TV\+ · Передплата · Кінобаза/);
     assert.equal(await page.locator('.media-advice-other').count(), 1);
     assert.equal(await page.getByRole('button', { name: 'Діагностичний звіт' }).count(), 0);
     assert.equal(await page.locator('.media-advice-link-select option').count(), 2, 'subscription and Store choices are retained within the one service');
@@ -102,7 +104,9 @@ test('One Apple TV / iTunes real app form: mixed offer selection, own tracks, pr
     // Store is not allowed to inherit the subscription's captioned subtitles.
     await selectOffer('Apple TV Store');
     assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['●', '?', '?']);
-    assert.match(await page.locator('.media-advice-actions').innerText(), /Тип доступу: Купівля/);
+    assert.match(await page.locator('.media-advice-actions').innerText(), /Обраний сервіс: Apple TV \/ iTunes/);
+    assert.doesNotMatch(await page.locator('.media-advice-actions').innerText(), /Тип доступу:|Джерело:/);
+    assert.match(await page.locator('.media-advice-link-select option:checked').innerText(), /Apple TV Store · Купівля · TMDb \/ JustWatch/);
     const previewAndApply = async (expectedURL, expectedAccess) => {
       await page.getByRole('button', { name: 'Обрати', exact: true }).click();
       assert.match(await page.locator('.media-advice-preview').innerText(), /→ Apple TV \/ iTunes/);

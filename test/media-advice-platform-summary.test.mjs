@@ -263,13 +263,44 @@ test('comparison languages preserve positive, explicitly negative, missing, conf
     assert.match(negative.comparison[key].label, /у зазначеному записі.*не висновок про всі пропозиції/);
   }
   const formatNegative = view([block('apple', {}, { audio: sign('reported-negative', 'audio', 'dolby'), subtitles: undefined })], { filmId });
-  assert.equal(formatNegative.comparison.audio.state, 'format-negative'); assert.equal(formatNegative.comparison.audio.symbol, '?');
-  assert.match(formatNegative.comparison.audio.label, /формати.*інших українських доріжок невідома/);
+  assert.equal(formatNegative.comparison.audio.state, 'format-negative'); assert.equal(formatNegative.comparison.audio.symbol, '−*');
+  assert.match(formatNegative.comparison.audio.label, /«−» лише для зазначених форматів.*інші українські доріжки й інші пропозиції не перевірено/);
   assert.equal(formatNegative.comparison.subtitles.state, 'unknown');
   const conflict = view([block('megogo', {}, { audio: sign('conflicting'), subtitles: unknown() })], { filmId });
   assert.equal(conflict.comparison.audio.state, 'conflicting'); assert.equal(conflict.comparison.audio.symbol, '±');
   assert.equal(conflict.comparison.subtitles.state, 'unknown'); assert.equal(conflict.band, 'ua');
   assert.match(conflict.comparison.audio.label, /не означає відсутність/);
+});
+
+test('scoped format negatives retain their meaning beside unknown, positive or contradictory separate offers', () => {
+  const negative = block('rakuten', {}, { audio: sign('reported-negative', 'audio', 'стерео'), subtitles: sign('reported-positive', 'subtitles') });
+  const uaUnknown = row('tmdb:unknown', 'rakuten', { link: { href: services.rakuten[1] } });
+  const before = JSON.stringify([negative, uaUnknown]);
+  const scoped = view([negative, uaUnknown], { filmId });
+  assert.equal(scoped.comparison.audio.state, 'format-negative'); assert.equal(scoped.comparison.audio.symbol, '−*');
+  assert.match(scoped.comparison.audio.label, /інші.*пропозиції не перевірено/);
+  assert.equal(uaUnknown.audio.state, 'unknown');
+  const positive = { ...uaUnknown, id: 'motn:positive', audio: { state: 'reported', ukrainian: [{ language: 'uk' }] } };
+  assert.equal(view([negative, positive], { filmId }).comparison.audio.symbol, '±');
+  const conflict = { ...uaUnknown, id: 'motn:conflict', audio: { state: 'conflicting' } };
+  assert.equal(view([negative, conflict], { filmId }).comparison.audio.symbol, '±');
+  const unbound = block('rakuten', { linkAudit: { blockAssociation: 'unresolved' } }, { audio: sign('reported-negative', 'audio', 'стерео') });
+  assert.equal(view([unbound, uaUnknown], { filmId }).comparison.audio.symbol, '?');
+  const foreign = block('rakuten', { country: 'PL' }, { audio: sign('reported-negative', 'audio', 'стерео') });
+  assert.equal(view([foreign, uaUnknown], { filmId }).comparison.audio.symbol, '?');
+  assert.equal(JSON.stringify([negative, uaUnknown]), before);
+});
+
+test('the selected Apple Store or Plus offer never inherits a peer format negative, even with one equal navigation URL', () => {
+  const shop = block('apple', {}, { audio: sign('reported-negative', 'audio', 'dolby'), subtitles: sign('reported-positive', 'subtitles') });
+  const plus = { ...row('motn:subscription', 'apple', { link: shop.link }), provider: { key: 'appletvplus', sourceName: 'Apple TV+' }, access: { state: 'reported', value: 'subscription' } };
+  const group = groupMediaRows([plus, shop])[0], before = JSON.stringify(group);
+  const selectedShop = presentMediaGroup(group, { filmId, selectedRow: shop });
+  const selectedPlus = presentMediaGroup(group, { filmId, selectedRow: plus });
+  assert.equal(selectedShop.comparison.audio.symbol, '−*'); assert.equal(selectedShop.comparison.subtitles.symbol, '+');
+  assert.equal(selectedPlus.comparison.audio.symbol, '?'); assert.equal(selectedPlus.comparison.subtitles.symbol, '?');
+  assert.equal(selectedPlus.transferRow, plus); assert.equal(plus.audio.state, 'unknown');
+  assert.equal(JSON.stringify(group), before);
 });
 
 test('independent positive tracks remain visible beside negative Kinobaza records without claiming offer equivalence', () => {
