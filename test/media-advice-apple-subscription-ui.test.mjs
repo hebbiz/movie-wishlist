@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { createMediaAdvice, transferFor, makePreview, applyPreview, linkChoicesFor, otherPlatformLabels } from '../assets/media-advice.mjs';
-import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
+import { presentMediaGroups, presentMediaGroup } from '../assets/media-advice-presentation.mjs';
 import { safeMediaReport } from '../assets/media-advice-report.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 
@@ -55,15 +55,18 @@ async function harness(t, result, diagnostics = false) {
   return { control, state, button, entry };
 }
 
-test('subscription and Store are separate canonical groups even with the same href; languages never cross groups', () => {
+test('subscription and Store share the existing Apple display group even with the same href; selected records keep their own evidence', () => {
   const rows = [subscription(), store()], before = JSON.stringify(rows), groups = presentMediaGroups(rows, { filmId });
-  assert.equal(groups.length, 2);
-  const plus = groups.find(info => info.group.key === 'appletvplus'), shop = groups.find(info => info.group.key === 'apple');
-  assert.equal(plus.group.title, 'Apple TV+'); assert.equal(plus.access, 'Передплата');
+  assert.equal(groups.length, 1);
+  const plus = presentMediaGroup(groups[0].group, { filmId, selectedRow: rows[0] });
+  const shop = presentMediaGroup(groups[0].group, { filmId, selectedRow: rows[1] });
+  assert.equal(plus.group.title, 'Apple TV / iTunes'); assert.equal(plus.access, 'Передплата');
+  assert.equal(shop.access, 'Купівля');
   assert.deepEqual([plus.comparison.audio.symbol, plus.comparison.subtitles.symbol], ['?', '+']);
   assert.deepEqual([shop.comparison.audio.symbol, shop.comparison.subtitles.symbol], ['+', '?']);
-  assert.equal(plus.group.rows.length, 1); assert.equal(shop.group.rows.length, 1);
-  assert.equal(transferFor(plus.transferRow).medium, 'Apple TV+');
+  assert.equal(plus.group.rows.length, 2); assert.equal(shop.group.rows.length, 2);
+  assert.equal(plus.transferRow, rows[0]); assert.equal(shop.transferRow, rows[1]);
+  assert.equal(transferFor(plus.transferRow).medium, 'Apple TV / iTunes');
   assert.equal(transferFor(shop.transferRow).medium, 'Apple TV / iTunes');
   assert.equal(JSON.stringify(rows), before);
 });
@@ -78,30 +81,75 @@ test('Apple TV+ uses ordinary distinct link choices, never Store single-link pre
   assert.equal(JSON.stringify(rows), before);
 });
 
-test('subscription mixed, missing and conflicting data remains unknown/conflicting without borrowing Store evidence', () => {
+test('one Apple group keeps a subscription and Store navigation choice even if exact URLs match', () => {
+  const rows = [subscription(), store()], before = JSON.stringify(rows);
+  const info = presentMediaGroups(rows, { filmId })[0], choices = linkChoicesFor(info);
+  assert.equal(choices.length, 2, 'a shared destination string does not establish subscription/Store offer equivalence');
+  assert.deepEqual(choices.map(choice => choice.row.provider.key).sort(), ['apple', 'appletvplus']);
+  for (const choice of choices) {
+    const selected = presentMediaGroup(info.group, { filmId, selectedRow: choice.row });
+    const preview = makePreview(selected.transferRow, { recommended_medium: 'DVD', purchase_url: '' });
+    assert.equal(selected.transferRow, choice.row);
+    assert.equal(preview.after.recommended_medium, 'Apple TV / iTunes');
+    assert.equal(preview.after.purchase_url, href);
+    assert.equal(selected.access, choice.row.provider.key === 'appletvplus' ? 'Передплата' : 'Купівля');
+  }
+  assert.equal(JSON.stringify(rows), before);
+});
+
+test('selecting rental cannot inherit purchase or subscription tracks and access conditions', () => {
+  const plus = subscription(), purchase = store(), rental = store(href.replace('authored', 'rental'));
+  rental.id = 'motn:rental'; rental.access.value = 'rent'; rental.audio = { state: 'unknown' };
+  rental.price = { state: 'reported', value: 3.99, currency: 'EUR' };
+  purchase.price = { state: 'reported', value: 12.99, currency: 'EUR' };
+  plus.price = { state: 'unknown' };
+  const rows = [plus, purchase, rental], before = JSON.stringify(rows);
+  const info = presentMediaGroups(rows, { filmId })[0];
+  const selected = presentMediaGroup(info.group, { filmId, selectedRow: rental });
+  assert.deepEqual([selected.comparison.audio.symbol, selected.comparison.subtitles.symbol], ['?', '?']);
+  assert.equal(selected.access, 'Оренда'); assert.equal(selected.transferRow, rental);
+  assert.equal(selected.transferRow.price.value, 3.99);
+  const preview = makePreview(selected.transferRow, { recommended_medium: 'DVD', purchase_url: '' });
+  assert.equal(preview.after.purchase_url, rental.link.href);
+  assert.equal(info.group.rows.length, 3);
+  assert.equal(JSON.stringify(rows), before);
+});
+
+test('mixed, missing and conflicting Apple data is scoped to the selected variant, not other offers', () => {
   const positive = subscription(), negative = subscription('kinobaza:negative');
   negative.kinobazaLocalization.subtitles = { state: 'reported-negative', evidence: [{ label: 'укр. субтитри', literal: '−', state: 'negative' }] };
   const rows = [positive, negative, store()];
-  const plus = presentMediaGroups(rows, { filmId }).find(info => info.group.key === 'appletvplus');
-  assert.equal(plus.comparison.audio.symbol, '?'); assert.equal(plus.comparison.subtitles.symbol, '±');
+  const merged = presentMediaGroups(rows, { filmId })[0];
+  const plus = presentMediaGroup(merged.group, { filmId, selectedRow: positive });
+  const minus = presentMediaGroup(merged.group, { filmId, selectedRow: negative });
+  assert.equal(plus.comparison.audio.symbol, '?'); assert.equal(plus.comparison.subtitles.symbol, '+');
+  assert.deepEqual([minus.comparison.audio.symbol, minus.comparison.subtitles.symbol], ['?', '−']);
+  const conflict = subscription('kinobaza:conflict'); conflict.kinobazaLocalization.subtitles.state = 'conflicting';
+  const conflictGroup = presentMediaGroups([conflict, store()], { filmId })[0];
+  const ownConflict = presentMediaGroup(conflictGroup.group, { filmId, selectedRow: conflict });
+  assert.deepEqual([ownConflict.comparison.audio.symbol, ownConflict.comparison.subtitles.symbol], ['?', '±']);
   const missing = subscription(); missing.link.href = null; missing.kinobazaLocalization.href = null;
-  const absent = presentMediaGroups([missing, store()], { filmId }).find(info => info.group.key === 'appletvplus');
+  const missingGroup = presentMediaGroups([missing, store()], { filmId })[0];
+  const absent = presentMediaGroup(missingGroup.group, { filmId, selectedRow: missing });
   assert.deepEqual([absent.comparison.audio.symbol, absent.comparison.subtitles.symbol], ['?', '?']);
-  assert.equal(linkChoicesFor(absent).length, 0);
+  assert.equal(transferFor(absent.transferRow).url, null, 'the missing variant does not borrow the Store link');
+  const unknown = presentMediaGroup(merged.group, { filmId, selectedRow: subscription('not-in-group') });
+  assert.deepEqual([unknown.comparison.audio.symbol, unknown.comparison.subtitles.symbol], ['?', '?']);
+  assert.equal(unknown.band, 'withheld', 'an out-of-group selection has no authority');
   assert.equal(transferFor({ ...positive, providerConflict: true }), null);
   assert.equal(transferFor({ ...positive, identityStatus: 'unresolved' }), null);
   assert.equal(transferFor(subscription('unsafe', 'javascript:alert(1)')).url, null);
   assert.equal(transferFor(subscription('itunes-store-is-not-subscription', 'https://itunes.apple.com/ua/movie/id123')).url, null);
 });
 
-test('ordinary and diagnostic users see subscription/subtitles, distinct accessible emblem and exact URL preview→apply with no automatic Save', async t => {
+test('ordinary and diagnostic users see one accessible Apple service and selected subscription/subtitles; preview→apply keeps the existing medium', async t => {
   for (const diagnostics of [false, true]) await t.test(diagnostics ? 'diagnostic' : 'ordinary Beta', async t => {
     const original = subscription(), result = { film: { id: filmId, imdbId: 'tt21103218', title: 'The Lost Bus', year: 2025 }, rows: [original], unmapped: [] };
     const { control, state, button, entry } = await harness(t, result, diagnostics);
     const row = control.dialog.querySelector('.media-advice-row'), service = row.querySelector('button');
-    assert.equal(row.dataset.providerKey, 'appletvplus'); assert.equal(service.attributes['aria-label'], 'Apple TV+');
+    assert.equal(row.dataset.providerKey, 'apple'); assert.equal(service.attributes['aria-label'], 'Apple TV / iTunes');
     assert.deepEqual(row.querySelectorAll('.media-advice-symbol').map(e => e.textContent), ['◐', '?', '+']);
-    assert.equal(service.querySelector('.media-advice-icon-slot').textContent, '+');
+    assert.equal(service.querySelector('.media-advice-icon-slot').textContent, '', 'subscription is not a separate branded service emblem');
     assert.equal(service.querySelector('img').src, '/assets/icons/media/appletv.svg');
     assert.match(control.dialog.querySelector('.media-advice-actions').textContent, /Тип доступу: Передплата/);
     assert.equal(control.dialog.querySelectorAll('select').length, 0);
@@ -115,16 +163,104 @@ test('ordinary and diagnostic users see subscription/subtitles, distinct accessi
     }
     await button('Відкрити посилання').click(); assert.deepEqual(state.opens, [[href, '_blank', 'noopener,noreferrer']]);
     await button('Обрати').click();
-    assert.match(control.dialog.querySelector('.media-advice-preview').textContent, /→ Apple TV\+/);
+    assert.match(control.dialog.querySelector('.media-advice-preview').textContent, /→ Apple TV \/ iTunes/);
     assert.match(control.dialog.querySelector('.media-advice-preview').textContent, /Тип доступу: Передплата/);
     assert.ok(control.dialog.querySelector('.media-advice-preview').textContent.includes(href)); assert.equal(state.output, null);
     await button('Перенести в картку').click();
-    assert.deepEqual(state.output, { recommended_medium: 'Apple TV+', purchase_url: href });
+    assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: href });
     await entry.click(); assert.equal(state.calls, 1, 'reopening does not repeat discovery');
     const icon = control.dialog.querySelector('.media-advice-service-select').querySelector('img');
     for (const callback of icon.listeners.error) callback();
-    assert.equal(control.dialog.querySelector('.media-advice-service-name').textContent, 'Apple TV+');
+    assert.equal(control.dialog.querySelector('.media-advice-service-name').textContent, 'Apple TV / iTunes');
     assert.equal(control.dialog.querySelector('.media-advice-service-select').dataset.iconState, 'failed');
+  });
+});
+
+test('mixed Apple selector changes only the selected offer evidence and preserves product selection through preview', async t => {
+  for (const diagnostics of [false, true]) for (const selectedProduct of ['appletvplus', 'apple']) {
+    await t.test(`${diagnostics ? 'diagnostic' : 'ordinary Beta'} / ${selectedProduct}`, async t => {
+      const original = [subscription(), store()]; original[1].audio = { state: 'unknown' };
+      const snapshot = JSON.stringify(original);
+      const result = { film: { id: filmId, imdbId: 'tt21103218', title: 'Authored mixed Apple film', year: 2025 }, rows: original, unmapped: [] };
+      const { control, state, button, entry } = await harness(t, result, diagnostics);
+      assert.equal(control.dialog.querySelectorAll('.media-advice-row').length, 1);
+      assert.equal(control.dialog.querySelector('.media-advice-row').dataset.providerKey, 'apple');
+      async function choose(product) {
+        const selector = control.dialog.querySelector('.media-advice-link-select');
+        assert.equal(selector.attributes['aria-label'], 'Посилання сервісу Apple TV / iTunes');
+        const options = selector.querySelectorAll('option');
+        assert.equal(options.length, 2, 'shared exact href does not hide a distinct access product');
+        const option = options.find(element => element.textContent.startsWith(product === 'appletvplus' ? 'Apple TV+ ·' : 'Apple TV Store ·'));
+        assert.ok(option); selector.value = option.value;
+        for (const callback of selector.listeners.change) await callback({ target: selector });
+        const row = control.dialog.querySelector('.media-advice-row');
+        assert.deepEqual(row.querySelectorAll('.media-advice-symbol').map(element => element.textContent), product === 'appletvplus' ? ['◐', '?', '+'] : ['●', '?', '?']);
+        assert.match(control.dialog.querySelector('.media-advice-actions').textContent, product === 'appletvplus' ? /Тип доступу: Передплата · Apple TV\+/ : /Тип доступу: Купівля · Apple TV Store/);
+        assert.equal(row.dataset.rowId, product === 'appletvplus' ? original[0].id : original[1].id);
+        const answer = control.dialog.querySelector('.media-advice-answer').textContent;
+        if (product === 'appletvplus') assert.match(answer, /є дані про українські субтитри/);
+        else {
+          assert.doesNotMatch(answer, /є дані про українські субтитри|є дані про українське аудіо/);
+          assert.match(answer, /українські доріжки поки не підтверджені/);
+        }
+      }
+      await choose('appletvplus'); await choose('apple'); await choose(selectedProduct);
+      await button('Обрати').click();
+      const preview = control.dialog.querySelector('.media-advice-preview');
+      assert.match(preview.textContent, /→ Apple TV \/ iTunes/);
+      assert.match(preview.textContent, selectedProduct === 'appletvplus' ? /Тип доступу: Передплата/ : /Тип доступу: Купівля/);
+      assert.equal(state.output, null);
+      await button('Скасувати вибір').click();
+      await entry.click(); assert.equal(state.calls, 1);
+      const selectedOption = control.dialog.querySelector('.media-advice-link-select').querySelectorAll('option').find(option => option.selected);
+      assert.ok(selectedOption.textContent.startsWith(selectedProduct === 'appletvplus' ? 'Apple TV+ ·' : 'Apple TV Store ·'));
+      await button('Обрати').click(); await button('Перенести в картку').click();
+      assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: href });
+      assert.equal(JSON.stringify(original), snapshot);
+    });
+  }
+});
+
+test('a literal Apple subscription link keeps its chosen Kino representative while switching Store and subscription repeatedly', async t => {
+  for (const diagnostics of [false, true]) await t.test(diagnostics ? 'diagnostic' : 'ordinary Beta', async t => {
+    const kino = subscription('kinobaza:captioned-subscription');
+    const unknown = subscription('motn:unknown-subscription');
+    unknown.country = 'UA'; unknown.provenance = { source: 'Movie of the Night' };
+    delete unknown.kinobazaLocalization; delete unknown.linkAudit;
+    const shop = store(); shop.audio = { state: 'unknown' };
+    const rows = [kino, unknown, shop], snapshot = JSON.stringify(rows);
+    const result = { film: { id: filmId, imdbId: 'tt21103218', title: 'Authored three-source Apple film', year: 2025 }, rows, unmapped: [] };
+    const { control, state, button, entry } = await harness(t, result, diagnostics);
+    const row = () => control.dialog.querySelector('.media-advice-row');
+    assert.equal(row().dataset.rowId, kino.id, 'initial subtitle recommendation chooses the captioned Kino observation');
+    assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), ['◐', '?', '+']);
+    assert.equal(control.dialog.querySelectorAll('.media-advice-row').length, 1);
+    for (const product of ['apple', 'appletvplus', 'apple', 'appletvplus']) {
+      const selector = control.dialog.querySelector('.media-advice-link-select');
+      const options = selector.querySelectorAll('option');
+      assert.equal(options.length, 2, 'literal duplicate subscription links form one stable navigation choice');
+      const plusOption = options.find(option => option.textContent.startsWith('Apple TV+ ·'));
+      assert.match(plusOption.textContent, /Кінобаза/, 'changing another product cannot replace the Plus representative with the unknown MOTN row');
+      const option = product === 'appletvplus' ? plusOption : options.find(option => option.textContent.startsWith('Apple TV Store ·'));
+      selector.value = option.value;
+      for (const callback of selector.listeners.change) await callback({ target: selector });
+      assert.equal(row().dataset.rowId, product === 'appletvplus' ? kino.id : shop.id);
+      assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), product === 'appletvplus' ? ['◐', '?', '+'] : ['●', '?', '?']);
+      const actions = control.dialog.querySelector('.media-advice-actions').textContent;
+      assert.match(actions, product === 'appletvplus' ? /Передплата · Apple TV\+\. Джерело: Кінобаза/ : /Купівля · Apple TV Store\. Джерело: Movie of the Night/);
+      assert.equal(state.calls, 1);
+    }
+    await button('Обрати').click();
+    const preview = control.dialog.querySelector('.media-advice-preview').textContent;
+    assert.match(preview, /→ Apple TV \/ iTunes/);
+    assert.match(preview, /Передплата · Apple TV\+\. Джерело: Кінобаза/);
+    assert.match(preview, /Українські субтитри: джерело повідомляє наявність/);
+    assert.ok(preview.includes(href)); assert.equal(state.output, null);
+    await button('Перенести в картку').click();
+    assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: href });
+    await entry.click(); assert.equal(state.calls, 1);
+    assert.equal(row().dataset.rowId, kino.id);
+    assert.equal(JSON.stringify(rows), snapshot);
   });
 });
 
@@ -143,13 +279,14 @@ test('display-only other-platform notices collapse exact normalized names while 
   assert.equal(JSON.stringify(unmapped), before); assert.equal(state.calls, 1);
 });
 
-test('ordinary form options, save payload projection and fillForm round trip preserve subscription separately from Store', async () => {
+test('ordinary form options, save payload projection and fillForm keep subscription and Store under the existing Apple medium', async () => {
   const html = await readFile(new URL('../app.html', import.meta.url), 'utf8'), app = await readFile(new URL('../app.js', import.meta.url), 'utf8');
   const fields = Object.fromEntries(['title', 'year', 'imdb_url', 'recommended_medium', 'status', 'owned_medium', 'purchase_url', 'added_by'].map(id => [id, { value: '' }]));
   for (const id of ['recommended_medium', 'owned_medium']) {
     const select = new RegExp(`<select id="${id}">([\\s\\S]*?)<\\/select>`).exec(html)[1];
     const options = [...select.matchAll(/<option value="([^"]*)">/g)].map(match => match[1]);
-    assert.ok(options.includes('Apple TV+')); assert.ok(options.includes('Apple TV / iTunes'));
+    assert.equal(options.includes('Apple TV+'), false, 'no new medium option is introduced');
+    assert.equal(options.filter(value => value === 'Apple TV / iTunes').length, 1);
     let selected = ''; Object.defineProperty(fields[id], 'value', { get: () => selected, set: next => selected = options.includes(next) ? next : '' });
   }
   const named = name => {
@@ -160,6 +297,7 @@ test('ordinary form options, save payload projection and fillForm round trip pre
   vm.runInContext(['getMovieFormData', 'getMovieGroupListData', 'fillForm', 'isStreamingMedium', 'getPurchaseLabel'].map(named).join('\n'), context);
   for (const row of [subscription(), store()]) {
     const form = { recommended_medium: 'DVD', purchase_url: '' }, after = applyPreview(makePreview(row, form), form);
+    assert.equal(after.recommended_medium, 'Apple TV / iTunes');
     fields.title.value = 'Authored movie'; fields.year.value = '2025'; fields.status.value = 'wishlist';
     for (const [key, value] of Object.entries(after)) fields[key].value = value;
     const saved = JSON.parse(vm.runInContext('JSON.stringify(getMovieGroupListData(getMovieFormData()))', context));
@@ -169,7 +307,7 @@ test('ordinary form options, save payload projection and fillForm round trip pre
     assert.equal(fields.recommended_medium.value, after.recommended_medium); assert.equal(fields.purchase_url.value, href);
     assert.equal(vm.runInContext(`isStreamingMedium(${JSON.stringify(after.recommended_medium)})`, context), true);
     fields.owned_medium.value = after.recommended_medium;
-    assert.equal(vm.runInContext('getPurchaseLabel({ owned_medium: document.getElementById("owned_medium").value })', context), row.provider.key === 'appletvplus' ? 'Дивитись на Apple TV+' : 'Дивитись на Apple TV');
+    assert.equal(vm.runInContext('getPurchaseLabel({ owned_medium: document.getElementById("owned_medium").value })', context), 'Дивитись на Apple TV');
   }
 });
 

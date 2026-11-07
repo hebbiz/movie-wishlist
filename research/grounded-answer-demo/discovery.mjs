@@ -25,7 +25,7 @@ export function discoveryScenario(film, { discovery, amazonRegion, urlSource, ki
 
 const providers = {
   apple: { name: 'Apple TV Store', medium: 'Apple TV / iTunes' }, rakuten: { name: 'Rakuten TV', medium: 'Rakuten TV' },
-  appletvplus: { name: 'Apple TV+', medium: 'Apple TV+' },
+  appletvplus: { name: 'Apple TV+', medium: 'Apple TV / iTunes' },
   hbo: { name: 'HBO Max', medium: 'HBO Max' }, netflix: { name: 'Netflix', medium: 'Netflix' },
   prime: { name: 'Prime Video', medium: 'Prime Video' }, megogo: { name: 'MEGOGO', medium: 'Megogo' },
 };

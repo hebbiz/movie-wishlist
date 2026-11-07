@@ -8,7 +8,7 @@ import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { syntheticHtml } from '../research/grounded-answer-demo/synthetic.mjs';
 import { FILMS } from '../research/grounded-answer-demo/config.mjs';
 import { classifyLink } from '../shared/media-link-policy.mjs';
-import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
+import { presentMediaGroups, presentMediaGroup } from '../assets/media-advice-presentation.mjs';
 import { makePreview, applyPreview, linkChoicesFor } from '../assets/media-advice.mjs';
 import { discoverMedia } from '../netlify/lib/media-advice-service.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
@@ -31,9 +31,9 @@ function regionalHTML(label = 'Subscription', name = 'Apple TV') {
   const anchor = `<a title="Дивитись / Купити на ${name}" href="https://click.justwatch.com/a?authored=regional%2fOnly"><img alt="${name}"><div class="text-body fw-bold">${name}</div><div class="text-body fw-bold">${label}</div></a>`;
   return kinoHTML('').replace('<a title="Дивитись / Купити на Example UA" href="https://example.com/redirect?x=%2F&amp;y=1"><img alt="Example UA">Example UA</a>', anchor);
 }
-const plusGroup = result => presentMediaGroups(result.rows, { filmId: film.id }).find(info => info.group.key === 'appletvplus');
+const appleGroup = result => presentMediaGroups(result.rows, { filmId: film.id }).find(info => info.group.key === 'apple');
 
-test('Apple subscription and Store are explicit separate canonical services, never inferred from a link', () => {
+test('Apple subscription and Store keep distinct internal product mappings, never inferred from a link', () => {
   assert.equal(mapProvider('tmdb', 350, 'Apple TV+', 'subscription')?.key, 'appletvplus');
   assert.equal(mapProvider('tmdb', 350, 'Apple TV', 'subscription')?.key, 'appletvplus');
   assert.equal(mapProvider('tmdb', 2, 'Apple TV Store', 'purchase')?.key, 'apple');
@@ -42,6 +42,11 @@ test('Apple subscription and Store are explicit separate canonical services, nev
   assert.equal(mapProvider('motn', 'apple', 'Apple TV', 'rent')?.key, 'apple');
   assert.equal(mapProvider('motn', 'apple', 'Apple TV', 'buy')?.key, 'apple');
   assert.equal(mapProvider('kinobaza', undefined, 'Apple TV+')?.key, 'appletvplus');
+  for (const args of [
+    ['tmdb', 350, 'Apple TV+', 'subscription'], ['motn', 'apple', 'Apple TV', 'subscription'],
+    ['kinobaza', undefined, 'Apple TV+'], ['tmdb', 2, 'Apple TV Store', 'purchase'],
+    ['motn', 'apple', 'Apple TV', 'rent'],
+  ]) assert.equal(mapProvider(...args)?.medium, 'Apple TV / iTunes', 'internal product scope does not create a new Wishlist medium');
   for (const args of [
     ['tmdb', 2, 'Apple TV+', 'subscription'], ['tmdb', 350, 'Apple TV Store', 'purchase'],
     ['motn', 'other', 'Apple TV', 'subscription'], ['motn', 'apple', 'Apple TV Store', 'subscription'],
@@ -66,15 +71,19 @@ test('TMDb bucket is preserved and three different source observations do not be
   assert.equal(rows.find(row => row.id.startsWith('tmdb:')).link.transferable, false, 'TMDb watch page is not a provider deep link');
   assert.equal(rows.find(row => row.id.startsWith('motn:')).link.href, plusURL);
   assert.equal(rows.find(row => row.id.startsWith('kinobaza:')).link.href, plusURL);
-  const info = plusGroup(result);
+  const merged = appleGroup(result);
+  const info = presentMediaGroup(merged.group, { filmId: film.id, selectedRow: rows.find(row => row.id.startsWith('kinobaza:')) });
   assert.ok(info);
+  assert.equal(info.group.key, 'apple');
+  assert.equal(info.group.title, 'Apple TV / iTunes');
+  assert.equal(info.group.rows.length, 3, 'display grouping does not discard distinct source observations');
   assert.equal(info.comparison.subtitles.symbol, '+');
   assert.equal(info.comparison.audio.symbol, '?');
   assert.equal(rows.find(row => row.id.startsWith('tmdb:')).subtitles.state, 'unknown', 'no source-row language borrowing');
   assert.notEqual(rows.find(row => row.id.startsWith('motn:')).subtitles.state, 'reported-positive');
 });
 
-test('mixed subscription/rental/purchase are distinct groups and retain each original source row', () => {
+test('mixed subscription/rental/purchase share one display group and retain each original source row', () => {
   const result = compose({
     ua: { flatrate: [{ provider_id: 350, provider_name: 'Apple TV+' }], rent: [{ provider_id: 2, provider_name: 'Apple TV Store' }], buy: [{ provider_id: 2, provider_name: 'Apple TV Store' }] },
     options: [option('Apple TV', 'subscription', plusURL), option('Apple TV', 'rent', storeURL), option('Apple TV', 'buy', storeURL)],
@@ -83,9 +92,11 @@ test('mixed subscription/rental/purchase are distinct groups and retain each ori
   assert.equal(result.unmapped.length, 0, 'MOTN shared service ID with different explicit access is not by itself a conflict');
   const before = JSON.stringify(result.rows);
   const groups = presentMediaGroups(result.rows, { filmId: film.id });
-  assert.deepEqual(groups.map(info => info.group.key).sort(), ['apple', 'appletvplus']);
-  assert.equal(groups.find(info => info.group.key === 'apple').group.rows.length, 4);
-  assert.equal(groups.find(info => info.group.key === 'appletvplus').group.rows.length, 2);
+  assert.deepEqual(groups.map(info => info.group.key), ['apple']);
+  assert.equal(groups[0].group.title, 'Apple TV / iTunes');
+  assert.equal(groups[0].group.rows.length, 6);
+  assert.equal(groups[0].group.rows.filter(row => row.provider.key === 'apple').length, 4);
+  assert.equal(groups[0].group.rows.filter(row => row.provider.key === 'appletvplus').length, 2);
   assert.equal(JSON.stringify(result.rows), before);
 });
 
@@ -117,13 +128,21 @@ test('subscription captions stay bound to their own block and never populate Sto
   const kino = await extractHtml(kinoHTML(caption('Apple TV+', plusURL) + store), film);
   const result = compose({ kino });
   const groups = presentMediaGroups(result.rows, { filmId: film.id });
-  const plus = groups.find(info => info.group.key === 'appletvplus'), apple = groups.find(info => info.group.key === 'apple');
+  assert.equal(groups.length, 1);
+  const plusRow = result.rows.find(row => row.provider.key === 'appletvplus');
+  const appleRow = result.rows.find(row => row.provider.key === 'apple');
+  const plus = presentMediaGroup(groups[0].group, { filmId: film.id, selectedRow: plusRow });
+  const apple = presentMediaGroup(groups[0].group, { filmId: film.id, selectedRow: appleRow });
   assert.equal(plus.comparison.audio.symbol, '?');
   assert.equal(plus.comparison.subtitles.symbol, '+');
   assert.equal(apple.comparison.audio.symbol, '+');
   assert.equal(apple.comparison.subtitles.symbol, '?');
-  assert.ok(plus.group.rows.every(row => row.kinobazaLocalization?.provider === 'Apple TV+'));
-  assert.ok(apple.group.rows.every(row => row.kinobazaLocalization?.provider === 'itunes'));
+  assert.equal(plus.transferRow, plusRow);
+  assert.equal(apple.transferRow, appleRow);
+  assert.equal(plusRow.kinobazaLocalization.provider, 'Apple TV+');
+  assert.equal(appleRow.kinobazaLocalization.provider, 'itunes');
+  assert.equal(plus.access, 'Передплата');
+  assert.notEqual(apple.access, 'Передплата');
 });
 
 test('same-source conflicting provider IDs, incomplete ambiguous labels, and unknown services remain explicit', () => {
@@ -178,7 +197,7 @@ test('unsafe or ambiguous provider blocks cannot lend positive subscription trac
     caption('Apple TV+', plusURL, '(укр. субтитри, невідоме)'),
   ]) {
     const kino = await extractHtml(kinoHTML(body), film), result = compose({ kino });
-    const info = plusGroup(result);
+    const info = appleGroup(result);
     if (info) assert.equal(info.comparison.subtitles.symbol, '?');
   }
 });
@@ -211,10 +230,10 @@ test('subscription selection requires explicit preview/apply and preserves exact
   const row = result.rows.find(row => row.provider.key === 'appletvplus');
   assert.ok(row);
   const before = { recommended_medium: 'DVD', purchase_url: 'https://example.test/old' }, snapshot = JSON.stringify(row);
-  const info = plusGroup(result), choices = linkChoicesFor(info);
+  const info = appleGroup(result), choices = linkChoicesFor(info);
   assert.equal(choices.length, 1);
   const preview = makePreview(row, before);
-  assert.equal(preview.after.recommended_medium, 'Apple TV+');
+  assert.equal(preview.after.recommended_medium, 'Apple TV / iTunes');
   assert.equal(preview.after.purchase_url, plusURL);
   assert.deepEqual(before, { recommended_medium: 'DVD', purchase_url: 'https://example.test/old' });
   assert.deepEqual(applyPreview(preview, before), preview.after);
@@ -282,10 +301,13 @@ test('server discovery preserves Apple subscription source rows, existing reserv
   assert.equal(publicResult.rows.length, 3);
   assert.ok(publicResult.unmapped.every(row => Object.keys(row).join() === 'name'));
   assert.doesNotMatch(JSON.stringify(publicResult), /AUTHORED_IDENTITY_DETAIL|observations?|resolver|metrics|rawHref|sourceURL|directorPeople|directorAliases|identityContext|requestsMade/);
-  const publicInfo = presentMediaGroups(publicResult.rows, { filmId: publicResult.film.id })[0];
-  assert.equal(publicInfo.group.key, 'appletvplus'); assert.equal(publicInfo.comparison.subtitles.symbol, '+');
+  const publicGroup = presentMediaGroups(publicResult.rows, { filmId: publicResult.film.id })[0];
+  const publicInfo = presentMediaGroup(publicGroup.group, { filmId: publicResult.film.id, selectedRow: publicResult.rows.find(row => row.id.startsWith('kinobaza:')) });
+  assert.equal(publicInfo.group.key, 'apple'); assert.equal(publicInfo.comparison.subtitles.symbol, '+');
   assert.equal(publicInfo.comparison.audio.symbol, '?');
   const choices = linkChoicesFor(publicInfo); assert.equal(choices.length, 1);
-  assert.equal(makePreview(choices[0].row, { recommended_medium: '', purchase_url: '' }).after.purchase_url, plusURL);
+  const preview = makePreview(choices[0].row, { recommended_medium: '', purchase_url: '' });
+  assert.equal(preview.after.purchase_url, plusURL);
+  assert.equal(preview.after.recommended_medium, 'Apple TV / iTunes');
   assert.equal(JSON.stringify(result), before);
 });

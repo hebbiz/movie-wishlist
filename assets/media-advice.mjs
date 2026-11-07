@@ -1,10 +1,10 @@
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
-import { groupMediaRows, presentMediaGroups, presentMediaRow, summarizeMediaGroups } from './media-advice-presentation.mjs';
+import { groupMediaRows, presentMediaGroup, presentMediaGroups, presentMediaRow, summarizeMediaGroups } from './media-advice-presentation.mjs';
 import { groupLinkChoices, preferredAppleLinkChoice } from './media-advice-link-choices.mjs';
 
-const media = Object.freeze({ apple: 'Apple TV / iTunes', appletvplus: 'Apple TV+', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
-const serviceIcons = Object.freeze({ apple: 'appletv', appletvplus: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
+const media = Object.freeze({ apple: 'Apple TV / iTunes', appletvplus: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
+const serviceIcons = Object.freeze({ apple: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
 // Only repeated notice text is collapsed. The original observations, their
 // distinct offers and URLs remain in the result and privileged source details.
 export function otherPlatformLabels(rows) {
@@ -34,7 +34,9 @@ export function linkChoicesFor(info) {
   if (info?.group?.readOnly) return [];
   if (info?.group?.key === 'apple') {
     const choice = preferredAppleLinkChoice(info.group.rows, { preferredRow: info.transferRow });
-    return choice ? [choice] : [];
+    // One UI service, but not one combined offer: Store navigation keeps its
+    // established preference and subscription choices retain their own rows.
+    return [...(choice ? [choice] : []), ...groupLinkChoices(info.group.rows, { providerKey: 'appletvplus', preferredRow: info.transferRow })];
   }
   return groupLinkChoices(info?.group?.rows, { providerKey: info?.group?.key, preferredRow: info?.transferRow });
 }
@@ -177,8 +179,8 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const sourceDetails = node('details'); sourceDetails.append(node('summary', 'Джерельні деталі варіантів'));
     for (const group of groupMediaRows(rowsFor())) for (const [index, row] of group.rows.entries()) {
       sourceDetails.append(node('h4', `${group.title} · варіант ${index + 1}`), node('pre', JSON.stringify(mediaSourceDetails(row), null, 2)));
-      // Apple alternatives stay inspectable on demand, not in the primary
-      // chooser or copyable short report. Text only: no automatic navigation.
+      // Original Apple alternatives stay inspectable even where the Store's
+      // primary chooser retains only its preferred pointer. No navigation.
       const transfer = group.key === 'apple' ? transferFor(row) : null;
       if (transfer?.link.transferable) {
         const address = node('details'); address.className = 'media-advice-link-address media-advice-diagnostic-link';
@@ -207,7 +209,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     footer.append(links, node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'));
     const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; footer.append(logo); details.append(footer); chat.append(details);
   }
-  function comparison(groups) {
+  function comparison(groups, { onAppleSelection = () => {} } = {}) {
     if (!groups.length) return;
     const body = bubble(); body.classList.add('media-advice-comparison-bubble', 'media-advice-options');
     const table = node('table'); table.className = 'media-advice-comparison';
@@ -223,6 +225,10 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const symbol = state => { const e = node('span', state.symbol); e.className = 'media-advice-symbol'; e.setAttribute('role', 'img'); e.setAttribute('aria-label', state.label); e.setAttribute('title', state.label); e.dataset.state = state.state; return e; };
     const fallback = { state: 'unknown', symbol: '?', label: 'Невідомо: даних недостатньо, це не означає відсутність.' };
     session.linkSelections ??= new Map();
+    // A presentation change cannot change a navigation choice's source row.
+    // In particular, literal-equal subscription links may have different
+    // language evidence; retain their chosen representative for this view.
+    const choicesByGroup = new Map(groups.map(info => [info, linkChoicesFor(info)]));
     const selected = groups.find(info => info.group.key === session.platformKey) ?? groups.find(info => !info.group.readOnly) ?? groups[0];
     function showActions(info) {
       if (!valid()) return invalidate();
@@ -230,23 +236,38 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       for (const item of controls) item.button.setAttribute('aria-pressed', String(item.info === info));
       actions.replaceChildren();
       const group = info.group;
-      const links = linkChoicesFor(info);
-      const chosen = links.find(link => link.href === session.linkSelections.get(group.key)) ?? links.find(link => link.row === info.transferRow) ?? links[0];
+      const links = choicesByGroup.get(info) ?? [];
+      // Equal hrefs do not establish equal access products or language claims.
+      const choiceKey = link => JSON.stringify([link.row?.provider?.key, link.row?.id, link.href]);
+      const chosen = links.find(link => choiceKey(link) === session.linkSelections.get(group.key)) ?? links.find(link => link.row === info.transferRow) ?? links[0];
       const row = chosen?.row ?? info.transferRow;
-      const item = controls.find(item => item.info === info); if (item && row) item.tr.dataset.rowId = row.id;
+      const selectedInfo = group.key === 'apple' ? presentMediaGroup(group, { filmId: session.result?.film?.id, selectedRow: row }) : info;
+      if (group.key === 'apple') onAppleSelection(info, selectedInfo);
+      const item = controls.find(item => item.info === info);
+      if (item && row) {
+        item.tr.dataset.rowId = row.id;
+        if (group.key === 'apple') for (const field of ['availability', 'audio', 'subtitles']) item.cells[field].replaceChildren(symbol(selectedInfo.comparison?.[field] ?? fallback));
+      }
       actions.append(node('p', `Обраний сервіс: ${group.title}`));
-      if (group.key === 'appletvplus') actions.append(node('p', `Тип доступу: ${presentMediaRow(row).accessLabel}.`));
+      if (group.key === 'apple') {
+        const presented = presentMediaRow(row), product = row?.provider?.key === 'appletvplus' ? 'Apple TV+' : 'Apple TV Store';
+        actions.append(node('p', `Тип доступу: ${presented.accessLabel} · ${product}. Джерело: ${presented.sourceLabel}.`));
+      }
       if (links.length > 1) {
         const label = node('label', 'Посилання сервісу'), select = node('select'); select.className = 'media-advice-link-select';
         select.setAttribute('aria-label', `Посилання сервісу ${group.title}`);
         for (const [index, link] of links.entries()) {
-          const option = node('option', `Посилання ${index + 1} · ${new URL(link.href).hostname}`);
+          const presented = presentMediaRow(link.row);
+          const label = group.key === 'apple'
+            ? `${link.row?.provider?.key === 'appletvplus' ? 'Apple TV+' : 'Apple TV Store'} · ${presented.accessLabel} · ${presented.sourceLabel} · ${new URL(link.href).hostname}`
+            : `Посилання ${index + 1} · ${new URL(link.href).hostname}`;
+          const option = node('option', label);
           option.value = String(index); option.selected = link === chosen; select.append(option);
         }
         select.addEventListener('change', () => {
           if (!valid()) return invalidate();
           const link = links[Number(select.value)]; if (!link) return;
-          session.linkSelections.set(group.key, link.href); showActions(info);
+          session.linkSelections.set(group.key, choiceKey(link)); showActions(info);
           actions.querySelector('select')?.focus({ preventScroll: true });
         });
         label.append(select); actions.append(label);
@@ -263,6 +284,13 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const choose = button('Обрати', () => review(row)); choose.disabled = group.readOnly || !transfer; buttons.append(choose); actions.append(buttons);
     }
     for (const info of groups) {
+      let displayed = info;
+      if (info.group.key === 'apple') {
+        const links = choicesByGroup.get(info) ?? [];
+        const chosen = links.find(link => JSON.stringify([link.row?.provider?.key, link.row?.id, link.href]) === session.linkSelections.get(info.group.key)) ?? links.find(link => link.row === info.transferRow) ?? links[0];
+        displayed = presentMediaGroup(info.group, { filmId: session.result?.film?.id, selectedRow: chosen?.row ?? info.transferRow });
+        onAppleSelection(info, displayed);
+      }
       const tr = node('tr'); tr.className = 'media-advice-row'; tr.dataset.providerKey = info.group.key; tr.dataset.rowId = info.transferRow?.id ?? '';
       const cell = node('th'); cell.setAttribute('scope', 'row');
       const choose = button('', () => showActions(info)); choose.className = 'media-advice-service-select'; choose.setAttribute('aria-label', info.group.title); choose.setAttribute('title', info.group.title); choose.setAttribute('aria-pressed', 'false');
@@ -274,16 +302,15 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         icon.addEventListener('load', () => { if (icon.naturalWidth > 0) choose.dataset.iconState = 'loaded'; else fallbackName(); });
         icon.addEventListener('error', fallbackName);
         icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; slot.append(icon);
-        // Keep the subscription service visibly distinct from the Store even
-        // on small screens where the full accessible name is visually hidden.
-        if (info.group.key === 'appletvplus') slot.append(node('span', '+'));
         choose.append(slot);
       }
       const name = node('span', info.group.title); name.className = 'media-advice-service-name'; choose.append(name);
       cell.append(choose); tr.append(cell);
-      const availability = node('td'); availability.append(symbol(info.comparison?.availability ?? fallback)); tr.append(availability);
-      for (const field of ['audio', 'subtitles']) { const td = node('td'); td.append(symbol(info.comparison?.[field] ?? fallback)); tr.append(td); }
-      controls.push({ info, tr, button: choose }); rows.append(tr);
+      const cells = {};
+      for (const field of ['availability', 'audio', 'subtitles']) {
+        const td = node('td'); td.append(symbol(displayed.comparison?.[field] ?? fallback)); tr.append(td); cells[field] = td;
+      }
+      controls.push({ info, tr, button: choose, cells }); rows.append(tr);
     }
     table.append(rows); body.append(table);
     const legend = node('details'); legend.className = 'media-advice-legend';
@@ -322,7 +349,12 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         if (!index) bubble('Знайшов кілька карток із підтвердженою відповідністю фільму. Оберіть, дані якої додати до відповіді.');
         chat.append(button(`Використати підтверджену картку ${index + 1}`, () => { if (!valid()) return invalidate(); session.choice = choice; render(); }));
       }
-      comparison(groups);
+      comparison(groups, { onAppleSelection(info, selectedInfo) {
+        // Only the local presentation changes. The source rows and their
+        // groups stay intact; changing an offer never starts discovery.
+        Object.assign(info, selectedInfo);
+        answer.querySelector('p').textContent = summarizeMediaGroups(groups, { sourcesIncomplete });
+      } });
       for (const label of otherPlatformLabels([...(session.result.unmapped ?? []), ...(session.choice?.unmapped ?? [])])) {
         const other = node('p', `Інші платформи — ${label}: лише для перегляду. Тип доступу й умови потрібно перевірити окремо.`); other.className = 'media-advice-other'; chat.append(other);
       }
@@ -345,7 +377,13 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     preview?.remove(); diagnostics.hidden = true; chat.hidden = true;
     preview = node('section'); preview.className = 'media-advice-preview';
     preview.append(node('h3', 'Перевірте зміни'), node('p', `Рекомендований носій: ${before.recommended_medium || '—'} → ${transfer.medium}`), node('p', linkPreview(before.purchase_url, transfer.url)), node('p', 'Статус, придбаний носій, назва, рік і автор не змінюються. Збереження — звичайною кнопкою форми.'));
-    if (row.provider?.key === 'appletvplus') preview.append(node('p', `Тип доступу: ${presentMediaRow(row).accessLabel}.`));
+    if (['apple', 'appletvplus'].includes(row.provider?.key)) {
+      const presented = presentMediaRow(row), group = groupMediaRows([row])[0];
+      const selectedInfo = presentMediaGroup(group, { filmId: session.result?.film?.id, selectedRow: row });
+      const product = row.provider.key === 'appletvplus' ? 'Apple TV+' : 'Apple TV Store';
+      preview.append(node('p', `Тип доступу: ${presented.accessLabel} · ${product}. Джерело: ${presented.sourceLabel}.`));
+      preview.append(node('p', selectedInfo.comparison.audio.label), node('p', selectedInfo.comparison.subtitles.label));
+    }
     if (before.purchase_url || transfer.url) {
       const details = node('details'); details.className = 'media-advice-preview-links';
       details.append(node('summary', 'Повні адреси'), node('p', `Зараз: ${before.purchase_url || 'відсутнє'}`), node('p', `Обране: ${transfer.url || 'відсутнє'}`)); preview.append(details);

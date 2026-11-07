@@ -31,10 +31,14 @@ function rowSource(row) {
   return sourceLabels.get(row?.provenance?.source) ?? 'unknown';
 }
 function variantReferences(rows) {
-  const references = new Map();
+  const references = new Map(), counters = new Map();
   for (const [groupIndex, group] of groupMediaRows(rows).entries()) {
-    const platform = platforms.has(group.key) ? group.key : `unmapped-group-${count(groupIndex + 1)}`;
-    for (const [index, row] of group.rows.entries()) references.set(row, `${platform}/variant-${count(index + 1)}`);
+    for (const row of group.rows) {
+      // UI service grouping must not erase the original product namespace.
+      const platform = !group.readOnly && platforms.has(row.provider?.key) ? row.provider.key : `unmapped-group-${count(groupIndex + 1)}`;
+      const index = (counters.get(platform) ?? 0) + 1; counters.set(platform, index);
+      references.set(row, `${platform}/variant-${count(index)}`);
+    }
   }
   return references;
 }
@@ -181,7 +185,8 @@ export function safeMediaReport(result, { applied = false, filmContext, stale } 
   lines.push(`Kinobaza projection: mapped ${count(kinoRows)}; other platforms ${count(kinoOther)}; foreign-context candidates are not UA offers.`);
   lines.push(`Film-level UA audio badge: ${loc(result?.filmLocalization?.ukrainianAudio?.state)}; not provider tracks.`);
   for (const info of presentMediaGroups(rows, { filmId: result?.film?.id }).filter(info => info.kinobaza.applied)) {
-    lines.push(`M4 Kinobaza interpretation/${platforms.has(info.group.key) ? info.group.key : 'unknown'}: UA by application rule matched-provider-block-app-ua-interpretation; audio ${loc(info.kinobaza.audio)}, subtitles ${loc(info.kinobaza.subtitles)}; not independently verified availability or offer binding.`);
+    const product = info.transferRow?.provider?.key;
+    lines.push(`M4 Kinobaza interpretation/${platforms.has(product) ? product : 'unknown'}: UA by application rule matched-provider-block-app-ua-interpretation; audio ${loc(info.kinobaza.audio)}, subtitles ${loc(info.kinobaza.subtitles)}; not independently verified availability or offer binding.`);
   }
   for (const r of rows.slice(0, 24)) {
     const source = rowSource(r);

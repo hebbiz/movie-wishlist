@@ -158,12 +158,6 @@ const MEDIA_SUBLIST_META = {
     order: 50,
     iconWidth: 23,
   },
-  "Apple TV+": {
-    label: "Apple TV+",
-    icon: "assets/icons/media/appletv.svg",
-    order: 51,
-    iconWidth: 23,
-  },
   "HBO Max": {
     label: "HBO Max",
     icon: "assets/icons/media/hbomax.svg",
@@ -6643,7 +6637,6 @@ function getPurchaseLabel(movie) {
   "HBO Max",
   "Disney+",
   "Apple TV / iTunes",
-  "Apple TV+",
   "Prime Video",
   "Megogo",
   "Rakuten TV",
@@ -6651,7 +6644,6 @@ function getPurchaseLabel(movie) {
 
   const displayNames = {
   "Apple TV / iTunes": "Apple TV",
-  "Apple TV+": "Apple TV+",
   "Prime Video": "Prime Video",
   "HBO Max": "HBO Max",
   "Disney+": "Disney+",
@@ -7352,7 +7344,6 @@ function isStreamingMedium(medium) {
     "HBO Max",
     "Disney+",
     "Apple TV / iTunes",
-    "Apple TV+",
     "Prime Video",
     "Megogo",
     "Rakuten TV",

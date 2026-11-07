@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 // Opt-in real browser against app.html, authored source rows and an entirely
 // local Save interceptor. No provider/source/API/Supabase request is allowed.
-test('Apple TV+ real app form: accessible mobile/wide comparison, explicit preview/apply and ordinary local-only Save capture', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
+test('One Apple TV / iTunes real app form: mixed offer selection, own tracks, preview/apply and ordinary local-only Save capture', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const root = resolve(import.meta.dirname, '..');
   const server = createServer(async (req, res) => {
     try {
@@ -62,22 +62,30 @@ test('Apple TV+ real app form: accessible mobile/wide comparison, explicit previ
     await page.locator('#mediaAdviceEntry').click();
     await page.getByRole('button', { name: 'Обрати', exact: true }).waitFor();
     await page.waitForFunction(() => [...document.querySelectorAll('.media-advice-provider-icon')].every(image => image.complete && image.naturalWidth > 0));
-    const choice = page.getByRole('button', { name: 'Apple TV+', exact: true });
+    const choice = page.getByRole('button', { name: 'Apple TV / iTunes', exact: true });
     assert.equal(await choice.count(), 1);
+    assert.equal(await page.getByRole('button', { name: 'Apple TV+', exact: true }).count(), 0);
+    assert.equal(await page.locator('.media-advice-comparison tbody tr').count(), 1);
+    assert.equal(await page.locator('#recommended_medium option[value="Apple TV+"], #owned_medium option[value="Apple TV+"]').count(), 0);
     await choice.focus(); await page.keyboard.press('Enter');
     assert.equal(await choice.getAttribute('aria-pressed'), 'true');
-    assert.equal(await page.getByRole('button', { name: 'Apple TV / iTunes', exact: true }).getAttribute('aria-pressed'), 'false');
-    assert.deepEqual(await page.locator('[data-provider-key="appletvplus"] td').allTextContents(), ['◐', '?', '+']);
-    assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['●', '?', '?']);
+    const selectOffer = async serviceLabel => {
+      const select = page.locator('.media-advice-link-select');
+      assert.equal(await select.count(), 1);
+      const value = await select.locator('option').evaluateAll((options, label) => options.find(option => option.textContent.includes(label))?.value, serviceLabel);
+      assert.notEqual(value, undefined, `offer ${serviceLabel} is separately selectable`);
+      await select.selectOption(value);
+    };
+    await selectOffer('Apple TV+');
+    assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['◐', '?', '+']);
     assert.match(await page.locator('.media-advice-actions').innerText(), /Тип доступу: Передплата/);
     assert.equal(await page.locator('.media-advice-other').count(), 1);
     assert.equal(await page.getByRole('button', { name: 'Діагностичний звіт' }).count(), 0);
-    assert.equal(await page.locator('.media-advice-link-select').count(), 0);
+    assert.equal(await page.locator('.media-advice-link-select option').count(), 2, 'subscription and Store choices are retained within the one service');
     const geometry = await page.locator('.media-advice-comparison').evaluate(table => {
       const rect = e => { const r = e.getBoundingClientRect(); return { x: r.x, right: r.right, center: r.x + r.width / 2, width: r.width, height: r.height }; };
       return { headers: [...table.querySelectorAll('thead th')].map(rect), rows: [...table.querySelectorAll('tbody tr')].map(row => ({
         cells: [...row.children].map(rect), button: rect(row.querySelector('button')), slot: rect(row.querySelector('.media-advice-icon-slot')),
-        plus: row.dataset.providerKey === 'appletvplus' ? rect(row.querySelector('.media-advice-icon-slot > span')) : null,
         name: rect(row.querySelector('.media-advice-service-name')), label: row.querySelector('button').getAttribute('aria-label') })) };
     });
     const steps = geometry.headers.slice(1).map((h, i) => h.center - geometry.headers[i].center);
@@ -86,30 +94,41 @@ test('Apple TV+ real app form: accessible mobile/wide comparison, explicit previ
       assert.ok(row.button.width >= 44 && row.button.height >= 44);
       assert.ok(row.slot.x >= row.cells[0].x && row.slot.right <= row.cells[0].right);
       for (const [i, cell] of row.cells.entries()) assert.ok(Math.abs(cell.center - geometry.headers[i].center) < 1);
-      if (row.plus) assert.ok(row.plus.x >= row.slot.x && row.plus.right <= row.slot.right, 'visible plus stays inside its service emblem slot');
       assert.equal(row.name.width <= 1, width <= 480, 'loaded names are visually hidden only on mobile');
     }
     assert.equal(await page.locator('.media-advice-dialog').evaluate(e => e.scrollWidth <= e.clientWidth), true);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     if (process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/apple-subscription-${width}.png`, animations: 'disabled' });
-    await page.getByRole('button', { name: 'Обрати', exact: true }).click();
-    assert.match(await page.locator('.media-advice-preview').innerText(), /→ Apple TV\+/);
-    assert.match(await page.locator('.media-advice-preview').innerText(), /Тип доступу: Передплата/);
-    await page.getByText('Повні адреси', { exact: true }).click();
-    assert.ok((await page.locator('.media-advice-preview').innerText()).includes(href));
-    assert.equal(await page.evaluate(() => authoredDBWrites.length), 0);
-    await page.getByRole('button', { name: 'Перенести в картку', exact: true }).click();
-    await page.waitForFunction(() => !mediaAdviceController.dialog.open);
-    assert.equal(await page.locator('#recommended_medium').inputValue(), 'Apple TV+');
-    assert.equal(await page.locator('#purchase_url').inputValue(), href);
-    assert.deepEqual(await page.evaluate(() => [document.querySelector('#status').value, document.querySelector('#owned_medium').value, activeAdviceRoom.id, mykolaChat.textContent]), ['wishlist', '', 'KEEP', 'SOCIAL HISTORY']);
-    assert.equal(await page.evaluate(() => authoredDBWrites.length), 0, 'apply changes only form fields, never Save');
+    // Store is not allowed to inherit the subscription's captioned subtitles.
+    await selectOffer('Apple TV Store');
+    assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['●', '?', '?']);
+    assert.match(await page.locator('.media-advice-actions').innerText(), /Тип доступу: Купівля/);
+    const previewAndApply = async (expectedURL, expectedAccess) => {
+      await page.getByRole('button', { name: 'Обрати', exact: true }).click();
+      assert.match(await page.locator('.media-advice-preview').innerText(), /→ Apple TV \/ iTunes/);
+      assert.ok((await page.locator('.media-advice-preview').innerText()).includes(`Тип доступу: ${expectedAccess}`));
+      await page.getByText('Повні адреси', { exact: true }).click();
+      assert.ok((await page.locator('.media-advice-preview').innerText()).includes(expectedURL));
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), 0);
+      await page.getByRole('button', { name: 'Перенести в картку', exact: true }).click();
+      await page.waitForFunction(() => !mediaAdviceController.dialog.open);
+      assert.equal(await page.locator('#recommended_medium').inputValue(), 'Apple TV / iTunes');
+      assert.equal(await page.locator('#purchase_url').inputValue(), expectedURL);
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), 0, 'apply changes only form fields, never Save');
+    };
+    await previewAndApply(store.link.href, 'Купівля');
     await page.locator('#mediaAdviceEntry').click();
     assert.equal(discoveries, 1);
-    await page.locator('[data-provider-key="appletvplus"] img').evaluate(image => image.dispatchEvent(new Event('error')));
+    await selectOffer('Apple TV+');
+    assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['◐', '?', '+']);
+    await previewAndApply(href, 'Передплата');
+    assert.deepEqual(await page.evaluate(() => [document.querySelector('#status').value, document.querySelector('#owned_medium').value, activeAdviceRoom.id, mykolaChat.textContent]), ['wishlist', '', 'KEEP', 'SOCIAL HISTORY']);
+    await page.locator('#mediaAdviceEntry').click();
+    assert.equal(discoveries, 1);
+    await page.locator('[data-provider-key="apple"] img').evaluate(image => image.dispatchEvent(new Event('error')));
     assert.equal(await choice.getAttribute('data-icon-state'), 'failed');
     assert.equal(await choice.locator('.media-advice-service-name').isVisible(), true);
-    assert.equal(await choice.getAttribute('aria-label'), 'Apple TV+');
+    assert.equal(await choice.getAttribute('aria-label'), 'Apple TV / iTunes');
     assert.equal(await page.locator('.media-advice-dialog').evaluate(e => e.scrollWidth <= e.clientWidth), true);
     if (width === 375 && process.env.M4_SCREENSHOT_DIR) await page.locator('.media-advice-dialog').screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/apple-subscription-fallback-${width}.png`, animations: 'disabled' });
     await page.getByRole('button', { name: '← До картки', exact: true }).click();
@@ -117,9 +136,9 @@ test('Apple TV+ real app form: accessible mobile/wide comparison, explicit previ
     await page.waitForFunction(() => authoredDBWrites.length === 1);
     const saved = await page.evaluate(() => authoredDBWrites[0]);
     assert.equal(saved.name, 'movie_group_lists'); assert.equal(saved.operation, 'update');
-    assert.equal(saved.fields.recommended_medium, 'Apple TV+'); assert.equal(saved.fields.purchase_url, href);
+    assert.equal(saved.fields.recommended_medium, 'Apple TV / iTunes'); assert.equal(saved.fields.purchase_url, href);
     await page.evaluate(saved => fillForm({ title: 'The Lost Bus', year: 2025, ...saved }), saved.fields);
-    assert.equal(await page.locator('#recommended_medium').inputValue(), 'Apple TV+');
+    assert.equal(await page.locator('#recommended_medium').inputValue(), 'Apple TV / iTunes');
     assert.equal(await page.locator('#purchase_url').inputValue(), href);
     assert.deepEqual(await page.evaluate(() => authoredOpened), [], 'no real or mocked platform transition was invoked');
     assert.equal(discoveries, 1);
