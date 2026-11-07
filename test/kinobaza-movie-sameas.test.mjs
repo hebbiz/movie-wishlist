@@ -159,11 +159,11 @@ test('Roman, Ukrainian г/ґ and unknown translations preserve exact year and di
   }
 });
 
-test('new semantic bypass does not erase explicitly ambiguous directors', () => {
+test('semantic ID route distinguishes credited cardinality from ambiguous fields', () => {
   const selected = { ...film, directorCount: 2, directorPeople: [...film.directorPeople, { namespace: 'tmdb:person', personId: 999900002, names: ['Another Person'] }] };
-  assert.equal(inspect(movie(), {}, selected).reason, 'director-scope-unestablished');
+  assert.equal(inspect(movie(), {}, selected).reason, 'explicit-stable-title-year-match');
   assert.equal(inspect(movie(), { stable: '<tr><td>Режисер:</td><td>Second Person</td></tr>' }).reason, 'director-scope-unestablished');
-  assert.equal(inspect(movie(), { director: '<a href="https://kinobazaua.com/persons/person-one">Person One</a>, <a href="https://kinobazaua.com/persons/person-two">Person Two</a>' }).reason, 'director-scope-unestablished');
+  assert.equal(inspect(movie(), { director: '<a href="https://kinobazaua.com/persons/person-one">Person One</a>, <a href="https://kinobazaua.com/persons/person-two">Person Two</a>' }).reason, 'explicit-stable-title-year-match');
 });
 
 test('server-known exact linked-person conflict blocks new semantic bypass, not ordinary spelling uncertainty', async () => {

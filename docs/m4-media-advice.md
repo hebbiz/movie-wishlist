@@ -6593,8 +6593,11 @@ shared ID, an exactly known title and equal primary year, the existing strong
 ID route no longer requires identical director spelling. A year difference
 still requires director proof. Terminal Roman glyph, Ukrainian г/ґ and unknown
 translation routes retain their narrower exact-original/primary-year/director
-requirements. Explicit multi-director ambiguity is not erased by the new
-semantic proof, including multiple people linked inside one metadata cell.
+requirements. Multiple people credited in one clearly structured metadata
+field are not, by themselves, competing film identities (see the 2026-11-07
+correction below). Duplicate director fields and opaque/unscoped multi-person
+values remain unresolved; director-required routes still need a single
+confirmed person and do not infer group membership from a flat alias list.
 An already proven contradiction for the exact bound director profile also
 cannot be bypassed. A different spelling alone is not that contradiction.
 
@@ -6831,3 +6834,148 @@ and recovery/state checks. This PR does **not** apply, merge, activate or deploy
   full run above passes. The first deadline test needed bounded microtask
   draining before asserting a dispatched predicted GET; product deadlines were
   not relaxed. No failure was hidden by a source retry.
+
+### Sin City: credited director groups versus ambiguous identity (2026-11-07)
+
+Base: `589b993cb6746356a6c47d4938b3c8f777e00f27` (`develop`). No search,
+ranking, source-link/localization, Beta/diagnostics authorization, ledger,
+deadline, migration or UI behavior change is part of this fix.
+
+#### Historical observation versus current reproduction
+
+The owner reported develop deploy `6aebab31553f7e3e61dbdec2`, run
+`a5991ff9-9d03-4d8b-b3f4-8266ebeb7919`, for IMDb `tt0401792`: the read card
+agreed on stable film ID, Ukrainian/original titles and year but stopped at
+`director-scope-unestablished`; prediction was `already-read`. We have that
+description, not the complete report, historical HTML, candidate list or full
+TMDb response. The current capture is not a reconstruction of that invocation.
+`already-read` correctly avoids reading the same URL again; another GET would
+not fix a deterministic identity refusal on the same card.
+
+Current response `https://kinobazaua.com/titles/sin-city`, captured
+2026-11-07T08:56:31Z, HTTP200,275793 bytes, SHA256
+`4b9e5e7a023a483f4f97856fbce3c1a943ac5eca46a556e563ae806166909756`:
+
+- One canonical, H1 `Місто Гріхів (2005)` and metadata H2 `Sin City`.
+- One owned JSON-LD Movie at line305; its own URL is the opened card and its
+  name agrees with H1. `sameAs` contains IMDb `tt0401792` and TMDb movie187,
+  alongside Wikipedia links. No `datePublished` is used as a film year.
+- One film metadata row, lines974–979, labelled **`Режисери:`**, containing
+  three comma-separated `/persons/` links: Frank Miller, Quentin Tarantino and
+  Robert Rodriguez, in the source's Ukrainian spellings. It is inside the main
+  film interval, before `availabilityAccordion` at line1179. This is one
+  structured credits field, not three competing metadata fields. No parse
+  errors were observed on this particular current Sin City body.
+
+Two code conditions explain the omission. The source reader recognized only
+singular `Режисер:`, so it did not report that plural row. Independently, the
+JSON-LD-only same-ID path vetoed any selected multi-director scope before its
+exact-title/same-year success branch. In a controlled declared-three-director
+context on these current bytes, the pinned develop code reproduces exactly
+`director-scope-unestablished`. Thus a stronger film-ID route was blocked by
+director cardinality, not by a demonstrated ID, title, year or person conflict.
+
+#### General correction and preserved refusals
+
+Both singular/plural labels are read only inside the existing film metadata
+boundary. One field can contain a bounded list of distinct, nonempty exact
+Kinobaza person-profile links separated by simple punctuation/line breaks.
+This establishes **structure only**, never alias equivalence, group membership,
+completeness or the identities of the credited people. No profile request or
+person alias is synthesized.
+
+Reliable owned Movie.sameAs ID + exact known H1 title + validated original-title
+scope/value + equal trusted primary year may use the existing
+`stable-id-title-year` route regardless of selected/source director cardinality.
+The protected report marks all three director gates `not-evaluated`, not
+verified. A prior proven exact-profile conflict is still checked against every
+eligible group pointer with no network I/O.
+
+Duplicate director fields, opaque combined names, extra unscoped text, groups
+containing non-person/foreign/parameterized links, duplicate profile addresses,
+oversized groups and critical HTML/JSON-LD ambiguity do not gain authority.
+Film-ID conflict precedence, same-system comparison, main-Movie ownership,
+canonical/H1/H2 checks, sequel/title conflicts and date semantics remain intact.
+No reliable ID, a different year, Roman-glyph, Ukrainian г/ґ or unknown-translation
+routes still require the old single-person director proof. Two people sharing
+a spelling are not silently deduplicated into one person on that route.
+Single-person name refusals keep their prior diagnostic reasons.
+
+#### Same-response before/after results
+
+Five current HTML captures are replayed against the exact pinned old parser and
+the new parser, without another source read. Sin City's independent input is
+the owner-supplied IMDb/original/year plus a declared expected Ukrainian display
+title and multi-credit test scope; it is **not a new trusted TMDb API response**.
+Only IMDb is compared to that input; source TMDb187 is not copied into trusted
+selected evidence. The four regressions use the retained 2026-11-04 TMDb
+projection's title/original/year/people subset, not fresh TMDb metadata or a
+claim about a new deployed invocation. The full source candidate search is not
+re-executed.
+
+| Current card | Old -> new confirmation on the same bytes | New Ukrainian audio/subtitle display |
+| --- | --- | --- |
+| Sin City2005 | unresolved -> matched, owned-ID/title/year | MEGOGO+/?, Netflix?/+, Apple?/? |
+| Renfield2023 | matched -> matched | Rakuten+/+, Netflix+/+, MEGOGO+/+ |
+| Lucky Number Slevin2006 | matched -> matched; extraction partial preserved | MEGOGO+/+, Apple?/? |
+| Meet the Fockers2004 | matched -> matched, original/year/director translation route | MEGOGO+/+, Rakuten?/+, Netflix?/+, Apple?/? |
+| Meet the Parents2000 | matched -> matched | MEGOGO+/+, Rakuten?/+, Netflix?/+, Apple?/? |
+
+For Sin City the returned exact source links include
+`https://megogo.net/ua/view/23089806` and
+`https://www.netflix.com/title/70021630`. Apple retains its original tracking
+pointer, without printing parameter values in the research report. All three
+pass the unchanged link policy. `?` is unknown, not absent. These are Kinobaza
+block claims under the existing UA application rule, **not independently
+verified platform availability, tracks, regional/account entitlement or offer
+equivalence**. No destination/redirect was visited. No language evidence was
+transferred between providers or offers.
+
+Both ordinary Beta product projection and diagnostic-authorized presentation
+produce identical tables; language details remain in their existing blocks.
+Exact link preview/explicit apply were exercised in memory with the original
+form unchanged until apply. This is not a live Save, login or physical browser
+test. Cross-replaying the two current Fockers/Parents bodies against the other
+selected IMDb context yields `source-stable-id-conflict` and zero records.
+
+A separate authored-search transport replay through the unchanged resolver
+confirms Sin City on one card, skips prediction as `prior-card-confirmed`, and
+uses search/card reservations only (6 total logical attempts including the4
+omitted baseline stages). It makes **zero HTTP**, establishes no Tavily ranking
+or new provider response, and does not attest a live ledger/session.
+
+#### Requests and verification limits
+
+New controlled source traffic: **6 GET** =1 robots.txt +5 Kinobaza cards, all200;
+Tavily Basic0/Advanced0,0 credits; TMDb API0; person profiles0; platforms0;
+shared DB/Wishlist0. Measured GET wire times total1.681s (cards1.326s). Replay
+adds0 external requests and is not an independent latency benchmark. A
+separate web-tool attempt to open the public TMDb movie page returned no
+accessible content; its underlying HTTP dispatch is not attested. It is not
+counted as a successful TMDb check or silently folded into the six measured GETs.
+
+The capture's initial robots guard conservatively stopped after its sole
+robots read because it did not distinguish listing-query rules and the separate
+meta-externalagent group. After reviewing the retained rules, the five ordinary
+card paths were explicitly qualified and the series continued. No received
+response was fetched again, no blocked path was used, and runtime robots/search
+logic was not changed. Raw current HTML remains a local study artifact, not a
+committed fixture, credential store or historical archive.
+
+Authored tests cover clean plural/singular groups, absent/conflicting IDs,
+wrong/duplicate/nested Movies, original/title/canonical/year contradictions,
+different series parts, same-name people, opaque/duplicate metadata, bounds and
+known person conflicts. Existing resolver-cap, protected diagnostics, source
+binding, dialogue isolation and preview/apply/save regressions are also run.
+No migration, merge, deployment or flag activation is part of this change.
+
+Final verification: `node --test --test-concurrency=1 test/*.test.mjs
+research/grounded-answer-demo/test/*.test.mjs` reports1364 tests: **1343 passed,
+0 failed,21 opt-in skips**. Skips are browser/native PostgreSQL suites; neither
+new physical-device tests nor live SQL migrations are claimed. The new authored
+director-group file has41 passing tests, including all cap8/10/12/14
+resolver→projection→table→exact-preview cases. `git diff --check` passes.
+The first broad run exposed three changed refusal reasons for opaque single
+values; the fix now scopes the new opaque-group veto to the strong semantic
+route and preserves those legacy alias refusals. No fixture was weakened to
+hide those failures, and no source response was fetched again for the rerun.
