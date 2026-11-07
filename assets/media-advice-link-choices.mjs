@@ -5,12 +5,23 @@ const editionFields = ['cut', 'package', 'version'];
 
 // Navigation comparison only. No destination fetch, URL replacement or offer
 // join: all members and the representative are original source-row objects.
-function strictURL(href) {
+function strictURL(href, { appleMovie = false } = {}) {
   const original = /^https:\/\/([^/?#]+)(\/[^?#]*)(\?[^#]*)?$/.exec(href);
-  if (!original || original[1].includes(':') || /[%\\]/.test(original[2])) return null;
+  if (!original || original[1].includes(':') || /\\/.test(original[2])) return null;
   let url;
   try { url = new URL(href); } catch { return null; }
-  if (url.username || url.password || url.port || url.hash || url.pathname !== original[2] ||
+  let path = original[2];
+  if (appleMovie && /^\/[a-z]{2}\/movie\/[^/]+\/umc\.cmc\.[a-z0-9]+$/.test(path)) {
+    // A localized Apple movie slug may contain literal Unicode or UTF-8
+    // escapes. Admit only that serialization difference, not encoded ASCII
+    // separators/dots/percent, malformed UTF-8 or another normalized route.
+    // Slug text is not a film/offer identity proof; country + UMC + qualifiers
+    // still define the navigation key, and the source href is never rewritten.
+    if (/%[0-7][\da-f]/i.test(path)) return null;
+    try { path = encodeURI(decodeURIComponent(path)); } catch { return null; }
+  } else if (/%/.test(path)) return null;
+  const uppercaseEscapes = value => value.replace(/%[\da-f]{2}/gi, pair => pair.toUpperCase());
+  if (url.username || url.password || url.port || url.hash || uppercaseEscapes(url.pathname) !== uppercaseEscapes(path) ||
       original[1].toLowerCase() !== url.hostname) return null;
   return { url, query: original[3]?.slice(1) ?? null };
 }
@@ -33,12 +44,13 @@ function queryPairs(query) {
 
 function directPointer(href, providerKey) {
   if (classifyLink(href, { key: providerKey }).kind !== 'exact-card-unverified') return null;
-  const parsed = strictURL(href);
+  const appleProduct = ['apple', 'appletvplus'].includes(providerKey);
+  const parsed = strictURL(href, { appleMovie: appleProduct });
   if (!parsed) return null;
   const { url, query } = parsed, pairs = queryPairs(query);
   if (!pairs) return null;
   let namespace, country, card, match;
-  if (providerKey === 'apple' && url.hostname === 'tv.apple.com' &&
+  if (appleProduct && url.hostname === 'tv.apple.com' &&
       (match = /^\/([a-z]{2})\/movie\/[^/]+\/(umc\.cmc\.[a-z0-9]+)$/.exec(url.pathname))) {
     namespace = 'apple-tv-card'; country = match[1].toUpperCase(); card = match[2];
   } else if (providerKey === 'apple' && url.hostname === 'itunes.apple.com' &&
@@ -49,14 +61,19 @@ function directPointer(href, providerKey) {
     // An exact regional path, not a guessed Rakuten content ID. Different
     // hosts, slugs or trailing slashes are not silently declared equivalent.
     namespace = url.hostname; country = 'UA'; card = url.pathname;
+  } else if (['netflix', 'prime', 'megogo'].includes(providerKey)) {
+    // Only routes already admitted by the unchanged shared link policy.
+    // Exact host/path, not guessed aliases for hosts, locale prefixes, slugs,
+    // ID-only routes or editions. Netflix/Prime prefixes are not countries.
+    namespace = url.hostname; country = providerKey === 'megogo' ? 'UA' : null; card = url.pathname;
   } else return null;
 
   const qualifiers = [];
   for (const [key, value] of pairs) {
     // Apple's documented affiliate/campaign/group/partner tokens do not select a movie.
     // Their original values remain in the chosen href and every source row.
-    if (providerKey === 'apple' && ['at', 'ct', 'itscg', 'itsct'].includes(key)) continue;
-    if (providerKey === 'apple' && key === 'playableId') {
+    if (appleProduct && ['at', 'ct', 'itscg', 'itsct'].includes(key)) continue;
+    if (appleProduct && key === 'playableId') {
       // Query transport may percent-encode the content ID. Decode this known
       // qualifier once, never recursively; absence or another ID remains distinct.
       const decoded = decodeURIComponent(value.replaceAll('+', ' '));
@@ -80,13 +97,15 @@ function declaredPointer(href, providerKey) {
       parameters.get('uct_country')?.toUpperCase() !== 'UA') return null;
   const target = parameters.get('r'), pointer = directPointer(target, providerKey);
   // The embedded value is a declared target, never a verified redirect. It
-  // must independently be an admitted card of this provider and this market.
-  return pointer?.country === 'UA' ? pointer : null;
+  // must independently be an admitted card of this provider. For regionless
+  // native routes UA is only the wrapper's declared context, not inferred from
+  // a locale-like path. A direct row needs its own matching context to join.
+  return pointer && (!pointer.country || pointer.country === 'UA') ? { ...pointer, country: 'UA' } : null;
 }
 
 function semanticKey(row, href, providerKey) {
   const pointer = directPointer(href, providerKey) ?? declaredPointer(href, providerKey);
-  if (!pointer || row.country && row.country !== pointer.country) return null;
+  if (!pointer || row.country && pointer.country && row.country !== pointer.country) return null;
   if (row.conflicts != null && !Array.isArray(row.conflicts) || row.conflicts?.some(conflict => editionFields.includes(conflict?.field))) return null;
   const editions = [];
   for (const field of editionFields) {
@@ -109,7 +128,7 @@ function semanticKey(row, href, providerKey) {
     else if (qualifier.state === 'reported' && (['string', 'boolean'].includes(typeof qualifier.value) || typeof qualifier.value === 'number' && Number.isFinite(qualifier.value))) editions.push(qualifier.value);
     else return null;
   }
-  return JSON.stringify([pointer.key, editions]);
+  return JSON.stringify([pointer.key, pointer.country ?? row.country ?? null, editions]);
 }
 
 const blockBoundaryIssues = new Set(['ambiguous-provider-block', 'unsupported-provider-block', 'provider-block-count-limit', 'block-field-count-limit']);
