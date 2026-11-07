@@ -194,7 +194,8 @@ test('ordinary and diagnostic users see one accessible Apple service and selecte
     assert.deepEqual(row.querySelectorAll('.media-advice-symbol').map(e => e.textContent), ['◐', '?', '+']);
     assert.equal(service.querySelector('.media-advice-icon-slot').textContent, '', 'subscription is not a separate branded service emblem');
     assert.equal(service.querySelector('img').src, '/assets/icons/media/appletv.svg');
-    assert.match(control.dialog.querySelector('.media-advice-actions').textContent, /Тип доступу: Передплата/);
+    assert.match(control.dialog.querySelector('.media-advice-actions').textContent, /Обраний сервіс: Apple TV \/ iTunes/);
+    assert.doesNotMatch(control.dialog.querySelector('.media-advice-actions').textContent, /Тип доступу:|Джерело:/);
     assert.equal(control.dialog.querySelectorAll('select').length, 0);
     if (diagnostics) {
       await button('Діагностичний звіт').click();
@@ -238,7 +239,10 @@ test('mixed Apple selector changes only the selected offer evidence and preserve
         for (const callback of selector.listeners.change) await callback({ target: selector });
         const row = control.dialog.querySelector('.media-advice-row');
         assert.deepEqual(row.querySelectorAll('.media-advice-symbol').map(element => element.textContent), product === 'appletvplus' ? ['◐', '?', '+'] : ['●', '?', '?']);
-        assert.match(control.dialog.querySelector('.media-advice-actions').textContent, product === 'appletvplus' ? /Тип доступу: Передплата · Apple TV\+/ : /Тип доступу: Купівля · Apple TV Store/);
+        assert.match(option.textContent, product === 'appletvplus' ? /Apple TV\+ · Передплата · Кінобаза/ : /Apple TV Store · Купівля · Movie of the Night/,
+          'link choices retain their own product, access and source labels');
+        assert.match(control.dialog.querySelector('.media-advice-actions').textContent, /Обраний сервіс: Apple TV \/ iTunes/);
+        assert.doesNotMatch(control.dialog.querySelector('.media-advice-actions').textContent, /Тип доступу:|Джерело:/);
         assert.equal(row.dataset.rowId, product === 'appletvplus' ? original[0].id : original[1].id);
         const answer = control.dialog.querySelector('.media-advice-answer').textContent;
         if (product === 'appletvplus') assert.match(answer, /є дані про українські субтитри/);
@@ -290,7 +294,10 @@ test('a literal Apple subscription link keeps its chosen Kino representative whi
       assert.equal(row().dataset.rowId, product === 'appletvplus' ? kino.id : shop.id);
       assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), product === 'appletvplus' ? ['◐', '?', '+'] : ['●', '?', '?']);
       const actions = control.dialog.querySelector('.media-advice-actions').textContent;
-      assert.match(actions, product === 'appletvplus' ? /Передплата · Apple TV\+\. Джерело: Кінобаза/ : /Купівля · Apple TV Store\. Джерело: Movie of the Night/);
+      assert.match(actions, /Обраний сервіс: Apple TV \/ iTunes/);
+      assert.doesNotMatch(actions, /Тип доступу:|Джерело:/);
+      assert.match(option.textContent, product === 'appletvplus' ? /Передплата · Кінобаза/ : /Купівля · Movie of the Night/,
+        'removing the redundant action line does not remove the selected pointer label');
       assert.equal(state.calls, 1);
     }
     await button('Обрати').click();

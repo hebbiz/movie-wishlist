@@ -220,14 +220,16 @@ test('source notes consolidate all limitations and retain exact attribution link
   assert.equal(state.calls, 1); assert.equal(state.output, null); assert.deepEqual(state.opens, []);
 });
 
-test('Apple format-negative audio stays unknown overall while subtitles and other services retain their own signs', async t => {
+test('Apple format-negative audio visibly retains a scoped minus while subtitles and other services retain their own signs', async t => {
   const rows = [ownBlock('apple', 'reported-negative'), ownBlock('rakuten'), ownBlock('megogo')];
   const { control, state } = await harness(t, rows);
   const cards = control.dialog.querySelectorAll('.media-advice-row'); assert.equal(cards.length, 3);
   const apple = cards.find(card => card.dataset.providerKey === 'apple');
   const symbols = apple.querySelectorAll('.media-advice-symbol');
-  assert.deepEqual(symbols.map(s => s.textContent), ['◐', '?', '+']);
-  assert.match(symbols[1].attributes['aria-label'], /формати.*інших українських доріжок невідома/);
+  assert.deepEqual(symbols.map(s => s.textContent), ['◐', '−*', '+']);
+  assert.match(symbols[1].attributes['aria-label'], /«−» лише для зазначених форматів.*інші українські доріжки й інші пропозиції не перевірено/);
+  assert.match(control.dialog.querySelector('.media-advice-legend').textContent, /−\* — позначено відсутність лише в зазначених форматах/);
+  assert.doesNotMatch(control.dialog.querySelector('.media-advice-actions').textContent, /Тип доступу:|Джерело:/);
   for (const key of ['rakuten', 'megogo']) assert.deepEqual(cards.find(card => card.dataset.providerKey === key).querySelectorAll('.media-advice-symbol').map(s => s.textContent), ['◐', '+', '+']);
   assert.equal(state.calls, 1); assert.equal(state.output, null);
 });

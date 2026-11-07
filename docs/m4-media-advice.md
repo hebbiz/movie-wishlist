@@ -7324,3 +7324,140 @@ Save and shared DB writes: 0. Identity gates, link admission, source search and
 ranking, request/time budgets, Beta/diagnostic permissions, session/global
 lifecycle/auth, migrations/flags and production remain unchanged. Merge and
 manual deployment are separate approvals and were not performed.
+
+## Compact Apple actions and scoped negative marks — 2026-11-07
+
+Base develop `65acdcf06e38791defbef09967938f62fb5e0f2f`, after #229.
+Only client presentation, tests and this report change. No source/identity/link
+policy, grouping, choice ordering, ranking or action-budget change is needed.
+
+### Historical report versus current source control
+
+The owner supplied the complete report for The Shining (1980), IMDb tt0081505,
+run `3f8505ba-423e-4586-b62b-cbcb58cebe66`, deploy
+`6aef2f127d5e7b793310e320`, commit `65acdcf`. It records 7/14 source attempts,
+11 mapped source rows (5 Kinobaza), matched card identity and these original
+provider-block values:
+
+- Apple: stereo `-`, dolby `-`, Ukrainian subtitles `+`.
+- Rakuten: stereo `-`, Ukrainian subtitles `+`.
+- MEGOGO: Ukrainian audio and subtitles positive. The film-level audio badge is
+  also positive, but neither is another provider's offer-level audio evidence.
+- Separate TMDb/UA availability observations have unknown provider tracks;
+  MOTN Prime subtitle evidence is a different source/service observation.
+
+The diagnostic negatives were not lost in extraction, projection or copied
+report. `comparisonLanguage` deliberately classified negatives restricted to
+named formats as `format-negative`, but left its visual symbol as `?`. The
+earlier implementation (introduced in `58ac0c7`) and tests intentionally avoided
+claiming that all Ukrainian audio was absent. That conservative meaning agrees
+with the existing limitation: a minus for one format does not exclude others.
+However, using the same visible mark as missing data concealed the explicit
+negative source assertion. This is a display ambiguity, not a new source failure.
+
+A new controlled GET of [The Shining card](https://kinobazaua.com/titles/the-shining)
+at `2026-11-07T14:23:03.687Z` returned 200, 414907 bytes, body SHA256
+`2a9b16711beff9664d4f96fc847ac5153fea96bbedb88b1d543be00d30473161`.
+The actual extractor confirms matched identity through the existing stable-ID,
+title/year route and returns 5 original rows. Its owned Apple and Rakuten tables
+contain the same named-format negative signs and positive subtitles. This is
+**current HTML, not reconstruction of the historical run**. The local film
+context uses the owner's IMDb/title/year, not a new TMDb projection; no current
+TMDb/MOTN offer response or independent platform availability was verified.
+
+For Meet the Fockers and Meet the Parents, retained 2026-11-07 card bodies from
+the earlier study each have an unambiguous top Rakuten table: stereo `-`,
+subtitles `+`. Their own table, not a neighboring caption/service, supplies the
+signs. They are saved-response regressions, not fresh source requests here.
+
+### Implemented display contract
+
+The extra Apple-only `Тип доступу… Джерело…` paragraph is removed **only from
+the actions block** below the selected service. Raw subscription/rental/purchase
+and source data remain intact. Link-selector product/access/source labels and
+the existing Apple preview access/source information remain. The advice engine
+still receives the same access facts; no ability to refer to a subscription is
+removed. Exact opening/preview/apply/ordinary Save behavior is unchanged.
+
+The `format-negative` state remains distinct; only its visible representation
+and scoped explanatory label change:
+
+| Evidence in the established source scope | Table mark | Meaning / boundary |
+| --- | --- | --- |
+| Reported Ukrainian track present | `+` | Positive source assertion; not independently verified availability |
+| Explicit unqualified negative | `−` | Negative in the stated record, not a conclusion about all offers |
+| Negative only for named audio formats | `−*` | Source says minus for those formats; other tracks and offers remain unverified |
+| Missing, unknown or unbound evidence | `?` | No negative assertion is invented |
+| Contradictory signs / mixed separate observations | `±` | Differences stay visible; no universal negative is inferred |
+
+The legend visibly explains `−*`; its tooltip and accessible label repeat the
+format and source scope. It is not an unqualified minus for the whole film,
+platform, region or every offer. Existing source notes retain the format caveat.
+
+A negative format beside an unknown peer remains visibly qualified; the peer's
+raw field remains unknown. An independent positive or conflicting UA observation
+still produces `±` under the existing aggregate rules. Negative stereo and
+positive dolby in distinct named fields can still yield positive audio evidence,
+not a fabricated contradiction or a claim that every format is present. Foreign,
+unsafe, identity-refused or unbound blocks do not gain authority.
+
+Explicitly selected Apple TV+ / Store rows remain row-scoped: selecting unknown
+subscription/rental data does not inherit a Store negative or another record's
+subtitles, even for a shared navigation URL. Grouping itself is unchanged and
+does not merge track evidence. No additional rental/purchase toggle is added.
+
+### Same-response results and verification
+
+The identical input is projected through base and updated presentation:
+
+| Control | Before → after audio / subtitles | Preserved |
+| --- | --- | --- |
+| The Shining, current card: Apple + Rakuten | `? / +` → `−* / +` for each | Matched identity, 5 raw Kino rows, chosen source and exact addresses |
+| The Shining, MEGOGO | `+ / +` → `+ / +` | No cross-service negative from Apple/Rakuten |
+| Meet the Fockers, saved Rakuten block | `? / +` → `−* / +` | 5 raw rows, separate Apple unknown remains `? / ?` |
+| Meet the Parents, saved Rakuten block | `? / +` → `−* / +` | 5 raw rows, separate Apple unknown remains `? / ?` |
+
+Ordinary Beta and diagnostic projections agree on these displayed results;
+primary values, provenance, format evidence and original URLs are unchanged.
+The same-input control checks every selectable exact URL through preview/apply.
+Historical report rows not supplied as raw API results are not recreated from
+these three HTML controls.
+
+Focused authored tests cover positive/negative/unknown/conflicting fields,
+format-only negatives, unknown and conflicting peers, different formats, wrong
+country/unbound blocks, selected Plus/Store isolation and unchanged actions,
+selectors and previews. Full regression and opt-in browser results are recorded
+below; skipped opt-in checks are not called executed tests.
+
+- Full root + research regression: **1425 tests: 1401 passed, 0 failed,
+  24 opt-in skips**. No native/live DB check is claimed from a skipped suite.
+- Separate local Edge/Chromium opt-in browser run: **14/14 tests/subtests
+  passed, 0 failed/skipped** (5 existing Apple mixed-form controls plus 9
+  scoped-negative controls). It uses authored source rows and local capability,
+  discovery and Supabase stubs, not historical/current platform offers.
+  Mobile 375/420, tablet 820 and desktop 1280 layouts, single/multiple pointers,
+  Plus/Store/subscription/rental/purchase, `+ / − / −* / ? / ±`, raw diagnostic
+  preservation, exact open interception/preview/apply, no rediscovery and form
+  isolation pass. Screenshots were visually inspected. Explicitly captured Save
+  payloads are local-only, not real database writes or a successful live Save.
+- Focused unit/controller run: 83/83 pass. Independent review and an independent
+  presentation-summary repeat (33/33) found no concrete remaining issue.
+  Syntax and whitespace checks pass. No physical Safari/iPhone or authenticated
+  deployed-browser verification is claimed.
+
+### External request accounting and release boundary
+
+This task made **2 controlled source GETs**: robots.txt (200, 352ms) and the one
+allowed film card (200, 397ms). The initial conservative local robots check
+incorrectly combined another user-agent's group and stopped **before** a card
+attempt. After inspecting the saved state and applicable wildcard group, the
+remaining one card GET was performed without re-fetching robots or retrying a
+card request. No robots restriction was bypassed; `/search` was not used.
+One separate web-index query located the card URL; its cached text was not
+used as the live HTML control. Tavily Basic/Advanced, TMDb/MOTN API calls and
+credits: 0. Saved-response and authored browser replays add 0 source HTTP.
+
+No source API keys, platform navigation, real Wishlist/shared-DB writes,
+migration, flags/auth/lifecycle changes, merge or manual deployment are part of
+this change. Actual platform availability/track entitlement, fresh TMDb/MOTN
+offers and authenticated deployed end-to-end Save remain unverified.
