@@ -7461,3 +7461,160 @@ No source API keys, platform navigation, real Wishlist/shared-DB writes,
 migration, flags/auth/lifecycle changes, merge or manual deployment are part of
 this change. Actual platform availability/track entitlement, fresh TMDb/MOTN
 offers and authenticated deployed end-to-end Save remain unverified.
+
+## Service availability is not the selected navigation offer (2026-11-07)
+
+Base develop `7d313943495a5a79de801672de6a448ae32b4593`, after #230.
+This change is limited to presentation, regression tests and this report. It
+does not change source discovery, identity gates, grouping/link equivalence,
+link preference, ranking, preview/apply, request budgets or server accounting.
+
+### Historical Fast & Furious 6 evidence and cause
+
+The owner supplied the report for Fast & Furious 6 (2013), IMDb tt1905041,
+run `89d58df4-058a-4a02-84d2-5fc0706fd993`, deploy
+`6aef37167551b11aaa3632ea`, exact commit above. It records 10/14 attempts,
+17 mapped rows, 0 unmapped, matched source identity, TMDb UA Apple rental and
+purchase, two MOTN UA Apple purchase observations and one rental observation.
+Their provider tracks remain unknown/empty-list with unknown completeness.
+Kinobaza contributes a separate UA Apple Store pointer with unknown tracks and
+access, plus other services' language blocks. No Apple top language block is
+recorded. Another service's positive audio cannot supply Apple's audio.
+
+The report does not contain the selected Apple row or full original offer URLs.
+It therefore cannot establish which historical pointer was chosen or whether
+different source offers were equivalent. The current verified card URL has the
+same requested-address SHA256 `4ab42a44605397e55036968aaaf22f9cd6c3dfe99c318467a26451efd1b661f8`;
+this establishes the requested address, **not historical HTML equality**.
+
+Two presentation rules explain the discrepancy without any missing extraction:
+
+1. Explicit Apple navigation selection scopes `presentMediaGroup` to one row.
+   This correctly protects offer-bound languages/access, but also concealed
+   other same-product UA availability observations. An authored control using
+   the reported source-field shapes produces `●` with a TMDb pointer and `?`
+   with an unknown-country Kinobaza pointer on the same input before the fix.
+   This is a code-path reproduction, not a reconstruction of the historical
+   selected URL.
+2. `comparisonAvailability` excluded all Kinobaza rows, including an explicit
+   validated Ukrainian section. The current Fast 6 Kinobaza-only control
+   reproduces Apple `?` despite the preserved source-section UA claim.
+
+The earlier #228 selected-offer rule was too broad for the availability cell.
+It remains correct for tracks, conditions and addresses. The correction below
+narrows only availability authority; it does not merge offers or change country
+fields. The first advice sentence also uses the source-availability result when
+appropriate, so it no longer contradicts `●` by saying UA availability is wholly
+unknown. Display bands and recommendation order are unchanged.
+
+### Display contract and safeguards
+
+- `●` means a source mentions a UA variant of this service/product for the same
+  confirmed film. Its tooltip explicitly says this does **not** confirm the
+  selected offer and actual availability is unverified. It is not account,
+  platform, current price, entitlement or selected-link destination verification.
+- For Apple only the availability cell considers original matched peers of the
+  same established film and internal product. `apple` (Store) and `appletvplus`
+  (subscription) still share one Apple TV / iTunes UI and Wishlist medium, but
+  cannot lend availability to each other, even for equal navigation URLs.
+  Unknown/mixed film context and invalid/out-of-group selection cannot borrow
+  peer authority. The selected row's tracks, access, country, conditions and
+  exact URL remain unchanged.
+- The common provider rule accepts an explicit Kinobaza UA section only with
+  the complete existing parser-issued envelope: matched identity/known provider,
+  source `Kinobaza HTML`, the exact explicit-UA territory basis, JustWatch-section
+  provenance, `countrySignal.state=source-section-claim`, UA territory, literal
+  signal/row href equality, normalized source-provider equality and an admitted
+  transferable link. A country flag alone, invalid/partial envelope or top caption
+  does not qualify. These fields already survive the ordinary Beta projection.
+- UA TMDb/MOTN provider observations retain their existing authority. A row with
+  explicit availability, country, territory, provider or identity contradiction
+  cannot supply a clean UA observation. Unrelated track/price differences do not
+  erase a separate valid regional observation. No inference of unavailability is
+  added. Kinobaza's JustWatch section and TMDb share lineage, not independent
+  corroboration.
+- An owned language caption without a source UA observation remains `◐` under
+  the existing application interpretation. No country/availability field is
+  overwritten. Language `+ / − / −* / ? / ±`, format scope, selected Apple record
+  boundaries and table-over-caption priority are preserved.
+
+### Current HTML and identical-response controls
+
+Two new allowed film-card GETs were captured once after checking robots.txt:
+
+| Card | Captured UTC / HTTP / bytes / source time | HTML body SHA256 |
+| --- | --- | --- |
+| [Fast & Furious 6](https://kinobazaua.com/titles/fast-furious-6) | 2026-11-07T15:07:58.887Z / 200 / 348618 / 200 ms | `2005066bb9a2df8af6952aa5885a6288419b541cf2696f065902cfd7aeb6d20b` |
+| [Police Academy](https://kinobazaua.com/titles/police-academy) | 2026-11-07T15:07:59.098Z / 200 / 259043 / 174 ms | `d6bc7c3681b64ac22e9ef6f0e149ea957cd84cb1f891871ebbb4341cadb600d0` |
+
+The Lost Bus and The Shining use the earlier retained 2026-11-07 HTML, respectively
+body SHA256 `150f1c4ff7075c327d49bd8784e1fb4ac429ac8b8b8396a575611a19205cd435`
+and `2a9b16711beff9664d4f96fc847ac5153fea96bbedb88b1d543be00d30473161`.
+They are saved-response regressions, not new live requests or historical run
+reconstruction. All four go through the actual unchanged extractor/identity
+gates and composition with owner IMDb/title/year context; no fresh TMDb film
+projection or TMDb/MOTN provider response is claimed.
+
+The exact same source rows are presented by base and updated code:
+
+| Film/provider | Source rows | Availability before → after | Audio / subtitles, unchanged |
+| --- | --- | --- | --- |
+| Fast 6 Apple Store | 6 Kino rows total | `?` → `●` | `? / ?` |
+| Fast 6 Rakuten | same input | `◐` → `●` | `−* / +` |
+| Fast 6 Netflix | same input | `?` → `●` | `? / ?` |
+| Fast 6 Prime and MEGOGO | same input | `◐` → `◐` | `+ / +` each; no separate UA observation invented |
+| Police Academy Apple Store + Rakuten | 5 | `◐` → `●` each | `−* / +` each |
+| The Lost Bus Apple subscription | 2 | `◐` → `●` | `? / +` |
+| The Shining Apple Store + Rakuten | 5 | `◐` → `●` each | `−* / +` each |
+| Police Academy / The Shining MEGOGO | respective input above | `◐` → `◐` | `+ / +` |
+
+All four identities remain matched. The replay asserts ordinary/diagnostic
+display parity, unchanged original rows and choice/member identities, unchanged
+selected representative, no track copying, and byte-exact original preview/apply
+addresses for every selectable pointer. The local helper initially compared
+diagnostic-only access notes against their intentionally stripped ordinary
+projection; that assertion was corrected to compare actual product access
+state/value. Only saved data was replayed afterward, with no repeated HTTP.
+
+### Tests, browser scope and external requests
+
+Focused authored regressions cover same-product availability independent of
+navigation; selected-row tracks/access/URL; Store/Plus isolation; incomplete and
+forged section envelopes for all supported products; unknown/mixed film context;
+unconfirmed identity/provider and availability conflicts; foreign/unknown data;
+source-field immutability and ordinary/diagnostic parity. Browser fixtures use
+the actual app with local capability/discovery/auth/Save stubs and authored
+offers, not historical or currently verified API offers.
+
+- Final full root + research regression: **1465 tests, 1440 passed, 0 failed,
+  25 opt-in skips**, 157755 ms. Skipped suites are not claimed as executed.
+- Focused new availability/scope/summary tests: **39/39 passed**, 0 skipped.
+- Separate real local Edge/Chromium browser runs: **29/29 passed**, 0 skipped
+  (9 new availability tests/subtests plus 20 existing Apple, shared grouping
+  and scoped-language checks). New controls cover Fast 6, The Lost Bus,
+  The Shining, Police Academy and non-Apple Rakuten at 375/1280 pixels;
+  retained controls also exercise 420/820 layouts. Ordinary Beta and diagnostic
+  paths, single/multiple original pointers, repeated selection/reopen, exact
+  opening interception/preview/apply, no rediscovery and no real Save pass.
+  The initial new browser run exposed only an incorrectly authored preview
+  wording assertion, corrected to the actual existing text; final rerun passes.
+  Mobile/desktop screenshots were visually inspected: table/controls remain
+  aligned and compact, with `●` and unchanged track marks. These are authored
+  fixture assertions, not verification of platform destinations or historical
+  selected URLs. No physical iPhone Safari or authenticated deployed session is
+  tested by this local browser.
+- Independent read-only review found the first-answer/table inconsistency;
+  its narrow fix and regression pass. No remaining concrete issue was found
+  with film/product scope, source envelope, response parity or original URLs.
+  Syntax and whitespace checks pass.
+
+New controlled source HTTP: **3 GETs total** — robots.txt 200/357 ms, the two
+cards above 200/200 ms and 200/174 ms. No redirect follows or automatic retries.
+Two separate web-index queries located the exact card URLs; cached snippets did
+not substitute for the captured HTML. Tavily Basic/Advanced calls/credits,
+TMDb/MOTN API calls, platform requests and real DB writes: **0**. Saved-response,
+authored unit and browser replays add 0 source HTTP. No API keys were needed.
+
+No migration, flags/auth changes, merge or manual deployment is performed.
+Actual destination availability, selected-offer equivalence/entitlement, fresh
+TMDb/MOTN offers and authenticated end-to-end Save remain unverified.

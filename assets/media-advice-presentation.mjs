@@ -175,11 +175,24 @@ function kinoLanguageLabel(state, key) {
   if (state === 'conflicting') return `${subject}: суперечливі дані Кінобази`;
   return `${subject}: невідомо`;
 }
+function kinobazaUASection(row) {
+  const signal = row.countrySignal;
+  // A parser-issued UA section claim is different from the application's
+  // regional interpretation of a language caption. Neither is entitlement.
+  return row.provenance?.source === 'Kinobaza HTML' && !row.kinobazaLocalization && row.country === 'UA' &&
+    row.territoryBasis === 'Explicit Ukrainian section; not entitlement' &&
+    row.provenance.upstream === 'JustWatch section (shared with TMDb)' &&
+    signal?.state === 'source-section-claim' && signal.territory?.code === 'UA' &&
+    Boolean(normalizedLabel(signal.provider)) && normalizedLabel(signal.provider) === normalizedLabel(row.provider?.sourceName) &&
+    signal.href === row.link?.href && classifyLink(row.link?.href, row.provider).transferable;
+}
 function comparisonAvailability(rows, kinoRows) {
-  const matched = rows.filter(row => row.identityStatus === 'matched' && !row.providerConflict && Object.hasOwn(providers, row.provider?.key));
-  // The regional interpretation of a Kinobaza block is never promoted to an
-  // independently returned UA availability observation.
-  if (matched.some(row => !kinoSource(row) && row.country === 'UA')) return { state: 'reported', symbol: '●', label: 'Джерело вказує варіант для України; фактичну доступність не перевірено' };
+  const matched = rows.filter(row => row.identityStatus === 'matched' && !row.providerConflict && Object.hasOwn(providers, row.provider?.key) &&
+    !['conflicting', 'reported-negative'].includes(row.availability?.state) &&
+    !(row.conflicts ?? []).some(conflict => ['availability', 'country', 'territory', 'provider', 'identity'].includes(conflict?.field)));
+  // Availability is a service/product source observation, not a join between
+  // offers. A caption alone still cannot establish a source-reported UA region.
+  if (matched.some(row => kinoSource(row) ? kinobazaUASection(row) : row.country === 'UA')) return { state: 'reported', symbol: '●', label: 'Джерело вказує варіант цього сервісу для України; це не підтверджує обрану пропозицію, фактичну доступність не перевірено' };
   if (kinoRows.length) return { state: 'partial', symbol: '◐', label: 'Неповні дані сервісу Кінобази; український регіон враховано за правилом застосунку, доступність не перевірено' };
   if (matched.length && matched.every(row => row.country && row.country !== 'UA')) return { state: 'foreign', symbol: '◇', label: 'Джерела вказують іншу країну; доступність в Україні невідома' };
   return { state: 'unknown', symbol: '?', label: 'Доступність в Україні невідома' };
@@ -270,7 +283,7 @@ export function presentMediaGroup(group, { filmId, selectedRow } = {}) {
   const scopedApple = group?.key === 'apple' && (selectedRow !== undefined || rows.some(row => row.provider?.key === 'appletvplus'));
   if (!scopedApple) return presentGroupRows(group, { filmId });
   // An explicit navigation variant must never inherit another offer's tracks,
-  // region, conditions or link. An out-of-group row has no authority here.
+  // conditions or link. An out-of-group row has no authority here.
   let selected = selectedRow;
   if (selectedRow === undefined) {
     const options = rows.map((row, index) => ({ row, index, info: presentGroupRows({ ...group, rows: [row], primary: row }, { filmId }) }));
@@ -279,7 +292,19 @@ export function presentMediaGroup(group, { filmId, selectedRow } = {}) {
     selected = options[0]?.row;
   }
   const scoped = rows.includes(selected) ? [selected] : [];
-  return { ...presentGroupRows({ ...group, rows: scoped, primary: scoped[0] }, { filmId }), group, variantScoped: true };
+  const info = presentGroupRows({ ...group, rows: scoped, primary: scoped[0] }, { filmId });
+  const filmIds = new Set(rows.map(row => row.filmId).filter(id => typeof id === 'string' && id));
+  const scope = filmId ?? (filmIds.size === 1 ? [...filmIds][0] : null);
+  // Changing a navigation pointer must not hide a separate UA observation for
+  // this film and product. Store and Plus share a UI, not availability/offer
+  // authority. This overrides only the availability cell, never row evidence.
+  if (scoped.length && scope && selected.filmId === scope && selected.identityStatus === 'matched' && !selected.providerConflict &&
+      ['apple', 'appletvplus'].includes(selected.provider?.key)) {
+    const productRows = rows.filter(row => row.filmId === scope && row.provider?.key === selected.provider.key);
+    const product = presentGroupRows({ ...group, rows: productRows, primary: productRows[0] }, { filmId: scope });
+    info.comparison = { ...info.comparison, availability: product.comparison.availability };
+  }
+  return { ...info, group, variantScoped: true };
 }
 export function presentMediaGroups(rows, { filmId } = {}) {
   const filmIds = new Set((Array.isArray(rows) ? rows : []).map(row => row?.filmId).filter(id => typeof id === 'string' && id));
@@ -304,6 +329,7 @@ export function summarizeMediaGroups(groups, { sourcesIncomplete = false } = {})
   else if (first.band === 'ua') advice = ['conflicting', 'mixed'].includes(audio) || ['conflicting', 'mixed'].includes(subtitles)
     ? `Можна перевірити ${title}, але дані про українські доріжки суперечливі.`
     : `Можна перевірити ${title}, але українські доріжки поки не підтверджені.`;
+  else if (first.comparison?.availability?.state === 'reported') advice = `Джерело згадує варіант ${title} для України; відповідність обраної пропозиції ще не перевірено.`;
   else advice = `Є згадка про ${title}, але доступність в Україні поки не встановлена.`;
   return `${lead} ${advice} ${caveat}`;
 }

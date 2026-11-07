@@ -147,7 +147,7 @@ test('shared established-card navigation: real app Lost Bus-shaped, Store and ot
       assert.equal(await page.locator('.media-advice-link-select option').count(), 3,
         'three Plus rows make two choices, with the Store product still a third separate choice');
       assert.equal(await page.locator('[data-provider-key="apple"]').getAttribute('data-row-id'), plusCaption.id);
-      assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['◐', '?', '+']);
+      assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['●', '?', '+']);
       await pick(page, 'apple', motnHref);
       assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['●', '?', '?'],
         'an unknown qualifier cannot borrow the Kino representative subtitles');
@@ -190,7 +190,7 @@ test('shared established-card navigation: real app Lost Bus-shaped, Store and ot
       assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['●', '?', '?']);
       await openPreviewApply(page, state, 'apple', captionHref, 'Apple TV / iTunes');
       await pick(page, 'apple', captionHref);
-      assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['◐', '?', '+'], 'original representative/evidence survives repeated switching and reopen');
+      assert.deepEqual(await page.locator('[data-provider-key="apple"] td').allTextContents(), ['●', '?', '+'], 'same-product UA observation and original representative/tracks survive repeated switching and reopen');
       await openPreviewApply(page, state, 'apple', storeHref, 'Apple TV / iTunes');
       assert.deepEqual(await page.evaluate(() => [activeAdviceRoom.id, mykolaChat.textContent, authoredDBWrites.length]), ['KEEP', 'UNCHANGED SOCIAL CHAT', 0]);
       assert.equal(state.discoveries, 1);

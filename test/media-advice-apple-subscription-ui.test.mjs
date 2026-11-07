@@ -107,7 +107,7 @@ test('same declared Plus card groups navigation only and keeps unknown MOTN, Sto
       // Store is also MOTN; select the subscription by its full product/access label.
       await choose(label === 'Movie of the Night' ? 'Apple TV+ · Передплата · Movie of the Night' : label);
       assert.equal(row().dataset.rowId, expected.id);
-      assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), expected === kino ? ['◐', '?', '+'] : ['●', '?', '?']);
+      assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), expected === kino ? ['●', '?', '+'] : ['●', '?', '?']);
     }
     await button('Відкрити посилання').click(); assert.deepEqual(state.opens, [[kino.link.href, '_blank', 'noopener,noreferrer']]);
     await button('Обрати').click(); const preview = control.dialog.querySelector('.media-advice-preview').textContent;
@@ -280,7 +280,7 @@ test('a literal Apple subscription link keeps its chosen Kino representative whi
     const { control, state, button, entry } = await harness(t, result, diagnostics);
     const row = () => control.dialog.querySelector('.media-advice-row');
     assert.equal(row().dataset.rowId, kino.id, 'initial subtitle recommendation chooses the captioned Kino observation');
-    assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), ['◐', '?', '+']);
+    assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), ['●', '?', '+']);
     assert.equal(control.dialog.querySelectorAll('.media-advice-row').length, 1);
     for (const product of ['apple', 'appletvplus', 'apple', 'appletvplus']) {
       const selector = control.dialog.querySelector('.media-advice-link-select');
@@ -292,7 +292,7 @@ test('a literal Apple subscription link keeps its chosen Kino representative whi
       selector.value = option.value;
       for (const callback of selector.listeners.change) await callback({ target: selector });
       assert.equal(row().dataset.rowId, product === 'appletvplus' ? kino.id : shop.id);
-      assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), product === 'appletvplus' ? ['◐', '?', '+'] : ['●', '?', '?']);
+      assert.deepEqual(row().querySelectorAll('.media-advice-symbol').map(element => element.textContent), product === 'appletvplus' ? ['●', '?', '+'] : ['●', '?', '?']);
       const actions = control.dialog.querySelector('.media-advice-actions').textContent;
       assert.match(actions, /Обраний сервіс: Apple TV \/ iTunes/);
       assert.doesNotMatch(actions, /Тип доступу:|Джерело:/);
