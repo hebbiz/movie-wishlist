@@ -7,37 +7,51 @@ const allowed = { mykola_media_advice: true, mykola_media_advice_diagnostics: tr
 const context = { userId: 'user-a', groupId: 'group-a', imdbId: 'tt0290002', listId: 'list-a', formSession: 'form-a' };
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 
-test('entry hint is short-lived group display eligibility, never retains diagnostics or tokens', async () => {
+test('entry hint is session-wide user availability, never stores movie/group grants, diagnostics or tokens', async () => {
   let clock = 0, calls = 0;
   const prep = createEntryAccessPreparation({ scope: () => context, now: () => clock,
-    request: async c => { calls++; assert.equal(c.listId, null); assert.equal(c.imdbId, context.imdbId); return allowed; } });
+    request: async c => { calls++; assert.deepEqual(c, { userId: context.userId }); return allowed; } });
   assert.equal(prep.peek(), false);
   assert.equal(await prep.prepare(context), true);
   assert.equal(prep.peek({ ...context, imdbId: 'tt0081505', listId: 'list-b', formSession: 'form-b' }), true, 'display eligibility is not a card authorization');
   assert.equal(await prep.prepare(context), true); assert.equal(calls, 1);
   assert.equal(typeof prep.peek(), 'boolean');
-  assert.equal(prep.peek({ ...context, groupId: 'other' }), false);
+  assert.equal(prep.remainingMs(), Infinity);
+  assert.equal(prep.peek({ ...context, groupId: 'other' }), true);
   assert.equal(prep.peek({ ...context, userId: 'other' }), false);
-  clock = 30000; assert.equal(prep.peek(), false);
+  clock = 300000; assert.equal(prep.peek(), true);
+  await prep.prepare({ ...context, groupId: null }); assert.equal(calls, 1);
+  prep.invalidate(); assert.equal(prep.peek(), false);
   await prep.prepare(context); assert.equal(calls, 2);
 });
 
-test('preparation deduplicates in flight and refuses missing/unknown film context without HTTP', async () => {
+test('preparation needs only authenticated user, deduplicates in flight and refuses missing/foreign user', async () => {
   let calls = 0; const flight = deferred();
   const prep = createEntryAccessPreparation({ scope: () => context, request: () => { calls++; return flight.promise; } });
-  for (const c of [null, { ...context, imdbId: '' }, { ...context, formSession: null }, { ...context, userId: 'other' }]) assert.equal(await prep.prepare(c), false);
+  for (const c of [null, { userId: '' }, { ...context, userId: 'other' }]) assert.equal(await prep.prepare(c), false);
   assert.equal(calls, 0);
-  const first = prep.prepare(context), second = prep.prepare({ ...context, formSession: 'different' });
+  const first = prep.prepare({ userId: context.userId, groupId: context.groupId }), second = prep.prepare({ ...context, imdbId: '', formSession: null });
   assert.equal(first, second); await Promise.resolve(); assert.equal(calls, 1);
   flight.resolve(allowed); assert.equal(await first, true);
 });
 
-test('old auth/group/role generations and errors cannot revive a display hint', async () => {
-  for (const change of ['userId', 'groupId', 'role']) {
+test('empty groups prepare before a film exists and reject caller-supplied movie/private fields', async () => {
+  const scope = { userId: 'user-a', groupId: 'empty-group' };
+  let sent;
+  const prep = createEntryAccessPreparation({ scope: () => scope, request: async c => { sent = c; return allowed; } });
+  assert.equal(await prep.prepare({ ...scope, imdbId: 'tt0290002', listId: 'anything', formSession: 'anything', mykola_media_advice_diagnostics: true }), true);
+  assert.deepEqual(sent, { userId: scope.userId });
+  assert.equal(prep.peek(scope), true);
+  assert.equal(prep.peek({ ...scope, groupId: 'another' }), true);
+  prep.invalidate(); assert.equal(prep.remainingMs(), 0);
+});
+
+test('old user/auth-session generations and errors cannot revive a display hint', async () => {
+  for (const change of ['userId', 'auth-session']) {
     let current = { ...context }; const old = deferred(), fresh = deferred(); let calls = 0, signal;
     const prep = createEntryAccessPreparation({ scope: () => current, request: (c, s) => { signal ??= s; return ++calls === 1 ? old.promise : fresh.promise; } });
     const first = prep.prepare(context); await Promise.resolve();
-    if (change !== 'role') current[change] = 'changed';
+    if (change === 'userId') current.userId = 'changed';
     prep.invalidate(); assert.equal(signal.aborted, true);
     const second = prep.prepare(current); await Promise.resolve(); fresh.resolve(allowed); await second;
     old.resolve(allowed); assert.equal(await first, false);
@@ -57,6 +71,38 @@ test('strict flag values and observed denial remove the hint; no private capabil
   for (value of [true, {}, { mykola_media_advice: 'true' }, { mykola_media_advice: false, mykola_media_advice_diagnostics: true }]) {
     assert.equal(await prep.prepare(context, { force: true }), false); assert.equal(prep.peek(), false);
   }
+});
+
+test('a denied or failed init is fail-closed without probing again on every film; explicit retry recovers', async () => {
+  for (const failure of [false, 'network']) {
+    let calls = 0;
+    const prep = createEntryAccessPreparation({ scope: () => context, request: async () => {
+      calls++; if (calls > 1) return allowed;
+      if (failure === 'network') throw Error('offline');
+      return { mykola_media_advice: false };
+    } });
+    assert.equal(await prep.prepare(context), false);
+    assert.equal(await prep.prepare({ ...context, groupId: 'another', imdbId: 'tt0081505' }), false);
+    assert.equal(calls, 1);
+    assert.equal(await prep.prepare(context, { force: true }), true);
+    assert.equal(calls, 2);
+  }
+});
+
+test('a forced new check advances the action revision but retains a valid hint; parallel callers share its new epoch', async () => {
+  let requests = 0, finish;
+  const prep = createEntryAccessPreparation({ scope: () => context, request: async () => {
+    if (++requests === 1) return allowed;
+    return new Promise(resolve => { finish = resolve; });
+  } });
+  await prep.prepare(context); const oldRevision = prep.revision();
+  const fresh = prep.prepare(context, { force: true }), newRevision = prep.revision();
+  assert.ok(newRevision > oldRevision);
+  assert.equal(prep.peek(context), true);
+  const coalesced = prep.prepare(context, { force: true });
+  assert.equal(prep.revision(), newRevision); assert.equal(fresh, coalesced);
+  await Promise.resolve(); finish(allowed); await fresh;
+  assert.equal(prep.revision(), newRevision); assert.equal(prep.peek(context), true);
 });
 
 function control(capability, preparedEntry = () => true) {

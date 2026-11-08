@@ -232,7 +232,10 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
   const channelExtraction = await extractHtml(localizedMarkup(paragraphBlock('megogo', '(укр. аудіо [5.1])', channelHref.replace('&', '&amp;')), 'coherence', false), recoveredFilm);
   assert.equal(channelExtraction.identity.status, 'matched');
   const channelResult = composeDiscovery(recoveredFilm, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: channelExtraction, status: channelExtraction.status } });
-  for (const [width, height] of [[1280, 900], [375, 812], [420, 912], [820, 1180]]) await t.test(`${width}x${height}`, async t => {
+  // Optional local QA isolation; the ordinary suite still exercises all sizes.
+  const viewports = [[1280, 900], [375, 812], [420, 912], [820, 1180]]
+    .filter(([width]) => !process.env.M4_BROWSER_WIDTH || width === Number(process.env.M4_BROWSER_WIDTH));
+  for (const [width, height] of viewports) await t.test(`${width}x${height}`, async t => {
     const context = await browser.newContext({ viewport: { width, height }, serviceWorkers: 'block' }); t.after(() => context.close());
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw Error('AUTHORED denied'); } } });
@@ -249,9 +252,10 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       if (u.pathname === '/.netlify/functions/movie-lookup') return route.fulfill({json:{title:'Authored added film',year:2024,poster_url:null,overview:null}});
       if (u.pathname === '/.netlify/functions/media-advice') {
         const body = route.request().postDataJSON(); calls.push(body);
-        if (body.action === 'capability') return route.fulfill({ json: { mykola_media_advice: allowed, mykola_media_advice_diagnostics: allowed && diagnosticsAllowed } });
+        if (body.action === 'availability') return route.fulfill({ json: { mykola_media_advice: allowed } });
+        if (body.action === 'apply-capability' || body.action === 'diagnostic-capability') return route.fulfill({ json: { mykola_media_advice: allowed, mykola_media_advice_diagnostics: allowed && diagnosticsAllowed } });
         if (resolveDiscover) await new Promise(r => resolveDiscover = r);
-        return route.fulfill({ json: { result: authored } });
+        return route.fulfill({ json: { result: { ...authored, capabilities: { mykola_media_advice: allowed, mykola_media_advice_diagnostics: allowed && diagnosticsAllowed } } } });
       }
       return route.continue();
     });
@@ -265,7 +269,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       startEditMovie('list'); mykolaChat.textContent = 'SOCIAL HISTORY'; activeAdviceRoom = { id: 'KEEP' };
     });
     assert.equal(await page.locator('#mediaAdviceEntry').isHidden(), true);
-    allowed = true; await page.evaluate(() => mediaAdviceController.refresh());
+    allowed = true; await page.evaluate(() => prepareMediaAdviceAccess({ force: true }));
     await page.locator('#mediaAdviceEntry').click();
     await page.getByRole('button', { name: 'Обрати', exact: true }).waitFor();
     assert.equal(await page.getByRole('button', {name:'Знайти варіанти',exact:true}).count(),0);
@@ -455,13 +459,16 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
     assert.equal(await page.locator('#purchase_url').inputValue(), '');
     // Revoked feature access suppresses transfer, while normal form fields stay editable.
     await page.locator('#mediaAdviceEntry').click(); await page.getByRole('button', { name: 'Обрати', exact: true }).click();
-    allowed = false; await page.getByRole('button', { name: 'Перенести в картку' }).click(); await page.waitForFunction(() => !document.querySelector('.media-advice-dialog').open);
+    allowed = false; await page.getByRole('button', { name: 'Перенести в картку' }).click(); await page.waitForFunction(() => !document.querySelector('.media-advice-preview'));
+    assert.equal(await page.locator('#mediaAdviceEntry').isHidden(), false, 'denied editing cannot revoke global read-only availability');
+    await page.evaluate(() => prepareMediaAdviceAccess({ force: true }));
     assert.equal(await page.locator('#mediaAdviceEntry').isHidden(), true);
     assert.equal(await page.locator('#purchase_url').isEditable(), true);
     assert.equal(await page.evaluate(() => window.authoredDBWrites.length), 0);
     await page.locator('#submitButton').click();
     await page.waitForFunction(() => window.authoredDBWrites.length === 1);
     assert.equal(await page.evaluate(() => window.authoredDBWrites[0].name), 'movie_group_lists');
+    allowed = true; await page.evaluate(() => prepareMediaAdviceAccess({ force: true }));
     if ([375,420].includes(width)) {
       allowed = true;
       authored.rows = authoredGroupedMediaRows();
@@ -1038,8 +1045,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         await page.getByRole('button',{name:'Обрати',exact:true}).waitFor();
         assert.equal(calls.filter(c=>c.action==='discover').length,beforeCalls+1);
         const discovery=calls.filter(c=>c.action==='discover').at(-1);
-        assert.equal(discovery.imdbId,imdbId);assert.equal(discovery.listId,null);
-        assert.deepEqual(Object.keys(discovery).sort(),['action','formSession','groupId','imdbId','listId']);
+        assert.equal(discovery.imdbId,imdbId);assert.equal(Object.hasOwn(discovery,'listId'),false);
+        assert.deepEqual(Object.keys(discovery).sort(),['action','formSession','imdbId']);
         assert.match(await page.locator('.media-advice-dialog').innerText(),new RegExp(title));
         await page.getByRole('button',{name:'Діагностичний звіт',exact:true}).click();
         assert.match(await page.getByLabel('Короткий звіт для копіювання').inputValue(),new RegExp(title));
@@ -1266,6 +1273,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
         assert.match(report, /не доводить, що це інший фільм або помилка Tavily/);
         await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true }));
         await page.getByRole('button', { name: 'Скопіювати короткий звіт', exact: true }).click();
+        await page.locator('.media-advice-diagnostics [role="status"]').filter({ hasText: 'Буфер недоступний. Виділіть і скопіюйте текст' }).waitFor();
         assert.match(await page.locator('.media-advice-diagnostics [role="status"]').innerText(), /Буфер недоступний\. Виділіть і скопіюйте текст/);
         assert.deepEqual(await text.evaluate(element => [document.activeElement === element, element.selectionStart, element.selectionEnd]), [true, 0, report.length], 'the complete diagnostic text is selectable when clipboard access is unavailable');
         assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);

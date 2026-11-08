@@ -9,6 +9,9 @@ updated with merged #217. Later authorized execution:
 The preparation/execution records below are dated evidence, not a live-state
 assertion. PR#220's additional preparation does not authorize deployment,
 migrations or activation; its current scope is recorded at the end of this file.
+Current prepared access decision: [actual region transitions and personal overrides](#actual-region-transitions-and-personal-overrides--2026-11-08)
+supersedes group/film eligibility for display and discovery, not editing rights.
+Its new migration is prepared only, not applied to the shared database.
 Current branch search strategy: **two unchanged Tavily Basic slots, then one
 Advanced exact-match reserve if the complete earlier path fails**, candidate URLs only,
 with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
@@ -7781,3 +7784,558 @@ detached flight.
 The earlier full-suite/native IPC limitation remains recorded above; this
 follow-up does not claim a new unfiltered full run or a live SDK recovery.
 No migration, merge or manual deployment is performed.
+
+## Global UA advice availability and early initialization — 2026-11-08
+
+Historical intermediate PR #233 design: the final [personal flag decision](#personal-feature-flag-and-global-beta--2026-11-08)
+below supersedes its runtime-UA rule, no-assignment plan and unchanged-pilot-RPC
+claims. Its browser timing observations remain separate evidence, not a new live measurement.
+
+This decision supersedes the group/film-scoped **display and discovery**
+eligibility described above. Mykola media advice is available to authenticated
+users of the application's existing Ukrainian region, regardless of movie,
+group membership or editing role. A valid selected IMDb identity is still
+required to search; it is not an authorization input. Ordinary card editing
+and saving permissions remain separate. Signed-out and Supabase anonymous
+accounts have not been assigned a new inferred region or new access policy.
+
+### Observed chain and implementation
+
+Baseline `develop` is `1f257566326bbe5968208cb13dd3d833d7fa879e`
+(including #232). The earlier warm-up needed a real IMDb from the group list;
+in an empty group it could not start until lookup filled the form. Its
+`Promise.all` also waited for the larger advice controller module before
+installing the small preparation helper. Rendering the filled form then
+triggered exact-film capability requests (including overlapping preparation
+and controller refresh). Reserving button space hid a layout jump, not that
+serial dependency.
+
+The small availability module now initializes independently. As soon as
+`updateAuthUI` knows the authenticated user, it prepares availability before
+awaiting the profile, group or role queries. One memory-only hint per user/app
+session is shared across concurrent consumers; group, role, movie and form
+changes do not create another eligibility request. Successful hints are not
+polled on focus/resume. Failed or unavailable initialization can be explicitly
+retried on a later foreground event, coalesced across those events. Auth user
+changes, explicit feature reinitialization/USER_UPDATED and discovery denial
+invalidate the relevant hint; token refresh alone does not repeat a successful
+availability request. The existing recoverable four-second session wrapper,
+abort and generation guards remain.
+
+`availability` sends only its action, without group, list, IMDb, region or
+browser-selected user claims. It returns only the display boolean, never a
+diagnostic grant. Opening or refreshing advice reads that cached eligibility;
+it makes no film-permission request. Discovery starts only on an explicit
+button click, sends IMDb + form session, and freshly verifies Auth and backend
+feature access at start, each reservation and finish. User/group/film changes
+invalidate private form/results/preview state. Editing-role changes preserve
+the existing read-only answer and spent search session, but cancel preview or
+pending transfer and refresh editing controls without another search. A visitor can read advice and
+open links but cannot transfer fields; transfer rechecks current local editing
+rights and the existing strict group/list capability on the server, with the
+ordinary save/RLS path unchanged. That existing transfer check still includes
+UA and the feature flag as well as editing/list rights.
+
+Protected diagnostics use a separate fresh **global** check before inserting
+the report DOM or copying it. Closing the dialog clears protected DOM; stale
+diagnostic replies cannot revive it after user/form/dialog changes. Neither a
+cached display hint nor an edit denial grants or revokes diagnostics silently.
+An ordinary `200` diagnostic denial only removes private details; a current
+`401/403` general Auth/feature denial removes global availability as well.
+Abort, exact-form and availability-epoch guards reject denials from an old
+film/form or a superseded availability check, even if a response ignores abort.
+Forced global revalidation retains a valid hint while pending, preventing a
+temporary refresh from discarding a one-shot answer. Initial SDK auth events
+are adopted coherently even when the first session read is still awaiting.
+
+An already-confirmed eligible entry can appear while the controller is still
+loading, visibly disabled with `aria-busy`; it becomes interactive only when
+ready. A failed optional module hides that entry without blocking the form.
+There is no promise of zero delay on the first cold authenticated launch:
+session availability, the small module and the server still take time. A
+cached successful display hint is not an immediate push notification of a
+remote flag/region change: the next server action fails closed, and explicit
+reinitialization refreshes it. No film search is used as a warm-up.
+
+### Existing region authority and prepared SQL
+
+The authority is unchanged: backend-only
+`media_advice_private.user_regions.region_code = 'UA'`, assigned by the
+existing Auth-user trigger/backfill with a default UA value. It is not IP,
+browser language, profile residence or editable Auth metadata. The existing
+global `beta_config.enabled` switch and separate expiring diagnostic grant
+are retained without changing any data or assignments.
+
+CLI-created migration
+`20261108185237_media_advice_global_access.sql` adds a service-role-only
+`media_advice_beta_global_action` and private volatile feature-access helper.
+Global sessions have honest NULL group/list metadata; the only column change
+is allowing NULL `sessions.group_id`. The new RPC requires
+`global-predicted-card-v1` for a new cap14 session, matches exact user/IMDb/form
+and NULL group/list on reserve/finish, and retains one-shot form protection,
+unique stages, expiry, cleanup and post-lock authorization. The existing
+pilot/group RPCs, their definitions and existing cap8/10/12/14 rows are not
+rewritten; neither contract can adopt the other's sessions. There is no
+fallback to an older permission contract after an error.
+
+Prepared operational order (NOT executed): independently recheck PR SHA and
+SQL, target project/history, active sessions and readable recovery; apply only
+this file through the isolated migration workflow; verify one history entry,
+unchanged existing session caps/attempts, old RPCs and ACLs/data/flags, plus a
+new global cap14 contract without a group; only then release the compatible
+handler/client through the approved release process. The new handler fails
+closed if the new RPC is absent. No general db push, history repair, live
+migration, merge or manual deployment is authorized by this implementation.
+
+### Controlled browser timing and evidence boundary
+
+The same local Chromium fixture runs frozen baseline sources and the changed
+actual add/IMDb-lookup and edit handlers. Authored delays: role 80ms, SDK
+session 60ms, capability 300ms, lookup 180ms, cold controller 600ms. Its
+boundary begins with a known user/group, not a complete deployed Auth startup.
+Network and Windows scheduling introduce jitter; these are individual
+controlled examples, not production medians or real-phone measurements.
+
+| Filled-form → visible button | Baseline | Global preparation |
+| --- | ---: | ---: |
+| Cold add, Fast Five, empty group | 663.4ms | 31.0ms |
+| Edit existing film | 392.2ms | 0ms |
+| Repeated opening after preparation | 0ms | 0ms |
+
+In the final cold-add example, the new availability request ran at 65.4–404.3ms,
+overlapping role (0.6–81.6ms) and lookup (152.7–375.2ms). The form was filled
+at 376.3ms and the visible button appeared at 407.3ms, still disabled while
+the delayed controller loaded. The baseline controller was ready at 606.7ms
+and did not send capability until 673.7ms, after filling its form at 330ms;
+the button became visible at 993.4ms. The new edit control had global
+availability ready before opening the populated form. These timestamps have
+different origins per run; compare intervals, not absolute cross-run times.
+`0ms` means visibility in the same JavaScript turn as film establishment, not
+zero physical paint time. A separate held-three-second-module case verifies
+that the button becomes enabled and one click then discovers exactly once.
+This table measures DOM appearance, not click-ready or complete search time.
+
+The exact local artifact is `m4-group-entry-study/before-after-timing.json`
+outside the repository; an earlier `baseline-timing.json` is superseded and
+is not the final evidence. New browser checks cover global initialization
+before a held profile, empty groups, visitor/no membership, cold/repeated
+add/edit, held/failed capability, delayed module, context changes, late-user
+responses, denial and recovery. Additional controller/SQL/HTTP regressions
+cover separate transfer/diagnostic permissions and old budgets.
+
+All source HTTP (TMDb/MOTN/Tavily/Kinobaza/platforms), real Supabase calls and
+database writes in these checks are **0**; Tavily Basic/Advanced credits **0**.
+Local app/API/SVG fixtures are not source attempts. This does not attest a
+live SDK account, deployed feature flags, physical iPhone/Safari or a real
+screen-reader session. The SQL was exercised only against an authored local
+database. Final test totals and any environment limits are recorded in the PR.
+
+Validation record: broad root + research regression **1480 passed, 0 failed,
+27 opt-in skips** (213.7s); two unrelated native Windows pipe/broker helper
+controls were excluded by name because of the previously recorded environment
+limit. This is not an unfiltered native integration claim. The nine global
+SQL contract/security tests passed, including preserved legacy rows, RPC
+definitions and ACLs. The final client lifecycle delta also passed **45/45**
+focused unit checks. Across nine browser suites, **98 distinct leaf checks**
+passed (107 reported checks including parent tests): the new global suite
+17/17, four unaffected legacy suites 44/44, and the four final rechecked suites
+46/46. These cover 375px mobile and 1280px desktop, delayed/error SVGs,
+selection/grouping/preview and original-address transfer, protected report
+open/copy, hung-session recovery, initial Auth events, role changes without
+search replay, and late discovery/report/apply responses. Earlier asynchronous
+DOM assertions and one case-sensitive error-text assertion were corrected to
+await the fresh diagnostic check; their original value/count assertions were
+retained. No runtime assertion failure remains in these final browser runs.
+
+## Personal feature flag and global Beta — 2026-11-08
+
+Historical PR #233 revision at `6a274c7`: the later
+[actual-region-transition policy](#actual-region-transitions-and-personal-overrides--2026-11-08)
+supersedes the permanent-manual-override behavior below. Its completed test and
+preflight records remain historical evidence, not results of the later revision.
+
+Final owner clarification for PR #233: **effective feature access = global
+`beta_config.enabled` AND active personal `mykola_media_advice` permission**,
+in addition to verified, non-anonymous Auth. There is no additional runtime
+UA/group/role/movie permission gate for viewing advice. The existing private
+backend region governs automatic personal flag assignment, not a new region
+definition or a browser claim. The existing default-UA Auth trigger is unchanged.
+
+### Assignment and explicit overrides
+
+The revised, still-unapplied CLI-created migration is
+`20261108185237_media_advice_global_access.sql` (the same version, NOT a repair
+of applied history). It fills missing flags for current Beta+UA users and
+installs an AFTER-region-row trigger, so every new user's actual default UA
+row exists before assignment. A Beta-activation trigger reconciles users
+created while Beta was off. No diagnostics flag is automatically assigned.
+
+Only newly inserted automatic flags enter private
+`beta_feature_assignments`. Existing flags are explicit overrides: their true,
+false and expiry values remain byte-for-byte unchanged. Any later direct
+UPDATE of a personal core-permission row, even a no-op assignment of the same
+value, detaches automatic ownership. Its subsequent region changes cannot
+silently overwrite that operator intent. Automatic reconciliation reclaims
+only its own writes after the permission trigger; there is no caller-controlled
+metadata/GUC bypass. Deleting a flag is absence, not durable refusal: a later
+eligible reconciliation can recreate it. Use an explicit false for durable denial.
+
+| Event / state | Stored personal flag | Effective advice access |
+| --- | --- | --- |
+| Active Beta + UA, no personal row | Insert true/no expiry; automatically managed | Yes |
+| New default-UA user while Beta off | No new row; next activation fills it | No |
+| Managed UA → non-UA or missing region | Automatic false, retains ownership | No |
+| Managed non-UA/missing → UA | Automatic true, including while Beta off | Only when global Beta is on |
+| Beta off, then on | Off does not erase personal rows; on fills missing eligible rows | Off denies ALL feature routes; on still requires active personal flag |
+| Existing/manual false or expired permission | Preserve value and expiry, do not renew | No |
+| Existing/manual true outside UA | Preserve explicit override; no runtime UA check | Yes while Beta is on and grant unexpired |
+| Repeat assignment | No-op for already-correct managed rows and all explicit rows | No new entitlement or diagnostics |
+
+The explicit-override exception is intentional preservation, not an inferred
+regional grant. If product policy should revoke **all** explicit true grants
+on leaving UA or automatically renew explicit expired/false grants, that needs
+a separate approved reconciliation decision. The target currently has no
+non-UA explicit grant. Assignment provenance did not exist historically, so
+this migration never guesses which old settings could be overwritten.
+
+Region/Beta writes serialize with the same transaction advisory lock in
+BEFORE STATEMENT triggers, before row locks; the reconciler also acquires that
+lock. This closes the simultaneous activation/default-region insertion gap.
+Migration backfill holds bounded table locks on Auth users, config, regions and permissions;
+lock timeout is 5s and a failure rolls the transaction back. Region deletion
+locks the permission before rechecking ownership, so it cannot overwrite a
+concurrent manual override. Auth-user deletion remains cascading; no orphan
+assignment is recreated. These locks do not span any source HTTP operation.
+
+### Entry, diagnostics, editing and old sessions
+
+The existing PR #233 client/server initialization remains: `updateAuthUI`
+starts the small global availability hint as soon as user identity is known,
+before waiting for profile/group/role and without an IMDb. The same minimal
+`availability` response now derives from the personal flag. User changes do
+not inherit another user's cached answer. Changing film/group/role does not
+repeat availability or start a search. A cold launch can still wait for Auth,
+module and network; the filled form is not blocked. Once-per-session caching
+is not real-time flag push: remote changes are enforced by fresh server
+authorization at start/reserve/finish/report/apply, and reinitialization
+refreshes the display hint. A stale positive button cannot authorize an action.
+
+Diagnostics still require the independent active
+`mykola_media_advice_diagnostics` permission, freshly checked before protected
+report DOM/copy. Diagnostics alone never grant advice. Modern ordinary advice
+does not require diagnostics. Transfer/apply still requires the ordinary
+group role/list/movie editing context, plus current Beta+personal entitlement;
+it no longer introduces a separate runtime UA condition. Save/RLS and exact
+selected-address transfer remain unchanged.
+
+Mass core-flag assignment would otherwise open the old pilot RPC to all UA
+users. A private `pilot_access_users` snapshot therefore captures only
+pre-backfill core-permission users (including disabled/expired settings).
+The legacy pilot RPC keeps its old role/list checks, cap8 and daily limit,
+with fresh pilot authorization both before and after its existing ledger
+lock. The global Beta switch now stops this route too. Because historical
+pilot HTTP deployments return an unredactable raw diagnostic result, that
+legacy boundary also requires the separate diagnostics grant. The one target
+pilot user already has it, so current pilot access is preserved. A synthetic
+old pilot without diagnostics now loses only that raw legacy route, not
+modern ordinary advice. Expanding legacy pilot membership is a separate
+operator decision, not a side effect of automatic flags.
+
+All private helpers revoke EXECUTE from PUBLIC/anon/authenticated/service_role;
+new ownership tables enable RLS, expose no browser policy or writes and allow
+service-role SELECT only. Public wrappers remain service-role-only with an
+empty search path. Global sessions use NULL group/list and cap14 negotiated
+only by the compatible handler. Existing cap8/10/12/14 ledger rows and source
+budgets remain unchanged; old/group contracts cannot adopt global sessions.
+
+### Read-only target preflight and release order (NOT executed)
+
+Verified target: `mttkectgdqqmejpenkrn` (`movie-wishlist`, eu-north-1), matching
+the application's Supabase URL. The checked script is
+`supabase/operations/media-advice-global-access.preflight.sql`: explicit
+READ ONLY transaction, timeouts, catalog/count/fingerprint queries and ROLLBACK,
+without app RPCs, user identifiers, emails, keys or source URLs.
+
+At **2026-11-08 21:10:38 UTC**, Beta was on, all 7 existing users had backend
+UA, one had an active core flag and one the separate diagnostics flag (same
+pilot user); 6 UA users had no core row. All six required earlier M4 versions
+were recorded exactly once; proposed `20261108185237`, global RPC and new
+ownership tables were absent. Existing service RPCs were service-only and
+used empty search paths; private tables had RLS and no browser access. There
+were 9 finished cap14 sessions, 0 active/over-cap; earlier reads had 5 and 6
+sessions. That is live concurrent application activity, not a stable backup
+or evidence of a preflight write. No cap8/10/12 rows existed on the target;
+their compatibility must be established locally, not claimed from live rows.
+
+The security advisor also reports existing no-policy RLS INFO notices for
+the intentionally private M4 tables, plus unrelated public definer-function
+and Auth-password-protection warnings. This PR does not silently change those
+broader settings or claim a clean project-wide security audit. See the
+[public-definer advisory](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable),
+[authenticated-definer advisory](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
+and [password-protection guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Prepared release procedure, requiring separate execution authorization:
+
+1. Recheck exact PR HEAD/develop, SQL hash, target ref, required history and
+   absence of this version, active sessions and queued work. Repeat the
+   read-only preflight immediately before applying: these counts are not a
+   future execution attestation. Coordinate manual region/permission writes.
+2. Confirm a readable recovery of current M4 definitions, permissions, regions,
+   config and ledger, with restricted local access. Create/verify a fresh copy
+   if the old recovery is stale; no new utility or Windows update is needed.
+   This task did not create or certify a fresh data backup; catalog MD5s are
+   drift comparisons, not recovery or cryptographic integrity proofs.
+3. Stage **only this exact migration** in an isolated migration workdir and
+   apply it through the established single-file workflow. No general db push,
+   history repair or blind retry. If the reply is lost, read actual history,
+   objects and assignments before deciding any next action.
+4. Postcheck exactly one version entry; expected current impact is 6 missing
+   core flags + 6 managed rows, one preserved pilot member, no new diagnostic
+   grants. Compare every pre-existing permission value/expiry and old ledger
+   caps/attempts/data, plus regions/config and unrelated data. Verify private
+   RLS/ACLs, service-only public RPCs, default-region and assignment triggers,
+   and compatible new global cap14 without adopting old sessions. Do not
+   create a live test account or source search without separate authorization.
+5. Only after successful SQL postchecks and separate release approval deploy
+   the compatible handler/client. Missing migration fails closed. Validate
+   startup, personal denial, global Beta kill switch, diagnostics and ordinary
+   read-only/editing transfer on the approved environment. No merge or manual
+   deployment was performed for this task.
+
+### Validation of the final personal-flag revision
+
+New external film-source HTTP requests: **0** (TMDb, MOTN, Tavily, Kinobaza,
+platforms); Tavily Basic/Advanced credits **0**. The target checks were four successful
+read-only SQL calls plus project metadata and the security advisor (one later
+confirmation expired without executing and was safely renewed); no live
+RPC invocation, mutation, account creation or migration. Browser checks use
+local authored Auth/API/source/SVG fixtures, not a deployed account. Earlier
+controlled timing and broad/browser counts above belong to the preceding
+client implementation, not a fresh production benchmark of this migration.
+
+Final single-revision broad regression: **1494 passed, 0 failed, 28 skipped**
+(183.54s), including all **19** global/personal SQL contract cases. Two unrelated
+native Windows pipe/broker controls remain excluded by name; the other skips
+are explicitly opt-in integrations, not claimed live coverage. Focused HTTP
+dispatch tests passed **12/12** (also included in the broad run).
+
+The existing installed native PostgreSQL **17.6** passed five independent
+multi-connection scenario subtests plus their parent (**6/6**, 48.3s including
+cluster initialization/cleanup): activation versus signup in both orders,
+same-value manual false plus queued region/mixed writes, and Auth deletion
+versus activation in both orders. Workers demonstrably waited on the common
+advisory lock before row locks; there were no missed grants or orphan rows in
+these controls. This is an authored loopback database, not the target Supabase.
+
+Final quiet-host browser run: **32 leaf scenarios + parent = 33/33**, 0 failures
+or skips (76.92s), using both 375px and 1280px viewports. It includes early
+initialization before the profile resolves, opposite personal flags, an
+explicit non-UA grant, global Beta off, revocation/expiry, user/group/role/film
+changes, getSession timeout recovery, late-response guards, separate report
+authorization, cold/delayed/error SVGs, repeated link switching, preview and
+exact-address transfer. No source discovery occurs before clicking.
+
+An earlier overloaded run hit the real five-second terminal icon fallback
+while the fixture still deliberately held the SVGs, and an earlier 115-second
+suite envelope timed out. Those are not suppressed successes: the unchanged
+runtime behaved as bounded; the full final rerun passed after removing local
+load. Only the expanded browser harness envelope is now 240s; production Auth,
+capability and icon deadlines were not relaxed. No physical iPhone/Safari,
+real screen reader, deployed SDK account, live signup or live source integration
+was exercised. Final local artifacts are `personal-final-regression.tap` and
+`personal-browser-quiet-final.tap` in the external `m4-group-entry-study` folder.
+
+## Actual region transitions and personal overrides — 2026-11-08
+
+This owner-approved refinement supersedes the permanent-manual-override rule
+of `6a274c7`. Runtime access is unchanged: **global Beta + active personal
+`mykola_media_advice` flag**, with verified non-anonymous Auth. There is no
+extra runtime region, group or film-editing gate for viewing advice.
+
+### Exact regional synchronization policy
+
+An explicit personal true outside UA remains valid until the next **actual**
+authoritative region change. An UPDATE whose old and new `region_code` values
+are equal is not such an event: the trigger returns before reconciliation,
+without touching permissions, expiry, ownership or diagnostics. This includes
+same-region writes while Beta is off, and a still-missing permission row.
+
+On a real change, the core enabled value becomes
+`new backend region = UA AND global Beta enabled`, even if the old value was
+set manually. UA→GB and GB→UA are both covered, as is GB→US (a different
+non-UA region). Initial insertion of the authoritative region and deletion
+to a missing region also count as regional events; missing region disables
+an existing flag. A missing permission is created only for active Beta + UA.
+The existing default-UA source and Auth trigger are not redefined.
+
+| Operation | Stored core flag / management | Effective feature access |
+| --- | --- | --- |
+| UA→GB→UA, Beta on | false→true, including a former manual value | denied→allowed if unexpired |
+| Manual true in GB, then GB→GB | true and manual ownership unchanged | allowed while Beta on and unexpired |
+| Manual true in GB, then GB→US | false; the real event resumes region management | denied |
+| UA→GB→UA, Beta off | existing core flag false on each real change | denied throughout |
+| Beta off alone, with no region event | no personal value or expiry change | denied globally |
+| Beta activation after a Beta-off UA transition | region-managed UA flag enabled; missing eligible rows filled | allowed if unexpired |
+| UA→UA after a manual false | no changes; bulk reconciliation also preserves detached manual override | denied until a real regional event or explicit grant |
+
+Only `enabled` is synchronized. Existing `expires_at` is preserved and never
+renewed: a regional UA event can set enabled=true on an expired row, but that
+row remains effectively denied until its expiry is explicitly changed. The
+owner authorized overriding the boolean on region events, not extending grant
+lifetime. Diagnostics and ordinary editing/save rights are not changed.
+
+### Implementation and compatibility
+
+The still-unapplied `20261108185237_media_advice_global_access.sql` adds a
+private invoker `sync_beta_feature_region(uuid)` helper. It reads the actual
+locked backend region, never a caller-supplied region. It serializes with
+Beta, region, permission and Auth deletion writes using the existing common
+statement-level transaction lock, then locks the personal row before writing.
+Auth deletion cannot recreate grants or ownership rows.
+
+The region trigger skips equal-region UPDATEs. Real region events adopt the
+core row into private automatic management, recording its original expiry as
+well as enabled state. Later manual permission writes still detach management,
+so their explicit value is preserved by ordinary activation/backfill until the
+next real region event. Beta-off bulk reconciliation is a no-op; Beta-on bulk
+reconciliation fills missing eligible flags and adjusts region-managed rows
+without erasing detached manual overrides or renewing expiry.
+
+Migration backfill still preserves every pre-existing permission/expiry and
+the old pilot snapshot. The global Beta gate, separate diagnostics, guarded
+legacy raw-pilot route, strict transfer editing checks, source budgets and
+cap8/10/12/14 session isolation are unchanged from the preceding revision.
+The new helper also revokes EXECUTE from PUBLIC, anon, authenticated and
+service_role; no browser-writable policy or extra public RPC is introduced.
+
+### Exact future application sequence — NOT run
+
+The same migration version was confirmed absent before editing. If that
+changes, STOP: do not replace applied history or reuse this procedure blindly.
+The exact approved PR HEAD is recorded in the PR report, not inferred from a
+future working HEAD. The SQL LF SHA256 for this revision is
+`0f8e5c05cd43837c08c810e66b9f36937c21e2d7746086cdc804462b4c27c51d`.
+Recheck it if any SQL changes after review.
+
+1. Recheck remote PR #233 HEAD, develop, clean source checkout and this exact
+   SQL. Verify project `mttkectgdqqmejpenkrn` against the application URL and
+   the read-only preflight. Require the six earlier M4 versions exactly once,
+   proposed version absent, expected RPC/trigger/table ACLs, no active/queued
+   M4 work and no unexpected history ordering. Coordinate Auth/region/flag
+   writes; table locks are bounded by a 5s timeout, not a reason to interrupt
+   user work or keep retrying.
+2. Verify a current readable, restricted local recovery of M4 definitions,
+   permissions, regions, config and ledger. Refresh it if stale using existing
+   tools only. Catalog MD5s are not a backup, and this read-only task does not
+   certify a fresh recovery. Preserve the before-state permission values/expiry
+   and session caps/attempts for comparison.
+3. Create a fresh isolated migration workdir under the task workspace, not the
+   general repository's migration directory. Copy only the approved source
+   config and these seven exact migration files from the reviewed checkout:
+
+   ```text
+   20261020205122_media_advice_access_ledger.sql
+   20261021072002_media_advice_review_fixes.sql
+   20261031135149_media_advice_beta_ua.sql
+   20261101180436_media_advice_identity_budget.sql
+   20261102181617_media_advice_exact_reserve_budget.sql
+   20261104210025_media_advice_predicted_card_budget.sql
+   20261108185237_media_advice_global_access.sql
+   ```
+
+   Compare the staged pending SQL's raw SHA256 to its source copy and its
+   normalized-LF SHA256 to the approved value above; record the execution-byte
+   hash. Verify the first six files are unchanged applied predecessors, not
+   additional pending work. Do not copy credentials or unrelated migrations.
+4. Use the existing verified CLI **2.122.0**, without installing/upgrading it.
+   `$M4Cli` is the checked absolute executable path and `$M4Stage` the fresh
+   isolated directory containing its `supabase` folder. Read-only list first:
+
+   ```powershell
+   $M4Cli = 'C:\Users\DenysLis\.codex\visualizations\2026\09\28\01a0e7c4-3dc8-75e0-a3ed-84a709483b8d\m4-beta-tools\npm-cache\_npx\91eb58246759989d\node_modules\@supabase\cli-windows-x64\bin\supabase.exe'
+   & $M4Cli migration list --linked --project-ref mttkectgdqqmejpenkrn --workdir $M4Stage
+   ```
+
+   Proceed only if **the sole pending migration is 20261108185237** and all
+   independent preconditions still match. If the CLI refuses partial staging,
+   reports history divergence or proposes another version, stop and inspect;
+   do not use `--include-all`, general `db push` or history repair.
+5. Only after explicit execution approval, apply exactly the staged file:
+
+   ```powershell
+   & $M4Cli migration up --linked --project-ref mttkectgdqqmejpenkrn --workdir $M4Stage
+   ```
+
+   These flags were verified using the installed CLI's help only. No migration
+   command was executed in this task. If the reply is lost or ambiguous, first
+   inspect history and actual objects/assignments; never retry the apply command
+   merely because its reply was missing.
+6. Postcheck exactly one proposed history record; global RPC and private helper
+   definitions/ACLs/RLS; unchanged default-UA trigger, regions and Beta value;
+   expected missing-flag backfill and preserved pilot/diagnostic scope; every
+   pre-existing personal value/expiry and ledger row's cap/attempts. The local
+   contracts cover old cap8/10/12/14 and new global cap14; do not mutate old
+   sessions or create a live test account/search just to demonstrate this.
+   Region-transition tests run on authored local PostgreSQL, not by changing
+   a real user's region during these postchecks.
+7. Keep merge and release separately authorized. The compatible client/handler
+   requires the new global RPC and fails closed if it is missing. Only after
+   successful SQL postchecks should the approved release path proceed; this
+   task does not merge or run a manual deployment.
+
+### Repeated preflight and validation for this regional revision
+
+At **2026-11-08 21:47:36 UTC**, the final read-only script confirmed the app's
+target `mttkectgdqqmejpenkrn` (the same URL in `app.js`): history contained
+exactly the six prior M4 versions, each once, latest `20261104210025`, no
+duplicates. Proposed `20261108185237` and its global RPC/assignment objects
+were absent; the proposed version is later than the full current history.
+Beta remained active; all **7 users were UA**. One had the active personal core
+flag and separate diagnostics grant; **6** had no core flag. There were **9
+finished/expired cap14 sessions, 0 active/over-cap**, and **0 active or queued
+visible M4 DB queries** with full activity-statistics visibility verified.
+Existing M4 RPCs still had empty search paths and no browser-role EXECUTE.
+
+Expected current apply impact remains **6 new core permissions + 6 automatic
+ownership rows**, one preserved pilot member and one unchanged diagnostic
+grant. The migration does not simulate a region event for existing users or
+rewrite their explicit values. Repeat this preflight and compare the full
+before-state immediately before any separately approved apply; these counts
+are a point-in-time observation, not an authorization or recovery snapshot.
+
+The security advisor was repeated: existing private-table no-policy INFO
+notices, 12 public/17 authenticated definer-callability WARN findings elsewhere
+and disabled leaked-password protection remained. They were not changed by
+this task. The prior section links the corresponding
+[public-definer remediation](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable),
+[authenticated-definer remediation](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
+and [password-protection guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+This is not a clean whole-project security certification.
+
+New validation on the regional policy:
+
+- Broad serial regression: **1495 passed, 0 failed, 28 opt-in/environment skips**
+  (209.92s), including all **20** global/personal SQL cases and the existing
+  HTTP, diagnostics, editing, link/preview/transfer regressions. Two unrelated
+  native Windows pipe/broker controls remain excluded by name, as previously.
+- Native PostgreSQL **17.6**: **7 scenario subtests + parent = 8/8**, 0 failures
+  or skips (13.97s including temporary cluster setup/cleanup). Both activation
+  versus signup orders, queued real region versus manual intent, manual true
+  outside UA, equal-region no-ops, both transition directions, Beta-off/on,
+  original expiry/diagnostics, missing flags and Auth deletion were exercised
+  on independent connections. No grant loss, deadlock or orphan was observed.
+- Frontend/runtime HTTP code did not change in this revision. The previous
+  32-scenario mobile/desktop browser pass remains separately dated evidence,
+  not a new browser or deployed-user run. Core Boolean changes use the same
+  fresh server authorization paths already tested for revocation and expiry.
+
+New film-source HTTP requests **0**, Tavily Basic/Advanced credits **0**.
+Target access consisted of **2 successful read-only SQL calls** (initial
+history guard and final full preflight), project metadata, documentation and
+security-advisor reads. No target application RPC, region/permission mutation,
+account creation, live migration, merge or manual deployment was performed.
+Only CLI version/help was invoked; no tool or Windows update was installed.
+Local artifacts: `m4-group-entry-study/region-transition-regression.tap` and
+`region-transition-native.tap` outside Git. No live signup, physical device,
+real platform availability or recovery-restoration exercise is attested here.

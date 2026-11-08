@@ -55,16 +55,16 @@ export function linkPreview(current, chosen) {
 }
 
 // Shared visual classes, private DOM/state. Never call another Mykola controller.
-export function createMediaAdvice({ document: doc, entry, context, readForm, writeForm, capability, preparedEntry = () => false, discover, validateApply = capability, renewContext, now = Date.now }) {
+export function createMediaAdvice({ document: doc, entry, context, readForm, writeForm, capability, preparedEntry = () => false, cachedAvailability = false, discover, validateApply = capability, canApply = () => true, validateDiagnostics, renewContext, now = Date.now }) {
   const dialog = doc.createElement('dialog'); dialog.className = 'media-advice-dialog';
   dialog.setAttribute('aria-label', 'Поради носіїв від Миколи'); doc.body.append(dialog);
-  let session = null, generation = 0, controller = null, capabilityGeneration = 0, selectionToken = null, refreshFlight = null, entryCheck = null;
-  let access = normalizeMediaCapabilities(false);
+  let session = null, generation = 0, controller = null, capabilityGeneration = 0, selectionToken = null, refreshFlight = null, entryCheck = null, diagnosticCheck = null;
+  let access = normalizeMediaCapabilities(false), diagnosticRevision = 0;
   let returnFocus, viewReturnFocus, scrollY = 0, freshnessTimer, chat, preview, diagnostics, notice, staleNotice;
   // View freshness only. The server's 30-minute action ledger is NOT extended.
   const freshnessMs = 30 * 60 * 1000;
   const key = c => c && JSON.stringify([c.userId, c.groupId, c.imdbId, c.listId ?? null, c.formSession, c.title ?? null, c.year ?? null]);
-  const usable = c => c?.userId && c.groupId && /^tt\d{7,10}$/.test(c.imdbId ?? '') && c.formSession;
+  const usable = c => c?.userId && /^tt\d{7,10}$/.test(c.imdbId ?? '') && c.formSession;
   const valid = () => session && key(context()) === session.key;
   const node = (tag, text) => { const e = doc.createElement(tag); if (text !== undefined) e.textContent = text; return e; };
   function button(text, action) { const e = node('button', text); e.type = 'button'; e.addEventListener('click', action); return e; }
@@ -90,6 +90,15 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     } else diagnosticBubble();
     return access.mykola_media_advice;
   }
+  function updateDisplayAccess(value) {
+    // A cached global display hint is not a private diagnostics grant. Keep
+    // the grant supplied by the last fresh result; report access is separately
+    // checked on demand before any private content is inserted or copied.
+    if (cachedAvailability && normalizeMediaCapabilities(value).mykola_media_advice) {
+      return updateAccess({ mykola_media_advice: true, mykola_media_advice_diagnostics: access.mykola_media_advice_diagnostics });
+    }
+    return updateAccess(value);
+  }
   function returnToChat(message) {
     selectionToken = null; preview?.remove(); preview = null;
     if (diagnostics) diagnostics.hidden = true;
@@ -107,8 +116,9 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     doc.defaultView.scrollTo(0, scrollY);
   }
   function invalidate() {
-    clearTimeout(freshnessTimer); selectionToken = null; generation++; capabilityGeneration++;
-    controller?.abort(); controller = null; session = null; refreshFlight = entryCheck = null; access = normalizeMediaCapabilities(false); entry.hidden = true;
+    clearTimeout(freshnessTimer); selectionToken = null; generation++; capabilityGeneration++; diagnosticRevision++;
+    diagnosticCheck?.controller.abort();
+    controller?.abort(); controller = null; session = null; refreshFlight = entryCheck = diagnosticCheck = null; access = normalizeMediaCapabilities(false); entry.hidden = true;
     if (dialog.open) dialog.close(); dialog.replaceChildren(); chat = preview = diagnostics = notice = staleNotice = viewReturnFocus = null;
   }
   function markStale(timerElapsed = false) {
@@ -127,9 +137,9 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     if (!usable(c)) return invalidate();
     if (session && session.key !== key(c)) invalidate();
     // This hint reveals only the entry, never grants dialog/diagnostics access.
-    // It is scoped to the current user/group; the exact card check still runs.
-    // A user click already performs a fresh exact check. Background focus/role
-    // refresh must not supersede it and silently swallow the opening action.
+    // In the integrated app this reads only a session-level availability hint;
+    // neither opening a card nor opening advice performs film authorization.
+    // Background refresh must not supersede a pending opening action.
     if (entryCheck?.key === key(c)) return;
     if (!session) entry.hidden = preparedEntry(c) !== true;
     if (refreshFlight?.key === key(c)) return refreshFlight.promise;
@@ -141,7 +151,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       try {
         const ok = await Promise.resolve().then(() => capability(c));
         if (check !== capabilityGeneration) return;
-        if (key(context()) !== key(c) || !updateAccess(ok)) return invalidate();
+        if (key(context()) !== key(c) || !updateDisplayAccess(ok)) return invalidate();
         markStale(); entry.hidden = false;
       } catch { if (check === capabilityGeneration) invalidate(); }
       finally { if (refreshFlight === flight) refreshFlight = null; }
@@ -154,7 +164,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const current = session, c = context(), epoch = generation; current.renewing = true;
     let ok = false; try { ok = await capability(c); } catch {}
     if (epoch !== generation || !valid() || current !== session || key(c) !== key(context())) return;
-    if (!updateAccess(ok)) return invalidate();
+    if (!updateDisplayAccess(ok)) return invalidate();
     const next = renewContext();
     if (!next || key(next) !== key(context()) || ['userId', 'groupId', 'imdbId', 'listId', 'title', 'year'].some(k => (c[k] ?? null) !== (next[k] ?? null)) || next.formSession === c.formSession) return invalidate();
     clearTimeout(freshnessTimer); generation++; controller?.abort(); selectionToken = null;
@@ -166,9 +176,28 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   const rowsFor = () => [...(session.result?.rows ?? []), ...(session.choice?.rows ?? [])];
   const filmLocalizationFor = () => session.choice?.filmLocalization ?? session.result?.filmLocalization;
   const reportText = () => safeMediaReport({ ...session.result, rows: rowsFor(), unmapped: [...(session.result?.unmapped ?? []), ...(session.choice?.unmapped ?? [])], filmLocalization: filmLocalizationFor() }, { applied: session.applied, filmContext: session.runContext, stale: session.stale === true });
-  function showReport() {
+  async function verifyDiagnostics() {
+    if (!validateDiagnostics) return access.mykola_media_advice_diagnostics;
+    if (!valid() || !dialog.open) return false;
+    if (diagnosticCheck?.session === session) return diagnosticCheck.promise;
+    const epoch = generation, reportEpoch = diagnosticRevision, current = session;
+    const flight = { session: current, controller: new AbortController(), promise: null };
+    flight.promise = Promise.resolve().then(() => validateDiagnostics(current.context, { signal: flight.controller.signal })).then(value => {
+      if (epoch !== generation || reportEpoch !== diagnosticRevision || current !== session || !valid() || !dialog.open) return false;
+      if (!updateAccess(value)) { invalidate(); return false; }
+      return access.mykola_media_advice_diagnostics;
+    }, () => {
+      if (epoch === generation && reportEpoch === diagnosticRevision && current === session && valid()) updateAccess({ mykola_media_advice: true, mykola_media_advice_diagnostics: false });
+      return false;
+    }).finally(() => { if (diagnosticCheck === flight) diagnosticCheck = null; });
+    diagnosticCheck = flight;
+    return flight.promise;
+  }
+  async function showReport() {
     if (!valid()) return invalidate();
     if (!access.mykola_media_advice_diagnostics) return;
+    if (validateDiagnostics && !await verifyDiagnostics()) return;
+    if (!valid() || !dialog.open || !access.mykola_media_advice_diagnostics) return;
     markStale(); selectionToken = null; session.chatScroll = dialog.scrollTop;
     viewReturnFocus = doc.activeElement;
     diagnostics.replaceChildren(node('h3', 'Діагностичний звіт'), node('p', 'Лише для пілоту. Звіт нікуди не надсилається автоматично.'), button('← До порад', () => returnToChat()));
@@ -177,6 +206,8 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     diagnostics.append(button('Скопіювати короткий звіт', async () => {
       if (!valid()) return invalidate();
       if (!access.mykola_media_advice_diagnostics) return;
+      if (validateDiagnostics && !await verifyDiagnostics()) return;
+      if (!valid() || !dialog.open || !access.mykola_media_advice_diagnostics) return;
       markStale(); const report = reportText(); text.value = report;
       const epoch = generation, current = session;
       try {
@@ -289,7 +320,8 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
         if (!valid()) return invalidate(); markStale();
         doc.defaultView.open(transfer.link.href, '_blank', 'noopener,noreferrer');
       }));
-      const choose = button('Обрати', () => review(row)); choose.disabled = group.readOnly || !transfer; buttons.append(choose); actions.append(buttons);
+      const choose = button('Обрати', () => review(row)); choose.disabled = group.readOnly || !transfer || !canApply(); buttons.append(choose); actions.append(buttons);
+      if (!canApply()) actions.append(node('p', 'Поради доступні для перегляду. Для перенесення в картку потрібні права додавання або редагування цієї групи.'));
     }
     for (const info of groups) {
       let displayed = info;
@@ -374,6 +406,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   }
   function review(row) {
     if (!valid()) return invalidate(); markStale();
+    if (!canApply()) return returnToChat('Немає прав для перенесення в цю картку. Поради можна переглядати.');
     const before = readForm(), transfer = transferFor(row);
     if (!transfer) return;
     tell('');
@@ -401,13 +434,21 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       let permitted = false; try { permitted = await validateApply(c); } catch {}
       markStale();
       if (epoch !== generation || token !== selectionToken || !dialog.open || !valid()) return;
-      if (!updateAccess(permitted)) return invalidate();
+      if (!canApply() || !normalizeMediaCapabilities(permitted).mykola_media_advice) return returnToChat('Немає прав для перенесення в цю картку. Поради можна переглядати.');
+      updateAccess(permitted);
       const changes = applyPreview(makePreview(row, before, { clearMissing }), readForm());
       if (!changes) return returnToChat('Поля змінилися або очищення не підтверджено. Оберіть варіант повторно.');
       writeForm(changes); session.applied = true; close();
     });
     preview.append(apply, button('Скасувати вибір', () => returnToChat())); dialog.append(preview); dialog.scrollTop = 0;
     const heading = preview.querySelector('h3'); heading.tabIndex = -1; heading.focus({ preventScroll: true });
+  }
+  function editingAccessChanged() {
+    // Role changes affect writing, not global advice access or its one-shot
+    // source ledger. Keep the already obtained result and chosen addresses.
+    selectionToken = null;
+    if (preview) returnToChat('Права редагування змінилися. Перевірте вибір повторно.');
+    if (valid() && !session.loading) render();
   }
   async function run() {
     if (!valid() || session.used) return; session.used = true; session.loading = true;
@@ -436,7 +477,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     try {
       const check = ++capabilityGeneration; let ok = false; try { ok = await capability(c); } catch {}
       if (check !== capabilityGeneration || epoch !== generation || key(c) !== key(context())) return;
-      if (!updateAccess(ok)) return invalidate();
+      if (!updateDisplayAccess(ok)) return invalidate();
       entry.hidden = false;
       if (!session || session.key !== key(c)) { generation++; session = { context: { ...c }, key: key(c), used: false, result: null }; dialog.replaceChildren(); }
       returnFocus = doc.activeElement; scrollY = doc.defaultView.scrollY;
@@ -453,7 +494,16 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     } finally { if (entryCheck === opening) entryCheck = null; }
   });
   dialog.addEventListener('cancel', e => { e.preventDefault(); close(); });
-  dialog.addEventListener('close', () => { selectionToken = null; if (preview) returnToChat(); });
-  return { refresh, invalidate, dialog };
+  dialog.addEventListener('close', () => {
+    selectionToken = null; if (preview) returnToChat();
+    if (validateDiagnostics) {
+      diagnosticCheck?.controller.abort();
+      diagnosticRevision++; diagnosticCheck = null;
+      diagnostics?.replaceChildren();
+      if (diagnostics) diagnostics.hidden = true;
+      if (chat) chat.hidden = false;
+    }
+  });
+  return { refresh, invalidate, editingAccessChanged, dialog };
 }
 

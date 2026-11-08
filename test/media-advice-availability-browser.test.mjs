@@ -87,7 +87,8 @@ test('same-product service availability is independent of navigation choice; ori
         if (url.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'text/javascript', body: sdkStub });
         if (url.origin !== origin) { state.blockedRemote.push(url.hostname); return route.abort(); }
         if (url.pathname === '/.netlify/functions/media-advice') {
-          if (route.request().postDataJSON().action === 'capability') return route.fulfill({ json: capabilities });
+          if (route.request().postDataJSON().action === 'availability') return route.fulfill({ json: { mykola_media_advice: true } });
+          if (['apply-capability', 'diagnostic-capability'].includes(route.request().postDataJSON().action)) return route.fulfill({ json: capabilities });
           state.discoveries++; return route.fulfill({ json: { result: projected } });
         }
         return route.continue();
@@ -165,6 +166,7 @@ test('same-product service availability is independent of navigation choice; ori
       assert.equal(await button.count(), enabled ? 1 : 0);
       if (enabled) {
         await button.click();
+        await page.locator('.media-advice-diagnostics textarea').waitFor({ state: 'visible' });
         assert.equal(await page.locator('.media-advice-diagnostics pre').count(), rows.length, 'all distinct original source observations remain available only to authorized diagnostics');
         await page.getByRole('button', { name: '← До порад', exact: true }).click();
       } else assert.equal(await page.locator('.media-advice-diagnostics pre').count(), 0);

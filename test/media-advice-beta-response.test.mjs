@@ -32,7 +32,7 @@ const fullResult = () => ({ film: { id: 'imdb:tt1234567', imdbId: 'tt1234567', t
 test('ordinary Beta response withholds diagnostics even with forged browser flags/region/user metadata', async () => {
   const operations = [], client = { auth: { getUser: async () => ({ data: { user: { id: user,
     user_metadata: { region: 'UA', mykola_media_advice_diagnostics: true } } } }) },
-    rpc: async (name, args) => { assert.equal(name, 'media_advice_beta_action'); operations.push(args);
+    rpc: async (name, args) => { assert.equal(name, 'media_advice_beta_global_action'); operations.push(args);
       return { data: { id: user, attempts: [], ...caps(false) } }; } };
   const response = await createMediaAdviceHandler({ client, env: () => '', run: async () => fullResult() })(request({
     region: 'UA', diagnostics: true, mykola_media_advice_diagnostics: true, userId: group, role: 'owner' }));
@@ -42,7 +42,7 @@ test('ordinary Beta response withholds diagnostics even with forged browser flag
   assert.equal(payload.result.sources[0].status, 'partial'); assert.deepEqual(payload.result.unmapped, [{ name: 'Plex' }]);
   assert.doesNotMatch(JSON.stringify(payload), /PRIVATE_|resolver|metrics|runtime|rawHref|sourceURL|"diagnostics":/);
   assert.deepEqual(operations.map(op => op.p_op), ['start', 'finish']);
-  assert.ok(operations.every(op => op.p_user === user && op.p_group === group));
+  assert.ok(operations.every(op => op.p_user === user && !Object.hasOwn(op, 'p_group') && !Object.hasOwn(op, 'p_list')));
   assert.doesNotMatch(JSON.stringify(operations), /diagnostics|region|owner/);
 });
 
@@ -61,7 +61,10 @@ test('diagnostics require fresh server permission; revoking only diagnostics doe
 test('capability returns only effective booleans; client cannot request a diagnostic bypass or self-grant', async () => {
   for (const allowed of [true, false]) {
     const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) },
-      rpc: async () => ({ data: { ...caps(true), mykola_media_advice: allowed, region: 'PRIVATE_REGION', userId: 'PRIVATE_ID' } }) };
+      rpc: async (name, args) => {
+        assert.equal(name, 'media_advice_beta_action'); assert.equal(args.p_user, user); assert.equal(args.p_group, group);
+        return { data: { ...caps(true), mykola_media_advice: allowed, region: 'PRIVATE_REGION', userId: 'PRIVATE_ID' } };
+      } };
     const handler = createMediaAdviceHandler({ client, env: () => '', run: () => assert.fail('capability must not discover') });
     const response = await handler(request({ action: 'capability', mykola_media_advice: true }));
     assert.equal(response.status, allowed ? 200 : 403);
@@ -109,7 +112,8 @@ test('Beta authorization and diagnostics remain independent of actual Tavily-onl
     let searches = 0;
     const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) },
       rpc: async (name, args) => {
-        assert.equal(name, 'media_advice_beta_action'); assert.equal(args.p_user, user); assert.equal(args.p_group, group);
+        assert.equal(name, 'media_advice_beta_global_action'); assert.equal(args.p_user, user);
+        assert.equal(Object.hasOwn(args, 'p_group'), false); assert.equal(Object.hasOwn(args, 'p_list'), false);
         operations.push(args);
         if (args.p_op === 'reserve') {
           assert.ok(stages.has(args.p_stage)); assert.ok(!reserved.includes(args.p_stage));
@@ -163,7 +167,7 @@ test('server-denied Beta session cannot dispatch the actual resolver despite bro
   const operations = [];
   const client = { auth: { getUser: async () => ({ data: { user: { id: user,
     user_metadata: { region: 'UA', mykola_media_advice: true, mykola_media_advice_diagnostics: true } } } }) },
-    rpc: async (name, args) => { assert.equal(name, 'media_advice_beta_action'); operations.push(args.p_op); return { error: true }; } };
+    rpc: async (name, args) => { assert.equal(name, 'media_advice_beta_global_action'); operations.push(args.p_op); return { error: true }; } };
   const response = await createMediaAdviceHandler({ client, env: () => 'AUTHORED_KEY',
     fetchImpl: async () => assert.fail('denied Beta access must reserve or dispatch no source attempt'),
     resolver: createKinobazaResolver({ apiKey: 'AUTHORED_KEY' }) })(request({ imdbId: `tt${IDS[0]}`, region: 'UA',

@@ -86,7 +86,8 @@ test('qualified source negatives and compact actions: authored Shining/family/Ap
         if (url.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'text/javascript', body: sdkStub });
         if (url.origin !== origin) { state.blockedRemote.push(url.hostname); return route.abort(); }
         if (url.pathname === '/.netlify/functions/media-advice') {
-          if (route.request().postDataJSON().action === 'capability') return route.fulfill({ json: capabilities });
+          if (route.request().postDataJSON().action === 'availability') return route.fulfill({ json: { mykola_media_advice: true } });
+          if (['apply-capability', 'diagnostic-capability'].includes(route.request().postDataJSON().action)) return route.fulfill({ json: capabilities });
           state.discoveries++; return route.fulfill({ json: { result: projected } });
         }
         return route.continue();
@@ -184,6 +185,7 @@ test('qualified source negatives and compact actions: authored Shining/family/Ap
         return;
       }
       await button.click();
+      await page.getByLabel('Короткий звіт для копіювання').waitFor();
       const originals = await page.locator('.media-advice-diagnostics pre').allTextContents();
       assert.equal(originals.length, rows.length, 'authorized diagnostics retain all original observations');
       assert.deepEqual(originals.map(text => JSON.stringify(JSON.parse(text))).sort(), rows.map(row => JSON.stringify(mediaSourceDetails(row))).sort(),
