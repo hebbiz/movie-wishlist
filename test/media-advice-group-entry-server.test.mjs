@@ -140,3 +140,70 @@ test('cached display success cannot bypass fresh discovery start or finish denia
     assert.deepEqual(operations, deniedOp === 'start' ? ['capability', 'start'] : ['capability', 'start', 'finish']);
   }
 });
+
+test('personal availability is derived from the verified user: two UA users can have opposite flags and diagnostics cannot grant advice', async () => {
+  // Authored RPC outcomes exercise HTTP dispatch only. The companion SQL
+  // tests separately prove how actual permission rows produce these outcomes.
+  const people = new Map([
+    [user, { region: 'UA', enabled: true, diagnostics: false }],
+    [other, { region: 'UA', enabled: false, diagnostics: true }],
+  ]);
+  const operations = []; let sources = 0;
+  const handler = createMediaAdviceHandler({ env: () => '',
+    client: { auth: { getUser: async token => ({ data: { user: { id: token === 'AUTHORED-ALLOW' ? user : other, user_metadata: { region: 'UA', mykola_media_advice: true, role: 'owner' } } } }) },
+      rpc: async (name, args) => {
+        operations.push({ name, args }); const person = people.get(args.p_user);
+        if (!person.enabled) return { error: { message: 'AUTHORED_PRIVATE_PERSONAL_DENIAL' } };
+        return { data: { mykola_media_advice: true, mykola_media_advice_diagnostics: person.diagnostics } };
+      } },
+    run: async () => { sources++; throw Error('unexpected sources'); } });
+  const permitted = await handler(request({ action: 'availability' }, { authorization: 'Bearer AUTHORED-ALLOW' }));
+  assert.equal(permitted.status, 200); assert.deepEqual(await permitted.json(), { mykola_media_advice: true });
+  for (const action of ['availability', 'diagnostic-capability', 'discover']) {
+    const body = { ...(action === 'discover' ? movieInput : { action }), action,
+      userId: user, country: 'UA', mykola_media_advice: true, mykola_media_advice_diagnostics: true };
+    const denied = await handler(request(body, { authorization: 'Bearer AUTHORED-DENY' }));
+    assert.equal(denied.status, 403, action);
+    assert.doesNotMatch(await denied.text(), /AUTHORED_PRIVATE/);
+  }
+  assert.equal(sources, 0);
+  assert.deepEqual(operations.map(call => call.args.p_user), [user, other, other, other]);
+  assert.ok(operations.every(call => call.name === 'media_advice_beta_global_action'));
+});
+
+test('personal flag revocation or expiry after startup is checked before new discovery and performs no source calls', async () => {
+  for (const change of ['revoked', 'expired']) {
+    const flag = { enabled: true, expiresAt: null }; let sources = 0, sourceHTTP = 0;
+    const operations = [];
+    const handler = createMediaAdviceHandler({ env: () => '',
+      client: { auth: { getUser: async () => ({ data: { user: { id: user } } }) },
+        rpc: async (name, args) => {
+          operations.push({ name, args });
+          if (!flag.enabled || flag.expiresAt !== null && flag.expiresAt <= Date.now()) return { error: { message: 'AUTHORED_PRIVATE_PERSONAL_DENIAL' } };
+          return { data: { mykola_media_advice: true, mykola_media_advice_diagnostics: true } };
+        } },
+      run: async () => { sources++; throw Error('unexpected sources'); },
+      fetchImpl: async () => { sourceHTTP++; throw Error('unexpected source HTTP'); } });
+    assert.equal((await handler(request())).status, 200);
+    if (change === 'revoked') flag.enabled = false; else flag.expiresAt = Date.now() - 1;
+    const result = await handler(request({ ...movieInput, mykola_media_advice: true }));
+    assert.equal(result.status, 403, change);
+    assert.equal(sources, 0); assert.equal(sourceHTTP, 0);
+    assert.deepEqual(operations.map(call => call.args.p_op), ['capability', 'start']);
+  }
+});
+
+test('explicit non-UA personal permission is eligible, while the global Beta switch can still deny it', async () => {
+  const person = { region: 'DE', enabled: true }; let betaEnabled = true, sources = 0;
+  const handler = createMediaAdviceHandler({ env: () => '',
+    client: { auth: { getUser: async () => ({ data: { user: { id: user, user_metadata: { region: person.region } } } }) },
+      rpc: async () => betaEnabled && person.enabled
+        ? { data: { mykola_media_advice: true, mykola_media_advice_diagnostics: false } }
+        : { error: { message: 'AUTHORED_PRIVATE_BETA_DENIAL' } } },
+    run: async () => { sources++; throw Error('unexpected sources'); } });
+  assert.deepEqual(await (await handler(request())).json(), { mykola_media_advice: true });
+  betaEnabled = false;
+  assert.equal((await handler(request())).status, 403);
+  assert.equal((await handler(request(movieInput))).status, 403);
+  assert.equal(sources, 0);
+});

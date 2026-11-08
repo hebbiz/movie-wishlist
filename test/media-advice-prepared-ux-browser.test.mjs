@@ -29,7 +29,7 @@ window.supabase={createClient:()=>({
       window.authoredSessionReads++;
       if(window.authoredSessionQueue) return await new Promise((resolve,reject)=>window.authoredSessionControls.push({resolve,reject}));
       if(window.authoredSessionDelay) await new Promise(resolve=>window.authoredSessionRelease=resolve);
-      return {data:{session:window.authoredLogin?{access_token:'AUTHORED',user:{id:window.authoredUser}}:null}};
+      return {data:{session:window.authoredLogin?{access_token:'AUTHORED-'+window.authoredUser,user:{id:window.authoredUser}}:null}};
     },
     getUser:async()=>({data:{user:window.authoredLogin?{id:window.authoredUser}:null}}),
     onAuthStateChange:fn=>{window.authoredAuthEvent=fn;return {data:{subscription:{unsubscribe(){}}}};}
@@ -42,7 +42,7 @@ window.supabase={createClient:()=>({
 })};`;
 
 test('prepared Mykola UX: local browser controls, cold cache and deliberately pending SVGs',
-  { skip: !process.env.PLAYWRIGHT_MODULE_PATH, timeout: 115000 }, async t => {
+  { skip: !process.env.PLAYWRIGHT_MODULE_PATH, timeout: 240000 }, async t => {
     const root = resolve(import.meta.dirname, '..');
     const server = createServer(async (req, res) => {
       try {
@@ -63,6 +63,7 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
 
     async function setup(t, width, options = {}) {
       const state = { discoveries: 0, capabilities: [], iconRequests: [], blockedRemote: [],
+        personalFlags: options.personalFlags ?? null, betaEnabled: options.betaEnabled !== false, sourceDiscoveries: 0, discoverBodies: [],
         diagnostics: options.diagnostics === true,
         capabilityMode: options.capabilityMode ?? 'allow', iconMode: options.iconMode ?? 'normal',
         holdDiscover: options.holdDiscover ?? false, holdModule: options.holdModule ?? false,
@@ -96,15 +97,21 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
         }
         if (url.pathname === '/.netlify/functions/media-advice') {
           const body = route.request().postDataJSON();
+          const user = /^Bearer AUTHORED-(user-[ab])$/.exec(route.request().headers().authorization ?? '')?.[1];
+          const personal = state.personalFlags?.[user];
+          const personallyAllowed = state.betaEnabled && (!state.personalFlags || personal?.enabled === true &&
+            (personal.expiresAt === null || personal.expiresAt > Date.now()));
           if (['availability', 'apply-capability', 'diagnostic-capability'].includes(body.action)) {
             const mode = state.capabilityMode; state.capabilities.push(body);
             if (mode.startsWith('hold')) await new Promise(resolve => state.pendingCapabilities.push(resolve));
-            if (mode.endsWith('deny')) return route.fulfill({ status: 403, json: { status: 'access-unavailable' } });
+            if (mode.endsWith('deny') || !personallyAllowed) return route.fulfill({ status: 403, json: { status: 'access-unavailable' } });
             if (mode === 'fail') return route.abort('failed');
             return route.fulfill({ json: { mykola_media_advice: true, mykola_media_advice_diagnostics: body.action === 'diagnostic-capability' && state.diagnostics } });
           }
           state.discoveries++;
-          if (state.capabilityMode.endsWith('deny')) return route.fulfill({ status: 403, json: { status: 'access-unavailable' } });
+          state.discoverBodies.push(body);
+          if (state.capabilityMode.endsWith('deny') || !personallyAllowed) return route.fulfill({ status: 403, json: { status: 'access-unavailable' } });
+          state.sourceDiscoveries++;
           if (state.holdDiscover) await new Promise(resolve => state.pendingDiscoveries.push(resolve));
           const selected = body.imdbId === secondFilm.imdbId ? secondFilm : film;
           return route.fulfill({ json: { result: { film: selected, rows: rowsFor(selected), unmapped: [], sources: [],
@@ -668,6 +675,66 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
       assert.equal(await page.evaluate(() => authoredReportAttempts), 2, 'only the two explicit report openings request protected access');
       assert.equal(state.capabilities.filter(request => request.action === 'availability').length, 1, 'no fresh availability epoch masks the same-form report race');
       assert.equal(state.discoveries, 1, 'closing, reopening and the late denial never repeat discovery');
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), 0);
+    });
+    await t.test('Personal flag: startup follows personal permission rather than region, while movie/group/role changes do not recheck or search', async t => {
+      const { page, state } = await setup(t, 375, { personalFlags: {
+        'user-a': { region: 'DE', enabled: true, diagnostics: false, expiresAt: null },
+        'user-b': { region: 'UA', enabled: false, diagnostics: true, expiresAt: null },
+      } });
+      await page.evaluate(() => {
+        appHasInitialized = false; currentUser = null; syncMediaAdviceEntryScope();
+        const original = supabaseClient.from;
+        supabaseClient.from = name => name === 'profiles' ? { select: () => ({ eq: () => ({ single: () => new Promise(resolve => {
+          window.authoredProfileRelease = () => resolve({ data: { display_name: 'Authored personal user', notifications_enabled: false } });
+        }) }) }) } : original.call(supabaseClient, name);
+        window.authoredPersonalInitDone = false;
+        window.authoredPersonalInit = updateAuthUI().finally(() => { authoredPersonalInitDone = true; });
+      });
+      await page.waitForFunction(() => typeof authoredProfileRelease === 'function' && mediaAdviceAccessPreparation.peek(mediaAdviceEntryScope()));
+      assert.equal(await page.evaluate(() => authoredPersonalInitDone), false, 'the personal flag is ready before the independent profile response');
+      assert.equal(state.capabilities.filter(body => body.action === 'availability').length, 1);
+      await openCard(page);
+      assert.equal(state.discoveries, 0);
+      await page.evaluate(() => { authoredProfileRelease(); return authoredPersonalInit; });
+      await page.evaluate(() => startEditMovie('list-1'));
+      await page.evaluate(() => { authoredRole = 'visitor'; return loadCurrentRole(); });
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true, 'the personal feature flag is independent of writing rights');
+      await page.evaluate(() => {
+        currentGroupId = 'group-b'; authoredRole = 'owner'; movies.forEach(movie => { movie.group_id = 'group-b'; });
+        return loadCurrentRole();
+      });
+      await openCard(page);
+      assert.equal(state.capabilities.filter(body => body.action === 'availability').length, 1);
+      assert.equal(state.discoveries, 0);
+      await page.evaluate(() => {
+        authoredUser = 'user-b'; authoredProfileRelease = null;
+        authoredAuthEvent('SIGNED_IN', { user: { id: 'user-b' } });
+        window.authoredDeniedInit = updateAuthUI();
+      });
+      await page.waitForFunction(() => currentUser?.id === 'user-b' && typeof authoredProfileRelease === 'function' &&
+        mediaAdviceAccessPreparation.remainingMs(mediaAdviceEntryScope()) > 0 && !mediaAdviceAccessPreparation.peek(mediaAdviceEntryScope()));
+      await page.evaluate(() => startEditMovie('list-0'));
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), false, 'a UA user with diagnostics alone does not inherit advice from an enabled non-UA user');
+      assert.equal(state.capabilities.filter(body => body.action === 'availability').length, 2);
+      assert.ok(state.capabilities.every(body => Object.keys(body).join() === 'action'));
+      assert.equal(state.discoveries, 0); assert.equal(state.sourceDiscoveries, 0);
+      assert.equal(await page.locator('.media-advice-diagnostics textarea,.media-advice-diagnostics pre').count(), 0);
+      await page.evaluate(() => { authoredProfileRelease(); return authoredDeniedInit; });
+    });
+    for (const change of ['revoked', 'expired', 'beta-disabled']) await t.test(`Personal flag: ${change} after initialization denies a fresh action before sources and clears the hint`, async t => {
+      const personal = { region: 'UA', enabled: true, diagnostics: true, expiresAt: null };
+      const { page, state } = await setup(t, 1280, { personalFlags: { 'user-a': personal } });
+      await openCard(page);
+      assert.equal(state.capabilities.filter(body => body.action === 'availability').length, 1);
+      if (change === 'revoked') personal.enabled = false;
+      else if (change === 'expired') personal.expiresAt = Date.now() - 1;
+      else state.betaEnabled = false;
+      await page.locator('#mediaAdviceEntry').click(); await page.locator('#mediaAdviceEntry').waitFor({ state: 'hidden' });
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceEntryScope())), false);
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), false);
+      assert.equal(state.discoveries, 1); assert.equal(state.sourceDiscoveries, 0, 'the authored endpoint denies before its fake source runner');
+      assert.deepEqual(Object.keys(state.discoverBodies[0]).sort(), ['action', 'formSession', 'imdbId']);
       assert.equal(await page.evaluate(() => authoredDBWrites.length), 0);
     });
     console.info('Prepared UX browser controls: source HTTP 0; real Supabase HTTP/writes 0; real platform navigation 0. Routes and permissions are authored fixtures, not live attestations.');

@@ -20,7 +20,7 @@ const snapshot = async db => ({
   permissions: (await db.query('select * from media_advice_private.permissions order by user_id,feature_key')).rows,
 });
 
-test('global migration preserves existing cap8/10/12/14 rows, legacy RPCs, source data and backend flags', async t => {
+test('global migration preserves existing cap8/10/12/14 rows, source data and stored decisions while isolating pilot access', async t => {
   const { db, rpc } = await betaDb(); t.after(() => db.close());
   await db.exec('update media_advice_private.beta_config set enabled=true');
   const eight = await rpc('start'); await rpc('reserve', { session: eight.id, stage: 'tmdb-find' });
@@ -35,7 +35,19 @@ test('global migration preserves existing cap8/10/12/14 rows, legacy RPCs, sourc
   await db.query('insert into media_advice_private.permissions values($1,$2,true,null)', [user, 'mykola_media_advice_diagnostics']);
   const before = await snapshot(db);
   await db.exec(await globalAccessSql());
-  assert.deepEqual(await snapshot(db), before, 'no rows, flags, assignments or legacy function definitions are rewritten');
+  const after = await snapshot(db);
+  assert.deepEqual({ ...after, definitions: before.definitions, permissions: before.permissions }, before,
+    'existing sessions, source data, membership, regions and Beta flag are unchanged');
+  for (const previous of before.permissions) assert.deepEqual(after.permissions.find(row => row.user_id === previous.user_id && row.feature_key === previous.feature_key), previous,
+    'existing permission/diagnostic values are never overwritten');
+  assert.deepEqual(after.permissions.filter(row => row.feature_key === 'mykola_media_advice'),
+    [{ user_id: user, feature_key: 'mykola_media_advice', enabled: true, expires_at: null }], 'only the missing eligible personal flag is assigned');
+  for (const definition of before.definitions.filter(row => !row.signature.startsWith('media_advice_action('))) {
+    assert.deepEqual(after.definitions.find(row => row.signature === definition.signature), definition,
+      'existing Beta ledger and cleanup RPC definitions remain unchanged');
+  }
+  assert.notDeepEqual(after.definitions.find(row => row.signature.startsWith('media_advice_action(')),
+    before.definitions.find(row => row.signature.startsWith('media_advice_action(')), 'pilot RPC receives explicit legacy-allowlist isolation');
   assert.deepEqual(before.sessions.map(row => row.source_cap), [8, 10, 12, 14]);
   const columns = (await db.query(`select column_name,is_nullable,column_default from information_schema.columns
     where table_schema='media_advice_private' and table_name='sessions' order by ordinal_position`)).rows;
@@ -82,8 +94,9 @@ test('backend region and global flag are authoritative; missing users and editab
   await assert.rejects(globalRpc('capability', { targetUser: secondUser }), /access-denied/);
   await assert.rejects(globalRpc('capability', { targetUser: '00000000-0000-4000-8000-000000000099' }), /access-denied/);
   await assert.rejects(globalRpc('capability', { targetUser: null }), /invalid-context|access-denied/);
-  await db.query('insert into media_advice_private.permissions values($1,$2,false,null)', [user, 'mykola_media_advice']);
-  assert.equal((await globalRpc('capability')).mykola_media_advice, true, 'old per-user pilot assignment is not the new Beta access policy');
+  await db.query("update media_advice_private.permissions set enabled=false where user_id=$1 and feature_key='mykola_media_advice'", [user]);
+  await assert.rejects(globalRpc('capability'), /access-denied/, 'an explicit disabled personal flag denies Beta');
+  await db.query("update media_advice_private.permissions set enabled=true where user_id=$1 and feature_key='mykola_media_advice'", [user]);
   await db.exec('update media_advice_private.beta_config set enabled=false');
   await assert.rejects(globalRpc('capability'), /access-denied/);
   assert.equal((await sessions(db)).length, 0);
@@ -203,7 +216,7 @@ test('global diagnostics is an independent expiring backend grant and is recheck
   await db.query('insert into media_advice_private.permissions values($1,$2,true,null)', [user, 'mykola_media_advice_diagnostics']);
   assert.equal((await globalRpc('capability')).mykola_media_advice_diagnostics, true);
   assert.equal((await globalRpc('reserve', { session: session.id, stage: 'tmdb-find' })).mykola_media_advice_diagnostics, true);
-  await db.exec("update media_advice_private.permissions set expires_at=clock_timestamp()-interval '1 second'");
+  await db.exec("update media_advice_private.permissions set expires_at=clock_timestamp()-interval '1 second' where feature_key='mykola_media_advice_diagnostics'");
   assert.equal((await globalRpc('finish', { session: session.id })).mykola_media_advice_diagnostics, false);
   assert.equal((await globalRpc('capability')).mykola_media_advice, true, 'diagnostics expiry does not revoke ordinary Beta');
 });
