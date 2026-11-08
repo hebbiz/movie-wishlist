@@ -276,7 +276,7 @@ test('duplicate source rows with one admitted URL need no chooser or purchase/re
   assert.equal(JSON.stringify(rows), before); assert.equal(state.calls, 1);
 });
 
-test('service name remains available until a usable emblem loads and falls back on error without changing actions', async t => {
+test('service name stays accessible while a usable emblem loads and falls back on error without changing actions', async t => {
   const original = ownBlock('apple'), { control, state, button } = await harness(t, [original]);
   const service = control.dialog.querySelector('.media-advice-service-select');
   const name = service.querySelector('.media-advice-service-name'), icon = service.querySelector('img'), slot = service.querySelector('.media-advice-icon-slot');
@@ -287,6 +287,8 @@ test('service name remains available until a usable emblem loads and falls back 
   for (const callback of icon.listeners.error) callback();
   assert.equal(service.dataset.iconState, 'failed'); assert.equal(icon.hidden, true);
   assert.equal(slot.hidden, true, 'failed emblems leave no empty slot before the text fallback');
+  for (const callback of icon.listeners.load) callback();
+  assert.equal(service.dataset.iconState, 'failed', 'a late load cannot replace the established text fallback');
   assert.equal(name.textContent, 'Apple TV / iTunes'); assert.equal(service.attributes['aria-pressed'], 'true');
   await button('Обрати').click(); await button('Перенести в картку').click();
   assert.deepEqual(state.output, { recommended_medium: 'Apple TV / iTunes', purchase_url: original.link.href });
