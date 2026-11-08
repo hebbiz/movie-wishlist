@@ -253,6 +253,28 @@ let pendingInviteRole = null;
 let isLoggingOut = false;
 let activeAdviceRoom = null;
 let mediaAdviceController = null;
+let mediaAdviceAccessPreparation = null;
+let mediaAdviceAccessScope = null;
+let mediaAdviceSessionFlight = null;
+// Start auth initialization alongside app startup, outside onAuthStateChange.
+function mediaAdviceSession() {
+  if (!mediaAdviceSessionFlight) {
+    let timer;
+    // Bound the shared read itself, not only each capability consumer. The
+    // SDK read cannot be aborted; its late outcome must never own a new flight.
+    const expired = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Session unavailable')), 4000);
+    });
+    const read = Promise.resolve().then(() => supabaseClient.auth.getSession());
+    const flight = Promise.race([read, expired]).finally(() => {
+      clearTimeout(timer);
+      if (mediaAdviceSessionFlight === flight) mediaAdviceSessionFlight = null;
+    });
+    mediaAdviceSessionFlight = flight;
+  }
+  return mediaAdviceSessionFlight;
+}
+mediaAdviceSession().catch(() => {});
 function newMediaAdviceFormSession() {
   try { return globalThis.crypto?.randomUUID?.() ?? null; } catch { return null; }
 }
@@ -263,6 +285,36 @@ function invalidateMediaAdvice() {
   mediaAdviceFormSession = newMediaAdviceFormSession();
   mediaAdviceEstablished = null;
   mediaAdviceController?.invalidate();
+  delete document.getElementById('mediaAdviceEntry').dataset.reserveSpace;
+}
+
+function mediaAdviceEntryScope() {
+  return currentUser && currentGroupId ? { userId: currentUser.id, groupId: currentGroupId } : null;
+}
+
+function syncMediaAdviceEntryScope() {
+  const next = JSON.stringify(mediaAdviceEntryScope());
+  if (next !== mediaAdviceAccessScope) {
+    mediaAdviceAccessScope = next;
+    mediaAdviceAccessPreparation?.invalidate();
+    invalidateMediaAdvice();
+  }
+}
+
+function prepareMediaAdviceAccess({ force = false } = {}) {
+  syncMediaAdviceEntryScope();
+  if (!mediaAdviceAccessPreparation || !currentUser || !currentGroupId) return Promise.resolve(false);
+  const movie = movies.find(item => item.group_id === currentGroupId && /^tt\d{7,10}$/.test(item.imdb_id ?? normalizeImdbIdFromUrl(item.imdb_url) ?? ''));
+  const active = mediaAdviceContext();
+  const imdbId = movie?.imdb_id ?? normalizeImdbIdFromUrl(movie?.imdb_url ?? '') ?? active?.imdbId;
+  if (!imdbId) return Promise.resolve(false); // No invented film or speculative search.
+  const c = { ...mediaAdviceEntryScope(), imdbId, listId: null, formSession: newMediaAdviceFormSession() };
+  const prepared = mediaAdviceAccessPreparation.prepare(c, { force });
+  const revision = mediaAdviceAccessPreparation.revision();
+  return prepared.then(allowed => {
+    if (!allowed && revision === mediaAdviceAccessPreparation.revision() && c.userId === currentUser?.id && c.groupId === currentGroupId) mediaAdviceController?.invalidate();
+    return allowed;
+  });
 }
 
 function mediaAdviceContext() {
@@ -275,27 +327,62 @@ function mediaAdviceContext() {
 
 function establishMediaAdvice() {
   mediaAdviceEstablished = JSON.stringify([normalizeImdbIdFromUrl(document.getElementById("imdb_url").value), document.getElementById("title").value, document.getElementById("year").value]);
+  if (mediaAdviceContext()) document.getElementById('mediaAdviceEntry').dataset.reserveSpace = 'true';
   mediaAdviceController?.refresh();
+  prepareMediaAdviceAccess();
 }
 
-async function mediaAdviceRequest(action, context, signal) {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session?.access_token || !context || session.user?.id !== context.userId) throw new Error("Access unavailable");
-  const response = await fetch("/.netlify/functions/media-advice", {
-    method: "POST", credentials: "same-origin", cache: "no-store", signal,
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-    body: JSON.stringify({ action, groupId: context.groupId, imdbId: context.imdbId, listId: context.listId, formSession: context.formSession }),
+async function mediaAdviceRequest(action, context, signal, { entryPreparation = false } = {}) {
+  const accessRevision = mediaAdviceAccessPreparation?.revision();
+  const guard = new AbortController();
+  const abort = () => guard.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  if (signal?.aborted) guard.abort();
+  // Install a new shared session deadline before the consumer deadline. Its
+  // rejection/cleanup then releases all waiters before another check can retry.
+  const sessionRead = mediaAdviceSession();
+  const timeout = action === 'capability' ? setTimeout(abort, 4000) : null;
+  let onAbort;
+  const interrupted = new Promise((_, reject) => {
+    onAbort = () => reject(new Error('Advice unavailable'));
+    guard.signal.addEventListener('abort', onAbort, { once: true });
+    if (guard.signal.aborted) onAbort();
   });
-  if (!response.ok) throw new Error("Advice unavailable");
-  return response.json();
+  const execute = async () => {
+    const { data: { session } } = await sessionRead;
+    if (guard.signal.aborted) throw new Error('Advice unavailable');
+    if (!session?.access_token || !context || session.user?.id !== context.userId) throw new Error("Access unavailable");
+    const response = await fetch("/.netlify/functions/media-advice", {
+      method: "POST", credentials: "same-origin", cache: "no-store", signal: guard.signal,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ action, groupId: context.groupId, imdbId: context.imdbId, listId: context.listId, formSession: context.formSession }),
+    });
+    if (!response.ok) throw new Error("Advice unavailable");
+    return response.json();
+  };
+  try { return await Promise.race([execute(), interrupted]); }
+  catch (error) {
+    // An exact-context denial/error removes the display hint too. A late
+    // response for another user/group must never revoke the current hint.
+    const current = mediaAdviceContext();
+    if (action === 'capability' && !entryPreparation && accessRevision === mediaAdviceAccessPreparation?.revision() && current &&
+        ['userId', 'groupId', 'imdbId', 'listId', 'formSession'].every(key => current[key] === context?.[key])) mediaAdviceAccessPreparation?.invalidate();
+    throw error;
+  } finally {
+    clearTimeout(timeout); signal?.removeEventListener('abort', abort);
+    guard.signal.removeEventListener('abort', onAbort);
+  }
 }
 
-import("./assets/media-advice.mjs").then(({ createMediaAdvice }) => {
+Promise.all([import("./assets/media-advice.mjs"), import("./assets/media-advice-entry-access.mjs")]).then(([{ createMediaAdvice }, { createEntryAccessPreparation }]) => {
+  mediaAdviceAccessPreparation = createEntryAccessPreparation({ scope: mediaAdviceEntryScope,
+    request: (c, signal) => mediaAdviceRequest('capability', c, signal, { entryPreparation: true }) });
   mediaAdviceController = createMediaAdvice({
     document, entry: document.getElementById("mediaAdviceEntry"), context: mediaAdviceContext,
     readForm: () => ({ recommended_medium: document.getElementById("recommended_medium").value, purchase_url: document.getElementById("purchase_url").value }),
     writeForm: fields => { for (const [key, value] of Object.entries(fields)) document.getElementById(key).value = value; },
     capability: async c => await mediaAdviceRequest("capability", c),
+    preparedEntry: c => mediaAdviceAccessPreparation.peek(c),
     discover: async (c, { signal }) => (await mediaAdviceRequest("discover", c, signal)).result,
     renewContext: () => {
       if (!mediaAdviceContext()) return null;
@@ -304,6 +391,7 @@ import("./assets/media-advice.mjs").then(({ createMediaAdvice }) => {
     },
   });
   mediaAdviceController.refresh();
+  prepareMediaAdviceAccess().then(() => { if (mediaAdviceContext()) mediaAdviceController.refresh(); });
 }).catch(() => {}); // Feature failure must not prevent ordinary editing.
 for (const id of ["imdb_url", "title", "year"]) document.getElementById(id).addEventListener("input", invalidateMediaAdvice);
 let adviceRoomPollingTimer = null;
@@ -510,6 +598,7 @@ async function getDefaultGroupId() {
 
 function saveActiveGroupId(groupId) {
   localStorage.setItem("activeGroupId", groupId);
+  syncMediaAdviceEntryScope();
 }
 
 function getSavedActiveGroupId() {
@@ -714,6 +803,7 @@ async function updateAuthUI() {
 
   if (session?.user) {
     currentUser = session.user;
+    syncMediaAdviceEntryScope();
     
     loginButton.style.display = "none";
     userInfo.style.display = "block";
@@ -747,6 +837,7 @@ async function updateAuthUI() {
     userAvatarLetter.textContent = getUserAvatarLetter();
   } else {
       currentUser = null;
+      syncMediaAdviceEntryScope();
       currentRole = null;
       currentProfile = null;
 
@@ -2031,27 +2122,40 @@ const accessMessages = {
 };
 
 async function loadCurrentRole() {
-  // M4-only hook: revalidate this context without discarding its live dialog.
-  mediaAdviceController?.refresh();
+  syncMediaAdviceEntryScope();
   if (!currentUser) {
     currentRole = null;
+    mediaAdviceAccessPreparation?.invalidate();
+    mediaAdviceController?.invalidate();
     return;
   }
+
+  const userId = currentUser.id, groupId = currentGroupId, previousRole = currentRole;
+  // Group eligibility does not depend on the client role result. With an
+  // already known real film, prepare alongside that query, never await it.
+  prepareMediaAdviceAccess({ force: true });
 
   const { data, error } = await supabaseClient
     .from("group_members")
     .select("role")
-    .eq("group_id", currentGroupId)
-    .eq("user_id", currentUser.id)
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
     .maybeSingle();
 
+  if (currentUser?.id !== userId || currentGroupId !== groupId) return;
   if (error) {
     console.warn("Role load error:", error);
     currentRole = "visitor";
-    return;
+  } else {
+    currentRole = (data?.role || "visitor").trim().toLowerCase();
   }
-
-  currentRole = (data?.role || "visitor").trim().toLowerCase();
+  if (previousRole !== null && previousRole !== currentRole || !canUpdateMovie()) {
+    mediaAdviceAccessPreparation?.invalidate();
+    mediaAdviceController?.invalidate();
+    if (canUpdateMovie()) prepareMediaAdviceAccess();
+  }
+  // Revalidate AFTER assigning the new role (also after a failed role query).
+  mediaAdviceController?.refresh();
 }
 
 function applyAccessLevel() {
@@ -2086,6 +2190,8 @@ loginButton.addEventListener("click", async () => {
 });
 
 logoutButton.addEventListener("click", async () => {
+  mediaAdviceAccessPreparation?.invalidate();
+  mediaAdviceSessionFlight = null;
   invalidateMediaAdvice();
   isLoggingOut = true;
 
@@ -2396,6 +2502,10 @@ async function loadMovies() {
     created_at: item.created_at,
     updated_at: item.updated_at,
 }));
+
+  // Run before ancillary recommendations/activities and grid rendering. Only
+  // one real film is needed for the display-only group check; no discovery.
+  prepareMediaAdviceAccess();
 
   await loadSocialAdviceMovies();
 
@@ -6794,6 +6904,7 @@ function resetFormMode() {
 }
 
 function startEditMovie(id) {
+  syncMediaAdviceEntryScope();
   invalidateMediaAdvice();
   console.log("Editing movie:", id);
 
@@ -9447,13 +9558,27 @@ async function refreshAppDataOnResume() {
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
+    revalidateMediaAdviceEntry();
     refreshAppDataOnResume();
   }
 });
 
 window.addEventListener("pageshow", () => {
+  revalidateMediaAdviceEntry();
   refreshAppDataOnResume();
 });
+
+let mediaAdviceResumeScope = null, mediaAdviceResumeAt = 0;
+function revalidateMediaAdviceEntry() {
+  syncMediaAdviceEntryScope();
+  const scope = JSON.stringify(mediaAdviceEntryScope()), now = Date.now();
+  // Browser restoration often emits pageshow, focus and visibility together.
+  if (scope === mediaAdviceResumeScope && now - mediaAdviceResumeAt < 1500) return;
+  mediaAdviceResumeScope = scope; mediaAdviceResumeAt = now;
+  prepareMediaAdviceAccess({ force: true });
+  mediaAdviceController?.refresh();
+}
+window.addEventListener('focus', revalidateMediaAdviceEntry);
 
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) {
@@ -9488,8 +9613,13 @@ wireMykolaActionButtons();
 initApp();
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_OUT" || currentUser?.id !== session?.user?.id) invalidateMediaAdvice();
-  if (appHasInitialized && !isLoggingOut) {
-    initApp();
+  if (event === "SIGNED_OUT" || currentUser?.id !== session?.user?.id) {
+    mediaAdviceAccessPreparation?.invalidate();
+    mediaAdviceSessionFlight = null;
+    invalidateMediaAdvice();
   }
+  // Never start getSession/DB work inside the SDK's auth callback lock.
+  setTimeout(() => {
+    if (appHasInitialized && !isLoggingOut) initApp();
+  }, 0);
 });

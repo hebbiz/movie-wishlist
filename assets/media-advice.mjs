@@ -2,9 +2,9 @@ import { classifyLink } from '../shared/media-link-policy.mjs';
 import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
 import { groupMediaRows, presentMediaGroup, presentMediaGroups, presentMediaRow, summarizeMediaGroups } from './media-advice-presentation.mjs';
 import { groupLinkChoices, preferredAppleLinkChoice } from './media-advice-link-choices.mjs';
+import { MEDIA_SERVICE_ICON_SOURCES, preloadMediaServiceIcons, watchMediaServiceIcon } from './media-advice-icons.mjs';
 
 const media = Object.freeze({ apple: 'Apple TV / iTunes', appletvplus: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'Megogo', rakuten: 'Rakuten TV' });
-const serviceIcons = Object.freeze({ apple: 'appletv', netflix: 'netflix', hbo: 'hbomax', prime: 'primevideo', megogo: 'megogo', rakuten: 'rakuten' });
 // Only repeated notice text is collapsed. The original observations, their
 // distinct offers and URLs remain in the result and privileged source details.
 export function otherPlatformLabels(rows) {
@@ -55,10 +55,10 @@ export function linkPreview(current, chosen) {
 }
 
 // Shared visual classes, private DOM/state. Never call another Mykola controller.
-export function createMediaAdvice({ document: doc, entry, context, readForm, writeForm, capability, discover, validateApply = capability, renewContext, now = Date.now }) {
+export function createMediaAdvice({ document: doc, entry, context, readForm, writeForm, capability, preparedEntry = () => false, discover, validateApply = capability, renewContext, now = Date.now }) {
   const dialog = doc.createElement('dialog'); dialog.className = 'media-advice-dialog';
   dialog.setAttribute('aria-label', 'Поради носіїв від Миколи'); doc.body.append(dialog);
-  let session = null, generation = 0, controller = null, capabilityGeneration = 0, selectionToken = null;
+  let session = null, generation = 0, controller = null, capabilityGeneration = 0, selectionToken = null, refreshFlight = null, entryCheck = null;
   let access = normalizeMediaCapabilities(false);
   let returnFocus, viewReturnFocus, scrollY = 0, freshnessTimer, chat, preview, diagnostics, notice, staleNotice;
   // View freshness only. The server's 30-minute action ledger is NOT extended.
@@ -108,7 +108,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   }
   function invalidate() {
     clearTimeout(freshnessTimer); selectionToken = null; generation++; capabilityGeneration++;
-    controller?.abort(); controller = null; session = null; access = normalizeMediaCapabilities(false); entry.hidden = true;
+    controller?.abort(); controller = null; session = null; refreshFlight = entryCheck = null; access = normalizeMediaCapabilities(false); entry.hidden = true;
     if (dialog.open) dialog.close(); dialog.replaceChildren(); chat = preview = diagnostics = notice = staleNotice = viewReturnFocus = null;
   }
   function markStale(timerElapsed = false) {
@@ -126,16 +126,28 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const c = context();
     if (!usable(c)) return invalidate();
     if (session && session.key !== key(c)) invalidate();
-    if (!session) entry.hidden = true;
+    // This hint reveals only the entry, never grants dialog/diagnostics access.
+    // It is scoped to the current user/group; the exact card check still runs.
+    // A user click already performs a fresh exact check. Background focus/role
+    // refresh must not supersede it and silently swallow the opening action.
+    if (entryCheck?.key === key(c)) return;
+    if (!session) entry.hidden = preparedEntry(c) !== true;
+    if (refreshFlight?.key === key(c)) return refreshFlight.promise;
     markStale();
     if (selectionToken) returnToChat('Перевірте вибір повторно після оновлення доступу.');
     const check = ++capabilityGeneration;
-    try {
-      const ok = await capability(c);
-      if (check !== capabilityGeneration) return;
-      if (key(context()) !== key(c) || !updateAccess(ok)) return invalidate();
-      markStale(); entry.hidden = false;
-    } catch { if (check === capabilityGeneration) invalidate(); }
+    const flight = { key: key(c), promise: null };
+    flight.promise = (async () => {
+      try {
+        const ok = await Promise.resolve().then(() => capability(c));
+        if (check !== capabilityGeneration) return;
+        if (key(context()) !== key(c) || !updateAccess(ok)) return invalidate();
+        markStale(); entry.hidden = false;
+      } catch { if (check === capabilityGeneration) invalidate(); }
+      finally { if (refreshFlight === flight) refreshFlight = null; }
+    })();
+    refreshFlight = flight;
+    return flight.promise;
   }
   async function renew() {
     if (!valid() || session.loading || session.renewing || !renewContext) return;
@@ -290,14 +302,11 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const tr = node('tr'); tr.className = 'media-advice-row'; tr.dataset.providerKey = info.group.key; tr.dataset.rowId = info.transferRow?.id ?? '';
       const cell = node('th'); cell.setAttribute('scope', 'row');
       const choose = button('', () => showActions(info)); choose.className = 'media-advice-service-select'; choose.setAttribute('aria-label', info.group.title); choose.setAttribute('title', info.group.title); choose.setAttribute('aria-pressed', 'false');
-      if (Object.hasOwn(serviceIcons, info.group.key)) {
+      if (Object.hasOwn(MEDIA_SERVICE_ICON_SOURCES, info.group.key)) {
         const slot = node('span'); slot.className = 'media-advice-icon-slot'; slot.setAttribute('aria-hidden', 'true');
         const icon = node('img'); icon.className = 'media-advice-provider-icon'; icon.alt = ''; icon.setAttribute('aria-hidden', 'true'); icon.width = 24; icon.height = 24;
-        choose.dataset.iconState = 'pending';
-        const fallbackName = () => { icon.hidden = true; slot.hidden = true; choose.dataset.iconState = 'failed'; };
-        icon.addEventListener('load', () => { if (icon.naturalWidth > 0) choose.dataset.iconState = 'loaded'; else fallbackName(); });
-        icon.addEventListener('error', fallbackName);
-        icon.src = `/assets/icons/media/${serviceIcons[info.group.key]}.svg`; slot.append(icon);
+        watchMediaServiceIcon({ button: choose, slot, icon, view: doc.defaultView });
+        icon.src = MEDIA_SERVICE_ICON_SOURCES[info.group.key]; slot.append(icon);
         choose.append(slot);
       }
       const name = node('span', info.group.title); name.className = 'media-advice-service-name'; choose.append(name);
@@ -406,6 +415,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
     const epoch = generation, current = session;
     freshnessTimer = setTimeout(() => { if (current === session && epoch === generation) markStale(true); }, freshnessMs);
     controller = new AbortController(); render();
+    preloadMediaServiceIcons(doc);
     try {
       const result = await discover(current.context, { signal: controller.signal });
       if (epoch !== generation || current !== session || !valid()) return;
@@ -421,21 +431,26 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
   }
   entry.addEventListener('click', async () => {
     const c = context(), epoch = generation; if (!usable(c)) return invalidate();
-    const check = ++capabilityGeneration; let ok = false; try { ok = await capability(c); } catch {}
-    if (check !== capabilityGeneration || epoch !== generation || key(c) !== key(context())) return;
-    if (!updateAccess(ok)) return invalidate();
-    if (!session || session.key !== key(c)) { generation++; session = { context: { ...c }, key: key(c), used: false, result: null }; dialog.replaceChildren(); }
-    returnFocus = doc.activeElement; scrollY = doc.defaultView.scrollY;
-    markStale();
-    if (!session.used) void run();
-    if (!dialog.open) dialog.showModal();
-    const top = session.dialogScroll ?? 0, current = session, reportHidden = diagnostics.hidden;
-    dialog.scrollTop = top;
-    // Native showModal focus can scroll again after this event. Restore before
-    // the next paint, without reviving a closed/changed context or a new view.
-    doc.defaultView.requestAnimationFrame(() => {
-      if (valid() && session === current && dialog.open && !preview && diagnostics.hidden === reportHidden) dialog.scrollTop = top;
-    });
+    if (entryCheck?.key === key(c)) return;
+    const opening = { key: key(c) }; entryCheck = opening;
+    try {
+      const check = ++capabilityGeneration; let ok = false; try { ok = await capability(c); } catch {}
+      if (check !== capabilityGeneration || epoch !== generation || key(c) !== key(context())) return;
+      if (!updateAccess(ok)) return invalidate();
+      entry.hidden = false;
+      if (!session || session.key !== key(c)) { generation++; session = { context: { ...c }, key: key(c), used: false, result: null }; dialog.replaceChildren(); }
+      returnFocus = doc.activeElement; scrollY = doc.defaultView.scrollY;
+      markStale();
+      if (!session.used) void run();
+      if (!dialog.open) dialog.showModal();
+      const top = session.dialogScroll ?? 0, current = session, reportHidden = diagnostics.hidden;
+      dialog.scrollTop = top;
+      // Native showModal focus can scroll again after this event. Restore before
+      // the next paint, without reviving a closed/changed context or a new view.
+      doc.defaultView.requestAnimationFrame(() => {
+        if (valid() && session === current && dialog.open && !preview && diagnostics.hidden === reportHidden) dialog.scrollTop = top;
+      });
+    } finally { if (entryCheck === opening) entryCheck = null; }
   });
   dialog.addEventListener('cancel', e => { e.preventDefault(); close(); });
   dialog.addEventListener('close', () => { selectionToken = null; if (preview) returnToChat(); });

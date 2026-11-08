@@ -7618,3 +7618,166 @@ authored unit and browser replays add 0 source HTTP. No API keys were needed.
 No migration, flags/auth changes, merge or manual deployment is performed.
 Actual destination availability, selected-offer equivalence/entitlement, fresh
 TMDb/MOTN offers and authenticated end-to-end Save remain unverified.
+
+## Production Beta: prepared entry and non-flickering service icons (2026-11-08)
+
+Baseline: `develop` / `9b2edc509a73eaf586b5af3906dec8a2a6072c8a`.
+This is client UX preparation, not a new discovery route, server permission,
+ledger stage or provider identity rule. No SQL, migration, cap or endpoint change.
+
+### Cause and entry preparation
+
+Previously the hidden entry waited for `startEditMovie → fillForm →
+establishMediaAdvice → refresh → getSession → capability POST`. The import
+already started at app startup, but cold module/dependency loading could add a
+second wait. `loadCurrentRole` also refreshed advice **before** reading the new
+role, with no matching post-query refresh.
+
+The app now module-preloads the controller and entry helper, starts session
+initialization early and shares only an unfinished M4 `getSession` promise.
+No bearer token or capability is persisted. Group display eligibility is warmed
+as soon as mapped movie rows are available, before ancillary recommendation /
+activity loads and rendering. If a real movie is already known, it also runs
+in parallel with the role query. Empty groups do not send a fictional IMDb:
+preparation waits for a real lookup/film context.
+
+The existing capability request uses that **real** IMDb and `listId:null` for
+this display-only preparation. The existing SQL's null-list path checks Beta
+flag, UA region and current group membership/role, not a particular list row.
+Only a boolean, user/group key and 30-second expiry are retained. This hint
+can reveal the entry synchronously in the card-opening turn, but is never
+passed into `updateAccess`, diagnostics, click, renew, discovery or apply.
+Each card still receives its exact list/IMDb capability check in the background;
+opening advice and applying a preview still perform fresh checks, and server
+Auth plus start/finish authorization is untouched.
+
+Slow/failed session or capability work has a **4-second total client deadline**
+and cannot hold up the ordinary movie form. A valid form reserves the entry's
+space even while the button is hidden, avoiding a vertical layout jump on a
+cold module/capability response. The hidden control remains invisible and
+unfocusable. A failed check does not enable advice.
+
+User/group/auth changes, changed roles and observed access denial clear
+preparation/private state. Role results are applied before controller refresh;
+late results from another user/group are ignored. Late failed exact requests
+cannot revoke a newer film/form's display hint. Focus, pageshow and visibility
+return trigger revalidation (coalesced for 1.5 seconds); in-flight display
+checks coalesce too. A pending user click retains its own fresh authorization
+and cannot be swallowed by a background refresh or duplicate click.
+
+Supabase auth-event work is scheduled outside `onAuthStateChange`, following
+the [official callback guidance](https://supabase.com/docs/reference/javascript/auth-onauthstatechange)
+and [documented async-callback deadlock](https://supabase.com/kb/troubleshooting/why-is-my-supabase-api-call-not-returning-PGzXw0).
+`getSession` supplies transport credentials, not trusted authorization; the
+server still verifies the user and RPC permissions. Remote flag changes are
+not push notifications: they become visible on the next revalidation/action,
+not instantaneously while an idle page has no server contact.
+
+### Icons
+
+Previously the local SVG `src` was assigned only when the result table was
+built, and mobile names were clipped only after `load`. Hence visible text
+became an icon. Discovery now starts six deduplicated, fixed local image
+preloads alongside the three-dot loading state. No provider URL is fetched.
+
+The table always reserves an icon slot. Pending mobile icons use a static
+placeholder, not a transient visible service name; desktop retains its existing
+icon-plus-name layout. The button's accessible service name remains available
+throughout, and decorative SVGs are excluded from accessibility output. Error,
+empty image or 5 seconds pending in the rendered table produces a terminal text
+fallback; a late successful image cannot replace it. Search never waits for
+preloads, load/decode or the fallback deadline.
+
+### Validation and limits
+
+New deterministic controls cover short TTL, strict flag values, no invented
+film, user/group/role epochs, late replies, in-flight deduplication and fresh
+click checks. Icon controls cover allowlisted local assets, preload failure,
+load/error/empty/timeout and late-response terminal fallback. Source rows,
+grouping, identity gates, availability/languages and exact selected addresses
+are not modified.
+
+Real local Edge/Chromium browser controls run the actual app with authored
+Supabase/capability/discovery responses and all remote requests blocked. New
+mobile 375px and desktop 1280px scenarios include cold contexts, held module,
+held session, delayed/failed/denied capability, role/capability parallelism,
+film/group/user changes, flag revocation on focus/click/apply, and pending,
+failed or permanently stalled SVGs. They also check repeated link selection,
+preview, byte-exact form transfer, accessible names, touch targets, responsive
+layout and no discovery on preparation/revalidation/reopening. Screenshots of
+pending, loaded and failed states were visually inspected. Existing Store/Plus,
+non-Apple, grouping, pending/resume and form regressions are run separately.
+
+Validation results:
+
+- New preparation/icon helper controls: **15/15 passed**, no skips.
+- Root + research regression, excluding the two native Windows pipe checks:
+  **1480 reported tests, 1454 passed, 0 failed, 26 opt-in skips**. The omitted
+  native checks are not included in that total or claimed as passing.
+- Initial unfiltered regression: **1480 reported tests, 1453 passed, 1 failed,
+  26 skipped**. The failure is the unchanged fake-key PowerShell pipe broker's
+  16-second client `status` timeout. An isolated rerun also timed out (1 native
+  SID/NETWORK check passed, 1 broker check failed). These scripts/tests do not
+  import the changed client code. No unrelated pipe repair or relaxed timeout
+  was added; this remains an explicit environment/helper verification limit,
+  not a fully green unfiltered regression claim.
+- **84 distinct browser checks passed** across the new suite and seven
+  existing suites: **20 new + 64 existing**, with no final skips. New controls
+  were rerun after the final expired-hint/pending-click guard, **20/20**, 67.0s.
+  The initial combined run's 120-second CLI watchdog cancelled the unchanged
+  general viewport suite at 820px. That suite reran unchanged with a
+  300-second watchdog: **5/5 passed**, 170.2s, including 1280/375/420/820px.
+  No functional browser assertion failure remains. The independent review's
+  late-response, concurrent refresh/click and hint-expiry cases have targeted
+  regressions; no authorization blocker remains in that review.
+
+These are deterministic network-delay/error controls, not a real mobile
+carrier trace, physical iPhone/Safari, screen-reader session or authenticated
+deployed production check. No current film/API offers were refetched: new
+TMDb, MOTN, Tavily, Kinobaza and platform source HTTP requests **0**, Tavily
+Basic/Advanced credits **0**, real Supabase calls/writes **0**. Local app/API
+fixtures and six static SVGs are not source-budget attempts. Official auth
+documentation was consulted separately. No migration, merge or manual
+deployment is performed.
+
+### Follow-up: recovery after a hung getSession (2026-11-08)
+
+The first deadline control proved that a stalled auth read could not delay the
+ordinary form or send late HTTP, but did not attempt recovery while that raw
+SDK promise remained unresolved. Three new browser cases reproduced the gap:
+the capability's timeout settled its consumer, yet `mediaAdviceSessionFlight`
+still cached the unbounded raw `getSession()` promise. The next check joined
+that same stalled promise rather than reading the now-working session.
+
+The shared session read now has its own 4-second bounded wrapper, including
+startup warming. Every concurrent consumer shares that wrapper; timeout,
+success or failure clears it only if it still owns the current flight. A new
+session deadline is installed before the consuming capability's deadline, so
+the old shared read is released before the next check can join it. A single
+caller's cancellation does not detach a read still shared by other consumers.
+There is no automatic retry, SDK replacement or automatic discovery: the next
+ordinary revalidation/opening can initiate one fresh shared read without a page
+reload. Server authorization remains unchanged.
+
+The underlying SDK call has no cancellation contract here. Its old raw promise
+may remain pending, but a late success/rejection cannot clear a replacement
+flight, send an expired capability request, revoke recovered access or revive
+an actual server denial. This fixes our retained-flight state, not a persistent
+internal SDK lock if fresh SDK calls themselves still fail to return.
+
+Controls explicitly leave the old read unresolved past timeout, start
+concurrent preparation/exact refresh, require exactly one fresh SDK read, and
+recover the entry on the existing page before resolving the old read. Separate
+cases cover stale wrong-user success after recovery, old rejection during the
+new pending read, and current capability denial followed by stale success.
+Permission recovery makes no discovery request; only the later explicit click
+does. New source/API, real Supabase and platform requests/writes remain **0**.
+Follow-up validation: **65/65** focused preparation/icon/controller/server
+checks pass. **53/53** browser checks pass across the prepared UX (23), pending
+authorization (7) and resume/revocation (23) suites, 92.4s. The prepared UX
+suite additionally passed **23/23**, 58.3s, after strengthening the direct
+shared-promise identity assertion, so upper-layer coalescing cannot mask a
+detached flight.
+The earlier full-suite/native IPC limitation remains recorded above; this
+follow-up does not claim a new unfiltered full run or a live SDK recovery.
+No migration, merge or manual deployment is performed.
