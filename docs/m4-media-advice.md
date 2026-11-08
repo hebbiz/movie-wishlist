@@ -7739,3 +7739,45 @@ Basic/Advanced credits **0**, real Supabase calls/writes **0**. Local app/API
 fixtures and six static SVGs are not source-budget attempts. Official auth
 documentation was consulted separately. No migration, merge or manual
 deployment is performed.
+
+### Follow-up: recovery after a hung getSession (2026-11-08)
+
+The first deadline control proved that a stalled auth read could not delay the
+ordinary form or send late HTTP, but did not attempt recovery while that raw
+SDK promise remained unresolved. Three new browser cases reproduced the gap:
+the capability's timeout settled its consumer, yet `mediaAdviceSessionFlight`
+still cached the unbounded raw `getSession()` promise. The next check joined
+that same stalled promise rather than reading the now-working session.
+
+The shared session read now has its own 4-second bounded wrapper, including
+startup warming. Every concurrent consumer shares that wrapper; timeout,
+success or failure clears it only if it still owns the current flight. A new
+session deadline is installed before the consuming capability's deadline, so
+the old shared read is released before the next check can join it. A single
+caller's cancellation does not detach a read still shared by other consumers.
+There is no automatic retry, SDK replacement or automatic discovery: the next
+ordinary revalidation/opening can initiate one fresh shared read without a page
+reload. Server authorization remains unchanged.
+
+The underlying SDK call has no cancellation contract here. Its old raw promise
+may remain pending, but a late success/rejection cannot clear a replacement
+flight, send an expired capability request, revoke recovered access or revive
+an actual server denial. This fixes our retained-flight state, not a persistent
+internal SDK lock if fresh SDK calls themselves still fail to return.
+
+Controls explicitly leave the old read unresolved past timeout, start
+concurrent preparation/exact refresh, require exactly one fresh SDK read, and
+recover the entry on the existing page before resolving the old read. Separate
+cases cover stale wrong-user success after recovery, old rejection during the
+new pending read, and current capability denial followed by stale success.
+Permission recovery makes no discovery request; only the later explicit click
+does. New source/API, real Supabase and platform requests/writes remain **0**.
+Follow-up validation: **65/65** focused preparation/icon/controller/server
+checks pass. **53/53** browser checks pass across the prepared UX (23), pending
+authorization (7) and resume/revocation (23) suites, 92.4s. The prepared UX
+suite additionally passed **23/23**, 58.3s, after strengthening the direct
+shared-promise identity assertion, so upper-layer coalescing cannot mask a
+detached flight.
+The earlier full-suite/native IPC limitation remains recorded above; this
+follow-up does not claim a new unfiltered full run or a live SDK recovery.
+No migration, merge or manual deployment is performed.

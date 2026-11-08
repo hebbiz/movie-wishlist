@@ -259,9 +259,18 @@ let mediaAdviceSessionFlight = null;
 // Start auth initialization alongside app startup, outside onAuthStateChange.
 function mediaAdviceSession() {
   if (!mediaAdviceSessionFlight) {
-    const flight = supabaseClient.auth.getSession();
+    let timer;
+    // Bound the shared read itself, not only each capability consumer. The
+    // SDK read cannot be aborted; its late outcome must never own a new flight.
+    const expired = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Session unavailable')), 4000);
+    });
+    const read = Promise.resolve().then(() => supabaseClient.auth.getSession());
+    const flight = Promise.race([read, expired]).finally(() => {
+      clearTimeout(timer);
+      if (mediaAdviceSessionFlight === flight) mediaAdviceSessionFlight = null;
+    });
     mediaAdviceSessionFlight = flight;
-    flight.finally(() => { if (mediaAdviceSessionFlight === flight) mediaAdviceSessionFlight = null; }).catch(() => {});
   }
   return mediaAdviceSessionFlight;
 }
@@ -329,6 +338,9 @@ async function mediaAdviceRequest(action, context, signal, { entryPreparation = 
   const abort = () => guard.abort();
   signal?.addEventListener('abort', abort, { once: true });
   if (signal?.aborted) guard.abort();
+  // Install a new shared session deadline before the consumer deadline. Its
+  // rejection/cleanup then releases all waiters before another check can retry.
+  const sessionRead = mediaAdviceSession();
   const timeout = action === 'capability' ? setTimeout(abort, 4000) : null;
   let onAbort;
   const interrupted = new Promise((_, reject) => {
@@ -337,7 +349,7 @@ async function mediaAdviceRequest(action, context, signal, { entryPreparation = 
     if (guard.signal.aborted) onAbort();
   });
   const execute = async () => {
-    const { data: { session } } = await mediaAdviceSession();
+    const { data: { session } } = await sessionRead;
     if (guard.signal.aborted) throw new Error('Advice unavailable');
     if (!session?.access_token || !context || session.user?.id !== context.userId) throw new Error("Access unavailable");
     const response = await fetch("/.netlify/functions/media-advice", {

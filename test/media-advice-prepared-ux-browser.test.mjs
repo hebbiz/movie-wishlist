@@ -22,10 +22,15 @@ const rowsFor = f => [
 ];
 const sdkStub = `
 window.authoredDBWrites=[]; window.authoredLogin=false; window.authoredUser='user-a'; window.authoredRole='owner';
-window.authoredSessionReads=0;
+window.authoredSessionReads=0; window.authoredSessionControls=[];
 window.supabase={createClient:()=>({
   auth:{
-    getSession:async()=>{window.authoredSessionReads++; if(window.authoredSessionDelay) await new Promise(resolve=>window.authoredSessionRelease=resolve);return {data:{session:window.authoredLogin?{access_token:'AUTHORED',user:{id:window.authoredUser}}:null}};},
+    getSession:async()=>{
+      window.authoredSessionReads++;
+      if(window.authoredSessionQueue) return await new Promise((resolve,reject)=>window.authoredSessionControls.push({resolve,reject}));
+      if(window.authoredSessionDelay) await new Promise(resolve=>window.authoredSessionRelease=resolve);
+      return {data:{session:window.authoredLogin?{access_token:'AUTHORED',user:{id:window.authoredUser}}:null}};
+    },
     getUser:async()=>({data:{user:window.authoredLogin?{id:window.authoredUser}:null}}),
     onAuthStateChange:fn=>{window.authoredAuthEvent=fn;return {data:{subscription:{unsubscribe(){}}}};}
   },
@@ -267,6 +272,96 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       });
       assert.equal(state.capabilities.length, 0, 'late auth resolution cannot send an expired request');
+      assert.equal(state.discoveries, 0);
+    });
+
+    for (const staleOutcome of ['resolve', 'reject']) await t.test(`a new auth read recovers after the previous getSession deadline / late ${staleOutcome}`, async t => {
+      const { page, state } = await setup(t, 375);
+      await page.evaluate(() => {
+        window.authoredSessionQueue = true; window.authoredFirstReadDone = false;
+        window.authoredRecoveryReadBaseline = authoredSessionReads;
+        window.authoredFirstRead = prepareMediaAdviceAccess({ force: true }).finally(() => { authoredFirstReadDone = true; });
+        startEditMovie('list-0');
+      });
+      await page.waitForFunction(() => authoredSessionControls.length === 1);
+      await page.waitForFunction(() => authoredFirstReadDone, null, { timeout: 6500 });
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), false);
+      assert.equal(state.capabilities.length, 0, 'the expired raw auth read has not authorized HTTP');
+      await page.evaluate(() => {
+        window.authoredRecoveryDone = false;
+        window.authoredRecovery = Promise.all([
+          prepareMediaAdviceAccess({ force: true }), prepareMediaAdviceAccess({ force: true }),
+          mediaAdviceController.refresh(), mediaAdviceController.refresh(),
+        ]).finally(() => { authoredRecoveryDone = true; });
+      });
+      await page.waitForFunction(() => authoredSessionControls.length === 2, null, { timeout: 1800 });
+      assert.equal(await page.evaluate(() => authoredSessionReads - authoredRecoveryReadBaseline), 2,
+        'simultaneous preparation and exact refresh share one fresh bounded SDK read');
+      assert.equal(state.capabilities.length, 0, 'the new shared read is held independently of the old read');
+      if (staleOutcome === 'reject') {
+        await page.evaluate(() => { window.authoredFreshFlight = mediaAdviceSession(); });
+        await page.evaluate(async () => {
+          authoredSessionControls[0].reject(new Error('Authored late session rejection'));
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          // Late settlement must not clear the newer in-flight singleflight.
+          window.authoredThirdRefresh = mediaAdviceController.refresh();
+          window.authoredThirdPrepare = prepareMediaAdviceAccess({ force: true });
+        });
+        assert.equal(await page.evaluate(() => mediaAdviceSession() === authoredFreshFlight), true,
+          'late settlement cannot detach the replacement shared read, independently of consumer-level deduplication');
+        assert.equal(await page.evaluate(() => authoredSessionControls.length), 2,
+          'the obsolete rejection cannot detach the fresh pending read');
+      }
+      await page.evaluate(() => authoredSessionControls[1].resolve({ data: { session: { access_token: 'AUTHORED', user: { id: 'user-a' } } } }));
+      await page.waitForFunction(() => authoredRecoveryDone);
+      await page.locator('#mediaAdviceEntry').waitFor({ state: 'visible' });
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), true);
+      assert.equal(state.discoveries, 0, 'recovering permission does not itself search');
+      assert.equal(state.capabilities.length, 2, 'one prepared-scope and one exact-context check recover, without duplicate HTTP');
+      const recoveredCapabilityCount = state.capabilities.length;
+      if (staleOutcome === 'resolve') await page.evaluate(async () => {
+        authoredSessionControls[0].resolve({ data: { session: { access_token: 'AUTHORED-OLD', user: { id: 'old-user' } } } });
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      });
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true, 'stale auth cannot clear a recovered entry');
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), true,
+        'stale auth does not invalidate the newer prepared access hint');
+      assert.equal(state.capabilities.length, recoveredCapabilityCount, 'late auth cannot start a stale capability HTTP request');
+      await page.evaluate(() => { authoredSessionQueue = false; });
+      await page.locator('#mediaAdviceEntry').click();
+      await page.locator('.media-advice-comparison').waitFor();
+      assert.equal(state.discoveries, 1, 'the recovered entry opens on the existing page with one explicit search');
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), 0);
+    });
+
+    await t.test('a current capability denial stays denied when an expired getSession later succeeds', async t => {
+      const { page, state } = await setup(t, 1280);
+      await page.evaluate(() => {
+        authoredSessionQueue = true; window.authoredOldReadDone = false;
+        window.authoredOldRead = prepareMediaAdviceAccess({ force: true }).finally(() => { authoredOldReadDone = true; });
+        startEditMovie('list-0');
+      });
+      await page.waitForFunction(() => authoredSessionControls.length === 1);
+      await page.waitForFunction(() => authoredOldReadDone, null, { timeout: 6500 });
+      state.capabilityMode = 'deny';
+      await page.evaluate(() => {
+        window.authoredCurrentDenialDone = false;
+        window.authoredCurrentDenial = Promise.all([prepareMediaAdviceAccess({ force: true }), mediaAdviceController.refresh()])
+          .finally(() => { authoredCurrentDenialDone = true; });
+      });
+      await page.waitForFunction(() => authoredSessionControls.length === 2, null, { timeout: 1800 });
+      await page.evaluate(() => authoredSessionControls[1].resolve({ data: { session: { access_token: 'AUTHORED', user: { id: 'user-a' } } } }));
+      await page.waitForFunction(() => authoredCurrentDenialDone);
+      assert.ok(state.capabilities.length >= 1, 'the current server response, rather than an old local session, supplies the denial');
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), false);
+      const deniedCapabilityCount = state.capabilities.length;
+      await page.evaluate(async () => {
+        authoredSessionControls[0].resolve({ data: { session: { access_token: 'AUTHORED-OLD', user: { id: 'user-a' } } } });
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      });
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), false, 'a late old success cannot resurrect denied access');
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), false);
+      assert.equal(state.capabilities.length, deniedCapabilityCount);
       assert.equal(state.discoveries, 0);
     });
 
