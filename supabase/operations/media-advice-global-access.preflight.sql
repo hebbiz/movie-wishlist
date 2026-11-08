@@ -78,6 +78,7 @@ expected_rpcs(signature) as (values
   ('media_advice_private.lock_beta_feature_assignment()'),
   ('media_advice_private.set_default_user_region()'),
   ('media_advice_private.assign_beta_feature(uuid)'),
+  ('media_advice_private.sync_beta_feature_region(uuid)'),
   ('media_advice_private.assign_beta_feature_on_region()'),
   ('media_advice_private.assign_beta_feature_on_activation()')
 ),
@@ -150,6 +151,11 @@ select jsonb_build_object(
   'mode', 'read-only-preflight-no-rpc-no-mutation',
   'checkedAt', transaction_timestamp(),
   'history', (select jsonb_agg(to_jsonb(v) order by version) from versions v),
+  'history_summary', jsonb_build_object(
+    'total_rows', (select count(*) from supabase_migrations.schema_migrations),
+    'latest_any_version', (select max(version) from supabase_migrations.schema_migrations),
+    'proposed_after_latest', (select coalesce(max(version) < '20261108185237', true) from supabase_migrations.schema_migrations),
+    'duplicate_versions', (select count(*) from (select version from supabase_migrations.schema_migrations group by version having count(*) > 1) d)),
   'global_migration_absent', (select recorded_count = 0 from versions where version = '20261108185237'),
   'global_rpc_absent', to_regprocedure('public.media_advice_beta_global_action(uuid,text,uuid,text,uuid,text)') is null,
   'beta_switch', (select jsonb_build_object('rows', count(*), 'enabled_rows', count(*) filter (where singleton and enabled)) from media_advice_private.beta_config),
@@ -174,12 +180,15 @@ select jsonb_build_object(
     'active_diagnostics_without_active_personal_advice', count(*) filter (where diagnostics_active and not (personal_enabled and (personal_expires is null or personal_expires > transaction_timestamp())))
   ) from ua_candidates),
   'permission_provenance', jsonb_build_object(
-    'preexisting_explicit_flags_and_expiry_must_be_preserved', true,
+    'backfill_preserves_preexisting_enabled_and_expiry', true,
+    'real_region_change_overrides_manual_enabled', true,
+    'same_region_update_changes_no_flags_or_ownership', true,
+    'expiry_never_automatically_renewed', true,
     'legacy_pilot_scope_requires_separate_snapshot_before_new_assignments', true,
     'legacy_raw_pilot_requires_snapshot_core_diagnostics_and_global_beta', true,
-    'region_controls_new_automatic_assignment_not_runtime_authorization', true,
+    'region_controls_assignment_and_real_transition_not_runtime_authorization', true,
     'runtime_requires_global_beta_and_personal_flag', true,
-    'note', 'The proposed assignment ownership table tracks only newly automatic rows. Existing explicit values and expiry win. Pilot snapshot includes every preexisting core-permission row, including disabled or expired rows; diagnostics never grant advice. Auth remains a separate verified non-anonymous server gate.'),
+    'note', 'Proposed policy: backfill preserves existing decisions. Manual enabled overrides survive until a real backend region transition, which synchronizes enabled with UA plus active Beta; same-region writes do nothing. Original expiry is never renewed. Region events adopt automatic ownership with original expiry. Pilot snapshot includes all old core rows; diagnostics remains separate. Auth is a verified non-anonymous server gate.'),
   'proposed_assignment_objects', jsonb_build_object(
     'automatic_assignments_table_present', to_regclass('media_advice_private.beta_feature_assignments') is not null,
     'pilot_snapshot_table_present', to_regclass('media_advice_private.pilot_access_users') is not null,
@@ -188,6 +197,10 @@ select jsonb_build_object(
     'note', 'This before-migration script deliberately does not SELECT from possibly absent new tables; counts stay unknown. Catalog metadata below covers these tables if present.'),
   'session_caps', coalesce((select jsonb_agg(to_jsonb(c) order by source_cap) from caps c), '[]'::jsonb),
   'active_ledger_sessions', (select count(*) from media_advice_private.sessions where not finished and expires_at > transaction_timestamp()),
+  'active_or_queued_visible_m4_db_queries', (select count(*) from pg_stat_activity
+    where pid <> pg_backend_pid() and datname = current_database() and state <> 'idle' and query ilike '%media_advice%'),
+  'all_db_activity_visible', (select rolsuper from pg_roles where rolname = current_user)
+    or pg_has_role(current_user, 'pg_read_all_stats', 'MEMBER'),
   'session_group_nullable', (select not a.attnotnull from pg_attribute a where a.attrelid = to_regclass('media_advice_private.sessions') and a.attname = 'group_id' and not a.attisdropped),
   'rpc_catalog', (select jsonb_agg(to_jsonb(r) order by signature) from rpcs r),
   'm4_triggers', coalesce((select jsonb_agg(to_jsonb(t) order by table_schema, table_name, trigger_name) from triggers t), '[]'::jsonb),

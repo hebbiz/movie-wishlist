@@ -1,6 +1,8 @@
 -- Personal feature assignment + global discovery; no group/movie/editing gate
 -- for reading advice. This PR migration is UNAPPLIED on the verified target.
--- Existing explicit flags/expiry and cap8/10/12/14 ledger rows are preserved.
+-- Existing explicit flags/expiry are preserved by backfill. A REAL later region
+-- change synchronizes even a manual enabled value; expiry is never renewed.
+-- Existing cap8/10/12/14 ledger rows are preserved.
 begin;
 set local lock_timeout = '5s';
 
@@ -19,11 +21,13 @@ insert into media_advice_private.pilot_access_users(user_id)
   select user_id from media_advice_private.permissions where feature_key = 'mykola_media_advice';
 comment on table media_advice_private.pilot_access_users is 'Preserved pre-autogrant pilot scope, not a Beta feature grant; separate explicit operator action required to expand the legacy pilot';
 
--- Track ONLY rows created by this automatic policy. Pre-existing rows are
--- explicit overrides (including false/expiry) and never enter this table.
+-- Track automatic assignments and subsequent authoritative region events.
+-- Backfill never claims pre-existing explicit settings. A later REAL region
+-- change supersedes their enabled value, but preserves their original expiry.
 create table media_advice_private.beta_feature_assignments (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  enabled boolean not null
+  enabled boolean not null,
+  expires_at timestamptz
 );
 alter table media_advice_private.beta_feature_assignments enable row level security;
 revoke all on media_advice_private.beta_feature_assignments from public, anon, authenticated, service_role;
@@ -58,9 +62,9 @@ create trigger media_advice_lock_beta_feature_user_delete
   before delete on auth.users
   for each statement execute function media_advice_private.lock_beta_feature_assignment();
 
--- ANY later operator update, even an unchanged value, takes ownership away
--- from the automatic policy. The reconciler explicitly reclaims only its own
--- writes afterwards; no caller-settable GUC or metadata marker is trusted.
+-- ANY operator update, even an unchanged value, overrides automatic management
+-- until the next REAL region change. Reconcilers reclaim only their own writes
+-- afterwards; no caller-settable GUC or metadata marker is trusted.
 create function media_advice_private.detach_beta_feature_assignment()
 returns trigger language plpgsql security definer set search_path = ''
 as $$
@@ -77,9 +81,8 @@ create trigger media_advice_detach_beta_feature_assignment
   before update or delete on media_advice_private.permissions
   for each row execute function media_advice_private.detach_beta_feature_assignment();
 
--- Beta gates the whole feature, while region changes manage automatic flags.
--- Beta off does not rewrite personal settings. Existing managed rows still
--- follow region during Beta off; missing grants require active Beta + UA.
+-- Bulk/activation reconciliation preserves explicit overrides. Beta off alone
+-- never rewrites flags; actual region events use the separate helper below.
 create function media_advice_private.assign_beta_feature(p_user uuid default null)
 returns bigint language plpgsql security invoker set search_path = ''
 as $$
@@ -87,25 +90,27 @@ declare
   v_count bigint := 0;
   v_region record;
   v_permission media_advice_private.permissions%rowtype;
-  v_managed boolean;
+  v_managed media_advice_private.beta_feature_assignments%rowtype;
   v_inserted uuid;
 begin
   perform pg_advisory_xact_lock(hashtextextended('media-advice-feature-assignment', 4104));
+  if not exists (select 1 from media_advice_private.beta_config where singleton and enabled) then return 0; end if;
   for v_region in select r.user_id, r.region_code from media_advice_private.user_regions r
     where p_user is null or r.user_id = p_user order by r.user_id for update of r
   loop
     select * into v_permission from media_advice_private.permissions
       where user_id = v_region.user_id and feature_key = 'mykola_media_advice' for update;
     if found then
-      select a.enabled into v_managed from media_advice_private.beta_feature_assignments a
+      select a.* into v_managed from media_advice_private.beta_feature_assignments a
         where a.user_id = v_region.user_id;
-      if found and v_permission.enabled = v_managed and v_permission.expires_at is null then
+      if found and v_permission.enabled = v_managed.enabled
+        and v_permission.expires_at is not distinct from v_managed.expires_at then
         if v_permission.enabled is distinct from (v_region.region_code = 'UA') then
           update media_advice_private.permissions set enabled = (v_region.region_code = 'UA')
             where user_id = v_region.user_id and feature_key = 'mykola_media_advice';
-          insert into media_advice_private.beta_feature_assignments(user_id, enabled)
-            values(v_region.user_id, v_region.region_code = 'UA')
-            on conflict(user_id) do update set enabled = excluded.enabled;
+          insert into media_advice_private.beta_feature_assignments(user_id, enabled, expires_at)
+            values(v_region.user_id, v_region.region_code = 'UA', v_permission.expires_at)
+            on conflict(user_id) do update set enabled = excluded.enabled, expires_at = excluded.expires_at;
           v_count := v_count + 1;
         end if;
       elsif found then
@@ -131,33 +136,57 @@ end;
 $$;
 revoke all on function media_advice_private.assign_beta_feature(uuid) from public, anon, authenticated, service_role;
 
+-- A real authoritative region transition wins over any previous manual enabled
+-- value. It does not reset expiry, diagnostics or editing permissions. The
+-- backend row, not a caller-supplied region, determines the synchronized value.
+create function media_advice_private.sync_beta_feature_region(p_user uuid)
+returns void language plpgsql security invoker set search_path = ''
+as $$
+declare
+  v_region text;
+  v_enabled boolean;
+  v_permission media_advice_private.permissions%rowtype;
+  v_inserted uuid;
+begin
+  perform pg_advisory_xact_lock(hashtextextended('media-advice-feature-assignment', 4104));
+  -- Auth deletion cascades must never recreate permission/ownership rows.
+  if not exists (select 1 from auth.users where id = p_user) then return; end if;
+  select region_code into v_region from media_advice_private.user_regions where user_id = p_user for update;
+  v_enabled := coalesce(v_region = 'UA', false)
+    and exists (select 1 from media_advice_private.beta_config where singleton and enabled);
+  select * into v_permission from media_advice_private.permissions
+    where user_id = p_user and feature_key = 'mykola_media_advice' for update;
+  if found then
+    update media_advice_private.permissions set enabled = v_enabled
+      where user_id = p_user and feature_key = 'mykola_media_advice';
+    insert into media_advice_private.beta_feature_assignments(user_id, enabled, expires_at)
+      values(p_user, v_enabled, v_permission.expires_at)
+      on conflict(user_id) do update set enabled = excluded.enabled, expires_at = excluded.expires_at;
+  elsif v_enabled then
+    insert into media_advice_private.permissions(user_id, feature_key, enabled, expires_at)
+      values(p_user, 'mykola_media_advice', true, null)
+      on conflict(user_id, feature_key) do nothing returning user_id into v_inserted;
+    if v_inserted is not null then
+      insert into media_advice_private.beta_feature_assignments(user_id, enabled, expires_at)
+        values(v_inserted, true, null);
+    end if;
+  end if;
+end;
+$$;
+revoke all on function media_advice_private.sync_beta_feature_region(uuid) from public, anon, authenticated, service_role;
+
 create function media_advice_private.assign_beta_feature_on_region()
 returns trigger language plpgsql security definer set search_path = ''
 as $$
-declare v_permission media_advice_private.permissions%rowtype;
 begin
   if tg_op = 'DELETE' then
-    if not exists (select 1 from auth.users where id = old.user_id) then return old; end if;
-    -- Missing backend region disables an automatic flag as well. Preserve
-    -- ownership so a later authoritative UA insertion can enable it again.
-    -- Lock the personal row BEFORE checking ownership: an operator may have
-    -- detached it while this region deletion was waiting for that row lock.
-    select * into v_permission from media_advice_private.permissions
-      where user_id = old.user_id and feature_key = 'mykola_media_advice' for update;
-    if found and v_permission.expires_at is null and exists (
-      select 1 from media_advice_private.beta_feature_assignments
-      where user_id = old.user_id and enabled = v_permission.enabled
-    ) then
-      update media_advice_private.permissions set enabled = false
-        where user_id = old.user_id and feature_key = 'mykola_media_advice';
-      if found then
-        insert into media_advice_private.beta_feature_assignments(user_id, enabled) values(old.user_id, false)
-          on conflict(user_id) do update set enabled = false;
-      end if;
-    end if;
+    perform media_advice_private.sync_beta_feature_region(old.user_id);
     return old;
   end if;
-  perform media_advice_private.assign_beta_feature(new.user_id);
+  -- Rewriting an unchanged region is NOT a policy event: preserve manual
+  -- values, expiry, ownership and even absence of a permission row verbatim.
+  if tg_op = 'UPDATE' and new.region_code is not distinct from old.region_code then return new; end if;
+  perform media_advice_private.sync_beta_feature_region(new.user_id);
   return new;
 end;
 $$;

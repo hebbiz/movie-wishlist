@@ -70,7 +70,7 @@ test('native PostgreSQL17 feature assignment serializes activation, signup and m
       const outcome = await pending; assert.equal(outcome.error, undefined);
       assert.deepEqual(await flag(userId), { enabled: true, expires_at: null, managed: true });
     });
-    await t.test('manual no-op permission intent locks first and a queued region cannot invert its row locks', async () => {
+    await t.test('manual intent locks first; a queued REAL region change overrides it without inverted row locks', async () => {
       const userId = '00000000-0000-4000-8000-000000000081';
       await admin.query("update media_advice_private.user_regions set region_code='GB' where user_id=$1", [userId]);
       assert.deepEqual(await flag(userId), { enabled: false, expires_at: null, managed: false });
@@ -82,9 +82,52 @@ test('native PostgreSQL17 feature assignment serializes activation, signup and m
       await a.query("update media_advice_private.user_regions set region_code='GB' where user_id=$1", [userId]);
       await a.query('commit');
       const outcome = await pending; assert.equal(outcome.error, undefined);
-      assert.deepEqual(await flag(userId), { enabled: false, expires_at: null, managed: null });
+      assert.deepEqual(await flag(userId), { enabled: true, expires_at: null, managed: true }, 'the queued actual GB to UA change wins over the prior manual false');
+      await admin.query("update media_advice_private.user_regions set region_code='UA' where user_id=$1", [userId]);
+      assert.deepEqual(await flag(userId), { enabled: true, expires_at: null, managed: true }, 'the repeated UA write is a no-op');
+    });
+    await t.test('manual true outside UA survives same-region writes, but real transitions respect Beta and preserve expiry/diagnostics', async () => {
+      const userId = '00000000-0000-4000-8000-000000000085';
+      await admin.query('insert into auth.users(id) values($1)', [userId]);
+      await admin.query("update media_advice_private.user_regions set region_code='GB' where user_id=$1", [userId]);
+      await admin.query("update media_advice_private.permissions set enabled=true,expires_at='2099-02-01' where user_id=$1 and feature_key='mykola_media_advice'", [userId]);
+      await admin.query("insert into media_advice_private.permissions(user_id,feature_key,enabled) values($1,'mykola_media_advice_diagnostics',true)", [userId]);
+      const manual = await flag(userId);
+      assert.equal(manual.enabled, true); assert.equal(manual.managed, null);
+      const diagnostics = await admin.query("select * from media_advice_private.permissions where user_id=$1 and feature_key='mykola_media_advice_diagnostics'", [userId]);
+      for (let i = 0; i < 2; i++) await admin.query("update media_advice_private.user_regions set region_code='GB' where user_id=$1", [userId]);
+      assert.deepEqual(await flag(userId), manual);
+      await admin.query('update media_advice_private.beta_config set enabled=false');
+      await admin.query("update media_advice_private.user_regions set region_code='GB' where user_id=$1", [userId]);
+      assert.deepEqual(await flag(userId), manual, 'neither global off nor a no-op region rewrite erases a manual value');
+      await assert.rejects(admin.query("select public.media_advice_beta_global_action($1,null,null,'capability')", [userId]), /access-denied/);
+      await admin.query("update media_advice_private.user_regions set region_code='UA' where user_id=$1", [userId]);
+      assert.deepEqual(await flag(userId), { ...manual, enabled: false, managed: false });
+      await admin.query("update media_advice_private.user_regions set region_code='UA' where user_id=$1", [userId]);
+      assert.deepEqual(await flag(userId), { ...manual, enabled: false, managed: false });
+      await admin.query('update media_advice_private.beta_config set enabled=true');
+      assert.deepEqual(await flag(userId), { ...manual, enabled: true, managed: true });
+      await admin.query("update media_advice_private.user_regions set region_code='GB' where user_id=$1", [userId]);
+      assert.deepEqual(await flag(userId), { ...manual, enabled: false, managed: false });
+      await admin.query("update media_advice_private.permissions set enabled=true where user_id=$1 and feature_key='mykola_media_advice'", [userId]);
+      await admin.query("update media_advice_private.user_regions set region_code='US' where user_id=$1", [userId]);
+      assert.deepEqual(await flag(userId), { ...manual, enabled: false, managed: false }, 'a different non-UA region also overrides manual true');
+      assert.deepEqual((await admin.query("select * from media_advice_private.permissions where user_id=$1 and feature_key='mykola_media_advice_diagnostics'", [userId])).rows, diagnostics.rows);
+    });
+    await t.test('missing and manually false UA flags are not repaired by writing the same region', async () => {
+      const userId = '00000000-0000-4000-8000-000000000086';
+      await admin.query('update media_advice_private.beta_config set enabled=false');
+      await admin.query('insert into auth.users(id) values($1)', [userId]);
+      assert.equal(await flag(userId), undefined);
+      await admin.query("update media_advice_private.user_regions set region_code='UA' where user_id=$1", [userId]);
+      assert.equal(await flag(userId), undefined);
+      await admin.query('update media_advice_private.beta_config set enabled=true');
+      await admin.query("update media_advice_private.permissions set enabled=false where user_id=$1 and feature_key='mykola_media_advice'", [userId]);
       await admin.query("update media_advice_private.user_regions set region_code='UA' where user_id=$1", [userId]);
       assert.deepEqual(await flag(userId), { enabled: false, expires_at: null, managed: null });
+      await admin.query("update media_advice_private.user_regions set region_code='GB' where user_id=$1", [userId]);
+      await admin.query("update media_advice_private.user_regions set region_code='UA' where user_id=$1", [userId]);
+      assert.deepEqual(await flag(userId), { enabled: true, expires_at: null, managed: true });
     });
     for (const first of ['delete', 'activation']) await t.test(`${first} first: Auth delete and activation serialize before cascade row locks`, async () => {
       const userId = first === 'delete' ? '00000000-0000-4000-8000-000000000083' : '00000000-0000-4000-8000-000000000084';

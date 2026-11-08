@@ -164,11 +164,12 @@ incorporates merged #217, owner observations and the scoped positive Tavily
 response for private Beta Researcher use. Narrow #192 apply/deadline/queued-reservation fixes were locally
 verified, including native PostgreSQL 17.6 concurrency; dated execution records
 describe actual activation separately from prepared plans.
-The latest [personal feature-flag contract](docs/m4-media-advice.md#personal-feature-flag-and-global-beta--2026-11-08)
+The latest [personal feature-flag contract](docs/m4-media-advice.md#actual-region-transitions-and-personal-overrides--2026-11-08)
 requires global Beta plus the user's own flag, prepared once during authenticated
 app initialization without film/group/role authorization before entry. Existing
-backend UA assigns/manages automatic grants; explicit settings, diagnostics and
-transfer/save rights stay separate. Its compatibility migration remains unapplied.
+backend region changes synchronize the personal enabled value, including manual
+overrides; unchanged-region writes do not. Diagnostics, expiry and transfer/save
+rights stay separate. Its compatibility migration remains unapplied.
 The [three-film pilot retrieval follow-up](docs/m4-media-advice.md#three-film-pilot-retrieval-follow-up--2026-10-28)
 preserves independent localization when UA country data is absent, adds a
 reviewed person-level Craig Gillespie alias and safe extraction diagnostics.

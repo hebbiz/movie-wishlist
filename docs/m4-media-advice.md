@@ -9,7 +9,7 @@ updated with merged #217. Later authorized execution:
 The preparation/execution records below are dated evidence, not a live-state
 assertion. PR#220's additional preparation does not authorize deployment,
 migrations or activation; its current scope is recorded at the end of this file.
-Current prepared access decision: [personal feature flag and global Beta](#personal-feature-flag-and-global-beta--2026-11-08)
+Current prepared access decision: [actual region transitions and personal overrides](#actual-region-transitions-and-personal-overrides--2026-11-08)
 supersedes group/film eligibility for display and discovery, not editing rights.
 Its new migration is prepared only, not applied to the shared database.
 Current branch search strategy: **two unchanged Tavily Basic slots, then one
@@ -7949,6 +7949,11 @@ retained. No runtime assertion failure remains in these final browser runs.
 
 ## Personal feature flag and global Beta — 2026-11-08
 
+Historical PR #233 revision at `6a274c7`: the later
+[actual-region-transition policy](#actual-region-transitions-and-personal-overrides--2026-11-08)
+supersedes the permanent-manual-override behavior below. Its completed test and
+preflight records remain historical evidence, not results of the later revision.
+
 Final owner clarification for PR #233: **effective feature access = global
 `beta_config.enabled` AND active personal `mykola_media_advice` permission**,
 in addition to verified, non-anonymous Auth. There is no additional runtime
@@ -8140,3 +8145,197 @@ capability and icon deadlines were not relaxed. No physical iPhone/Safari,
 real screen reader, deployed SDK account, live signup or live source integration
 was exercised. Final local artifacts are `personal-final-regression.tap` and
 `personal-browser-quiet-final.tap` in the external `m4-group-entry-study` folder.
+
+## Actual region transitions and personal overrides — 2026-11-08
+
+This owner-approved refinement supersedes the permanent-manual-override rule
+of `6a274c7`. Runtime access is unchanged: **global Beta + active personal
+`mykola_media_advice` flag**, with verified non-anonymous Auth. There is no
+extra runtime region, group or film-editing gate for viewing advice.
+
+### Exact regional synchronization policy
+
+An explicit personal true outside UA remains valid until the next **actual**
+authoritative region change. An UPDATE whose old and new `region_code` values
+are equal is not such an event: the trigger returns before reconciliation,
+without touching permissions, expiry, ownership or diagnostics. This includes
+same-region writes while Beta is off, and a still-missing permission row.
+
+On a real change, the core enabled value becomes
+`new backend region = UA AND global Beta enabled`, even if the old value was
+set manually. UA→GB and GB→UA are both covered, as is GB→US (a different
+non-UA region). Initial insertion of the authoritative region and deletion
+to a missing region also count as regional events; missing region disables
+an existing flag. A missing permission is created only for active Beta + UA.
+The existing default-UA source and Auth trigger are not redefined.
+
+| Operation | Stored core flag / management | Effective feature access |
+| --- | --- | --- |
+| UA→GB→UA, Beta on | false→true, including a former manual value | denied→allowed if unexpired |
+| Manual true in GB, then GB→GB | true and manual ownership unchanged | allowed while Beta on and unexpired |
+| Manual true in GB, then GB→US | false; the real event resumes region management | denied |
+| UA→GB→UA, Beta off | existing core flag false on each real change | denied throughout |
+| Beta off alone, with no region event | no personal value or expiry change | denied globally |
+| Beta activation after a Beta-off UA transition | region-managed UA flag enabled; missing eligible rows filled | allowed if unexpired |
+| UA→UA after a manual false | no changes; bulk reconciliation also preserves detached manual override | denied until a real regional event or explicit grant |
+
+Only `enabled` is synchronized. Existing `expires_at` is preserved and never
+renewed: a regional UA event can set enabled=true on an expired row, but that
+row remains effectively denied until its expiry is explicitly changed. The
+owner authorized overriding the boolean on region events, not extending grant
+lifetime. Diagnostics and ordinary editing/save rights are not changed.
+
+### Implementation and compatibility
+
+The still-unapplied `20261108185237_media_advice_global_access.sql` adds a
+private invoker `sync_beta_feature_region(uuid)` helper. It reads the actual
+locked backend region, never a caller-supplied region. It serializes with
+Beta, region, permission and Auth deletion writes using the existing common
+statement-level transaction lock, then locks the personal row before writing.
+Auth deletion cannot recreate grants or ownership rows.
+
+The region trigger skips equal-region UPDATEs. Real region events adopt the
+core row into private automatic management, recording its original expiry as
+well as enabled state. Later manual permission writes still detach management,
+so their explicit value is preserved by ordinary activation/backfill until the
+next real region event. Beta-off bulk reconciliation is a no-op; Beta-on bulk
+reconciliation fills missing eligible flags and adjusts region-managed rows
+without erasing detached manual overrides or renewing expiry.
+
+Migration backfill still preserves every pre-existing permission/expiry and
+the old pilot snapshot. The global Beta gate, separate diagnostics, guarded
+legacy raw-pilot route, strict transfer editing checks, source budgets and
+cap8/10/12/14 session isolation are unchanged from the preceding revision.
+The new helper also revokes EXECUTE from PUBLIC, anon, authenticated and
+service_role; no browser-writable policy or extra public RPC is introduced.
+
+### Exact future application sequence — NOT run
+
+The same migration version was confirmed absent before editing. If that
+changes, STOP: do not replace applied history or reuse this procedure blindly.
+The exact approved PR HEAD is recorded in the PR report, not inferred from a
+future working HEAD. The SQL LF SHA256 for this revision is
+`0f8e5c05cd43837c08c810e66b9f36937c21e2d7746086cdc804462b4c27c51d`.
+Recheck it if any SQL changes after review.
+
+1. Recheck remote PR #233 HEAD, develop, clean source checkout and this exact
+   SQL. Verify project `mttkectgdqqmejpenkrn` against the application URL and
+   the read-only preflight. Require the six earlier M4 versions exactly once,
+   proposed version absent, expected RPC/trigger/table ACLs, no active/queued
+   M4 work and no unexpected history ordering. Coordinate Auth/region/flag
+   writes; table locks are bounded by a 5s timeout, not a reason to interrupt
+   user work or keep retrying.
+2. Verify a current readable, restricted local recovery of M4 definitions,
+   permissions, regions, config and ledger. Refresh it if stale using existing
+   tools only. Catalog MD5s are not a backup, and this read-only task does not
+   certify a fresh recovery. Preserve the before-state permission values/expiry
+   and session caps/attempts for comparison.
+3. Create a fresh isolated migration workdir under the task workspace, not the
+   general repository's migration directory. Copy only the approved source
+   config and these seven exact migration files from the reviewed checkout:
+
+   ```text
+   20261020205122_media_advice_access_ledger.sql
+   20261021072002_media_advice_review_fixes.sql
+   20261031135149_media_advice_beta_ua.sql
+   20261101180436_media_advice_identity_budget.sql
+   20261102181617_media_advice_exact_reserve_budget.sql
+   20261104210025_media_advice_predicted_card_budget.sql
+   20261108185237_media_advice_global_access.sql
+   ```
+
+   Compare the staged pending SQL's raw SHA256 to its source copy and its
+   normalized-LF SHA256 to the approved value above; record the execution-byte
+   hash. Verify the first six files are unchanged applied predecessors, not
+   additional pending work. Do not copy credentials or unrelated migrations.
+4. Use the existing verified CLI **2.122.0**, without installing/upgrading it.
+   `$M4Cli` is the checked absolute executable path and `$M4Stage` the fresh
+   isolated directory containing its `supabase` folder. Read-only list first:
+
+   ```powershell
+   $M4Cli = 'C:\Users\DenysLis\.codex\visualizations\2026\09\28\01a0e7c4-3dc8-75e0-a3ed-84a709483b8d\m4-beta-tools\npm-cache\_npx\91eb58246759989d\node_modules\@supabase\cli-windows-x64\bin\supabase.exe'
+   & $M4Cli migration list --linked --project-ref mttkectgdqqmejpenkrn --workdir $M4Stage
+   ```
+
+   Proceed only if **the sole pending migration is 20261108185237** and all
+   independent preconditions still match. If the CLI refuses partial staging,
+   reports history divergence or proposes another version, stop and inspect;
+   do not use `--include-all`, general `db push` or history repair.
+5. Only after explicit execution approval, apply exactly the staged file:
+
+   ```powershell
+   & $M4Cli migration up --linked --project-ref mttkectgdqqmejpenkrn --workdir $M4Stage
+   ```
+
+   These flags were verified using the installed CLI's help only. No migration
+   command was executed in this task. If the reply is lost or ambiguous, first
+   inspect history and actual objects/assignments; never retry the apply command
+   merely because its reply was missing.
+6. Postcheck exactly one proposed history record; global RPC and private helper
+   definitions/ACLs/RLS; unchanged default-UA trigger, regions and Beta value;
+   expected missing-flag backfill and preserved pilot/diagnostic scope; every
+   pre-existing personal value/expiry and ledger row's cap/attempts. The local
+   contracts cover old cap8/10/12/14 and new global cap14; do not mutate old
+   sessions or create a live test account/search just to demonstrate this.
+   Region-transition tests run on authored local PostgreSQL, not by changing
+   a real user's region during these postchecks.
+7. Keep merge and release separately authorized. The compatible client/handler
+   requires the new global RPC and fails closed if it is missing. Only after
+   successful SQL postchecks should the approved release path proceed; this
+   task does not merge or run a manual deployment.
+
+### Repeated preflight and validation for this regional revision
+
+At **2026-11-08 21:47:36 UTC**, the final read-only script confirmed the app's
+target `mttkectgdqqmejpenkrn` (the same URL in `app.js`): history contained
+exactly the six prior M4 versions, each once, latest `20261104210025`, no
+duplicates. Proposed `20261108185237` and its global RPC/assignment objects
+were absent; the proposed version is later than the full current history.
+Beta remained active; all **7 users were UA**. One had the active personal core
+flag and separate diagnostics grant; **6** had no core flag. There were **9
+finished/expired cap14 sessions, 0 active/over-cap**, and **0 active or queued
+visible M4 DB queries** with full activity-statistics visibility verified.
+Existing M4 RPCs still had empty search paths and no browser-role EXECUTE.
+
+Expected current apply impact remains **6 new core permissions + 6 automatic
+ownership rows**, one preserved pilot member and one unchanged diagnostic
+grant. The migration does not simulate a region event for existing users or
+rewrite their explicit values. Repeat this preflight and compare the full
+before-state immediately before any separately approved apply; these counts
+are a point-in-time observation, not an authorization or recovery snapshot.
+
+The security advisor was repeated: existing private-table no-policy INFO
+notices, 12 public/17 authenticated definer-callability WARN findings elsewhere
+and disabled leaked-password protection remained. They were not changed by
+this task. The prior section links the corresponding
+[public-definer remediation](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable),
+[authenticated-definer remediation](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
+and [password-protection guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+This is not a clean whole-project security certification.
+
+New validation on the regional policy:
+
+- Broad serial regression: **1495 passed, 0 failed, 28 opt-in/environment skips**
+  (209.92s), including all **20** global/personal SQL cases and the existing
+  HTTP, diagnostics, editing, link/preview/transfer regressions. Two unrelated
+  native Windows pipe/broker controls remain excluded by name, as previously.
+- Native PostgreSQL **17.6**: **7 scenario subtests + parent = 8/8**, 0 failures
+  or skips (13.97s including temporary cluster setup/cleanup). Both activation
+  versus signup orders, queued real region versus manual intent, manual true
+  outside UA, equal-region no-ops, both transition directions, Beta-off/on,
+  original expiry/diagnostics, missing flags and Auth deletion were exercised
+  on independent connections. No grant loss, deadlock or orphan was observed.
+- Frontend/runtime HTTP code did not change in this revision. The previous
+  32-scenario mobile/desktop browser pass remains separately dated evidence,
+  not a new browser or deployed-user run. Core Boolean changes use the same
+  fresh server authorization paths already tested for revocation and expiry.
+
+New film-source HTTP requests **0**, Tavily Basic/Advanced credits **0**.
+Target access consisted of **2 successful read-only SQL calls** (initial
+history guard and final full preflight), project metadata, documentation and
+security-advisor reads. No target application RPC, region/permission mutation,
+account creation, live migration, merge or manual deployment was performed.
+Only CLI version/help was invoked; no tool or Windows update was installed.
+Local artifacts: `m4-group-entry-study/region-transition-regression.tap` and
+`region-transition-native.tap` outside Git. No live signup, physical device,
+real platform availability or recovery-restoration exercise is attested here.

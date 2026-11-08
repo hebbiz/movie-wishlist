@@ -81,7 +81,7 @@ test('global capability is independent of movie, form, group, membership and edi
   await assert.rejects(rpc('capability'), /access-denied/, 'legacy editing access remains separate');
 });
 
-test('backend region and global flag are authoritative; missing users and editable claims cannot self-grant', async t => {
+test('global Beta and personal flag authorize; authoritative region changes assign flags but editable claims cannot self-grant', async t => {
   const { db, globalRpc } = await globalAccessDb(); t.after(() => db.close());
   await db.exec('update media_advice_private.beta_config set enabled=true');
   await db.query('insert into auth.users values($1,$2)', [secondUser, { region_code: 'UA', mykola_media_advice: true, mykola_media_advice_diagnostics: true }]);
@@ -92,6 +92,16 @@ test('backend region and global flag are authoritative; missing users and editab
   await assert.rejects(globalRpc('capability', { targetUser: secondUser }), /access-denied/);
   await db.query('delete from media_advice_private.user_regions where user_id=$1', [secondUser]);
   await assert.rejects(globalRpc('capability', { targetUser: secondUser }), /access-denied/);
+  await db.query("update media_advice_private.permissions set enabled=true where user_id=$1 and feature_key='mykola_media_advice'", [secondUser]);
+  assert.equal((await globalRpc('capability', { targetUser: secondUser })).mykola_media_advice,true,
+    'manual personal true works even without a backend region: there is no extra runtime region gate');
+  await db.query("insert into media_advice_private.user_regions(user_id,region_code) values($1,'GB')",[secondUser]);
+  await assert.rejects(globalRpc('capability', { targetUser: secondUser }), /access-denied/,'a new authoritative foreign-region row is a real change and disables that override');
+  await db.query("update media_advice_private.permissions set enabled=true where user_id=$1 and feature_key='mykola_media_advice'", [secondUser]);
+  const explicitOutside = (await db.query("select * from media_advice_private.permissions where user_id=$1 and feature_key='mykola_media_advice'",[secondUser])).rows;
+  await db.query("update media_advice_private.user_regions set region_code='GB' where user_id=$1",[secondUser]);
+  assert.equal((await globalRpc('capability', { targetUser: secondUser })).mykola_media_advice,true,'same-region write preserves a manual override');
+  assert.deepEqual((await db.query("select * from media_advice_private.permissions where user_id=$1 and feature_key='mykola_media_advice'",[secondUser])).rows,explicitOutside);
   await assert.rejects(globalRpc('capability', { targetUser: '00000000-0000-4000-8000-000000000099' }), /access-denied/);
   await assert.rejects(globalRpc('capability', { targetUser: null }), /invalid-context|access-denied/);
   await db.query("update media_advice_private.permissions set enabled=false where user_id=$1 and feature_key='mykola_media_advice'", [user]);
@@ -121,6 +131,8 @@ test('global RPC is service-only and hardened; clients cannot read private table
     assert.ok(row.proconfig.some(value => value === 'search_path=""' || value === 'search_path='));
   }
   const body = (await db.query('select pg_get_functiondef($1::regprocedure) body', [signature])).rows[0].body.toLowerCase();
+  const featureBody = (await db.query("select pg_get_functiondef('media_advice_private.assert_beta_feature_access(uuid)'::regprocedure) body")).rows[0].body.toLowerCase();
+  assert.doesNotMatch(featureBody,/user_regions|group_members|movie_group_lists/,'effective advice access is Beta + active personal flag, never region or editing scope');
   const lockAt = body.indexOf('pg_advisory_xact_lock');
   assert.ok(lockAt > 0);
   assert.match(body.slice(0, lockAt), /assert_beta_feature_access/);
