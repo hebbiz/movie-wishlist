@@ -44,7 +44,8 @@ test('One Apple TV / iTunes real app form: mixed offer selection, own tracks, pr
       if (u.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'text/javascript', body: `window.authoredDBWrites=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:window.authoredLogin?{access_token:'AUTHORED',user:{id:'user'}}:null}}),onAuthStateChange:fn=>{window.authoredAuthEvent=fn;}},from:name=>({select:()=>{const q={eq:()=>q,maybeSingle:async()=>({data:{role:'owner'}})};return q;},insert:fields=>{window.authoredDBWrites.push({name,fields,operation:'insert'});return{error:{message:'AUTHORED stop before ordinary save completion'}}},update:fields=>{window.authoredDBWrites.push({name,fields,operation:'update'});return{eq:async()=>({error:{message:'AUTHORED stop before ordinary save completion'}})}}})})}` });
       if (u.origin !== origin) { blockedRemote.push(u.hostname); return route.abort(); }
       if (u.pathname === '/.netlify/functions/media-advice') {
-        if (route.request().postDataJSON().action === 'capability') return route.fulfill({ json: result.capabilities });
+        if (route.request().postDataJSON().action === 'availability') return route.fulfill({ json: { mykola_media_advice: true } });
+        if (['apply-capability', 'diagnostic-capability'].includes(route.request().postDataJSON().action)) return route.fulfill({ json: result.capabilities });
         discoveries++; return route.fulfill({ json: { result } });
       }
       return route.continue();

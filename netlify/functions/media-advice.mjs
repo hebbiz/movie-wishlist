@@ -27,8 +27,13 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
         } finally { signal.removeEventListener('abort', cancel); }
       });
     } catch (error) { return reply(error instanceof HandlerDeadline ? 504 : 400, { status: error instanceof HandlerDeadline ? 'handler-deadline' : 'invalid-request' }); }
-    if (!['capability', 'discover'].includes(data?.action) || !uuid(data.groupId) || !uuid(data.formSession) ||
-      !/^tt\d{7,10}$/.test(data.imdbId ?? '') || data.listId !== null && data.listId !== undefined && !uuid(data.listId)) return reply(400, { status: 'invalid-context' });
+    const globalCapability = ['availability', 'diagnostic-capability'].includes(data?.action);
+    const editCapability = ['capability', 'apply-capability'].includes(data?.action);
+    if (!globalCapability && !editCapability && data?.action !== 'discover') return reply(400, { status: 'invalid-context' });
+    if (globalCapability
+      ? ['groupId', 'imdbId', 'listId', 'formSession'].some(field => Object.hasOwn(data, field))
+      : !uuid(data.formSession) || !/^tt\d{7,10}$/.test(data.imdbId ?? '') || editCapability &&
+        (!uuid(data.groupId) || data.listId !== null && data.listId !== undefined && !uuid(data.listId))) return reply(400, { status: 'invalid-context' });
     const token = /^Bearer ([^\s]{1,8192})$/.exec(request.headers.get('authorization') ?? '')?.[1];
     if (!token) return reply(401, { status: 'authentication-required' });
     let finishing = false, authSignal, session, rpc, finishAttempted = false;
@@ -42,24 +47,29 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
       const { data: auth, error } = await deadline.wait(signal => { authSignal = signal; return db.auth.getUser(token); });
       authSignal = null;
       if (error || !auth?.user?.id || auth.user.is_anonymous) return reply(401, { status: 'authentication-required' });
-      const args = { p_user: auth.user.id, p_group: data.groupId, p_imdb: data.imdbId, p_list: data.listId ?? null, p_form: data.formSession };
+      // Eligibility and discovery are global. Movie identity scopes the search,
+      // never a group permission. Only apply/legacy capability uses edit scope.
+      const args = { p_user: auth.user.id, p_imdb: globalCapability ? null : data.imdbId, p_form: globalCapability ? null : data.formSession,
+        ...(editCapability ? { p_group: data.groupId, p_list: data.listId ?? null } : {}) };
       rpc = async (p_op, extra = {}) => {
         const { data: result, error } = await deadline.wait(signal => {
-          const query = db.rpc('media_advice_beta_action', { ...args, p_op, ...extra });
+          const query = db.rpc(editCapability ? 'media_advice_beta_action' : 'media_advice_beta_global_action', { ...args, p_op, ...extra });
           return typeof query.abortSignal === 'function' ? query.abortSignal(signal) : query;
         }, { finish: p_op === 'finish' });
         if (error || !result) throw Error('access-or-budget-denied');
         return result;
       };
-      if (data.action === 'capability') {
+      if (globalCapability || editCapability) {
         const capabilities = mediaCapabilities(await rpc('capability'));
-        return capabilities.mykola_media_advice ? reply(200, capabilities) : reply(403, { status: 'access-unavailable' });
+        return capabilities.mykola_media_advice
+          ? reply(200, data.action === 'availability' ? { mykola_media_advice: true } : capabilities)
+          : reply(403, { status: 'access-unavailable' });
       }
       // Server protocol capability, never a browser-selected cap or flag. Old
       // SQL that rejects an unknown contract fails closed: deploy the prepared
       // migration first, never retry start with a weaker marker after an error.
       // Migrated SQL preserves old callers/sessions and negotiates14 only here.
-      session = await rpc('start', { p_stage: 'predicted-card-v1' });
+      session = await rpc('start', { p_stage: 'global-predicted-card-v1' });
       // The durable server ledger chooses the supported budget. Browser JSON,
       // counters and user metadata never authorize additional source attempts.
       const sourceCap = session.cap === undefined ? 8 : session.cap;
@@ -82,6 +92,7 @@ export function createMediaAdviceHandler({ client, env, run = discoverMedia, fet
       // One best-effort finish, never a retry/refund. A lost RPC reply may still
       // have committed. Suppress source results when final authorization fails.
       if (session && !finishAttempted) { try { await finish(); } catch {} }
+      if (globalCapability || editCapability) return reply(error instanceof HandlerDeadline ? 504 : 403, { status: error instanceof HandlerDeadline ? 'handler-deadline' : 'access-unavailable' });
       return reply(error instanceof HandlerDeadline ? 504 : 403, { status: error instanceof HandlerDeadline ? 'handler-deadline' : 'access-session-or-budget-unavailable', accounting: 'attempts-may-have-been-spent-no-retry' });
     }
   };

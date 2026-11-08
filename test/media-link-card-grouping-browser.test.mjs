@@ -79,7 +79,8 @@ test('shared established-card navigation: real app Lost Bus-shaped, Store and ot
         if (url.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'text/javascript', body: sdkStub });
         if (url.origin !== origin) { state.blockedRemote.push(url.hostname); return route.abort(); }
         if (url.pathname === '/.netlify/functions/media-advice') {
-          if (route.request().postDataJSON().action === 'capability') return route.fulfill({ json: capabilities });
+          if (route.request().postDataJSON().action === 'availability') return route.fulfill({ json: { mykola_media_advice: true } });
+          if (['apply-capability', 'diagnostic-capability'].includes(route.request().postDataJSON().action)) return route.fulfill({ json: capabilities });
           state.discoveries++; return route.fulfill({ json: { result: projected } });
         }
         return route.continue();
@@ -172,6 +173,7 @@ test('shared established-card navigation: real app Lost Bus-shaped, Store and ot
       if (!diagnostics && process.env.M4_SCREENSHOT_DIR) await page.screenshot({ path: `${process.env.M4_SCREENSHOT_DIR}/link-card-grouping-${width}.png`, animations: 'disabled' });
       if (diagnostics) {
         await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+        await page.getByLabel('Короткий звіт для копіювання').waitFor();
         assert.equal(await page.locator('.media-advice-diagnostics pre').count(), rows.length, 'every original source observation survives navigation grouping');
         assert.equal(await page.locator('.media-advice-diagnostic-link').count(), 4, 'both Kino pointers plus uncertain MOTN and Store addresses remain available to authorized user');
         await page.getByRole('button', { name: '← До порад', exact: true }).click();

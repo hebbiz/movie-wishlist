@@ -1,35 +1,44 @@
 // An ephemeral display hint, never an authorization or a diagnostics grant.
-// The real capability (including list relation), discover and apply stay fresh.
-export function createEntryAccessPreparation({ scope, request, now = Date.now, ttlMs = 30000 }) {
-  const key = value => value?.userId && value?.groupId ? JSON.stringify([value.userId, value.groupId]) : null;
+// Availability is per authenticated app session, never tied to a film, group
+// role or editing permission. Explicit initialization/auth refresh invalidates
+// this memory-only hint; server actions always reauthorize independently.
+export function createEntryAccessPreparation({ scope, request, now = Date.now, ttlMs = Infinity }) {
+  const key = value => value?.userId ? JSON.stringify([value.userId]) : null;
   let epoch = 0, record = null, pending = null;
   function invalidate() {
     epoch++; record = null; pending?.controller.abort(); pending = null;
   }
-  function peek(context = scope()) {
+  function remainingMs(context = scope()) {
     const current = key(scope());
-    return !!current && key(context) === current && record?.key === current && now() < record.expiresAt;
+    return current && key(context) === current && record?.key === current ? Math.max(0, record.expiresAt - now()) : 0;
+  }
+  function peek(context = scope()) {
+    return remainingMs(context) > 0 && record.allowed === true;
   }
   function prepare(context, { force = false } = {}) {
     const current = key(scope());
-    if (!current || key(context) !== current || !/^tt\d{7,10}$/.test(context?.imdbId ?? '') || !context.formSession) return Promise.resolve(false);
+    if (!current || key(context) !== current) return Promise.resolve(false);
     if (pending?.key === current) return pending.promise;
-    if (!force && peek(context)) return Promise.resolve(true);
+    if (!force && remainingMs(context) > 0) return Promise.resolve(record.allowed === true);
     if (pending || record?.key !== current) invalidate();
-    const generation = epoch, controller = new AbortController();
+    // A new authoritative check supersedes actions sent under the previous
+    // hint even for the same film/user. Retain the hint while forced refresh
+    // is pending; only its fresh outcome may change the displayed permission.
+    const generation = ++epoch, controller = new AbortController();
     const flight = { key: current, controller, promise: null };
-    // listId:null intentionally checks group eligibility, not this list row.
-    flight.promise = Promise.resolve().then(() => request({ ...context, listId: null }, controller.signal)).then(value => {
+    // Pass only the local auth scope. The HTTP availability request itself has
+    // no client-supplied user, region, group, role or movie fields.
+    flight.promise = Promise.resolve().then(() => request({ userId: context.userId }, controller.signal)).then(value => {
       if (generation !== epoch || key(scope()) !== current) return false;
       const allowed = value?.mykola_media_advice === true;
-      record = allowed ? { key: current, expiresAt: now() + ttlMs } : null;
+      record = { key: current, allowed, expiresAt: now() + ttlMs };
       return allowed;
     }, () => {
-      if (generation === epoch && key(scope()) === current) record = null;
+      if (generation === epoch && key(scope()) === current) record = { key: current, allowed: false, expiresAt: now() + ttlMs };
       return false;
     }).finally(() => { if (pending === flight) pending = null; });
     pending = flight;
     return flight.promise;
   }
-  return { peek, prepare, invalidate, revision: () => epoch };
+  return { peek, prepare, invalidate, remainingMs, revision: () => epoch };
 }

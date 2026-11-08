@@ -63,6 +63,7 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
 
     async function setup(t, width, options = {}) {
       const state = { discoveries: 0, capabilities: [], iconRequests: [], blockedRemote: [],
+        diagnostics: options.diagnostics === true,
         capabilityMode: options.capabilityMode ?? 'allow', iconMode: options.iconMode ?? 'normal',
         holdDiscover: options.holdDiscover ?? false, holdModule: options.holdModule ?? false,
         pendingModules: [], pendingCapabilities: [], pendingIcons: [], pendingDiscoveries: [] };
@@ -95,18 +96,19 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
         }
         if (url.pathname === '/.netlify/functions/media-advice') {
           const body = route.request().postDataJSON();
-          if (body.action === 'capability') {
+          if (['availability', 'apply-capability', 'diagnostic-capability'].includes(body.action)) {
             const mode = state.capabilityMode; state.capabilities.push(body);
             if (mode.startsWith('hold')) await new Promise(resolve => state.pendingCapabilities.push(resolve));
             if (mode.endsWith('deny')) return route.fulfill({ status: 403, json: { status: 'access-unavailable' } });
             if (mode === 'fail') return route.abort('failed');
-            return route.fulfill({ json: { mykola_media_advice: true, mykola_media_advice_diagnostics: false } });
+            return route.fulfill({ json: { mykola_media_advice: true, mykola_media_advice_diagnostics: body.action === 'diagnostic-capability' && state.diagnostics } });
           }
           state.discoveries++;
+          if (state.capabilityMode.endsWith('deny')) return route.fulfill({ status: 403, json: { status: 'access-unavailable' } });
           if (state.holdDiscover) await new Promise(resolve => state.pendingDiscoveries.push(resolve));
           const selected = body.imdbId === secondFilm.imdbId ? secondFilm : film;
           return route.fulfill({ json: { result: { film: selected, rows: rowsFor(selected), unmapped: [], sources: [],
-            capabilities: { mykola_media_advice: true, mykola_media_advice_diagnostics: false } } } });
+            capabilities: { mykola_media_advice: true, mykola_media_advice_diagnostics: state.diagnostics } } } });
         }
         return route.continue();
       });
@@ -114,6 +116,7 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
       page.on('dialog', dialog => dialog.accept());
       await page.goto(origin + '/app.html', { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => typeof startEditMovie === 'function');
+      await page.waitForFunction(() => !!mediaAdviceAccessPreparation);
       if (!options.holdModule) await page.waitForFunction(() => !!mediaAdviceController);
       await page.evaluate(({ film, secondFilm }) => {
         document.getElementById('appLoader').style.display = 'none'; mainView.style.display = 'block';
@@ -317,7 +320,7 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
       await page.locator('#mediaAdviceEntry').waitFor({ state: 'visible' });
       assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), true);
       assert.equal(state.discoveries, 0, 'recovering permission does not itself search');
-      assert.equal(state.capabilities.length, 2, 'one prepared-scope and one exact-context check recover, without duplicate HTTP');
+      assert.equal(state.capabilities.length, 1, 'only global availability is rechecked; opening the film does not add a permission request');
       const recoveredCapabilityCount = state.capabilities.length;
       if (staleOutcome === 'resolve') await page.evaluate(async () => {
         authoredSessionControls[0].resolve({ data: { session: { access_token: 'AUTHORED-OLD', user: { id: 'old-user' } } } });
@@ -365,7 +368,7 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
       assert.equal(state.discoveries, 0);
     });
 
-    await t.test('group capability starts in parallel with an unresolved role query', async t => {
+    await t.test('global availability does not wait for an unresolved editing-role query', async t => {
       const { page, state } = await setup(t, 1280);
       await page.evaluate(() => { window.authoredRoleDelay = true; window.authoredRoleLoad = loadCurrentRole(); });
       await page.waitForFunction(() => typeof authoredRoleRelease === 'function');
@@ -378,22 +381,27 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
 
     await t.test('a delayed Mykola module never delays the movie form', async t => {
       const { page, state } = await setup(t, 375, { holdModule: true });
+      await page.evaluate(() => prepareMediaAdviceAccess());
       await page.evaluate(() => startEditMovie('list-0'));
       assert.equal(await page.locator('#title').inputValue(), film.title);
-      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), false);
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true, 'small group preparation is independent of the heavy controller');
+      assert.equal(await page.locator('#mediaAdviceEntry').isDisabled(), true);
+      assert.equal(await page.locator('#mediaAdviceEntry').getAttribute('aria-busy'), 'true');
       state.holdModule = false; state.releaseModules();
       await page.locator('#mediaAdviceEntry').waitFor({ state: 'visible' });
+      await page.waitForFunction(() => !document.getElementById('mediaAdviceEntry').disabled);
       assert.equal(state.discoveries, 0);
     });
 
-    await t.test('role and group changes cannot reuse the previous entry hint or result', async t => {
+    await t.test('role and group changes discard private results without revoking global advice availability', async t => {
       const { page, state } = await setup(t, 1280);
       await page.evaluate(() => prepareMediaAdviceAccess());
       await openCard(page); await page.locator('#mediaAdviceEntry').click();
       await page.locator('.media-advice-comparison').waitFor();
       await page.evaluate(() => { window.authoredRole = 'visitor'; return loadCurrentRole(); });
-      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), false);
-      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), false);
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true);
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), true);
+      assert.equal(await page.getByRole('button', { name: 'Обрати', exact: true }).isDisabled(), true);
       assert.equal(state.discoveries, 1);
       await page.evaluate(() => { window.authoredRole = 'owner'; return loadCurrentRole(); });
       await page.locator('#mediaAdviceEntry').waitFor({ state: 'visible' });
@@ -407,11 +415,11 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
       state.capabilityMode = 'allow'; state.releaseCapabilities();
       await page.evaluate(() => window.authoredRoleLoad);
       await openCard(page);
-      assert.ok(state.capabilities.some(request => request.groupId === 'group-b'));
+      assert.equal(state.capabilities.length, 1, 'changing roles/groups does not repeat session availability');
       assert.equal(state.discoveries, 1, 'role/group revalidation itself never discovers');
     });
 
-    await t.test('group capability denial immediately clears a result even while the role query is still pending', async t => {
+    await t.test('a global availability denial clears a result even while the editing-role query is pending', async t => {
       const { page, state } = await setup(t, 1280);
       await openCard(page); await page.locator('#mediaAdviceEntry').click();
       await page.locator('.media-advice-comparison').waitFor();
@@ -419,13 +427,15 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
       await page.evaluate(() => {
         window.authoredRoleDelay = true; window.authoredRoleLoadDone = false;
         window.authoredRoleLoad = loadCurrentRole().finally(() => { authoredRoleLoadDone = true; });
+        window.authoredGlobalRefresh = prepareMediaAdviceAccess({ force: true });
       });
       await page.waitForFunction(() => typeof authoredRoleRelease === 'function');
       await page.waitForFunction(() => !mediaAdviceController.dialog.open);
       assert.equal(await page.evaluate(() => authoredRoleLoadDone), false, 'capability rejection does not wait for the outstanding role response');
       assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), false);
       assert.equal(await page.locator('.media-advice-comparison').count(), 0, 'private data is removed immediately');
-      assert.equal(state.capabilities.at(-1).listId, null, 'this rejection comes from parallel group preparation, not a later exact-form refresh');
+      assert.equal(state.capabilities.at(-1).action, 'availability', 'only global availability is rechecked');
+      assert.equal(Object.hasOwn(state.capabilities.at(-1), 'imdbId'), false);
       assert.equal(state.discoveries, 1);
       await page.evaluate(() => { authoredRoleDelay = false; authoredRoleRelease(); return authoredRoleLoad; });
     });
@@ -450,52 +460,52 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
       assert.equal(state.discoveries, 1);
     });
 
-    await t.test('a feature flag revocation is rechecked on click before discovery', async t => {
+    await t.test('discovery performs fresh server authorization after cached display availability', async t => {
       const { page, state } = await setup(t, 375);
       await page.evaluate(() => prepareMediaAdviceAccess()); await openCard(page);
       state.capabilityMode = 'deny';
       await page.locator('#mediaAdviceEntry').click();
       await page.locator('#mediaAdviceEntry').waitFor({ state: 'hidden' });
-      assert.equal(state.discoveries, 0, 'display preparation cannot authorize an actual discovery');
+      assert.equal(state.discoveries, 1, 'one action is sent; the server refuses before source discovery');
       assert.equal(await page.locator('.media-advice-comparison').count(), 0);
     });
 
-    await t.test('entry revalidation cannot supersede a pending authorized click or require a second click', async t => {
-      const { page, state } = await setup(t, 1280);
+    await t.test('global revalidation cannot duplicate a pending explicit discovery or require a second click', async t => {
+      const { page, state } = await setup(t, 1280, { holdDiscover: true });
       await page.evaluate(() => prepareMediaAdviceAccess()); await openCard(page);
       await page.evaluate(() => mediaAdviceController.refresh());
-      const beforeExact = state.capabilities.filter(request => request.listId === 'list-0').length;
+      const beforeGlobal = state.capabilities.length;
       state.capabilityMode = 'hold';
-      const clickCapability = page.waitForRequest(request => {
-        if (!request.url().endsWith('/.netlify/functions/media-advice')) return false;
-        const body = request.postDataJSON(); return body.action === 'capability' && body.listId === 'list-0';
-      });
-      await page.locator('#mediaAdviceEntry').click(); await clickCapability;
-      await page.evaluate(() => { authoredClockOffset += 31000; revalidateMediaAdviceEntry(); });
-      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), false,
-        'the prepared display hint really expired during the pending exact click');
-      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true, 'hint expiry cannot hide an entry whose click is awaiting exact authorization');
       await page.locator('#mediaAdviceEntry').click();
-      assert.equal(state.discoveries, 0, 'pending authorization has not searched');
-      state.capabilityMode = 'allow'; state.releaseCapabilities();
+      await page.waitForFunction(() => !!document.querySelector('.mykola-typing-bubble'));
+      await page.evaluate(() => { window.authoredExplicitInit = prepareMediaAdviceAccess({ force: true }); document.getElementById('mediaAdviceEntry').click(); });
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), true, 'session hint is retained during an explicit refresh');
+      assert.equal(state.discoveries, 1, 'reopening cannot start a second source action');
+      state.capabilityMode = 'allow'; state.releaseCapabilities(); state.releaseDiscoveries();
       await page.locator('.media-advice-comparison').waitFor();
       assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), true);
       assert.equal(state.discoveries, 1, 'the original permitted click completes without another discovery');
-      assert.equal(state.capabilities.filter(request => request.listId === 'list-0').length, beforeExact + 1,
-        'refresh and repeated click reuse the pending exact entry check');
+      assert.equal(state.capabilities.length, beforeGlobal + 1, 'only the explicit global refresh uses a permission request');
+      assert.equal(state.capabilities.every(request => request.action === 'availability'), true, 'film opening adds no authorization preflight');
       await page.getByRole('button', { name: '← До картки', exact: true }).click();
       assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true, 'the freshly authorized opening leaves an entry available after closing the dialog');
     });
 
-    await t.test('returning focus rechecks a revoked feature flag without rediscovering', async t => {
+    await t.test('returning focus does not poll a successful hint; the next discovery enforces revoked feature access', async t => {
       const { page, state } = await setup(t, 1280);
       await page.evaluate(() => prepareMediaAdviceAccess()); await openCard(page);
       await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-comparison').waitFor();
+      const beforeAvailability = state.capabilities.length;
       state.capabilityMode = 'deny';
-      await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+      await page.evaluate(async () => { window.dispatchEvent(new Event('focus')); await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+      assert.equal(state.capabilities.length, beforeAvailability, 'successful initialization is not polled on focus');
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true);
+      await page.getByRole('button', { name: '← До картки', exact: true }).click();
+      await page.evaluate(() => startEditMovie('list-0'));
+      await page.locator('#mediaAdviceEntry').click();
       await page.locator('#mediaAdviceEntry').waitFor({ state: 'hidden' });
       assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), false);
-      assert.equal(state.discoveries, 1);
+      assert.equal(state.discoveries, 2, 'the fresh action is denied before source requests');
     });
 
     await t.test('revoked permission at preview transfer never applies its exact URL', async t => {
@@ -506,11 +516,159 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
       await page.locator('.media-advice-preview').waitFor();
       state.capabilityMode = 'deny';
       await page.getByRole('button', { name: 'Перенести в картку', exact: true }).click();
-      await page.locator('#mediaAdviceEntry').waitFor({ state: 'hidden' });
+      await page.waitForFunction(() => !document.querySelector('.media-advice-preview'));
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true, 'denied writing does not revoke advice viewing');
       assert.equal(await page.locator('#purchase_url').inputValue(), '');
       assert.equal(await page.locator('#recommended_medium').inputValue(), 'DVD');
       assert.equal(await page.evaluate(() => authoredDBWrites.length), 0);
       assert.equal(state.discoveries, 1);
+    });
+    await t.test('a late denied discovery that ignores abort cannot revoke a newer film or recovered availability', async t => {
+      const { page, state } = await setup(t, 1280);
+      await page.evaluate(() => {
+        const original = window.fetch;
+        window.authoredHeldDiscoveries = 0;
+        window.fetch = (url, options) => {
+          let action; try { action = JSON.parse(options?.body ?? '{}').action; } catch {}
+          if (String(url).endsWith('/.netlify/functions/media-advice') && action === 'discover' && authoredHeldDiscoveries++ === 0) {
+            return new Promise(resolve => { window.authoredReleaseOldDenial = () => resolve(new Response(JSON.stringify({ status: 'access-unavailable' }), { status: 403, headers: { 'Content-Type': 'application/json' } })); });
+          }
+          return original(url, options);
+        };
+      });
+      await openCard(page); await page.locator('#mediaAdviceEntry').click();
+      await page.waitForFunction(() => typeof authoredReleaseOldDenial === 'function');
+      await page.evaluate(() => startEditMovie('list-1'));
+      await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-comparison').waitFor();
+      await page.evaluate(async () => {
+        await prepareMediaAdviceAccess({ force: true });
+        authoredReleaseOldDenial();
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      });
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), true);
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true);
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), true);
+      assert.match(await page.locator('.media-advice-dialog').innerText(), /The Shining/);
+      assert.equal(state.discoveries, 1, 'only the newer controlled request reaches the fake endpoint');
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), 0);
+    });
+    await t.test('P2: a denied old discovery cannot revoke a newer availability epoch for the same form', async t => {
+      const { page, state } = await setup(t, 1280);
+      await page.evaluate(() => {
+        const original = window.fetch;
+        window.fetch = (url, options) => {
+          let action; try { action = JSON.parse(options?.body ?? '{}').action; } catch {}
+          if (String(url).endsWith('/.netlify/functions/media-advice') && action === 'discover') return new Promise(resolve => {
+            window.authoredReleaseSameFormDenial = () => resolve(new Response('{}', { status: 403 }));
+          });
+          return original(url, options);
+        };
+      });
+      await openCard(page); await page.locator('#mediaAdviceEntry').click();
+      await page.waitForFunction(() => typeof authoredReleaseSameFormDenial === 'function');
+      await page.evaluate(async () => {
+        const previous = mediaAdviceAccessPreparation.revision();
+        await prepareMediaAdviceAccess({ force: true });
+        if (!(mediaAdviceAccessPreparation.revision() > previous)) throw Error('fresh availability did not advance its epoch');
+        authoredReleaseSameFormDenial();
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      });
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), true);
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true);
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), true);
+      assert.match(await page.locator('.media-advice-dialog').innerText(), /не вдалося/i);
+      assert.equal(state.discoveries, 0, 'the authored held action never reaches a source fixture');
+    });
+    for (const denial of ['private-only', 'global']) await t.test(`P2: ${denial} diagnostic denial has the correct visibility scope`, async t => {
+      const { page, state } = await setup(t, 1280, { diagnostics: true });
+      await openCard(page); await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-comparison').waitFor();
+      if (denial === 'global') state.capabilityMode = 'deny'; else state.diagnostics = false;
+      await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+      if (denial === 'global') await page.locator('#mediaAdviceEntry').waitFor({ state: 'hidden' });
+      else await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).waitFor({ state: 'detached' });
+      assert.equal(await page.locator('.media-advice-diagnostics textarea,.media-advice-diagnostics pre').count(), 0);
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), denial !== 'global');
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), denial !== 'global');
+      assert.equal(state.discoveries, 1);
+    });
+    await t.test('P2: a late old diagnostic 403 cannot revoke a newer film and availability epoch', async t => {
+      const { page, state } = await setup(t, 1280, { diagnostics: true });
+      await openCard(page); await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-comparison').waitFor();
+      await page.evaluate(() => {
+        const original = window.fetch;
+        window.fetch = (url, options) => {
+          let action; try { action = JSON.parse(options?.body ?? '{}').action; } catch {}
+          if (String(url).endsWith('/.netlify/functions/media-advice') && action === 'diagnostic-capability') return new Promise(resolve => {
+            window.authoredReleaseOldReportDenial = () => resolve(new Response('{}', { status: 403 }));
+          });
+          return original(url, options);
+        };
+      });
+      await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+      await page.waitForFunction(() => typeof authoredReleaseOldReportDenial === 'function');
+      await page.evaluate(() => startEditMovie('list-1'));
+      await page.locator('#mediaAdviceEntry').click(); await page.locator('.media-advice-comparison').waitFor();
+      await page.evaluate(async () => {
+        await prepareMediaAdviceAccess({ force: true }); authoredReleaseOldReportDenial();
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      });
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), true);
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true);
+      assert.equal(await page.locator('.media-advice-dialog').evaluate(dialog => dialog.open), true);
+      assert.match(await page.locator('.media-advice-dialog').innerText(), /The Shining/);
+      assert.equal(await page.locator('.media-advice-diagnostics textarea,.media-advice-diagnostics pre').count(), 0);
+      assert.equal(state.discoveries, 2);
+    });
+    await t.test('P2: an old report denial after close/reopen cannot revoke a newer report for the same form', async t => {
+      const { page, state } = await setup(t, 1280, { diagnostics: true });
+      await openCard(page); await page.locator('#mediaAdviceEntry').click();
+      await page.locator('.media-advice-comparison').waitFor();
+      const formSession = await page.evaluate(() => mediaAdviceContext().formSession);
+      await page.evaluate(() => {
+        const original = window.fetch;
+        window.authoredReportAttempts = 0;
+        window.fetch = (url, options) => {
+          let action; try { action = JSON.parse(options?.body ?? '{}').action; } catch {}
+          if (String(url).endsWith('/.netlify/functions/media-advice') && action === 'diagnostic-capability' && ++authoredReportAttempts === 1) {
+            window.authoredOldReportSignal = options.signal;
+            // Deliberately ignore abort to exercise the HTTP denial guard,
+            // not just native fetch's usual cancellation rejection.
+            return new Promise(resolve => {
+              window.authoredReleaseClosedReportDenial = () => resolve(new Response('{}', { status: 403 }));
+            });
+          }
+          return original(url, options);
+        };
+      });
+      await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+      await page.waitForFunction(() => typeof authoredReleaseClosedReportDenial === 'function');
+      await page.getByRole('button', { name: '← До картки', exact: true }).click();
+      await page.waitForFunction(() => !mediaAdviceController.dialog.open);
+      await page.waitForFunction(() => authoredOldReportSignal.aborted, null, { timeout: 1500 });
+      assert.equal(await page.evaluate(() => authoredOldReportSignal.aborted), true, 'closing cancels the old protected check');
+      await page.locator('#mediaAdviceEntry').click();
+      await page.getByRole('button', { name: 'Діагностичний звіт', exact: true }).click();
+      const report = page.locator('.media-advice-diagnostics textarea');
+      await report.waitFor({ state: 'visible' });
+      const reportText = await report.inputValue();
+      assert.ok(reportText.length > 0);
+      const availabilityRevision = await page.evaluate(() => mediaAdviceAccessPreparation.revision());
+      await page.evaluate(async () => {
+        authoredReleaseClosedReportDenial();
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      });
+      assert.equal(await page.locator('.media-advice-diagnostics textarea').count(), 1, 'the newer authorized report remains mounted');
+      assert.equal(await report.inputValue(), reportText);
+      assert.equal(await report.isVisible(), true);
+      assert.equal(await page.evaluate(() => mediaAdviceController.dialog.open), true);
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.peek(mediaAdviceContext())), true);
+      assert.equal(await page.evaluate(() => mediaAdviceAccessPreparation.revision()), availabilityRevision, 'an older report reply cannot revoke the current global hint');
+      assert.equal(await page.evaluate(() => mediaAdviceContext().formSession), formSession, 'the test does not hide the race behind a new film/form');
+      assert.equal(await page.locator('#mediaAdviceEntry').isVisible(), true);
+      assert.equal(await page.evaluate(() => authoredReportAttempts), 2, 'only the two explicit report openings request protected access');
+      assert.equal(state.capabilities.filter(request => request.action === 'availability').length, 1, 'no fresh availability epoch masks the same-form report race');
+      assert.equal(state.discoveries, 1, 'closing, reopening and the late denial never repeat discovery');
+      assert.equal(await page.evaluate(() => authoredDBWrites.length), 0);
     });
     console.info('Prepared UX browser controls: source HTTP 0; real Supabase HTTP/writes 0; real platform navigation 0. Routes and permissions are authored fixtures, not live attestations.');
   });

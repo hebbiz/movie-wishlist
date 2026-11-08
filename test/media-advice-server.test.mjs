@@ -11,10 +11,11 @@ import { detailsData, providersData, motnData, IDS } from '../research/grounded-
 const user = '00000000-0000-4000-8000-000000000001', group = '00000000-0000-4000-8000-000000000002', form = '10000000-0000-4000-8000-000000000001';
 const input = { action: 'discover', groupId: group, formSession: form, listId: null, imdbId: `tt${IDS[0]}` };
 const request = (data = input, extra = {}) => new Request('https://app.example/.netlify/functions/media-advice', { method: 'POST', headers: { origin: 'https://app.example', authorization: 'Bearer AUTHORED', 'content-type': 'application/json', ...extra }, body: JSON.stringify(data) });
-test('HTTP boundary verifies Auth, backend capability/context each action and final revocation; no client claims trusted', async () => {
+test('HTTP boundary verifies Auth, global backend discovery and final revocation; no client claims trusted', async () => {
   let allow = true, validAuth = true, calls = [], started = false, runCalls = 0;
   const client = { auth: { getUser: async () => validAuth ? { data: { user: { id: user, user_metadata: { mykola_media_advice: true } } } } : { error: true } },
-    rpc: async (_, args) => {
+    rpc: async (name, args) => {
+      assert.equal(name, 'media_advice_beta_global_action');
       calls.push(args);
       if (!allow) return { error: true };
       if (args.p_op === 'start') { if (started) return { error: true }; started = true; }
@@ -27,7 +28,7 @@ test('HTTP boundary verifies Auth, backend capability/context each action and fi
   assert.equal(runCalls, 0); allow = true;
   assert.equal((await handler(request())).status, 200); assert.equal(runCalls, 1);
   assert.equal((await handler(request())).status, 403); assert.equal(runCalls, 1);
-  assert.ok(calls.every(c => c.p_user === user && c.p_group === group && c.p_imdb === input.imdbId));
+  assert.ok(calls.every(c => c.p_user === user && c.p_imdb === input.imdbId && c.p_form === form && !Object.hasOwn(c, 'p_group') && !Object.hasOwn(c, 'p_list')));
   started = false;
   const revoke = createMediaAdviceHandler({ client, env: () => '', run: async () => { allow = false; return { rows: [{ secret: 'must-not-return' }] }; } });
   const denied = await revoke(request()); assert.equal(denied.status, 403); assert.doesNotMatch(await denied.text(), /must-not-return/);
@@ -102,7 +103,7 @@ test('only the durable start receipt selects source cap; browser cap and identit
     assert.doesNotMatch(JSON.stringify(operations), /sourceCap|"cap"|counters|identityContext|Browser|FAKE_KEY/);
     assert.doesNotMatch(await response.text(), /AUTHORED_SERVER_TMDB_KEY|BROWSER_FAKE_KEY/);
     assert.deepEqual(operations.map(args => args.p_op), ['start', 'finish']);
-    assert.equal(operations[0].p_stage, 'predicted-card-v1');
+    assert.equal(operations[0].p_stage, 'global-predicted-card-v1');
     assert.equal(operations[1].p_stage, undefined);
   }
 });
@@ -126,7 +127,7 @@ test('an older SQL contract rejection cannot trigger a second start or a downgra
   const response = await createMediaAdviceHandler({ client, env: () => '',
     run: async () => assert.fail('rejected contract must dispatch no source') })(request());
   assert.equal(response.status, 403); assert.equal(operations.length, 1);
-  assert.equal(operations[0].p_op, 'start'); assert.equal(operations[0].p_stage, 'predicted-card-v1');
+  assert.equal(operations[0].p_op, 'start'); assert.equal(operations[0].p_stage, 'global-predicted-card-v1');
 });
 
 test('actual cap14 handler/service path reads one predicted card after unchanged searches and redacts ordinary Beta', async () => {
@@ -219,8 +220,8 @@ test('actual handler/service/resolver preserves two searches/cards at cap8 and u
     const sent = [], reserved = [], operations = []; let searches = 0;
     const allowed = new Set([...baselineStages, ...resolverStages, ...(sourceCap === 10 ? ['tmdb-person', 'kinobaza-person'] : [])]);
     const client = { auth: { getUser: async () => ({ data: { user: { id: user } } }) }, rpc: async (name, args) => {
-      assert.equal(name, 'media_advice_beta_action'); operations.push(args);
-      assert.equal(args.p_user, user); assert.equal(args.p_group, group); assert.equal(args.p_imdb, input.imdbId);
+      assert.equal(name, 'media_advice_beta_global_action'); operations.push(args);
+      assert.equal(args.p_user, user); assert.equal(Object.hasOwn(args, 'p_group'), false); assert.equal(Object.hasOwn(args, 'p_list'), false); assert.equal(args.p_imdb, input.imdbId);
       if (args.p_op === 'reserve') {
         assert.ok(allowed.has(args.p_stage)); assert.ok(!reserved.includes(args.p_stage));
         assert.ok(reserved.length < sourceCap, 'the mocked durable ledger never admits an extra attempt'); reserved.push(args.p_stage);

@@ -44,18 +44,115 @@ function ownBlock(key, audio = 'reported-positive', subtitles = 'reported-positi
       audio: { state: audio, language: 'uk', evidence: [{ label: 'Укр. звук (стерео)', literal: audio === 'reported-positive' ? '+' : '−', state: audio === 'reported-positive' ? 'positive' : 'negative', formatLiteral: 'стерео' }] },
       subtitles: { state: subtitles, language: 'uk', evidence: [] } } };
 }
-async function harness(t, rows, extra = {}, capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: true }, form = { recommended_medium: 'DVD', purchase_url: '' }) {
+async function harness(t, rows, extra = {}, capabilities = { mykola_media_advice: true, mykola_media_advice_diagnostics: true }, form = { recommended_medium: 'DVD', purchase_url: '' }, controllerOptions = {}) {
   const entry = new Element('button'), body = new Element('body'), state = { output: null, calls: 0, opens: [], capabilities };
   const doc = { body, activeElement: entry, createElement: tag => new Element(tag), createTextNode: text => new Element('text', text),
     defaultView: { scrollY: 0, scrollTo() {}, requestAnimationFrame(callback) { callback(); }, navigator: {}, open(...args) { state.opens.push(args); } } };
   const control = createMediaAdvice({ document: doc, entry, context: () => ({ userId: 'u', groupId: 'g', imdbId: 'tt1234567', formSession: 's', title: 'Authored film' }),
     capability: async () => state.capabilities, discover: async () => { state.calls++; return { rows, film: { id: filmId, imdbId: 'tt1234567' }, ...extra }; },
-    readForm: () => ({ ...form }), writeForm: fields => state.output = fields });
+    readForm: () => ({ ...form }), writeForm: fields => state.output = fields, ...controllerOptions });
   t.after(() => control.invalidate());
   await entry.click(); await new Promise(resolve => setTimeout(resolve, 0));
   const button = text => control.dialog.querySelectorAll('button').find(element => element.textContent === text);
-  return { control, state, button };
+  return { control, state, button, doc, entry };
 }
+
+test('global availability allows advice without a group or editing rights, but cannot transfer', async t => {
+  const h = await harness(t, [ownBlock('apple')], {}, true, undefined, {
+    context: () => ({ userId: 'u', imdbId: 'tt1234567', formSession: 's' }),
+    cachedAvailability: true, canApply: () => false,
+  });
+  assert.equal(h.control.dialog.open, true); assert.equal(h.state.calls, 1);
+  assert.equal(h.control.dialog.querySelectorAll('.media-advice-row').length, 1);
+  assert.equal(h.button('Обрати').disabled, true);
+  await h.button('Обрати').click();
+  assert.equal(h.control.dialog.querySelector('.media-advice-preview'), null);
+  await h.button('Відкрити посилання').click(); assert.equal(h.state.opens.length, 1);
+  assert.equal(h.state.output, null);
+});
+
+test('transfer rechecks write rights without removing globally available read-only advice', async t => {
+  let canApply = true;
+  const h = await harness(t, [ownBlock('apple')], {}, true, undefined, { cachedAvailability: true, canApply: () => canApply, validateApply: async () => false });
+  await h.button('Обрати').click(); canApply = false;
+  await h.button('Перенести в картку').click();
+  assert.equal(h.state.output, null); assert.equal(h.control.dialog.open, true);
+  assert.equal(h.entry.hidden, false);
+  assert.equal(h.control.dialog.querySelector('.media-advice-preview'), null);
+  assert.equal(h.control.dialog.querySelectorAll('.media-advice-row').length, 1);
+});
+
+test('editing-role changes preserve a one-shot result and reject a late previously authorized apply', async t => {
+  let editable = true, resolveApply;
+  const pendingApply = new Promise(resolve => { resolveApply = resolve; });
+  const h = await harness(t, [ownBlock('apple')], {}, true, undefined,
+    { cachedAvailability: true, canApply: () => editable, validateApply: () => pendingApply });
+  await h.button('Обрати').click();
+  const applying = h.button('Перенести в картку').click();
+  editable = false; h.control.editingAccessChanged();
+  assert.equal(h.button('Обрати').disabled, true);
+  assert.equal(h.control.dialog.querySelector('.media-advice-preview'), null);
+  resolveApply({ mykola_media_advice: true }); await applying;
+  assert.equal(h.state.output, null);
+  await h.button('← До картки').click(); await h.entry.click();
+  assert.equal(h.state.calls, 1); assert.equal(h.button('Обрати').disabled, true);
+  editable = true; h.control.editingAccessChanged();
+  assert.equal(h.button('Обрати').disabled, false);
+  assert.equal(h.state.calls, 1);
+});
+
+test('cached basic availability preserves a fresh-result diagnostic affordance but does not reveal it before a fresh check', async t => {
+  let resolveCheck, checks = 0;
+  const pending = new Promise(resolve => { resolveCheck = resolve; });
+  const h = await harness(t, [ownBlock('apple')], { capabilities: { mykola_media_advice: true, mykola_media_advice_diagnostics: true } }, true, undefined,
+    { cachedAvailability: true, validateDiagnostics: () => { checks++; return pending; } });
+  await h.control.refresh(); assert.ok(h.button('Діагностичний звіт'));
+  assert.equal(h.control.dialog.querySelectorAll('textarea').length, 0);
+  const first = h.button('Діагностичний звіт').click(), second = h.button('Діагностичний звіт').click();
+  await Promise.resolve(); assert.equal(checks, 1);
+  assert.equal(h.control.dialog.querySelectorAll('textarea').length, 0);
+  resolveCheck({ mykola_media_advice: true, mykola_media_advice_diagnostics: false });
+  await Promise.all([first, second]);
+  assert.equal(h.control.dialog.querySelectorAll('textarea').length, 0);
+  assert.equal(h.control.dialog.querySelectorAll('pre').length, 0);
+  assert.equal(h.button('Діагностичний звіт'), undefined);
+  assert.equal(h.control.dialog.querySelectorAll('.media-advice-row').length, 1);
+});
+
+test('diagnostic copy revalidates and clears revoked private DOM; stale report checks cannot revive a closed context', async t => {
+  let allowed = true, checks = 0, copies = 0;
+  const h = await harness(t, [ownBlock('apple')], { capabilities: { mykola_media_advice: true, mykola_media_advice_diagnostics: true } }, true, undefined,
+    { cachedAvailability: true, validateDiagnostics: async () => { checks++; return { mykola_media_advice: true, mykola_media_advice_diagnostics: allowed }; } });
+  h.doc.defaultView.navigator.clipboard = { writeText: async () => { copies++; } };
+  await h.button('Діагностичний звіт').click(); assert.equal(h.control.dialog.querySelectorAll('textarea').length, 1);
+  allowed = false; await h.button('Скопіювати короткий звіт').click();
+  assert.equal(checks, 2); assert.equal(copies, 0);
+  assert.equal(h.control.dialog.querySelectorAll('textarea').length, 0);
+  assert.equal(h.control.dialog.querySelectorAll('pre').length, 0);
+  let finish;
+  const old = await harness(t, [ownBlock('apple')], { capabilities: { mykola_media_advice: true, mykola_media_advice_diagnostics: true } }, true, undefined,
+    { cachedAvailability: true, validateDiagnostics: () => new Promise(resolve => { finish = resolve; }) });
+  const showing = old.button('Діагностичний звіт').click(); await Promise.resolve();
+  old.control.invalidate(); finish({ mykola_media_advice: true, mykola_media_advice_diagnostics: true }); await showing;
+  assert.equal(old.control.dialog.querySelectorAll('textarea').length, 0);
+  assert.equal(old.control.dialog.children.length, 0);
+});
+
+test('closing and reopening advice never resumes a protected report without a new diagnostic check', async t => {
+  let allowed = true, checks = 0;
+  const h = await harness(t, [ownBlock('apple')], { capabilities: { mykola_media_advice: true, mykola_media_advice_diagnostics: true } }, true, undefined,
+    { cachedAvailability: true, validateDiagnostics: async () => { checks++; return { mykola_media_advice: true, mykola_media_advice_diagnostics: allowed }; } });
+  await h.button('Діагностичний звіт').click();
+  assert.equal(h.control.dialog.querySelectorAll('textarea').length, 1);
+  await h.button('← До картки').click();
+  assert.equal(h.control.dialog.querySelectorAll('textarea').length, 0);
+  allowed = false; await h.entry.click();
+  assert.equal(h.control.dialog.querySelectorAll('textarea').length, 0);
+  assert.equal(h.control.dialog.querySelector('.media-advice-chat').hidden, false);
+  await h.button('Діагностичний звіт').click();
+  assert.equal(checks, 2); assert.equal(h.control.dialog.querySelectorAll('textarea').length, 0);
+  assert.equal(h.state.calls, 1);
+});
 
 test('ordinary Beta and legacy basic capability show advice and transfer without diagnostic bubble, report or source detail DOM', async t => {
   for (const capabilities of [true, { mykola_media_advice: true, mykola_media_advice_diagnostics: false }]) {

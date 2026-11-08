@@ -9,6 +9,9 @@ updated with merged #217. Later authorized execution:
 The preparation/execution records below are dated evidence, not a live-state
 assertion. PR#220's additional preparation does not authorize deployment,
 migrations or activation; its current scope is recorded at the end of this file.
+Current prepared access decision: [global UA availability and early initialization](#global-ua-advice-availability-and-early-initialization--2026-11-08)
+supersedes group/film eligibility for display and discovery, not editing rights.
+Its new migration is prepared only, not applied to the shared database.
 Current branch search strategy: **two unchanged Tavily Basic slots, then one
 Advanced exact-match reserve if the complete earlier path fails**, candidate URLs only,
 with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
@@ -7781,3 +7784,161 @@ detached flight.
 The earlier full-suite/native IPC limitation remains recorded above; this
 follow-up does not claim a new unfiltered full run or a live SDK recovery.
 No migration, merge or manual deployment is performed.
+
+## Global UA advice availability and early initialization — 2026-11-08
+
+This decision supersedes the group/film-scoped **display and discovery**
+eligibility described above. Mykola media advice is available to authenticated
+users of the application's existing Ukrainian region, regardless of movie,
+group membership or editing role. A valid selected IMDb identity is still
+required to search; it is not an authorization input. Ordinary card editing
+and saving permissions remain separate. Signed-out and Supabase anonymous
+accounts have not been assigned a new inferred region or new access policy.
+
+### Observed chain and implementation
+
+Baseline `develop` is `1f257566326bbe5968208cb13dd3d833d7fa879e`
+(including #232). The earlier warm-up needed a real IMDb from the group list;
+in an empty group it could not start until lookup filled the form. Its
+`Promise.all` also waited for the larger advice controller module before
+installing the small preparation helper. Rendering the filled form then
+triggered exact-film capability requests (including overlapping preparation
+and controller refresh). Reserving button space hid a layout jump, not that
+serial dependency.
+
+The small availability module now initializes independently. As soon as
+`updateAuthUI` knows the authenticated user, it prepares availability before
+awaiting the profile, group or role queries. One memory-only hint per user/app
+session is shared across concurrent consumers; group, role, movie and form
+changes do not create another eligibility request. Successful hints are not
+polled on focus/resume. Failed or unavailable initialization can be explicitly
+retried on a later foreground event, coalesced across those events. Auth user
+changes, explicit feature reinitialization/USER_UPDATED and discovery denial
+invalidate the relevant hint; token refresh alone does not repeat a successful
+availability request. The existing recoverable four-second session wrapper,
+abort and generation guards remain.
+
+`availability` sends only its action, without group, list, IMDb, region or
+browser-selected user claims. It returns only the display boolean, never a
+diagnostic grant. Opening or refreshing advice reads that cached eligibility;
+it makes no film-permission request. Discovery starts only on an explicit
+button click, sends IMDb + form session, and freshly verifies Auth and backend
+feature access at start, each reservation and finish. User/group/film changes
+invalidate private form/results/preview state. Editing-role changes preserve
+the existing read-only answer and spent search session, but cancel preview or
+pending transfer and refresh editing controls without another search. A visitor can read advice and
+open links but cannot transfer fields; transfer rechecks current local editing
+rights and the existing strict group/list capability on the server, with the
+ordinary save/RLS path unchanged. That existing transfer check still includes
+UA and the feature flag as well as editing/list rights.
+
+Protected diagnostics use a separate fresh **global** check before inserting
+the report DOM or copying it. Closing the dialog clears protected DOM; stale
+diagnostic replies cannot revive it after user/form/dialog changes. Neither a
+cached display hint nor an edit denial grants or revokes diagnostics silently.
+An ordinary `200` diagnostic denial only removes private details; a current
+`401/403` general Auth/feature denial removes global availability as well.
+Abort, exact-form and availability-epoch guards reject denials from an old
+film/form or a superseded availability check, even if a response ignores abort.
+Forced global revalidation retains a valid hint while pending, preventing a
+temporary refresh from discarding a one-shot answer. Initial SDK auth events
+are adopted coherently even when the first session read is still awaiting.
+
+An already-confirmed eligible entry can appear while the controller is still
+loading, visibly disabled with `aria-busy`; it becomes interactive only when
+ready. A failed optional module hides that entry without blocking the form.
+There is no promise of zero delay on the first cold authenticated launch:
+session availability, the small module and the server still take time. A
+cached successful display hint is not an immediate push notification of a
+remote flag/region change: the next server action fails closed, and explicit
+reinitialization refreshes it. No film search is used as a warm-up.
+
+### Existing region authority and prepared SQL
+
+The authority is unchanged: backend-only
+`media_advice_private.user_regions.region_code = 'UA'`, assigned by the
+existing Auth-user trigger/backfill with a default UA value. It is not IP,
+browser language, profile residence or editable Auth metadata. The existing
+global `beta_config.enabled` switch and separate expiring diagnostic grant
+are retained without changing any data or assignments.
+
+CLI-created migration
+`20261108185237_media_advice_global_access.sql` adds a service-role-only
+`media_advice_beta_global_action` and private volatile feature-access helper.
+Global sessions have honest NULL group/list metadata; the only column change
+is allowing NULL `sessions.group_id`. The new RPC requires
+`global-predicted-card-v1` for a new cap14 session, matches exact user/IMDb/form
+and NULL group/list on reserve/finish, and retains one-shot form protection,
+unique stages, expiry, cleanup and post-lock authorization. The existing
+pilot/group RPCs, their definitions and existing cap8/10/12/14 rows are not
+rewritten; neither contract can adopt the other's sessions. There is no
+fallback to an older permission contract after an error.
+
+Prepared operational order (NOT executed): independently recheck PR SHA and
+SQL, target project/history, active sessions and readable recovery; apply only
+this file through the isolated migration workflow; verify one history entry,
+unchanged existing session caps/attempts, old RPCs and ACLs/data/flags, plus a
+new global cap14 contract without a group; only then release the compatible
+handler/client through the approved release process. The new handler fails
+closed if the new RPC is absent. No general db push, history repair, live
+migration, merge or manual deployment is authorized by this implementation.
+
+### Controlled browser timing and evidence boundary
+
+The same local Chromium fixture runs frozen baseline sources and the changed
+actual add/IMDb-lookup and edit handlers. Authored delays: role 80ms, SDK
+session 60ms, capability 300ms, lookup 180ms, cold controller 600ms. Its
+boundary begins with a known user/group, not a complete deployed Auth startup.
+Network and Windows scheduling introduce jitter; these are individual
+controlled examples, not production medians or real-phone measurements.
+
+| Filled-form → visible button | Baseline | Global preparation |
+| --- | ---: | ---: |
+| Cold add, Fast Five, empty group | 663.4ms | 31.0ms |
+| Edit existing film | 392.2ms | 0ms |
+| Repeated opening after preparation | 0ms | 0ms |
+
+In the final cold-add example, the new availability request ran at 65.4–404.3ms,
+overlapping role (0.6–81.6ms) and lookup (152.7–375.2ms). The form was filled
+at 376.3ms and the visible button appeared at 407.3ms, still disabled while
+the delayed controller loaded. The baseline controller was ready at 606.7ms
+and did not send capability until 673.7ms, after filling its form at 330ms;
+the button became visible at 993.4ms. The new edit control had global
+availability ready before opening the populated form. These timestamps have
+different origins per run; compare intervals, not absolute cross-run times.
+`0ms` means visibility in the same JavaScript turn as film establishment, not
+zero physical paint time. A separate held-three-second-module case verifies
+that the button becomes enabled and one click then discovers exactly once.
+This table measures DOM appearance, not click-ready or complete search time.
+
+The exact local artifact is `m4-group-entry-study/before-after-timing.json`
+outside the repository; an earlier `baseline-timing.json` is superseded and
+is not the final evidence. New browser checks cover global initialization
+before a held profile, empty groups, visitor/no membership, cold/repeated
+add/edit, held/failed capability, delayed module, context changes, late-user
+responses, denial and recovery. Additional controller/SQL/HTTP regressions
+cover separate transfer/diagnostic permissions and old budgets.
+
+All source HTTP (TMDb/MOTN/Tavily/Kinobaza/platforms), real Supabase calls and
+database writes in these checks are **0**; Tavily Basic/Advanced credits **0**.
+Local app/API/SVG fixtures are not source attempts. This does not attest a
+live SDK account, deployed feature flags, physical iPhone/Safari or a real
+screen-reader session. The SQL was exercised only against an authored local
+database. Final test totals and any environment limits are recorded in the PR.
+
+Validation record: broad root + research regression **1480 passed, 0 failed,
+27 opt-in skips** (213.7s); two unrelated native Windows pipe/broker helper
+controls were excluded by name because of the previously recorded environment
+limit. This is not an unfiltered native integration claim. The nine global
+SQL contract/security tests passed, including preserved legacy rows, RPC
+definitions and ACLs. The final client lifecycle delta also passed **45/45**
+focused unit checks. Across nine browser suites, **98 distinct leaf checks**
+passed (107 reported checks including parent tests): the new global suite
+17/17, four unaffected legacy suites 44/44, and the four final rechecked suites
+46/46. These cover 375px mobile and 1280px desktop, delayed/error SVGs,
+selection/grouping/preview and original-address transfer, protected report
+open/copy, hung-session recovery, initial Auth events, role changes without
+search replay, and late discovery/report/apply responses. Earlier asynchronous
+DOM assertions and one case-sensitive error-text assertion were corrected to
+await the fresh diagnostic check; their original value/count assertions were
+retained. No runtime assertion failure remains in these final browser runs.

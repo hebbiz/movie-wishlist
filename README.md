@@ -164,6 +164,10 @@ incorporates merged #217, owner observations and the scoped positive Tavily
 response for private Beta Researcher use. Narrow #192 apply/deadline/queued-reservation fixes were locally
 verified, including native PostgreSQL 17.6 concurrency; dated execution records
 describe actual activation separately from prepared plans.
+The latest [prepared global UA advice contract](docs/m4-media-advice.md#global-ua-advice-availability-and-early-initialization--2026-11-08)
+checks feature availability once during authenticated app initialization, without
+film/group/role authorization before entry; transfer/save editing rights stay
+separate. Its compatibility migration is not applied by this PR.
 The [three-film pilot retrieval follow-up](docs/m4-media-advice.md#three-film-pilot-retrieval-follow-up--2026-10-28)
 preserves independent localization when UA country data is absent, adds a
 reviewed person-level Craig Gillespie alias and safe extraction diagnostics.

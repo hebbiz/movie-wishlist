@@ -36,8 +36,8 @@ async function discover({ start = true, finish = start, sourceCap = 8, finishAcc
       // The browser/Auth user metadata must never grant diagnostics.
       user_metadata: { mykola_media_advice_diagnostics: true } } } }) },
     rpc: async (name, args) => {
-      assert.equal(name, 'media_advice_beta_action');
-      assert.equal(args.p_user, user); assert.equal(args.p_group, group);
+      assert.equal(name, 'media_advice_beta_global_action');
+      assert.equal(args.p_user, user); assert.equal(Object.hasOwn(args, 'p_group'), false); assert.equal(Object.hasOwn(args, 'p_list'), false);
       assert.equal(args.p_imdb, `tt${IDS[0]}`); operations.push(args);
       if (args.p_op === 'reserve') {
         assert.ok([...baselineStages, ...resolverStages].includes(args.p_stage));
