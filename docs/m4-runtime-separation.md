@@ -598,8 +598,87 @@ rejects any direct/transitive/dynamic `research` or `test` dependency.
 
 ### Verification record
 
-Commands, final counts, automatic Preview identity and browser limitations
-are recorded below after executing the paired checks. All source transports
-in these checks are authored/injected; film-source HTTP and Tavily credits
-are **zero**. No live search, platform navigation, SQL, migration or manual
-deployment is part of this verification.
+All source transports in these checks are authored/injected; film-source
+HTTP and Tavily credits are **zero**. No live search, platform navigation,
+SQL, migration or manual deployment is part of this verification.
+
+| Check | Verified result |
+| --- | --- |
+| Paired affected product + all research suites + publication | Baseline **1171 pass / 0 fail / 14 skip**, current **1175 / 0 / 14**; 58.815s / 56.969s. Four new assertions/tests account for the difference. Fourteen opt-in browser suites are exercised separately where relevant, not claimed as browser passes here. |
+| Extended non-DB root + research + publication | Baseline **1511 / 0 / 22**, current first concurrent run **1512 / 3 / 22**. Three Windows credential-helper startup/time-limit failures occurred during browser/broad concurrency; the unchanged entire credentials file immediately rerun separately gave **8 / 0 / 0**. These retries are not presented as a single all-green broad run. |
+| Focused fixture parity, boundary, frozen runtime parity, clean installation, publication | **20 / 0 / 0**. Exact authored inputs/URLs, production export closure and unchanged results. |
+| Actual shallow Git copy | Without pinned history, nonzero with explicit fetch instructions, no skipped parity/current-code fallback. After explicitly fetching `42b4b849…` from the local full repository, both fixture/runtime parity suites **8 / 0 / 0**; full repository parity also passes. |
+| Native Windows demo standalone | `-Html` and `-Discovery` pass: detached start/status/duplicate-start refusal/unrelated-PID refusal/safe stop/restart; Discovery also checks fake-key fixed/dynamic assisted workflows. No SSH-disconnect test. |
+| Product browser | Headless installed Edge on Windows: **11 / 0 / 0**. Actual local form/dialog at 1280×900, 375×812, 420×912 and 820×1180; ordinary/diagnostic link groups at 375/1280, Store-only, repeated selection, preview and exact-address transfer. |
+| Six retained research browser suites | **62 / 4 / 5**: assisted 9/2/0, discovery 18/2/1, film-search 9/0/1, HTML 11/0/1, M2 9/0/1, Mykola 6/0/1. Five skips are missing WebKit; no download or real iPhone test. |
+| Inherited browser failures, repeated on untouched baseline | Assisted **9 / 2 / 0**, discovery **18 / 2 / 1**, identical to current. Each counts one failing scenario and its parent. No assertions weakened. |
+| Runtime / fixture graph | Server **28 modules / 38 edges**, browser **17 / 13**, no research/test edge. Canonical fixtures **5 modules / 2 edges**, no research/runtime/package/transport import. |
+| Publication | **62 byte-equivalent public files**, 16 browser/shared modules evaluated; all **308** private tracked paths retained, including the seven M4 migrations. Stale/nested generated output cleaned on rebuild, source files unchanged. |
+| Automatic Deploy Preview, implementation commit `587d723…` | Netlify **6af21b32dd8960fb0e97b554**, `ready`, `deploy-preview`, `manual_deploy=false`, matching commit. All four Functions available. Eight public paths returned 200 (five JS/SVG/PWA bodies equal local normalized bytes); fourteen private paths returned 404 with no source prefix, not a misleading 200 fallback. Guard-only Function GETs returned 405/400 without source calls. Final report-only HEAD Preview is checked in PR #237. |
+
+The known `discovery-browser` `store-subscription` assertion expects the old
+unmapped Apple TV+ state. The additional `assisted-kinobaza-browser`
+`unresolved-director` fixture supplies a matching stable IMDb ID but expects
+unresolved identity. Both fail on unmodified `d94159d`; neither is repaired
+opportunistically by moving fixtures. Review these two stale demo contracts
+explicitly in a later stage before treating their suites as green.
+
+Reproduction uses the existing root locked setup
+`npm ci --ignore-scripts --no-audit --no-fund` (these worktrees used
+`--offline`, with an already populated package cache). From each worktree,
+the paired test selection is the root `.test.mjs` files changed by this PR
+(omit the newly added file only in the baseline where it does not exist),
+plus `media-advice.test.mjs`, `media-advice-presentation.test.mjs`,
+`media-advice-history.test.mjs`, every research `.test.mjs`, and
+`tests/build-site.test.mjs`. Invocation:
+
+```powershell
+node --test --test-concurrency=1 --test-reporter=tap <selected-files>
+node --test test/media-advice-fixture-parity.test.mjs test/media-advice-runtime-boundary.test.mjs test/media-advice-runtime-parity.test.mjs test/media-advice-demo-install.test.mjs tests/build-site.test.mjs
+node --test test/m4-control-credentials.test.mjs
+pwsh -NoProfile -File research/grounded-answer-demo/test/windows.test.ps1 -Html
+pwsh -NoProfile -File research/grounded-answer-demo/test/windows.test.ps1 -Discovery
+```
+
+The extended non-DB selection is all root/research suites except root files
+whose source matches `PGlite|pglite|POSTGRES` case-insensitively (one local
+ledger SQL suite plus six native PostgreSQL suites), and uses
+`--test-skip-pattern="native local pipe|full fake-key broker"` for two separate
+unmodified IPC cases. No local or remote SQL is executed. Browser runs set
+`PLAYWRIGHT_MODULE_PATH` to the already-installed Playwright module and
+`PLAYWRIGHT_CHANNEL=msedge`, then use the same `node --test
+--test-concurrency=1` invocation. The product pair is
+`media-advice-browser` / `media-link-card-grouping-browser`; the six research
+suites are `assisted-kinobaza-browser`, `discovery-browser`,
+`film-search-browser`, `html-browser`, `m2-browser`, `mykola-browser`.
+All timings reflect concurrent local workload, not a performance comparison.
+
+Supabase Preview reports **skipped: PR database branching disabled**; no
+Supabase setting is changed to enable it. Preview source search is deliberately
+not exercised, so its secret contexts and authenticated redirect settings are
+not attested. No additional secret/redirect change is required for these
+static, bundle or mock-browser checks. A later live evaluation would need an
+explicit scenario, the existing deploy-preview source-token context and its
+permitted auth redirect URL reviewed separately, without putting keys in chat.
+
+Updated existing root consumers (relative to `test/`; canonical fixture
+definitions and the two graph/parity guards are listed separately above):
+
+```text
+apple-subscription-mapping.test.mjs       director-alias-crosswalk.test.mjs
+kinobaza-cascade.test.mjs                 kinobaza-contextual-policy.test.mjs
+kinobaza-deferred-extraction.test.mjs     kinobaza-director-selection.test.mjs
+kinobaza-exact-reserve.test.mjs           kinobaza-localized-identity.test.mjs
+kinobaza-movie-director-group.test.mjs    kinobaza-movie-sameas.test.mjs
+kinobaza-predicted-reserve.test.mjs       kinobaza-resolver.test.mjs
+kinobaza-second-query-policy.test.mjs    kinobaza-slevin-profile-pipeline.test.mjs
+kinobaza-terminal-roman.test.mjs         kinobaza-title-year.test.mjs
+kinobaza-ukrainian-g.test.mjs             m4-fockers-control.test.mjs
+m4-practical-series.test.mjs             m4-predicted-controls.test.mjs
+m4-url-diagnostics.test.mjs              media-advice-beta-response.test.mjs
+media-advice-browser.test.mjs            media-advice-demo-install.test.mjs
+media-advice-diagnostics.test.mjs        media-advice-group.fixture.mjs
+media-advice-platform-ui.test.mjs        media-advice-report.test.mjs
+media-advice-runtime-parity.test.mjs     media-advice-search-security.test.mjs
+media-advice-server.test.mjs             media-search-relevance-diagnostic.test.mjs
+```
