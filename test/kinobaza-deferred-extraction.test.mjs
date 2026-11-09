@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
-import { markup, CARD } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 
 const PROFILE = 'https://kinobazaua.com/persons/authored-director';
 const ALIAS = 'Авторський режисер';

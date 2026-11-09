@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { safeMediaReport, mediaSourceDetails } from '../assets/media-advice-report.mjs';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
-import { CARD, markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
-import { IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
+import { IDS } from './film-workflow.fixture.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
 

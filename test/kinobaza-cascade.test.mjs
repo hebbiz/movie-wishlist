@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
-import { CARD, markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
 import { createDirectorAliasLookup } from '../shared/director-alias-crosswalk.mjs';
 import { safeIdentityDiagnostic } from '../shared/media-advice-diagnostics.mjs';
 

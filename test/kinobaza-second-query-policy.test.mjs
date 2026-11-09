@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver, resolverQueries, resolverRefusalQuery } from '../netlify/lib/kinobaza-resolver.mjs';
-import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { markup } from './assisted-kinobaza.fixture.mjs';
 import { safeMediaReport } from '../assets/media-advice-report.mjs';
 
 const SEARCH = 'https://api.tavily.com/search';

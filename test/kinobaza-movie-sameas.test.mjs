@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { parse } from 'parse5';
 import { movieSameAsEvidence, parseMovieSameAsID, parseBoundedMovieJSON } from '../shared/kinobaza-movie-identity.mjs';
 import { assistedIdentity, fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
-import { CARD, markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
 import { safeIdentityDiagnostic } from '../shared/media-advice-diagnostics.mjs';
 
 const film = { identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001,

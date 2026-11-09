@@ -4,7 +4,7 @@ import { describeCandidateURL } from '../scripts/m4-url-diagnostics.mjs';
 import { runControlDiagnostic } from '../scripts/m4-control-diagnostic.mjs';
 import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
 import { resolverQueries, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
-import { detailsData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { detailsData, IDS } from './film-workflow.fixture.mjs';
 
 // Authored URL shapes, never a saved search response or historical owner URL.
 const origin = 'https://kinobazaua.com';

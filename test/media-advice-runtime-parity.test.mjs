@@ -9,8 +9,8 @@ import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { discoverMedia } from '../netlify/lib/media-advice-service.mjs';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
-import { markup, CARD } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
-import { detailsData, providersData, motnData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
+import { detailsData, providersData, motnData, IDS } from './film-workflow.fixture.mjs';
 
 const root = new URL('../', import.meta.url), loaded = new Map();
 const baselineSources = readMediaAdviceBaselineSources();

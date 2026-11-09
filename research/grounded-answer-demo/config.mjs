@@ -5,6 +5,8 @@ import { tmdbScenario } from './tmdb.mjs';
 import { megogoScenario } from './megogo.mjs';
 import { discoveryScenario } from './discovery.mjs';
 import { HELD_OUT_FILMS, isHeldOut } from './held-out.mjs';
+import { SYNTHETIC_FILMS as FILMS } from '../../test/kinobaza-html.fixture.mjs';
+export { FILMS };
 
 export const MODEL = 'gemini-3.8-flash';
 export const MAX_OUTPUT_TOKENS = 4096;
@@ -12,12 +14,6 @@ export const DEFAULT_FILM = 'dune-part-two';
 export const AMAZON_REGIONS = Object.freeze({
   us: 'amazon.com', uk: 'amazon.co.uk', de: 'amazon.de', it: 'amazon.it',
 });
-export const FILMS = Object.freeze({
-  'dune-part-two': Object.freeze({ id: 'dune-part-two', title: 'Dune: Part Two (2024)', director: 'Denis Villeneuve' }),
-  coherence: Object.freeze({ id: 'coherence', title: 'Coherence (2013)', director: 'James Ward Byrkit' }),
-  'blade-runner-final-cut': Object.freeze({ id: 'blade-runner-final-cut', title: 'Blade Runner (1982) — The Final Cut', director: 'Ridley Scott' }),
-});
-
 export function selectFilm(id = DEFAULT_FILM) {
   if (!Object.hasOwn(FILMS, id)) throw new Error(`Unknown DEMO_FILM. Choose: ${Object.keys(FILMS).join(', ')}.`);
   return FILMS[id];

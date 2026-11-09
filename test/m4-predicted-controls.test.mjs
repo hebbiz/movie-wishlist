@@ -1,10 +1,11 @@
 // Authored offline HTTP responses only. Never contacts any source.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { predictedControlManifest, frozenSearchFactory, safeControlURL, createControlTransport,
   runPredictedControlSeries, loadPredictedControlBaseline, PREDICTED_CONTROL_BASELINE } from '../scripts/m4-predicted-controls.mjs';
 import { resolverQueries, resolverReserveQuery } from '../netlify/lib/kinobaza-resolver.mjs';
-import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { markup } from './assisted-kinobaza.fixture.mjs';
 const key = 'AUTHORED-TMDB-KEY-NEVER-REPORT';
 const card = 'https://kinobazaua.com/titles/authored-original', wrong = 'https://kinobazaua.com/titles/authored-wrong';
 const requested = { title: 'Authored original', year: 2004, imdbId: 'tt0290002' };
@@ -16,6 +17,18 @@ const saved = searches => ({ cases: [{ requested: { ...requested }, baseline: { 
 const freshState = () => ({ actual: { tmdb: 0, cards: 0, tmdbPerson: 0, kinobazaPerson: 0, total: 0 }, ramReuses: 0, frozenSearchTransports: 0, requests: [] });
 const context = () => ({ findURL: 'https://api.themoviedb.org/3/find/tt0290002?external_source=imdb_id&language=uk-UA', detailsURL: null, film, allowedCards: new Set([card]) });
 const get = () => ({ method: 'GET', redirect: 'manual', credentials: 'omit', signal: AbortSignal.timeout(1000), headers: { Accept: 'text/html' } });
+
+test('reviewed-source fence covers the shared authored scaffold before any credential or HTTP work', async () => {
+  const source = await readFile(new URL('../scripts/m4-predicted-controls.mjs', import.meta.url), 'utf8');
+  const manifest = source.match(/const usedPaths = \[([\s\S]*?)\];/);
+  assert.ok(manifest, 'The control must retain its explicit reviewed-source manifest.');
+  assert.match(manifest[1], /'test\/kinobaza-html\.fixture\.mjs'/,
+    'Demo config and synthetic wrappers now reach the canonical test scaffold.');
+  const fence = source.indexOf("throw Error('reviewed-source-dirty')");
+  const credentials = source.indexOf('credentials = await readTmdbCredential(');
+  assert.ok(fence > source.indexOf('const usedPaths = [') && credentials > fence,
+    'Reject dirty executable dependencies before reading credentials or starting the control.');
+});
 
 test('bounded frozen manifest discards source prose and accepts only clean observed admitted card URLs', () => {
   const input = saved(); input.cases[0].secret = 'SOURCE_BODY_DO_NOT_COPY';

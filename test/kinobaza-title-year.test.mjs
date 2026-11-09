@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver, resolverQueries, resolverRefusalQuery, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
 import { runControlDiagnostic } from '../scripts/m4-control-diagnostic.mjs';
-import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
-import { detailsData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { markup } from './assisted-kinobaza.fixture.mjs';
+import { detailsData, IDS } from './film-workflow.fixture.mjs';
 
 const film = { id: 'authored', tmdbId: IDS[0], imdbId: `tt${IDS[0]}`,
   identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001,

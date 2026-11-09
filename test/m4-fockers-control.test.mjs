@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fockersControl, cap12ControlSeries, cap12ControlFilms } from '../scripts/m4-fockers-control.mjs';
 import { rankedCandidates, resolverQueries, resolverRefusalQuery } from '../netlify/lib/kinobaza-resolver.mjs';
-import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { markup } from './assisted-kinobaza.fixture.mjs';
 
 // Every response below is authored, not a historical/live source archive.
 const keys={tmdbToken:'author-local-tmdb-key',tavilyKey:'author-local-tavily-key'};

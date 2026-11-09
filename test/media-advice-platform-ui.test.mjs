@@ -3,11 +3,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMediaAdvice } from '../assets/media-advice.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { FILMS } from '../research/grounded-answer-demo/config.mjs';
+import { SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
-import { localizedMarkup, netflixCatalogueBlock, netflixAudioCatalogueBlock, paragraphBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
-import { recommendationCarousel } from '../research/grounded-answer-demo/test/recommendation-markup.fixture.mjs';
+import { localizedMarkup, netflixCatalogueBlock, netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
+import { recommendationCarousel } from './recommendation-markup.fixture.mjs';
 
 class Element {
   constructor(tag = 'div', text = '') { this.tagName = tag.toUpperCase(); this.children = []; this.attributes = {}; this.listeners = {}; this.dataset = {}; this.hidden = false; this.open = false; this.isConnected = true; this.classList = { add: (...names) => { this.className = [...new Set([...(this.className?.split(' ') ?? []), ...names])].join(' '); } }; this.textContent = text; }

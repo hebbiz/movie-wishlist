@@ -30,6 +30,10 @@ try {
     foreach ($file in @('kinobaza-card.mjs','kinobaza-html.mjs','kinobaza-localization.mjs','media-discovery-compose.mjs','media-source-motn.mjs','media-source-tmdb.mjs')) {
         Copy-Item -LiteralPath (Join-Path $source "../../netlify/lib/$file") -Destination (Join-Path $copyRoot "netlify/lib/$file")
     }
+    # The retained demo and product tests share the same authored HTML scaffold.
+    # Preserve its repository-relative location in this standalone temporary tree.
+    $null = New-Item -ItemType Directory -Path (Join-Path $copyRoot 'test')
+    Copy-Item -LiteralPath (Join-Path $source '../../test/kinobaza-html.fixture.mjs') -Destination (Join-Path $copyRoot 'test/kinobaza-html.fixture.mjs')
     foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs','film-workflow.mjs','film-workflow-synthetic.mjs','assisted-kinobaza.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
@@ -159,7 +163,9 @@ try {
     }
     if ($Discovery) {
         Copy-Item -LiteralPath (Join-Path $copy 'server.mjs') -Destination (Join-Path $copy 'server-core.mjs')
-        Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'film-workflow.fixture.mjs') -Destination (Join-Path $copy 'film-probe.fixture.mjs')
+        # Copy the self-contained canonical fixture, not the compatibility
+        # wrapper whose relative import belongs at research/.../test/.
+        Copy-Item -LiteralPath (Join-Path $source '../../test/film-workflow.fixture.mjs') -Destination (Join-Path $copy 'film-probe.fixture.mjs')
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'discovery-launch.fixture.mjs') -Destination (Join-Path $copy 'server.mjs')
         $env:DEMO_MODE = 'live'
         $env:DEMO_FILM = 'kingdom-of-heaven'

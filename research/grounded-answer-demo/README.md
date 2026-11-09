@@ -1,5 +1,14 @@
 # MW-FUT-01: isolated grounded-answer demo
 
+Shared authored fixtures now live in the repository-root `test/` directory.
+Keep the full checkout layout when running this retained demo: `config.mjs`
+and `synthetic.mjs` share `test/kinobaza-html.fixture.mjs`, and four legacy
+`test/*.fixture.mjs` paths here are compatibility re-exports, not data copies.
+The existing root `npm ci --ignore-scripts --no-audit --no-fund` setup remains
+the supported installation. The Windows integration test copies the required
+root fixture explicitly; copying only this demo directory is not supported.
+See [Stage 2.1 ownership and verification](../../docs/m4-runtime-separation.md#stage-21--shared-product-fixtures).
+
 ## M3.1 arbitrary-film discovery — isolated implementation
 
 **M3.1 and assisted M3.2 approved/implemented for bounded research. One combined
