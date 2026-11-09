@@ -237,7 +237,8 @@ test('LAN auth/Host/Origin protect new mode and display asset; unauthorized call
 });
 
 test('adapter/display contain no logging, storage, model call or destination fetch; source data is synthetic only', async () => {
-  const source = await readFile(new URL('../motn.mjs', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../motn.mjs', import.meta.url), 'utf8') +
+    await readFile(new URL('../../../netlify/lib/media-source-motn.mjs', import.meta.url), 'utf8');
   const display = await readFile(new URL('../public/motn-display.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(source + display, /console\.|writeFile|localStorage|sessionStorage|indexedDB|innerHTML|generativelanguage|googleSearch/);
   assert.equal((source.match(/fetchImpl\(/g) ?? []).length, 1);

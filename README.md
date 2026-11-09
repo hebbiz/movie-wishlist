@@ -170,6 +170,10 @@ app initialization without film/group/role authorization before entry. Existing
 backend region changes synchronize the personal enabled value, including manual
 overrides; unchanged-region writes do not. Diagnostics, expiry and transfer/save
 rights stay separate. Its compatibility migration remains unapplied.
+The [runtime separation and pilot inventory](docs/m4-runtime-separation.md)
+records stage 1 ownership: product source adapters/extraction live in
+`netlify/lib`, browser artwork in `assets`, and retained demo/tests depend on
+them only in the reverse direction. Pilot retirement and release stay separate.
 The [three-film pilot retrieval follow-up](docs/m4-media-advice.md#three-film-pilot-retrieval-follow-up--2026-10-28)
 preserves independent localization when UA country data is absent, adds a
 reviewed person-level Craig Gillespie alias and safe extraction diagnostics.

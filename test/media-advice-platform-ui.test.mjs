@@ -313,7 +313,7 @@ test('source notes consolidate all limitations and retain exact attribution link
   assert.ok(links.every(link => link.target === '_blank' && link.rel === 'noopener noreferrer'));
   assert.equal(footer.querySelector('p').textContent, 'This product uses the TMDB API but is not endorsed or certified by TMDB.');
   const logo = footer.querySelector('img');
-  assert.deepEqual([logo.src, logo.alt, logo.width], ['/research/grounded-answer-demo/public/tmdb-logo.svg', 'TMDB', 110]);
+  assert.deepEqual([logo.src, logo.alt, logo.width], ['/assets/icons/tmdb.svg', 'TMDB', 110]);
   assert.equal(state.calls, 1); assert.equal(state.output, null); assert.deepEqual(state.opens, []);
 });
 

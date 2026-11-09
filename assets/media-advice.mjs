@@ -250,7 +250,7 @@ export function createMediaAdvice({ document: doc, entry, context, readForm, wri
       const a = node('a', label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a);
     }
     footer.append(links, node('p', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'));
-    const logo = node('img'); logo.src = '/research/grounded-answer-demo/public/tmdb-logo.svg'; logo.alt = 'TMDB'; logo.width = 110; footer.append(logo); details.append(footer); chat.append(details);
+    const logo = node('img'); logo.src = '/assets/icons/tmdb.svg'; logo.alt = 'TMDB'; logo.width = 110; footer.append(logo); details.append(footer); chat.append(details);
   }
   function comparison(groups, { onAppleSelection = () => {} } = {}) {
     if (!groups.length) return;

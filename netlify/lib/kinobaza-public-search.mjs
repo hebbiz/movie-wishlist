@@ -1,5 +1,5 @@
 import { parse } from 'parse5';
-import { admitKinobazaURL } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { admitKinobazaURL } from './kinobaza-card.mjs';
 
 const ORIGIN = 'https://kinobazaua.com';
 const PREFIX = `${ORIGIN}/search?q=`;

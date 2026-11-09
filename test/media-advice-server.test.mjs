@@ -4,7 +4,7 @@ import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs'
 import { discoverMedia } from '../netlify/lib/media-advice-service.mjs';
 import { createKinobazaResolver, resolverQueries, resolverRefusalQuery } from '../netlify/lib/kinobaza-resolver.mjs';
 import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
-import { projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
+import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
 import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 import { detailsData, providersData, motnData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';

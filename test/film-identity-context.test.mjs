@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
-import { projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
+import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 
 // Entirely authored metadata. No live film record or historical response implied.
 const reported = value => ({ state: 'reported', value });

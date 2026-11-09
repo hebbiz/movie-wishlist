@@ -2,7 +2,7 @@
 // a claim about real platform availability, films, links or language tracks.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
 import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
 import { linkChoicesFor, makePreview } from '../assets/media-advice.mjs';

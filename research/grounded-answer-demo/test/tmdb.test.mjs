@@ -236,7 +236,8 @@ test('LAN auth, exact Host/Origin protect all new assets/session/answer; wrong a
 });
 
 test('no logging/storage/LLM/raw archives/destination fetch; synthetic avoids real expected offer facts', async () => {
-  const adapter = await readFile(new URL('../tmdb.mjs', import.meta.url), 'utf8');
+  const adapter = await readFile(new URL('../tmdb.mjs', import.meta.url), 'utf8') +
+    await readFile(new URL('../../../netlify/lib/media-source-tmdb.mjs', import.meta.url), 'utf8');
   const display = await readFile(new URL('../public/tmdb-display.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(adapter + display, /console\.|writeFile|localStorage|sessionStorage|indexedDB|innerHTML|generativelanguage|googleSearch/);
   assert.equal((adapter.match(/fetchImpl\(/g) ?? []).length, 1); assert.doesNotMatch(display, /fetch\(|createElement\('(script|iframe)'\)/);

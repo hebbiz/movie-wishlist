@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resolverQueries, resolverRefusalQuery } from '../netlify/lib/kinobaza-resolver.mjs';
-import { fetchAssistedKinobaza, linkedDirectorProfile } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { fetchAssistedKinobaza, linkedDirectorProfile } from '../netlify/lib/kinobaza-card.mjs';
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { markup, CARD } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { initialReleaseEvidence } from '../shared/film-release-year.mjs';
