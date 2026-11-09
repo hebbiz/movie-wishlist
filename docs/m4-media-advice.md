@@ -1,5 +1,130 @@
 # M4 — Mykola media advice
 
+## Current status and operation boundary — 2026-11-10
+
+This is the current entry point for the streaming-beta runbook. The checked
+integration baseline is `develop` **`890f3a9ada0bedcfc91898d7832fa6fa9ea4cfc5`**;
+checked production branch `main` is
+**`e92392856038e40e6d98c6c8744eed04c4e8dff9`**. These are Git references,
+not evidence that a production runtime, source account or database was tested
+on this date. The documentation-only cleanup does not apply SQL, change access,
+run recovery, call film sources or authorize a release.
+
+### Current implementation and access
+
+- [PR #235](https://github.com/hebbiz/movie-wishlist/pull/235) restricts static
+  publication to `.site-dist`; Functions still build from the repository.
+  [PR #236](https://github.com/hebbiz/movie-wishlist/pull/236) separates production
+  runtime from the demo and moves the TMDb logo to `assets/icons/tmdb.svg`.
+  [PR #237](https://github.com/hebbiz/movie-wishlist/pull/237),
+  [#238](https://github.com/hebbiz/movie-wishlist/pull/238) and
+  [#239](https://github.com/hebbiz/movie-wishlist/pull/239) move shared fixtures and
+  current consumers away from the demo. [PR #240](https://github.com/hebbiz/movie-wishlist/pull/240)
+  retires the Windows/LAN/Termius demo; it is no longer a supported way to run
+  this feature. See the [runtime/cleanup inventory](m4-runtime-separation.md)
+  and the substantive [physical-media handoff](m4-physical-media-handoff.md).
+  Physical-edition search remains deferred, not integrated into streaming beta.
+- Advice requires verified non-anonymous Auth, the **global Beta switch and an
+  active personal `mykola_media_advice` flag**. Availability is prepared during
+  authenticated app initialization, not for each film/group/role. The server
+  checks current authorization again for advice requests. Diagnostics use the
+  separate `mykola_media_advice_diagnostics` flag; transfer and ordinary Save
+  retain the card's existing editing permissions.
+- Region is the existing backend assignment authority, not another runtime
+  advice gate. Initial/default UA assignment with active Beta enables missing
+  eligible grants. An actual region change synchronizes the core flag to
+  `new region = UA AND Beta active`, including a previous manual value;
+  recording the same region is a no-op. Manual true outside UA remains valid
+  until another actual region event. Beta off denies the feature without itself
+  rewriting flags. Expiry and diagnostics remain separate. The exact transitions
+  and Beta-reactivation ownership rules remain in the [approved policy](#actual-region-transitions-and-personal-overrides--2026-11-08)
+  and [execution PR #233](https://github.com/hebbiz/movie-wishlist/pull/233).
+- The bounded current resolver preserves two Basic Tavily stages, then one
+  Advanced `exact_match` reserve using original title and year, then one
+  predicted original-title URL only if no card was confirmed and it was not
+  already read. Candidate discovery never proves film identity. URL admission,
+  owned `Movie.sameAs`/identity gates, source rules and no automatic retries
+  remain in force; Kinobaza `/search` is not used. Compatible global sessions
+  have cap14, while legacy cap8/10/12 sessions keep their own limits and stages.
+  A numeric cap does not bypass per-stage or deadline restrictions.
+- Source availability, audio and subtitle observations are **source claims**,
+  not a viewing entitlement or independent platform-track verification. Exact
+  selected addresses, distinct access variants and evidence provenance remain
+  separate from service/link presentation. Current structure, installation,
+  build/test commands and environment-variable names are in [README](../README.md).
+
+### Global-access execution and recovery evidence
+
+The [authorized execution record in PR #233](https://github.com/hebbiz/movie-wishlist/pull/233)
+supersedes the prepared-only status of
+[`20261108185237_media_advice_global_access.sql`](../supabase/migrations/20261108185237_media_advice_global_access.sql)
+in the older records below. From approved commit
+`b19fadab8448b70940cd851f0cb970ca249b10dd`, **only that migration was applied once
+at 2026-11-08 22:26:33 UTC**. Approved normalized-LF SQL SHA256:
+`0f8e5c05cd43837c08c810e66b9f36937c21e2d7746086cdc804462b4c27c51d`.
+This is dated execution evidence, **not a new read of today's target state**.
+
+The same record reports a fresh scoped M4 recovery snapshot at **22:24:20 UTC**:
+five private tables including nine cap14 ledger rows; relevant definitions,
+constraints/indexes/RLS/ACLs, five functions, default-region Auth trigger, cleanup
+metadata and the six predecessor history records. AES-256-GCM with a separately
+DPAPI-protected key and restricted local ACLs was used. Ciphertext/payload SHA256,
+GCM authentication, independent persisted-key readback, readable JSON/SQL material,
+row/PK checks and equality to that source snapshot passed.
+
+**Readback was verified; an actual restore of this M4 snapshot was not performed.**
+It depends on existing core/Auth objects, roles and the relevant Windows profile
+and key. It is not a portable/off-device or full Supabase-project backup.
+The older [focused recovery assessment](#focused-recovery-assessment--2026-10-22-m4-qualified)
+tested an earlier scope; it does not prove restoration of later private M4 tables,
+new global-access objects or all external Supabase services. No current recovery
+artifact was opened or refreshed for this documentation change.
+
+At **22:28:01 UTC**, PR #233 records all 25 postchecks passing: seven M4 history
+versions with the new version exactly once; seven core grants (+6), six ownership
+rows, preserved pilot and separate diagnostics; all nine prior ledger rows and
+attempts, permission expiries, regions/config, core data/editing rights and existing
+ACL/RLS retained. New/replaced function bodies and trigger/RPC permissions matched
+the approved SQL. The cap8/10/12/14 constraint and default8 were retained, with the
+new global cap14 contract installed. No live account or start/reserve RPC was
+created for compatibility proof: its behavior was checked in authored local tests,
+not by manufacturing real legacy sessions. Merge/deployment were separate actions,
+not part of that SQL execution.
+
+### Current operator entry point; historical procedures are not release validators
+
+Do not replay the pre-install commands below to "bring develop up to date".
+Seven M4 migration files are retained for history and recovery; their presence
+alone does not establish the state of a target database. There is **no pending
+SQL/activation/recovery operation authorized by this document update**.
+
+| Material | Current use and limitation |
+| --- | --- |
+| [`media-advice-global-access.preflight.sql`](../supabase/operations/media-advice-global-access.preflight.sql) | Preserved **pre-install #233** guard: expects global-access objects/version to be absent. Do not present it as a post-install health check or rerun it as an application step. |
+| [`media-advice-beta.preflight.sql`](../supabase/operations/media-advice-beta.preflight.sql), [activation](../supabase/operations/media-advice-beta.activate.sql), [postcheck](../supabase/operations/media-advice-beta.postcheck.sql) | Historical pilot install/owner-only activation workflow. Its old RPC/absence/cohort assumptions are not the current personal/global access model. Do not use it as a streaming release validator or mass-assignment recipe. |
+| [`media-advice-beta.rollback.sql`](../supabase/operations/media-advice-beta.rollback.sql) | Retained global Beta kill-switch operation, requiring separate authorization. A shared switch also affects develop; it is not code rollback, data restoration or removal of personal assignments. |
+| [Cleanup inspection](../supabase/operations/media-advice-cleanup.sql), [scheduler preparation](../supabase/operations/media-advice-cleanup.schedule.sql) | Retained operational/retention tools; inspect current job/state before a separately authorized operation. No new scheduler or cleanup execution is attested here. |
+| [`scripts/`](../scripts/) controlled studies and inspectors | Versioned local diagnostics and historical cap10/cap12 comparisons, including `production-beta` study naming, are not current cap14 release validators. See the [operator inventory and scope](m4-runtime-separation.md). Keep their original guards, pinned SHA/paths and credentials boundaries. |
+| [`supabase/operations/`](../supabase/operations/) recovery chain | Retained interdependent export/readback/local-restore tools and tests. A script's existence is not a fresh usable backup or a successful restoration of today's schema. |
+
+Before a **separately approved** release/privileged operation, recheck actual Git
+heads, exact target and migration history, unfinished/active work, flags/diagnostics,
+RPC ACL/RLS, compatibility and current recovery scope/readability. Stop on drift or
+missing evidence. Do not repeat an applied migration or blindly retry a lost
+response; inspect actual state first. Preserve the source-use/account review,
+production configuration review and separately approved live acceptance checks.
+Passing fixtures, browser mocks or a Deploy Preview build do not certify a live
+film search, production authorization, source licence or complete restoration.
+
+## Historical status index — superseded by the current entry point
+
+The original index and chronological records below are retained for their dated
+evidence and existing anchors. Words such as "current", "future", "prepared" or
+"not executed" in those records refer to their original checkpoint, not today's
+operation status. In particular, global-access prepared-only statements are
+superseded only by the execution evidence summarized above; old pilot activation
+and local-demo commands are not current setup or release instructions.
+
 Status: M4.1–M4.3 implemented; default-off semantics retained. Earlier deployment,
 assignment and cleanup evidence remains in its dated execution records below.
 The dated records below distinguish earlier preparation from later execution.
