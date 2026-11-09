@@ -273,7 +273,7 @@ test('extracted runtime modules exclude demo catalogues, fixed scenarios, prompt
   }
 });
 
-test('canonical product fixtures have a closed test-only graph; demo compatibility paths share exports without data copies', async t => {
+test('canonical product fixtures have a closed test-only graph; retired compatibility paths are absent', async t => {
   const names = ['assisted-kinobaza', 'film-workflow', 'kinobaza-localization', 'recommendation-markup'];
   const canonical = names.map(name => `test/${name}.fixture.mjs`);
   const allowed = [...canonical, 'test/kinobaza-html.fixture.mjs'].sort();
@@ -291,12 +291,26 @@ test('canonical product fixtures have a closed test-only graph; demo compatibili
   ]);
   for (const name of names) {
     const legacyPath = `research/grounded-answer-demo/test/${name}.fixture.mjs`;
-    const code = (await localRead(legacyPath)).replace(/^\/\/[^\n]*(?:\n|$)/gm, '').trim();
-    assert.equal(code, `export * from '../../../test/${name}.fixture.mjs';`, 'Compatibility files must contain no duplicated fixture data.');
-    const current = await import(new URL(`../test/${name}.fixture.mjs`, import.meta.url));
-    const legacy = await import(new URL(`../${legacyPath}`, import.meta.url));
-    assert.deepEqual(Object.keys(legacy), Object.keys(current));
-    for (const key of Object.keys(current)) assert.equal(legacy[key], current[key], `${name}/${key} must be the same function or value`);
+    await assert.rejects(localRead(legacyPath), { code: 'ENOENT' }, 'Retired wrappers must not silently return.');
+  }
+  for (const name of ['assisted-kinobaza', 'kinobaza-localization']) {
+    await assert.rejects(localRead(`research/grounded-answer-demo/${name}.mjs`), { code: 'ENOENT' });
+  }
+  // Inspect relative literals used by retained demo imports, lazy imports and
+  // source-body reads. Demo operator loaders also use calculated import URLs;
+  // their disposable-copy manifests are exercised by demo-install/Windows.
+  // This is not the strict production graph audit above, which stays fail-closed.
+  const retired = new Set([
+    ...names.map(name => `research/grounded-answer-demo/test/${name}.fixture.mjs`),
+    'research/grounded-answer-demo/assisted-kinobaza.mjs',
+    'research/grounded-answer-demo/kinobaza-localization.mjs',
+  ]);
+  for (const file of await codeFiles('research/grounded-answer-demo')) {
+    for (const token of tokens(await localRead(file))) {
+      if (token.kind !== 'string' || !token.value.startsWith('.')) continue;
+      const target = decodeURIComponent(new URL(token.value, new URL(file, 'https://offline.invalid/')).pathname).slice(1);
+      assert.ok(!retired.has(target), `${file}: current literal reference to retired ${target}`);
+    }
   }
   const scaffold = await import('./kinobaza-html.fixture.mjs');
   const config = await import('../research/grounded-answer-demo/config.mjs');
@@ -324,11 +338,13 @@ test('TMDb logo uses a production asset path with unchanged bytes and attributio
   assert.match(source, /not endorsed or certified by TMDB/);
 });
 
-test('nine migrated product suites execute with current research modules forbidden, including transitive imports', () => {
+test('all thirteen migrated product scenarios execute with current research modules forbidden, including transitive imports', () => {
   const suites = ['kinobaza-contextual-policy', 'kinobaza-deferred-extraction', 'kinobaza-localized-identity',
     'kinobaza-movie-director-group', 'kinobaza-slevin-profile-pipeline', 'kinobaza-terminal-roman', 'kinobaza-ukrainian-g',
-    'media-advice-diagnostics', 'media-advice-kinobaza-pipeline'];
-  const urls = suites.map(name => new URL(`./${name}.test.mjs`, import.meta.url).href);
+    'media-advice-diagnostics', 'media-advice-kinobaza-pipeline', 'apple-subscription-mapping',
+    'media-advice-browser', 'media-advice-platform-ui'];
+  const urls = [...suites.map(name => new URL(`./${name}.test.mjs`, import.meta.url).href),
+    new URL('./media-advice-group.fixture.mjs', import.meta.url).href];
   const code = `import { registerHooks } from 'node:module';
     registerHooks({ resolve(specifier, context, nextResolve) {
       const result = nextResolve(specifier, context);
@@ -337,16 +353,21 @@ test('nine migrated product suites execute with current research modules forbidd
     } });
     globalThis.fetch = () => { throw Error('external-transport-forbidden'); };
     for (const url of ${JSON.stringify(urls)}) await import(url);
-    console.log('nine-product-suites-without-current-research');`;
+    const group = await import(${JSON.stringify(new URL('./media-advice-group.fixture.mjs', import.meta.url).href)});
+    await group.authoredDuneMediaResult();
+    console.log('thirteen-product-scenarios-without-current-research');`;
   // Node's parent test runner exports a binary child-reporting context. This
   // independently spawned suite must use its own ordinary TAP reporter.
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
+  // Browser behavior is exercised separately with its opt-in runner. This
+  // import-closure check must remain offline and deterministic in both runs.
+  delete env.PLAYWRIGHT_MODULE_PATH;
   const output = execFileSync(process.execPath, ['--test-reporter=tap', '--input-type=module', '-e', code], {
     encoding: 'utf8', windowsHide: true, timeout: 30_000, maxBuffer: 1024 * 1024,
     stdio: ['ignore', 'pipe', 'pipe'], env,
   });
-  assert.match(output, /nine-product-suites-without-current-research/);
+  assert.match(output, /thirteen-product-scenarios-without-current-research/);
   assert.match(output, /# fail 0\b/);
 });
 
@@ -365,12 +386,38 @@ test('retained synthetic fixed-film identity is explicitly distinct from the req
     assert.equal(invalid.identity.status, 'unresolved', 'the retained gate must not become an always-matched fixture');
     assert.deepEqual(invalid.candidates, []);
   }
-  const retained = ['apple-subscription-mapping.test.mjs', 'media-advice-browser.test.mjs',
-    'media-advice-platform-ui.test.mjs', 'media-advice-group.fixture.mjs'];
-  for (const name of retained) {
-    const source = await localRead(`test/${name}`);
-    assert.equal((source.match(/(?:from\s+|import\(\s*)['"]\.\.\/research\/grounded-answer-demo\/html-source\.mjs['"]/g) ?? []).length, 1,
-      `${name}: this deliberate fixed-gate dependency must be re-evaluated, not silently swapped`);
-    assert.doesNotMatch(source, /(?:from\s+|import\(\s*)['"]\.\.\/research\/grounded-answer-demo\/(?:discovery|motn)\.mjs['"]/);
+});
+
+test('product fixture uses actual identity gates before exposing source languages or exact URLs', async () => {
+  const { authoredProductFilm, authoredProductHTML, extractProductHTML } = await import('./media-advice-group.fixture.mjs');
+  const { tableBlock } = await import('./kinobaza-localization.fixture.mjs');
+  const exact = 'https://itunes.apple.com/ua/movie/id9999001?at=AUTHOR%2fONLY';
+  for (const id of ['coherence', 'dune-part-two']) {
+    const film = authoredProductFilm(id);
+    const html = authoredProductHTML(film, tableBlock('itunes', [['Укр. звук', '+'], ['Укр. субтитри', '−']], exact));
+    const good = await extractProductHTML(html, film);
+    assert.equal(good.identity.status, 'matched');
+    assert.equal(good.identity.reason, 'explicit-title-year-director-match');
+    assert.equal(good.identity.diagnostics.strategy, 'title-year-director');
+    assert.ok(good.candidates.some(candidate => candidate.href === exact));
+    assert.equal(good.localization.blocks[0].audio.state, 'reported-positive');
+    assert.equal(good.localization.blocks[0].subtitles.state, 'reported-negative');
+    const mutations = [
+      ['wrong heading', html.replace(`<h1>${film.identityTitle}`, '<h1>Other film')],
+      ['wrong original', html.replace(`<h2>${film.originalTitle}</h2>`, '<h2>Other original</h2>')],
+      ['wrong year', html.replace(`(${film.year})</h1>`, `(${film.year + 1})</h1>`)],
+      ['wrong director', html.replace(film.director, 'Other authored director')],
+      ['wrong canonical', html.replace(`/titles/${film.id}`, '/titles/other-film')],
+      ['conflicting ID', html.replace('</table>', '<tr><td>IMDb:</td><td>tt999900002</td></tr></table>')],
+      ['ambiguous heading', html.replace('</h1>', '</h1><h1>Other film (2013)</h1>')],
+      ['ambiguous original', html.replace('</h2>', '</h2><h2>Other original</h2>')],
+      ['ambiguous director', html.replace('</table>', '<tr><td>Режисер:</td><td>Other authored director</td></tr></table>')],
+    ];
+    for (const [label, value] of mutations) {
+      const rejected = await extractProductHTML(value, film);
+      assert.notEqual(rejected.identity.status, 'matched', `${id}: ${label}`);
+      assert.deepEqual(rejected.candidates, [], `${label}: no source pointers escape identity refusal`);
+      assert.deepEqual(rejected.localization?.blocks ?? [], [], `${label}: no source language claims escape identity refusal`);
+    }
   }
 });

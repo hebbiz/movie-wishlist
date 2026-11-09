@@ -2,7 +2,7 @@
 import { selectRequest } from '../config.mjs';
 import { authoredDiscoveryData, runDiscovery } from '../discovery.mjs';
 import { describeDiscovery } from '../matching.mjs';
-import { localizedMarkup, tableBlock } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock } from '../../../test/kinobaza-localization.fixture.mjs';
 export const MYKOLA_STATES = ['several', 'unbound-localization', 'conflicting-properties', 'candidates-only', 'partial-source'];
 export async function mykolaFixture(kind) {
   if (!MYKOLA_STATES.includes(kind)) throw new Error('Authored state required');

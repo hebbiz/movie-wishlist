@@ -5,7 +5,7 @@ import { extractHtml, fetchHtmlCandidates, htmlScenario, canonicalKinobazaURL, c
 import { FILMS, selectRequest } from '../config.mjs';
 import { runDiscovery, authoredDiscoveryData, composeDiscovery } from '../discovery.mjs';
 import { prepareDraft, compactFields } from '../public/discovery-client.mjs';
-import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge, authoredDuneLanguageMarkup, netflixCatalogueBlock, netflixAudioCatalogueBlock } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock, paragraphBlock, badge, generalBadge, authoredDuneLanguageMarkup, netflixCatalogueBlock, netflixAudioCatalogueBlock } from '../../../test/kinobaza-localization.fixture.mjs';
 
 const parse = (body, film = 'coherence') => extractHtml(body, FILMS[film]);
 const selection = film => htmlScenario(FILMS[film], { discovery: 'digital-ua' });
@@ -548,6 +548,6 @@ test('post-hop blocks, malformed content, size and timeout remain bounded withou
 });
 
 test('new extractor has no network, execution, storage or logging hooks', async () => {
-  const code = await readFile(new URL('../kinobaza-localization.mjs', import.meta.url), 'utf8');
+  const code = await readFile(new URL('../../../netlify/lib/kinobaza-localization.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(code, /\bfetch\s*\(|eval\s*\(|innerHTML|localStorage|sessionStorage|writeFile|console\./);
 });

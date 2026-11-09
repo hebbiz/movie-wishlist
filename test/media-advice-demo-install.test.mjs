@@ -17,15 +17,13 @@ const runtime = ['kinobaza-card.mjs', 'kinobaza-html.mjs', 'kinobaza-localizatio
   'media-discovery-compose.mjs', 'media-source-motn.mjs', 'media-source-tmdb.mjs'];
 const shared = ['director-alias-crosswalk.mjs', 'film-release-year.mjs', 'kinobaza-movie-identity.mjs',
   'media-advice-diagnostics.mjs', 'media-link-policy.mjs', 'terminal-roman-title.mjs', 'ukrainian-g-title.mjs'];
-const demo = ['assisted-kinobaza.mjs', 'config.mjs', 'discovery.mjs', 'held-out.mjs', 'html-source.mjs',
-  'kinobaza-localization.mjs', 'megogo.mjs', 'motn.mjs', 'synthetic.mjs', 'tmdb.mjs', 'url-context.mjs'];
+const demo = ['config.mjs', 'discovery.mjs', 'held-out.mjs', 'html-source.mjs',
+  'megogo.mjs', 'motn.mjs', 'synthetic.mjs', 'tmdb.mjs', 'url-context.mjs'];
 const files = ['package.json', 'package-lock.json', 'research/grounded-answer-demo/package.json',
   ...runtime.map(name => `netlify/lib/${name}`), ...shared.map(name => `shared/${name}`),
   ...demo.map(name => `research/grounded-answer-demo/${name}`),
   'test/kinobaza-html.fixture.mjs', 'test/kinobaza-localization.fixture.mjs',
-  'test/assisted-kinobaza.fixture.mjs',
-  'research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs',
-  'research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs'];
+  'test/assisted-kinobaza.fixture.mjs'];
 
 async function absent(target) {
   try { await access(target); return false; }
@@ -55,7 +53,7 @@ let unintendedFetches = 0;
 globalThis.fetch = () => { unintendedFetches++; assert.fail('No external source request is permitted.'); };
 const htmlModule = await import('./research/grounded-answer-demo/html-source.mjs');
 const { FILMS } = await import('./research/grounded-answer-demo/config.mjs');
-const { localizedMarkup, tableBlock, paragraphBlock } = await import('./research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs');
+const { localizedMarkup, tableBlock, paragraphBlock } = await import('./test/kinobaza-localization.fixture.mjs');
 const html = localizedMarkup(tableBlock('itunes', [['Укр. звук (стерео)', '-'], ['Укр. субтитри', '+']]) + paragraphBlock('megogo', '(укр. аудіо [5.1])'));
 const film = FILMS.coherence;
 const selection = htmlModule.htmlScenario(film, { discovery: 'digital-ua' });
@@ -150,10 +148,10 @@ console.log(JSON.stringify({ identity: parsed.identity.status, audio: [apple.aud
       subtitles: ['reported-positive', 'unknown'], intercepted: 1, unintendedFetches: 0, wrongIdentity: 'unresolved' });
   });
 
-  await t.test('retained assisted-card wrapper resolves the same root parser and preserves its independent identity gate', () => {
+  await t.test('retained demo setup supports the runtime assisted-card reader and its independent identity gate', () => {
     const result = runChild(directory, `
-const { fetchAssistedKinobaza } = await import('./research/grounded-answer-demo/assisted-kinobaza.mjs');
-const { markup, CARD } = await import('./research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs');
+const { fetchAssistedKinobaza } = await import('./netlify/lib/kinobaza-card.mjs');
+const { markup, CARD } = await import('./test/assisted-kinobaza.fixture.mjs');
 const selected = { id: 'imdb:tt999900001', imdbId: 'tt999900001', tmdbId: 999900001, identityTitle: 'Вигаданий фільм',
   originalTitle: 'Authored original', year: 2001, titleAliases: [], directorAliases: ['Authored director'], directorCount: 1 };
 let cardReads = 0;

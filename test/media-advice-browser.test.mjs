@@ -4,13 +4,9 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { resolve, extname } from 'node:path';
-import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
-import { SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
-// This authored synthetic scaffold still needs the demo's fixed-film identity
-// gate. Do not replace it with an unconditional match or a different gate.
-import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
+import { authoredGroupedMediaRows, authoredDuneMediaResult, authoredProductFilm, authoredProductHTML, extractProductHTML as extractHtml } from './media-advice-group.fixture.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
-import { localizedMarkup, netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
+import { netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
 import { recommendationCarousel } from './recommendation-markup.fixture.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { safeExtractionDiagnostic } from '../shared/media-advice-diagnostics.mjs';
@@ -221,8 +217,8 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
   // Fictional film/link: actual extractor and Beta projection, not retained live
   // Klaus HTML, a source request or an assertion of real Netflix availability.
   const recoveredNetflixHref = 'https://click.justwatch.com/a?authored=%2fEXACT&service=netflix';
-  const recoveredFilm = { ...FILMS.coherence, imdbId: 'tt1234567', year: 2013 };
-  const recoveredMarkup = localizedMarkup(netflixAudioCatalogueBlock({ href: recoveredNetflixHref.replace('&', '&amp;') }), 'coherence', false)
+  const recoveredFilm = { ...authoredProductFilm(), imdbId: 'tt1234567' };
+  const recoveredMarkup = authoredProductHTML(recoveredFilm, netflixAudioCatalogueBlock({ href: recoveredNetflixHref.replace('&', '&amp;') }))
     .replace('</body>', `${recommendationCarousel()}</body>`);
   const recoveredExtraction = await extractHtml(recoveredMarkup, recoveredFilm);
   assert.equal(recoveredExtraction.identity.status, 'matched');
@@ -235,7 +231,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
       candidateCount: recoveredExtraction.candidates.length, blockCount: recoveredExtraction.localization.blocks.length }) }] };
   // Authored MEGOGO channel-format caption, not a stored/live Kong response.
   const channelHref = 'https://megogo.net/ua/view/999999-authored.html?exact=%2f&x=1';
-  const channelExtraction = await extractHtml(localizedMarkup(paragraphBlock('megogo', '(укр. аудіо [5.1])', channelHref.replace('&', '&amp;')), 'coherence', false), recoveredFilm);
+  const channelExtraction = await extractHtml(authoredProductHTML(recoveredFilm, paragraphBlock('megogo', '(укр. аудіо [5.1])', channelHref.replace('&', '&amp;'))), recoveredFilm);
   assert.equal(channelExtraction.identity.status, 'matched');
   const channelResult = composeDiscovery(recoveredFilm, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: channelExtraction, status: channelExtraction.status } }, { sourceURLs });
   // Optional local QA isolation; the ordinary suite still exercises all sizes.

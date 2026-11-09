@@ -685,6 +685,10 @@ media-advice-server.test.mjs             media-search-relevance-diagnostic.test.
 
 ## Stage 2.2 — current demo API dependencies
 
+This section records the Stage 2.2 checkpoint. The four remaining product
+dependencies and conditional deletion proposal below are superseded by
+[Stage 2.3](#stage-23--remaining-product-identity-and-compatibility-retirement).
+
 Based on verified `origin/develop`
 **77565bbf9e9d2249913f6df367e87aa32ad437ed**, after #237. The Stage 2.1
 inventory above is historical; the following is the new dependency state.
@@ -872,3 +876,123 @@ private HTTP smoke results are recorded in this stage's draft PR after push.
 No secret/redirect setting is needed for static/bundle/mock checks. A future
 live search requires its own approved scenario and review of deploy-preview
 token scopes/auth redirect context; no credential value is requested in chat.
+
+## Stage 2.3 — remaining product identity and compatibility retirement
+
+Verified starting `origin/develop` is the expected post-#238 commit
+`39187a30488b931ecd19a18e7943f347567893bd`. Work uses a fresh branch and an
+independent baseline worktree, not an earlier uncommitted experiment.
+No production module, browser asset, source rule, request budget, access rule,
+Supabase/Netlify configuration, operator implementation or migration changes.
+No new permanent file, directory, package or duplicate data set is added.
+
+### Four product consumers: fixed demo gate → actual product gate
+
+The last four consumers were `apple-subscription-mapping.test.mjs`,
+`media-advice-browser.test.mjs`, `media-advice-platform-ui.test.mjs` and
+`media-advice-group.fixture.mjs` under root `test/`. They now share small
+helpers in the existing group fixture: full authored selected-film metadata,
+canonical-owned HTML and `extractHtml` with the actual runtime
+`assistedIdentity` callback. The existing canonical HTML scaffold supplies
+only authored data; its demo-only `SYNTHETIC` H1 prefix is removed rather
+than admitted as an alias. No fixed-film gate is copied, and no result is
+forced to `matched`.
+
+Coherence/Dune lack source stable IDs in these authored inputs, so the valid
+route really checks title, original title, year **and director**. New negative
+cases mutate H1, H2, year, director, canonical, conflicting IMDb and duplicate
+identity fields; each withholds pointers and language blocks. Other existing
+identity suites retain their multiple-director, Movie.sameAs, crosswalk,
+ambiguous/conflicting data and cap8/10/12/14 coverage.
+
+Frozen `42b4b849…` group comparison still executes the original builder body.
+Only its one known historical fixture import URL is rebound to the identical
+canonical data, with an exact expected-rebinding count. Full selected-film
+metadata and actual product identity evidence are the **two explicit result
+differences**, individually asserted. All other result fields, all source
+rows/order, language evidence, exact provider hrefs, source-operation URLs,
+undefined fields and provenance remain deeply equal to the frozen result.
+There is no broad timestamp/URL normalization or current-code baseline.
+
+The current product-import guard now executes all thirteen assigned scenarios
+and the Dune helper while refusing every current `research/` module, including
+transitive imports. Production graph checks remain strict for unknown imports.
+The separate retained demo fixed-film gate is still tested as a demo contract;
+the runtime extractor still refuses a missing identity callback.
+
+### Six deleted compatibility paths and migrated consumers
+
+All paths below are relative to `research/grounded-answer-demo/`. Each was a
+two-line re-export, not an implementation or a source-data archive.
+
+| Deleted path | Consumers moved before deletion |
+| --- | --- |
+| `assisted-kinobaza.mjs` | `film-workflow.mjs`, assisted and HTML-source suites → `netlify/lib/kinobaza-card.mjs`; source-body assertion reads the real implementation; Windows/clean-install manifests updated |
+| `kinobaza-localization.mjs` | Localization source-body assertion → runtime implementation; manifests and four handoff/proposal documents updated |
+| `test/assisted-kinobaza.fixture.mjs` | Assisted unit/browser and title-boundary helper → root canonical fixture; clean-install manifest/probe updated |
+| `test/film-workflow.fixture.mjs` | Assisted, film-search browser and workflow suites → root canonical fixture; Windows keeps its canonical self-contained renamed `film-probe.fixture.mjs` copy |
+| `test/kinobaza-localization.fixture.mjs` | Localization, HTML, discovery, M2, provider-grouping and Mykola helpers/suites → root canonical fixture; disposable-copy manifests updated |
+| `test/recommendation-markup.fixture.mjs` | HTML-source suite → root canonical fixture |
+
+README and live documentation links name the new owners. The boundary guard
+asserts all six old paths are absent and rejects literal references to them
+in retained demo code, including import/readFile strings. Calculated demo
+loaders are covered by actual clean-install/Windows copy execution, not claimed
+as a fully static demo import graph. Canonical fixtures remain **5 files / 2
+edges**, without research/runtime/packages/transport. Research is now **90
+tracked files**, down from 96. Deleted wrappers remain recoverable from Git.
+
+Original historical Git paths and SHA values in cascade/predicted operators,
+history fixtures and frozen parity remain unchanged. Frozen runtime source
+loading already binds its original dependencies to the actual pinned bodies;
+it needs no current-wrapper fallback. No historical gate is rewritten.
+
+### Verification and limitations
+
+Locked offline setup in both fresh worktrees:
+`npm ci --offline --ignore-scripts --no-audit --no-fund`.
+The paired `node --test --test-concurrency=1` selection is the same selection
+listed in Stage 2.2 above: 24 named root suites, every retained research
+`.test.mjs`, and `tests/build-site.test.mjs`.
+
+| Check | Result |
+| --- | --- |
+| Paired baseline / current broad selection | **932 pass / 0 fail / 14 skip** before; **933 / 0 / 14** after. One added gate-regression test; existing assertions preserved. 58.024s / 42.158s are local timings, not a performance claim. |
+| Additional history / identity / resolver suites | **168 / 0 / 0**: history fail-closed, title/year, Movie.sameAs, director selection/verifier/reuse, resolver, exact and predicted reserve |
+| Runtime/fixture boundary and frozen parity | **19 / 0 / 0**; server **28 modules / 38 edges**, browser **17 / 13**, no research/test dependency |
+| Owned Apple/controller units | **47 / 0 / 0**, including subscription/Store, language signs/conflicts, source scope and exact selection/preview/transfer |
+| Product browser, installed Edge on Windows | **5 / 0 / 0**, 1280×900, 375×812, 420×912, 820×1180; unchanged service/link/preview/transfer, recovered languages and icon checks |
+| Retained demo browser, installed Edge | **38 / 4 / 2**, 76.189s. Only the known assisted `unresolved-director` and discovery `store-subscription` failures, each also failing its parent; HTML passes. Both skips are unavailable WebKit. Assertions unchanged. |
+| Retained demo clean install + targeted unit suites | **218 / 0 / 0**, including actual runtime source-body assertions |
+| Windows standalone copies | `pwsh -NoProfile -File research/grounded-answer-demo/test/windows.test.ps1 -Html` and `-Discovery`: both **PASS**; restart, parent exit, duplicate start, identity refusal and safe stop |
+| Native operator IPC | `node --test test/m4-practical-pipe.test.mjs`: **2 / 0 / 0**, fake-key local broker only |
+| Publication / repeated build | **62 exact public files**, 16 imported browser/shared modules, **302 tracked private files** preserved, all seven M4 migrations retained; stale/nested output cleanup passes |
+
+Counts overlap and are not additive. The 14 broad-selection skips are opt-in
+browser cases; dedicated browser runs use installed Edge via the existing
+`PLAYWRIGHT_MODULE_PATH` / `PLAYWRIGHT_CHANNEL=msedge` hooks. No new browser or
+utility is installed. Automatic Preview and dedicated retained-demo browser
+results are recorded in the draft PR after push; a build does not prove live
+source access. The known demo-browser baseline evidence is historical; the
+baseline browser was not rerun in this stage. Only fixture import paths changed
+in the two failing suites, not their assertions. No live film-source HTTP, API credit, platform visit, real key,
+SQL, user-data mutation, migration, manual deploy or release was performed.
+Real iPhone/WebKit and SSH-disconnect behavior are not verified here.
+
+### Remaining dependencies and exact next cleanup candidates
+
+There is **no further consumer-free deletion list** after these six wrappers.
+The following are coordinated follow-up candidates, not deletion authorization:
+
+| Candidate | Remaining dependency / required next action |
+| --- | --- |
+| Demo `html-source.mjs`, `tmdb.mjs`, `motn.mjs`, `discovery.mjs` | Real fixed-scenario/orchestration logic remains in config/server/workflow/public UI, tests and Windows modes. Retire or migrate useful contracts before retiring each mode. Product scenarios no longer import them. |
+| Six demo-only fixtures | `assisted-title-boundaries.fixture.mjs` serves assisted tests; four `*-launch.fixture.mjs` files serve Windows renamed-server copies; `mykola.fixture.mjs` serves Mykola unit/browser modes and config/discovery/matching. Move only useful independent contracts before coordinated demo retirement. |
+| `public/tmdb-logo.svg` | Still used by demo display, server route, TMDb test, root byte-parity guard and its handoff link. Coordinate retirement; the product uses `assets/icons/tmdb.svg`. |
+| `config.mjs` / `synthetic.mjs` | Not empty wrappers: retain prompts, scenarios and synthetic-response generators. Do not remove merely because their shared data moved. |
+| Root historical/demo checks | Demo-install, demo contract/logo boundary checks, frozen Git parity and historical operator-loader proofs remain intentional, distinct from a product dependency. `m4-predicted-controls.test.mjs` still reads the tiny demo callback delegate as evidence; move that proof only if the demo delegate is retired. |
+
+Keep the seven M4 migrations, operation SQL, recovery and operator tools,
+current documentation and canonical product fixtures. The next stage should
+first select retained demo contracts/modes, then adapt their browser/Windows
+and documentation dependencies, and only then propose bounded deletions.

@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createDemo } from '../server.mjs';
 import { FILMS } from '../config.mjs';
 import { authoredDiscoveryData } from '../discovery.mjs';
-import { localizedMarkup, tableBlock } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock } from '../../../test/kinobaza-localization.fixture.mjs';
 
 test('M2 direct A/B + copy report mobile browser (authored mocks only)', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const { chromium, webkit } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href);

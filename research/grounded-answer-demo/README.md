@@ -2,12 +2,14 @@
 
 Shared authored fixtures now live in the repository-root `test/` directory.
 Keep the full checkout layout when running this retained demo: `config.mjs`
-and `synthetic.mjs` share `test/kinobaza-html.fixture.mjs`, and four legacy
-`test/*.fixture.mjs` paths here are compatibility re-exports, not data copies.
+and `synthetic.mjs` share `test/kinobaza-html.fixture.mjs`. Retained demo tests
+import the four canonical root fixtures directly; the old compatibility
+re-exports have been retired. Assisted cards and localization use the runtime
+modules under `netlify/lib/`; the demo's fixed-film HTML gate remains separate.
 The existing root `npm ci --ignore-scripts --no-audit --no-fund` setup remains
 the supported installation. The Windows integration test copies the required
 root fixture explicitly; copying only this demo directory is not supported.
-See [Stage 2.1 ownership and verification](../../docs/m4-runtime-separation.md#stage-21--shared-product-fixtures).
+See [fixture ownership and Stage 2.3 verification](../../docs/m4-runtime-separation.md#stage-23--remaining-product-identity-and-compatibility-retirement).
 
 ## M3.1 arbitrary-film discovery — isolated implementation
 

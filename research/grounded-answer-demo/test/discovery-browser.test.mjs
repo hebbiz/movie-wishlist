@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createDemo } from '../server.mjs';
 import { FILMS } from '../config.mjs';
 import { authoredDiscoveryData } from '../discovery.mjs';
-import { localizedMarkup, tableBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock, paragraphBlock } from '../../../test/kinobaza-localization.fixture.mjs';
 
 const modulePath = process.env.PLAYWRIGHT_MODULE_PATH;
 test('consolidated discovery mobile browser flow (mocks, not real iPhone)', { skip: !modulePath }, async t => {

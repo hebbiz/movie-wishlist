@@ -1,5 +1,5 @@
 // Author-written shapes only. No live DOM, source body or inferred source selectors.
-import { markup } from './assisted-kinobaza.fixture.mjs';
+import { markup } from '../../../test/assisted-kinobaza.fixture.mjs';
 
 const original = '<h2>Authored original</h2>';
 const stableConflict = '<tr><td>IMDb:</td><td>tt999900002</td></tr>';

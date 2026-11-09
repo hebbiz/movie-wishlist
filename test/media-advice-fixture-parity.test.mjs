@@ -59,18 +59,47 @@ test('shared HTML builder and three fixture identities equal their frozen demo o
   assert.equal(builder(current), builder(oldSynthetic));
 });
 
-test('product group fixture retains the complete frozen result with explicit source URLs instead of demo composer defaults', async () => {
+test('product group fixture preserves frozen rows, source claims and URLs while replacing only selected metadata and fixed-gate evidence', async () => {
   const path = 'test/media-advice-group.fixture.mjs';
   const moduleURL = new URL(`../${path}`, import.meta.url);
   // Only import URLs are rebound. The committed input-builder body is not
   // patched, nor replaced by the new helper. Its original demo wiring remains
   // intentional evidence for the old fixture result, not a product dependency.
+  let reboundFixtures = 0;
   const original = frozen(path).replace(/import\(\s*(['"])(\.[^'"]+)\1\s*\)/g,
-    (_, _quote, specifier) => `import(${JSON.stringify(new URL(specifier, moduleURL).href)})`);
+    (_, _quote, specifier) => {
+      // Keep the actual frozen body and original Git path. Only this known
+      // dependency URL moves to the same canonical, separately frozen data.
+      if (specifier === '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs') {
+        reboundFixtures++;
+        return `import(${JSON.stringify(new URL('./kinobaza-localization.fixture.mjs', import.meta.url).href)})`;
+      }
+      return `import(${JSON.stringify(new URL(specifier, moduleURL).href)})`;
+    });
+  assert.equal(reboundFixtures, 1, 'A changed frozen dependency must be reviewed, not rebound heuristically.');
   const before = await import(`data:text/javascript;base64,${Buffer.from(original).toString('base64')}`);
   const after = await import('./media-advice-group.fixture.mjs');
   assert.deepEqual(after.authoredGroupedMediaRows(), before.authoredGroupedMediaRows());
-  // No timestamp/URL/provenance normalization: preserve undefined fields and
-  // exact addresses as well as every projected row and source-language claim.
-  assert.deepEqual(await after.authoredDuneMediaResult(), await before.authoredDuneMediaResult());
+  const previous = await before.authoredDuneMediaResult(), current = await after.authoredDuneMediaResult();
+  // Two explicit fixture changes, NOT a runtime behavior change: full selected
+  // metadata and real product identity evidence replace a partial demo film and
+  // fixed-gate evidence. Everything else, including undefined properties, row
+  // ordering, exact hrefs, old source URLs and source language claims is exact.
+  const { film: previousFilm, sources: previousSources, ...previousResult } = previous;
+  const { film: currentFilm, sources: currentSources, ...currentResult } = current;
+  assert.deepEqual(currentResult, previousResult);
+  assert.deepEqual(currentFilm, { ...previousFilm, originalTitle: 'Dune: Part Two', tmdbId: 693134,
+    identityTitle: 'Dune: Part Two', titleAliases: ['Dune: Part Two'], directorCount: 1, directorAliases: ['Denis Villeneuve'] });
+  assert.deepEqual(currentSources.slice(0, 2), previousSources.slice(0, 2));
+  assert.equal(currentSources.length, 3); assert.equal(previousSources.length, 3);
+  const { evidence: previousEvidence, ...previousSource } = previousSources[2];
+  const { evidence: currentEvidence, ...currentSource } = currentSources[2];
+  assert.deepEqual(currentSource, previousSource);
+  assert.deepEqual(previousEvidence, { status: 'matched', observed: { heading: ['SYNTHETIC Dune: Part Two (2024)'],
+    originalTitles: ['Dune: Part Two'], directors: ['Denis Villeneuve'] } });
+  assert.equal(currentEvidence.status, 'matched');
+  assert.equal(currentEvidence.reason, 'explicit-title-year-director-match');
+  assert.equal(currentEvidence.diagnostics.strategy, 'title-year-director');
+  assert.deepEqual(currentEvidence.observed, { headingCount: 1, originalTitleCount: 1, directorCount: 1, canonicalCount: 1, stableIdCount: 0 });
+  assert.ok(Object.values(currentEvidence.diagnostics.gates).every(state => state === 'pass'));
 });

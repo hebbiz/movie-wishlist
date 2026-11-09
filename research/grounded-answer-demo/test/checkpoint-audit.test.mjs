@@ -7,7 +7,7 @@ import { describeDiscovery, supportedPointer } from '../matching.mjs';
 import { buildShortReport } from '../public/discovery-report.mjs';
 import { prepareDraft } from '../public/discovery-client.mjs';
 import { syntheticTmdb, projectTmdbIdentity } from '../tmdb.mjs';
-import { localizedMarkup, tableBlock } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, tableBlock } from '../../../test/kinobaza-localization.fixture.mjs';
 
 async function authored(mutate = () => {}) {
   const s = selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence' });
