@@ -173,6 +173,11 @@ call count/quota errors in memory; no precise cost inferred from missing usage.
 
 ## 9. Verified components
 
+Current-tree installation after runtime separation uses the repository-root
+lockfile; see [HTML setup](../README.md#html-only-setup-and-result-contract).
+The component/dependency observations below describe this handoff's original
+baseline, not the current install location of the shared runtime parser.
+
 Inspected at review baseline; re-inspect before changes:
 
 - [config](../config.mjs), [server](../server.mjs), [network](../network.mjs):

@@ -1,5 +1,16 @@
 # Windows + iPhone manual test guide (trusted home LAN only)
 
+## Current setup after runtime separation
+
+For the current tree, run `npm ci --ignore-scripts --no-audit --no-fund`
+**from the repository root**, as described in the
+[HTML setup](../README.md#html-only-setup-and-result-contract). The runtime
+extractor now resolves `parse5` from root `node_modules`; a research-only
+`--prefix` installation is insufficient. No source request or startup occurs.
+The branch-switch/installation commands below describe older pilot commits:
+their nested installs are historical reproduction instructions, not current
+setup. When checking out such a commit, follow its own lockfile and instructions.
+
 ## M3.1 arbitrary-film search — no owner run requested
 
 M3.1 is implemented for isolated research; **live preflight/evaluation is not

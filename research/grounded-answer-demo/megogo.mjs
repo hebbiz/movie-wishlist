@@ -223,7 +223,7 @@ function htmlAcceptance(doc, nodes, counts, events, total, overflow, html) {
 export async function extractMegogo(html) {
   const result = base();
   if (typeof html !== 'string' || Buffer.byteLength(html) > MEGOGO_LIMIT_BYTES) return { ...result, status: 'unsupported-markup', issues: ['html-size-or-type-limit'] };
-  let parse, ErrorCodes; try { ({ parse, ErrorCodes } = await import('parse5')); } catch { return { ...result, status: 'parser-unavailable', issues: ['Install isolated parse5 dependency.'] }; }
+  let parse, ErrorCodes; try { ({ parse, ErrorCodes } = await import('parse5')); } catch { return { ...result, status: 'parser-unavailable', issues: ['From repository root run npm ci --ignore-scripts --no-audit --no-fund'] }; }
   try {
     const knownCodes = new Set(Object.values(ErrorCodes)), counts = new Map(), events = []; let total = 0, overflow = false;
     const doc = parse(html, { sourceCodeLocationInfo: true, onParseError: e => {

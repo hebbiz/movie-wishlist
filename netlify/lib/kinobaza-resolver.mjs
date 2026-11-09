@@ -1,4 +1,4 @@
-import { admitKinobazaURL, fetchAssistedKinobaza } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { admitKinobazaURL, fetchAssistedKinobaza } from './kinobaza-card.mjs';
 import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
 import { createHash } from 'node:crypto';
 import { initialReleaseEvidence } from '../../shared/film-release-year.mjs';

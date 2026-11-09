@@ -276,6 +276,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     // label above uncommitted code. Parallel docs/SQL work is not executed here.
     const usedPaths = ['netlify/lib/kinobaza-resolver.mjs', 'netlify/lib/kinobaza-director-verifier.mjs',
       'netlify/lib/kinobaza-predicted-url.mjs', 'netlify/lib/director-candidate-selection.mjs',
+      'netlify/lib/kinobaza-card.mjs', 'netlify/lib/kinobaza-html.mjs', 'netlify/lib/kinobaza-localization.mjs',
+      'netlify/lib/media-discovery-compose.mjs', 'netlify/lib/media-source-motn.mjs', 'netlify/lib/media-source-tmdb.mjs',
       'netlify/lib/director-profile.mjs', 'shared', 'research/grounded-answer-demo',
       'assets/media-advice-presentation.mjs', 'scripts/m4-predicted-controls.mjs', 'scripts/m4-control-credentials.mjs'];
     if (git('status', '--porcelain', '--untracked-files=all', '--', ...usedPaths)) throw Error('reviewed-source-dirty');

@@ -1,6 +1,6 @@
 // Invocation-local, bounded verification of a card's already admitted director
 // pointer. No search, redirects, retries, persistence or global alias registry.
-import { readTmdbJson } from '../../research/grounded-answer-demo/tmdb.mjs';
+import { readTmdbJson } from './media-source-tmdb.mjs';
 import { admitDirectorProfileURL, projectTmdbPerson, inspectDirectorProfile, compareDirectorProfile } from './director-profile.mjs';
 
 const TIMEOUT_MS = 5_000;

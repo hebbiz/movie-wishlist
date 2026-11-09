@@ -20,14 +20,27 @@ function Free-Port {
     $listener.Start(); $port = $listener.LocalEndpoint.Port; $listener.Stop(); return $port
 }
 try {
-    # Preserve the production/research shared pure URL-policy module boundary.
+    # Keep the demo's runtime wrappers and their pure shared dependencies in
+    # the disposable checkout layout; production no longer imports the demo.
     $null = New-Item -ItemType Directory -Path (Join-Path $copyRoot 'shared')
-    Copy-Item -LiteralPath (Join-Path $source '../../shared/media-link-policy.mjs') -Destination (Join-Path $copyRoot 'shared/media-link-policy.mjs')
+    foreach ($file in @('director-alias-crosswalk.mjs','director-profile-diagnostics.mjs','film-identity-context.mjs','film-release-year.mjs','kinobaza-movie-identity.mjs','media-advice-diagnostics.mjs','media-link-policy.mjs','media-search-relevance-diagnostic.mjs','terminal-roman-title.mjs','ukrainian-g-title.mjs')) {
+        Copy-Item -LiteralPath (Join-Path $source "../../shared/$file") -Destination (Join-Path $copyRoot "shared/$file")
+    }
+    $null = New-Item -ItemType Directory -Path (Join-Path $copyRoot 'netlify/lib') -Force
+    foreach ($file in @('kinobaza-card.mjs','kinobaza-html.mjs','kinobaza-localization.mjs','media-discovery-compose.mjs','media-source-motn.mjs','media-source-tmdb.mjs')) {
+        Copy-Item -LiteralPath (Join-Path $source "../../netlify/lib/$file") -Destination (Join-Path $copyRoot "netlify/lib/$file")
+    }
     foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs','film-workflow.mjs','film-workflow-synthetic.mjs','assisted-kinobaza.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
-        $null = New-Item -ItemType Directory -Path (Join-Path $copy 'node_modules')
-        foreach ($dependency in @('parse5','entities')) { Copy-Item -LiteralPath (Join-Path $source "node_modules/$dependency") -Destination (Join-Path $copy 'node_modules') -Recurse }
+        # The parser is also imported by netlify/lib, so put the installed
+        # packages at the copied repository root, not only below research.
+        $null = New-Item -ItemType Directory -Path (Join-Path $copyRoot 'node_modules')
+        foreach ($dependency in @('parse5','entities')) {
+            $installed = Join-Path $source "../../node_modules/$dependency"
+            if (-not (Test-Path -LiteralPath $installed)) { $installed = Join-Path $source "node_modules/$dependency" }
+            Copy-Item -LiteralPath $installed -Destination (Join-Path $copyRoot 'node_modules') -Recurse
+        }
     }
     $port = Free-Port
     $shell = (Get-Process -Id $PID).Path

@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sameTerminalRomanTitle } from '../shared/terminal-roman-title.mjs';
-import { fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { markup, CARD } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { netflixAudioCatalogueBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
 import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
