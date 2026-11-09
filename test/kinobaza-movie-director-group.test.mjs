@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parse } from 'parse5';
-import { assistedIdentity, fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { assistedIdentity, fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { CARD, markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { paragraphBlock, netflixCatalogueBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';

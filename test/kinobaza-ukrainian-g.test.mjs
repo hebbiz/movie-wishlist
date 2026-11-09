@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sameUkrainianGTitle } from '../shared/ukrainian-g-title.mjs';
-import { fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { markup, CARD } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { netflixAudioCatalogueBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';

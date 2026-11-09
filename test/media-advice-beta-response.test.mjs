@@ -9,7 +9,7 @@ import { createKinobazaResolver, resolverRefusalQuery } from '../netlify/lib/kin
 import { safeMediaReport } from '../assets/media-advice-report.mjs';
 import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { detailsData, providersData, motnData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
-import { projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
+import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
 import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 

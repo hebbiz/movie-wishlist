@@ -1,6 +1,6 @@
-import { readTmdbJson, projectTmdbIdentityFor, projectTmdbProvidersFor } from '../../research/grounded-answer-demo/tmdb.mjs';
-import { fetchMotnFor } from '../../research/grounded-answer-demo/motn.mjs';
-import { composeDiscovery } from '../../research/grounded-answer-demo/discovery.mjs';
+import { readTmdbJson, projectTmdbIdentityFor, projectTmdbProvidersFor } from './media-source-tmdb.mjs';
+import { fetchMotnFor } from './media-source-motn.mjs';
+import { composeDiscovery } from './media-discovery-compose.mjs';
 import { projectDirectorPeople } from '../../shared/director-alias-crosswalk.mjs';
 import { projectFilmIdentityContext } from '../../shared/film-identity-context.mjs';
 const api = 'https://api.themoviedb.org/3';

@@ -2,8 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { composeDiscovery, mapProvider } from '../research/grounded-answer-demo/discovery.mjs';
-import { projectTmdbProvidersFor } from '../research/grounded-answer-demo/tmdb.mjs';
-import { normalizeMotnFor } from '../research/grounded-answer-demo/motn.mjs';
+import { projectTmdbProvidersFor } from '../netlify/lib/media-source-tmdb.mjs';
+import { normalizeMotnFor } from '../netlify/lib/media-source-motn.mjs';
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { syntheticHtml } from '../research/grounded-answer-demo/synthetic.mjs';
 import { FILMS } from '../research/grounded-answer-demo/config.mjs';
@@ -12,7 +12,7 @@ import { presentMediaGroups, presentMediaGroup } from '../assets/media-advice-pr
 import { makePreview, applyPreview, linkChoicesFor } from '../assets/media-advice.mjs';
 import { discoverMedia } from '../netlify/lib/media-advice-service.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 
 const film = FILMS.coherence;
 const expected = { imdbId: 'tt2866360', tmdbId: 220289, title: 'Coherence', titleAliases: ['Coherence'], year: 2013, director: 'James Ward Byrkit' };

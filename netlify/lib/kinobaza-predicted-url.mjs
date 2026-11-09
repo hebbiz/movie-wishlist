@@ -1,4 +1,4 @@
-import { admitKinobazaURL } from '../../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { admitKinobazaURL } from './kinobaza-card.mjs';
 
 // Discovery pointer only. No alias/year variants, cross-script transliteration,
 // Roman-number conversion, source search, redirects or identity authority.

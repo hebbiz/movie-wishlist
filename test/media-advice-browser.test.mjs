@@ -159,7 +159,7 @@ async function assertSourceFooter(page, width) {
   assert.deepEqual(await links.evaluateAll(elements => elements.map(a => [a.textContent, a.href])), expected, 'source destinations remain exactly unchanged');
   assert.deepEqual(await links.evaluateAll(elements => elements.map(a => [a.target, a.rel])), expected.map(() => ['_blank', 'noopener noreferrer']));
   assert.equal(await footer.getByText('This product uses the TMDB API but is not endorsed or certified by TMDB.', { exact: true }).count(), 1);
-  assert.deepEqual(await footer.locator('img').evaluate(image => [image.getAttribute('src'), image.alt, image.width]), ['/research/grounded-answer-demo/public/tmdb-logo.svg', 'TMDB', 110]);
+  assert.deepEqual(await footer.locator('img').evaluate(image => [image.getAttribute('src'), image.alt, image.width]), ['/assets/icons/tmdb.svg', 'TMDB', 110]);
   assert.equal(await details.locator(':scope > p').count(), 5, 'the explanation and Beta scope precede the attribution footer');
   assert.equal(await footer.evaluate(element => element.scrollWidth <= element.clientWidth), true, 'the footer wraps without horizontal overflow');
   assert.equal(await details.evaluate(element => element.scrollWidth <= element.clientWidth), true);
