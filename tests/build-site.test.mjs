@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = join(root, '.site-dist');
 const build = () => execFileSync(process.execPath, ['scripts/build-site.mjs'], { cwd: root });
 
-test('publish output preserves app dependencies but excludes development files', () => {
+test('publish output preserves app dependencies but excludes development files', async () => {
   build();
   for (const path of [
     'index.html', 'app.html', 'invite.html', 'app.js', 'styles.css',
@@ -26,6 +26,10 @@ test('publish output preserves app dependencies but excludes development files',
     'research/grounded-answer-demo/server.mjs', 'research/grounded-answer-demo/tmdb.mjs',
     'package.json', 'netlify.toml',
   ]) assert.equal(existsSync(join(output, path)), false, `${path} must not be published`);
+
+  // Load the actual output to catch missing browser-module imports.
+  await import(pathToFileURL(join(output, 'assets/media-advice.mjs')).href);
+  await import(pathToFileURL(join(output, 'assets/media-advice-entry-access.mjs')).href);
 
   // A rebuild must not retain files from an older publish tree.
   writeFileSync(join(output, 'obsolete-file.txt'), 'old');
