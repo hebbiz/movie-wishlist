@@ -6,7 +6,7 @@ import { sameTerminalRomanTitle } from '../shared/terminal-roman-title.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 import { netflixAudioCatalogueBlock } from './kinobaza-localization.fixture.mjs';
-import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
 import { linkChoicesFor, makePreview } from '../assets/media-advice.mjs';

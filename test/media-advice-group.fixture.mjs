@@ -28,17 +28,23 @@ export function authoredGroupedMediaRows() {
 // Authored HTML through the actual extractor/projection, never a live response.
 export async function authoredDuneMediaResult() {
   const { SYNTHETIC_FILMS: FILMS } = await import('./kinobaza-html.fixture.mjs');
-  const { MOTN_FILMS } = await import('../research/grounded-answer-demo/motn.mjs');
+  // Keep the existing fixed-film gate for this synthetic scaffold; product
+  // composition below no longer depends on the demo's scenario orchestrator.
   const { extractHtml } = await import('../research/grounded-answer-demo/html-source.mjs');
-  const { composeDiscovery } = await import('../research/grounded-answer-demo/discovery.mjs');
+  const { composeDiscovery } = await import('../netlify/lib/media-discovery-compose.mjs');
   const { localizedMarkup, tableBlock, paragraphBlock } = await import('./kinobaza-localization.fixture.mjs');
-  const film = { ...FILMS['dune-part-two'], year: 2024, imdbId: MOTN_FILMS['dune-part-two'].imdbId };
+  // Identical case input formerly read from the demo's fixed MOTN catalogue;
+  // it does not assert a current source response or expand that catalogue.
+  const film = { ...FILMS['dune-part-two'], year: 2024, imdbId: 'tt15239678' };
+  const sourceURLs = { kinobaza: 'https://kinobaza.com.ua/titles/dune-part-two',
+    kinobazaLocalization: { source: 'Kinobaza HTML', method: 'authored synthetic source blocks',
+      sourceURL: 'https://kinobaza.com.ua/titles/dune-part-two', receivedAt: undefined, upstream: 'not-established' } };
   const body = localizedMarkup(
     tableBlock('itunes', [['Укр. звук (стерео)', '+'], ['Укр. субтитри', '−']], 'https://itunes.apple.com/ua/movie/id9999001?at=AUTHOR%2fONLY') +
     tableBlock('rakuten', [['Укр. звук', '+'], ['Укр. субтитри', '+']], 'https://rakuten.tv/ua/movies/authored-dune') +
     paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', 'https://megogo.net/ua/view/9999002-authored.html'), 'dune-part-two', false);
   const extraction = await extractHtml(body, film);
-  const result = composeDiscovery(film, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: extraction, status: extraction.status } }, { synthetic: true });
+  const result = composeDiscovery(film, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: extraction, status: extraction.status } }, { synthetic: true, sourceURLs });
   return { ...result, rows: result.rows.filter(row => row.kinobazaLocalization), unmapped: [], stages: undefined,
     metrics: { requestsMade: 0, requestBudget: 8, calls: [] } };
 }

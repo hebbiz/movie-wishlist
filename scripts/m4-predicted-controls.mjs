@@ -6,14 +6,14 @@ import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { readTmdbCredential } from './m4-control-credentials.mjs';
-import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
+import { readTmdbJson, projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
-import { admitKinobazaURL } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
 import { admitDirectorProfileURL } from '../netlify/lib/director-profile.mjs';
 import { predictedKinobazaURL } from '../netlify/lib/kinobaza-predicted-url.mjs';
-import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
 
 export const PREDICTED_CONTROL_BASELINE = '7a9754d6431426a86ea9c3843a11c97f28210c4c';
@@ -81,16 +81,27 @@ export function frozenSearchFactory(traces, observations) {
 // executable. Remaining ordinary dependencies resolve to the working checkout.
 export async function loadPredictedControlBaseline() {
   const paths = ['research/grounded-answer-demo/assisted-kinobaza.mjs', 'netlify/lib/kinobaza-director-verifier.mjs', 'netlify/lib/kinobaza-resolver.mjs'];
-  const loaded = new Map();
+  const loaded = new Map(), runtimeImports = new Map([
+    ['research/grounded-answer-demo/html-source.mjs', 'netlify/lib/kinobaza-html.mjs'],
+    ['research/grounded-answer-demo/tmdb.mjs', 'netlify/lib/media-source-tmdb.mjs'],
+  ]), rebound = new Map();
   for (const path of paths) {
     const base = new URL(path, ROOT), original = git('show', `${PREDICTED_CONTROL_BASELINE}:${path}`);
     const source = original.replace(/from '([^']+)'/g, (whole, imported) => {
       if (!imported.startsWith('.')) return whole;
       const absolute = new URL(imported, base), relative = fileURLToPath(absolute).slice(fileURLToPath(ROOT).length).replaceAll('\\', '/');
+      // Preserve the fixed historical body and gates. The card supplies its
+      // own identityCheck to the extractor; the verifier uses readTmdbJson,
+      // directly re-exported by the former demo wrapper. No fixed scenarios.
+      if (runtimeImports.has(relative)) {
+        rebound.set(relative, (rebound.get(relative) ?? 0) + 1);
+        return `from '${new URL(runtimeImports.get(relative), ROOT).href}'`;
+      }
       return `from '${loaded.get(relative) ?? absolute.href}'`;
     });
     loaded.set(path, `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
   }
+  if ([...runtimeImports.keys()].some(path => rebound.get(path) !== 1)) throw Error('fixed-baseline-runtime-import-unestablished');
   return (await import(loaded.get(paths[2]))).createKinobazaResolver;
 }
 
@@ -278,8 +289,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       'netlify/lib/kinobaza-predicted-url.mjs', 'netlify/lib/director-candidate-selection.mjs',
       'netlify/lib/kinobaza-card.mjs', 'netlify/lib/kinobaza-html.mjs', 'netlify/lib/kinobaza-localization.mjs',
       'netlify/lib/media-discovery-compose.mjs', 'netlify/lib/media-source-motn.mjs', 'netlify/lib/media-source-tmdb.mjs',
-      'netlify/lib/director-profile.mjs', 'shared', 'research/grounded-answer-demo',
-      'test/kinobaza-html.fixture.mjs', // Shared authored scaffold reached through retained demo config/synthetic wrappers.
+      'netlify/lib/director-profile.mjs', 'shared',
       'assets/media-advice-presentation.mjs', 'scripts/m4-predicted-controls.mjs', 'scripts/m4-control-credentials.mjs'];
     if (git('status', '--porcelain', '--untracked-files=all', '--', ...usedPaths)) throw Error('reviewed-source-dirty');
     const bytes = await readFile(options['--input']);

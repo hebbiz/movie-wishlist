@@ -682,3 +682,193 @@ media-advice-platform-ui.test.mjs        media-advice-report.test.mjs
 media-advice-runtime-parity.test.mjs     media-advice-search-security.test.mjs
 media-advice-server.test.mjs             media-search-relevance-diagnostic.test.mjs
 ```
+
+## Stage 2.2 — current demo API dependencies
+
+Based on verified `origin/develop`
+**77565bbf9e9d2249913f6df367e87aa32ad437ed**, after #237. The Stage 2.1
+inventory above is historical; the following is the new dependency state.
+No production/runtime/browser/shared module, source/identity/access/URL rule,
+request budget, package, Supabase object, secret, flag or Netlify configuration
+changes here. No SQL, live source requests, manual deployment or release.
+There are **no new permanent files/directories and no deleted files**.
+
+### Product consumers: 18 current demo import edges → 4
+
+All thirteen inventoried product test/helper files were inspected, including
+the group helper's literal dynamic imports and its transitive UI consumers.
+Eleven composer imports now use `netlify/lib/media-discovery-compose.mjs`;
+two extractor imports whose callers already supply an independent
+`identityCheck` now use `netlify/lib/kinobaza-html.mjs`. The group helper's
+single MOTN fixed-catalogue lookup becomes the identical authored case input
+`tt15239678`, not a new catalogue or a claim about a current API response.
+Fourteen direct import edges are removed; nine files are demo-independent.
+
+| Product file under `test/` | Result |
+| --- | --- |
+| `kinobaza-contextual-policy.test.mjs` | Runtime extractor; the existing explicit linked-person pointer callback is unchanged |
+| `kinobaza-deferred-extraction.test.mjs` | Runtime extractor; existing independent/deferred identity callbacks are unchanged |
+| `kinobaza-localized-identity.test.mjs` | Runtime composer; fetched assisted card already carries source evidence |
+| `kinobaza-movie-director-group.test.mjs` | Same runtime composer replacement |
+| `kinobaza-slevin-profile-pipeline.test.mjs` | Same runtime composer replacement |
+| `kinobaza-terminal-roman.test.mjs` | Same runtime composer replacement |
+| `kinobaza-ukrainian-g.test.mjs` | Same runtime composer replacement |
+| `media-advice-diagnostics.test.mjs` | Runtime composer; existing explicit MOTN source URL retained |
+| `media-advice-kinobaza-pipeline.test.mjs` | Runtime composer; assisted-card provenance retained |
+| `apple-subscription-mapping.test.mjs` | Runtime composer/provider mapping; one fixed-demo extractor import remains |
+| `media-advice-browser.test.mjs` | Runtime composer; one fixed-demo extractor import remains |
+| `media-advice-platform-ui.test.mjs` | Runtime composer; one fixed-demo extractor import remains |
+| `media-advice-group.fixture.mjs` | Runtime composer and local authored IMDb input; one fixed-demo extractor import remains |
+
+The four remaining imports are deliberate, not overlooked. Their synthetic
+HTML starts with an authored `SYNTHETIC` heading and relies on the demo's
+fixed-film title/year/director checker. The runtime extractor deliberately
+returns `identity-check-required` without a caller-provided product gate.
+An import-only replacement, an always-matched callback or copying the old
+pilot gate into a newly named helper would change or conceal that contract.
+The retained gate still rejects a wrong director, with claims withheld.
+
+Their exact current research closure is
+`html-source.mjs → url-context.mjs / held-out.mjs → runtime extractor`.
+Next action: separately rebase these four authored scenarios onto existing
+product-shaped markup/selected-film metadata and explicit product identity,
+with before/after source-result and UI-contract review. Do not retire the
+fixed gate merely because the import path can be made shorter.
+
+The old composer supplied lazy source-operation URLs and language provenance.
+The four default-dependent callers now supply the **same values explicitly**:
+Coherence TMDb `220289`, MOTN `tt2866360`, old
+`https://kinobaza.com.ua/titles/coherence` / `dune-part-two` operation URLs,
+the same synthetic method/upstream labels and the same `receivedAt` value
+(including `undefined`). These are test evidence, not new network requests
+or changed source URLs. Assisted-card callers already carry their own
+`sourceURL` and localization provenance. Exact complete Dune helper output
+is compared with its actual frozen original at `42b4b849…`, without timestamp,
+URL, undefined-property or provenance normalization.
+
+### Seven operators: 15 direct demo imports → 0
+
+| Script under `scripts/` | Current runtime dependencies replacing demo imports |
+| --- | --- |
+| `m4-cascade-comparison.mjs` | HTML extractor and assisted identity |
+| `m4-control-diagnostic.mjs` | TMDb read/projection and card admission |
+| `m4-director-person-diagnostic.mjs` | TMDb read |
+| `m4-fockers-control.mjs` | TMDb read/projection, card admission, composition |
+| `m4-practical-series.mjs` | TMDb read/projection, card admission/read, composition |
+| `m4-predicted-controls.mjs` | TMDb read/projection, card admission, composition |
+| `m4-url-diagnostics.mjs` | Card admission |
+
+The three operator composition callsites use fetched Kinobaza results with
+their own source URL/provenance; no fixed-demo fallback used to execute.
+URL spelling, reservations, timing/budget rules, no-retry behavior, credential
+input/IPC handling and public-safe output schemas are unchanged.
+
+Top-level import changes alone were insufficient: pinned assisted card code
+still imported the **current** demo extractor, and the pinned verifier imported
+the current demo TMDb wrapper. The existing loader URL-rebinding step now maps
+only those two known delegation imports to their exact runtime equivalents.
+All three pinned cards already pass their original independent `identityCheck`;
+the verifier uses `readTmdbJson`, formerly a direct runtime re-export. Expected
+rebinding counts are checked fail-closed before executing the pinned modules.
+
+Original Git SHA and source-path strings remain unchanged:
+
+- Cascade: `5a9c3c38f892644d04988d9055e3463fc6b9b86b` and
+  `21d1be24acf2b654254c38c9b252246ed8de1343`, original research assisted path.
+- Predicted comparison: `7a9754d6431426a86ea9c3843a11c97f28210c4c`, original
+  assisted/verifier/resolver paths.
+- Existing runtime/fixture parity: `42b4b849d77281e1660701500c7bba9e6ec44b02`.
+
+Historical bodies/gates are not rewritten. Only dependency-loader URLs change.
+The predicted-control reviewed-source manifest no longer includes unrelated
+current research or the canonical test scaffold, because neither executes.
+A recursive test checks every current and rebound historical dependency is
+still fenced **before credentials are read**. A fresh module-hook child imports
+all seven operators and all pinned loaders while refusing any current module
+under `research/` or `test/`. Historical Git reads are not current-module imports.
+
+### Intentional non-product and historical research use
+
+Keep separate from the four product dependencies:
+
+- `media-advice-demo-install.test.mjs`: retained demo installation and explicit
+  disposable-copy manifests; purposefully tests the demo and compatibility paths.
+- `media-advice-runtime-boundary.test.mjs`: legacy re-export identity, demo
+  catalogue/scaffold compatibility, old/new logo equality and the explicit
+  distinction between fixed demo identity and product identity requirements.
+- `media-advice-fixture-parity.test.mjs`: reads immutable original fixtures and
+  the original group input-builder through Git; rebases import URLs only.
+- `media-advice-runtime-parity.test.mjs` / history fixture: original nine pinned
+  implementation files, unchanged fail-closed history prerequisite.
+- `m4-predicted-controls.test.mjs`: reads the small current demo delegation body
+  as compatibility evidence with an injected runtime extractor and a failing
+  default gate; it does not import demo orchestration. It also inspects the
+  three pinned card bodies to verify their original explicit identity callbacks.
+- Group-entry historical browser comparison and Windows launch-matrix remain
+  intentional historical application/demo checks, not current product imports.
+
+### Exact next-PR deletion proposal — conditional, not immediate
+
+**No compatibility path is consumer-free today; the standalone safe-deletion
+list is empty.** The following six paths are the bounded next proposal only
+with their consumer/doc/manifest migrations in the same reviewed follow-up:
+
+| Path under `research/grounded-answer-demo/` | Required before deletion |
+| --- | --- |
+| `assisted-kinobaza.mjs` | Redirect retained `film-workflow.mjs`, assisted/HTML-source tests and source-inspection assertion to runtime; update Windows and clean-install manifests; keep historical Git path strings |
+| `kinobaza-localization.mjs` | Redirect its source-inspection test and copy manifests; repair references in `regional-card-proposal.md`, `m3-arbitrary-film-handoff.md`, `m2-offer-matching-handoff.md`, `consolidated-poc-handoff.md` |
+| `test/assisted-kinobaza.fixture.mjs` | Redirect assisted unit/browser suites, title-boundary helper and root compatibility/clean-install guards to canonical fixture |
+| `test/film-workflow.fixture.mjs` | Redirect assisted/workflow/search suites and root compatibility guard; preserve the canonical Windows renamed-copy behavior |
+| `test/kinobaza-localization.fixture.mjs` | Redirect its six suites plus `mykola.fixture.mjs`, root compatibility guard and clean-install manifest |
+| `test/recommendation-markup.fixture.mjs` | Redirect HTML-source suite and root compatibility guard |
+
+Do **not** include `tmdb.mjs`, `motn.mjs`, `discovery.mjs` or `html-source.mjs`
+in an isolated shim-deletion PR: these retain real fixed-scenario/orchestration
+logic used by config/server/workflow, demo/browser/Windows tests and, for HTML,
+the four remaining product consumers. The old SVG still serves demo display,
+its handoff document and the boundary byte check. Keep it pending coordinated
+demo retirement. Keep all seven M4 migrations, operation SQL, recovery tools,
+operators and current documentation. Research remains **96 tracked files**.
+
+### Verification
+
+Fresh baseline/current worktrees used root
+`npm ci --offline --ignore-scripts --no-audit --no-fund` with the locked local
+package cache. No extra utility or browser was installed.
+
+| Check | Result |
+| --- | --- |
+| Same targeted product/operator/demo/unit/publication selection | Baseline **927 pass / 0 fail / 14 skip**, current **932 / 0 / 14**; five added checks, existing assertions preserved. Timings 59.331s / 33.324s are not a benchmark. |
+| Thirteen assigned product test/helper consumers | Twelve suites **273 / 0 / 1**; one opt-in browser placeholder, exercised separately |
+| Product browser, installed Edge/Windows | **5 / 0 / 0**, all 1280×900, 375×812, 420×912, 820×1180: service/link selection, preview/apply, recovered language data, icon load/failure and diagnostics |
+| Current retained demo browser | **38 / 4 / 2** across assisted/discovery/HTML: exactly the two known failing scenarios plus parents; missing WebKit accounts for both skips |
+| Native Windows operator IPC/fake-key broker | **2 / 0 / 0**, no real key or source request |
+| Production / fixture boundary | Server **28 modules / 38 edges**, browser **17 / 13**, no research/test node; canonical fixtures **5 / 2**. Nine migrated product suites also execute with current research modules forbidden. |
+| Frozen parity / source metadata | Runtime parity passes; canonical fixture code and complete group result match immutable originals. Explicit-callback delegation covers matched/unresolved/mismatch and sync/async cases. |
+| Clean demo install / publication | Pass: root parser setup and copy manifests retained; **62 exact static files**, 16 browser/shared modules, **308 tracked private files** preserved, repeated-build stale/nested cleanup and all seven M4 migrations retained. |
+
+Paired selection uses `node --test --test-concurrency=1` on the twelve affected
+product suites, `media-advice.test.mjs`, `media-advice-presentation.test.mjs`,
+runtime/fixture boundary and parity, demo-install, Fockers/practical/predicted/
+URL operator suites, `kinobaza-cascade.test.mjs`,
+`director-person-diagnostic.test.mjs`, every research `.test.mjs` and
+`tests/build-site.test.mjs`. Browser opt-in runs set existing
+`PLAYWRIGHT_MODULE_PATH` and `PLAYWRIGHT_CHANNEL=msedge`; actual browser suites
+are `test/media-advice-browser.test.mjs` plus demo `html-browser`,
+`assisted-kinobaza-browser`, `discovery-browser`. Native operator check:
+`node --test test/m4-practical-pipe.test.mjs`, fake keys/local IPC only.
+
+The two demo-browser failures are unchanged `unresolved-director` (assisted
+line 63, supplies matching stable IMDb but expects unresolved) and
+`store-subscription` (discovery line 109, expects the obsolete unmapped Apple
+TV+ state). The entire current research tree has zero diff from `77565bb…`;
+these test files also match `d94159d…`, where both failures were reproduced in
+Stage 2.1. That earlier baseline-browser run is historical evidence, not a
+new baseline run in this stage. No assertion was weakened. No WebKit/real
+iPhone, SSH-disconnect, authenticated Preview search or live platform check.
+
+Automatic Preview identity, all-four-Function checks and read-only public /
+private HTTP smoke results are recorded in this stage's draft PR after push.
+No secret/redirect setting is needed for static/bundle/mock checks. A future
+live search requires its own approved scenario and review of deploy-preview
+token scopes/auth redirect context; no credential value is requested in chat.

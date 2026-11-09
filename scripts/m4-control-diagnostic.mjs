@@ -1,8 +1,8 @@
 // Opt-in local control, NOT a deployed endpoint or an alternate source parser.
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
-import { admitKinobazaURL } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { readTmdbJson, projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
+import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
 import { createKinobazaResolver, resolverQueries, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
 import { safeSearchDiagnostic } from '../shared/media-advice-diagnostics.mjs';
 import { readControlCredentials } from './m4-control-credentials.mjs';

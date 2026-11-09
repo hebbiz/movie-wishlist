@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { parse } from 'parse5';
-import { readTmdbJson } from '../research/grounded-answer-demo/tmdb.mjs';
+import { readTmdbJson } from '../netlify/lib/media-source-tmdb.mjs';
 import { readTmdbCredential } from './m4-control-credentials.mjs';
 const movieId = 335984, targetAlias = 'Денні Вільньов';
 const creditsURL = 'https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA';

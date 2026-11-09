@@ -2,9 +2,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { predictedControlManifest, frozenSearchFactory, safeControlURL, createControlTransport,
   runPredictedControlSeries, loadPredictedControlBaseline, PREDICTED_CONTROL_BASELINE } from '../scripts/m4-predicted-controls.mjs';
 import { resolverQueries, resolverReserveQuery } from '../netlify/lib/kinobaza-resolver.mjs';
+import { extractHtml } from '../netlify/lib/kinobaza-html.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
 const key = 'AUTHORED-TMDB-KEY-NEVER-REPORT';
 const card = 'https://kinobazaua.com/titles/authored-original', wrong = 'https://kinobazaua.com/titles/authored-wrong';
@@ -18,16 +21,95 @@ const freshState = () => ({ actual: { tmdb: 0, cards: 0, tmdbPerson: 0, kinobaza
 const context = () => ({ findURL: 'https://api.themoviedb.org/3/find/tt0290002?external_source=imdb_id&language=uk-UA', detailsURL: null, film, allowedCards: new Set([card]) });
 const get = () => ({ method: 'GET', redirect: 'manual', credentials: 'omit', signal: AbortSignal.timeout(1000), headers: { Accept: 'text/html' } });
 
-test('reviewed-source fence covers the shared authored scaffold before any credential or HTTP work', async () => {
-  const source = await readFile(new URL('../scripts/m4-predicted-controls.mjs', import.meta.url), 'utf8');
+test('reviewed-source fence covers every current and rebound historical dependency before credentials or HTTP', async () => {
+  const root = new URL('../', import.meta.url), entry = 'scripts/m4-predicted-controls.mjs';
+  const source = await readFile(new URL(entry, root), 'utf8');
   const manifest = source.match(/const usedPaths = \[([\s\S]*?)\];/);
   assert.ok(manifest, 'The control must retain its explicit reviewed-source manifest.');
-  assert.match(manifest[1], /'test\/kinobaza-html\.fixture\.mjs'/,
-    'Demo config and synthetic wrappers now reach the canonical test scaffold.');
+  const protectedPaths = [...manifest[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
+  const historicalPaths = ['research/grounded-answer-demo/assisted-kinobaza.mjs', 'netlify/lib/kinobaza-director-verifier.mjs', 'netlify/lib/kinobaza-resolver.mjs'];
+  const rebound = new Map([
+    ['research/grounded-answer-demo/html-source.mjs', 'netlify/lib/kinobaza-html.mjs'],
+    ['research/grounded-answer-demo/tmdb.mjs', 'netlify/lib/media-source-tmdb.mjs'],
+  ]), visited = new Set();
+  const visit = async (path, historical = false) => {
+    const key = `${historical ? PREDICTED_CONTROL_BASELINE : 'current'}:${path}`;
+    if (visited.has(key)) return;
+    visited.add(key);
+    if (!historical) {
+      assert.ok(protectedPaths.some(protectedPath => path === protectedPath || path.startsWith(`${protectedPath}/`)), `${path} must be fenced before credentials`);
+      assert.ok(!path.startsWith('research/'), `${path} is not a current executable dependency`);
+    }
+    const url = new URL(path, root);
+    const body = historical ? execFileSync(process.platform === 'win32' ? 'C:/Program Files/Git/cmd/git.exe' : 'git', ['show', `${PREDICTED_CONTROL_BASELINE}:${path}`],
+      { cwd: fileURLToPath(root), encoding: 'utf8', windowsHide: true, stdio: ['ignore','pipe','ignore'] }) : await readFile(url, 'utf8');
+    for (const [, imported] of body.matchAll(/\bfrom\s+['"]([^'"]+)['"]/g)) {
+      if (!imported.startsWith('.')) continue;
+      const relative = fileURLToPath(new URL(imported, url)).slice(fileURLToPath(root).length).replaceAll('\\', '/');
+      const pinned = historical && historicalPaths.includes(relative);
+      await visit(historical ? rebound.get(relative) ?? relative : relative, pinned);
+    }
+  };
+  await visit(entry);
+  for (const path of historicalPaths) await visit(path, true);
   const fence = source.indexOf("throw Error('reviewed-source-dirty')");
   const credentials = source.indexOf('credentials = await readTmdbCredential(');
   assert.ok(fence > source.indexOf('const usedPaths = [') && credentials > fence,
     'Reject dirty executable dependencies before reading credentials or starting the control.');
+});
+
+test('all seven operators and pinned comparison loaders load no current demo or test modules', () => {
+  const operators = ['cascade-comparison', 'control-diagnostic', 'director-person-diagnostic', 'fockers-control', 'practical-series', 'predicted-controls', 'url-diagnostics']
+    .map(name => new URL(`../scripts/m4-${name}.mjs`, import.meta.url).href);
+  const cascade = new URL('../scripts/m4-cascade-comparison.mjs', import.meta.url).href;
+  const predicted = new URL('../scripts/m4-predicted-controls.mjs', import.meta.url).href;
+  const script = `import { registerHooks } from 'node:module';
+    registerHooks({ resolve(specifier, context, nextResolve) {
+      const resolved = nextResolve(specifier, context);
+      if (resolved.url.startsWith('file:') && new URL(resolved.url).pathname.toLowerCase().split('/').some(part => part === 'research' || part === 'test')) throw Error('current-demo-or-test-dependency');
+      return resolved;
+    } });
+    for (const operator of ${JSON.stringify(operators)}) await import(operator);
+    const cascade = await import(${JSON.stringify(cascade)});
+    for (const sha of [cascade.CASCADE_BASELINE_SHA, '21d1be24acf2b654254c38c9b252246ed8de1343']) {
+      if (typeof await cascade.loadCascadeBaseline(sha) !== 'function') throw Error('missing-pinned-cascade');
+    }
+    const predicted = await import(${JSON.stringify(predicted)});
+    if (typeof await predicted.loadPredictedControlBaseline() !== 'function') throw Error('missing-pinned-resolver');
+    process.stdout.write('pinned-loaders-without-current-demo');`;
+  assert.equal(execFileSync(process.execPath, ['--input-type=module', '-e', script],
+    { encoding: 'utf8', windowsHide: true, timeout: 15000 }), 'pinned-loaders-without-current-demo');
+});
+
+test('pinned card callbacks make the former demo extractor exactly delegate to runtime extraction', async () => {
+  const root = new URL('../', import.meta.url), sourcePath = 'research/grounded-answer-demo/html-source.mjs';
+  // Read the retained demo as test evidence, without making it an executable
+  // operator dependency or importing its fixed catalogue/default identity gate.
+  const demo = await readFile(new URL(sourcePath, root), 'utf8');
+  const wrapper = demo.match(/export function extractHtml\(html, film, options = \{\}\) \{([\s\S]*?)\r?\n\}/);
+  assert.ok(wrapper, 'The explicit-callback delegation must remain inspectable.');
+  const delegate = new Function('extractRuntimeHtml', 'identity', `return function(html, film, options = {}) {${wrapper[1]}}`)(extractHtml,
+    () => assert.fail('An explicit historical callback must not execute the demo default gate.'));
+  const html = markup(), context = { id: 'not-in-the-fixed-demo-catalogue' };
+  for (const status of ['matched', 'unresolved', 'mismatch']) {
+    for (const asynchronous of [false, true]) {
+      let calls = 0;
+      const identity = all => { calls++; assert.ok(Array.isArray(all) && all.length > 0); return { status, reason: 'authored-explicit-gate' }; };
+      const identityCheck = asynchronous ? async all => identity(all) : identity;
+      const expected = await extractHtml(html, context, { identityCheck });
+      const observed = await delegate(html, context, { identityCheck });
+      assert.deepEqual(observed, expected);
+      assert.equal(calls, 2, 'Each path invokes the same explicit callback once.');
+    }
+  }
+  for (const sha of ['5a9c3c38f892644d04988d9055e3463fc6b9b86b', '21d1be24acf2b654254c38c9b252246ed8de1343', PREDICTED_CONTROL_BASELINE]) {
+    const pinned = execFileSync(process.platform === 'win32' ? 'C:/Program Files/Git/cmd/git.exe' : 'git',
+      ['show', `${sha}:research/grounded-answer-demo/assisted-kinobaza.mjs`],
+      { cwd: fileURLToPath(root), encoding: 'utf8', windowsHide: true, stdio: ['ignore','pipe','ignore'] });
+    assert.equal([...pinned.matchAll(/\bextractHtml\s*\(\s*html\s*,\s*film\s*,/g)].length, 1, `${sha}: one bounded extraction path`);
+    assert.match(pinned, /\bextractHtml\s*\(\s*html\s*,\s*film\s*,\s*\{\s*identityCheck:/,
+      `${sha}: the pinned extraction path supplies its original independent identity gate`);
+  }
 });
 
 test('bounded frozen manifest discards source prose and accepts only clean observed admitted card URLs', () => {

@@ -1,9 +1,11 @@
 // Authored source fixtures, not archived live offers or provider entitlement.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { composeDiscovery, mapProvider } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery, mapProvider } from '../netlify/lib/media-discovery-compose.mjs';
 import { projectTmdbProvidersFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { normalizeMotnFor } from '../netlify/lib/media-source-motn.mjs';
+// This authored synthetic scaffold still needs the demo's fixed-film identity
+// gate. Do not replace it with an unconditional match or a different gate.
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { syntheticHtml, SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
 import { classifyLink } from '../shared/media-link-policy.mjs';
@@ -18,10 +20,19 @@ const expected = { imdbId: 'tt2866360', tmdbId: 220289, title: 'Coherence', titl
 const plusURL = 'https://tv.apple.com/ua/movie/authored-subscription/umc.cmc.authoronly?at=AUTHORED%2fExact#Original';
 const storeURL = 'https://itunes.apple.com/ua/movie/id123456?at=AUTHORED%2fStore#Original';
 const stage = result => ({ result, status: result?.status ?? 'disabled-no-request', receivedAt: '2026-11-07T00:00:00Z', elapsedMs: 0 });
+// Exact source-operation metadata formerly supplied by the fixed demo wrapper.
+// These are authored projection inputs, not a network call or current offer claim.
+const sourceURLs = {
+  tmdb: 'https://api.themoviedb.org/3/movie/220289/watch/providers',
+  motn: 'https://api.movieofthenight.com/v4/shows/tt2866360?country=ua',
+  kinobaza: 'https://kinobaza.com.ua/titles/coherence',
+  kinobazaLocalization: { source: 'Kinobaza HTML', method: 'authored synthetic source blocks',
+    sourceURL: 'https://kinobaza.com.ua/titles/coherence', receivedAt: '2026-11-07T00:00:00Z', upstream: 'not-established' },
+};
 const tmdb = ua => ({ identity: { identity: { status: 'matched' } }, providers: projectTmdbProvidersFor({ id: expected.tmdbId, results: { UA: ua } }, expected) });
 const motn = options => normalizeMotnFor({ imdbId: expected.imdbId, tmdbId: `movie/${expected.tmdbId}`, showType: 'movie', originalTitle: expected.title, releaseYear: expected.year, streamingOptions: { ua: options } }, expected);
 function compose({ ua = {}, options = [], kino = null } = {}) {
-  return composeDiscovery(film, { tmdb: stage(tmdb(ua)), motn: stage(motn(options)), kinobaza: stage(kino) });
+  return composeDiscovery(film, { tmdb: stage(tmdb(ua)), motn: stage(motn(options)), kinobaza: stage(kino) }, { sourceURLs });
 }
 const option = (name, type, link, fields = {}) => ({ service: { id: 'apple', name }, type, link, ...fields });
 const caption = (provider, href, text = '(укр. субтитри)') => `<p class="mt-2"><a title="Доступно в ${provider}" href="${href}"><img alt="Доступно в ${provider}"></a> ${text}</p>`;
@@ -208,7 +219,7 @@ test('Apple subscription mapping cannot bypass any source film-identity gate', a
   const motnResult = motn([option('Apple TV', 'subscription', plusURL)]);
   motnResult.identity.status = 'mismatch';
   kino.identity.status = 'unresolved';
-  const result = composeDiscovery(film, { tmdb: stage(tmdbResult), motn: stage(motnResult), kinobaza: stage(kino) });
+  const result = composeDiscovery(film, { tmdb: stage(tmdbResult), motn: stage(motnResult), kinobaza: stage(kino) }, { sourceURLs });
   assert.equal(result.rows.length, 0);
   assert.equal(result.unmapped.length, 0);
   assert.equal(presentMediaGroups(result.rows, { filmId: film.id }).length, 0);

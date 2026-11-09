@@ -3,12 +3,12 @@
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { parse } from 'parse5';
-import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
-import { admitKinobazaURL, fetchAssistedKinobaza } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { readTmdbJson, projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
+import { admitKinobazaURL, fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { createKinobazaResolver, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
 import { describeCandidateURL } from './m4-url-diagnostics.mjs';
 import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
-import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
 import { admitDirectorProfileURL } from '../netlify/lib/director-profile.mjs';
 

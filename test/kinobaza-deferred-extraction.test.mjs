@@ -1,7 +1,7 @@
 // Authored HTML, identities and proof only; not live catalogue/person evidence.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
+import { extractHtml } from '../netlify/lib/kinobaza-html.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 

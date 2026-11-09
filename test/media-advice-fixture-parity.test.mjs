@@ -58,3 +58,19 @@ test('shared HTML builder and three fixture identities equal their frozen demo o
   assert.equal(catalogue(current, 'SYNTHETIC_FILMS'), catalogue(oldConfig, 'FILMS'));
   assert.equal(builder(current), builder(oldSynthetic));
 });
+
+test('product group fixture retains the complete frozen result with explicit source URLs instead of demo composer defaults', async () => {
+  const path = 'test/media-advice-group.fixture.mjs';
+  const moduleURL = new URL(`../${path}`, import.meta.url);
+  // Only import URLs are rebound. The committed input-builder body is not
+  // patched, nor replaced by the new helper. Its original demo wiring remains
+  // intentional evidence for the old fixture result, not a product dependency.
+  const original = frozen(path).replace(/import\(\s*(['"])(\.[^'"]+)\1\s*\)/g,
+    (_, _quote, specifier) => `import(${JSON.stringify(new URL(specifier, moduleURL).href)})`);
+  const before = await import(`data:text/javascript;base64,${Buffer.from(original).toString('base64')}`);
+  const after = await import('./media-advice-group.fixture.mjs');
+  assert.deepEqual(after.authoredGroupedMediaRows(), before.authoredGroupedMediaRows());
+  // No timestamp/URL/provenance normalization: preserve undefined fields and
+  // exact addresses as well as every projected row and source-language claim.
+  assert.deepEqual(await after.authoredDuneMediaResult(), await before.authoredDuneMediaResult());
+});

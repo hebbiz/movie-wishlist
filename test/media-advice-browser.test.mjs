@@ -6,8 +6,10 @@ import { pathToFileURL } from 'node:url';
 import { resolve, extname } from 'node:path';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
 import { SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
+// This authored synthetic scaffold still needs the demo's fixed-film identity
+// gate. Do not replace it with an unconditional match or a different gate.
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
-import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { localizedMarkup, netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
 import { recommendationCarousel } from './recommendation-markup.fixture.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
@@ -15,6 +17,10 @@ import { safeExtractionDiagnostic } from '../shared/media-advice-diagnostics.mjs
 
 const incompleteCaveat = 'Деякі дані неповні, тож перевір умови на платформі.';
 const ordinaryCaveat = 'Інформація не завжди точна, тож варто перевіряти.';
+// Preserve the authored fixture's former fixed-demo provenance explicitly.
+const sourceURLs = { kinobaza: 'https://kinobaza.com.ua/titles/coherence',
+  kinobazaLocalization: { source: 'Kinobaza HTML', method: 'authored synthetic source blocks',
+    sourceURL: 'https://kinobaza.com.ua/titles/coherence', receivedAt: undefined, upstream: 'not-established' } };
 
 async function assertInlineIncompleteCaveat(page) {
   const answer = await page.locator('.media-advice-answer').innerText();
@@ -221,7 +227,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
   const recoveredExtraction = await extractHtml(recoveredMarkup, recoveredFilm);
   assert.equal(recoveredExtraction.identity.status, 'matched');
   assert.ok(recoveredExtraction.issues.includes('noncritical-recommendation-markup-recovered'));
-  const recoveredResult = composeDiscovery(recoveredFilm, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: recoveredExtraction, status: recoveredExtraction.status } });
+  const recoveredResult = composeDiscovery(recoveredFilm, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: recoveredExtraction, status: recoveredExtraction.status } }, { sourceURLs });
   // The real server's resolver supplies this allowlisted report envelope;
   // composeDiscovery alone does not. No HTTP request is implied by this fixture.
   recoveredResult.resolver = { cards: [{ identity: recoveredExtraction.identity.status,
@@ -231,7 +237,7 @@ test('real form Mykola dialog: desktop/iPhone X/Air, one automatic discovery, is
   const channelHref = 'https://megogo.net/ua/view/999999-authored.html?exact=%2f&x=1';
   const channelExtraction = await extractHtml(localizedMarkup(paragraphBlock('megogo', '(укр. аудіо [5.1])', channelHref.replace('&', '&amp;')), 'coherence', false), recoveredFilm);
   assert.equal(channelExtraction.identity.status, 'matched');
-  const channelResult = composeDiscovery(recoveredFilm, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: channelExtraction, status: channelExtraction.status } });
+  const channelResult = composeDiscovery(recoveredFilm, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: channelExtraction, status: channelExtraction.status } }, { sourceURLs });
   // Optional local QA isolation; the ordinary suite still exercises all sizes.
   const viewports = [[1280, 900], [375, 812], [420, 912], [820, 1180]]
     .filter(([width]) => !process.env.M4_BROWSER_WIDTH || width === Number(process.env.M4_BROWSER_WIDTH));

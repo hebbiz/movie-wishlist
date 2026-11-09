@@ -3,14 +3,14 @@
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { readControlCredentials } from './m4-control-credentials.mjs';
-import { readTmdbJson, projectTmdbIdentityFor } from '../research/grounded-answer-demo/tmdb.mjs';
+import { readTmdbJson, projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
 import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
 import { createKinobazaResolver, tavilySearch, rankedCandidates, admittedCandidates } from '../netlify/lib/kinobaza-resolver.mjs';
-import { admitKinobazaURL } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
 import { admitDirectorProfileURL } from '../netlify/lib/director-profile.mjs';
 import { safeSearchCorrelation, safeSearchCardURL } from '../shared/media-search-relevance-diagnostic.mjs';
-import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 
 const API = 'https://api.themoviedb.org/3', SEARCH = 'https://api.tavily.com/search';
 const APPEND = 'external_ids,alternative_titles,credits,release_dates,translations';
