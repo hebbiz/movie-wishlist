@@ -141,11 +141,11 @@ function noncriticalRecommendationError(error, all, html) {
   return true;
 }
 
-// parse5 is lazy: existing Gemini modes still run without installing this parser.
+// Resolve the lazy parser from its runtime owner, using the repository lockfile.
 export async function extractHtml(html, film, { identityCheck, onIdentityBlocked } = {}) {
   if (typeof html !== 'string' || Buffer.byteLength(html) > HTML_LIMIT_BYTES) return { status: 'unsupported-markup', candidates: [], issues: ['html-size-limit'] };
   let parse;
-  try { ({ parse } = await import('parse5')); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['Run npm ci --prefix research/grounded-answer-demo --ignore-scripts'] }; }
+  try { ({ parse } = await import('parse5')); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['From repository root run npm ci --ignore-scripts --no-audit --no-fund'] }; }
   try {
     const errors = []; let overflow = false;
     const doc = parse(html, { sourceCodeLocationInfo: true, onParseError: e => {

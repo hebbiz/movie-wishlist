@@ -1,5 +1,12 @@
 # MW-FUT-01 consolidated architecture proposal
 
+Current installation note after runtime separation: use the repository-root
+`npm ci --ignore-scripts --no-audit --no-fund` from the
+[maintained HTML setup](../README.md#html-only-setup-and-result-contract).
+Descriptions below of an isolated research parser and `--prefix` installs
+record the older named checkpoints; they are not setup for the current tree.
+Their historical source/identity results are not revised by this note.
+
 ## Verified baseline and M2 design status
 
 **Current research baseline, October 20, 2026:** fetched `origin/develop`

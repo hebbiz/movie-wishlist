@@ -94,7 +94,7 @@ export function extractHtml(html, film, options = {}) {
 
 export async function fetchHtmlCandidates(selection, fetchImpl = globalThis.fetch, { timeoutMs = HTML_TIMEOUT_MS, maxBytes = HTML_LIMIT_BYTES, canonicalRedirect = false } = {}) {
   if (selection.retrieval !== 'kinobaza-html' || !Object.hasOwn(HTML_CARDS, selection.film.id) || selection.sourceURL !== HTML_CARDS[selection.film.id]) throw new Error('Fixed HTML source required.');
-  try { await import('parse5'); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['Install isolated parser before live GET.'] }; }
+  try { await import('parse5'); } catch { return { status: 'parser-unavailable', candidates: [], issues: ['From repository root run npm ci --ignore-scripts --no-audit --no-fund'] }; }
   const controller = new AbortController(); let reader;
   const aborted = new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true }));
   const timer = setTimeout(() => controller.abort(), timeoutMs);

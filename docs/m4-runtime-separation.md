@@ -26,8 +26,8 @@ No new permanent directory or dependency package is introduced. Existing
 cross-boundary policies, and `assets/icons` owns browser artwork. Browser code
 does not import server code. Transport headers, issue/audit text, source
 ordering, limits and unknown/conflict interpretation are intentionally retained.
-An old diagnostic installation hint still mentions the demo parser command;
-it is inert text, not an import or a runtime asset dependency.
+The parser is resolved at its runtime owner using the existing root lockfile.
+Missing-parser diagnostics now point to that root installation, not research.
 
 ```text
 netlify/functions/media-advice.mjs
@@ -94,20 +94,22 @@ Counts are from tracked baseline files, not temporary worktrees, dependencies,
 private recovery directories, secret handoffs or uncommitted experiments.
 Baseline has **349 files**. The following disjoint groups cover **283**;
 the remaining 66 are existing application/integration files, not deletion
-candidates. Stage 1 adds six server modules, one SVG, two test suites and this
-inventory: **359 files**, with no tracked file deletion.
+candidates. Initial Stage 1 HEAD `4ec3cef` added six server modules, one SVG,
+two test suites and this inventory: **359 files**. Review fixes add two
+regression suites and one test-only history helper: **362 files**, with no
+tracked file deletion.
 
 | Group | Baseline count | Stage 1 count | Next-stage decision and dependency |
 | --- | ---: | ---: | --- |
 | `research/grounded-answer-demo` | 96 | 96 | Retain temporarily; extract useful fixture/contracts before retiring demo orchestration |
-| Root `test` | 81 | 83 | Keep product/security regression coverage; relocate pilot fixtures deliberately |
+| Root `test` | 81 | 86 | Keep product/security regression coverage; relocate pilot fixtures deliberately |
 | Recovery `tests` | 4 | 4 | Keep with supported recovery chain |
 | `scripts` | 15 | 15 | Keep build stamp; individually review 14 local controls |
 | M4 migrations | 7 | 7 | Keep all seven, including applied versions |
 | `supabase/operations` | 34 | 34 | Keep rollback/cleanup/recovery; label superseded runbooks rather than deleting blindly |
 | M4 documentation | 2 | 3 | Extract current contract/runbook before archiving chronological evidence |
 | Product M4 runtime/resources | 44 | 51 | Keep: these are product code/artwork, not pilot leftovers |
-| **Disjoint M4/test/operator total** | **283** | **293** | Other application files remain 66 |
+| **Disjoint M4/test/operator total** | **283** | **296** | Other application files remain 66 |
 
 Mixed integration surfaces (`app.js`, `app.html`, `styles.css`, `README.md`,
 package files, `.gitignore`, `netlify.toml` and baseline assets) remain in place.
@@ -139,7 +141,7 @@ discovery-launch, film-workflow, kinobaza-localization, megogo-launch,
 motn-launch, mykola, recommendation-markup and tmdb-launch. At baseline,
 **29 root test files directly consume four** of them: assisted-kinobaza,
 film-workflow, kinobaza-localization and recommendation-markup. The new parity
-suite is one more consumer. Their transitive demo dependencies must also be
+and clean-install suites add two consumers (31 total). Their transitive demo dependencies must also be
 accounted for before moving/deleting `research/test`.
 
 The 31 JS research suites include source adapter, HTML/localization, identity,
@@ -167,7 +169,8 @@ Root baseline tests comprise 75 suites and six DB/group fixtures. Six suites
 cover operator controls (credentials, Fockers, practical pipe/series, predicted
 controls and URL diagnostics); 69 cover product/source/security/identity/UI
 behavior. Nine browser and six native PostgreSQL suites are overlapping
-attributes, not additional files. Stage 1 adds boundary and frozen-parity suites.
+attributes, not additional files. Stage 1 adds boundary, frozen-parity,
+clean-install and history-guard suites plus the test-only history helper.
 
 Keep `scripts/stamp-media-advice-build.mjs`: it is required build provenance.
 Review the other 14 scripts independently:
@@ -247,6 +250,49 @@ parser packages live at the disposable repository root so both import owners
 resolve them. Existing launch/restart/refusal assertions remain intact.
 
 ## Validation and release boundary
+
+### Supported clean installation and pinned history
+
+From the repository root, install the existing locked dependencies:
+
+```text
+npm ci --ignore-scripts --no-audit --no-fund
+node --test research/grounded-answer-demo/test/html-source.test.mjs
+```
+
+This is the maintained setup for the retained HTML/Kinobaza/MEGOGO demo and
+the root tests. No nested install is required. The old research-only `--prefix`
+command does not install a parser visible to `netlify/lib`; it is insufficient
+after separation. The unchanged root manifest/lockfile already pins `parse5`
+8.0.1. Older named pilot checkouts retain their historical setup; current demo
+README, iPhone guide and source-handoff notes explicitly distinguish them.
+Installing packages does not start a server or authorize a live source request.
+
+The frozen parity suite additionally requires Git and the actual baseline
+commit **42b4b849d77281e1660701500c7bba9e6ec44b02**, including nine source files,
+in the local object database. A normal full clone containing develop history
+already satisfies this. A depth-1 clone often does not. Check/prepare explicitly:
+
+```text
+git cat-file -e "42b4b849d77281e1660701500c7bba9e6ec44b02^{commit}"
+git fetch origin 42b4b849d77281e1660701500c7bba9e6ec44b02
+node --test test/media-advice-runtime-parity.test.mjs
+```
+
+Fetch only if the object is absent. If the remote refuses a pinned-SHA fetch,
+use `git fetch --unshallow origin` for a shallow checkout (or fetch develop
+history in a full checkout), verify the exact object, then rerun. This is an
+explicit operator Git action, not an automatic test network request. Git
+source archives without `.git` cannot run frozen parity; use a Git checkout.
+
+The test preloads the pinned commit and all nine required files before any
+frozen module executes. Missing history/files fail nonzero with a sanitized
+`M4_FROZEN_BASELINE_UNAVAILABLE` error and these commands. There is no silent
+skip, automatic fetch, missing-file workaround or current-implementation
+substitute. The focused guard tests cover absent commit, each missing file,
+fixed repository cwd/command order and suppression of raw Git stderr.
+
+### Initial Stage 1 validation at 4ec3cef
 
 The comparison uses authored transport, parser/API fixtures and local browser
 routes. It is not live TMDb/MOTN/Kinobaza/Tavily coverage or a reconstruction of
@@ -336,3 +382,109 @@ publish-output hardening (#235), full release-diff review (#234) and any
 production release remain separate owner decisions. A publish root that exposes
 research/server source files is not fixed by moving imports; do not mistake
 this ownership refactor for deployment isolation or source-policy approval.
+
+## Root and publication review (read-only)
+
+Rechecked main `e92392856038e40e6d98c6c8744eed04c4e8dff9`, develop
+`42b4b849d77281e1660701500c7bba9e6ec44b02`, PR #236 initial head `4ec3cef`,
+and PR #235 draft head `0261a8af63394a2725d1d35619003ea3fe51206d`.
+No root object was moved/deleted, nor was #235/configuration changed.
+Counts exclude installed packages, Git internals and private recovery data:
+
+| Root object | main files | develop files | #236 after review fixes | Purpose |
+| --- | ---: | ---: | ---: | --- |
+| Root files | 10 | 13 | 13 | Site/PWA entrypoints plus project/build metadata |
+| `assets` | 37 | 43 | 44 | Browser code and artwork |
+| `docs` | 9 | 11 | 12 | Repository guidance and operational decisions |
+| `netlify` | 3 | 15 | 21 | Functions and server libraries |
+| `privacy`, `terms` | 2 | 2 | 2 | Public legal pages |
+| `research` | 0 | 96 | 96 | Retained pilot, demo and test fixtures |
+| `scripts` | 0 | 15 | 15 | Build stamp and local source controls |
+| `shared` | 0 | 10 | 10 | Browser/server pure policies |
+| `supabase` | 18 | 59 | 59 | Edge Functions, 23 migrations, 34 operations |
+| `test` | 0 | 81 | 86 | Product/control tests and fixtures |
+| `tests` | 0 | 4 | 4 | Recovery verification |
+| **Total** | **79** | **349** | **362** | Initial #236 had 359; review adds three test files |
+
+main → develop is 270 added + five modified files (275 total); initial
+#236 → main spans 285 changed files, and the three review additions make 288.
+Directory count is not a cleanup criterion: new runtime, tests, policies and
+operational ownership explain much of the difference. New root files versus
+main are `.gitignore`, `netlify.toml` and `package-lock.json`; keep them for
+generated/private-file exclusion, attested develop builds and reproducibility.
+
+| Object | Recommendation | Checked dependencies and consequence/risk |
+| --- | --- | --- |
+| Seven public root site/PWA files, legal pages | Keep URLs/layout; publish | HTML references, app/service-worker navigation and manifests; moving requires routing/cache/link review |
+| Product `assets` and new TMDb logo | Keep and publish | Browser dynamic imports, icon paths/preloading, attribution; losing an asset breaks UI or branding |
+| `netlify/functions`, `netlify/lib` | Keep in Git; exclude static publication | Function entry/import closure, root packages; exclude from publish, not from bundling |
+| `shared` | Keep in Git; publish proven browser closure | Browser uses link policy, advice diagnostics, director-profile diagnostics and search-relevance diagnostics; server-only policies can be excluded from static output only after closure tests |
+| Build stamp, package/lock/config | Keep; not static website files | Develop provenance, root parser install and reproducible tests; moving needs explicit build-path adaptations |
+| Root product tests and pilot fixtures | Keep tests; move reusable fixtures in a later PR | 31 current root consumers of four pilot fixtures, frozen Git readers and explicit copy manifests; deleting research first would remove coverage |
+| Research demo/launchers/dated source investigations | Exclude publication now; review retirement later | Demo wrappers, README/iPhone links, authored contracts and standalone-copy controls; archive obsolete code in Git history only after useful contracts move |
+| Fourteen local controls | Review supported controls individually; exclude publication | Pinned historical modules, reviewed-commit fences, credential/IPC lifecycle; do not retire all merely because they were pilot work |
+| Seven M4 migrations, seven M4 operation SQL files | Keep | Provisioning/history, access/RPC/cap compatibility, rollback/preflight/cleanup; applied history is not disposable |
+| 27 recovery tools and four recovery tests | Keep until tested replacement | Export/read/schema/ACL/recovery chain; filename cleanup alone must not weaken recovery |
+| M4 documentation | Separate active contract from dated evidence later | Existing internal policy/runbook links; repair references before archival |
+
+### What #235 does and needs after #236
+
+#235 changes four files: `.site-dist` ignore rule, explicit publish output,
+allowlist-copy build script and publication test. It keeps repository files in
+Git; it does not retire pilot code. Its checked allowlist produces **63 static
+files from 351 tracked files**, excluding 288: seven root website/PWA files,
+43 assets, ten shared policies, two legal pages and the legacy research logo
+are included. Functions are bundled separately from the full checkout.
+
+With #236's new logo, `assets` copying already includes `/assets/icons/tmdb.svg`.
+Unadapted #235 also copies the now-unused
+`research/grounded-answer-demo/public/tmdb-logo.svg`, giving 64 static files.
+In a separate #235 update, remove only that obsolete output entry/assertion,
+assert the new logo bytes/attribution and **no published research subtree**,
+then verify browser import/asset closure and bundled Functions. This predicts
+63 static files from this 362-file review tree (299 excluded); these are
+allowlist-derived counts, not a claim that a combined deployment was executed.
+All six runtime libraries stay in Git and outside static output.
+
+#235 currently publishes all ten shared modules, while only four are direct
+browser dependencies: `media-link-policy.mjs`, `media-advice-diagnostics.mjs`,
+`director-profile-diagnostics.mjs`, `media-search-relevance-diagnostic.mjs`.
+A tighter publication closure is an optional separate hardening decision, not
+permission to delete the other six from Git. Preserve stamp-before-build order.
+
+Existing main already has public-reference debt: `invite.html` names
+`/assets/icons/site.webmanifest` (tracked manifest is `/site.webmanifest`),
+`app.html` names untracked `/assets/icons/browserconfig.xml`, and index/invite
+link `/terms.html` and `/privacy.html` while tracked pages are directory
+`index.html` files. Reference inspection establishes these strings, not their
+effective CDN destinations; redirects/settings were not inferred or changed.
+Check them in a separate public-routing/resource task, not opportunistically here.
+
+Recommended separate sequence: finish #236 review; adapt/test #235's output
+against the final runtime/asset layout; extract useful fixtures/contracts and
+retire only individually justified pilot material; recompute the complete
+release diff and verify develop; then request the separate release decision.
+None of these future stages is authorized by this report to merge or deploy.
+
+## Review-fix verification record
+
+The review reproduced a genuine clean-install gap hidden by the initial
+worktree's root dependency installation. In separate clean baseline/initial-PR
+copies, the old documented nested-only install and the same
+`node --test --test-name-pattern="authored fixtures: exact href" research/grounded-answer-demo/test/html-source.test.mjs`
+produce baseline **1 pass** versus initial #236 **1 fail**. Installing the
+documented root dependencies in the latter makes that exact test **1 pass**.
+The failing case has no matched identity because its runtime parser is absent;
+no identity/source rules are changed to repair it.
+
+The focused HTML/MEGOGO/discovery, server, historical-loader, boundary and
+parity run passes **142 tests**, no failures/skips. The new disposable clean-tree
+suite passes **4 tests**: missing-parser guidance before I/O, root-only parser
+demo localization/fixed-card read, and retained assisted-card read with
+independent identity. Each transport is authored/intercepted, not live.
+
+Full/shallow committed-checkout verification, final broad/browser totals and
+the new automatic Preview are recorded in the PR review-fix report after
+execution. The test never fetches history itself. Live film-source HTTP and
+credits remain zero. No package/lockfile, source/identity/URL rule, budget,
+Supabase object/data/flag or Netlify configuration is changed by these fixes.

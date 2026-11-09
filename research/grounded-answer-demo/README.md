@@ -523,8 +523,8 @@ owner validation on that configuration, not an independent agent device test
 or a guarantee for other Windows/SSH environments.
 
 Node.js 24, modern desktop browser. Gemini, Movie of the Night and TMDb modes need no npm install or
-build. HTML and consolidated-with-Kinobaza need the pinned isolated parser below, not production
-dependencies. Run from the repository root. No `.env` file is loaded.
+build. HTML, MEGOGO HTML and consolidated-with-Kinobaza need the repository-root
+dependency installation below. Run from the repository root. No `.env` file is loaded.
 
 | Environment | Values / purpose |
 | --- | --- |
@@ -562,11 +562,22 @@ The browser cannot override film, discovery, region or prompt.
 
 ### HTML-only setup and result contract
 
-Install only the research dependency, with its lockfile and no install scripts:
+Install the locked repository dependencies, without install scripts:
 
 ```powershell
-npm ci --prefix research/grounded-answer-demo --ignore-scripts --no-audit --no-fund
+npm ci --ignore-scripts --no-audit --no-fund
 ```
+
+After runtime separation, the shared HTML extractor lives in `netlify/lib` and
+resolves `parse5` from root `node_modules`. Installing only below `research`
+is **not sufficient** for the current tree. The root lockfile already pins
+`parse5` 8.0.1; no package or lockfile change is required. This command also
+installs the existing server/test dependencies, but performs no source request,
+database operation, configuration change or demo startup. The nested research
+manifest/lockfile is retained as historical/demo metadata, not an alternative
+current install location. Older-commit reproduction instructions must use that
+commit's own setup. See [Stage 1 validation](../../docs/m4-runtime-separation.md#validation-and-release-boundary)
+for the full/shallow Git prerequisite of the frozen parity suite.
 
 `DEMO_RETRIEVAL=kinobaza-html` requires `DEMO_DISCOVERY=digital-ua`, Dune or
 Coherence, no Amazon region, and URL source unset or `kinobaza`. Only synthetic
@@ -781,9 +792,9 @@ reproduction steps, not instructions to repeat the completed pilot.
 Opt-in `DEMO_RETRIEVAL=megogo-html`, `DEMO_DISCOVERY=digital-ua`,
 `DEMO_FILM=dune-part-two`; unset `DEMO_URL_SOURCE` and `DEMO_AMAZON_REGION`.
 Synthetic default, only synthetic scenario `grounded`; unsupported combinations
-fail before listening. No API key. Install the existing pinned research `parse5`
-dependency using the [HTML setup](#html-only-setup-and-result-contract), not a
-production dependency. Reused parser avoids regex HTML parsing or JS execution.
+fail before listening. No API key. Install the pinned repository dependencies
+using the [HTML setup](#html-only-setup-and-result-contract). Reused `parse5`
+avoids regex HTML parsing or JS execution.
 
 Fixed source: <https://megogo.net/ua/view/22027436-dyuna-chastina-druga.html>.
 Expected native ID `22027436`, TMDb `693134`, IMDb `tt15239678`; the last two are

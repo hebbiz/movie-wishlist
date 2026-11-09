@@ -2,8 +2,7 @@
 // No real provider/search/DB request, key or captured user/source data.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { readMediaAdviceBaselineSources } from './media-advice-history.fixture.mjs';
 import * as tmdb from '../netlify/lib/media-source-tmdb.mjs';
 import * as motn from '../netlify/lib/media-source-motn.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
@@ -13,16 +12,13 @@ import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { markup, CARD } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
 import { detailsData, providersData, motnData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
 
-const BASE = '42b4b849d77281e1660701500c7bba9e6ec44b02';
 const root = new URL('../', import.meta.url), loaded = new Map();
+const baselineSources = readMediaAdviceBaselineSources();
 const parse5 = import.meta.resolve('parse5');
 async function frozen(path) {
   // Original historical import paths stay intact in Git. Only loader URLs are
   // rebound; no implementation, assertion, response value or gate is patched.
-  const source = execFileSync('git', ['show', `${BASE}:${path}`], {
-    cwd: fileURLToPath(root), encoding: 'utf8', windowsHide: true, maxBuffer: 2 * 1024 * 1024,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  }).replace(/from '([^']+)'/g, (whole, name) => name.startsWith('.')
+  const source = baselineSources.get(path).replace(/from '([^']+)'/g, (whole, name) => name.startsWith('.')
     ? `from '${loaded.get(new URL(name, new URL(path, root)).href) ?? new URL(name, new URL(path, root)).href}'` : whole)
     .replaceAll("import('parse5')", `import('${parse5}')`);
   const url = `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
