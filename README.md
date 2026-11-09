@@ -172,8 +172,12 @@ overrides; unchanged-region writes do not. Diagnostics, expiry and transfer/save
 rights stay separate. Its compatibility migration remains unapplied.
 The [runtime separation and pilot inventory](docs/m4-runtime-separation.md)
 records stage 1 ownership: product source adapters/extraction live in
-`netlify/lib`, browser artwork in `assets`, and retained demo/tests depend on
-them only in the reverse direction. Pilot retirement and release stay separate.
+`netlify/lib` and browser artwork in `assets`. The local Windows/LAN/Termius
+demo is now retired; its code and operating instructions remain in Git history,
+not as a supported local application. Streaming beta remains the release
+direction. [Physical-edition decisions and evidence](docs/m4-physical-media-handoff.md)
+are preserved for future work on the current Mykola baseline; physical search
+is not integrated or enabled. Pilot retirement and release stay separate.
 The [three-film pilot retrieval follow-up](docs/m4-media-advice.md#three-film-pilot-retrieval-follow-up--2026-10-28)
 preserves independent localization when UA country data is absent, adds a
 reviewed person-level Craig Gillespie alias and safe extraction diagnostics.

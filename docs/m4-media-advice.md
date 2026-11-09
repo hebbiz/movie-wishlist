@@ -35,7 +35,11 @@ See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
 the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
 and the preserved [Gemini finding](#gemini-primary-resolver-feasibility-2026-10-21).
 Canonical implementation record, not a second research architecture. Evidence and
-source boundaries remain in [research proposal](../research/grounded-answer-demo/docs/regional-card-proposal.md).
+source boundaries remain in the [historical research proposal](https://github.com/hebbiz/movie-wishlist/blob/f534dacba1b7377637fe4f00bf995e8145adcc8f/research/grounded-answer-demo/docs/regional-card-proposal.md).
+The Windows/LAN/Termius demo is retired; earlier local-demo commands below are
+historical evidence, not supported current setup. Streaming beta remains the
+release direction. [Physical-media search decisions and evidence](m4-physical-media-handoff.md)
+are preserved for a separately approved future stage, not integrated here.
 Latest narrow source-parser change: [Mad Max markup recovery](#mad-max-noncritical-image-markup-recovery--2026-10-31).
 Latest localization-caption change: [MEGOGO audio-format suffix](#megogo-audio-format-caption--2026-11-02).
 Latest link-choice decision: [declared destinations and duplicate navigation](#link-choice-equivalence-and-justwatch-inspection--2026-10-31).

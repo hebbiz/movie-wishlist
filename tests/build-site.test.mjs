@@ -27,7 +27,7 @@ function section(config, name) {
   return (end < 0 ? after : after.slice(0, end)).join('\n');
 }
 
-test('publish output preserves only public app dependencies, rebuilds cleanly and leaves Function/pilot sources in Git', async t => {
+test('publish output preserves only public app dependencies, rebuilds cleanly and leaves Function/recovery sources in Git', async t => {
   // The expected surface is independent of the build script's private array.
   // Assets/shared/legal directories are deliberate public roots, except their
   // Markdown metadata. Every output file must correspond to an existing public
@@ -38,8 +38,7 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
   const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8', windowsHide: true }).split('\0').filter(Boolean);
   const retained = tracked.filter(file => !allowed.has(file));
   const before = new Map(retained.map(file => [file, digest(file)]));
-  for (const file of ['research/grounded-answer-demo/server.mjs', 'research/grounded-answer-demo/public/tmdb-logo.svg',
-    'assets/icons/media/SOURCES.md',
+  for (const file of ['assets/icons/media/SOURCES.md', 'test/media-advice-history.fixture.mjs',
     'docs/m4-media-advice.md', 'scripts/build-site.mjs', 'tests/build-site.test.mjs', 'test/media-advice-server.test.mjs',
     'netlify/functions/media-advice.mjs', 'netlify/lib/media-source-tmdb.mjs',
     'supabase/migrations/20261108185237_media_advice_global_access.sql', 'package.json', 'package-lock.json', 'netlify.toml']) {

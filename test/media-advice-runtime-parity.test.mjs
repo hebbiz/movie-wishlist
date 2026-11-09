@@ -1,8 +1,8 @@
 // Frozen committed implementations, authored inputs and intercepted transport.
 // No real provider/search/DB request, key or captured user/source data.
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readMediaAdviceBaselineSources } from './media-advice-history.fixture.mjs';
+import { loadMediaAdviceBaseline } from './media-advice-history.fixture.mjs';
 import * as tmdb from '../netlify/lib/media-source-tmdb.mjs';
 import * as motn from '../netlify/lib/media-source-motn.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
@@ -12,18 +12,9 @@ import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 import { detailsData, providersData, motnData, IDS } from './film-workflow.fixture.mjs';
 
-const root = new URL('../', import.meta.url), loaded = new Map();
-const baselineSources = readMediaAdviceBaselineSources();
-const parse5 = import.meta.resolve('parse5');
-async function frozen(path) {
-  // Original historical import paths stay intact in Git. Only loader URLs are
-  // rebound; no implementation, assertion, response value or gate is patched.
-  const source = baselineSources.get(path).replace(/from '([^']+)'/g, (whole, name) => name.startsWith('.')
-    ? `from '${loaded.get(new URL(name, new URL(path, root)).href) ?? new URL(name, new URL(path, root)).href}'` : whole)
-    .replaceAll("import('parse5')", `import('${parse5}')`);
-  const url = `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
-  loaded.set(new URL(path, root).href, url); return import(url);
-}
+const baseline = await loadMediaAdviceBaseline();
+after(baseline.dispose);
+const frozen = path => baseline.importModule(path);
 await frozen('research/grounded-answer-demo/kinobaza-localization.mjs');
 await frozen('research/grounded-answer-demo/html-source.mjs');
 const oldTmdb = await frozen('research/grounded-answer-demo/tmdb.mjs');

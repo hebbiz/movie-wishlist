@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { MEDIA_ADVICE_BASELINE_SHA, MEDIA_ADVICE_BASELINE_PATHS,
+  MEDIA_ADVICE_BASELINE_CLOSURE,
   readMediaAdviceBaselineSources } from './media-advice-history.fixture.mjs';
 
 const privateError = () => Object.assign(new Error('PRIVATE_GIT_STDERR https://user:password@invalid.example'),
@@ -49,6 +50,28 @@ test('missing pinned commit fails closed with explicit full/shallow recovery ins
     calls.push({ command, args }); throw privateError();
   }), error => safeFailure(error));
   assert.deepEqual(calls, [{ command: 'git', args: ['cat-file', '-e', `${MEDIA_ADVICE_BASELINE_SHA}^{commit}`] }]);
+});
+
+test('retired demo parity declares the entire pinned closure, including circular wiring and frozen shared code', () => {
+  assert.equal(MEDIA_ADVICE_BASELINE_CLOSURE.length, 29);
+  assert.equal(new Set(MEDIA_ADVICE_BASELINE_CLOSURE).size, 29);
+  assert.equal(Object.isFrozen(MEDIA_ADVICE_BASELINE_CLOSURE), true);
+  for (const file of MEDIA_ADVICE_BASELINE_PATHS) assert.ok(MEDIA_ADVICE_BASELINE_CLOSURE.includes(file));
+  for (const file of ['research/grounded-answer-demo/config.mjs', 'research/grounded-answer-demo/synthetic.mjs',
+    'research/grounded-answer-demo/held-out.mjs', 'research/grounded-answer-demo/url-context.mjs',
+    'research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs',
+    'shared/media-link-policy.mjs', 'shared/kinobaza-movie-identity.mjs', 'test/media-advice-group.fixture.mjs']) {
+    assert.ok(MEDIA_ADVICE_BASELINE_CLOSURE.includes(file), `Historical dependency must not fall back to the current checkout: ${file}`);
+  }
+  const calls = [];
+  const sources = readMediaAdviceBaselineSources((command, args) => {
+    calls.push({ command, args });
+    return args[0] === 'show' ? `// frozen ${args[1]}` : '';
+  }, MEDIA_ADVICE_BASELINE_CLOSURE);
+  assert.deepEqual([...sources.keys()], MEDIA_ADVICE_BASELINE_CLOSURE);
+  assert.deepEqual(calls.slice(1).map(call => call.args),
+    MEDIA_ADVICE_BASELINE_CLOSURE.map(file => ['show', `${MEDIA_ADVICE_BASELINE_SHA}:${file}`]));
+  assert.ok(calls.every(call => call.command === 'git' && ['cat-file', 'show'].includes(call.args[0])));
 });
 
 test('missing required historical file fails before a partial baseline can escape; every file is checked', () => {

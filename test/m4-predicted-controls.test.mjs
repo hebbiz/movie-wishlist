@@ -83,9 +83,11 @@ test('all seven operators and pinned comparison loaders load no current demo or 
 
 test('pinned card callbacks make the former demo extractor exactly delegate to runtime extraction', async () => {
   const root = new URL('../', import.meta.url), sourcePath = 'research/grounded-answer-demo/html-source.mjs';
-  // Read the retained demo as test evidence, without making it an executable
-  // operator dependency or importing its fixed catalogue/default identity gate.
-  const demo = await readFile(new URL(sourcePath, root), 'utf8');
+  // The last reviewed thin wrapper is historical test evidence only. Never
+  // import a retired demo or reconstruct a missing body with current code.
+  const demo = execFileSync(process.platform === 'win32' ? 'C:/Program Files/Git/cmd/git.exe' : 'git',
+    ['show', `f534dacba1b7377637fe4f00bf995e8145adcc8f:${sourcePath}`],
+    { cwd: fileURLToPath(root), encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
   const wrapper = demo.match(/export function extractHtml\(html, film, options = \{\}\) \{([\s\S]*?)\r?\n\}/);
   assert.ok(wrapper, 'The explicit-callback delegation must remain inspectable.');
   const delegate = new Function('extractRuntimeHtml', 'identity', `return function(html, film, options = {}) {${wrapper[1]}}`)(extractHtml,

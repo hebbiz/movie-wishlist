@@ -12,6 +12,7 @@ import path from 'node:path';
 import { builtinModules } from 'node:module';
 import { parse } from 'parse5';
 import { execFileSync } from 'node:child_process';
+import { MEDIA_ADVICE_BASELINE_SHA } from './media-advice-history.fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const RUNTIME_FILES = [
@@ -296,27 +297,10 @@ test('canonical product fixtures have a closed test-only graph; retired compatib
   for (const name of ['assisted-kinobaza', 'kinobaza-localization']) {
     await assert.rejects(localRead(`research/grounded-answer-demo/${name}.mjs`), { code: 'ENOENT' });
   }
-  // Inspect relative literals used by retained demo imports, lazy imports and
-  // source-body reads. Demo operator loaders also use calculated import URLs;
-  // their disposable-copy manifests are exercised by demo-install/Windows.
-  // This is not the strict production graph audit above, which stays fail-closed.
-  const retired = new Set([
-    ...names.map(name => `research/grounded-answer-demo/test/${name}.fixture.mjs`),
-    'research/grounded-answer-demo/assisted-kinobaza.mjs',
-    'research/grounded-answer-demo/kinobaza-localization.mjs',
-  ]);
-  for (const file of await codeFiles('research/grounded-answer-demo')) {
-    for (const token of tokens(await localRead(file))) {
-      if (token.kind !== 'string' || !token.value.startsWith('.')) continue;
-      const target = decodeURIComponent(new URL(token.value, new URL(file, 'https://offline.invalid/')).pathname).slice(1);
-      assert.ok(!retired.has(target), `${file}: current literal reference to retired ${target}`);
-    }
-  }
-  const scaffold = await import('./kinobaza-html.fixture.mjs');
-  const config = await import('../research/grounded-answer-demo/config.mjs');
-  const synthetic = await import('../research/grounded-answer-demo/synthetic.mjs');
-  assert.equal(config.FILMS, scaffold.SYNTHETIC_FILMS);
-  assert.equal(synthetic.syntheticHtml, scaffold.syntheticHtml);
+  const retiredEntries = await readdir(path.join(ROOT, 'research/grounded-answer-demo'), { recursive: true, withFileTypes: true })
+    .catch(error => { if (error.code === 'ENOENT') return []; throw error; });
+  assert.deepEqual(retiredEntries.filter(entry => !entry.isDirectory()), [],
+    'No retired launcher/UI/demo files may return; empty working-tree directories are not tracked Git content. Historical parity uses Git objects.');
   t.diagnostic(`Fixture closure: ${graph.files.length} test-only modules / ${graph.edges.length} import edges; no research, runtime, packages or transport.`);
 });
 
@@ -325,7 +309,8 @@ test('TMDb logo uses a production asset path with unchanged bytes and attributio
   assert.match(source, /logo\.src\s*=\s*['"]\/assets\/icons\/tmdb\.svg['"]/);
   assert.doesNotMatch(source, /\/research\/grounded-answer-demo\/public\/tmdb-logo\.svg/);
   const current = await readFile(path.join(ROOT, 'assets/icons/tmdb.svg'));
-  const previous = await readFile(path.join(ROOT, 'research/grounded-answer-demo/public/tmdb-logo.svg'));
+  const previous = execFileSync('git', ['show', `${MEDIA_ADVICE_BASELINE_SHA}:research/grounded-answer-demo/public/tmdb-logo.svg`],
+    { cwd: ROOT, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   // Git stores this text SVG with LF; Windows checkout conversion can give
   // only one of the two copies CRLF. Compare repository-normalized bytes, not
   // that checkout-only newline representation. No other byte repair is used.
@@ -338,11 +323,11 @@ test('TMDb logo uses a production asset path with unchanged bytes and attributio
   assert.match(source, /not endorsed or certified by TMDB/);
 });
 
-test('all thirteen migrated product scenarios execute with current research modules forbidden, including transitive imports', () => {
+test('all fourteen migrated product scenarios execute with current research modules forbidden, including transitive imports', () => {
   const suites = ['kinobaza-contextual-policy', 'kinobaza-deferred-extraction', 'kinobaza-localized-identity',
     'kinobaza-movie-director-group', 'kinobaza-slevin-profile-pipeline', 'kinobaza-terminal-roman', 'kinobaza-ukrainian-g',
     'media-advice-diagnostics', 'media-advice-kinobaza-pipeline', 'apple-subscription-mapping',
-    'media-advice-browser', 'media-advice-platform-ui'];
+    'media-advice-browser', 'media-advice-platform-ui', 'kinobaza-source-contracts'];
   const urls = [...suites.map(name => new URL(`./${name}.test.mjs`, import.meta.url).href),
     new URL('./media-advice-group.fixture.mjs', import.meta.url).href];
   const code = `import { registerHooks } from 'node:module';
@@ -355,7 +340,7 @@ test('all thirteen migrated product scenarios execute with current research modu
     for (const url of ${JSON.stringify(urls)}) await import(url);
     const group = await import(${JSON.stringify(new URL('./media-advice-group.fixture.mjs', import.meta.url).href)});
     await group.authoredDuneMediaResult();
-    console.log('thirteen-product-scenarios-without-current-research');`;
+    console.log('fourteen-product-scenarios-without-current-research');`;
   // Node's parent test runner exports a binary child-reporting context. This
   // independently spawned suite must use its own ordinary TAP reporter.
   const env = { ...process.env };
@@ -367,24 +352,20 @@ test('all thirteen migrated product scenarios execute with current research modu
     encoding: 'utf8', windowsHide: true, timeout: 30_000, maxBuffer: 1024 * 1024,
     stdio: ['ignore', 'pipe', 'pipe'], env,
   });
-  assert.match(output, /thirteen-product-scenarios-without-current-research/);
+  assert.match(output, /fourteen-product-scenarios-without-current-research/);
   assert.match(output, /# fail 0\b/);
 });
 
-test('retained synthetic fixed-film identity is explicitly distinct from the required product identity callback', async () => {
-  const { extractHtml: demoExtract } = await import('../research/grounded-answer-demo/html-source.mjs');
+test('raw HTML extraction refuses synthetic fixture identity without an independent product callback', async () => {
   const { extractHtml: runtimeExtract } = await import('../netlify/lib/kinobaza-html.mjs');
   const { localizedMarkup } = await import('./kinobaza-localization.fixture.mjs');
   const { SYNTHETIC_FILMS } = await import('./kinobaza-html.fixture.mjs');
   for (const id of ['coherence', 'dune-part-two']) {
     const film = SYNTHETIC_FILMS[id], html = localizedMarkup('', id);
-    assert.equal((await demoExtract(html, film)).identity.status, 'matched');
     const required = await runtimeExtract(html, film);
     assert.equal(required.identity.status, 'unresolved');
     assert.equal(required.identity.reason, 'identity-check-required');
-    const invalid = await demoExtract(html.replace(film.director, 'Other authored director'), film);
-    assert.equal(invalid.identity.status, 'unresolved', 'the retained gate must not become an always-matched fixture');
-    assert.deepEqual(invalid.candidates, []);
+    assert.deepEqual(required.candidates, [], 'Authored title/director text is not an implicit identity proof.');
   }
 });
 
