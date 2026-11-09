@@ -4,10 +4,7 @@ import assert from 'node:assert/strict';
 import { composeDiscovery, mapProvider } from '../netlify/lib/media-discovery-compose.mjs';
 import { projectTmdbProvidersFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { normalizeMotnFor } from '../netlify/lib/media-source-motn.mjs';
-// This authored synthetic scaffold still needs the demo's fixed-film identity
-// gate. Do not replace it with an unconditional match or a different gate.
-import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
-import { syntheticHtml, SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
+import { authoredProductFilm, authoredProductHTML, extractProductHTML as extractHtml } from './media-advice-group.fixture.mjs';
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { presentMediaGroups, presentMediaGroup } from '../assets/media-advice-presentation.mjs';
 import { makePreview, applyPreview, linkChoicesFor } from '../assets/media-advice.mjs';
@@ -15,7 +12,7 @@ import { discoverMedia } from '../netlify/lib/media-advice-service.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 
-const film = FILMS.coherence;
+const film = authoredProductFilm();
 const expected = { imdbId: 'tt2866360', tmdbId: 220289, title: 'Coherence', titleAliases: ['Coherence'], year: 2013, director: 'James Ward Byrkit' };
 const plusURL = 'https://tv.apple.com/ua/movie/authored-subscription/umc.cmc.authoronly?at=AUTHORED%2fExact#Original';
 const storeURL = 'https://itunes.apple.com/ua/movie/id123456?at=AUTHORED%2fStore#Original';
@@ -36,7 +33,7 @@ function compose({ ua = {}, options = [], kino = null } = {}) {
 }
 const option = (name, type, link, fields = {}) => ({ service: { id: 'apple', name }, type, link, ...fields });
 const caption = (provider, href, text = '(укр. субтитри)') => `<p class="mt-2"><a title="Доступно в ${provider}" href="${href}"><img alt="Доступно в ${provider}"></a> ${text}</p>`;
-const kinoHTML = body => syntheticHtml(film).replace('<div id="availabilityAccordion">', `${body}<div id="availabilityAccordion">`);
+const kinoHTML = body => authoredProductHTML(film, body);
 function regionalHTML(label = 'Subscription', name = 'Apple TV') {
   const anchor = `<a title="Дивитись / Купити на ${name}" href="https://click.justwatch.com/a?authored=regional%2fOnly"><img alt="${name}"><div class="text-body fw-bold">${name}</div><div class="text-body fw-bold">${label}</div></a>`;
   return kinoHTML('').replace('<a title="Дивитись / Купити на Example UA" href="https://example.com/redirect?x=%2F&amp;y=1"><img alt="Example UA">Example UA</a>', anchor);
@@ -253,8 +250,7 @@ test('subscription selection requires explicit preview/apply and preserves exact
 
 test('server discovery preserves Apple subscription source rows, existing reservations, and ordinary Beta diagnostic protection', async () => {
   const sourceURL = 'https://kinobazaua.com/titles/authored-subscription-pipeline';
-  const html = kinoHTML(caption('Apple TV+', plusURL)).replace('SYNTHETIC Coherence', 'Coherence')
-    .replace('</head>', `<link rel="canonical" href="${sourceURL}"></head>`);
+  const html = authoredProductHTML(film, caption('Apple TV+', plusURL), sourceURL);
   const details = {
     id: expected.tmdbId, imdb_id: expected.imdbId, title: expected.title, original_title: expected.title, release_date: '2013-01-01',
     external_ids: { imdb_id: expected.imdbId }, alternative_titles: { titles: [] }, release_dates: { results: [] }, translations: { translations: [] },

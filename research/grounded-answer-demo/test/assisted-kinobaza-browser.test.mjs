@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { createDemo } from '../server.mjs';
-import { mockTransport } from './film-workflow.fixture.mjs';
-import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
+import { mockTransport } from '../../../test/film-workflow.fixture.mjs';
+import { CARD, markup } from '../../../test/assisted-kinobaza.fixture.mjs';
 
 test('assisted mobile card addition: admission, source gate, incremental draft preservation and stale protection', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href);

@@ -34,7 +34,7 @@ try {
     # Preserve its repository-relative location in this standalone temporary tree.
     $null = New-Item -ItemType Directory -Path (Join-Path $copyRoot 'test')
     Copy-Item -LiteralPath (Join-Path $source '../../test/kinobaza-html.fixture.mjs') -Destination (Join-Path $copyRoot 'test/kinobaza-html.fixture.mjs')
-    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','kinobaza-localization.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs','film-workflow.mjs','film-workflow-synthetic.mjs','assisted-kinobaza.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
+    foreach ($file in @('server.mjs','network.mjs','config.mjs','synthetic.mjs','url-context.mjs','html-source.mjs','motn.mjs','tmdb.mjs','megogo.mjs','megogo-synthetic.mjs','discovery.mjs','matching.mjs','held-out.mjs','film-workflow.mjs','film-workflow-synthetic.mjs')) { Copy-Item -LiteralPath (Join-Path $source $file) -Destination $copy }
     foreach ($folder in @('public','windows')) { Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $copy -Recurse }
     if ($Html -or $Megogo -or $Discovery) {
         # The parser is also imported by netlify/lib, so put the installed
@@ -163,8 +163,8 @@ try {
     }
     if ($Discovery) {
         Copy-Item -LiteralPath (Join-Path $copy 'server.mjs') -Destination (Join-Path $copy 'server-core.mjs')
-        # Copy the self-contained canonical fixture, not the compatibility
-        # wrapper whose relative import belongs at research/.../test/.
+        # The self-contained product fixture intentionally keeps its launch-probe
+        # name here; no research compatibility wrapper is copied or needed.
         Copy-Item -LiteralPath (Join-Path $source '../../test/film-workflow.fixture.mjs') -Destination (Join-Path $copy 'film-probe.fixture.mjs')
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'discovery-launch.fixture.mjs') -Destination (Join-Path $copy 'server.mjs')
         $env:DEMO_MODE = 'live'

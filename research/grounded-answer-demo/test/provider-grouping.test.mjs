@@ -4,7 +4,7 @@ import { FILMS, selectRequest } from '../config.mjs';
 import { runDiscovery, composeDiscovery, classifyLink, mapProvider, conflictingProviderIds } from '../discovery.mjs';
 import { extractHtml } from '../html-source.mjs';
 import { linkPresentation, groupProviderRows, providerSummary, prepareDraft } from '../public/discovery-client.mjs';
-import { localizedMarkup, paragraphBlock, tableBlock } from './kinobaza-localization.fixture.mjs';
+import { localizedMarkup, paragraphBlock, tableBlock } from '../../../test/kinobaza-localization.fixture.mjs';
 
 const config = selectRequest({ retrieval: 'ua-discovery', discovery: 'digital-ua', filmId: 'coherence' });
 

@@ -200,7 +200,7 @@ Inspected in the design baseline; recheck before editing:
 | [discovery.mjs](../discovery.mjs) | `composeDiscovery`, `mapProvider`, `conflictingProviderIds`, `classifyLink`, independent bounded `runDiscovery`; no offer join. |
 | [tmdb.mjs](../tmdb.mjs) | `projectTmdbIdentity`, `projectTmdbProviders`; stable-ID gate, catalogue versus UA buckets, actual states/lineage. |
 | [motn.mjs](../motn.mjs) | `normalizeMotn`; stable match/year warning, per-option access/link/addon/fields, incomplete lists, literal prices. |
-| [html-source.mjs](../html-source.mjs), [kinobaza-localization.mjs](../kinobaza-localization.mjs) | Structural identity, exact source href, independent country panel and own block associations; no arbitrary URL discovery. Inspect only, no parser refactor. |
+| [html-source.mjs](../html-source.mjs), [runtime kinobaza-localization.mjs](../../../netlify/lib/kinobaza-localization.mjs) | Structural identity, exact source href, independent country panel and own block associations; no arbitrary URL discovery. Inspect only, no parser refactor. |
 | [discovery client](../public/discovery-client.mjs) | `groupProviderRows`, `linkPresentation`, `needsLinkAcknowledgement`, `prepareDraft`, one-row select/confirm/cancel. |
 | [server](../server.mjs), [network](../network.mjs), [config](../config.mjs) | Fixed configuration/token/Host/Origin/auth/bounds; no new transport needed. |
 | [provider regressions](../test/provider-grouping.test.mjs), [composition tests](../test/discovery.test.mjs), [localization tests](../test/kinobaza-localization.test.mjs) | Authored R1/R2/link/block/failure/budget guards; extend, not replace. |

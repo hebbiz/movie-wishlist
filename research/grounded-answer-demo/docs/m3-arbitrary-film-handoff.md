@@ -160,12 +160,12 @@ names are mandated until implementation inspection.
 
 ## 9. Verified components
 
-All paths relative to this demo:
+Paths are relative to this demo unless explicitly linked to the runtime owner:
 
 - `config.mjs`, `held-out.mjs`, `server.mjs`: catalogue, film binding/assets,
   credentials and consumed-token controls.
 - `tmdb.mjs`, `motn.mjs`: fixed-ID builders, bounded transport, projections/gates.
-- `html-source.mjs`, `kinobaza-localization.mjs`: fixed root cards, narrow hop,
+- `html-source.mjs`, [runtime localization](../../../netlify/lib/kinobaza-localization.mjs): fixed root cards, narrow hop,
   structural identity and own-block properties/country links.
 - `discovery.mjs`, `matching.mjs`: exact planned URL set/budget, independent
   stages, namespaced provider-ID quarantine and auxiliary A/B.

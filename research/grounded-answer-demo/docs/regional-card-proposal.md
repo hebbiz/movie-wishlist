@@ -874,7 +874,7 @@ cache, archive, source-data forwarding to LLMs or partner/private endpoints.
 
 #### Implemented field and redirect boundaries
 
-[Extractor](../kinobaza-localization.mjs) reads the already bounded parse5 DOM;
+[Extractor](../../../netlify/lib/kinobaza-localization.mjs) reads the already bounded parse5 DOM;
 the existing identity gate and conservative parse-error refusal are unchanged.
 No scripts/eval/HTML insertion, assets or destination requests. Four layers:
 
@@ -2004,7 +2004,7 @@ At the [verified baseline](#verified-baseline-and-m2-design-status):
   coalesce; empty lists retain unknown completeness. No provider-native offer ID
   or provider update time is projected; do not assume these fields exist upstream.
 - [Kinobaza HTML](../html-source.mjs) currently matches title/year/director in
-  bounded markup, not a returned stable-ID crosswalk. [Localization](../kinobaza-localization.mjs)
+  bounded markup, not a returned stable-ID crosswalk. [Localization](../../../netlify/lib/kinobaza-localization.mjs)
   binds direct single-anchor table/paragraph blocks with parser-issued block IDs;
   film badge, provider block and country section remain different observations.
   Block IDs are operation-local, not stable provider offer IDs.
@@ -3208,7 +3208,7 @@ Inspection at09c9482 establishes the actual work, not just a new search box:
 | [server.mjs](../server.mjs) | `/session?film=` accepts only fixed IDs; token stores filmId, expires30min, consumed before await at `/answer`. | Bind opaque tokens to one search generation, selected TMDb ID and immutable projected identity; invalidate prior selection on change. Existing modes unchanged. New local route names are intentionally not specified before implementation review. |
 | [tmdb.mjs](../tmdb.mjs) | `TMDB_FILMS`, fixed URL equality, root/returned-ID checks, five appended resources, independent `results.UA` projection. | Parameterize expected identity from validated selected root; preview Details once and reuse that transient projection for discovery. Do not relax response validation. |
 | [motn.mjs](../motn.mjs) | `MOTN_FILMS`, exact IMDb required, conflicts quarantine results, year variance alone allowed. | Accept only the validated TMDb crosswalk snapshot; missing/invalid IMDb means not evaluated,0 MOTN calls, not guessed search. |
-| [html-source.mjs](../html-source.mjs), [kinobaza-localization.mjs](../kinobaza-localization.mjs) | Fixed cards; explicit title/year/director aliases; strict old-to-canonical hop only for original controls; distinct film/block/country/link layers. | Separate candidate admission from structural identity and extraction. Dynamic director aliases cannot be hardcoded per film; unsupported transliteration remains ambiguous, never guessed. |
+| [html-source.mjs](../html-source.mjs), [runtime kinobaza-localization.mjs](../../../netlify/lib/kinobaza-localization.mjs) | Fixed cards; explicit title/year/director aliases; strict old-to-canonical hop only for original controls; distinct film/block/country/link layers. | Separate candidate admission from structural identity and extraction. Dynamic director aliases cannot be hardcoded per film; unsupported transliteration remains ambiguous, never guessed. |
 | [discovery.mjs](../discovery.mjs), [matching.mjs](../matching.mjs) | Exact per-run allowed URLs/seen set/deadline, independent source gates, R1/R2; matching also uses the fixed expected catalogue. | Construct the allowlist only from the validated context; carry it through projections/composition/auxiliary A. No new B policy or offer enrichment. |
 | [client](../public/discovery-client.mjs), [report](../public/discovery-report.mjs) | Six-option picker; stale generation protection; fixed-label film report; draft/selection remains original-row and memory-only. | Replace fixed lookup assumptions throughout display/report/draft with bounded projected identity. Do not let an arbitrary title or query become report instructions/raw payload. |
 | [Windows helpers](../windows/Start-Demo.ps1), [lifecycle checks](../test/windows.test.ps1) | Hidden server credentials, detached owner workflow and explicit module-copy list. | Reuse unchanged lifecycle; update isolated test-copy list only if implementation adds modules. No owner process/system changes. |
@@ -3512,7 +3512,7 @@ resolution, live preflight/evaluation, general scraping or production.
 
 **Actual components and flow**
 
-- [assisted-kinobaza.mjs](../assisted-kinobaza.mjs) admits original spelling
+- [runtime kinobaza-card.mjs](../../../netlify/lib/kinobaza-card.mjs) admits original spelling
   `https://kinobazaua.com/titles/[a-z0-9]+(-[a-z0-9]+)*`, max512 characters.
   No normalization/repair, default/other port, userinfo, alternate host, query,
   fragment, subpage, encoded slash/dot/double encoding, backslash or whitespace.

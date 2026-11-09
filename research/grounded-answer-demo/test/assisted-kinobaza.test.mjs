@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { admitKinobazaURL, fetchAssistedKinobaza } from '../assisted-kinobaza.mjs';
+import { admitKinobazaURL, fetchAssistedKinobaza } from '../../../netlify/lib/kinobaza-card.mjs';
 import { createFilmWorkflows } from '../film-workflow.mjs';
 import { prepareDraft } from '../public/discovery-client.mjs';
 import { buildShortReport, buildWorkflowReport } from '../public/discovery-report.mjs';
-import { mockTransport } from './film-workflow.fixture.mjs';
-import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
+import { mockTransport } from '../../../test/film-workflow.fixture.mjs';
+import { CARD, markup } from '../../../test/assisted-kinobaza.fixture.mjs';
 import { titleBoundaryCases } from './assisted-title-boundaries.fixture.mjs';
 const film = { dynamic: true, id: 'tmdb:999900001', tmdbId: 999900001, imdbId: 'tt999900001', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: [], directorAliases: ['Authored director'], directorCount: 1 };
 const response = html => new Response(html, { headers: { 'content-type': 'text/html; charset=UTF-8' } });
@@ -263,7 +263,7 @@ test('synthetic assisted path is explicitly authored and makes zero source reque
   assert.equal(Object.values(r.payload.workflow.counters).reduce((a, b) => a + b, 0), 0); assert.equal(h.calls.length, 0);
 });
 test('assisted modules have no persistence, logging, execution, redirect follow or destination-fetch hooks', async () => {
-  const source = await readFile(new URL('../assisted-kinobaza.mjs', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../../../netlify/lib/kinobaza-card.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /console\.|localStorage|sessionStorage|writeFile|appendFile|eval\(|redirect: 'follow'|generateContent|googleSearch/);
 });
 test('lost local assisted response does not falsely claim source was not evaluated or zero GETs', () => {

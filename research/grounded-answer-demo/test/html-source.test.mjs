@@ -6,8 +6,8 @@ import { createDemo } from '../server.mjs';
 import { selectRequest, requestBody, FILMS } from '../config.mjs';
 import { syntheticHtml } from '../synthetic.mjs';
 import { extractHtml, fetchHtmlCandidates } from '../html-source.mjs';
-import { recommendationCarousel, quotedRecommendation } from './recommendation-markup.fixture.mjs';
-import { assistedIdentity } from '../assisted-kinobaza.mjs';
+import { recommendationCarousel, quotedRecommendation } from '../../../test/recommendation-markup.fixture.mjs';
+import { assistedIdentity } from '../../../netlify/lib/kinobaza-card.mjs';
 
 const options = { retrieval: 'kinobaza-html', discovery: 'digital-ua', urlSource: 'kinobaza' };
 const select = (filmId = 'coherence') => selectRequest({ ...options, filmId });

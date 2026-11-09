@@ -6,7 +6,7 @@ import { createFilmWorkflows, projectFilmSearch, detailsURL } from '../film-work
 import { createDemo } from '../server.mjs';
 import { buildShortReport, buildWorkflowReport } from '../public/discovery-report.mjs';
 import { prepareDraft } from '../public/discovery-client.mjs';
-import { IDS, mockTransport, searchData } from './film-workflow.fixture.mjs';
+import { IDS, mockTransport, searchData } from '../../../test/film-workflow.fixture.mjs';
 function harness(options = {}, network = {}) {
   const transport = mockTransport(network), flows = createFilmWorkflows({ mode: 'live', tmdbToken: 'author-tmdb-key', motnKey: 'author-motn-key', fetchImpl: transport.fetchImpl, ...options });
   let workflow = flows.issue();

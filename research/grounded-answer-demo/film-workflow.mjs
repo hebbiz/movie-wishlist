@@ -4,10 +4,10 @@ import { readTmdbJson, projectTmdbIdentityFor, projectTmdbProvidersFor } from '.
 import { fetchMotnFor } from './motn.mjs';
 import { composeDiscovery } from './discovery.mjs';
 import { describeDiscovery } from './matching.mjs';
-import { admitKinobazaURL, fetchAssistedKinobaza } from './assisted-kinobaza.mjs';
+import { admitKinobazaURL, fetchAssistedKinobaza } from '../../netlify/lib/kinobaza-card.mjs';
 import { authoredAssistedHtml } from './film-workflow-synthetic.mjs';
 import { extractHtml } from './html-source.mjs';
-import { assistedIdentity } from './assisted-kinobaza.mjs';
+import { assistedIdentity } from '../../netlify/lib/kinobaza-card.mjs';
 import { authoredFilmSearch, authoredFilmDetails, authoredFilmProviders, authoredFilmMotn } from './film-workflow-synthetic.mjs';
 
 const nonce = () => randomBytes(32).toString('hex');

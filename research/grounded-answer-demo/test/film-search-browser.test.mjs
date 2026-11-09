@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { createDemo } from '../server.mjs';
-import { mockTransport, IDS } from './film-workflow.fixture.mjs';
+import { mockTransport, IDS } from '../../../test/film-workflow.fixture.mjs';
 
 test('M3.1 mobile search/preview/confirm/discovery: authored identities, counters, draft/report and no extra requests', { skip: !process.env.PLAYWRIGHT_MODULE_PATH }, async t => {
   const { chromium, webkit } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE_PATH).href);

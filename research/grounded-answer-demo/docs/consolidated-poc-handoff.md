@@ -185,7 +185,7 @@ Inspected at review baseline; re-inspect before changes:
 - [TMDb](../tmdb.mjs), [MOTN](../motn.mjs), [HTML](../html-source.mjs):
   catalogue/identity/bounded transports/projections. Existing parse5 isolated in
   [research package](../package.json), not production dependencies.
-- [Kinobaza source-block extraction](../kinobaza-localization.mjs): general badge,
+- [Kinobaza source-block extraction](../../../netlify/lib/kinobaza-localization.mjs): general badge,
   isolated table/paragraph binding, exact labels/literal signs/formats, unknown
   completeness, no original-language/provider or cross-source inference.
 - [client](../public/client.mjs), [TMDb display](../public/tmdb-display.mjs),
@@ -307,7 +307,7 @@ no directly identified MOTN/Kinobaza conflict with this bounded non-LLM scope,
 not blanket permission. [One-session owner commands](iphone-windows.md#consolidated-discovery-owner-workflow).
 
 The separately approved localization amendment is now implemented from #182:
-`kinobaza-localization.mjs` reads isolated block claims, `html-source.mjs` exposes
+`netlify/lib/kinobaza-localization.mjs` reads isolated block claims, `html-source.mjs` exposes
 four independent layers and optional exact canonical transport, composition/UI
 preserve provenance and do not join properties into MOTN by name. The standalone
 HTML path stays one GET; composed max5 is conditional on the verified hop (base4).

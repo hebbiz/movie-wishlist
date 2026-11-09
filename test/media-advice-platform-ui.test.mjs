@@ -3,12 +3,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMediaAdvice } from '../assets/media-advice.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
-// This authored synthetic scaffold still needs the demo's fixed-film identity
-// gate. Do not replace it with an unconditional match or a different gate.
-import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
+import { authoredProductFilm, authoredProductHTML, extractProductHTML as extractHtml } from './media-advice-group.fixture.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
-import { localizedMarkup, netflixCatalogueBlock, netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
+import { netflixCatalogueBlock, netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
 import { recommendationCarousel } from './recommendation-markup.fixture.mjs';
 
 class Element {
@@ -415,9 +412,9 @@ const sourceURLs = { kinobaza: 'https://kinobaza.com.ua/titles/coherence',
   kinobazaLocalization: { source: 'Kinobaza HTML', method: 'authored synthetic source blocks',
     sourceURL: 'https://kinobaza.com.ua/titles/coherence', receivedAt: undefined, upstream: 'not-established' } };
 async function netflixCaptionResult(href = netflixFilmHref, audioCatalogue = false) {
-  const film = { ...FILMS.coherence, imdbId: 'tt1234567', year: 2013 };
+  const film = { ...authoredProductFilm(), imdbId: 'tt1234567' };
   const block = audioCatalogue ? netflixAudioCatalogueBlock : netflixCatalogueBlock;
-  const html = localizedMarkup(block({ href }) + paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', megogoFilmHref), 'coherence', false)
+  const html = authoredProductHTML(film, block({ href }) + paragraphBlock('megogo', '(укр. аудіо, укр. субтитри)', megogoFilmHref))
     .replace('</body>', `${audioCatalogue ? recommendationCarousel() : ''}</body>`);
   const extracted = await extractHtml(html, film);
   assert.equal(extracted.identity.status, 'matched');
