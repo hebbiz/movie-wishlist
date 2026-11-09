@@ -1,5 +1,9 @@
 # M4 runtime separation and pilot inventory
 
+Current cleanup state: [local pilot retirement](#local-pilot-retirement--2026-11-09).
+Stage 1–2.3 inventories and launch commands below are historical checkpoints,
+not instructions for running the retired demo in the current checkout.
+
 Stage 1 separates the code used by the deployed Function from the research
 demo. It does not retire the demo, change source rules, clean deployment output,
 apply SQL, or authorize a release. The baseline is committed develop
@@ -996,3 +1000,154 @@ Keep the seven M4 migrations, operation SQL, recovery and operator tools,
 current documentation and canonical product fixtures. The next stage should
 first select retained demo contracts/modes, then adapt their browser/Windows
 and documentation dependencies, and only then propose bounded deletions.
+
+## Local pilot retirement — 2026-11-09
+
+The owner approved retirement of the local Windows/LAN/Termius demo, not a
+change to streaming beta or a production release. Verified starting develop:
+`f534dacba1b7377637fe4f00bf995e8145adcc8f` (after #239); main remains
+`e92392856038e40e6d98c6c8744eed04c4e8dff9`.
+
+### Preserved work and retired application
+
+[Deferred physical-media handoff](m4-physical-media-handoff.md) is the permanent
+standalone record: retailers and Marketplace, stock/price/seller/condition,
+English audio and edition/disc rules, Final Cut, shipping exclusion, actual
+Gemini PoC architecture, prompt-only versus checked guarantees, limited
+owner-reported results and exact Git recovery references. No physical search
+is added to Mykola. This compact document is new because the requirements and
+evidence must survive without the old application/manuals; links alone would
+not preserve the decisions.
+
+All **90 files** under `research/grounded-answer-demo` are removed from this
+checkout after consumers move: 19 root code/config/package files, 10 research
+documents, 13 UI/assets, 43 tests/fixtures/Windows probes and five Windows
+launcher files. This includes the server, fixed-scenario/Gemini orchestration,
+legacy UI, LAN/Termius operation instructions, old demo logo and demo-only
+test infrastructure. No remaining component requires current demo files.
+The tree is recoverable at `f534dac…`; see the handoff for full-commit recovery,
+not a second permanent demo copy or authorization to run live sources.
+
+From this PR's checkout, the old demo **cannot start**: `server.mjs`, package,
+UI and Start/Status/Stop launchers are absent. Existing processes or other
+historical worktrees were not stopped, deleted or upgraded. Develop/main are
+not modified until a separately authorized merge. Earlier launch commands in
+this document and the implementation record are archival evidence only.
+
+Useful coverage stays in product-owned tests:
+
+| Retired contract | Preserved product coverage |
+| --- | --- |
+| HTML/localization parsing, channel suffixes, Netflix catalogue scope, table precedence, raw/exact URLs, candidate limits, malformed attribute recovery/refusal and bounded transport | New `test/kinobaza-source-contracts.test.mjs`: 41 tests, including all 25 authored title-boundary cases; real `assistedIdentity` / `fetchAssistedKinobaza`, existing canonical fixtures, no copied fixed gate or forced match |
+| TMDb/MOTN projections, independent identity, malformed/missing responses, one-shot transport, composition/source claims | Frozen runtime parity plus existing source/server/identity-context/Apple mapping suites; synthetic responses remain test data, not live evidence |
+| Link grouping/selection, source-scoped languages, preview and exact transfer | Existing media-link choices/card-grouping and media-advice presentation/controller/browser suites |
+| Parser dependency resolution, missing parser failure and clean-layout source reading | Existing demo-install suite is renamed/adapted to `test/media-advice-runtime-install.test.mjs`; copies only runtime/shared/canonical data and locked parser packages, never demo code |
+| Local LAN/basic-auth, PID/port/lifecycle and legacy multi-mode demo UI | Intentionally retire with the application; not represented as beta security/behavior coverage |
+
+The source-contract test is the only new test file: a coherent home for useful
+runtime contracts formerly mixed with server/UI/demo modes. No new directory,
+package or production layer is introduced. Canonical fixture implementations
+and the current product runtime remain unchanged.
+
+### Historical parity and the two old browser failures
+
+The nine original baseline entry paths and SHA `42b4b849…` remain unchanged.
+Their reviewed **29-file historical dependency closure**, including original
+shared helpers and circular config/discovery/synthetic wiring, is read from
+Git into a disposable temporary tree only during tests. Only `parse5` package
+resolution is rebound; relative paths, bodies, default identity gates and
+input data are original. Missing historical dependencies fail closed rather
+than resolving against current code. This is not relocating the 90-file demo.
+Group parity retains the previously reviewed two differences (selected metadata
+and actual product identity evidence); all other result fields, source rows,
+order, languages, exact hrefs/provenance and undefined fields remain exact.
+
+The logo byte comparison now reads Git; operator callback-delegation evidence
+reads the last reviewed wrapper at `f534dac…`. Seven current operator scripts
+and their credential fences/pinned comparison loaders are unchanged.
+Full Git history is the simplest supported setup. Shallow users must explicitly
+fetch required pinned objects before the applicable tests; runtime/fixture
+parity requires `42b4b849d77281e1660701500c7bba9e6ec44b02`, operator proofs also
+use `f534dacba1b7377637fe4f00bf995e8145adcc8f`,
+`5a9c3c38f892644d04988d9055e3463fc6b9b86b`,
+`21d1be24acf2b654254c38c9b252246ed8de1343` and
+`7a9754d6431426a86ea9c3843a11c97f28210c4c`.
+Tests never fetch automatically or substitute current implementations.
+
+The two known demo-browser failures disappear **because their obsolete demo
+application/scenarios are removed**, not because assertions were weakened:
+
+- Assisted `unresolved-director` expected refusal despite a matching stable ID.
+  The product's stable-ID/title/year acceptance and truthful skipped-director
+  diagnostics remain checked in `kinobaza-cascade.test.mjs`, with conflicts and
+  unowned IDs refused in cascade/Movie.sameAs/director suites.
+- Discovery `store-subscription` expected Apple TV+ to be unmapped. Current
+  subscription/Store separation, own-offer languages, single Apple display
+  service, exact link selection/preview/transfer remain in
+  `apple-subscription-mapping.test.mjs` and the Apple UI/browser suites.
+
+### Verification
+
+Fresh baseline/current root installs used
+`npm ci --offline --ignore-scripts --no-audit --no-fund`; no utility/browser
+installation, live film-source HTTP, API credit, actual platform visit or real
+credential. No SQL (including local SQL tests), DB/user mutation, secrets,
+flags, Supabase/Netlify config, manual deploy, merge or release action.
+
+| Check | Result |
+| --- | --- |
+| Same controlled product/operator selection | Baseline **986 pass / 0 fail / 9 skip** in 66 root suites; current **1028 / 0 / 9** in 67. Added 41 source-contract tests and one history closure check; the install suite is a rename. 50.115s / 45.693s are local timings, not a speed claim. |
+| Original baseline including every demo `.test.mjs` | **933 / 0 / 14**; historical comparison only. Retired demo-only checks are not counted as current beta coverage. |
+| Affected history/boundary/parity/runtime-install/operator/publication selection | **42 / 0 / 0**, after deletion; parser absence/installation and negative card identity tested in clean layouts |
+| Product source contracts + cascade/localized identity/Apple mapping | **129 / 0 / 0**; new source-contract file alone **41 / 0 / 0** |
+| Installed Edge product + Apple subscription browser | **10 / 0 / 0**, both suites at 375×812, 420×912, 820×1180, 1280×900; own-offer languages, mixed subscription/Store, exact selection/preview/apply/local Save, diagnostics and icon failure |
+| Production / fixture boundary | **28 server modules / 38 edges**, **17 browser modules / 13 edges**, no research dependency; **14** product scenarios execute with current research modules forbidden; canonical data closure **5 files / 2 edges** |
+| Publication / repeated build | **62 exact public files**, 16 imported browser/shared modules, **214 tracked private files** preserved; all seven M4 migrations retained; stale/nested private output cleanup passes |
+
+Counts overlap, not additive. The nine normal-selection skips are opt-in
+browser suites; the two selected browser suites are separately exercised above.
+Other opt-in browser suites, real iPhone/WebKit and live/authenticated Preview
+search were not verified. Old Windows/LAN/Termius launch tests are intentionally
+not rerun after removal. Current operator IPC and automatic Preview outcomes
+are recorded in the draft PR after push.
+
+The controlled selection is reproducible in PowerShell without SQL execution:
+
+```powershell
+$excluded = 'media-advice-(beta-ledger|global-access|identity-budget|ledger|personal-flag|predicted-budget|reserve-budget|.*native)\.test\.mjs$|m4-practical-pipe\.test\.mjs$'
+$cases = @(Get-ChildItem -LiteralPath test -Filter '*.test.mjs' | Where-Object { $_.Name -notmatch $excluded } | ForEach-Object { $_.FullName })
+node --test --test-concurrency=1 @cases tests/build-site.test.mjs
+```
+
+Browser runs use the existing `PLAYWRIGHT_MODULE_PATH` and
+`PLAYWRIGHT_CHANNEL=msedge` hooks with
+`node --test --test-concurrency=1 test/media-advice-browser.test.mjs test/media-advice-apple-subscription-browser.test.mjs`.
+Native operator IPC runs separately with fake keys/local pipes:
+`node --test test/m4-practical-pipe.test.mjs`.
+
+### Structure compared with main
+
+These are tracked-file inventories, not live deployments or a requirement to
+make develop identical to main. This PR adds no runtime feature.
+
+| Area | Main `e923928` | Before `f534dac` | After cleanup | Why retained |
+| --- | ---: | ---: | ---: | --- |
+| Root files | 10 | 13 | 13 | Site/PWA plus existing ignore, lockfile and publish configuration |
+| `assets` | 37 | 44 | 44 | Current product UI/icons/TMDb attribution |
+| `docs` | 9 | 12 | 13 | Product/recovery/release history and new compact physical handoff |
+| `netlify` | 3 | 21 | 21 | Four Functions and current server modules |
+| `research` | 0 | 90 | 0 | Local pilot retired, Git remains its archive |
+| `scripts` | 0 | 16 | 16 | Publish builder and needed diagnostic/operator/recovery workflows |
+| `shared` | 0 | 10 | 10 | Browser/server product identity, URL and diagnostic policies |
+| `test` / `tests` | 0 | 97 | 98 | Product/operator/history fixtures, regressions and publication/UX checks |
+| `supabase` | 18 | 59 | 59 | Existing migrations, operation SQL, recovery and Functions; untouched |
+| `privacy` / `terms` | 2 | 2 | 2 | Existing public legal pages |
+| **Total** | **79** | **364** | **276** | Net reduction **88**; 90 removed, one document and one contract suite added |
+
+Compared with main the remaining release diff is **197 added / 5 modified
+files** (202 paths), not pilot residue by default. The extra permanent root
+directories are `scripts`, `shared`, `test`, `tests`, each with a concrete
+production/build/recovery/test obligation. No flattening or removal is proposed
+just to match main's file count. The next task is an independent whole-release
+review; runtime changes, seven M4 migrations, recovery, operator tools and useful
+tests remain. A production release needs a separate owner decision.

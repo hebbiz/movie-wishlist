@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { MEDIA_ADVICE_BASELINE_SHA, readMediaAdviceBaselineSources } from './media-advice-history.fixture.mjs';
+import { MEDIA_ADVICE_BASELINE_SHA, readMediaAdviceBaselineSources, loadMediaAdviceBaseline } from './media-advice-history.fixture.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const normalize = source => source.replaceAll('\r\n', '\n');
@@ -59,25 +59,14 @@ test('shared HTML builder and three fixture identities equal their frozen demo o
   assert.equal(builder(current), builder(oldSynthetic));
 });
 
-test('product group fixture preserves frozen rows, source claims and URLs while replacing only selected metadata and fixed-gate evidence', async () => {
+test('product group fixture preserves frozen rows, source claims and URLs while replacing only selected metadata and fixed-gate evidence', async t => {
   const path = 'test/media-advice-group.fixture.mjs';
-  const moduleURL = new URL(`../${path}`, import.meta.url);
-  // Only import URLs are rebound. The committed input-builder body is not
-  // patched, nor replaced by the new helper. Its original demo wiring remains
-  // intentional evidence for the old fixture result, not a product dependency.
-  let reboundFixtures = 0;
-  const original = frozen(path).replace(/import\(\s*(['"])(\.[^'"]+)\1\s*\)/g,
-    (_, _quote, specifier) => {
-      // Keep the actual frozen body and original Git path. Only this known
-      // dependency URL moves to the same canonical, separately frozen data.
-      if (specifier === '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs') {
-        reboundFixtures++;
-        return `import(${JSON.stringify(new URL('./kinobaza-localization.fixture.mjs', import.meta.url).href)})`;
-      }
-      return `import(${JSON.stringify(new URL(specifier, moduleURL).href)})`;
-    });
-  assert.equal(reboundFixtures, 1, 'A changed frozen dependency must be reviewed, not rebound heuristically.');
-  const before = await import(`data:text/javascript;base64,${Buffer.from(original).toString('base64')}`);
+  // The original helper, its fixture builder, fixed gate and composer are all
+  // read at the same immutable commit, including their circular dependencies.
+  // No deleted/current demo path or current composer fills a historical gap.
+  const baseline = await loadMediaAdviceBaseline();
+  t.after(baseline.dispose);
+  const before = await baseline.importModule(path);
   const after = await import('./media-advice-group.fixture.mjs');
   assert.deepEqual(after.authoredGroupedMediaRows(), before.authoredGroupedMediaRows());
   const previous = await before.authoredDuneMediaResult(), current = await after.authoredDuneMediaResult();

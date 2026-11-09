@@ -12,16 +12,13 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
-const prefix = 'mw-m4-demo-root-install-';
+const prefix = 'mw-m4-runtime-root-install-';
 const runtime = ['kinobaza-card.mjs', 'kinobaza-html.mjs', 'kinobaza-localization.mjs',
   'media-discovery-compose.mjs', 'media-source-motn.mjs', 'media-source-tmdb.mjs'];
 const shared = ['director-alias-crosswalk.mjs', 'film-release-year.mjs', 'kinobaza-movie-identity.mjs',
   'media-advice-diagnostics.mjs', 'media-link-policy.mjs', 'terminal-roman-title.mjs', 'ukrainian-g-title.mjs'];
-const demo = ['config.mjs', 'discovery.mjs', 'held-out.mjs', 'html-source.mjs',
-  'megogo.mjs', 'motn.mjs', 'synthetic.mjs', 'tmdb.mjs', 'url-context.mjs'];
-const files = ['package.json', 'package-lock.json', 'research/grounded-answer-demo/package.json',
+const files = ['package.json', 'package-lock.json',
   ...runtime.map(name => `netlify/lib/${name}`), ...shared.map(name => `shared/${name}`),
-  ...demo.map(name => `research/grounded-answer-demo/${name}`),
   'test/kinobaza-html.fixture.mjs', 'test/kinobaza-localization.fixture.mjs',
   'test/assisted-kinobaza.fixture.mjs'];
 
@@ -51,17 +48,19 @@ import assert from 'node:assert/strict';
 import { access } from 'node:fs/promises';
 let unintendedFetches = 0;
 globalThis.fetch = () => { unintendedFetches++; assert.fail('No external source request is permitted.'); };
-const htmlModule = await import('./research/grounded-answer-demo/html-source.mjs');
-const { FILMS } = await import('./research/grounded-answer-demo/config.mjs');
-const { localizedMarkup, tableBlock, paragraphBlock } = await import('./test/kinobaza-localization.fixture.mjs');
-const html = localizedMarkup(tableBlock('itunes', [['Укр. звук (стерео)', '-'], ['Укр. субтитри', '+']]) + paragraphBlock('megogo', '(укр. аудіо [5.1])'));
-const film = FILMS.coherence;
-const selection = htmlModule.htmlScenario(film, { discovery: 'digital-ua' });
+const { extractHtml } = await import('./netlify/lib/kinobaza-html.mjs');
+const { assistedIdentity, fetchAssistedKinobaza } = await import('./netlify/lib/kinobaza-card.mjs');
+const { markup, CARD } = await import('./test/assisted-kinobaza.fixture.mjs');
+const { tableBlock, paragraphBlock } = await import('./test/kinobaza-localization.fixture.mjs');
+const film = { id: 'imdb:tt999900001', imdbId: 'tt999900001', tmdbId: 999900001, identityTitle: 'Вигаданий фільм',
+  originalTitle: 'Authored original', year: 2001, titleAliases: [], directorAliases: ['Authored director'], directorCount: 1 };
+const html = markup({ blocks: tableBlock('itunes', [['Укр. звук (стерео)', '-'], ['Укр. субтитри', '+']]) + paragraphBlock('megogo', '(укр. аудіо [5.1])') });
+const extract = (body, options = {}) => extractHtml(body, film, { identityCheck: all => assistedIdentity(all, film, CARD), ...options });
 let intercepted = 0;
 const response = body => new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 const send = async (url, init) => {
   intercepted++;
-  assert.equal(url, selection.sourceURL); assert.equal(init.method, 'GET');
+  assert.equal(url, CARD); assert.equal(init.method, 'GET');
   assert.equal(init.redirect, 'manual'); assert.equal(init.credentials, 'omit');
   return response(html);
 };
@@ -75,7 +74,7 @@ function runChild(directory, body) {
   return JSON.parse(stdout);
 }
 
-test('retained demo parser uses the clean repository-root install, not nested or inherited node_modules', { timeout: 60_000 }, async t => {
+test('runtime parser uses the clean repository-root install, not retired demo or inherited node_modules', { timeout: 60_000 }, async t => {
   const tempRoot = resolve(tmpdir()), directory = await mkdtemp(join(tempRoot, prefix));
   t.after(async () => {
     const target = resolve(directory);
@@ -98,13 +97,12 @@ test('retained demo parser uses the clean repository-root install, not nested or
     await cp(join(ROOT, file), target, { errorOnExist: true, force: false });
   }
   assert.ok(await absent(join(directory, 'node_modules')));
-  assert.ok(await absent(join(directory, 'research/grounded-answer-demo/node_modules')));
+  assert.ok(await absent(join(directory, 'research')));
 
-  await t.test('without a parser, both local extraction and fixed-card preflight return an actionable root-install error before I/O', () => {
+  await t.test('without a parser, local extraction returns an actionable root-install error without I/O', () => {
     const result = runChild(directory, `
-const parsed = await htmlModule.extractHtml(html, film);
-const fetched = await htmlModule.fetchHtmlCandidates(selection, send);
-for (const result of [parsed, fetched]) {
+const parsed = await extract(html);
+for (const result of [parsed]) {
   assert.equal(result.status, 'parser-unavailable'); assert.deepEqual(result.candidates, []);
   const action = result.issues.join(' ');
   assert.match(action, /npm ci --ignore-scripts/);
@@ -112,9 +110,9 @@ for (const result of [parsed, fetched]) {
   assert.doesNotMatch(action, /--prefix|npm (?:add|install)/);
 }
 assert.equal(intercepted, 0); assert.equal(unintendedFetches, 0);
-console.log(JSON.stringify({ extraction: parsed.status, preflight: fetched.status, intercepted, unintendedFetches }));
+console.log(JSON.stringify({ extraction: parsed.status, intercepted, unintendedFetches }));
 `);
-    assert.deepEqual(result, { extraction: 'parser-unavailable', preflight: 'parser-unavailable', intercepted: 0, unintendedFetches: 0 });
+    assert.deepEqual(result, { extraction: 'parser-unavailable', intercepted: 0, unintendedFetches: 0 });
   });
 
   const lock = JSON.parse(await readFile(join(ROOT, 'package-lock.json'), 'utf8'));
@@ -125,47 +123,44 @@ console.log(JSON.stringify({ extraction: parsed.status, preflight: fetched.statu
     assert.equal(installed.version, lock.packages[`node_modules/${name}`].version, 'Use the already installed root-lockfile version.');
     await cp(installed.directory, join(directory, 'node_modules', name), { recursive: true, dereference: true, errorOnExist: true, force: false });
   }
-  assert.ok(await absent(join(directory, 'research/grounded-answer-demo/node_modules')));
+  assert.ok(await absent(join(directory, 'research')));
 
-  await t.test('root-only parser packages support demo identity/localization and one bounded intercepted HTML GET', () => {
+  await t.test('root-only parser packages support real identity/localization and one bounded intercepted HTML GET', () => {
     const result = runChild(directory, `
-const parsed = await htmlModule.extractHtml(html, film);
+const parsed = await extract(html);
 assert.equal(parsed.identity.status, 'matched');
+assert.equal(parsed.identity.reason, 'explicit-title-year-director-match');
 const apple = parsed.localization.blocks.find(block => block.provider === 'itunes');
 const megogo = parsed.localization.blocks.find(block => block.provider === 'megogo');
 assert.equal(apple.audio.state, 'reported-negative'); assert.equal(apple.subtitles.state, 'reported-positive');
 assert.equal(megogo.audio.state, 'reported-positive'); assert.equal(megogo.subtitles.state, 'unknown');
-const fetched = await htmlModule.fetchHtmlCandidates(selection, send);
+const fetched = await fetchAssistedKinobaza(CARD, film, send);
 assert.equal(fetched.identity.status, 'matched'); assert.equal(fetched.requestsMade, 1);
 assert.equal(intercepted, 1); assert.equal(unintendedFetches, 0);
 assert.deepEqual(fetched.candidates, parsed.candidates);
-await assert.rejects(access('research/grounded-answer-demo/node_modules'), { code: 'ENOENT' });
-const wrong = await htmlModule.extractHtml(html.replace('<h2>Coherence</h2>', '<h2>Other authored film</h2>'), film);
-assert.equal(wrong.status, 'identity-unresolved'); assert.deepEqual(wrong.candidates, []);
+await assert.rejects(access('research'), { code: 'ENOENT' });
+const wrong = await extract(html.replace('<h2>Authored original</h2>', '<h2>Other authored film</h2>'));
+assert.equal(wrong.identity.status, 'unresolved'); assert.equal(wrong.identity.reason, 'source-original-title-unestablished'); assert.deepEqual(wrong.candidates, []);
 console.log(JSON.stringify({ identity: parsed.identity.status, audio: [apple.audio.state, megogo.audio.state], subtitles: [apple.subtitles.state, megogo.subtitles.state], intercepted, unintendedFetches, wrongIdentity: wrong.identity.status }));
 `);
     assert.deepEqual(result, { identity: 'matched', audio: ['reported-negative', 'reported-positive'],
       subtitles: ['reported-positive', 'unknown'], intercepted: 1, unintendedFetches: 0, wrongIdentity: 'unresolved' });
   });
 
-  await t.test('retained demo setup supports the runtime assisted-card reader and its independent identity gate', () => {
+  await t.test('installed parser never supplies an implicit identity gate or accepts wrong film/year/director', () => {
     const result = runChild(directory, `
-const { fetchAssistedKinobaza } = await import('./netlify/lib/kinobaza-card.mjs');
-const { markup, CARD } = await import('./test/assisted-kinobaza.fixture.mjs');
-const selected = { id: 'imdb:tt999900001', imdbId: 'tt999900001', tmdbId: 999900001, identityTitle: 'Вигаданий фільм',
-  originalTitle: 'Authored original', year: 2001, titleAliases: [], directorAliases: ['Authored director'], directorCount: 1 };
-let cardReads = 0;
-const card = await fetchAssistedKinobaza(CARD, selected, async (url, init) => {
-  cardReads++; assert.equal(url, CARD); assert.equal(init.method, 'GET'); assert.equal(init.redirect, 'manual');
-  assert.equal(init.credentials, 'omit'); return response(markup());
-});
-assert.equal(card.identity.status, 'matched'); assert.equal(card.requestsMade, 1); assert.equal(cardReads, 1);
-assert.equal(card.localization.blocks[0].audio.state, 'reported-positive');
-assert.equal(card.localization.blocks[0].subtitles.state, 'reported-negative');
+const missing = await extractHtml(html, film);
+assert.equal(missing.identity.status, 'unresolved'); assert.equal(missing.identity.reason, 'identity-check-required');
+assert.deepEqual(missing.candidates, []);
+for (const body of [markup({ original: 'Other film' }), markup({ year: 2002 }), markup({ director: 'Other director' })]) {
+  const rejected = await extract(body);
+  assert.notEqual(rejected.identity.status, 'matched'); assert.deepEqual(rejected.candidates, []);
+  assert.deepEqual(rejected.localization?.blocks ?? [], []);
+}
 assert.equal(unintendedFetches, 0);
-console.log(JSON.stringify({ identity: card.identity.status, requestsMade: card.requestsMade, cardReads, unintendedFetches }));
+console.log(JSON.stringify({ missingIdentity: missing.identity.status, rejected: 3, intercepted, unintendedFetches }));
 `);
-    assert.deepEqual(result, { identity: 'matched', requestsMade: 1, cardReads: 1, unintendedFetches: 0 });
+    assert.deepEqual(result, { missingIdentity: 'unresolved', rejected: 3, intercepted: 0, unintendedFetches: 0 });
   });
   t.diagnostic('Authored clean-tree test only: reused locked local parse5/entities at repository root; no npm command, package download, nested install, or live source HTTP.');
 });
