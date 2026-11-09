@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { builtinModules } from 'node:module';
 import { parse } from 'parse5';
+import { execFileSync } from 'node:child_process';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const RUNTIME_FILES = [
@@ -321,4 +322,55 @@ test('TMDb logo uses a production asset path with unchanged bytes and attributio
   assert.match(source, /logo\.width\s*=\s*110\b/);
   assert.match(source, /https:\/\/www\.themoviedb\.org/);
   assert.match(source, /not endorsed or certified by TMDB/);
+});
+
+test('nine migrated product suites execute with current research modules forbidden, including transitive imports', () => {
+  const suites = ['kinobaza-contextual-policy', 'kinobaza-deferred-extraction', 'kinobaza-localized-identity',
+    'kinobaza-movie-director-group', 'kinobaza-slevin-profile-pipeline', 'kinobaza-terminal-roman', 'kinobaza-ukrainian-g',
+    'media-advice-diagnostics', 'media-advice-kinobaza-pipeline'];
+  const urls = suites.map(name => new URL(`./${name}.test.mjs`, import.meta.url).href);
+  const code = `import { registerHooks } from 'node:module';
+    registerHooks({ resolve(specifier, context, nextResolve) {
+      const result = nextResolve(specifier, context);
+      if (result.url.startsWith('file:') && new URL(result.url).pathname.includes('/research/')) throw Error('current-research-module-forbidden');
+      return result;
+    } });
+    globalThis.fetch = () => { throw Error('external-transport-forbidden'); };
+    for (const url of ${JSON.stringify(urls)}) await import(url);
+    console.log('nine-product-suites-without-current-research');`;
+  // Node's parent test runner exports a binary child-reporting context. This
+  // independently spawned suite must use its own ordinary TAP reporter.
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const output = execFileSync(process.execPath, ['--test-reporter=tap', '--input-type=module', '-e', code], {
+    encoding: 'utf8', windowsHide: true, timeout: 30_000, maxBuffer: 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'], env,
+  });
+  assert.match(output, /nine-product-suites-without-current-research/);
+  assert.match(output, /# fail 0\b/);
+});
+
+test('retained synthetic fixed-film identity is explicitly distinct from the required product identity callback', async () => {
+  const { extractHtml: demoExtract } = await import('../research/grounded-answer-demo/html-source.mjs');
+  const { extractHtml: runtimeExtract } = await import('../netlify/lib/kinobaza-html.mjs');
+  const { localizedMarkup } = await import('./kinobaza-localization.fixture.mjs');
+  const { SYNTHETIC_FILMS } = await import('./kinobaza-html.fixture.mjs');
+  for (const id of ['coherence', 'dune-part-two']) {
+    const film = SYNTHETIC_FILMS[id], html = localizedMarkup('', id);
+    assert.equal((await demoExtract(html, film)).identity.status, 'matched');
+    const required = await runtimeExtract(html, film);
+    assert.equal(required.identity.status, 'unresolved');
+    assert.equal(required.identity.reason, 'identity-check-required');
+    const invalid = await demoExtract(html.replace(film.director, 'Other authored director'), film);
+    assert.equal(invalid.identity.status, 'unresolved', 'the retained gate must not become an always-matched fixture');
+    assert.deepEqual(invalid.candidates, []);
+  }
+  const retained = ['apple-subscription-mapping.test.mjs', 'media-advice-browser.test.mjs',
+    'media-advice-platform-ui.test.mjs', 'media-advice-group.fixture.mjs'];
+  for (const name of retained) {
+    const source = await localRead(`test/${name}`);
+    assert.equal((source.match(/(?:from\s+|import\(\s*)['"]\.\.\/research\/grounded-answer-demo\/html-source\.mjs['"]/g) ?? []).length, 1,
+      `${name}: this deliberate fixed-gate dependency must be re-evaluated, not silently swapped`);
+    assert.doesNotMatch(source, /(?:from\s+|import\(\s*)['"]\.\.\/research\/grounded-answer-demo\/(?:discovery|motn)\.mjs['"]/);
+  }
 });

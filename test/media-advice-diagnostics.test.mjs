@@ -5,7 +5,7 @@ import { candidateDiagnostics, tavilySearch, createKinobazaResolver } from '../n
 import { safeMediaReport, motnLanguageReport } from '../assets/media-advice-report.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { normalizeMotnFor } from '../netlify/lib/media-source-motn.mjs';
-import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { buildEvidence } from '../scripts/stamp-media-advice-build.mjs';
 import { mediaRuntime } from '../netlify/lib/media-advice-runtime.mjs';
 import { runControlDiagnostic } from '../scripts/m4-control-diagnostic.mjs';

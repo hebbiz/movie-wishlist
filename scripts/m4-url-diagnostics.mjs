@@ -1,5 +1,5 @@
 // Trusted local diagnostic only. NEVER a URL rewriter/admission replacement.
-import { admitKinobazaURL } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
 
 export const expectedFormat = 'https://kinobazaua.com/titles/<lowercase-ascii-hyphenated-slug>';
 const pathShape = /^\/titles\/[a-z0-9]+(?:-[a-z0-9]+)*$/;

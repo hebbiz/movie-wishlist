@@ -4,8 +4,10 @@ import assert from 'node:assert/strict';
 import { createMediaAdvice } from '../assets/media-advice.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
+// This authored synthetic scaffold still needs the demo's fixed-film identity
+// gate. Do not replace it with an unconditional match or a different gate.
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
-import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { localizedMarkup, netflixCatalogueBlock, netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
 import { recommendationCarousel } from './recommendation-markup.fixture.mjs';
 
@@ -408,6 +410,10 @@ test('a film-level audio badge remains in diagnostics without adding a separate 
 // projection. These fictional film links are not captured Kinobaza responses.
 const netflixFilmHref = 'https://www.netflix.com/title/900001234';
 const megogoFilmHref = 'https://megogo.net/ua/view/900001235-authored.html?exact=%2f#Anchor';
+// Preserve the authored fixture's former fixed-demo provenance explicitly.
+const sourceURLs = { kinobaza: 'https://kinobaza.com.ua/titles/coherence',
+  kinobazaLocalization: { source: 'Kinobaza HTML', method: 'authored synthetic source blocks',
+    sourceURL: 'https://kinobaza.com.ua/titles/coherence', receivedAt: undefined, upstream: 'not-established' } };
 async function netflixCaptionResult(href = netflixFilmHref, audioCatalogue = false) {
   const film = { ...FILMS.coherence, imdbId: 'tt1234567', year: 2013 };
   const block = audioCatalogue ? netflixAudioCatalogueBlock : netflixCatalogueBlock;
@@ -415,7 +421,7 @@ async function netflixCaptionResult(href = netflixFilmHref, audioCatalogue = fal
     .replace('</body>', `${audioCatalogue ? recommendationCarousel() : ''}</body>`);
   const extracted = await extractHtml(html, film);
   assert.equal(extracted.identity.status, 'matched');
-  const result = composeDiscovery(film, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: extracted, status: extracted.status } });
+  const result = composeDiscovery(film, { tmdb: { result: null }, motn: { result: null }, kinobaza: { result: extracted, status: extracted.status } }, { sourceURLs });
   return { extracted, result: { ...result, rows: result.rows.filter(row => row.kinobazaLocalization), unmapped: [] } };
 }
 

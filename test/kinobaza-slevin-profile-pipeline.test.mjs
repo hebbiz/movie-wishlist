@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
 import { paragraphBlock } from './kinobaza-localization.fixture.mjs';
-import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
+import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
 import { linkChoicesFor, makePreview, applyPreview } from '../assets/media-advice.mjs';

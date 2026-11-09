@@ -2,8 +2,8 @@
 // responses. Both policies inspect the same in-memory current card response.
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
-import { assistedIdentity } from '../research/grounded-answer-demo/assisted-kinobaza.mjs';
+import { extractHtml } from '../netlify/lib/kinobaza-html.mjs';
+import { assistedIdentity } from '../netlify/lib/kinobaza-card.mjs';
 export const CASCADE_BASELINE_SHA = '5a9c3c38f892644d04988d9055e3463fc6b9b86b';
 const source = 'research/grounded-answer-demo/assisted-kinobaza.mjs';
 
@@ -15,9 +15,19 @@ export async function loadCascadeBaseline(sha = CASCADE_BASELINE_SHA) {
   const git = process.platform === 'win32' ? 'C:/Program Files/Git/cmd/git.exe' : 'git';
   const baseline = execFileSync(git, ['show', `${sha}:${source}`],
     { cwd: fileURLToPath(root), encoding: 'utf8', maxBuffer: 128 * 1024, windowsHide: true, stdio: ['ignore','pipe','ignore'] });
-  // Only this fixed committed module is loaded. Relative imports resolve to the
-  // unchanged shared extractor/registry; no browser/env-selected code is loaded.
-  const code = baseline.replace(/from '(\.[^']+)'/g, (_, path) => `from '${new URL(path, moduleURL).href}'`);
+  // Keep the pinned body/gates and Git source path. Its extractor import used
+  // the demo wrapper only with an explicit identityCheck, which delegates
+  // unchanged to this runtime extractor. No demo scenario/catalogue is needed.
+  let extractorImports = 0;
+  const code = baseline.replace(/from '(\.[^']+)'/g, (_, path) => {
+    const absolute = new URL(path, moduleURL);
+    if (absolute.href === new URL('research/grounded-answer-demo/html-source.mjs', root).href) {
+      extractorImports++;
+      return `from '${new URL('netlify/lib/kinobaza-html.mjs', root).href}'`;
+    }
+    return `from '${absolute.href}'`;
+  });
+  if (extractorImports !== 1) throw Error('fixed-baseline-extractor-import-unestablished');
   const loaded = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
   loaded.assistedIdentity.baselineSha = sha;
   return loaded.assistedIdentity;
