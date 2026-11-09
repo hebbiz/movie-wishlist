@@ -29,14 +29,17 @@ function section(config, name) {
 
 test('publish output preserves only public app dependencies, rebuilds cleanly and leaves Function/pilot sources in Git', async t => {
   // The expected surface is independent of the build script's private array.
-  // Assets/shared/legal directories are deliberate public roots; every output
-  // file must correspond to an existing source file beneath one of them.
-  const expected = [...publicFiles, ...publicDirectories.flatMap(directory => filesBelow(join(root, directory), directory + '/'))].sort();
+  // Assets/shared/legal directories are deliberate public roots, except their
+  // Markdown metadata. Every output file must correspond to an existing public
+  // source file; source-attribution documents stay tracked but are not deployed.
+  const expected = [...publicFiles, ...publicDirectories.flatMap(directory => filesBelow(join(root, directory), directory + '/'))]
+    .filter(file => !/\.md$/i.test(file)).sort();
   const allowed = new Set(expected);
   const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8', windowsHide: true }).split('\0').filter(Boolean);
   const retained = tracked.filter(file => !allowed.has(file));
   const before = new Map(retained.map(file => [file, digest(file)]));
   for (const file of ['research/grounded-answer-demo/server.mjs', 'research/grounded-answer-demo/public/tmdb-logo.svg',
+    'assets/icons/media/SOURCES.md',
     'docs/m4-media-advice.md', 'scripts/build-site.mjs', 'tests/build-site.test.mjs', 'test/media-advice-server.test.mjs',
     'netlify/functions/media-advice.mjs', 'netlify/lib/media-source-tmdb.mjs',
     'supabase/migrations/20261108185237_media_advice_global_access.sql', 'package.json', 'package-lock.json', 'netlify.toml']) {
@@ -56,8 +59,8 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
       assert.equal(existsSync(join(output, directory)), false, `${directory} must not be published, including empty/stale directories`);
     }
     for (const file of filesBelow(output)) {
-      assert.doesNotMatch(file, /(?:^|\/)(?:package(?:-lock)?\.json|netlify\.toml|\.env(?:\.[^/]*)?|\.gitignore)$|\.(?:sql|toml|ps1|cs)$/i,
-        `Server SQL/configuration/tooling must not appear in public output: ${file}`);
+      assert.doesNotMatch(file, /(?:^|\/)(?:package(?:-lock)?\.json|netlify\.toml|\.env(?:\.[^/]*)?|\.gitignore)$|\.(?:md|sql|toml|ps1|cs)$/i,
+        `Documentation/server SQL/configuration/tooling must not appear in public output: ${file}`);
     }
   };
 
@@ -103,7 +106,8 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
   const stale = ['obsolete-file.txt', 'research/grounded-answer-demo/public/tmdb-logo.svg',
     'research/grounded-answer-demo/server.mjs', 'netlify/functions/media-advice.mjs', 'netlify/lib/media-source-tmdb.mjs',
     'scripts/private.mjs', 'docs/private.md', 'test/fixture.mjs', 'tests/fixture.mjs',
-    'supabase/migrations/stale.sql', 'config/private.toml', 'assets/icons/stale.svg', 'privacy/nested/stale.html'];
+    'supabase/migrations/stale.sql', 'config/private.toml', 'assets/icons/stale.svg',
+    'assets/icons/media/SOURCES.md', 'privacy/nested/stale.html'];
   for (const file of stale) {
     const destination = join(output, file); mkdirSync(dirname(destination), { recursive: true });
     writeFileSync(destination, 'STALE OUTPUT FIXTURE');

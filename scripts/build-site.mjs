@@ -19,7 +19,10 @@ export function buildSite() {
   for (const relativePath of publicPaths) {
     const destination = join(publishDir, relativePath);
     mkdirSync(dirname(destination), { recursive: true });
-    cpSync(join(root, relativePath), destination, { recursive: true, errorOnExist: true });
+    cpSync(join(root, relativePath), destination, { recursive: true, errorOnExist: true,
+      // Icon provenance/docs remain tracked, not part of the browser resource graph.
+      filter: source => !/\.md$/i.test(source),
+    });
   }
 }
 
