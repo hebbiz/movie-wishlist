@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { practicalFilms, practicalStudies, practicalOperation, inspectPublicIdentity } from '../scripts/m4-practical-series.mjs';
-import { detailsData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
-import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { detailsData, IDS } from './film-workflow.fixture.mjs';
+import { markup } from './assisted-kinobaza.fixture.mjs';
 import { loadCascadeBaseline, compareCascadeCard, CASCADE_BASELINE_SHA } from '../scripts/m4-cascade-comparison.mjs';
 const keys = {tmdbToken:'AUTHORED_TMDB_KEY',tavilyKey:'AUTHORED_TAVILY_KEY'};
 

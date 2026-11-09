@@ -27,11 +27,11 @@ export function authoredGroupedMediaRows() {
 
 // Authored HTML through the actual extractor/projection, never a live response.
 export async function authoredDuneMediaResult() {
-  const { FILMS } = await import('../research/grounded-answer-demo/config.mjs');
+  const { SYNTHETIC_FILMS: FILMS } = await import('./kinobaza-html.fixture.mjs');
   const { MOTN_FILMS } = await import('../research/grounded-answer-demo/motn.mjs');
   const { extractHtml } = await import('../research/grounded-answer-demo/html-source.mjs');
   const { composeDiscovery } = await import('../research/grounded-answer-demo/discovery.mjs');
-  const { localizedMarkup, tableBlock, paragraphBlock } = await import('../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs');
+  const { localizedMarkup, tableBlock, paragraphBlock } = await import('./kinobaza-localization.fixture.mjs');
   const film = { ...FILMS['dune-part-two'], year: 2024, imdbId: MOTN_FILMS['dune-part-two'].imdbId };
   const body = localizedMarkup(
     tableBlock('itunes', [['Укр. звук (стерео)', '+'], ['Укр. субтитри', '−']], 'https://itunes.apple.com/ua/movie/id9999001?at=AUTHOR%2fONLY') +

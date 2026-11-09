@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createKinobazaResolver} from '../netlify/lib/kinobaza-resolver.mjs';
 import {predictedKinobazaURL} from '../netlify/lib/kinobaza-predicted-url.mjs';
-import {markup} from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import {markup} from './assisted-kinobaza.fixture.mjs';
 const SEARCH='https://api.tavily.com/search', KEY='AUTHORED_SEARCH_KEY', PERSON_KEY='AUTHORED_PERSON_KEY';
 const URLS=['first','second','third'].map(x=>'https://kinobazaua.com/titles/authored-'+x);
 const PREDICTED='https://kinobazaua.com/titles/authored-original';

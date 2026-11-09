@@ -279,6 +279,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       'netlify/lib/kinobaza-card.mjs', 'netlify/lib/kinobaza-html.mjs', 'netlify/lib/kinobaza-localization.mjs',
       'netlify/lib/media-discovery-compose.mjs', 'netlify/lib/media-source-motn.mjs', 'netlify/lib/media-source-tmdb.mjs',
       'netlify/lib/director-profile.mjs', 'shared', 'research/grounded-answer-demo',
+      'test/kinobaza-html.fixture.mjs', // Shared authored scaffold reached through retained demo config/synthetic wrappers.
       'assets/media-advice-presentation.mjs', 'scripts/m4-predicted-controls.mjs', 'scripts/m4-control-credentials.mjs'];
     if (git('status', '--porcelain', '--untracked-files=all', '--', ...usedPaths)) throw Error('reviewed-source-dirty');
     const bytes = await readFile(options['--input']);

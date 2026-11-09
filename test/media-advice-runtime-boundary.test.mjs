@@ -164,14 +164,14 @@ function localTarget(importer, specifier, packages = new Set()) {
   return target;
 }
 
-async function graphFor(roots, read, packages = new Set()) {
+async function graphFor(roots, read, packages = new Set(), resolveTarget = localTarget) {
   const seen = new Set(), edges = [];
   const visit = async file => {
     if (seen.has(file)) return;
     seen.add(file);
     const source = await read(file);
     for (const specifier of importReferences(source)) {
-      const target = localTarget(file, specifier, packages);
+      const target = resolveTarget(file, specifier, packages);
       edges.push({ from: file, target: target ?? specifier, external: target === null });
       if (target !== null) await visit(target); // A missing module is a test failure.
     }
@@ -264,12 +264,45 @@ test('production Function, all server libraries and browser code have no direct/
 
 test('extracted runtime modules exclude demo catalogues, fixed scenarios, prompts and synthetic fixture builders', async () => {
   const forbidden = new Set(['TMDB_FILMS', 'MOTN_FILMS', 'HELD_OUT_FILMS', 'HTML_CARDS', 'KINOBAZA_CARDS', 'APPLE_UA_CARDS', 'DISCOVERY_IDS',
-    'FILMS', 'MODEL', 'PROMPT', 'MAX_OUTPUT_TOKENS', 'selectRequest', 'selectFilm', 'requestBody',
+    'FILMS', 'SYNTHETIC_FILMS', 'MODEL', 'PROMPT', 'MAX_OUTPUT_TOKENS', 'selectRequest', 'selectFilm', 'requestBody',
     'tmdbScenario', 'motnScenario', 'htmlScenario', 'urlScenario', 'discoveryScenario', 'runDiscovery',
     'syntheticTmdb', 'projectSyntheticTmdb', 'syntheticMotn', 'syntheticHtml', 'syntheticResponse', 'authoredDiscoveryData']);
   for (const file of RUNTIME_FILES) {
     for (const token of tokens(await localRead(file))) if (token.kind === 'word') assert.ok(!forbidden.has(token.value), `Demo-only identifier ${token.value} in ${file}`);
   }
+});
+
+test('canonical product fixtures have a closed test-only graph; demo compatibility paths share exports without data copies', async t => {
+  const names = ['assisted-kinobaza', 'film-workflow', 'kinobaza-localization', 'recommendation-markup'];
+  const canonical = names.map(name => `test/${name}.fixture.mjs`);
+  const allowed = [...canonical, 'test/kinobaza-html.fixture.mjs'].sort();
+  const fixtureTarget = (importer, specifier) => {
+    assert.ok(specifier.startsWith('.'), `Fixture imports must stay local: ${importer} -> ${specifier}`);
+    const target = decodeURIComponent(new URL(specifier, new URL(importer, 'https://offline.invalid/')).pathname).slice(1);
+    assert.ok(allowed.includes(target), `Fixture closure escaped test data: ${importer} -> ${target}`);
+    return target;
+  };
+  const graph = await graphFor(canonical, localRead, new Set(), fixtureTarget);
+  assert.deepEqual(graph.files, allowed);
+  assert.deepEqual(graph.edges.map(({ from, target }) => [from, target]), [
+    ['test/assisted-kinobaza.fixture.mjs', 'test/kinobaza-localization.fixture.mjs'],
+    ['test/kinobaza-localization.fixture.mjs', 'test/kinobaza-html.fixture.mjs'],
+  ]);
+  for (const name of names) {
+    const legacyPath = `research/grounded-answer-demo/test/${name}.fixture.mjs`;
+    const code = (await localRead(legacyPath)).replace(/^\/\/[^\n]*(?:\n|$)/gm, '').trim();
+    assert.equal(code, `export * from '../../../test/${name}.fixture.mjs';`, 'Compatibility files must contain no duplicated fixture data.');
+    const current = await import(new URL(`../test/${name}.fixture.mjs`, import.meta.url));
+    const legacy = await import(new URL(`../${legacyPath}`, import.meta.url));
+    assert.deepEqual(Object.keys(legacy), Object.keys(current));
+    for (const key of Object.keys(current)) assert.equal(legacy[key], current[key], `${name}/${key} must be the same function or value`);
+  }
+  const scaffold = await import('./kinobaza-html.fixture.mjs');
+  const config = await import('../research/grounded-answer-demo/config.mjs');
+  const synthetic = await import('../research/grounded-answer-demo/synthetic.mjs');
+  assert.equal(config.FILMS, scaffold.SYNTHETIC_FILMS);
+  assert.equal(synthetic.syntheticHtml, scaffold.syntheticHtml);
+  t.diagnostic(`Fixture closure: ${graph.files.length} test-only modules / ${graph.edges.length} import edges; no research, runtime, packages or transport.`);
 });
 
 test('TMDb logo uses a production asset path with unchanged bytes and attribution', async () => {

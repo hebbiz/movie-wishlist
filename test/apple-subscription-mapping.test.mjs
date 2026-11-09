@@ -5,8 +5,7 @@ import { composeDiscovery, mapProvider } from '../research/grounded-answer-demo/
 import { projectTmdbProvidersFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { normalizeMotnFor } from '../netlify/lib/media-source-motn.mjs';
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
-import { syntheticHtml } from '../research/grounded-answer-demo/synthetic.mjs';
-import { FILMS } from '../research/grounded-answer-demo/config.mjs';
+import { syntheticHtml, SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
 import { classifyLink } from '../shared/media-link-policy.mjs';
 import { presentMediaGroups, presentMediaGroup } from '../assets/media-advice-presentation.mjs';
 import { makePreview, applyPreview, linkChoicesFor } from '../assets/media-advice.mjs';

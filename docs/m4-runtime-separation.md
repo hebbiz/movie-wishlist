@@ -488,3 +488,118 @@ the new automatic Preview are recorded in the PR review-fix report after
 execution. The test never fetches history itself. Live film-source HTTP and
 credits remain zero. No package/lockfile, source/identity/URL rule, budget,
 Supabase object/data/flag or Netlify configuration is changed by these fixes.
+
+## Stage 2.1 — shared product fixtures
+
+This is a separate fixture-ownership change based on verified
+`origin/develop` **d94159db070c8f04f224def605f9bfbbee1fd172** (merged #235),
+not a rewrite of the historical Stage 1 counts above. No product runtime,
+public resource, source rule, identity gate, request budget, migration,
+Supabase object, flag or Netlify configuration changes here. No demo is deleted.
+
+### Ownership and dependency graph
+
+| Canonical file in existing `test/` | Purpose | Baseline direct root / research references |
+| --- | --- | ---: |
+| `assisted-kinobaza.fixture.mjs` | Authored card identity, availability and provider blocks | 27 / 3 |
+| `film-workflow.fixture.mjs` | Fictional API-shaped identities/offers and injected, bounded fake-key transport | 11 / 5 |
+| `kinobaza-localization.fixture.mjs` | Authored language tables, captions, Netflix catalogue and Dune regression structures | 9 / 7 |
+| `recommendation-markup.fixture.mjs` | Deliberately malformed unrelated recommendation/carousel | 2 / 1 |
+| `kinobaza-html.fixture.mjs` | Minimal generic HTML scaffold plus the three shared authored film identities | Extracted transitive dependency, not a new production module |
+
+Counts overlap. The four-name baseline union is **31 root files** (30 suites
+and the group helper), plus **14 research references** (ten suites, two helper
+fixtures, the Windows integration script and the assisted fixture itself).
+The root group helper also feeds `media-advice.test.mjs` and
+`media-advice-presentation.test.mjs`; the research Mykola helper feeds
+`mykola.test.mjs` and `mykola-browser.test.mjs`. The assisted title-boundary
+helper feeds the already-counted assisted suite. Literal dynamic imports and
+standalone-copy manifests are included, not only top-level imports.
+
+The localization fixture formerly pulled `synthetic.mjs → config.mjs →` the
+whole mixed demo adapter/scenario graph. Moving its two imports unchanged
+would therefore leave a transitive product-fixture dependency on research.
+Only the generic `syntheticHtml` builder and three `FILMS` records are shared
+now; prompts, scenario selection, synthetic model responses and orchestration
+stay in research. The third catalogue entry remains for the retained demo;
+there is one catalogue instance, not a second product/demo copy. All five
+files are test data, never imported by production runtime or browser modules.
+No permanent directory or production abstraction is added.
+
+```text
+product tests → test/assisted-kinobaza.fixture
+                     → test/kinobaza-localization.fixture
+                              → test/kinobaza-html.fixture
+product tests → test/film-workflow.fixture (self-contained)
+product tests → test/recommendation-markup.fixture (self-contained)
+retained demo tests → four legacy re-exports → same canonical fixtures
+demo config/synthetic → shared HTML scaffold/catalogue
+production Function/browser → runtime/shared (no research or test edge)
+```
+
+Root consumers use canonical paths, including the group helper's dynamic
+import and frozen-runtime-parity's authored inputs. Product tests using the
+same catalogue/builder now import the shared scaffold directly. Four old
+research fixture files are temporary two-line re-exports so retained demo
+suites keep their paths and exactly the same function/value references.
+Delete these wrappers only after their supported consumers move or retire.
+
+The disposable clean-install manifest includes canonical assisted,
+localization and HTML fixtures alongside the old wrappers. Every Windows
+mode copies the shared HTML fixture because every mode imports demo config.
+Discovery copies the self-contained canonical workflow implementation under
+its existing `film-probe.fixture.mjs` name: renaming a relative re-export
+would resolve incorrectly. The control's reviewed-source fence also includes
+the new shared scaffold before credentials are obtained. Normal root
+installation remains `npm ci --ignore-scripts --no-audit --no-fund`.
+
+### Historical and unchanged boundaries
+
+No historical Git path or SHA is rewritten. Cascade comparison still reads
+the original assisted module at `5a9c3c…` / `21d1be…`; predicted comparison
+reads three modules at `7a9754…`; frozen runtime parity reads nine sources at
+`42b4b849d77281e1660701500c7bba9e6ec44b02`; group-entry browser checks retain
+their historical app/assets/shared tree. None reads a historical version of
+the four relocated fixtures directly. The added fixture parity test reads
+their actual committed originals, the original HTML builder and catalogue
+from that same fixed `42b4b849…` baseline; only comments, import paths and
+the catalogue export name may differ. It does not replace old data with
+current builders or silently skip a missing baseline.
+
+For a shallow checkout, explicitly run
+`git fetch origin 42b4b849d77281e1660701500c7bba9e6ec44b02` (or
+`git fetch --unshallow origin`) before running both frozen parity suites.
+Neither suite fetches automatically. The existing full/shallow prerequisite
+and fail-closed history tests remain in force.
+
+### Remaining research dependencies and next separate cleanup candidates
+
+Research still has **96 tracked files**; replacement wrappers do not count
+as deletion. Its six non-relocated fixtures, demo modules/UI/launchers,
+documentation and package metadata are retained. All seven M4 migrations,
+operation SQL, recovery tools/data contracts and their tests remain untouched.
+
+| Candidate for a later stage | Dependencies / prerequisite; recommendation |
+| --- | --- |
+| Thirteen product test/helper files still importing demo APIs | `apple-subscription-mapping`; Kinobaza contextual, deferred, localized-identity, movie-director-group, Slevin, Roman, Ukrainian-g suites; media-advice browser, diagnostics, group helper, pipeline and platform-UI. Separate runtime-wrapper imports from scenario/catalogue helpers first; do not delete research beneath them. |
+| Seven operator source consumers | Cascade comparison, control diagnostic, director-person diagnostic, Fockers control, practical series, predicted controls, URL diagnostics. Adapt current imports and reviewed-source fences separately; preserve pinned historical sources and credential lifecycle. |
+| Four compatibility fixture paths | Ten direct demo suites and two helper fixtures still use them; retain until those consumers migrate or are intentionally retired. Windows uses canonical data in its disposable copy. |
+| Six research-owned fixtures | `assisted-title-boundaries`, `mykola`, `discovery-launch`, `megogo-launch`, `motn-launch`, `tmdb-launch`. Evaluate reusable contract coverage separately from demo-specific launch adapters; keep supported launcher chains intact. |
+| Demo UI and Windows launchers | Thirteen public demo files and five launcher files, plus their browser/integration tests. Retire together only after the remaining useful contracts and copy manifests are handled. |
+| Ten demo documents and old SVG | Extract current contracts and repair links first; `docs/m4-media-advice.md` still links to `regional-card-proposal.md`. Runtime-boundary still compares the old logo bytes with `assets/icons/tmdb.svg`. |
+| Seven M4 migrations, operation SQL and recovery | Keep: schema/history, cap compatibility, ACL/RPC and recovery obligations are not pilot clutter. No removal is proposed in this stage. |
+
+Publication remains #235's allowlist: **62 static files**; root `test/`,
+research, scripts, docs, migrations, server code and configuration are not
+static output. Functions still bundle from the full checkout. The added
+fixture-closure audit fails on static, re-export or literal dynamic imports
+escaping the five-file test graph; the existing production audit still
+rejects any direct/transitive/dynamic `research` or `test` dependency.
+
+### Verification record
+
+Commands, final counts, automatic Preview identity and browser limitations
+are recorded below after executing the paired checks. All source transports
+in these checks are authored/injected; film-source HTTP and Tavily credits
+are **zero**. No live search, platform navigation, SQL, migration or manual
+deployment is part of this verification.

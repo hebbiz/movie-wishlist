@@ -10,8 +10,8 @@ import { buildEvidence } from '../scripts/stamp-media-advice-build.mjs';
 import { mediaRuntime } from '../netlify/lib/media-advice-runtime.mjs';
 import { runControlDiagnostic } from '../scripts/m4-control-diagnostic.mjs';
 import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs';
-import { markup, CARD } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
-import { IDS, motnData, detailsData } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
+import { IDS, motnData, detailsData } from './film-workflow.fixture.mjs';
 const film={id:'authored',tmdbId:IDS[0],imdbId:`tt${IDS[0]}`,identityTitle:'Вигаданий фільм',originalTitle:'Authored original',year:2001,directorCount:1,directorAliases:['Authored director'],titleAliases:['Вигаданий фільм','Authored original']};
 const response=html=>new Response(html,{headers:{'content-type':'text/html'}});
 test('MOTN missing/null/empty/non-UA/invalid/positive stay distinct in copied report, not Kinobaza claims',()=>{

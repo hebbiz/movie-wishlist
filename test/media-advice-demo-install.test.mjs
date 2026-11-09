@@ -22,6 +22,8 @@ const demo = ['assisted-kinobaza.mjs', 'config.mjs', 'discovery.mjs', 'held-out.
 const files = ['package.json', 'package-lock.json', 'research/grounded-answer-demo/package.json',
   ...runtime.map(name => `netlify/lib/${name}`), ...shared.map(name => `shared/${name}`),
   ...demo.map(name => `research/grounded-answer-demo/${name}`),
+  'test/kinobaza-html.fixture.mjs', 'test/kinobaza-localization.fixture.mjs',
+  'test/assisted-kinobaza.fixture.mjs',
   'research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs',
   'research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs'];
 

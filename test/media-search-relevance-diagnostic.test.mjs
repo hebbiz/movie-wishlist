@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
-import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
+import { markup } from './assisted-kinobaza.fixture.mjs';
 import { possibleIrrelevantSearch, safeSearchCorrelation, safePossibleIrrelevantSearch, safeSearchCardURL } from '../shared/media-search-relevance-diagnostic.mjs';
 
 const KEY = 'AUTHORED_PRIVATE_SEARCH_KEY', OTHER = 'AUTHORED_PRIVATE_OTHER_KEY';

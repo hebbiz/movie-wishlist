@@ -8,8 +8,8 @@ import { CONFIRMED_DIRECTOR_ALIASES, createDirectorAliasLookup, projectDirectorP
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs';
-import { CARD, markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
-import { IDS, detailsData, providersData, motnData } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
+import { IDS, detailsData, providersData, motnData } from './film-workflow.fixture.mjs';
 
 const PERSON = 999999;
 const record = (extra = {}) => ({ namespace: 'tmdb:person', personId: PERSON,

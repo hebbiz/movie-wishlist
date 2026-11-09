@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { markup } from '../research/grounded-answer-demo/test/assisted-kinobaza.fixture.mjs';
-import { detailsData, providersData, motnData, IDS } from '../research/grounded-answer-demo/test/film-workflow.fixture.mjs';
+import { markup } from './assisted-kinobaza.fixture.mjs';
+import { detailsData, providersData, motnData, IDS } from './film-workflow.fixture.mjs';
 
 // Authored transport/HTML only. This is not a historical source response or a
 // claim that a live source has supplied these deliberately unrelated cards.

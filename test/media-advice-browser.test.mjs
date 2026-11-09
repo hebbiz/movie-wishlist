@@ -5,11 +5,11 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { resolve, extname } from 'node:path';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
-import { FILMS } from '../research/grounded-answer-demo/config.mjs';
+import { SYNTHETIC_FILMS as FILMS } from './kinobaza-html.fixture.mjs';
 import { extractHtml } from '../research/grounded-answer-demo/html-source.mjs';
 import { composeDiscovery } from '../research/grounded-answer-demo/discovery.mjs';
-import { localizedMarkup, netflixAudioCatalogueBlock, paragraphBlock } from '../research/grounded-answer-demo/test/kinobaza-localization.fixture.mjs';
-import { recommendationCarousel } from '../research/grounded-answer-demo/test/recommendation-markup.fixture.mjs';
+import { localizedMarkup, netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
+import { recommendationCarousel } from './recommendation-markup.fixture.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { safeExtractionDiagnostic } from '../shared/media-advice-diagnostics.mjs';
 
