@@ -5,13 +5,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const publishDir = join(root, '.site-dist');
 
-// Keep the original URL paths: the logo is referenced by the advice UI and
+// Keep original public URL paths: product artwork lives under assets and
 // shared modules are imported directly by browser-side JavaScript. Server
 // functions and their source dependencies remain in the repository for bundling.
 const publicPaths = [
   'index.html', 'app.html', 'invite.html', 'app.js', 'styles.css',
   'service-worker.js', 'site.webmanifest', 'assets', 'shared', 'privacy', 'terms',
-  'research/grounded-answer-demo/public/tmdb-logo.svg',
 ];
 
 export function buildSite() {
