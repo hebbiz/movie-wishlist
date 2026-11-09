@@ -4,6 +4,42 @@ Current cleanup state: [local pilot retirement](#local-pilot-retirement--2026-11
 Stage 1–2.3 inventories and launch commands below are historical checkpoints,
 not instructions for running the retired demo in the current checkout.
 
+## Current operator scope — 2026-11-10
+
+At verified develop `890f3a9ada0bedcfc91898d7832fa6fa9ea4cfc5`, `scripts/`
+contains **two build tools and fourteen operator files**, not a current
+release-validation suite. The retained Windows credential/IPC tools are not
+the retired Windows/LAN demo launcher. Recovery tooling lives separately in
+`supabase/operations/`; the older structure table's broad “recovery workflows”
+label for `scripts/` does not relocate or replace that recovery chain.
+
+| Retained files | Purpose and present limitation |
+| --- | --- |
+| [`build-site.mjs`](../scripts/build-site.mjs), [`stamp-media-advice-build.mjs`](../scripts/stamp-media-advice-build.mjs) | Current publication build and develop-only attestation. These write generated output/stamp files; they are not read-only diagnostic commands. |
+| [`m4-control-credentials.mjs`](../scripts/m4-control-credentials.mjs), [`m4-url-diagnostics.mjs`](../scripts/m4-url-diagnostics.mjs) | Shared memory-only credential and sanitized address-analysis helpers used by controlled studies and their authored tests; not release validators themselves. |
+| [`m4-control-password-prompt.ps1`](../scripts/m4-control-password-prompt.ps1), [`m4-read-control-result.ps1`](../scripts/m4-read-control-result.ps1), [`m4-practical-session.ps1`](../scripts/m4-practical-session.ps1), [`m4-practical-request.ps1`](../scripts/m4-practical-request.ps1) | Explicit operator entrypoints, hidden credential input and local IPC/result handling. Preserve reviewed-checkout/ExpectedCommit fences and credential lifecycle; a working IPC test is not evidence of live source or server authorization behavior. |
+| [`m4-control-diagnostic.mjs`](../scripts/m4-control-diagnostic.mjs), [`m4-director-person-diagnostic.mjs`](../scripts/m4-director-person-diagnostic.mjs) | Fixed-film source/address and director-profile investigations. Their selected examples/projections are study-specific, not replacements for runtime identity gates or a general release checklist. |
+| [`m4-fockers-control.mjs`](../scripts/m4-fockers-control.mjs) | Historical cap10/cap12 studies, including the eight-film cap12 series and in-memory cap10 replay. The cap12 series omits `tmdb-providers` and `motn-title`, so its local maximum is ten source attempts, not an attested server cap12 ledger session. Its report explicitly says `serverLedgerCapAttested: false`. |
+| [`m4-practical-series.mjs`](../scripts/m4-practical-series.mjs) | Historical practical series: even the mode named `production-beta` passes `sourceCap: 10`. The name does not make this a validator for the current cap14/global-access release. |
+| [`m4-cascade-comparison.mjs`](../scripts/m4-cascade-comparison.mjs), [`m4-predicted-controls.mjs`](../scripts/m4-predicted-controls.mjs) | Historical Git-pinned comparisons and sanitized study replay/control. Preserve original commits, historical `research` paths, manifest hashes and reviewed-source fences; these paths refer to Git objects, not a missing current demo dependency. |
+| [`m4-pilot-page-inspection.mjs`](../scripts/m4-pilot-page-inspection.mjs), [`m4-profile-markup-inspection.mjs`](../scripts/m4-profile-markup-inspection.mjs) | Explicit bounded page/profile investigation tools. The first is a fixed three-card pilot inspector; the second inspects one profile's markup. Neither proves current end-to-end release readiness. |
+
+No operator is run automatically as a release prerequisite. A new live study
+needs an agreed film/target, reviewed source revision, source/credit/time
+budget and safe-output plan before credentials or HTTP are used. Never infer
+permission to repeat a live call from a missing result. Local authored tests
+and static publication checks are described separately in the [README](../README.md#build-and-test-commands).
+
+The current application remains cap14 with legacy cap8/10/12 compatibility;
+retaining these studies does not change that contract. For access, migration
+execution and recovery evidence use the [current runbook](m4-media-advice.md),
+not an old pilot activation recipe. Historical SHA prerequisites below remain
+unchanged, including the frozen `42b4b849…` baseline and the operator comparison
+pins. [Physical-media work](m4-physical-media-handoff.md) remains deferred and
+recoverable from Git; none of these streaming studies integrates it into beta.
+
+## Historical cleanup checkpoints
+
 Stage 1 separates the code used by the deployed Function from the research
 demo. It does not retire the demo, change source rules, clean deployment output,
 apply SQL, or authorize a release. The baseline is committed develop
