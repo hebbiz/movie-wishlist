@@ -42,7 +42,7 @@ git switch -c codex/<topic> origin/main
    and explicit non-goals.
 4. Stop in review-ready state until the PR is approved.
 
-The v1.3.1 preparation PR must not merge itself, create a tag or publish a
+The release-preparation PR must not merge itself, create a tag or publish a
 GitHub Release.
 
 ## Release completion
@@ -54,7 +54,8 @@ After review and validation:
    path, if available, and verify any separately required Supabase operations.
 3. Merge `develop` into `main` without rewriting history.
 4. Confirm the production deploy.
-5. Create annotated tag `v1.3.1` on the final release commit.
+5. Create the annotated tag for the approved version on the final release
+   commit (`v1.4.0` for the current preparation, not yet created).
 6. Publish the prepared GitHub Release notes.
 7. Synchronize `develop` with the final `main` history and verify identical
    trees.
