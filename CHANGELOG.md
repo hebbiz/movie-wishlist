@@ -4,6 +4,47 @@ This file records user-visible and operational changes to Movie Wishlist. The
 v1.3.1 section is derived from the repository diff between `v1.3.0` and the
 reviewed production baseline.
 
+## [1.4.0]
+
+Prepared on **2026-11-11**. At that time, the versioned tag and GitHub Release
+had not yet been created, and no publication date was recorded. The limited
+streaming beta was already in production following
+[#234](https://github.com/hebbiz/movie-wishlist/pull/234); this documentation and
+version-metadata PR does not deploy it again.
+
+### Added
+
+- Added **«Поради носіїв Миколи»** in limited beta: discovery of digital offers
+  in the Ukrainian context, source-reported Ukrainian audio/subtitle information,
+  service/link selection and previewed transfer of the exact selected URL to a
+  movie card. Ordinary Save and existing editing rights remain separate.
+- Mykola himself and his other movie-selection/recommendation flows predate
+  this release; v1.4.0 does not introduce them for the first time.
+
+### Scope and evidence
+
+- Availability and language information represents source claims, not viewing
+  entitlement, guaranteed availability or independently verified tracks for an
+  individual offer. Language/access conditions do not transfer automatically
+  between unconfirmed offers.
+- The owner confirmed the production **«Форсаж 6» / Fast & Furious 6** flow:
+  advice, link transfer, card Save and the link's presence on reopening edit.
+  This is not an independent or exhaustive source/device/scenario test.
+- Physical-media search is deferred. The pilot's decisions, reported results
+  and evidence limits remain in [the handoff](docs/m4-physical-media-handoff.md).
+
+### Known limits and follow-up candidates
+
+- Production diagnostics show `Commit: unknown`; the source merge is not a
+  runtime-commit attestation from that report.
+- Full restore verification remains `verified:false` due to ACL/schema
+  differences. Matching M4 comparisons do not establish complete recovery.
+- Advice Room access policy requires separate work, not a change made by this
+  release-preparation PR.
+- Technical debt may be considered for a later release, tentatively 1.4.1;
+  no scope or delivery date is committed.
+- Release notes: [docs/releases/1.4.0/README.md](docs/releases/1.4.0/README.md).
+
 ## [1.3.1] - 2026-10-17
 
 ### Added
