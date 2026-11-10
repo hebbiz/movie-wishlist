@@ -15,6 +15,17 @@ temporary public software listed below. Restore real data only from the
 **explicitly approved checkpoint** after all safety gates pass. Rechecking an
 existing archive does not require another production export or password.
 
+Within an already approved Movie Wishlist local backup/restore test, Codex may
+reuse that permission to fetch **missing listed components**, verify their
+sources/versions/hashes, extract portable binaries, compile the required real
+extension and run public-software-only preparation/smoke checks in the guarded
+disposable root. Do not ask the owner to reapprove each such necessary step or
+each failed public-only preparation attempt. This is not blanket permission for
+unlisted tools, a changed pipeline, additional real-data restore attempts or a
+different checkpoint. Stop for an unverified component or failed safety gate.
+Platform sandbox/elevation approvals may still be required; this project
+permission neither suppresses those prompts nor bypasses safe credential entry.
+
 Separate owner decisions are required for production restore, migrations or
 other production data/schema/rights/flag/configuration changes; external service
 or Storage-byte recovery; new services, cloud/paid resources, permanent software
@@ -120,6 +131,96 @@ OCI **layer 50**, with the driver's pinned digest, and the pinned Linux17.11
 client package. Do not substitute an arbitrary locale or image pg_net0.19.5
 for the source's0.20.4. A failed prepare is not permission to stage data.
 
+### Recorded preparation recovery — 2026-11-10
+
+**This is a record of the actual successful continuation, not a verified
+end-to-end fresh-machine preparation recipe.** The original temporary VM and
+software root were cleaned up after the test. The public console wrapper/smoke
+used for the continuation were task-local, checkpoint/path-bound code, not
+committed operator entry points. No new VM, software download or real-data
+restore was run for the review documentation. A future fresh preparation must
+re-establish every gate; do not treat this record or `inspect` alone as a PASS.
+
+The inputs recorded for that run were:
+
+| Input | Recorded identity / verification |
+| --- | --- |
+| QEMU / extraction | Publisher Windows build `qemu-w64-setup-20260811`; `.sha512` from `qemu.weilnetz.de` verified before extraction with the existing 7-Zip 18.01. The installer was **not executed**. The retained asset manifest, not this document, holds its full digest. |
+| Alpine | Official `alpine-virt-3.24.4-x86_64.iso`, verified against its official SHA256. `latest-stable` was resolved once; it is not an immutable version pin. The exact earlier October Alpine version was not recovered or claimed. |
+| PostgreSQL image | `supabase/postgres:17.6.1.054`, manifest `sha256:e884cde9f5594ddb30ebec888bd236d128eaf9c9b48cc864d8fa3d27a6c6c6bc`; all 53 layer digests verified. `umoci` 0.6.0 was checked against the official GitHub release asset digest. No image entrypoint or Docker was used. |
+| pg_net source | Official commit `698fb055f666366a78c112b0578b0a5652ddbcfa`, archive SHA256 `e082e9c3c1eb2315c000f241baf782564c9f926b22cc41c848bb33dd0c8758f8`. |
+| curl headers | Official curl 8.4.0 archive SHA256 `16c62a9c4af0f703d28bda6d7bbf37ba47055ad3414d70dec63e2e6336f2a82d`. |
+| Aligned Linux client | Official PGDG `postgresql-client-17_17.11-1.pgdg24.04+2_amd64.deb`, SHA256 `b3b071b67a814a382516d6f6241b529c52f909672457e2f48083acce047b634f`. |
+| Locale | `usr/lib/locale/locale-archive` extracted from verified OCI layer 50; SHA256 `fe8f499312f54f3e25df424a1eca6f464a458a4205dd42d0f8ebd21a7a835c1b`. |
+
+The source/client/locale hashes are enforced by the existing build/restore
+scripts. They are payload-integrity pins; the official HTTPS source plus these
+checks is **not** a claim of PGP/signature attestation for every component.
+Neither the floating Alpine discovery nor directory-listing client selection
+is independently version-frozen by its downloader; recheck the resolved inputs
+against the retained record before accepting them.
+
+The actual order and recovery decisions were:
+
+1. Create the bounded private root, verify public-only/stopped-VM guards, fetch
+   and verify software, extract QEMU/Alpine boot files, assemble OCI layout,
+   recover the pinned locale/client, and create the temporary 12 GiB QCOW2.
+   Build the public ISO using Windows IMAPI. Because ISO preparation moves
+   `share` to `software`, fetch the pg_net/curl inputs into the **new** `share`.
+2. `prepare` reached its 20-minute unpack deadline, returned failure and shut
+   down the VM. Do not relabel it successful or blindly rerun it: that mode
+   contains `mkfs.ext4 -F` for the disposable disk. `inspect` then confirmed
+   the available rootfs had PG17.6, required controls and real compiler/headers;
+   this established only the usable inspected subset, **not complete OCI
+   unpack** or readiness to stage a backup.
+3. The real pg_net 0.20.4 build installed its module/control/SQL before the
+   build helper failed to find the other native aliases. Its `find -type f
+   -name <module>.so` fallback missed unversioned symlinks to versioned modules
+   in the pinned image. The public continuation used the same explicit alias
+   rule as
+   [`recovery-guest-inside.sh`](../supabase/operations/recovery-guest-inside.sh):
+   for `pg_cron`, `pg_net`, `supabase_vault`, `pg_stat_statements`, `pgcrypto`,
+   `uuid-ossp`, `plpgsql`, preserve each existing `$(pg_config --pkglibdir)/`
+   module. Only if absent, require `test -f` (a resolving real regular file,
+   possibly via a symlink) at
+   `/nix/store/1h5zql3fk1aan2fpbkhyxkc9bp0l8anp-postgresql-and-plugins-17.6/lib/<module>.so`
+   and link that exact file. Never replace the newly built pg_net with the
+   image's stock 0.19.5. `ldd` on **all seven** resolved modules had to succeed
+   without `not found`; pg_net control had to say 0.20.4 and its binary hash
+   was recorded. No stub extension or ignored native-load error was used.
+4. Reusing writable-FAT output files caused QEMU's
+   `vvfat.c:get_cluster_count_for_direntry` assertion. An earlier guest marker
+   was not accepted when the VM driver failed. With QEMU stopped, public-only
+   guards were checked again; the exact `share` child was moved to
+   `public-preparation-history` **within the same guarded root**, and an empty
+   `share` was created. Preserve failed logs, validate both exact paths and
+   refuse a pre-existing destination/reparse point; this is not a generic
+   directory move or a post-staging recovery procedure.
+5. The task-local public smoke used fresh output names and a new empty cluster
+   `/var/lib/postgresql/recovery-software-smoke-2` (refusing an existing path).
+   It required all seven real module checks above, no TCP, a mode0700 guest
+   socket, host authentication rejected, cron launch off, and pg_net confined
+   to untouched `template1` with batch size0. It tested those actual settings,
+   stopped PostgreSQL via an exit trap, then required both the smoke command
+   to return0 **and the VM driver to exit0**. This fresh-share smoke passed.
+   No checkpoint or private staging inputs were present in that smoke.
+
+Only after that public preparation passed did the separately authorized
+real-data staging/restore occur. The restore driver itself already creates a
+fresh `attempt-restore-<timestamp>` share for each actual attempt. Do not reuse
+an old writable-FAT output share, and do not invoke public console/preparation
+after private staging.
+
+**Remaining reproducibility gap:** the repository still lacks a guarded,
+single public-preparation continuation that automates the inspected partial
+unpack decision, symlink-aware alias repair and fresh-share smoke above.
+`prepare` → `inspect` → `build-pgnet` alone is therefore not a verified complete
+route on a new root; the current build helper still has the symlink-sensitive
+fallback. Before the next real-data restore, either prepare a reviewed minimal
+public-only continuation and validate it on public/empty-PG inputs, or stop and
+report this blocker. Do not rerun real data to prove the documentation or relax
+hashes/isolation/native-extension requirements to work around it.
+
 ## 3. Mandatory gates before plaintext staging
 
 1. Check checkpoint name, project, snapshot time, original manifest/key pins,
@@ -219,6 +320,125 @@ grantor. Retain before/after evidence and rerun native ACL comparisons. Never
 apply it to production, add broader grants, or relabel unclassified schema
 differences as formatting. Keep exact failures alongside any narrower semantic
 comparison or scope-qualified conclusion.
+
+### Separate, reproducible M4 archived-replay comparison
+
+[`recovery-m4-compare.ps1`](../supabase/operations/recovery-m4-compare.ps1) is
+an **offline supplemental check**, not a replacement for `recovery-local.ps1
+-Mode verify`. Run it after that full verifier has written its evidence and
+stopped the VM, **before cleanup**, even when the full verifier reports false.
+It neither starts PostgreSQL/QEMU nor executes SQL, contacts a source, applies
+an ACL supplement or changes a failed full result.
+
+Exact inputs for one attempt:
+
+| Input | Producer / binding |
+| --- | --- |
+| Explicit checkpoint, independently recorded original manifest and DPAPI-key SHA256 | Existing checkpoint/path/private-ACL/reparse guards; never auto-select latest backup. |
+| `$vmRoot/latest-restore.json` | Actual VM driver; `share` must be a single `attempt-restore-<digits>` child of the guarded, stopped root. |
+| That child's `source-schema.sql`, `source-data.sql` | PG17.11 `pg_restore --schema-only` / `--data-only` from the authenticated custom archive, generated by the staging worker, not repository migrations. |
+| Same child's `target-schema.sql`, `target-data.sql` | PG17.11 `pg_dump --schema-only` / `--data-only` of the actual isolated PG17.6 target, generated by `recovery-guest-inside.sh`. |
+| Same child's `acl-comparison.jsonl` | Native comparisons generated from the captured source inventory; must equal the entry in the authenticated full verifier's `-details.aesgcm`. |
+| Explicit `restore-<timestamp>.status.json` and its independently recorded SHA256 | Full verifier result; `actualRestore:true` and boolean `verified` required, including **false**. No automatic choice of a later status. |
+| Matching `restore-<timestamp>-comparisons.aesgcm` and `-details.aesgcm` | Authenticate with the persisted checkpoint key before decryption. Both schema fingerprints and the **entire** source/target COPY maps must bind the four SQL inputs to this full comparison; the comparison timestamp must match. |
+
+Example invocation from a reviewed checkout (variables come from the private
+operation record, not newly trusted hashes of arbitrary replacement files):
+
+```powershell
+& .\supabase\operations\recovery-m4-compare.ps1 -VmRoot $vmRoot `
+  -Checkpoint $checkpoint -ManifestSha256 $manifestSha256 -KeySha256 $keySha256 `
+  -FullStatusName $fullStatusName -FullStatusSha256 $fullStatusSha256
+```
+
+For the historical November10 run the full status name was
+`restore-2026-11-10T10-06-31-929Z.status.json`, and the attempt was selected by
+that run's `latest-restore.json`. **Its temporary root is deleted**; the example
+is not a command to recreate a missing historical target or rerun real data.
+Missing inputs, pin mismatch, unknown object serialization, incomplete/duplicate
+COPY or failed input binding are refusals, not skipped assertions or a fallback
+to the current implementation.
+
+The reviewed contract in
+[`recovery-m4-compare.mjs`](../supabase/operations/recovery-m4-compare.mjs)
+explicitly identifies the seven tables, fourteen exact function signatures,
+eight triggers (table/function, timing, event-set, row/statement and UPDATE
+columns), constraints/index, comments and ACL/RLS blocks of the seven-migration
+global-access baseline. It requires the complete expected inventory on **both**
+sides; two equally truncated inputs do not pass. The observed 79 is not merely
+a target total:
+
+| M4 SQL block kind | Expected count |
+| --- | ---: |
+| Private SCHEMA | 1 |
+| ACL: schema + seven tables + fourteen functions | 22 |
+| TABLE / FUNCTION | 7 / 14 |
+| COMMENT / ROW SECURITY | 6 / 7 |
+| CONSTRAINT / FK CONSTRAINT / INDEX | 8 / 5 / 1 |
+| TRIGGER | 8 |
+| Total | 79 |
+
+All selected source/target headers, owners and block bodies must match. Only
+existing pg_dump serialization handling is reused: CRLF/dump-edge delimiters,
+ACL statement order and boundary SET relocation whose exact values are compared
+separately. FUNCTION ACL/COMMENT identities may spell argument names as well
+as UUID/text types; their exact archived source/target SQL still must match.
+Duplicate ownerless identities are rejected. No function bodies, grants,
+grantors, grant options, policies or owner changes are normalized away.
+
+Additional checks require default8, cap8/10/12/14, attempts <= cap, nullable
+global group, seven ENABLE RLS blocks, four RPC ACLs (PUBLIC revoked; only
+service_role and the trusted owning role may be granted), seven distinct native
+table-ACL matches plus the private-schema ACL, exact column headers and sorted
+COPY-record fingerprints preserving duplicates, whole migration-history payload
+equality and each of the seven versions exactly once. The version is read by
+column name, not assumed to occupy the first field. This proves archive replay
+fidelity within the explicit contract, **not an independent source audit of
+function/column ACL or `pg_init_privs`**, nor execution of M4 business actions.
+A future schema change needs a reviewed contract update, not a relaxed test.
+
+Stdout contains only aggregate checks, `m4ArchivedReplayMatches`, the unchanged
+`fullVerifierVerified` value and **`wholeProjectRecoveryEstablished:false`**.
+Supplemental exit0 means only that the M4 checks passed. It never writes a
+`verified:true` replacement or changes the full status. A distinct
+`m4-replay-<timestamp>-<id>` prefix cannot shadow `restore-*.status.json` in the
+general audit. Its detailed evidence is AES-GCM encrypted/readback-authenticated
+beside the checkpoint; exact inputs, input hashes and the linked full proof are
+retained for subsequent offline comparison without another VM. These inputs
+include private SQL/data: never commit/upload them or print them in a report.
+The resulting cipher is bounded to the existing 32 MiB decrypt-reader limit;
+larger replay evidence is refused, not silently truncated. Only authored
+fixtures are used in the repository tests. After-cleanup replay means a reviewed
+authenticated decrypt into memory and calls to `assertM4InputBinding` / `compareM4`
+with those retained inputs, as demonstrated in the wrapper integration test.
+The PowerShell operator entry above still requires staging: it has **no
+after-cleanup replay mode**. Do not feed decrypted private SQL through shell
+arguments, stdout or an unguarded temporary file to work around that boundary.
+
+Reproducible **synthetic**, not real-source/restore, checks:
+
+```powershell
+node --test tests/recovery-m4-compare.test.mjs
+pwsh -NoProfile -File tests/recovery-m4-compare-wrapper.test.ps1
+```
+
+The first suite covers all79 identities plus omissions on both sides, wrong
+overloads/owners/triggers, ACL/RLS/ledger/data/history contradictions and tampered
+full-proof bindings. The Windows suite creates an unrelated private temporary
+fixture, synthetic DPAPI key/ciphers and full `verified:false` evidence; runs
+the exact wrapper; authenticates and replays its encrypted inputs; verifies
+pin/tamper refusals, no full-status shadowing or mutation; then deletes only
+its authored GUID directory. It does not read the actual checkpoint.
+
+**Historical replay limitation:** the November10 79-block result came from the
+task-local comparator while its source/target SQL existed. Its encrypted review
+retains difference bodies, aggregate M4 checks and full-verifier fingerprints,
+but not all matching block bodies or target data SQL. The new stricter supported
+comparator is tested on synthetic inputs; it has **not** been rerun against that
+deleted historical staging. Do not represent a synthetic79 PASS or authenticated
+historical summary as that rerun. Repeating real-data restore solely to fill this
+documentation gap is not justified or performed here. Future approved restore
+tests should run this supplemental check before cleanup to retain replay inputs.
 
 ## 5. Evidence, shutdown and cleanup
 
