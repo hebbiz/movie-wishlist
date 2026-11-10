@@ -6,7 +6,8 @@ of personal recommendations, and offers a user-scoped Social Advice catalogue
 plus Mykola's guided movie selection flow.
 
 Version **v1.3.1** stabilizes the production state that followed v1.3.0 without
-introducing a new product milestone.
+introducing a new product milestone. That is the historical production baseline,
+not a claim that the M4 streaming beta on `develop` has been released.
 
 ## Product boundaries
 
@@ -24,11 +25,15 @@ introducing a new product milestone.
 - installable PWA with a service worker and Web Push;
 - Supabase PostgreSQL, Auth, RLS, RPC, Database Webhooks and Edge Functions;
 - Netlify hosting and Netlify Functions;
-- TMDb lookup/search integration.
+- TMDb lookup/search integration;
+- Mykola streaming-media advice through server-side TMDb, Movie of the Night
+  (MOTN), Tavily and Kinobaza adapters.
 
 The browser loads `@supabase/supabase-js` from jsDelivr. `package.json` records
-the same runtime library as a dependency, but the repository currently defines
-no build, start or test scripts.
+that library and the server HTML parser `parse5`; the locked development
+dependency PGlite supports local database-contract tests. The package exposes
+`test:m4`, while Netlify invokes the build scripts directly rather than an
+`npm run build` script. There is no `npm start` script.
 
 ## Repository map
 
@@ -38,25 +43,85 @@ no build, start or test scripts.
 | `app.html`, `app.js`, `styles.css` | authenticated application UI and client logic |
 | `invite.html` | invitation landing flow |
 | `service-worker.js`, `site.webmanifest` | PWA installation, push and notification navigation |
-| `assets/` | icons, logos and preview assets |
-| `netlify/functions/` | TMDb search/lookup and invitation preview functions |
+| `assets/` | artwork, icons and browser media-advice modules; TMDb logo at `assets/icons/tmdb.svg` |
+| `shared/` | pure identity, diagnostics and URL-policy modules shared by browser/server consumers |
+| `netlify/functions/` | `movie-search.js`, `movie-lookup.js`, `invite-preview.js` and `media-advice.mjs` endpoints |
+| `netlify/lib/` | media-advice orchestration, source adapters, extraction, identity/profile verification and request-budget helpers |
+| `scripts/` | two build scripts plus explicit operator/controlled-study tools; not an automatic release-validation suite |
+| `test/` | M4 product, server, identity, access, browser, operator and historical-parity tests; canonical authored fixtures |
+| `tests/` | static-publication and recovery-tool tests, separate from `npm run test:m4` |
 | `supabase/functions/` | movie-activity and Social Advice push delivery |
 | `supabase/migrations/` | ordered database changes; repository presence does not prove deployment |
+| `supabase/operations/` | scoped preflight, activation/kill-switch and recovery tools; inspect their version-specific runbooks before use |
+| `privacy/`, `terms/` | public legal pages |
 | `docs/releases/` | immutable historical release archives and prepared release notes |
 | `docs/baselines/` | current repository/deployment evidence records |
+| `docs/m4-*.md` | current M4 status, dated research/operation records, cleanup inventory and physical-media handoff |
+| `.site-dist/` | generated Netlify static publish directory, not the source checkout or Functions source |
+
+The Windows/LAN/Termius demo under `research/grounded-answer-demo` was retired
+in [#240](https://github.com/hebbiz/movie-wishlist/pull/240). It is not a supported
+installation path. Useful fixtures live in `test/`; frozen historical comparisons
+read pinned Git objects rather than importing a current demo. The
+[cleanup inventory](docs/m4-runtime-separation.md) records the #235–240 stages
+and remaining operator/history dependencies. Physical-edition research is
+preserved in the [handoff](docs/m4-physical-media-handoff.md), not enabled in
+the streaming product.
 
 ## Local use
 
-This repository has no canonical local command or build step. For static UI
-inspection, serve the repository root over HTTP and open `/` or `/app.html`.
-Opening files directly with `file://` is not equivalent because the application
-uses a service worker, absolute paths and `/.netlify/functions/*` endpoints.
+Run commands from the repository root with Node.js/npm available. Install the
+root lockfile, including the parser required by the runtime and historical tests:
+
+```sh
+npm ci --ignore-scripts --no-audit --no-fund
+node scripts/build-site.mjs
+```
+
+The build deletes and recreates `.site-dist`; do not use it as a storage folder.
+For static UI inspection, serve `.site-dist` over HTTP and open `/` or
+`/app.html`. Opening files directly with `file://` is not equivalent because
+the application uses a service worker, absolute paths and
+`/.netlify/functions/*` endpoints.
 
 A generic static server does not emulate Netlify Functions, Supabase Auth,
 database RPCs, Edge Functions or Web Push. Full end-to-end behavior therefore
-requires compatible external services and their configured environments. No
-local database bootstrap or automated test harness is defined in this
-repository.
+requires compatible external services and their configured environments. A
+successful static build is not evidence of live source access, authorization or
+production readiness. These commands do not install or migrate a Supabase project.
+
+### Build and test commands
+
+`test/` currently contains 81 Node test entry files and 12 authored fixture
+modules. `tests/` contains three Node test files and two Windows PowerShell test
+scripts. They are deliberately separate; running one directory does not cover
+the other.
+
+| Command | Scope and limitations |
+| --- | --- |
+| `npm run test:m4` | Runs `node --test --test-concurrency=1 test/*.test.mjs`; includes controlled source fixtures and local PGlite/SQL contract tests, not migrations against the target database. Native/browser scenarios have additional prerequisites and may skip. |
+| `node --test tests/build-site.test.mjs` | Builds/rebuilds `.site-dist`, checks the public allowlist, browser dependencies and removal of stale output. |
+| `node --test tests/recovery-archive.test.mjs tests/recovery-local.test.mjs` | Authored recovery-tool fixtures and temporary local files, not a restore of the current M4 database. |
+| `pwsh -NoProfile -File tests/recovery-password-prompt.test.ps1` | Windows-only authored credential/ACL handling test; no real credentials or database connection. |
+| `pwsh -NoProfile -File tests/recovery-password-prompt.native.test.ps1` | Explicit native Windows test of an empty local PostgreSQL 17 cluster; requires the already-installed PG 17.11 binaries at the path declared in that script. Not a target-database restore or an installer. |
+| `node --test --test-concurrency=1 test/media-advice-browser.test.mjs test/media-advice-apple-subscription-browser.test.mjs` | Controlled browser scenarios; set `PLAYWRIGHT_MODULE_PATH` to an existing Playwright module and optionally `PLAYWRIGHT_CHANNEL` for an installed browser. These fixtures are not live source checks or a physical iPhone test. |
+| `node --test --test-concurrency=1 test/media-advice-runtime-parity.test.mjs test/media-advice-fixture-parity.test.mjs test/media-advice-history.test.mjs` | Frozen baseline and fixture/history checks; the pinned historical Git objects must exist locally. |
+
+For frozen runtime parity the fixed baseline is
+`42b4b849d77281e1660701500c7bba9e6ec44b02`. If the test reports it missing,
+explicitly obtain that history and rerun the test:
+
+```sh
+git fetch origin 42b4b849d77281e1660701500c7bba9e6ec44b02
+node --test test/media-advice-runtime-parity.test.mjs
+```
+
+For a shallow clone, `git fetch --unshallow origin` is another explicit option.
+The tests neither auto-fetch nor silently substitute current runtime code.
+Some operator/history tests require additional pinned commits listed in the
+[inventory and historical test instructions](docs/m4-runtime-separation.md).
+Do not interpret skipped prerequisites as passed scenarios. Test results must
+state the actual commands, skips and whether only authored fixtures were used.
 
 ## Environment configuration
 
@@ -66,9 +131,18 @@ committed to the repository.
 ### Netlify Functions
 
 - `TMDB_API_KEY` — used by movie search and IMDb-based lookup.
-- `SUPABASE_URL` — used by the invitation preview function.
+- `SUPABASE_URL` — used by invitation preview and server-side media advice.
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only credential used by the invitation
-  preview function.
+  preview and media-advice functions; never expose it to the browser.
+- `TMDB_READ_ACCESS_TOKEN` — TMDb identity/details/provider data for media advice
+  (distinct from the search/lookup `TMDB_API_KEY`).
+- `MOTN_API_KEY` — Movie of the Night data for media advice.
+- `TAVILY_API_KEY` — bounded Kinobaza candidate discovery for media advice.
+
+Production, `develop` branch deploys and Deploy Previews have separate Netlify
+environment contexts. Required values must be available to the relevant
+Functions context; a successful preview build alone does not prove this. This
+README lists variable names, not a verification of any live context or value.
 
 ### Supabase Edge Functions
 
@@ -86,15 +160,27 @@ for the server-only values above.
 
 ## Deployment
 
-The release workflow treats `main` as the production source branch and
-`develop` as the integration branch. The owner confirmed that the changes in
-this baseline were published through Netlify and work in production, but the
-exact deployed commit and live branch-deploy settings were not independently
-verified. Database migrations and Supabase Edge Functions are deployed
-separately from the static frontend. The repository does not contain a
-`netlify.toml` or an infrastructure-as-code record of the live Netlify/Supabase
-configuration, so deployment status must be verified in those services rather
-than inferred from Git alone.
+The release workflow treats `main` as production and `develop` as integration.
+[`netlify.toml`](netlify.toml) runs `node scripts/build-site.mjs` and publishes
+only `.site-dist`. Its `develop` context first runs
+`node scripts/stamp-media-advice-build.mjs`, then the same publication build.
+The stamp is deliberately attested only for a matching Netlify `develop`
+branch deploy; local, Preview and Production builds do not gain an attested
+commit merely by running the script. Netlify-provided build metadata names are
+`NETLIFY`, `CONTEXT`, `BRANCH`, `COMMIT_REF` and `DEPLOY_ID`.
+
+The static allowlist retains the seven root browser/PWA files, `assets/`,
+`shared/`, `privacy/` and `terms/`, excluding Markdown provenance files. It
+does not publish documentation, research, server code, tests, scripts,
+migrations or configuration. All four Netlify Functions and their dependencies
+remain in the full checkout for Functions bundling, outside the static publish
+directory. TMDb attribution continues to use `/assets/icons/tmdb.svg`.
+
+Database migrations and Supabase Edge Functions are deployed separately. Git
+contents and a successful build do not prove which schema, secrets, permissions
+or production code are live. Check the relevant dated execution evidence and
+target preflight before any separately authorized operation; this document is
+not permission to activate, migrate, recover or deploy.
 
 See [Git workflow](docs/git-workflow.md) for the branch, PR, release and rollback
 process.
@@ -102,10 +188,66 @@ process.
 ## Documentation
 
 - [Changelog](CHANGELOG.md)
+- [Local database backup/restore playbook and safety boundaries](docs/recovery-playbook.md)
 - [v1.3.1 baseline record](docs/baselines/v1.3.1.md)
 - [v1.3.1 release notes](docs/releases/1.3.1/README.md)
 - [v1.3.0 release archive](docs/releases/1.3/README.md)
 - [v1.2 release archive](docs/releases/1.2/README.md)
 
-`MW-FUT-01` and `MW-FUT-02` remain Discovery items. They are not part of the
-implemented or documented v1.3.1 scope.
+`MW-FUT-01`/M4 streaming advice is implemented on `develop`, separately from
+the historical v1.3.1 production scope. Physical search remains deferred.
+
+### Current M4 status and operating boundaries
+
+- [M4 status, runbook and dated evidence](docs/m4-media-advice.md) distinguish
+  present contracts from original pre-install/pilot plans. The current resolver
+  retains two bounded Basic Tavily searches, then one Advanced `exact_match`
+  reserve using original title/year, then at most one unread predicted title
+  URL. Search results and predicted URLs are candidates, never identity proof;
+  the Kinobaza `/search` fallback is not used. Current cap14 and legacy
+  cap8/10/12 ledger contracts, deadlines and no-automatic-retry rules remain
+  distinct from historical local study budgets.
+- The [personal feature-flag contract](docs/m4-media-advice.md#actual-region-transitions-and-personal-overrides--2026-11-08)
+  requires global Beta plus the user's own `mykola_media_advice` flag. Capability
+  preparation happens at authenticated app initialization, independently of
+  a film, group or group role. Actual region changes synchronize the flag;
+  writing the same region does not overwrite a personal override. Diagnostics
+  and normal transfer/save editing rights remain separate.
+- **Dated execution, not a fresh target check:** the
+  [#233 execution report](https://github.com/hebbiz/movie-wishlist/pull/233)
+  records `20261108185237_media_advice_global_access.sql` applied once at
+  **2026-11-08 22:26:33 UTC**, with postchecks at 22:28:01 UTC. Older
+  “prepared/unapplied” checkpoints describe the state before that operation.
+  The report verified protected-copy readback/integrity, not an actual database
+  restore. It is scoped M4 recovery evidence, not proof of a full-project or
+  current-state restore; no database state is rechecked by this README update.
+- TMDb/MOTN/Kinobaza availability and language rows are source claims, not
+  entitlement or an independent platform-track check. URL grouping does not
+  authorize copying language or access conditions between unconfirmed offers.
+  Source-use permissions and release/live validation remain separate decisions.
+- [Runtime separation, inventory and operator scope](docs/m4-runtime-separation.md)
+  explain why historical cap10/cap12 studies and film-specific diagnostics are
+  retained, but are not current release validators. Do not run them with live
+  credentials merely because a historical command is documented.
+- [Physical-media handoff](docs/m4-physical-media-handoff.md) preserves the
+  PoC's decisions, owner-reported evidence and Git recovery references for
+  future work; it is not a supported current demo or a streaming-beta feature.
+
+### Historical M4 checkpoints
+
+These dated records retain earlier behavior, limits and evidence. They are not
+instructions to replay activation, recover a database or recreate live searches:
+
+- [Same-document return state and expiry](docs/m4-media-advice.md#same-document-m4-return-state--2026-10-23)
+- [Pilot dialog, grouped variants and form-session memory](docs/m4-media-advice.md#mykola-media-dialog-and-form-session-lifetime--2026-10-28)
+- [Pilot diagnostics and bounded controls](docs/m4-media-advice.md#pilot-diagnostics-and-bounded-controls--2026-10-23)
+- [Title/year search checkpoint](docs/m4-media-advice.md#titleyear-oriented-kinobaza-search--2026-10-23)
+- [Person-level director crosswalk](docs/m4-media-advice.md#person-level-director-alias-crosswalk--2026-10-23)
+- [Autonomous five-film iteration](docs/m4-media-advice.md#autonomous-five-film-resolver-iteration--2026-10-23)
+- [Five-film automatic results](docs/m4-media-advice.md#five-film-automatic-results--2026-10-24)
+- [Original activation plan (not the latest execution state)](docs/m4-media-advice.md#activation--operation-plan-not-executed)
+- [UA Beta/private diagnostics checkpoint](docs/m4-media-advice.md#ua-beta-access-and-private-diagnostics--2026-10-31)
+- [Beta/Tavily integration](docs/m4-media-advice.md#beta-and-tavily-integration--2026-11-01)
+- [Three-film retrieval follow-up](docs/m4-media-advice.md#three-film-pilot-retrieval-follow-up--2026-10-28)
+- [Tavily replacement checkpoint](docs/m4-media-advice.md#tavily-search-replacement-2026-10-21)
+- [Second-search checkpoint](docs/m4-media-advice.md#tavily-only-alternative-search--2026-10-31)

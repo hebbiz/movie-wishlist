@@ -1,0 +1,101 @@
+import { createClient } from '@supabase/supabase-js';
+import { discoverMedia } from '../lib/media-advice-service.mjs';
+import { createKinobazaResolver } from '../lib/kinobaza-resolver.mjs';
+import { createDeadline, HandlerDeadline } from '../lib/media-advice-deadline.mjs';
+import { mediaRuntime } from '../lib/media-advice-runtime.mjs';
+import { mediaCapabilities, productMediaResult } from '../lib/media-advice-response.mjs';
+const uuid = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+const reply = (status, payload) => new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
+
+export function createMediaAdviceHandler({ client, env, run = discoverMedia, fetchImpl = fetch, resolver, deadlineOptions } = {}) {
+  return async (request, context) => {
+    const deadline = createDeadline(deadlineOptions);
+    if (request.method !== 'POST') return reply(405, { status: 'method-not-allowed' });
+    const origin = request.headers.get('origin');
+    if (!origin || origin !== new URL(request.url).origin || request.headers.get('sec-fetch-site') === 'cross-site') return reply(403, { status: 'origin-denied' });
+    if (!/^application\/json(?:;|$)/i.test(request.headers.get('content-type') ?? '') || Number(request.headers.get('content-length')) > 4096) return reply(400, { status: 'invalid-request' });
+    let data;
+    try {
+      data = await deadline.wait(async signal => {
+        const reader = request.body?.getReader(); if (!reader) throw Error();
+        const cancel = () => { void reader.cancel().catch(() => {}); };
+        signal.addEventListener('abort', cancel, { once: true });
+        try {
+          const chunks = []; let bytes = 0;
+          for (;;) { const part = await reader.read(); if (part.done) break; bytes += part.value.byteLength; if (bytes > 4096) { cancel(); throw Error(); } chunks.push(part.value); }
+          return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes)));
+        } finally { signal.removeEventListener('abort', cancel); }
+      });
+    } catch (error) { return reply(error instanceof HandlerDeadline ? 504 : 400, { status: error instanceof HandlerDeadline ? 'handler-deadline' : 'invalid-request' }); }
+    const globalCapability = ['availability', 'diagnostic-capability'].includes(data?.action);
+    const editCapability = ['capability', 'apply-capability'].includes(data?.action);
+    if (!globalCapability && !editCapability && data?.action !== 'discover') return reply(400, { status: 'invalid-context' });
+    if (globalCapability
+      ? ['groupId', 'imdbId', 'listId', 'formSession'].some(field => Object.hasOwn(data, field))
+      : !uuid(data.formSession) || !/^tt\d{7,10}$/.test(data.imdbId ?? '') || editCapability &&
+        (!uuid(data.groupId) || data.listId !== null && data.listId !== undefined && !uuid(data.listId))) return reply(400, { status: 'invalid-context' });
+    const token = /^Bearer ([^\s]{1,8192})$/.exec(request.headers.get('authorization') ?? '')?.[1];
+    if (!token) return reply(401, { status: 'authentication-required' });
+    let finishing = false, authSignal, session, rpc, finishAttempted = false;
+    const finish = async () => { finishAttempted = true; finishing = true; return rpc('finish', { p_session: session.id }); };
+    try {
+      const db = client ?? createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        global: { fetch: (url, init = {}) => deadline.wait(signal => fetchImpl(url, { ...init,
+          signal: AbortSignal.any([signal, init.signal, authSignal].filter(Boolean)) }), { finish: finishing, signal: init.signal }) },
+      });
+      const { data: auth, error } = await deadline.wait(signal => { authSignal = signal; return db.auth.getUser(token); });
+      authSignal = null;
+      if (error || !auth?.user?.id || auth.user.is_anonymous) return reply(401, { status: 'authentication-required' });
+      // Eligibility and discovery are global. Movie identity scopes the search,
+      // never a group permission. Only apply/legacy capability uses edit scope.
+      const args = { p_user: auth.user.id, p_imdb: globalCapability ? null : data.imdbId, p_form: globalCapability ? null : data.formSession,
+        ...(editCapability ? { p_group: data.groupId, p_list: data.listId ?? null } : {}) };
+      rpc = async (p_op, extra = {}) => {
+        const { data: result, error } = await deadline.wait(signal => {
+          const query = db.rpc(editCapability ? 'media_advice_beta_action' : 'media_advice_beta_global_action', { ...args, p_op, ...extra });
+          return typeof query.abortSignal === 'function' ? query.abortSignal(signal) : query;
+        }, { finish: p_op === 'finish' });
+        if (error || !result) throw Error('access-or-budget-denied');
+        return result;
+      };
+      if (globalCapability || editCapability) {
+        const capabilities = mediaCapabilities(await rpc('capability'));
+        return capabilities.mykola_media_advice
+          ? reply(200, data.action === 'availability' ? { mykola_media_advice: true } : capabilities)
+          : reply(403, { status: 'access-unavailable' });
+      }
+      // Server protocol capability, never a browser-selected cap or flag. Old
+      // SQL that rejects an unknown contract fails closed: deploy the prepared
+      // migration first, never retry start with a weaker marker after an error.
+      // Migrated SQL preserves old callers/sessions and negotiates14 only here.
+      session = await rpc('start', { p_stage: 'global-predicted-card-v1' });
+      // The durable server ledger chooses the supported budget. Browser JSON,
+      // counters and user metadata never authorize additional source attempts.
+      const sourceCap = session.cap === undefined ? 8 : session.cap;
+      if (![8, 10, 12, 14].includes(sourceCap)) throw Error('invalid-source-cap');
+      const result = await deadline.wait(signal => run({ imdbId: data.imdbId, tmdbToken: env('TMDB_READ_ACCESS_TOKEN'), motnKey: env('MOTN_API_KEY'),
+        reserve: stage => rpc('reserve', { p_session: session.id, p_stage: stage }),
+        fetchImpl: (url, init = {}) => deadline.wait(s => fetchImpl(url, { ...init, signal: AbortSignal.any([s, init.signal, signal].filter(Boolean)) }), { maxMs: deadline.remaining(), signal: init.signal ?? signal }),
+        resolver, signal, sourceCap, diagnostics: mediaCapabilities(session).mykola_media_advice_diagnostics,
+        diagnosticSecrets: [token, ...['SUPABASE_SERVICE_ROLE_KEY', 'TMDB_READ_ACCESS_TOKEN', 'MOTN_API_KEY', 'TAVILY_API_KEY'].map(env)].filter(Boolean) }), { maxMs: deadline.remaining() });
+      const receipt = await finish(); // Revocation suppresses late results too.
+      result.metrics ??= {};
+      result.metrics.ledgerReservations = Array.isArray(receipt.attempts) ? receipt.attempts.length : null;
+      result.runtime = mediaRuntime(context); // Never read build/run identity from browser JSON.
+      const serialized = JSON.stringify(result);
+      if (['SUPABASE_SERVICE_ROLE_KEY', 'TMDB_READ_ACCESS_TOKEN', 'MOTN_API_KEY', 'TAVILY_API_KEY'].map(env).filter(Boolean).some(secret => serialized.includes(secret))) return reply(502, { status: 'unsafe-source-content-withheld' });
+      const capabilities = mediaCapabilities(receipt);
+      if (!capabilities.mykola_media_advice) return reply(403, { status: 'access-unavailable' });
+      return reply(200, { result: capabilities.mykola_media_advice_diagnostics ? { ...result, capabilities } : productMediaResult(result, capabilities) });
+    } catch (error) {
+      // One best-effort finish, never a retry/refund. A lost RPC reply may still
+      // have committed. Suppress source results when final authorization fails.
+      if (session && !finishAttempted) { try { await finish(); } catch {} }
+      if (globalCapability || editCapability) return reply(error instanceof HandlerDeadline ? 504 : 403, { status: error instanceof HandlerDeadline ? 'handler-deadline' : 'access-unavailable' });
+      return reply(error instanceof HandlerDeadline ? 504 : 403, { status: error instanceof HandlerDeadline ? 'handler-deadline' : 'access-session-or-budget-unavailable', accounting: 'attempts-may-have-been-spent-no-retry' });
+    }
+  };
+}
+const env = key => globalThis.Netlify?.env.get(key) ?? process.env[key] ?? '';
+export default createMediaAdviceHandler({ env, resolver: createKinobazaResolver({ apiKey: env('TAVILY_API_KEY') }) });

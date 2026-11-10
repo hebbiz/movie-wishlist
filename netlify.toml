@@ -1,0 +1,7 @@
+[build]
+  command = "node scripts/build-site.mjs"
+  publish = ".site-dist"
+
+# Keep the attested build stamp limited to the develop branch deploy.
+[context.develop]
+  command = "node scripts/stamp-media-advice-build.mjs && node scripts/build-site.mjs"

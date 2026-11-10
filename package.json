@@ -2,6 +2,13 @@
   "name": "movie-wishlist",
   "version": "1.3.1",
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.0"
+    "@supabase/supabase-js": "^2.50.0",
+    "parse5": "8.0.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.10"
+  },
+  "scripts": {
+    "test:m4": "node --test --test-concurrency=1 test/*.test.mjs"
   }
 }

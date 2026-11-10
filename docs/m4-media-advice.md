@@ -1,0 +1,8470 @@
+# M4 — Mykola media advice
+
+## Current status and operation boundary — 2026-11-10
+
+This is the current entry point for the streaming-beta runbook. The checked
+integration baseline is `develop` **`890f3a9ada0bedcfc91898d7832fa6fa9ea4cfc5`**;
+checked production branch `main` is
+**`e92392856038e40e6d98c6c8744eed04c4e8dff9`**. These are Git references,
+not evidence that a production runtime, source account or database was tested
+on this date. The documentation-only cleanup does not apply SQL, change access,
+run recovery, call film sources or authorize a release.
+
+### Current implementation and access
+
+- [PR #235](https://github.com/hebbiz/movie-wishlist/pull/235) restricts static
+  publication to `.site-dist`; Functions still build from the repository.
+  [PR #236](https://github.com/hebbiz/movie-wishlist/pull/236) separates production
+  runtime from the demo and moves the TMDb logo to `assets/icons/tmdb.svg`.
+  [PR #237](https://github.com/hebbiz/movie-wishlist/pull/237),
+  [#238](https://github.com/hebbiz/movie-wishlist/pull/238) and
+  [#239](https://github.com/hebbiz/movie-wishlist/pull/239) move shared fixtures and
+  current consumers away from the demo. [PR #240](https://github.com/hebbiz/movie-wishlist/pull/240)
+  retires the Windows/LAN/Termius demo; it is no longer a supported way to run
+  this feature. See the [runtime/cleanup inventory](m4-runtime-separation.md)
+  and the substantive [physical-media handoff](m4-physical-media-handoff.md).
+  Physical-edition search remains deferred, not integrated into streaming beta.
+- Advice requires verified non-anonymous Auth, the **global Beta switch and an
+  active personal `mykola_media_advice` flag**. Availability is prepared during
+  authenticated app initialization, not for each film/group/role. The server
+  checks current authorization again for advice requests. Diagnostics use the
+  separate `mykola_media_advice_diagnostics` flag; transfer and ordinary Save
+  retain the card's existing editing permissions.
+- Region is the existing backend assignment authority, not another runtime
+  advice gate. Initial/default UA assignment with active Beta enables missing
+  eligible grants. An actual region change synchronizes the core flag to
+  `new region = UA AND Beta active`, including a previous manual value;
+  recording the same region is a no-op. Manual true outside UA remains valid
+  until another actual region event. Beta off denies the feature without itself
+  rewriting flags. Expiry and diagnostics remain separate. The exact transitions
+  and Beta-reactivation ownership rules remain in the [approved policy](#actual-region-transitions-and-personal-overrides--2026-11-08)
+  and [execution PR #233](https://github.com/hebbiz/movie-wishlist/pull/233).
+- The bounded current resolver preserves two Basic Tavily stages, then one
+  Advanced `exact_match` reserve using original title and year, then one
+  predicted original-title URL only if no card was confirmed and it was not
+  already read. Candidate discovery never proves film identity. URL admission,
+  owned `Movie.sameAs`/identity gates, source rules and no automatic retries
+  remain in force; Kinobaza `/search` is not used. Compatible global sessions
+  have cap14, while legacy cap8/10/12 sessions keep their own limits and stages.
+  A numeric cap does not bypass per-stage or deadline restrictions.
+- Source availability, audio and subtitle observations are **source claims**,
+  not a viewing entitlement or independent platform-track verification. Exact
+  selected addresses, distinct access variants and evidence provenance remain
+  separate from service/link presentation. Current structure, installation,
+  build/test commands and environment-variable names are in [README](../README.md).
+
+### Global-access execution and recovery evidence
+
+The [authorized execution record in PR #233](https://github.com/hebbiz/movie-wishlist/pull/233)
+supersedes the prepared-only status of
+[`20261108185237_media_advice_global_access.sql`](../supabase/migrations/20261108185237_media_advice_global_access.sql)
+in the older records below. From approved commit
+`b19fadab8448b70940cd851f0cb970ca249b10dd`, **only that migration was applied once
+at 2026-11-08 22:26:33 UTC**. Approved normalized-LF SQL SHA256:
+`0f8e5c05cd43837c08c810e66b9f36937c21e2d7746086cdc804462b4c27c51d`.
+This is dated execution evidence, **not a new read of today's target state**.
+
+The same record reports a fresh scoped M4 recovery snapshot at **22:24:20 UTC**:
+five private tables including nine cap14 ledger rows; relevant definitions,
+constraints/indexes/RLS/ACLs, five functions, default-region Auth trigger, cleanup
+metadata and the six predecessor history records. AES-256-GCM with a separately
+DPAPI-protected key and restricted local ACLs was used. Ciphertext/payload SHA256,
+GCM authentication, independent persisted-key readback, readable JSON/SQL material,
+row/PK checks and equality to that source snapshot passed.
+
+**Readback was verified; an actual restore of this M4 snapshot was not performed.**
+It depends on existing core/Auth objects, roles and the relevant Windows profile
+and key. It is not a portable/off-device or full Supabase-project backup.
+The older [focused recovery assessment](#focused-recovery-assessment--2026-10-22-m4-qualified)
+tested an earlier scope; it does not prove restoration of later private M4 tables,
+new global-access objects or all external Supabase services. No current recovery
+artifact was opened or refreshed for this documentation change.
+
+At **22:28:01 UTC**, PR #233 records all 25 postchecks passing: seven M4 history
+versions with the new version exactly once; seven core grants (+6), six ownership
+rows, preserved pilot and separate diagnostics; all nine prior ledger rows and
+attempts, permission expiries, regions/config, core data/editing rights and existing
+ACL/RLS retained. New/replaced function bodies and trigger/RPC permissions matched
+the approved SQL. The cap8/10/12/14 constraint and default8 were retained, with the
+new global cap14 contract installed. No live account or start/reserve RPC was
+created for compatibility proof: its behavior was checked in authored local tests,
+not by manufacturing real legacy sessions. Merge/deployment were separate actions,
+not part of that SQL execution.
+
+### Current operator entry point; historical procedures are not release validators
+
+Do not replay the pre-install commands below to "bring develop up to date".
+Seven M4 migration files are retained for history and recovery; their presence
+alone does not establish the state of a target database. There is **no pending
+SQL/activation/recovery operation authorized by this document update**.
+
+| Material | Current use and limitation |
+| --- | --- |
+| [`media-advice-global-access.preflight.sql`](../supabase/operations/media-advice-global-access.preflight.sql) | Preserved **pre-install #233** guard: expects global-access objects/version to be absent. Do not present it as a post-install health check or rerun it as an application step. |
+| [`media-advice-beta.preflight.sql`](../supabase/operations/media-advice-beta.preflight.sql), [activation](../supabase/operations/media-advice-beta.activate.sql), [postcheck](../supabase/operations/media-advice-beta.postcheck.sql) | Historical pilot install/owner-only activation workflow. Its old RPC/absence/cohort assumptions are not the current personal/global access model. Do not use it as a streaming release validator or mass-assignment recipe. |
+| [`media-advice-beta.rollback.sql`](../supabase/operations/media-advice-beta.rollback.sql) | Retained global Beta kill-switch operation, requiring separate authorization. A shared switch also affects develop; it is not code rollback, data restoration or removal of personal assignments. |
+| [Cleanup inspection](../supabase/operations/media-advice-cleanup.sql), [scheduler preparation](../supabase/operations/media-advice-cleanup.schedule.sql) | Retained operational/retention tools; inspect current job/state before a separately authorized operation. No new scheduler or cleanup execution is attested here. |
+| [`scripts/`](../scripts/) controlled studies and inspectors | Versioned local diagnostics and historical cap10/cap12 comparisons, including `production-beta` study naming, are not current cap14 release validators. See the [operator inventory and scope](m4-runtime-separation.md). Keep their original guards, pinned SHA/paths and credentials boundaries. |
+| [`supabase/operations/`](../supabase/operations/) recovery chain | Retained interdependent export/readback/local-restore tools and tests. A script's existence is not a fresh usable backup or a successful restoration of today's schema. |
+
+Before a **separately approved** release/privileged operation, recheck actual Git
+heads, exact target and migration history, unfinished/active work, flags/diagnostics,
+RPC ACL/RLS, compatibility and current recovery scope/readability. Stop on drift or
+missing evidence. Do not repeat an applied migration or blindly retry a lost
+response; inspect actual state first. Preserve the source-use/account review,
+production configuration review and separately approved live acceptance checks.
+Passing fixtures, browser mocks or a Deploy Preview build do not certify a live
+film search, production authorization, source licence or complete restoration.
+
+## Historical status index — superseded by the current entry point
+
+The original index and chronological records below are retained for their dated
+evidence and existing anchors. Words such as "current", "future", "prepared" or
+"not executed" in those records refer to their original checkpoint, not today's
+operation status. In particular, global-access prepared-only statements are
+superseded only by the execution evidence summarized above; old pilot activation
+and local-demo commands are not current setup or release instructions.
+
+Status: M4.1–M4.3 implemented; default-off semantics retained. Earlier deployment,
+assignment and cleanup evidence remains in its dated execution records below.
+The dated records below distinguish earlier preparation from later execution.
+UA Beta code: [access and private diagnostics](#ua-beta-access-and-private-diagnostics--2026-10-31),
+updated with merged #217. Later authorized execution:
+[Beta migration applied, switch still off](#beta-migration-execution--2026-11-01).
+The preparation/execution records below are dated evidence, not a live-state
+assertion. PR#220's additional preparation does not authorize deployment,
+migrations or activation; its current scope is recorded at the end of this file.
+Current prepared access decision: [actual region transitions and personal overrides](#actual-region-transitions-and-personal-overrides--2026-11-08)
+supersedes group/film eligibility for display and discovery, not editing rights.
+Its new migration is prepared only, not applied to the shared database.
+Current branch search strategy: **two unchanged Tavily Basic slots, then one
+Advanced exact-match reserve if the complete earlier path fails**, candidate URLs only,
+with a [second Tavily slot after first-card identity refusal](#tavily-only-alternative-search--2026-10-31),
+not Kinobaza `/search`. The reserve uses original title and selected year,
+without a director name: [Advanced reserve update](#advanced-reserve-search-update--2026-11-02).
+[Earlier five locked local controls](#five-film-automatic-results--2026-10-24)
+remain historical evidence;
+this is not catalogue-wide accuracy, track verification or new activation approval.
+The contextual second slot again combines the established primary/alternate
+titles and trusted single director name, after withdrawing the standalone-title
+experiment: [restoration and separate Tavily integrity research](#second-query-restoration-and-tavily-integrity-research--2026-11-02).
+The [Crimson Peak observations](#independent-localized-alternative-and-crimson-peak--2026-11-02)
+remain historical experiment evidence, not a demonstrated root-cause fix.
+The [paired current-response control](#paired-crimson-peak-queryresponse-control--2026-11-02)
+now captures actual POST/response correspondence; no new runtime guard is enabled.
+Crimson Peak is recorded as an **unreproduced issue with an unestablished cause**.
+The [protected possible-relevance report](#protected-possible-search-relevance-report--2026-11-02)
+adds observation only, not a search/identity guard or a finding against Tavily.
+Gemini Google Search Grounding remains excluded from URL → HTML extraction.
+See [Tavily decision/configuration](#tavily-search-replacement-2026-10-21),
+the historical [Brave decision/data-flow audit](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
+and the preserved [Gemini finding](#gemini-primary-resolver-feasibility-2026-10-21).
+Canonical implementation record, not a second research architecture. Evidence and
+source boundaries remain in the [historical research proposal](https://github.com/hebbiz/movie-wishlist/blob/f534dacba1b7377637fe4f00bf995e8145adcc8f/research/grounded-answer-demo/docs/regional-card-proposal.md).
+The Windows/LAN/Termius demo is retired; earlier local-demo commands below are
+historical evidence, not supported current setup. Streaming beta remains the
+release direction. [Physical-media search decisions and evidence](m4-physical-media-handoff.md)
+are preserved for a separately approved future stage, not integrated here.
+Latest narrow source-parser change: [Mad Max markup recovery](#mad-max-noncritical-image-markup-recovery--2026-10-31).
+Latest localization-caption change: [MEGOGO audio-format suffix](#megogo-audio-format-caption--2026-11-02).
+Latest link-choice decision: [declared destinations and duplicate navigation](#link-choice-equivalence-and-justwatch-inspection--2026-10-31).
+Apple UI preference now supersedes its multi-choice presentation:
+[one provenance-prioritized Apple link](#single-apple-link-preference--2026-10-31).
+That preference applies to Store pointers only; [Apple subscription support](#apple-tv-subscription-source-mapping--2026-11-07)
+retains distinct access observations inside one Apple TV / iTunes UI service.
+
+## Reviewed baseline and sequence
+
+`develop` acbdadf8efa2d180a12ed3fc85aa7784bb681782 (2026-10-20).
+Existing static add/edit form writes only on Save; no feature-capability system
+exists. Group owner/member may edit; visitors may not. Migration files 001–016
+are historical evidence, not proof of their deployed state. Owner checkout is
+excluded from implementation.
+
+1. **M4.1 — implemented, offline/browser-tested, live-unvalidated** isolated accessible form dialog, source-row selection, explicit
+   medium/URL diff and local-only transfer. Capability fails closed until M4.2.
+   Authored fixtures exist only in tests. No social-chat controller reuse.
+2. **M4.2 — implemented, isolated SQL/mock-tested, live-unvalidated** authenticated Netlify boundary, backend-only per-user assignment,
+   independently gated TMDb/MOTN and atomic technical ledger. New SQL only;
+   migration application/production flags/secrets require separate authorization.
+3. **M4.3 — implemented, mock/browser-tested, live-unvalidated** replaceable Tavily Search resolver, ≤2 queries and ≤2 sequential
+   admitted Kinobaza card GETs; no redirect/retry/destination resolution.
+
+Each stage has a separate stacked PR; no merge/deployment in this task.
+
+## Contracts and invariants
+
+### Pilot diagnostics and bounded controls — 2026-10-23
+
+Implemented/offline-tested in the diagnostics PR, not deployed. Base develop
+`5bd9f830eb665b2fa1ac4ad7eb2b384267bf37a7`; no matching/search-policy change.
+The five-film pilot is owner-reported, not representative accuracy/coverage or
+account entitlement. Transfer/Save is not attested. Historical reports print
+`Commit: unknown`; they cannot be assigned a runtime SHA retroactively.
+
+Owner evidence: Pursuit-title case screenshot7/8, search1/card2, two unexamined,
+director-alias unresolved then heading-alias refusal; its earlier6/8 report is a
+different/unlinked run, not combined. Exact year/IMDb remain unestablished.
+Blade Runner2049:6/8, search2/card0; empty versus rejected-only URLs unknown.
+Mortal Kombat2021:6/8, search1/card1, heading-alias refusal. Oppenheimer2023:7/8,
+one matched card, one heading-alias refusal, two unexamined; useful Rakuten/MEGOGO
+provider-block audio/subtitle claims and separate owner confirmation. Territory/
+offer binding stay unestablished. Alien1979:7/8, two heading-alias refusals and
+two unexamined; baseline Apple/Rakuten does not establish provider tracks.
+None of these refusals alone proves another film, parser defect or unavailability.
+
+**Correction to historical MOTN interpretation:** old M4 short reports read only
+`kinobazaLocalization` for all rows, so their MOTN `unknown` does **not** establish
+that language fields were absent in API responses. `row.audio/subtitles` retain
+the adapter fields. New reports distinguish `not-reported (missing-or-null)`
+(the adapter combines those), empty list, UK not listed/completeness unknown,
+invalid-withheld and positive `reported-uk`. Kinobaza block claims remain separate;
+no locale implies codec, entitlement, complete list or a cross-source offer join.
+
+Search diagnostics contain only allowlisted status/outcome, returned/admitted/
+rejected/duplicate counts and rejection categories. Admitted counts **unique
+accepted URLs**; duplicate counts repeated accepted URLs, so returned equals
+admitted + rejected + duplicates. Provider error counts are unknown, not zero.
+`empty-response` differs from `all-rejected`. First two admitted URLs retain
+provider order; exact deduplication/admission is unchanged. An alternative query
+still requires a successful empty admitted set; never an identity-refusal retry.
+
+Identity results add failed gate, existing structural counts, comparison flags
+and evaluated/not-evaluated gates. Heading-alias non-match is described literally,
+not as independently established different-film identity. Canonical/stable-ID
+priority, exact aliases, no transliteration/fuzzy matching and withholding are
+unchanged. `onIdentityDiagnostic` is an explicit **local trusted hook**, not an
+HTTP/browser option. It transiently receives the admitted sourceURL, bounded
+extracted H1/H2/year/directors, selected aliases and each gate result. Actual
+source values are absent from ordinary identity diagnostics/short reports/ledger.
+Truncation/structural limits remain explicit; no first/convenient-heading choice.
+
+Version provenance: a non-capability random UUID run ID is generated by the
+server after successful finish, never accepted from browser JSON. New
+`netlify.toml` sets **only the develop branch build command** to
+`node scripts/stamp-media-advice-build.mjs`; publish/functions settings remain
+in the existing dashboard, other deploy contexts unchanged. The script bundles
+public identifiers only when Netlify branch/develop context, COMMIT_REF and Git
+HEAD agree and DEPLOY_ID is valid. The handler additionally requires that bundled
+deploy ID match Netlify's server context. Missing/mismatched stamp => SHA unknown.
+No API lookup or additional source request. This is server build provenance, not
+a cryptographic signature. Local controls always say `local-diagnostic`, SHA
+unattested; copied browser text is not itself a trusted server artifact.
+[Netlify documents](https://docs.netlify.com/build/functions/environment-variables/#netlify-read-only-variables)
+that COMMIT_REF is not a guaranteed function-runtime variable; no new secret or
+runtime env assignment is introduced. Real develop build/stamp remains unvalidated
+until a separately approved merge/deploy; this task performs neither.
+
+`scripts/m4-control-diagnostic.mjs --live-control` prepares exactly Blade Runner
+2049 and Mortal Kombat2021. No catalogue IDs or source slugs are invented. Up to
+four TMDb identity requests (one explicit title search + one appended Details per
+film) establish a **unique exact original-title** candidate and stable crosswalk;
+Mortal Kombat additionally requires2021. No first-result fallback. A failed or
+ambiguous identity stops that case before Tavily. Then the existing resolver/
+admission/identity/extraction functions run with unchanged policy. Caps across
+both cases: TMDb4 + Tavily4 + Kinobaza4 = **12 source HTTP attempts**, including
+errors, at most6 per case.45s per-case source deadline; no retries/redirects,
+MOTN, Watch Providers, production proxy, destination fetch, DB or Wishlist write.
+This local bounded harness is not a replacement for the deployed atomic ledger.
+
+**Earlier credential-free preflight:** blocked before dispatch, both
+`TMDB_READ_ACCESS_TOKEN` and `TAVILY_API_KEY` absent in the local process. Both
+cases not-run; TMDb0 / Tavily0 / Kinobaza0, total0/12. No identity/result or new
+historical root cause is claimed. Existing Netlify Functions-only Secret values
+are not an exportable local credential handoff; no value read, printed, copied
+or changed. This zero-attempt result predates the owner's authorization of
+one-time local hidden input; it is not an executed live control.
+
+**Hidden local continuation implemented:** `scripts/m4-control-password-prompt.ps1`
+requires PowerShell7, the installed Node22+ and an exact `-ExpectedCommit` checkout
+with no tracked modifications. Two `Read-Host -AsSecureString` inputs immediately
+start the existing controls, once; do not restart after an uncertain/interrupted
+run. Credentials go only through redirected child stdin (`--credentials-stdin`),
+not argv, environment assignments, files, DPAPI blobs, clipboard or logs. The
+strict bounded stdin contract accepts exactly the two credentials, with no env
+fallback for malformed/missing input. Inherited Node preload/debug/TLS-bypass
+settings are removed from this child. Never use a transcript/recorded terminal.
+Managed strings are released best-effort; perfect memory zeroization is not
+claimed, and this does not change OS paging/crash-dump policy.
+
+After completion the helper clears credential references and keeps only the
+minimal safe diagnostic result in a single current-user-only **local named pipe**
+`mw-m4-controls-198`, for up to15 minutes including transfer. No TCP listener or
+result archive. Leave the prompt window open and notify Codex immediately;
+the result can be received in the same Windows token context, with only needed
+findings recorded in this section/PR. Receiver failure does not authorize another source run. Local
+checkout SHA is reported separately, never as deployed runtime attestation.
+The final copyable CMD/Termius command must pin the actual helper commit SHA
+with `-ExpectedCommit`; no source credential value belongs in that command.
+The owner executed the authorized hidden-input controls; evidence follows below.
+No owner movie retest or Netlify secret export is requested.
+
+**Result-handoff limitation:** owner subsequently reported `local prompt
+completed`; reading the existing pipe from the agent returned `Access denied`,
+including outside the sandbox and with a standard read-only pipe client.
+Windows `CurrentUserOnly` checks account **and elevation level**. Different
+SSH/desktop token contexts are a plausible explanation, not an independently
+proven exact token diagnosis. Same-context native authored IPC tests did not
+cover this boundary. Server ACL is not loosened, no process-memory dump/debugger
+attachment and no source rerun. `scripts/m4-read-control-result.ps1` is a bounded
+read-only receiver for a **second terminal in the same SSH context** while the
+original helper still waits; it prints only the already-sanitized diagnostic
+JSON for handoff, with no credential prompt, HTTP call or file write. The owner
+successfully used it and pasted a safe result excerpt; the excerpt is truncated
+in the second case, not an independently captured/complete machine JSON artifact.
+No ACL change or source rerun was used to recover it. Expiry/lost results would
+not authorize repeating the controls.
+
+**Executed control result — 2026-10-23:** local checkout
+`62c4a9a401899e29cd319af6f055bbd12661297b`, run
+`3d9890e2-ca7b-4132-baa0-5586f719da11`, `execution=local-diagnostic`,
+`buildSha=null`. This is owner-executed local diagnostic evidence, not deployed
+runtime attestation or a reconstruction of historical pilot responses.
+
+| Control | TMDb attempts | Tavily attempts | Kinobaza GET | Stop / evidence |
+| --- | ---: | ---: | ---: | --- |
+| Blade Runner 2049 | 2 | 1 | 0 | Both TMDb responses HTTP200; Tavily HTTP401 / `search-auth-error`. Explicit identity: TMDb335984, IMDbtt1856101, original title Blade Runner 2049,2017, English director alias Denis Villeneuve. |
+| Mortal Kombat (2021 control) | 2* | 1 | 0 | Resolver fragment shows `search-auth-error`, one search/no cards. Its per-case attempts/IDs/year were omitted in the pasted excerpt. |
+| Total | 4 | 2 | 0 | **6/12 attempts**; failed search attempts counted. |
+
+\* Mortal's TMDb2 (and total3) is arithmetic from the aggregate minus the fully
+shown Blade Runner case, not a directly pasted per-case counter. Its visible
+`search-auth-error` maps only to HTTP401 in the adapter; the actual HTTP status
+entry is omitted. Reaching search implies the harness's preceding TMDb gates
+passed, but omitted identity values are not reconstructed or added to catalogue.
+
+**Established stop:** Tavily authentication rejection, before successful search
+results, URL admission or any Kinobaza identity/extraction. The request uses
+`Authorization: Bearer <key>`; the existing adapter maps HTTP401 to
+`search-auth-error` and immediately stops without an alternative query, retry,
+Brave/Gemini fallback or card GET. Exact credential/account reason is unknown;
+the error body is intentionally discarded. A syntactically admitted local key
+is not evidence of a working Tavily credential. This result does **not** establish
+that the Netlify credential has the same problem; no configured secret is read
+or changed. Search `returned/admitted/rejected/duplicates=null` means provider
+counts unavailable, **not** an empty response/all URLs rejected. Resolver
+`candidates=0` is not proof there are no cards. Historical Blade Runner admission
+and Mortal title-refusal causes therefore remain unknown. No observed/expected
+Kinobaza title/director comparison was possible because card GETs were zero.
+
+**Local diagnostic encoding fix:** Node emits UTF-8, but the original PowerShell
+wrapper did not set child stdout decoding. The reported Cyrillic garbling is
+reproducible by decoding authored UTF-8 as CP866; this is a supported local
+handoff defect, not evidence of malformed upstream director aliases. The wrapper
+now explicitly uses UTF-8 for redirected stdout/stderr, and the read-only reader
+emits ASCII-escaped JSON to survive legacy CMD/SSH code pages. The exact point(s)
+of historical display corruption are not fully attested. Node's in-process
+matching/search data and HTTP authorization policy are unchanged; output encoding
+does not explain the Tavily401. No attempt is made to repair pasted names into
+new aliases. No new source calls were made for this fix.
+
+At that stage, the next prerequisite was a valid Tavily credential/account check
+by its holder, not a parser/search-policy change. No key is requested in chat and no automatic
+source repeat is authorized by the unused part of the cap. No new owner pilot
+or additional paste is needed to establish this stop; any further live
+continuation must explicitly account for the six spent attempts and its scope.
+
+Final continuation checks: **32/32** targeted credential/diagnostics/resolver
+tests passed. They include strict stdin/EOF, malformed/oversize/cancelled input,
+no env fallback, authored child errors with zero network traffic, PowerShell7 AST,
+native same-context current-user-only named-pipe round trip, read-only receiver,
+Unicode preservation under process-local CP866, exact6 accounting for two mocked
+401 controls with unknown provider counts/no retries/cards, existing cap12,
+withholding, admission and source isolation. These are not live validation or
+proof of SSH/desktop cross-token IPC compatibility.
+Source adapters, resolver policy, serverless ledger and application lifecycle
+remain unchanged; no new full browser/Windows-demo lifecycle run is needed for
+this isolated credential wrapper.
+
+**Separately authorised repeat — 2026-10-23:** after suspecting incorrect local
+Tavily input, the owner explicitly approved one new run of the same controls,
+with its own cap12 and no automatic retries/policy change. Owner-forwarded safe
+excerpt: run`5a481f68-1e0f-4b73-83ea-732fa143a4e9`, local checkout
+`20ed54c527ec953b2fa63812225f360d16148a14`, `execution=local-diagnostic`,
+`buildSha=null`. Its Mortal fragment is again truncated and one escaped director
+string is broken by the pasted line wrap; this is not a complete parseable JSON
+artifact. Only visible facts and explicitly identified code-path deductions are
+recorded. No omitted identity/URLs or historical source responses reconstructed.
+
+| Control | TMDb | Tavily | Kinobaza GET | Visible search result / stop |
+| --- | ---: | ---: | ---: | --- |
+| Blade Runner 2049 | 2 | 2 | 0 | All four attempt entries HTTP200. Each search `ok/all-rejected`, returned1/admitted0/rejected1/duplicates0, `unsupported-path:1`. Final `no-admitted-search-candidates`. |
+| Mortal Kombat (2021 control) | 2 | 2 | 0 | Per-case counters visible. Two TMDb200 and first search200 visible; first diagnostic fragment rejected5/duplicates0, `query:1`, `unsupported-path:4`. Second diagnostic complete: `ok/all-rejected`, returned5/admitted0/rejected5/duplicates0, `unsupported-path:5`. Final `no-admitted-search-candidates`. |
+| Repeat total | 4 | 4 | 0 | **8/12 attempts**; no card, MOTN, Watch Providers or destination requests. |
+
+The exact second Mortal HTTP status and its identity values are not visible;
+`ok` establishes a successful 2xx provider result, not an independently pasted
+HTTP200 entry. Dispatching the alternative requires the first search's `ok`
+status with zero admitted URLs; that first outcome/returned count are code-path
+deductions, not restored missing report fields. Blade identity is again explicitly
+TMDb335984 / IMDbtt1856101 / original title Blade Runner 2049 /2017, with English
+director alias Denis Villeneuve. Mortal's stable IDs are not invented.
+
+**What this establishes:** the local Tavily credential/request was accepted in
+this run. Search was non-empty where shown, but **URL admission rejected every
+candidate before HTML retrieval**. It is no longer an auth stop. This does not
+identify the precise cause of the earlier401 or attest Netlify configuration.
+The previous run remains6 attempts; the new run8, so **14 source HTTP attempts
+across two separately authorised runs** (TMDb8/Tavily6/Kinobaza0). They are not
+one run with an enlarged production budget. Unused cap does not authorise a third
+run or more search calls. The historical five-film owner pilot is separate.
+
+**Offline rule audit:** `admitKinobazaURL` accepts only the original exact
+`https://kinobazaua.com/titles/<lowercase-ascii-hyphenated-slug>` spelling, no
+query/fragment, trailing slash, subpage, credentials, explicit port, alternate
+host or encoded/path-normalisation tricks. Diagnostic classification uses the
+first applicable category: scheme → credentials → port → host → query → fragment
+→ normalised pathname shape → spelling. `unsupported-path` proves a failed path
+shape test, **not specifically a trailing slash**, and `query` can mask another
+path problem. Authored examples show trailing slash, subpage, root path,
+underscore/uppercase slug all produce the same broad path category; query on a
+bad subpage is still labelled `query`. None reconstructs a live search URL.
+`duplicates=0` counts no repeated **accepted** URLs, not uniqueness of rejected
+URLs within/across searches. Do not describe these responses as distinct cards.
+
+**Limits / proposed next narrow step:** actual rejected URLs/path components are
+not in this report and were not archived. No evidence yet distinguishes a valid
+card shape rejected too narrowly from a genuinely irrelevant/non-card result;
+admission broadening, slash/query stripping, redirect resolution, alternate
+host support or matching fixes are not justified. No Kinobaza H1/H2/year/director
+comparison ran. Historical Mortal title refusal and the exact historical Blade
+search result remain unknown; this current run is not their reconstruction.
+
+If separately authorised, the smallest next probe is **Blade Runner 2049 only**:
+up to2 TMDb identity calls + **one** Tavily basic call using the same established
+identity/query builder, total≤3; **zero Kinobaza/provider GET**, no alternate
+query/retry/redirect. Inspect rejected URLs only in trusted invocation memory;
+emit bounded allowlisted path-shape facts (title-path vs other, segment count,
+trailing slash, slug grammar/encoding flags, query-present), not query values,
+tokens, snippets, raw responses or a URL archive. Stop on identity ambiguity,
+auth/transport/quota error or no response URLs. That proposal is not executed or
+authorised here; it tests URL-shape admission only, not card identity/extraction.
+No owner pilot repeat or source-policy change is proposed as a substitute for
+the missing evidence.
+
+**URL-only probe authorised and prepared — 2026-10-23:** the owner subsequently
+approved precisely that one Blade Runner run, with actual safe path evidence.
+`scripts/m4-control-password-prompt.ps1 -UrlDiagnostic -ExpectedCommit <pinned
+SHA>` reuses the hidden stdin credential handoff and immediately runs
+`scripts/m4-control-diagnostic.mjs --live-control --credentials-stdin
+--url-diagnostic`. This is a separate explicit mode, **not** the old two-film
+controls. Before each dispatch it enforces TMDb≤2, Tavily≤1, cardGET=0,total≤3;
+errors spend attempts, no alternative query/retry/redirect. Existing TMDb
+identity selection/crosswalk and the first result of the unchanged
+`resolverQueries` builder are reused; the real bounded Tavily basic adapter
+parses the search response. No second film, MOTN, Watch Providers, card/provider
+fetch or destination resolution. Both Windows helpers validate the cap3,
+Blade-only, card0 result contract. Prior14 attempts remain separate; cumulative
+maximum17. A fresh run UUID is generated on execution. Execution was initially
+pending hidden entry; the subsequent screenshot result is recorded below.
+
+`tavilySearch` has an optional trusted `onCandidateURLs` callback, receiving only
+up to5 URL strings from a validated response in invocation memory. It is not an
+HTTP/browser parameter and receives no snippets/score/body; normal adapter output
+and admission are computed before it runs, and callback failure/mutation cannot
+alter that output. The ordinary resolver does not supply this hook, so detailed
+paths never enter its client projection, short report, ledger or logs.
+
+Local `scripts/m4-url-diagnostics.mjs` uses the **actual** `admitKinobazaURL`
+decision, with literal expected format, failed original-format check and specific
+differences (trailing slash, additional segments, uppercase/encoded path,
+query/fragment, authority spelling, parser normalization). Only a parsed exact
+`hostname=kinobazaua.com` permits path display. `originalPathname` is sliced from
+the original URL **before** parsing normalization and ends before query/fragment;
+`parsedPathname` is `URL.pathname`. Safe case, percent-escape spelling and final
+slash are preserved in each, with `pathChangedByParser` separately reported.
+This compares values, never rewrites/admits/fetches a normalized URL. Query and
+fragment values/names are absent; only presence flags, including empty`?`/`#`.
+Foreign hosts, userinfo/abnormal authority, oversized or unusual structures are
+withheld explicitly. Secret echoes (including encoded/cross-segment variants),
+token/credential-like labels, emails, UUID/JWT/long opaque or suspicious segments
+are `[withheld]` with a reason; following components are also withheld. Decoding
+is bounded and **detection-only**, never a displayed alias/canonicalization.
+Conservative diagnostic redaction does not change the actual admission decision.
+
+Authored output example only, not a live result: original and parsed path both
+`/titles/Authored-card/`, rejected by `exact-original-url-format`, with specific
+`trailing-slash-not-allowed` and `uppercase-path-not-allowed` differences. A dot
+path shows both the raw and parser-normalized paths instead of silently fixing
+it. Without HTML the result explicitly says `not-evaluated-no-html-fetch`; even
+an accepted pointer is **not** proof of the correct film or source claims.
+
+Use the existing second-terminal same-SSH reader within15 minutes after
+`Controls completed`; optional `-Compact` emits a single JSON line to reduce
+manual copy truncation. It reads only the safe in-memory result with ASCII JSON
+escaping; no key/file/clipboard persistence or archive is added. Keys enter only
+hidden prompts, not command arguments; no Netlify configuration/secrets read or
+changed. Record only minimum safe findings in this section/PR after execution,
+not full HTML/search responses. Existing application retention/TTL, request
+bodies/budgets, `initApp`, draft and production boundaries are unchanged.
+
+URL-mode preparation validation: **44/44** targeted offline/HTTP/helper tests
+passed, including real query-builder/admission reuse, cap3 with valid/empty/error
+results, identity-stop accounting, no card/alternative/destination request,
+literal vs parser-normalized path, empty query/fragment markers, foreign host/
+userinfo withholding, encoded and cross-segment key echoes, token/email/JWT/UUID/
+opaque components, hook mutation/error isolation and unchanged normal output,
+UTF-8/legacy-codepage handoff and mode-specific hidden-stdin CLI. Reviewer found
+initial encoded-label/cross-segment redaction gaps; hardened detection and authored
+regressions close those before any live execution. Local links/anchors and
+whitespace pass. No new browser/app-demo/SQL-concurrency/lifecycle suite: no UI,
+launcher, SQL or public endpoint contract changed. These checks are synthetic,
+not live validation of the returned URL shape, card identity or source coverage.
+
+**URL-only result received — 2026-10-23 (owner screenshot):** the visible safe
+JSON records Blade Runner 2049, `TMDb2 / Tavily1 / Kinobaza0 / total3`, all three
+attempts `response-received / HTTP200`, status`urls-inspected-no-html` and card
+identity`not-evaluated-no-html-fetch`. The screenshot begins mid-envelope: run ID,
+mode/build header and `localCheckoutSha` are **not visible**. The prepared pin was
+`ea9a14b70eedef309b12590bee24a20d5c41ddd0`; it is not retroactively attested by
+this cropped image. This is owner-forwarded local diagnostic evidence, not an
+independent agent source request or deployed-runtime attestation. Only minimal
+visible comparisons are transcribed, not the screenshot/full response in Git.
+
+| Comparison | Visible value |
+| --- | --- |
+| Hostname | `kinobazaua.com` |
+| Expected admitted path | `/titles/<lowercase-ascii-hyphenated-slug>` |
+| Original pathname | `/persons/denis-villeneuve` |
+| `URL.pathname` | `/persons/denis-villeneuve` |
+| Parser changed path / query present / fragment present | false / false / false |
+| Admission / failed check | rejected / `exact-original-url-format` |
+| Specific differences | `original-path-shape-not-allowed`, `parsed-path-shape-not-allowed` |
+| Diagnostic redactions | none |
+| Search | `ok/all-rejected`, returned1/admitted0/rejected1/duplicates0, `unsupported-path:1` |
+
+**Established cause for this result:** Tavily returned a **person-shaped pointer
+under `/persons/`**, not a title-shaped pointer. This is not a trailing-slash,
+percent-encoding, query or parser-normalization mismatch. Admission correctly
+refused that path; no admission fix or `/persons/` allowance is justified. No
+HTML was read, so neither actual destination content/person identity nor a
+correct film card, availability, localization or entitlement is verified.
+The visible film projection is TMDb335984 / IMDbtt1856101 / Blade Runner 2049 /
+2017; that film crosswalk does not validate the search URL.
+
+At that checkpoint the query builder included quoted film name, year, first known
+director alias and `site:kinobazaua.com/titles/`. Tavily `include_domains` is set
+to the hostname; the title-path hint exists in query text, not an enforced
+local admission decision. The exact provider-side reason for returning the
+director pointer is unknown. The director term may influence it, but that is a
+**hypothesis**, not demonstrated causation or a provider-contract verdict.
+Historical Blade results and Mortal title refusals are not reconstructed from
+this new result. No source URL rewrite, second query or HTML GET was attempted.
+
+Accounting: this authorised URL probe spent3/3; prior6+8 remain separate, so
+**17 total source attempts across three authorised local runs** (TMDb10 /
+Tavily7 / Kinobaza0). No budget remains for an automatic repeat. The second
+reader invocation shown below the already-printed safe JSON reports unavailable:
+the helper serves one connection and disposes the pipe after transfer. This is
+consistent with expected one-shot result consumption, not a failed source run,
+new source request or need to re-enter keys. No further reader/source run needed
+to establish this finding; exact missing wrapper fields stay unknown.
+
+**Separate query-policy proposal at that checkpoint, not yet implemented:** try a title/year-oriented
+query without the director term, retaining the existing title-path hint,
+domain/admission checks and the director as independent HTML identity evidence.
+Existing query/card limits, alternate-query error rules and withholding must
+stay unchanged. Whether this yields useful film candidates is unvalidated; no
+new live test is authorised by this result. Do not broaden admission to person
+routes or change identity to manufacture success.
+
+This result checkpoint changes only README/canonical documentation. Focused
+authored offline checks confirm the same person-route rejection and the current
+query composition (zero HTTP); no live URL copied into a fixture. Links/anchors,
+whitespace and scope checked. No runtime-suite rerun for Markdown-only changes;
+the44/44 preparation evidence remains tied to unchanged implementation. Owner
+checkout/demo, unrelated files, init/auth/lifecycle, source request policy/budgets,
+TTL/retention, R1/R2 and draft controls preserved; no merge/deployment.
+
+The preceding checkpoint`12223ea` was **documentation-only**, with8 focused authored offline
+admission/category cases (zero HTTP), local links/anchors and whitespace
+checks. No runtime test-suite rerun for Markdown-only changes; preceding32/32
+targeted checks belong to the unchanged implementation tip, not a new live
+validation. Request bodies/budgets, admission/identity gates, R1/R2, exact URLs,
+acknowledgement, TTL/storage, draft/stale controls and owner checkout unchanged.
+
+Controls keep field comparisons only in invocation memory and emit only minimal
+public identity differences needed to explain a failed gate, not raw bodies,
+snippets, scores or full responses. Do not redirect output into an evidence
+archive. Old pilot responses are not reconstructed. Retention remains unchanged:
+existing page-memory lifetime/TTL, content-free server ledger; no new logging,
+storage, chat UX, lifecycle/auth, budgets, transfer or persistence policy.
+
+Validation: initial full `npm run test:m4`67 passed/1 skipped (native PostgreSQL;
+SQL/ledger unchanged). Final changed/dependent M4 offline/HTTP/Edge suites65/65;
+dependent assisted-identity/MOTN suites126/126. Desktop1280×900, mobile375×812
+and820×1180 authored browser checks include copy fallback, stale results,
+pending apply/cancel and manual fields. No real iPhone/WebKit or fresh native
+concurrency claim; Windows lifecycle not repeated (unchanged launcher).
+Syntax/whitespace and local-reference checks pass. Application init/auth/lifecycle,
+M4 form controller, exact-link policy, source service/deadline and SQL unchanged.
+Source-use/account conditions remain separate; no merge/deploy, source key change,
+DB write, transfer/Save or pilot run. At that checkpoint new matching/search-policy
+changes remained proposals only; alternate search after identity refusal is still
+not implemented or authorised by the subsequent title/year-only change below.
+
+### Title/year-oriented Kinobaza search — 2026-10-23
+
+Implemented in a separate stacked branch above #198
+(`codex/m4-diagnostics`, pinned base
+`54e54a90e4ecedcbf627861bc25528f5231ccb5b`), not merged/deployed.
+The only application-path code change removes the director term from
+`resolverQueries`: quoted selected title + integer year (when established) +
+`site:kinobazaua.com/titles/`. Existing original/localised/known-alias ordering,
+two-name bound, escaping, input bounds and Tavily basic/domain settings remain.
+Director evidence is still required independently by HTML identity acceptance.
+No admission, parser/alias, withholding, R1/R2, form/report/retention, deadline or
+application-budget change. The second query still requires a successful first
+search with no admitted URLs; no alternate after identity refusal or error.
+
+**One authorised control, prepared then executed as recorded below:** the existing credential
+helper adds `-TitleYearControl` (Node `--title-year-control`), mutually exclusive
+with URL-only diagnostic mode. Only Blade Runner 2049 runs: TMDb identity <=2,
+Tavily <=2, sequential Kinobaza GET <=2, **total <=6 attempts**, errors included.
+The previous17 stay separate; cumulative ceiling23, not permission to retry.
+Identity is re-established by the same bounded TMDb search/Details functions;
+admitted cards continue through the actual resolver/admission/identity/extraction,
+not an alternate parser or a URL-only success check. No MOTN, Watch Providers,
+provider/destination request, redirect, retry or fallback.45s case deadline is
+unchanged. Normal deployed M4 cap8 is not replaced by this local control cap6.
+
+The existing local trusted hook compares bounded actual H1/H2/year/directors
+with the selected aliases and reports per-gate outcomes. This explicit control
+also exposes those minimal public identity fields for matched/refused cards,
+with exact admitted source-card URL, truncation and extraction status/counts;
+no raw HTML, snippets, offers, provider/tracking links, query/fragment values or
+credentials. Comparison/credential data stay in invocation memory; safe IPC
+result lifetime remains <=15 minutes. Do not archive the JSON or rerun after
+uncertain/lost output. `buildSha=null`; checkout SHA is local provenance only.
+The helper pins a clean tracked checkout and immediately runs once after two
+hidden inputs, without a credential file/environment/argv handoff. Retrieve
+the existing result once from a second Termius tab in the same SSH/elevation
+context using `m4-read-control-result.ps1 -Compact`; no source call or prompt
+occurs in that reader. Do not retry the reader after successful consumption.
+
+Offline validation and actual live counts are recorded separately. At preparation
+no new source request has run and no effect on search quality is established.
+The prior person-shaped pointer refusal remains correct; its director-term
+causation stays a hypothesis. A single new response cannot reconstruct earlier
+pilot results or demonstrate general resolver quality.
+
+Preparation validation: **9/9** new authored query/control regressions, **44/44**
+targeted resolver/diagnostic/credential/URL regressions and **94/94** dependent
+assisted-identity/extraction/workflow regressions passed. These cover exact
+director-free payloads, primary/alternate order/escaping/bounds, error stops,
+director/stable-ID refusals/withholding, actual mocked2+2+2 continuation to
+extraction, transient field comparisons and no snippet/key/raw HTML output.
+PowerShell7 parsing, stdin-only keys, native same-context IPC and codepage
+roundtrip ran.13 Markdown documents/445 local links/271 anchors, zero errors;
+whitespace and scope checked. Independent read-only diff review found no blocker.
+Sandbox initially refused test child spawning (`EPERM`); the same tests passed
+outside that restriction, not by weakening assertions/timeouts. No new browser,
+Windows-demo lifecycle, PostgreSQL or iPhone run: UI/lifecycle/SQL unchanged.
+No live-quality, deployment or rights-closure claim follows from these mocks.
+
+**Executed title/year control — 2026-10-23:** owner-forwarded safe local result,
+run `5923b78a-f889-49b0-a6b4-c0d842dd1768`, checkout
+`e8ff58b8a5f0790db330dd5fbf5ea6f012da2a85`, mode `title-year-control`,
+`execution=local-diagnostic`, `buildSha=null`. This is local checkout provenance,
+not deployed-runtime attestation, independent agent source capture or a
+reconstruction of the earlier pilot. The pasted excerpt is truncated between
+the first card's expected fields and the second card's diagnostics; it is not a
+complete parseable machine artifact. Missing fields/URLs are not reconstructed.
+
+| Stage | Actual attempts | Visible result |
+| --- | ---: | --- |
+| TMDb identity | 2 | Both HTTP200; selected TMDb335984 / IMDbtt1856101, Blade Runner 2049,2017; director aliases Дені Вільнев / Denis Villeneuve. |
+| Tavily basic Search | 1 | HTTP200; returned5, admitted3, rejected2 (query1 / unsupported-path1), duplicates0. |
+| Kinobaza cards | 2 | Both HTTP200; first unresolved at director alias, second mismatch at heading alias. One admitted candidate unexamined. |
+| New control total | **5/6** | `bounded-unresolved`; no second search/retry/redirect or provider request. |
+
+**First card:** exact visible admitted pointer
+`https://kinobazaua.com/titles/blade-runner-2049`. Extracted H1
+`Той, хто біжить по лезу 2049 ( 2017 )`, H2 `Blade Runner 2049`, year2017;
+title/original-title/year gates pass. One canonical/heading/original-title/
+director value, no explicit stable IDs (`stableIdCount=0`). Source director is
+**Денні Вільньов**, versus selected aliases **Дені Вільнев / Denis Villeneuve**.
+Those selected aliases are visible in the top-level identity and the later
+expected-field fragment; the cut-off first expected block is not reconstructed.
+The only failed gate is `director-alias`, reason `director-alias-unestablished`.
+NFC/whitespace/case normalization does not equate these spellings; the exact
+alias check correctly leaves unresolved rather than asserting different people.
+This establishes a missing **verified alias relationship**, not a malformed
+director extraction or proof of a different person. No alias is added by this
+result and no per-film/fuzzy/transliteration exception is introduced.
+
+**Second card:** visible H1 `Той, хто біжить по лезу ( 1982 )`, H2 `Blade Runner`,
+year1982, director `Рідлі Скотт`. These are concrete source-declared title/year
+differences from the selected2049/2017 projection; the first refusing gate is
+`heading-alias` / `source-title-conflict`. Later gates remain not evaluated,
+not additional independent failures merely because comparison flags are false.
+The exact second URL is absent from the excerpt and is not guessed. No
+independent stable-ID crosswalk for this card was established.
+
+Both refusals withheld claims before viewing/localization extraction
+(`identity-unresolved` / `identity-mismatch`), not `unsupported-markup` or evidence
+of no offers/tracks. The third admitted URL/identity is unknown and unexamined.
+First successful search already had admitted candidates, so the unchanged
+policy correctly did not use an alternate query after card refusals. Rejected
+URL categories alone do not reveal their exact paths/query values. No new URL
+admission change or additional control is warranted by these data.
+
+Accounting stays separate: previous17 + this5 = **22 actual attempts**
+(TMDb12 / Tavily8 / Kinobaza2), within the cumulative ceiling23. The unused
+ceiling does not authorise another request/run. No new live requests were made
+to analyse or record this owner-forwarded result.
+
+**Bounded conclusion / next proposal:** title/year search produced usable
+title-card pointers in this invocation, unlike the preceding person-pointer
+result, but no identity-confirmed extracted claims. One run does not prove
+general quality or that removing the director caused the difference. Historical
+pilot responses stay unknown. A separate narrow follow-up could establish a
+trusted **person-level** alias crosswalk with explicit provenance and a
+regression for this spelling pair; do not silently add aliases or bypass the
+director gate. No new live run is required to explain the now-visible stop.
+
+This result commit changes only README/canonical documentation. Three authored
+in-memory checks using the existing extractor/identity functions passed: the
+observed spelling remains unresolved/withheld, an existing exact alias matches
+when other gates pass, and a stable-ID conflict still overrides unknown director
+spelling. These are algorithm checks, not reconstructed source HTML or a parser
+fix. No runtime-suite rerun for Markdown-only changes; the prior147 regressions
+remain evidence of executed implementation `e8ff58b`, not newly attested on a
+different runtime. Local links/anchors, whitespace and documentation scope
+checked. No source call, parser/search-policy change, owner checkout/demo change,
+init/auth/lifecycle/retention change, DB/flag/secret/Save/merge/deployment action.
+
+### Person-level director alias crosswalk — 2026-10-23
+
+**Status: mechanism implemented/offline-tested; zero real aliases activated.**
+Separate stacked implementation above #199, pinned base
+`114afcfc58fd0b3fd109de8798df8bbd1ef41a94`; develop verified
+`5bd9f830eb665b2fa1ac4ad7eb2b384267bf37a7`. At mechanism implementation no
+merge/deployment or new live run;22 attempts were the then-current total. The
+separately authorised person check below adds3, for25 actual attempts.
+
+The TMDb credits projection already preserves validated `directors.items[].id`;
+M4 service/local-control film construction previously flattened names and lost
+their person association. `projectDirectorPeople` now retains
+`{namespace:'tmdb:person', personId, names}` from the **matched server-received
+projection**, separately per director. Missing/invalid IDs stay null; no ID is
+guessed from film IDs, names, slug or browser JSON. M4's HTTP handler still
+constructs server discovery inputs explicitly: additional browser person IDs,
+names, records or lookup options do not enter the resolver or ledger.
+
+`shared/director-alias-crosswalk.mjs` is statically imported compiled code, not
+a new database/service/file read, cache, client configuration or network lookup.
+Each reviewed record is keyed by namespace + person ID and contains literal
+aliases, `scope:'kinobaza-director-identity'`, and confirmation evidence with
+source/reference/recording date. This scope applies across films directed by
+that person, **only** to Kinobaza director identity; not title matching, MOTN
+values, tracks, offers, availability or entitlement. Record provenance is a
+review requirement, not self-proving evidence or legal permission. Malformed
+records fail compilation; duplicate person entries or shared alias spellings
+across different IDs yield ambiguous/no crosswalk aliases. Registry and lookup
+results are immutable snapshots; there is no runtime/browser registration.
+
+The identity gate can use the crosswalk only for one selected director/person,
+names attached to that same trusted credits record, and one source director
+value. Multiple/unknown group scope stays unresolved; no flat multi-person
+union, splitting, fuzzy matching, transliteration or diacritic removal. Existing
+NFC/whitespace/case normalization and exact equality remain. Original returned
+TMDb aliases still work without an extra crosswalk; absent person ID cannot
+enable new aliases. Canonical/stable-film-ID/title/year gates retain precedence,
+and unresolved/mismatch still withhold all Kinobaza claims. A match using a new
+confirmed person alias retains `identity.directorAliasEvidence` with record
+namespace/ID/scope/provenance; no extra UI/short-report or field propagation.
+Authored tests inject a separate lookup through an internal function option,
+never an HTTP/browser contract. Fixed-card parser/legacy film aliases unchanged.
+
+**Evidence at mechanism implementation did not authorise a real entry:** the control established
+source spelling `Денні Вільньов` versus selected `Дені Вільнев / Denis Villeneuve`
+but recorded movie IDs, not an authoritative person-ID association. The older
+fixed Dune alias list is per-film configuration without independent person-level
+provenance. The person-shaped Tavily pointer had not then been fetched, and neither its
+slug, spelling similarity nor the studied film's title/year can prove this
+crosswalk. No TMDb person ID is invented from memory. Required missing evidence:
+an independent person-level record explicitly tying the observed spelling to
+the same authoritative namespaced TMDb person ID, with source/date/scope.
+Accordingly `CONFIRMED_DIRECTOR_ALIASES` is deliberately empty. **The specific
+Blade Runner2049 spelling remains unresolved under the shipped registry.**
+The mechanism is complete, but confirming/activating that real record is not.
+
+All positive crosswalk records in regressions are explicitly authored synthetic
+people and provenance, not reconstructed source responses. Offline identity/
+extraction success does not validate real offers/tracks. Tests cover exact
+confirmed spelling, different namespace/person, the same person across films,
+missing/invalid IDs, record ambiguity, multi-director refusal, stable-ID/title/
+year precedence, withholding and ignored browser injection. Validation passed:
+**31/31** new crosswalk regressions, **34/34** resolver/title-year/diagnostic
+regressions and **203/203** dependent TMDb/assisted/workflow/HTTP/report/transfer/
+credential/URL checks.13 Markdown documents/446 links/272 anchors, zero errors;
+diff/whitespace pass. Independent read-only code/evidence reviews found no code
+blocker and no adequate real-record evidence. Initial sandbox child spawning
+failed with EPERM; unchanged tests passed outside that restriction. No new
+browser/iPhone, Windows-demo lifecycle or PostgreSQL run: UI/launcher/SQL
+unchanged. The Netlify Functions skill informed the static import boundary
+(no runtime file reads/new endpoint/configuration), not a deploy. No new
+control/owner cycle, source/rules/API GET,
+DB/migration, flag/secret, init/auth/lifecycle, UI, retention or Wishlist action.
+Search text/admission/request budgets/deadlines/retries/redirect policy, R1/R2,
+exact URLs/acknowledgement and form-transfer safeguards remain unchanged.
+
+#### Authorised one-time person verification — 2026-10-23
+
+Prepared in the same #200, subsequently executed as recorded below; real
+registry remains empty. **No new request at preparation.**
+The owner authorised <=3 total HTTP attempts, prior22 separate/cumulative<=25:
+one TMDb movie335984 credits GET, one details GET for its validated director
+person ID, and only if needed one exact
+`https://kinobazaua.com/persons/denis-villeneuve` GET. At preparation no reliable
+person-ID evidence was saved, so credits were not skipped or replaced by a guess.
+No film search/title-card/Tavily/watch-provider/platform/destination request.
+Errors spend attempts; no retries, redirect follow, alternative or auto-repeat.
+This person path is a local diagnostic exception, **not runtime card admission**.
+
+`scripts/m4-director-person-diagnostic.mjs` requires explicit CLI opt-in and
+strict one-key stdin. Existing hidden helper adds `-DirectorPersonCheck`:
+exact clean ExpectedCommit, only TMDB_READ_ACCESS_TOKEN SecureString prompt,
+no Tavily input or credential argv/env/disk/log handoff. The Node child removes
+inherited source credentials/preload/debug/TLS-log settings, uses the existing
+bounded TMDb reader, a45s overall source deadline and15s per-read bounds.
+Fixed source origin/path/stage/counters are validated before every dispatch;
+TMDb Authorization is never forwarded to Kinobaza. Only initial HTML in memory,
+no scripts/assets/JSON-LD context/linked IDs are fetched. Reader uses
+`-DirectorPersonCheck -Compact` in a second same-SSH/elevation terminal; separate
+current-user-only pipe `mw-m4-director-person-200`, one handoff, <=15min, no file.
+Retrieval failure/unused cap never authorises another run.
+
+Evidence chain: credits must identify movie335984 and one valid Director person
+ID; requested person response ID must match, including any appended ID. Exact
+target spelling in the valid TMDb person name/aliases can directly confirm and
+**skips the optional third GET**. Otherwise shared IMDb **person** nm-ID may
+link TMDb to an explicitly bound Kinobaza Person profile: canonical/H1/Person
+names and stable IDs must be consistent. No requirement that Kinobaza itself
+expose a TMDb ID. Root/appended IMDb conflicts, unrelated or ambiguous Person
+objects, foreign profile ownership or unclear markup do not auto-confirm.
+Plain person links are bounded observations with ownership unestablished for
+review, not a convenient page-wide same-ID proof. No slug/name/filmography/year
+similarity inference. Profiles lacking adequate linkage remain unresolved.
+
+Safe output contains source references, validated person IDs, only matching
+TMDb aliases/counts, bounded profile identity fields/person links, structural
+uncertainties, actual attempt statuses/counts and a new local run ID. No raw
+HTML/JSON response, biography, search snippets, credentials or tracking data.
+Local checkout SHA is distinct from unknown deployed-runtime attestation.
+After input the approved check runs immediately, once; no additional consent
+needed. Only sufficient reviewed proof permits a real registry entry; mocks
+must not be promoted to evidence. No repeated discovery or offer/track claim.
+
+Preparation checks: **54/54** targeted offline regressions passed (15 authored
+person-diagnostic,8 credential/helper,31 person-crosswalk). They cover direct
+TMDb alias proof/skipped third read, common IMDb person-ID proof, wrong or
+ambiguous IDs/profile ownership, appended-ID conflicts, exact spelling, counted
+HTTP/transport/body failures, manual redirects/no destinations, strict one-key
+stdin/no env fallback, secret/body filtering, native PowerShell parsing/IPC and
+unchanged crosswalk withholding. Review found/fixed missing profile-ownership and
+appended-person-ID guards before any source dispatch; bounded name output also
+checked.13 docs/446 links/272 anchors, no errors; whitespace/scope checked.
+These are mocks, not real alias confirmation. No browser/Windows-demo/SQL rerun:
+only local diagnostic/credential helpers and docs changed; app/runtime registry,
+admission, query, budgets, lifecycle/auth, UI and retention are unchanged.
+
+**Executed person check — 2026-10-23:** owner-forwarded safe local result,
+run `40763a2f-fddc-41b6-b6da-c09e2d4b779f`, started
+`2026-10-23T19:55:05.822Z`, checkout
+`099db961d86eada84b6b222de667add951979085`, mode `director-person-check`,
+`execution=local-diagnostic`, `buildSha=null`. Local checkout provenance only,
+not independent agent source capture or deployed-runtime attestation. Minimal
+facts below, not a copied JSON/HTML response or persistent content archive.
+
+| Read | Attempts / status | Established evidence |
+| --- | --- | --- |
+| [TMDb movie335984 credits](https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA) | 1 / HTTP200 | The validated Director record identifies person137427, name Дені Вільнев, original name Denis Villeneuve. |
+| [TMDb person137427](https://api.themoviedb.org/3/person/137427?language=uk-UA&append_to_response=external_ids) | 1 / HTTP200 | Matching requested person ID137427, name Дені Вільнев;3 aliases examined, no exact target spelling; projected IMDb person ID nm0898288. |
+| [Kinobaza person pointer](https://kinobazaua.com/persons/denis-villeneuve) | 1 / HTTP200 | `person-page-too-large`; refused before HTML decoding/profile extraction. No H1, canonical, Person object or external person-ID evidence returned. |
+| Total | **3/3** | No confirmed target alias; no redirect/retry/extra read. |
+
+The TMDb reads now establish the film-director-to-person-ID chain; the exact
+alias list contents are not reconstructed from its count. Matching the selected
+person to IMDb nm0898288 does **not** establish that Kinobaza uses that IMDb ID
+or that its profile associates `Денні Вільньов` with this person. HTTP200 does
+not establish a parsed profile. Public birth fields in the safe result are not
+needed for this conclusion and are not archived here.
+
+Precise stop: `readPersonHTML` returns the same `person-page-too-large` for
+declared Content-Length >524288 bytes **or** accumulated body bytes exceeding
+524288 (512 KiB). The safe result contains neither the branch nor the exact
+size. It therefore cannot show which check fired, the complete body size or
+that all HTML was read. Both paths stop before decoding, challenge detection,
+parse5/profile identity inspection; no claim that profile markup/links were
+missing, unsupported or incorrect. No alias, source-value repair or matching
+change is justified by this transport-bound refusal.
+
+**Real-entry status: not confirmed, not activated; registry still empty.**
+Missing evidence is the Kinobaza person-level side of the linkage (e.g. explicit
+profile ownership plus the same IMDb nm0898288 and the target spelling), or a
+trusted person record explicitly listing that exact alias. The earlier movie
+card, similar names/slug and known film ID cannot fill this gap.
+
+Accounting: previous22 + this3 = **25 actual attempts**, ceiling fully spent:
+TMDb14 / Tavily8 / Kinobaza title-card2 / Kinobaza person-page1. No unused budget,
+automatic repeat, re-prompt or additional request is authorised. Analysis/docs
+made zero source calls. A possible **separate proposal, not implemented or
+authorised** is one read of this same person page with a diagnostic-only2MiB
+bound and separate declared-length/stream-limit reason; reuse the now-saved
+TMDb person proof, no repeated TMDb/Tavily/title-card/discovery call. If it still
+fails its new bound, stop. This would require new explicit request/bound scope;
+it is not a change to runtime admission, parsing, retention or application cap.
+
+This result checkpoint changes only README/canonical documentation. Two focused
+authored in-memory transport cases reproduced both size-limit paths with the
+same public reason/counts and no profile extraction (zero source HTTP). These
+are not reconstructions of the real profile or evidence of its actual size.
+Links/anchors, diff scope and whitespace checked; runtime suites not repeated
+for Markdown-only changes. The54/54 preparation evidence remains tied to
+unchanged executed099db96, not a new live validation. No real alias, runtime
+bound, identity gate, query, UI/lifecycle/auth, retention, migration/flag/secret,
+Wishlist, owner checkout/demo, merge/deployment or discovery change.
+
+### Same-document M4 return state — 2026-10-23
+
+Owner reported loss of the open M4 window/results after switching apps on
+iPhone. The code establishes a loss path, not a recorded iPhone event sequence:
+the existing auth callback can invoke `initApp()` again; `initApp()` calls
+`loadCurrentRole()`, whose M4 hook previously called `invalidateMediaAdvice()`
+unconditionally. That rotated the form reference, erased the M4 controller
+session/DOM and closed its dialog, even for the same user/group/film/form.
+The visibility/pageshow resume path itself only refreshes movie data.
+
+Only that M4 hook now requests a capability refresh rather than invalidation.
+`initApp`, its callers/frequency, auth/lifecycle handlers and initialization order
+are unchanged. A same-context successful access refresh retains the original
+dialog, result objects, expanded details and scroll; it does not re-render or
+reopen an explicitly closed dialog. Capability checks use Auth/RPC, **zero
+source requests**. Failed/revoked access or changed context clears M4; ordinary
+form fields remain untouched. Pending selection authorization is revoked on
+revalidation; selection/review must be repeated, never applied by restoration.
+
+No persistence is added: no localStorage/sessionStorage/IndexedDB, snapshots,
+raw bodies, search snippets or server result recovery. This addresses a retained
+document/controller, **not iOS unloading the page or a full browser reload**.
+Those lose in-memory state; durable restoration would need a separately approved
+retention design. Explicit close, cancel/Save, logout and genuine user/group/
+film/list/form-session changes retain their invalidation/close behavior.
+
+Historical client-expiry behavior in this paragraph is superseded by the
+[pilot dialog/session decision](#mykola-media-dialog-and-form-session-lifetime--2026-10-28).
+The existing server session TTL remains 30 minutes and SQL/ledger retention is
+unchanged. The M4 view uses a conservative local bound of 30 minutes from explicit
+discovery dispatch (before server session creation), not from response/reopen.
+At expiry it drops projected results/choice/report DOM and pending apply, shows
+an expiry explanation and offers **Оновити вручну**. That explicit action checks
+access and renews only the M4 form reference; it makes zero source requests.
+The separate **Знайти варіанти** action starts a new metered search. Errors and
+lost replies remain spent/unknown; there is no retry or refund before expiry.
+Clock/deferred-timer expiry is also checked at access refresh, reopening and
+selection/navigation/copy/apply boundaries, including after async authorization.
+
+Authored browser regressions cover the actual unchanged auth callback → init →
+role load path with non-M4 data loaders mocked, retained DOM/details/scroll,
+in-flight discovery, explicit close, context changes, logout, revoked access,
+expiry and pending apply. No live source/DB/Save or real iPhone test is implied.
+After a separately authorized deployment: use one existing result, expand a
+detail and scroll; switch apps and return within TTL. Check the same window and
+position, unchanged source counter, no transfer/Save; explicitly close and return
+again to verify it stays closed. Real Safari/iOS suspension remains unvalidated.
+
+Local validation on this change: `npm run test:m4` with the explicit installed
+Playwright module/Edge: **60 passed, 1 skipped, 0 failed** (61 total). The skipped
+case is native PostgreSQL concurrency: no server/SQL/ledger changes; no claim of
+a new native run. Real-form browser viewports: 1280×900, 375×812, 820×1180.
+Windows launcher lifecycle and WebKit/device tests were not repeated/performed.
+Syntax, whitespace and local-reference checks passed (13 documents, 443 links,
+269 anchors). Byte-content comparison confirms the entire `initApp`/resume/auth
+tail, `updateAuthUI` and logout block are unchanged from develop `fbec4c2…`.
+No live discovery, Wishlist write, migration, flag/secret, merge or deployment.
+
+Form context: user + group + established IMDb identity + optional group-list ID
++ random form session. Typed title alone is insufficient. New film/group,
+cancel, successful Save or logout invalidates it. Late responses are discarded.
+Reopening retains same-session results. Abort does not refund a server attempt.
+Only `recommended_medium` and `purchase_url` are transferable; no ownership,
+status, title/year or added-by changes. Missing URL requires explicit clearing,
+never silent retention of a different platform's URL. Form edits after preview
+invalidate that preview. Affiliate/tracking acknowledgement preserves exact href.
+Unsupported/unmapped platforms remain read-only. Source rows never merge.
+Preview has its own opaque in-memory selection token, separate from discovery
+generation. Cancel, Escape, close, re-render and any new selection revoke it.
+After asynchronous access verification, both that token and the current form
+context/field snapshot must still match before the two local fields can change.
+
+## Source use and activation
+
+Implementation/offline checks are not live validation or rights clearance.
+No live source-body/API calls are authorized here. Existing dated research reviews do not
+grant blanket production or arbitrary-card permission. Before live activation,
+a separately authorized preflight must reconcile current TMDb, MOTN, Kinobaza
+scope and account-specific Tavily plan/terms, attribution, transient transfer and
+permitted access. The dated Tavily review below distinguishes the supported API
+path from unresolved end-user licensing. Search does not license destination
+content. No application LLM call or full-body archive.
+No current production feature assignment, secret or migration is changed.
+
+## Pilot (future, not executed)
+
+No concrete pilot films selected. The single
+[execution runbook](#activation--operation-plan-not-executed) defines selection,
+activation gates, owner-only access, source-free smoke and the later five-film
+pilot; do not substitute research fixtures.
+
+## Validation and remaining work
+
+M4.1 authored offline/browser validation covers capability failure, isolated
+dialog, stale response and preview, exact URLs/acknowledgement, missing URL and
+transfer-only fields. M4.2/M4.3 add server authz/concurrency/resolver tests.
+Windows launcher components are unchanged and are outside this integration.
+MW-FUT-01 remains Discovery; production readiness is a separate decision.
+
+## M4.2 server and migration contract
+
+Implemented, mock/offline tested; live-unvalidated. The server verifies a Supabase
+Auth user (not user metadata), then calls service-role-only
+`media_advice_action`. Every capability/start/reserve/finish checks backend
+permission, fresh owner/member membership and (edit only) list/group/IMDb relation.
+Add accepts an established IMDb selection without requiring an existing list row;
+the server resolves/validates the crosswalk itself. No client result/role/counter
+is accepted. Failed capability leaves normal editing usable.
+
+No trusted TMDb preview is retained by the existing form lookup. Therefore the
+full M4 ceiling is **8 source HTTP attempts**: IMDb Find 1 + Details 1 + UA
+providers 1 + MOTN title 1 + Tavily search ≤2 + Kinobaza cards ≤2. M4.2 alone ≤4.
+Missing/ambiguous crosswalk skips MOTN, never guesses an ID. Details/providers
+failure does not suppress an independent MOTN attempt with established crosswalk;
+its own metadata/ID gate may still withhold claims. Identity Details are reused
+within the action for localization/resolver, without additional fan-out.
+The handler clock starts at entry, before reading the body, Auth or ledger RPCs.
+Sources have only the remainder of the first **45s**; Auth and each RPC have at
+most 8s and never more than the remaining phase time. At most one finish attempt
+can use the next 8s, ending by 53s from entry. A 2s application response margin
+and a further 5s platform margin fit Netlify's documented synchronous 60s limit.
+Existing smaller adapter bounds remain; no budget increase or retry. Abort is
+propagated to network/body waits; an awaited operation that ignores abort is
+also raced against its deadline. This is an operational bound, not latency data.
+The response distinguishes dispatched source attempts from the finish RPC's
+durable reservation count. If a reservation reply is lost, no HTTP dispatch is
+authorized by that reply; the ledger may still have consumed the slot. If the
+whole action reply is lost, accounting is unknown to the client, not zero.
+Deadline exhaustion returns 504 without source results. If a session ID was
+received, the server makes one best-effort finish within its remaining margin,
+never retries finish or fetch. Failed/lost finish withholds results; it may have
+committed or left the session unfinished. Either way reservations are not refunded,
+the form/action cannot replay, and the 30-minute TTL plus retention cleanup apply.
+An unknown start outcome cannot be finished by guessed ID and is not retried.
+
+Migration `20261020205122_media_advice_access_ledger.sql` was created using
+Supabase CLI 2.121.0. It creates only a new private schema, default-off permission
+assignments, technical sessions and restricted RPCs. New tables have RLS and no
+anon/authenticated privileges; RPCs are service-role only. An advisory transaction
+lock serializes a user's new sessions and reservations; no lock spans source I/O.
+Follow-up `20261021072002_media_advice_review_fixes.sql` rechecks permission,
+fresh group role and edit-card context **after** acquiring the advisory lock,
+before any ledger mutation, including queued start/reserve/finish operations.
+Permission expiration is checked against wall-clock time after that wait.
+Per form session: one action; fixed stage names each reserved at most once,
+maximum eight. Per user: twenty sessions per rolling 24h (including expired
+30-minute sessions). Errors/lost responses consume reservations. No response,
+HTML, credential or chat persistence. No session replay/result recovery.
+
+Retention origin is the immutable action session's `created_at` (not its last
+reservation, finish, logout or form close). Rows become eligible at age **24h**,
+whether finished or abandoned, after their 30-minute active TTL has expired.
+A still-active row is preserved defensively, including an anomalously extended
+TTL; it becomes an overdue-monitor finding, not a reason to delete active work.
+Daily service-only `media_advice_cleanup()` is expected to delete eligible rows
+at ages **24–48h under a healthy scheduler**; opportunistic same-user cleanup can
+delete them earlier within that window. There is **no guaranteed 48h ceiling**
+during scheduler/DB failure. Movie, group-list/Wishlist and permission rows are
+not deleted by cleanup. Permission assignments
+persist until an authorized administrator revokes/removes them. No assignment
+is seeded. No global historical RLS repairs or production migration commands.
+
+Prepared, **not installed/activated**:
+[inactive pg_cron job configuration](../supabase/operations/media-advice-cleanup.schedule.sql)
+and [content-free health query](../supabase/operations/media-advice-cleanup.sql).
+The daily job is named `mykola-media-advice-cleanup`, 02:15 UTC; configuration
+refuses a non-UTC scheduler or an existing same-name job and creates it inactive
+in one transaction. There is no `cron.schedule` in an automatic migration.
+Enabling pg_cron/job requires later explicit authorization and baseline review.
+Denys, as backend operator, owns activation and daily independent monitoring:
+missing heartbeat, >26h since success, failed/inactive job or rows aged ≥48h
+require investigation. The private singleton heartbeat stores only last success
+and deletion count, atomically with deletion; a failed transaction cannot report
+success. Inspect `cron.job` / `cron.job_run_details`; recover via one authorized
+cleanup, never source replay or rate-counter reset. Before activation assign an
+independent daily check/alert outside this cleanup job; a stopped scheduler
+cannot report its own total outage. Cleanup health is backend-only, not browser
+content. Cron history pruning remains an operator concern, not source archival.
+
+Local validation uses PGlite 0.5.10 (test-only PostgreSQL/WASM), minimal authored
+prerequisites, and this new SQL only. It proves SQL execution/privileges/replay,
+not production migration history or native multi-connection/load behavior.
+Native PostgreSQL **17.6** was additionally run in an isolated loopback cluster
+with 24 distinct backend connections (matching the previously recorded target
+major/minor, not querying production to attest its current version). Both new
+M4 migrations run against authored prerequisites only; production migration
+history/baseline reconciliation remains pre-activation work. No old SQL replay.
+
+Server configuration (no values in Git): `SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `TMDB_READ_ACCESS_TOKEN`, `MOTN_API_KEY`;
+M4.3 additionally `TAVILY_API_KEY`. Secrets are not arguments/URLs/UI data.
+No configuration is changed by these PRs. Approved TMDb logo/complete current
+attribution and applicable commercial/source-use terms must be checked during
+activation preflight; text attribution and source links remain visible now.
+
+## M4.3 automatic resolver and UI
+
+No manual card field is required. The swappable search interface uses
+Tavily basic Search `POST https://api.tavily.com/search`, with
+server-only Bearer authentication. A verified original title/alias and year form
+a title-path/domain-limited query; director remains in the HTML identity gate,
+not the search text. Snippets/rank never establish identity or
+claims and are not returned or persisted. At most one alternative known title
+query is allowed **only when the first successful search yields no admitted
+URLs**, not after transport/auth/quota errors or merely to seek a nicer result.
+Read at most two distinct admitted candidates sequentially. More candidates are
+reported unexamined, not declared absent. Provider-internal traffic is unknown.
+
+Admission reuses the strict assisted policy:
+`https://kinobazaua.com/titles/<lowercase-ascii-slug>` only; no query, fragment,
+credentials, port (including explicit 443), alternative host, subpage, encoded
+slash/dot path, normalization repair or guessed slug. Revalidate before every
+GET; redirects/retries are refused. Search ≤15s/512KiB, source card ≤15s/2MiB,
+within the remaining source phase of the entry-based deadline. A reservation
+that outlives this phase cannot start a later search/card fetch. No
+cookies/login/scripts/assets/destinations.
+
+Identity reuses the existing independent canonical/title/original-title/year/
+director/stable-ID gates, including unresolved director spellings/composition,
+original-title scope refusal and stable-ID conflict priority. These parser
+limitations are preserved, not fixed by finding a URL. Refusals withhold claims.
+One matched card can contribute source rows automatically even when extraction
+is partial. Two matched cards require an explicit choice of already checked
+cards; selection adds **zero** requests and cannot override a refused identity.
+An identity match is not extraction success, offer identity or account entitlement.
+
+The dialog groups supported platforms for presentation only, keeps each source
+row selectable independently, and retains unknown/unmapped observations read-only.
+It shows source warnings, literal characteristics in details, localization scope,
+shared JustWatch lineage, exact-link acknowledgement and a safe copyable report.
+Report content is allowlisted counts/status/scopes; no raw URLs, tracking query,
+source body, secret or manually edited draft. Commit remains unknown without
+attestation. Clipboard denied/unavailable has selectable text fallback.
+Default field exclusions remain price/currency, audio/subtitles/video, status,
+owned medium, identity/title/year and added_by. No form write until explicit
+transfer; no DB write until ordinary Save. No source request from rendering,
+card selection, copy, review, transfer or cancel.
+
+The ledger retains rate rows across list/group deletion: new contexts cannot
+erase prior rolling-window usage. Historical foreign-key/RLS issues are not
+modified. New accounting stores group/list IDs as technical bindings, checked
+against fresh membership/list identity on each RPC, not cascading rate resets.
+
+## Activation / operation plan (not executed)
+
+### Execution runbook — preparation checkpoint 2026-10-21
+
+**Prepared, not authorized to execute.** One operational runbook; design remains
+above. Target: Netlify **develop branch deploy** with existing production
+Supabase `mttkectgdqqmejpenkrn`, not a fresh DB. Denys is the deployment/backend
+operator. Owner checkout/demo is excluded. Every mutating step below requires
+the next explicit authorization; do not run commands merely because documented.
+The five pilot films are **not selected**.
+**Execution hold:** the [focused recovery assessment](#focused-recovery-assessment--2026-10-22-m4-qualified)
+clears the MW recovery prerequisite for the two M4 migrations, with explicit
+limits; it does not authorize consolidation/auto-deploy or migrations. All other
+execution prerequisites and the next explicit authorization still apply.
+
+### Recovery checkpoint — 2026-10-22 (blocked)
+
+The heading retains its historical anchor. **Current verdict: recovery is
+sufficient for the two additive M4 migrations, not a full Supabase-project
+recovery guarantee.** The initial [data-pass/ACL-blocker result](#local-restore--2026-10-22-data-verified-acl-blocker)
+is superseded only to that scope by the
+[focused assessment](#focused-recovery-assessment--2026-10-22-m4-qualified).
+Disk encryption is explicitly waived, not a blocker. No production restore,
+migration, consolidation/deploy or activation is authorized by this evidence.
+
+Historical initial inspection time **2026-10-21T21:24:28Z** (2026-10-22 local Kyiv).
+PR #195 remained at `c2d38f6740ec4fd6ae7d6615d1e963c3ce9d1740`,
+base #194 `bdca14f9a06a6e84297f75917c5b009dbf41fa66` before this
+ordinary documentation follow-up. This timestamp is an access check, **not**
+a backup/snapshot time; **at that inspection** no artifact path, size, SHA256
+or restore comparison was available. It is superseded only by the explicitly
+dated evidence below, not by assumed success.
+
+Historical evidence / initial access blocker (subsequently resolved):
+
+- No `pg_dump`, `pg_restore`, `psql`, Supabase CLI or Docker on PATH.
+  The existing isolated native PG bundle supplies `postgres --version=17.6`,
+  but no dump/restore/psql executables were found in that bundle.
+- No PG connection/password/service environment configuration, default Windows
+  pgpass or service file was present (presence-only checks, no values read).
+  No login/export attempt, empty dump or invented checksum was produced.
+- Read-only SQL connector reports role `postgres`, server17.6. This is SQL
+  authorization, **not an exportable password/connection or secure streaming
+  file channel**. Do not extract it, expose source rows through tool/chat output,
+  use server-side files/OS commands, or substitute the Netlify service-role key.
+- Catalog-only inspection: public plus auth/storage/realtime and
+  cron/extensions/graphql/graphql_public/net/vault schemas exist. Extensions:
+  pg_cron1.6.4, pg_net0.20.4, pg_stat_statements1.11, pgcrypto1.3, plpgsql1.0,
+  supabase_vault0.3.1, uuid-ossp1.1. M4 schema/history table still absent.
+  No user rows, role-password hashes, decrypted Vault values or Storage files
+  were fetched. Core PG17.6 presence does not prove Supabase extension parity.
+
+**Required access, no password in chat:** in this project's Supabase Dashboard
+→ **Connect → Session pooler**, configure the displayed host, port **5432**,
+database **postgres**, user **postgres.mttkectgdqqmejpenkrn** and TLS. Use the
+existing DB password via a hidden local prompt or owner-restricted Windows
+`%APPDATA%\postgresql\pgpass.conf` / `PGPASSFILE`, not command arguments,
+source files, chat or public artifacts. Do not guess the regional pooler host.
+Direct connection from Connect is an alternative only when network access is
+established. Do not use transaction pooling (6543) for coordinated snapshots.
+Do not reset the production password, create roles or change grants under
+this authorization. Existing privileged read/export access is needed; a
+limited account must fail rather than silently omit RLS-protected tables.
+Portable PG17 client tools are also required before export can begin.
+
+#### Local tools / hidden password handoff — prepared 2026-10-22
+
+The earlier access-check findings above are historical, not current tool status.
+Owner confirmed Session pooler host
+`aws-1-eu-north-1.pooler.supabase.com`, port5432, database`postgres`,
+user`postgres.mttkectgdqqmejpenkrn`. PR #195/base #194 were rechecked before
+this follow-up; no owner-checkout or production changes.
+
+- Official EDB portable archive `postgresql-17.11-5-windows-x64-binaries.zip`
+  installed under `%LOCALAPPDATA%\MovieWishlist\RecoveryTools\pg17.11\pgsql`.
+  `pg_dump`, `pg_restore`, `psql` report **17.11**, same major as source17.6.
+  No installer, system service or PATH change. Download SHA256:
+  `80379B2C04D51C30225532E0AE04509899141E9957ED096FE749D7FD9DF8F82F`.
+  This is a local integrity hash of an official HTTPS download, not an
+  independently published vendor checksum or a database-backup checksum.
+- The initial Windows-root-only TLS probe refused the Supabase private CA;
+  no password or SQL was sent. The CA download URL was then verified against
+  [Supabase dashboard source](https://github.com/supabase/supabase/blob/master/apps/studio/hooks/custom-content/custom-content.json).
+  Public `prod-ca-2021.crt` file SHA256:
+  `700723581420DD1AC98FD7E9AC529F0EF210EADCAF87FC868A3AD7D114C2F3B7`.
+  The helper pins that downloaded CA file for this operation. No machine-wide
+  trust-store modification or permissive certificate callback.
+- TLS preflight passed with the explicit Supabase CA, chain/validity and exact
+  pooler-hostname verification. Native PG17 `sslmode=verify-full` also reached
+  `fe_sendauth: no password supplied`, the expected password-free stop before
+  authentication/SQL. This proves TLS setup, **not privileged DB access**.
+  CRL/OCSP revocation is not attested; no CRL is configured. Do not silently
+  downgrade to `require`/`verify-ca` to work around future errors.
+- [Local password prompt](../supabase/operations/recovery-password-prompt.ps1):
+  Windows PowerShell7+, `Read-Host -AsSecureString`; fixed pooler only;
+  no password in argv, parent environment, Git, console or plaintext file.
+  A bounded read-only `psql -X -w` check verifies database/role/major before
+  saving a **DPAPI CurrentUser-encrypted** credential handoff under
+  `%LOCALAPPDATA%\MovieWishlist\Recovery\mttkectgdqqmejpenkrn\pending`.
+  The directory has protected owner/SYSTEM-only DACL; reparse-point ancestors
+  are refused. A pending handoff is never overwritten. Brief plaintext copies
+  in the local child-process environment/memory are unavoidable; they are not
+  protected from a compromised same-user/admin process. Do not run with a
+  terminal transcript/session recording or in CI.
+- This is a two-stage local handoff, **not an automatic backup runner**.
+  The operator enters the password locally and reports only completion.
+  The next authorized recovery operation must check `pending.json` project,
+  successful read-only/TLS evidence and `expiresAt` before importing
+  `credential.pending.clixml` under the same Windows user/machine. Expiry is
+  two hours after creation, not a scheduled deletion: refuse expired use and
+  remove the exact credential file on consumption/failure/abandonment; do not
+  retain it with backups. Never print/decrypt it into tool arguments or logs.
+  DPAPI depends on this Windows profile/machine and is **not** a portable
+  disaster-recovery key. The eventual backup needs its own protected/tested
+  encryption and recovery-key procedure under the contract below.
+
+Launch in an ordinary, non-recorded PowerShell terminal using the prepared
+isolated checkout (no update/switch of the owner's working copy):
+
+```powershell
+& 'C:\Users\DenysLis\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe' -NoProfile -File 'C:\Users\DenysLis\.codex\visualizations\2026\09\28\01a0e7c4-3dc8-75e0-a3ed-84a709483b8d\mw-m2-ab-implementation\supabase\operations\recovery-password-prompt.ps1'
+```
+
+Offline authored regression passed: private/reapplied DACL, child-only secret
+with no argv exposure, fixed verify-full/read-only configuration, DPAPI
+round-trip, bounded-expiry metadata, refusal to overwrite and explicit
+`backupCreated=false` / `restoreVerified=false`. At that preparation stage,
+real-password entry, backup, snapshot/count capture and local restore were
+still pending; see the executed checkpoint below for subsequent evidence.
+The prompt itself performs no production writes/migrations or restore.
+Official references: [EDB portable binaries](https://www.enterprisedb.com/download-postgresql-binaries),
+[Supabase psql TLS](https://supabase.com/docs/guides/database/psql),
+[PostgreSQL17 SSL verification](https://www.postgresql.org/docs/17/libpq-ssl.html).
+
+Owner prompt follow-up (2026-10-22): the screenshot reports an earlier psql
+exit2 and a later successful psql execution followed by the generic
+`Unexpected database identity, server major, or read-only setting` refusal.
+The later refusal establishes neither a wrong password nor which metadata
+check failed: those values were deliberately not retained. At that failed-run
+inspection no credential handoff existed; no backup/restore had run.
+
+Narrow helper correction: the access query now explicitly runs
+`BEGIN READ ONLY; SET LOCAL statement_timeout = '15s'; ...; ROLLBACK;`,
+rather than relying solely on startup `PGOPTIONS` for transaction mode.
+Wrong database, unexpected role, non-PG17 and a non-read-only transaction
+still refuse credential capture. Refusals now use fixed allowlisted codes:
+`database-not-expected`, `role-not-expected`, `server-major-not-17`,
+`transaction-not-read-only`, `malformed-metadata`; no raw JSON, stderr,
+role names or other server-returned text is echoed. Client-side startup
+options not reaching the server is a possible explanation, **not an attested
+root cause for this owner's pooler connection**. PostgreSQL's explicit
+[read-only transaction mode](https://www.postgresql.org/docs/17/sql-begin.html)
+does not depend on that explanation. Reuse the same local launch command;
+no checkout switch/update or password reset is needed.
+Authored offline diagnostics/DPAPI/DACL tests passed. A fresh isolated native
+PostgreSQL17.11 test also reproduced the old refusal when the session default
+is read-write, then accepted the explicit read-only query with unchanged
+database/role/major checks. This is a controlled local reproduction, not proof
+that the pooler dropped the owner's startup options. The local fixture cluster
+was stopped; no production connection or real password was used in these tests.
+
+#### Executed backup — 2026-10-22 (local restore blocked)
+
+Owner subsequently completed the local prompt. The handoff's database/role/
+PG17/read-only evidence and two-hour expiry were checked privately. One TLS
+evidence object was validated explicitly (the older helper also emitted empty
+pipeline values; those are not accepted as verification). The helper now
+suppresses those non-secret extra outputs. The password was consumed via
+DPAPI/current-user memory and child environment only; the exact
+`credential.pending.clixml` was **deleted**, and non-secret handoff metadata
+was moved into the checkpoint. No password reset, grants or Netlify secrets.
+
+Actual checkpoint:
+
+- Source **PostgreSQL17.6**, clients **17.11**. Session pooler with verified
+  Supabase CA/hostname; explicit `REPEATABLE READ READ ONLY`, `row_security=off`
+  so unreadable/RLS-filtered counts cannot silently pass. Exported snapshot
+  held for dump and per-table counts; role/global definitions captured separately.
+- Snapshot UTC **2026-10-21T22:13:53.045Z** (Kyiv **2026-10-22 01:13:53**).
+  DB archive completed **2026-10-21T22:14:15.839Z**; snapshot released and
+  archive verification completed **22:14:17.980Z**. These are actual operation
+  times, not prior access-check timestamps.
+- Protected directory (outside Git/owner checkout/preview/OneDrive):
+  `C:\Users\DenysLis\AppData\Local\MovieWishlist\Recovery\mttkectgdqqmejpenkrn\checkpoint-20261021T221351Z-432dc0a6`.
+  Protected, inheritance-disabled DACL verified: current Windows owner + SYSTEM.
+  **AES-256-GCM** direct streaming, random nonce per file, authenticated header
+  and tag; no plaintext DB archive/staging file was created.
+- Separate key:
+  `%LOCALAPPDATA%\MovieWishlist\RecoveryKeys\checkpoint-20261021T221351Z-432dc0a6.key.dpapi`.
+  Owner/SYSTEM ACL verified. Independent reload/unprotect and archive
+  authentication passed under this Windows profile. **DPAPI is machine/profile
+  dependent**: this is not a portable/off-device disaster-recovery copy. Protect
+  that profile/key; moving ciphertext alone to another computer is insufficient.
+- Snapshot schema/table/constraint inventory and per-table counts are retained
+  **encrypted**, never in Git/report. All inventoried counts were readable.
+  Archive TOC accounts for every inventoried non-extension table, including Auth
+  and Storage data entries. This is coverage validation, **not** restored-row,
+  schema-definition, sequence, grant/RLS or FK/orphan comparison.
+- `pg_dump` custom archive and both `pg_dumpall --roles-only --no-role-passwords`
+  exports exited0 with empty stderr (no export warnings). Role definitions/
+  memberships were unchanged between exports
+  after removing pg_dumpall's random `\restrict` markers. All retained encrypted
+  artifacts authenticated; manifest hashes matched. `pg_restore --list` and
+  full `pg_restore --file=NUL` archive reading exited0, no SQL execution.
+  **Archive reading/decryption is not a database restore.**
+
+| Encrypted artifact | Bytes | SHA256 |
+| --- | ---: | --- |
+| `database.aesgcm` | 629292 | `a09a6d3079ebf22b42ff7b0af47406bff14bc8552005ebac6d0bf2fde99104f5` |
+| `roles-before.aesgcm` | 5701 | `5f5a77ed7b5f4a8d2fb24e952998ed9dcc08f9dab8caaa45dc724e7520b949ff` |
+| `source-inventory.aesgcm` | 58281 | `cd3235cc7a5902309783162e0b0689ad0f7b454d6061907ba3d6a77b01d899c7` |
+
+`status.json` and dated `audit-*.status.json` privately record all artifact
+names/sizes/hashes. Detailed TOC, diagnostics, source counts/constraints and
+coverage audit remain encrypted. Export completion is labelled `backupComplete`;
+it does **not** assert a complete Supabase-project backup or recovery readiness.
+Retain this checkpoint and its separate wrapped key until explicit owner-approved
+disposal; no automatic backup deletion/scheduler was introduced.
+
+**Historical local-restore prerequisites (subsequent authorization below):**
+
+1. EFS on the newly created empty test directory returned **"The request is not
+   supported"**. `manage-bde -status C:` was read-only but returned **access
+   denied / administrative rights required**. Therefore disk encryption is
+   **unknown**, not proven off or on. No real-data cluster or plaintext archive
+   was created under that earlier authorization. The owner subsequently
+   **explicitly authorized decryption/local restore without disk encryption**.
+   BitLocker/Device Encryption is no longer a prerequisite. Owner/SYSTEM-only
+   staging, network isolation and deletion of temporary plaintext remain required;
+   deletion is not a forensic-wipe guarantee (including SSD/pagefile remnants).
+2. Installed vanilla Windows PG17 lacks `pg_cron`, `pg_net`, `supabase_vault`
+   extension controls/binaries. This historical prerequisite was subsequently
+   addressed in an isolated Linux VM with real native modules; no stubs or
+   silently omitted extension errors. No Docker/system service was installed.
+
+The capture/audit stage above did not execute SQL restore. It is superseded by
+the dated test below, not retroactively relabelled as restore evidence. Another
+production connection/password is not needed to decrypt/test this immutable copy.
+Do not repeat the backup just to retry local restore. Auth/Storage service-level
+validation remains unperformed; production DDL/migrations, deployment,
+flags/scheduled cleanup and historical RLS remain untouched.
+
+#### Local restore — 2026-10-22 (data verified; ACL blocker)
+
+Actual final VM run started **2026-10-22T01:41:52.529Z**. The native driver
+completed and its first comparison was recorded at **01:43:58.716Z**. A final
+offline comparison of those outputs was recorded at **07:01:00.993Z**; that is
+**not a second SQL execution or a newer source snapshot**. The original source
+snapshot remains **2026-10-21T22:13:53.045Z**.
+
+Target/preparation, not a production Supabase restore:
+
+- Portable QEMU11.1/Alpine Linux VM, `-nic none`, no port forwarding/monitor/VNC;
+  PostgreSQL **17.6** listening only on a guest-local mode0700 Unix socket,
+  `listen_addresses=''`. No Docker entrypoint, Auth/Storage/Realtime services,
+  source-provider requests or new production connection. BitLocker is not required
+  under the owner's explicit waiver. All staging was owner/SYSTEM-only outside Git.
+- Official `supabase/postgres:17.6.1.054` amd64 image, pinned manifest
+  `sha256:e884cde9f5594ddb30ebec888bd236d128eaf9c9b48cc864d8fa3d27a6c6c6bc`.
+  The initial OCI unpack command reached its20min bound; no complete-container
+  image claim is made. Actual required PG/compiler/modules were inspected and
+  exercised, and the exact locale payload was recovered from verified layer50.
+- All seven extension versions matched the source inventory. Image pg_net0.19.5
+  was not presented as compatible with source0.20.4: real **pg_net0.20.4** was
+  built offline from official commit `698fb055f666366a78c112b0578b0a5652ddbcfa`.
+  Native dependencies for all seven modules were checked. PG17.11 Linux clients
+  were used for the final full-archive restore/schema/data redump, matching the
+  export's minor generator version (server remains17.6).
+- PostgreSQL17 initially rejected an exported `GRANTED BY` under the separately
+  named bootstrap. The final target uses the exported platform grantor as its
+  initial bootstrap, plus a distinct local operator role. Only the duplicate
+  `CREATE ROLE` for that pre-existing bootstrap is omitted from a private replay
+  copy; original encrypted roles/ALTER attributes/GRANT statements are unchanged.
+  Full role/membership redump matched after removing only the local operator and
+  client-version/random-restrict metadata. Source system OIDs were not captured.
+  This reconciles the local target, not proof of a source bootstrap OID.
+- Actual native pg_net0.20.4 requires preload. Its real, unmodified worker is
+  confined to untouched **template1**, **batch_size=0**, never the restored DB.
+  The worker is **present**, not falsely reported absent. Source code allows0
+  and consumes queue rows with that bound. Native checks confirmed isolation,
+  zero processing setting and an empty restored HTTP queue. Cron
+  `launch_active_jobs=off` throughout; no restored jobs ran. Import sessions use
+  `session_replication_role=replica` to prevent normal webhook/Vault triggers.
+  Independent no-NIC isolation prevents external HTTP even if an unexpected hook
+  exists. No playback, source API, webhook destination or production calls.
+
+| Native comparison | Actual result / boundary |
+| --- | --- |
+| Full archive SQL execution | Completed with stop-on-error; final run used unfiltered full `pg_restore17.11`, not a partial application-only restore. Earlier preparation failures are retained privately, not called successful restores. |
+| Snapshot table counts and data | PASS: every compared table count and sorted COPY-record fingerprint matched, including Auth and Storage SQL records. Only the two explicitly excluded net queue/cache tables are outside archived-data fidelity. No row counts/content in Git. |
+| Sequence state | PASS against captured archive `setval` state, not an assertion about later production changes or atomic MVCC sequence snapshots. |
+| Catalog structure | PASS for schema/table inventory, owners, RLS/force-RLS flags, extension membership/version inventory and constraint definitions/validation flags. This is not a blanket pass for all SQL serialization. |
+| Key relationships | PASS: all restored FKs checked for orphans. Captured FK coverage includes group membership→groups/users and movie-group-list→groups/movies; source/target constraint definitions match. No undeclared relationships or Auth service behavior are inferred. |
+| Roles/memberships | PASS for captured logical attributes/memberships, without role passwords. Source role/global definitions were stable during export. |
+| Object ACLs | **FAIL globally**: PostgreSQL `aclexplode`/`acldefault` comparison retains grantee, grantor, privilege and grant option, including NULL/default semantics. Later exact enumeration found **two schema mismatches and zero table mismatches**. The earlier statement about extension-owned table mismatches was an empty-set `every()` diagnostic, not evidence of any such mismatch. |
+| Full schema SQL | **FAIL**: normalized schema redump is not identical even with matched17.11 client. Remaining differences were not exhaustively classified; no blanket column/index/function/trigger/privilege fidelity claim. |
+| Auth/Storage/Vault services | Not tested; SQL rows restored, no service entrypoint, object bytes or project-root-key recovery. |
+
+**Historical blocker, subsequently scoped below:** permission/schema fidelity of the local Supabase-compatible
+target is not established. Different managed/extension initial privileges are a
+**hypothesis**, not an attested root cause. The source snapshot did not independently
+capture `pg_init_privs` or every extension-member function/column ACL baseline.
+Do not change/ignore ACL assertions, manually grant broader privileges, or call
+this checkpoint fully recovery-ready because data alone matched. A bounded next
+step is to compare the retained source/target ACL evidence against the relevant
+extension/bootstrap initialization, then test a supported, source-preserving
+reconciliation locally. Any additional privileged source-catalog capture requires
+separate approval; no password in chat. No new M4 research/owner evaluation is
+needed for this recovery issue.
+
+Evidence and cleanup:
+
+- Original ciphertext/key paths and hashes above are unchanged. Dated
+  `restore-*.status.json` plus authenticated `restore-*-details.aesgcm` and
+  `restore-*-comparisons.aesgcm` remain in that protected checkpoint directory.
+  They retain private catalog/count/ACL diagnostics and comparison fingerprints,
+  not public SQL/data or a Git archive. Original capture `status.json` remains
+  immutable historical evidence; the latest dated restore result supersedes its
+  old "not attempted" state. Updated offline audit reads both stages explicitly.
+- **2026-10-22T07:02:45.8977708Z**: stopped VM/PG, validated exact temporary
+  path/process/reparse boundaries, removed the entire disposable VM/software/
+  plaintext staging directory. Original AES archive SHA256 and separate wrapped
+  key preservation checked afterward; all retained AES-GCM artifacts authenticated
+  again. Logical deletion, **not forensic secure erase** of SSD/pagefile remnants.
+- Actual driver SHA256
+  `ff74facf85b6689f32ac1fa00fa6dab95e674a131b7fe89ac2965d4945dc1fce`
+  matched the normalized worktree helper before deletion. This is content
+  provenance for that native run, not an invented runtime Git-commit attestation.
+- [VM/operator helper](../supabase/operations/recovery-vm.mjs),
+  [private staging/comparison](../supabase/operations/recovery-local.ps1),
+  [native ACL queries](../supabase/operations/recovery-acl-checks.mjs) and
+  [exact cleanup](../supabase/operations/recovery-local-cleanup.ps1) are a pinned
+  operator test harness, **not a production restore/provisioning service**.
+  Authored helper tests are separate from the actual database evidence above:
+  **7 authored tests passed**, including console refusal after private staging,
+  GCM tamper/wrong-key handling, COPY comparison and native ACL-query generation.
+  JS/PowerShell syntax and local links/anchors checked (13docs/439links/267anchors,
+  no errors); whitespace/scope checked. Application/browser/Windows demo lifecycle
+  suites were not repeated: no application, launcher or deployment code changed.
+
+References: [official Supabase PG image](https://hub.docker.com/r/supabase/postgres),
+[pg_net0.20.4 preload/worker configuration](https://raw.githubusercontent.com/supabase/pg_net/698fb055f666366a78c112b0578b0a5652ddbcfa/src/worker.c),
+[queue consumption bound](https://raw.githubusercontent.com/supabase/pg_net/698fb055f666366a78c112b0578b0a5652ddbcfa/src/core.c),
+[PG17 role grantor/bootstrap rules](https://www.postgresql.org/docs/17/sql-grant.html),
+[initial privileges catalog](https://www.postgresql.org/docs/17/catalog-pg-init-privs.html).
+
+#### Focused recovery assessment — 2026-10-22 (M4 qualified)
+
+**Decision:** the existing copy demonstrates recovery of the MW objects/data
+needed before `20261020205122_media_advice_access_ledger.sql` and
+`20261021072002_media_advice_review_fixes.sql`. This is a **scope-qualified
+recovery checkpoint**, not permission to apply them. Original source inventory,
+archive and comparison failures remain unchanged; no expected ACL was weakened.
+No production connection, new snapshot, M4 SQL, flag or scheduler was executed.
+
+**Exact ACL differences, final full PG17.6 restore:** 66 native schema/table
+comparisons; 64 equal, the following two differ. All inventoried table ACLs
+match, including MW/public, Auth, Storage and extension-owned tables.
+
+| Object / ownership class | Captured source → restored target | Cause / MW impact |
+| --- | --- | --- |
+| `graphql`, Supabase-managed, owner `supabase_admin` | Source: owner `USAGE,CREATE`; `postgres` `USAGE WITH GRANT OPTION`; `anon`, `authenticated`, `service_role` `USAGE`, all granted by `supabase_admin`. Target: NULL ACL = owner defaults only; those four explicit grantee entries absent. | Inventory contains these grants, but the authenticated archive's schema SQL has **no SCHEMA ACL entry/grants for this schema**. A clean target cannot recreate omitted grants. This removes explicit schema access/grant option, not an RLS or MW-table change. |
+| `graphql_public`, same managed ownership (not proved extension membership) | Identical source grants and target omission as `graphql`. | Same archive omission. GraphQL callers need schema USAGE in addition to function EXECUTE; a function grant alone is insufficient. `BYPASSRLS` does not itself supply schema privileges. No M4 RPC/query uses either GraphQL schema. |
+
+The owner/default entry is unchanged; this is a real grant difference, not ACL
+array ordering. The missing direct `postgres` grant option is distinct from any
+power inherited through other roles. Managed ownership is **not** the same as
+current extension membership: `pg_graphql` is absent from the captured seven
+extensions. Why the exporter omitted these grants (for example an initial-
+privileges baseline) remains unknown: source `pg_init_privs` was not captured.
+That deeper cause is not asserted or needed to identify the omission.
+
+**Narrow procedure correction:** after an offline restore, use
+[the source-validated schema supplement](../supabase/operations/recovery-schema-supplement.mjs)
+for these two schemas only. It requires the exact captured source owner/ACL,
+allows only a default or already-identical target ACL, then grants precisely
+the missing USAGE/grant-option entries **as the original grantor**. Unexpected
+source or target rights cause refusal, not blanket grants/revokes. Re-run native
+`aclexplode` comparison afterward. This is an operator restore step, **not a
+production migration**, and is not imported by the application. Do not apply it
+to the still-live source or claim it repaired the already-deleted PG17.6 VM.
+
+**Targeted native repeat:** completed **2026-10-22T07:43:12.774Z**, Windows
+PostgreSQL **17.11** (same major; earlier full data/extension restore was real
+17.6). Only actual archived MW/public + Auth **schema** and logical roles were
+replayed here; no rows reimported and no M4 migrations. No extension stubs,
+cron/pg_net preload, event-trigger bootstrap, webhooks or source calls. The
+endpoint was **127.0.0.1 only**, random port, random private SCRAM credential,
+protected owner/SYSTEM directory; no LAN listener. This is distinct from the
+earlier no-NIC/socket-only VM. No Auth service or user-token behavior is claimed.
+
+- Both schema ACL omissions reproduced before the supplement; **44/44** scoped
+  schema/table ACL comparisons matched after it, without changing source ACLs.
+- MW/Auth table inventory/owners/RLS flags match independent of catalog ordering.
+- **476 source SQL object blocks** match the redump's object meaning: tables,
+  columns/defaults, indexes, constraints, functions/RPC definitions and archived
+  permissions, triggers, RLS policies and default grants. No changed function,
+  policy or constraint is silently normalized away. Authored tests ensure actual
+  DDL/grant/grant-option changes remain failures.
+- Exactly **two extra serialization blocks** are initdb's `public` schema and
+  its comment, owner `pg_database_owner`; source archive relies on that built-in
+  schema. Owner and effective ACL are checked separately, not inferred from the
+  missing CREATE statement.
+
+**Exact non-semantic SQL differences in that scoped repeat:**
+
+| Serialization difference | Evidence / interpretation |
+| --- | --- |
+| Block `public.sync_social_advice_discovery_for_movie(uuid,boolean,uuid)` | Two following dump-boundary statements, `SET default_tablespace = ''` and `SET default_table_access_method = heap`, occur at a different first-table boundary. They are not function statements. Exact global setting values match separately. |
+| Auth default ACLs for sequences/functions/tables, owner `supabase_auth_admin` | Same complete GRANT statements in a different order; no privilege/grantee/grant-option discarded. |
+| Public default ACLs for sequences/functions/tables, owner `supabase_admin` | Same statements/order-only serialization; the final block also carries the dump-complete comment. |
+| 29 FK `pg_get_constraintdef` strings | `REFERENCES auth.<table>` versus visible unqualified `REFERENCES <table>` under the different inspector/search-path context. Validation flags/actions unchanged; archived and redumped FK DDL explicitly agree on the actual target. Not evidence of a retargeted FK. |
+| Extension versions | All seven matched in the full17.6 restore; no version mismatch is being normalized into a pass. No extension members/binaries were exercised in the later schema-only repeat. |
+
+<details>
+<summary>Exact FK deparser-only differences (auth qualification removed; no other definition change)</summary>
+
+- `auth.users(id)`: auth FKs `identities_user_id_fkey`, `mfa_factors_user_id_fkey`,
+  `mfa_recovery_code_sets_user_id_fkey`, `oauth_authorizations_user_id_fkey`,
+  `oauth_consents_user_id_fkey`, `one_time_tokens_user_id_fkey`,
+  `scim_users_user_id_fkey`, `sessions_user_id_fkey`,
+  `webauthn_challenges_user_id_fkey`, `webauthn_credentials_user_id_fkey`;
+  public FKs `advice_room_participants_user_id_fkey`, `advice_rooms_created_by_fkey`,
+  `groups_created_by_fkey`, `profiles_id_fkey`, `push_subscriptions_user_id_fkey`.
+- `auth.sessions(id)`: `mfa_amr_claims_session_id_fkey`, `refresh_tokens_session_id_fkey`.
+- `auth.mfa_factors(id)`: `mfa_challenges_auth_factor_id_fkey`,
+  `mfa_recovery_code_sets_mfa_factor_id_fkey`.
+- `auth.mfa_recovery_code_sets(id)`: `mfa_recovery_codes_mfa_recovery_code_set_id_fkey`.
+- `auth.oauth_clients(id)`: `oauth_authorizations_client_id_fkey`,
+  `oauth_consents_client_id_fkey`, `sessions_oauth_client_id_fkey`.
+- `auth.sso_providers(id)`: `saml_providers_sso_provider_id_fkey`,
+  `saml_relay_states_sso_provider_id_fkey`, `scim_tokens_sso_provider_id_fkey`,
+  `scim_users_sso_provider_id_fkey`, `sso_domains_sso_provider_id_fkey`.
+- `auth.flow_state(id)`: `saml_relay_states_flow_state_id_fkey`.
+
+</details>
+
+**Dependency/access conclusion:** the two additive M4 migrations reference
+`auth.users(id)`, MW `group_members`, `movies`, `movie_group_lists` and PostgreSQL17
+built-ins (UUID/jsonb/time/advisory locks); none requires GraphQL, pg_net or Vault.
+The full17.6 test already verified snapshot data/COPY fingerprints, sequences,
+roles, all captured FKs and required membership/list/movie relationships. The
+scoped repeat verifies the MW/Auth DDL and archived RPC/RLS/grants, not historical
+RLS correctness (out of scope). Public/Auth schema/table access for `anon`,
+`authenticated`, `service_role` is unchanged from inventory. New M4 private
+tables/RPCs do not yet exist; their explicit service-role-only grants/default-off
+and post-migration checks remain future execution gates. Existing RPCs were not
+invoked; source-independent function/column ACL catalogs were not captured, so
+their proof is archive replay fidelity, not an independent whole-source ACL audit.
+
+**Remaining bounds, not an M4 recovery blocker:** full Supabase schema SQL hashes
+still differ. Target raw SQL from the deleted full17.6 VM was not retained, only
+fingerprints/catalogs; exact differences **outside** the scoped repeat cannot be
+reconstructed from those hashes. They are not relabelled formatting-only or
+asserted harmless for GraphQL/Auth/Storage/Vault service recovery. Requiring that
+entire text to be identical adds no demonstrated protection for the two additive
+M4 migrations after the MW/Auth checks above. Complete-project recovery still has
+the stated Storage bytes, secrets/service-config, managed-function/initial-ACL
+and portable/off-device key gaps. This verdict clears only the MW recovery gate.
+
+Protected evidence: `focused-1792654992781-details.aesgcm`, earlier scoped raw-
+difference proof, and dated authenticated `focused-assessment-*.aesgcm` beside
+the unchanged original backup. The [focused reader](../supabase/operations/recovery-focus.ps1)
+prints only structural evidence/flags, never rows or function bodies. All repeat
+clusters/open copies, including the stopped first harness attempt, were removed;
+original ciphertext and DPAPI key preserved. Logical deletion, not forensic
+erasure. A Windows child-pipe harness issue and missing schema prerequisite in a
+subset attempt were resolved locally, not misreported as backup/data failures.
+No application/browser/owner lifecycle test was needed: no application changed.
+Final checks: **12 authored recovery tests passed**, JS/PowerShell syntax passed,
+13 documentation files /442 local links /268 anchors checked without errors,
+whitespace/scope clean. Subsequent offline audit authenticated every retained
+AES-GCM artifact and original manifest hashes. It reports
+`m4MigrationRecoveryQualified:true` separately from the unchanged historical
+whole-round-trip `scopeQualifiedRecoveryReady:false`/`fullProjectRoundTripVerified:false`.
+
+#### Backup coverage contract — actual capture and exclusions
+
+| Area | Captured scope / explicit exclusion |
+| --- | --- |
+| Application schemas/data | Unfiltered native custom archive. Full17.6 data/counts/sequences/FKs pass plus scoped MW/Auth schema/archived-permission fidelity established above. Sufficient for the two additive M4 migrations, not a blanket Supabase definition/service/permission guarantee. |
+| Auth | Auth schema/data entries included only in encrypted archive, including sensitive account/session/hash records; no rows in Git/report. OAuth/SMTP settings, JWT/API secrets and external Auth service configuration excluded; project encryption-root keys not exported and service-level recoverability not established. |
+| Roles/grants | Separate role/membership exports **without role passwords**, stability/restored logical comparison passed. Exact two managed GraphQL schema ACL omissions identified and source-preserving supplement tested; all original table ACLs match. No independent complete function/column/initial-ACL capture; no production privilege changes. |
+| Extensions / managed schemas | Definitions/version inventory retained; source `pg_cron1.6.4`, `pg_net0.20.4`, `pg_stat_statements1.11`, `pgcrypto1.3`, `plpgsql1.0`, `supabase_vault0.3.1`, `uuid-ossp1.1`. Native logical dump omits non-config extension-owned table contents: specifically `net._http_response`, `net.http_request_queue` (HTTP cache/queue). No claim to preserve in-flight HTTP work. Extension binaries, managed services and Vault/project encryption-root keys excluded; no decrypted Vault export. |
+| Storage metadata | Storage SQL metadata rows/counts matched in native restore. Metadata is not object bytes; service behavior and object-store recovery remain untested. |
+| Storage files | Separate authorized object export with private per-object checksums/count/size verification; **not part of pg_dump**. No files copied or empty-bucket claim established in this checkpoint. |
+| Project configuration | Netlify/Edge deployments, secrets, DNS, Auth-provider settings, service keys and other external configuration are excluded from this DB checkpoint. A database dump is **not a full Supabase-project backup**. |
+
+This is a logical export of database`postgres` plus role definitions, not a
+physical/PITR backup: PostgreSQL system catalogs, WAL, replication-slot runtime
+state and server/OS configuration are not supplied. Object definitions/sequence
+state follow native pg_dump semantics; sequences are not MVCC snapshots of
+concurrent `nextval` activity. Do not infer external service recovery from SQL
+archive completeness.
+
+Actual destination and separate key are recorded above; both ACLs verified.
+The direct-to-encryption stream avoids needing plaintext dump staging.
+For this owner-authorized restore test, disk encryption is explicitly waived.
+Temporary plaintext is allowed only inside the protected disposable environment.
+The full restore used no NIC/TCP; the schema-only repeat used SCRAM loopback only,
+never LAN exposure or external service execution. No plaintext
+staging in Git/owner checkout/transcripts/public artifacts. Do not call private
+filesystem placement encryption. Stop the VM and remove its exact verified
+temporary directory afterward, preserving the original ciphertext and wrapped key;
+do not broadly delete user files or claim secure physical erasure.
+
+#### Resume procedure — only backup and isolated local restore authorized
+
+**Steps1–3 and native4–5 were executed with the boundaries above; step6 is now
+qualified for MW recovery before the two additive M4 migrations, not full-project
+recovery. Do not repeat export or infer execution permission.
+Disk encryption is not a prerequisite under the owner's explicit waiver.**
+Export is a one-use operator command,
+not a scheduled backup or migration tool. [Export wrapper](../supabase/operations/recovery-export.ps1)
+and [worker](../supabase/operations/recovery-export.mjs) use the already prepared
+local `pg` dependency; no product dependency or production code changed.
+
+To recheck the existing ciphertext **offline**, use the same Windows profile:
+
+```powershell
+& '<isolated-checkout>\supabase\operations\recovery-audit.ps1' -Checkpoint 'checkpoint-20261021T221351Z-432dc0a6'
+```
+
+The [audit](../supabase/operations/recovery-audit.ps1) unwraps the separate DPAPI
+key only in memory, passes it through child stdin, verifies original manifest
+hashes and all AES-GCM tags, emits only safe coverage flags, and creates a new
+dated private audit record. No source connection/password or SQL execution.
+The [archive module](../supabase/operations/recovery-archive.mjs) documents the
+format: magic`MWREC01\n` +12-byte nonce +ciphertext +16-byte GCM tag, with
+header as AAD. Authenticate the **whole** file with `verifyArtifact` before
+passing a second decrypt stream to any executing restore; streamed bytes are
+not authenticated until the final tag passes. Wrong key/tampering must stop.
+
+1. Establish the above private connection and PG17 tools. Recheck database/
+   project identity and effective read permissions; no DDL on production.
+   Record UTC start/end and a consistent snapshot boundary privately. Use a
+   held read-only repeatable-read exported snapshot for the database dump and
+   its validation counts so concurrent legitimate writes do not manufacture
+   mismatches; keep its control connection open until exports finish.
+2. Write the logical DB archive directly to the protected location, explicitly
+   inventorying managed/application schemas; export roles without passwords
+   separately. Inspect exit status/warnings and archive table-of-contents in
+   protected files, never stdout/chat. Do not ignore unreadable relations or
+   use schema-only/public-only output as a full DB success. Role/global metadata
+   is separate from the data snapshot; detect/reconcile concurrent role changes.
+3. Record SHA256, byte sizes, exact coverage/exclusions, dump-tool/server
+   versions and snapshot UTC time in a protected manifest. Export Storage bytes
+   separately if full Storage recovery is required; otherwise retain an explicit
+   file-exclusion gap. Verify encrypted artifacts can be decrypted locally.
+   Public documentation may record hashes/status, never bodies or credentials.
+4. Initialize a disposable **local** PG17.6-compatible target, separate directory/
+   cluster and local-only endpoint, no production connection string. Review the
+   archive as executable SQL. Block outbound network; keep cron/pg_net, webhooks,
+   subscriptions and Supabase services from executing external actions.
+   Prepare matching extension/service prerequisites locally before restoring.
+   Restore role prerequisites, then schema/pre-data, data/sequence state and
+   post-data constraints/indexes/ACLs, using stop-on-error and no production
+   `--clean`/restore commands. Never apply the M4 migrations as part of this test.
+   Concretely: authenticate archive +roles file using the saved key; on the
+   protected local target prepare compatible extension binaries with background
+   work/egress disabled; inspect decrypted schema/role SQL privately. Prefer a
+   **guest-local Unix socket, listen_addresses='' and a VM without a NIC**;
+   never use the pooler. Reconcile
+   the initial bootstrap/grantor with the role export (do not blindly replay
+   conflicting CREATE ROLE statements); restore roles/memberships with `psql -X`
+   and `ON_ERROR_STOP=1`. Use authenticated private staging and the matched17.11
+   restore client over the dedicated guest socket. The final actual run uses
+   full `pg_restore --create --exit-on-error` after dropping only initdb's empty
+   local DB **before** preload/worker startup; no production connection/clean.
+   `--create` is not combined with `--single-transaction`. Keep cron off and the
+   required pg_net preload worker in empty template1 with batch_size0/no NIC.
+   Reconcile the two omitted managed schema ACLs using the source-validated
+   supplement above and rerun exact native ACL checks; unexpected ACLs stop.
+   Any omitted/altered role or prerequisite must be recorded; a partial test is
+   not a full pass. This is a procedure, **not a command authorized for production**.
+5. Compare captured and restored schema object inventories/definitions, RLS/
+   grants/ownership, sequence state and **per-table snapshot row counts**,
+   including Auth and Storage metadata. Check validated FKs and explicit orphan
+   checks for group_members→users/groups, movie_group_lists→movies/groups and
+   any other inventoried key relationships. Record only aggregate pass/fail in
+   Git, keeping counts/identifiers/details protected. Historical violations,
+   if any, must remain distinguished from restore-created differences; do not
+   repair historical RLS/data under this task.
+6. If a Supabase extension/managed schema cannot restore on plain PG, report
+   that exact dependency and any separately tested application subset. Do not
+   replace it with a mock/stub or suppress errors and claim full recovery.
+   Native SQL restore cannot validate OAuth/email, object bytes, Realtime,
+   provider-hosted Vault or live Supabase services. Save verified hashes and
+   local comparison evidence before declaring **scope-qualified recovery ready**.
+   Stop/securely remove only the verified disposable target afterward; preserve
+   the encrypted backup. **No production restore is authorized**.
+
+Export/integrity, actual data/relationship checks and the focused MW/Auth
+schema/permission verification establish **scope-qualified recovery for Step2's
+two M4 migrations**, with the complete-project limitations above. This is not a
+claim that the old whole-dump `verified:false` result became `true`.
+No consolidation/deployment/migration/activation follows automatically.
+Relevant official references (checked 2026-10-22):
+[Supabase backup/restore](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore),
+[DB backup limitations](https://supabase.com/docs/guides/platform/backups),
+[PostgreSQL17 pg_dump](https://www.postgresql.org/docs/17/app-pgdump.html),
+[roles/global objects](https://www.postgresql.org/docs/17/app-pg-dumpall.html),
+[private password file](https://www.postgresql.org/docs/17/libpq-pgpass.html).
+
+Original preparation findings (2026-10-21; retained, not new restore evidence):
+
+- PRs #190–#194 are open/mergeable, each head descends from its stated base;
+  develop `acbdadf8efa2d180a12ed3fc85aa7784bb681782`;
+  main `e92392856038e40e6d98c6c8744eed04c4e8dff9`.
+- At exact heads, #190 has Netlify Deploy Preview success, three neutral
+  Netlify checks and skipped Supabase Preview. #191–#194 have skipped Supabase
+  Preview, no commit statuses; no approvals reported on any PR. These are not
+  passing required tests. Rulesets list is empty; branch-protection read is
+  **403**, so effective required checks/approvals/merge policy are **unknown**.
+- Supabase: PostgreSQL **17.6**, UTC; no M4 schema or function-name collisions;
+  migration list empty and history **table absent**, not proof of a blank DB.
+  Required UUID/text columns match. `auth.users`, UUID generation and required
+  roles exist. `pg_cron 1.6.4` is installed, `cron.timezone=GMT`; named M4 job
+  is absent. No DDL/DML or function invocation performed in this review.
+- Netlify site `e4d5295a-0794-40dc-abfa-6e346b04c142`,
+  `denyslisovyi-movies-list`: published production deploy
+  `6ad3ad799a970e3fc942b516` is ready, branch main at the main SHA above.
+  This does not prove configured develop builds. Project tool does not expose
+  build/branch settings, env scopes, APM or log drains. Values were not requested.
+
+### Step 0 — pre-merge operator gates
+
+In the [Netlify project dashboard](https://app.netlify.com/projects/denyslisovyi-movies-list):
+
+| Dashboard location | Required evidence before execution |
+| --- | --- |
+| Project configuration → Developer settings → Continuous deployment → Branches and deploy contexts | Production branch **main**; branch deploy explicitly enables **develop**; record auto-publish/build behavior. A merge into develop may immediately deploy. If not confirmed, stop before final merge; do not change settings silently. |
+| Same area → Build settings; Functions settings | Repository/base/publish directory, Functions directory `netlify/functions`, dependency install and Node **22+**, bundler and synchronous limit. Diagnostics PR prepares a develop-only build stamp command in `netlify.toml`; verify that command at a separately approved deployment. Preserve existing publish/Functions settings and other contexts. |
+| Project configuration → Environment variables | Owner reports Tavily/TMDb/MOTN keys Secret, Functions, Production + Branch deploys; Supabase URL/service-role present. Confirm **metadata/context only** (including develop overrides/shared-var precedence); no values/export. New source keys intentionally absent from PR previews. |
+| Analytics & metrics → Log Drains; Extensions / installed APM integrations; Cloud compute → Functions → media-advice (branch filter develop) | Inspect destinations, body/header capture and retention/redaction; never capture bearer/API keys, source bodies/results, query snippets or card/tracking URLs. Tool cannot attest these. Built-in observability extension in published deploy is not proof of third-party APM capture or its absence. |
+
+Check GitHub Settings → Rules → Rulesets / Branches and each PR merge box for
+effective required checks, approvals and merge-commit support. Missing API
+permission is not permission to bypass. If requirements cannot be established,
+pause execution for owner confirmation, not policy changes.
+
+Original function/import review (before diagnostic build stamp): `media-advice.mjs` imports three local libraries, then
+existing research transports/projections/identity and shared URL policy; package
+dependencies include Supabase JS and parse5. Offline import with networking
+disabled and stubbed empty configuration succeeded. No runtime file-read asset
+is needed by this handler. This is **not a Netlify bundle/deploy test**; local
+Netlify bundler is unavailable. Branch build must include the complete import
+closure/dependencies and list `media-advice` alongside existing functions.
+Inspect publish output for secret/server-only artifacts; no env values may be
+inlined. Keep 45s sources / 53s finish margins; no timeout/cap change.
+
+### Step 1 — consolidate with merge commits
+
+Pinned starting refs (full SHAs, not mutable labels):
+
+| PR → base branch | Initial head | Initial base |
+| --- | --- | --- |
+| #194 → codex/m4-gemini-resolver-feasibility | bdca14f9a06a6e84297f75917c5b009dbf41fa66 | 0db059a710bff801e5c455dcc396f06914c156cc |
+| #193 → codex/m4-3-kinobaza-discovery | 0db059a710bff801e5c455dcc396f06914c156cc | c5a09298903957b16360147b3363b8d4db90f195 |
+| #192 → codex/m4-2-media-advice-server | c5a09298903957b16360147b3363b8d4db90f195 | e0817151f73da0f742ee72b77bc23bb709457d7b |
+| #191 → codex/m4-1-media-advice-form | e0817151f73da0f742ee72b77bc23bb709457d7b | bd43cc83319888ff82c7763e48cd9adb36cb453a |
+| #190 → develop | bd43cc83319888ff82c7763e48cd9adb36cb453a | acbdadf8efa2d180a12ed3fc85aa7784bb681782 |
+
+Starting #194 tree: `6ddf25db140829951da748404a9244d6717308e5`.
+This documentation successor is not silently part of that tree: if incorporated
+into #194 first under later approval, repin its head/tree and review that docs
+diff before executing this sequence.
+
+| Merge | Expected source head | Expected target head immediately before merge | Record |
+| --- | --- | --- | --- |
+| #194 → #193 branch | H194 above | H193 above | M1 |
+| #193 → #192 branch | M1 | H192 above | M2 |
+| #192 → #191 branch | M2 | H191 above | M3 |
+| #191 → #190 branch | M3 | H190 above | M4 |
+| #190 → develop | M4 | pinned develop above, re-read immediately | M5 |
+
+Before **each** operation: fetch refs; re-read source **and base** SHA, diff,
+mergeability, reviews and checks at that exact head. Use GitHub merge method
+`merge` with expected source `sha`; no admin/bypass/force/retarget/squash.
+Expected head does not lock base: serialize operators, check base immediately
+before merge and verify returned commit's first parent equals that base and
+second parent equals expected source. After every parent advance, fetch and
+record its new SHA, both parents, tree, ancestry and updated PR diff/checks.
+Tree must equal the starting reviewed tip tree (or explicitly repinned docs
+successor); do not copy old checks to the new SHA.
+
+Before M5, verify the combined develop diff is M4 research-approved integration
+only; both M4 migrations, Tavily selection and #192 fixes are present. Confirm
+ancestry of all pinned heads plus launcher fix
+`e596341f2fdc1203b52b9abae840f7090cef30c0` and R1/R2
+`16461b22f001499720193d6b72df745dc8890a20`; no deletion/reversion of their tests/controls.
+Run full M4 offline/HTTP/Edge suites on assembled M4; native PG17.6 evidence
+can be reused only if SQL/ledger unchanged. After M5 record actual develop SHA,
+tree/parents/ancestry, rerun relevant final checks and read fresh statuses.
+Confirm main SHA and published production deploy unchanged.
+
+**Stop** for any unexpected head/base/tree/diff, conflict, rejected merge,
+missing required approval or failing required check. No automatic restacking.
+M5 also authorizes an auto branch deploy **only if explicitly included in the
+next approval**; do not invoke a manual deploy or build hook here.
+
+### Step 2 — apply only the two M4 migrations (future privileged action)
+
+| File under supabase/migrations | Dependency / SHA256 of reviewed bytes |
+| --- | --- |
+| `20261020205122_media_advice_access_ledger.sql` | Existing auth.users(id), public group_members/movies/movie_group_lists, standard roles and UUID function; creates private schema/two tables/index and two service-only public RPCs. `08b6ecfa102bb3d34d994a29d76412dfb6ad0546c65b4579c2408bd7f4fa825c` |
+| `20261021072002_media_advice_review_fixes.sql` | Requires first file; replaces those RPCs, adds private cleanup_health. `39ab043e86072efe25db55e042945e11fa8cfe7f39d1977e5d55eab65b2cd1b7` |
+
+No dependency on executing 001–016, no existing-row updates or historical
+RLS changes. Recheck object collisions before applying, including **any**
+same-name function signature; these are not idempotent replay scripts.
+Verify hashes against Git blobs/assembled tip (line-ending conversion changes
+byte hashes: establish the reviewed execution-file hash before running).
+Confirm backup/PITR recovery availability privately; no restore is invoked.
+
+Use a **new disposable Supabase CLI work directory containing only these two
+unchanged migration files**, outside owner checkout. Current machine has no
+Supabase CLI/psql in PATH: executing operator must pin/install an approved CLI
+and first inspect `--version` and command `--help`. Planned commands below
+are from the [official CLI reference](https://supabase.com/docs/reference/cli/supabase-migration-up)
+(checked 2026-10-21), not executed here:
+
+```powershell
+supabase migration up --help
+supabase migration list --help
+supabase migration repair --help
+supabase --workdir "$m4Stage" init
+# Copy ONLY the two reviewed files into $m4Stage/supabase/migrations.
+supabase --workdir "$m4Stage" link --project-ref mttkectgdqqmejpenkrn
+supabase --workdir "$m4Stage" migration list --linked
+# STOP unless exactly these two pending versions and no unexpected remote history.
+supabase --workdir "$m4Stage" migration up --linked
+supabase --workdir "$m4Stage" migration list --linked
+```
+
+`$m4Stage` must be a new unique temporary directory, not the repo or an existing
+linked workspace. Authenticate interactively with hidden password input; no
+password-bearing URI/arguments, debug logs or credentials in the runbook/Git.
+Confirm project identity independently before writes. CLI creates its own
+history metadata and applies only pending files in that isolated directory.
+Expected history: **only 20261020205122 and 20261021072002**, reflecting actual
+execution. Do not use general `db push`, `--include-all`, historical replay,
+blanket repair or automatic GitHub/Supabase production migration integration.
+
+Both files contain transaction boundaries. On any error/lost reply **stop**:
+an earlier file may have committed even if history recording failed. Inspect
+actual catalogs/function definitions and history; never blindly rerun.
+Only after proving which exact file executed may an operator use targeted
+`migration repair <that-version> --status applied --linked` in the same
+isolated directory. Do not mark 001–016 applied. Partial execution/history
+reconciliation needs review, not an automatic retry.
+
+Post-checks, with access still off:
+
+- Exactly permissions/sessions/cleanup_health in private schema; RLS enabled,
+  no anon/authenticated schema/table access. No permissions or sessions inserted.
+- Two public RPCs have expected signatures/definitions, SECURITY DEFINER and
+  empty search_path; service_role EXECUTE true, anon/authenticated false,
+  including PUBLIC/inherited grants. Verify pg_proc/proacl and
+  `has_function_privilege`; table grants match migration, cleanup_health is
+  service-role SELECT only. Do not execute start/reserve as a smoke test.
+- Record pre/post definitions/policies of the three existing public tables
+  and private aggregate row counts/fingerprints, not row bodies; compare.
+  Concurrent legitimate app writes require reconciliation, not a claim that
+  counts prove no changes. Static SQL writes only new M4 objects. No lock or
+  owner-demo interruption to manufacture identical snapshots.
+- Check actual two history entries and no new automated cleanup job; capability
+  without assignment must fail closed. Missing RPC/schema-cache visibility is
+  an operations issue to investigate, not permission to replay migrations.
+
+Copyable post-checks (privileged read-only connection, **after** migrations):
+
+```sql
+select version from supabase_migrations.schema_migrations order by version;
+select c.relname,c.relrowsecurity,
+  has_table_privilege('anon',c.oid,'SELECT,INSERT,UPDATE,DELETE') as anon_access,
+  has_table_privilege('authenticated',c.oid,'SELECT,INSERT,UPDATE,DELETE') as user_access
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='media_advice_private' and c.relkind='r';
+select p.proname,pg_get_function_identity_arguments(p.oid),p.prosecdef,p.proconfig,
+  has_function_privilege('service_role',p.oid,'EXECUTE') as server_execute,
+  has_function_privilege('anon',p.oid,'EXECUTE') as anon_execute,
+  has_function_privilege('authenticated',p.oid,'EXECUTE') as user_execute
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.proname in ('media_advice_action','media_advice_cleanup');
+select (select count(*) from media_advice_private.permissions) as assignments,
+       (select count(*) from media_advice_private.sessions) as sessions;
+```
+
+### Step 3 — daily cleanup and independent control
+
+Operator **Denys** owns activation and daily operations. After both migrations,
+review/run [prepared schedule SQL](../supabase/operations/media-advice-cleanup.schedule.sql)
+only with separate authorization: it creates the named job **inactive** and
+refuses an existing name/non-UTC-equivalent timezone. Then inspect its single
+jobid, command, database/user, `15 2 * * *` and GMT/UTC; activate that exact job
+with `cron.alter_job(<verified-jobid>, active := true)`. No second job or
+extension installation is needed by the observed baseline.
+
+Retention origin is session **created_at**, eligibility after age24h **and**
+expires_at elapsed (normal TTL30min), including unfinished/error sessions.
+Still-active rows are retained and become an overdue finding if anomalously
+old. Daily healthy scheduling expects deletion at age24–48h, **not a guaranteed
+48h bound on scheduler/DB failure**. No movies/Wishlist or permission deletion.
+
+Concrete pilot monitoring: Denys checks **daily at 09:00 UTC**, independently of
+pg_cron, in Supabase SQL Editor using
+[existing health SQL](../supabase/operations/media-advice-cleanup.sql), then
+these read-only checks:
+
+```sql
+select jobid,schedule,active from cron.job
+where jobname='mykola-media-advice-cleanup';
+select status,start_time,end_time from cron.job_run_details
+where jobid in (select jobid from cron.job
+               where jobname='mykola-media-advice-cleanup')
+order by start_time desc limit 3;
+```
+
+Require exactly one correctly configured job and today's scheduled
+run succeeded and heartbeat advanced after02:15UTC; the health query's missing/
+>26h success or age≥48h backlog is actionable too. Record only UTC check time,
+success/overdue count privately. Initial missing heartbeat is expected before
+first run, not permission to skip monitoring. Verify first scheduled success
+before live access; alternatively a separately authorized one-time cleanup
+can test the function but **does not validate scheduler firing**.
+
+This is a **manual control, not automatic alerting**. Denys must explicitly
+accept the duty before pilot, continuing after flag expiry until the final
+session has been cleaned; without coverage postpone access. For a missed/
+failed run, unexpected active job/TTL or overdue records: revoke pilot flag,
+inspect scheduler/DB, perform only authorized cleanup recovery, recheck; no
+source replay or accounting reset. Unattended alerting needs a separate
+approved independent monitor/notification design; none is added or activated
+implicitly. Scheduler cannot report its own complete outage.
+
+### Step 4 — branch deploy verification and source-free smoke
+
+Follow the automatic develop deploy from M5; record deploy ID, context
+`branch-deploy`, branch develop, commit exactly M5 and its HTTPS URL
+(expected convention `https://develop--denyslisovyi-movies-list.netlify.app`;
+use dashboard-reported URL, not an unverified address as evidence).
+Build/functions list must include media-advice with imports/dependencies and
+no secret exposure; check diagnostics without bodies/keys. Published main
+deploy must still be the recorded production one. Failure stops activation,
+not a reason for manual prod publish or policy/secret-scanning bypass.
+
+Future smoke, **no discovery/source calls**:
+
+1. GET media-advice →405; cross-origin POST →403; valid-context POST without
+   bearer →401, malformed context →400; all JSON/no-store, no secrets.
+2. With actual browser login, only `action: capability` for an established
+   film and eligible test group. Before assignment expect denial/hidden entry;
+   ordinary form editing still works. Do not click Find; no start/reserve.
+3. After separately authorized owner assignment, capability true only for
+   that UUID/eligible group; unassigned user/visitor/foreign group denied.
+   Open/close isolated advice without Find: no source requests or form writes.
+   Do not create/delete/modify production group membership for smoke.
+
+Capability uses Auth/RPC, not Tavily/TMDb/MOTN/Kinobaza. It does **not** validate
+source keys or live resolver quality. Do not use existing movie-search as a
+configuration probe. Ordinary read requests and later pilot Save are distinct.
+
+### Step 5 — owner-only, expiring backend assignment
+
+Owner UUID is **not established in this preparation**. Resolve it privately from
+the owner's authenticated Supabase `getUser()` id, corroborate in Authentication
+→ Users and eligible test-group membership. Never infer from display name or
+choose the first auth user. Do not print access tokens or publish email/UUID.
+Also establish the test group/list/film binding; current flag is per-user, not
+a new per-group restriction.
+
+Once all gates pass and activation is authorized: require no other enabled
+M4 permission rows; replace `<VERIFIED_OWNER_UUID>` with that exact UUID and assign
+**2 hours** through privileged SQL/admin, not editable user_metadata:
+
+```sql
+insert into media_advice_private.permissions(user_id,feature_key,enabled,expires_at)
+values ('<VERIFIED_OWNER_UUID>'::uuid,'mykola_media_advice',true,
+        clock_timestamp() + interval '2 hours')
+on conflict(user_id,feature_key) do update
+set enabled=true, expires_at=excluded.expires_at;
+```
+
+Emergency stop / end of pilot — a separate action, same verified UUID:
+
+```sql
+update media_advice_private.permissions
+set enabled=false, expires_at=clock_timestamp()
+where user_id='<VERIFIED_OWNER_UUID>'::uuid and feature_key='mykola_media_advice';
+```
+
+These are **future actions**. Confirm one exact active user/expiry after
+assignment; all others default-off. Revocation
+denies subsequent capability/reserve/finish/apply authorization; an already
+dispatched source request may still have spent its attempt. It does not undo
+earlier user Save or erase already displayed results. No retries/refund.
+
+### Step 6 — pilot, only under subsequent authorization
+
+Select **five concrete real Wishlist films first**; currently none selected.
+Record their real IDs and test-group card bindings privately, not research
+fixtures. One explicit discovery per film, ≤2 Tavily + ≤2 card + ≤4 baseline
+= ≤8 attempts/case, **≤10 Tavily within ≤40 total**. No retries/fallback/
+redirects/destination probes or platform sweep; internal search traffic unknown.
+One select → preview → transfer → ordinary **Save in the test group**, checking
+manual edits and exact acknowledged URL. This one Save is a later authorized
+Wishlist write, not part of preparation/smoke. No claim/track propagation.
+
+Record separately: search URL candidate acceptance; identity matched/refused;
+extraction useful/partial/refused; source-labelled links/localization and
+practical help; application calls/time and intervention; transfer/Save outcome.
+No offers is not resolver failure or evidence of unavailability. Stop for
+false identity, cap/access bypass, unexpected writes, lost edits or unsafe URL.
+No raw responses/HTML/snippets/secrets archive.
+
+### Unresolved prerequisites and evidence boundary
+
+Execution remains **conditional**, not deployment/pilot-ready approval:
+
+1. Effective branch policy/required approvals (403), fresh assembled-tip checks;
+   explicit merge + possible automatic develop deploy authorization.
+2. Dashboard develop/base/publish/functions/bundler/Node configuration and
+   APM/log-drain/body-capture verification; env context metadata confirmation.
+3. MW recovery prerequisite now scope-qualified for only two new migrations;
+   explicit execution authorization, privileged connection/history procedure and
+   live privileges/default-off/post-data checks still required and not yet run.
+4. Explicit cleanup activation/first-run evidence and Denys's independent
+   daily monitoring commitment (no automatic alerting exists).
+5. Exact owner UUID/test group and later bounded backend assignment.
+6. Five real pilot films, still unselected, and separate pilot/Save authorization.
+7. Account/source-use conditions: Tavily §§2/3.5 end-user scope versus an
+   owner-only pilot, actual plan/quota and AUP obligations; Kinobaza automatic
+   arbitrary-card content rights not supplied by Search; existing TMDb/MOTN
+   attribution/commercial/retention requirements. See dated findings below;
+   no blanket clearance, no new runtime legal switch.
+
+Read-only catalog/project/PR review and offline import check passed. No runtime,
+SQL, flag, secret or scheduler change here; prior #194 45-pass/1-skip browser/
+offline and #192 native17.6 evidence stay pinned, not a new run on these docs.
+Markdown-only: verify links/anchors, consistency, scope and whitespace; no
+reason to repeat runtime/Windows suites. Reference docs checked 2026-10-21:
+[Cron](https://supabase.com/docs/guides/cron),
+[migration history repair](https://supabase.com/docs/reference/cli/supabase-migration-repair),
+[function logs](https://docs.netlify.com/build/functions/logs/),
+[log drains](https://docs.netlify.com/manage/monitoring/log-drains/).
+
+## Verification record
+
+Authored fixtures are not source HTML archives or live coverage evidence.
+Real-form Edge browser covers desktop, 375×812 (iPhone X-sized) and 820×1180
+(Air-sized), not real iPhone/WebKit validation. It checks social-state isolation,
+local transfer, no write before Save, explicit clearing, affiliate acknowledgement,
+manual edits, same-session reuse, late replies and clipboard fallback.
+Local PostgreSQL/WASM validates only the new migration against minimal authored
+prerequisites. Existing research offline/HTTP/security suites protect unchanged
+requests, R1/R2 and old modes. No assertion/timeout is weakened.
+Launcher/key-routing components are unchanged, but the pure shared URL-policy
+import adds a copy-layout dependency. The Windows isolated test fixture now
+preserves repository-relative paths; lifecycle is rerun for this concrete risk.
+WebKit and live source/resolver behavior remain unvalidated. Windows lifecycle
+was not repeated for the narrow #192 fixes: no launcher, key routing, research
+transport or Windows fixture dependency changed; earlier evidence is reused only
+for that unchanged boundary, not claimed as a new lifecycle run.
+
+### #192 narrow blocker regressions (2026-10-21)
+
+Original findings: pending apply survived Cancel/Escape while awaiting access;
+the old 55s source clock excluded preceding Auth/start RPC; access checked before
+the advisory lock could become stale while queued. Fixes are selection-token
+revocation, entry-based phase deadline, and fresh post-lock authorization.
+Authored regressions cover each trigger (not live source reconstruction), pending
+close/new selection/manual edits, hanging Auth body/reserve/finish, resolver abort
+after reservation, and queued flag/group/card revocation. Native 17.6 tests also
+cover concurrent duplicate starts/stages, eight-slot cap, twenty-session cap,
+service-only privileges and cleanup health. PGlite tests cover active/younger rows
+and no card/Wishlist deletion. The isolated native server is stopped after tests.
+Scheduler extension/run integration is **not run**: only inactive configuration
+and the health query are prepared, no production job or migration activated.
+An authored cron stub verifies the configuration transaction's UTC/refusal,
+inactive-job and no-overwrite behavior; it is not evidence of pg_cron execution.
+
+Final narrow-fix run: **43/43 M4 tests passed**, including real-form Edge at
+1280×900 / 375×812 / 820×1180 and native PostgreSQL 17.6 with 24 connections;
+**29/29** targeted research provider-grouping/matching regressions passed.
+13 Markdown documents / 418 local links / 257 anchors: zero errors; whitespace
+clean. To repeat native tests, set `M4_NATIVE_PG_MODULE` to the local pinned
+`embedded-postgres@17.6.0-beta.15` module's `dist/index.js` before `npm run test:m4`.
+No project dependency was added for that portable engine. Without the explicit
+module path the native test is **skipped**, not successful native evidence.
+Browser tests likewise need `PLAYWRIGHT_MODULE_PATH` and the installed Edge
+channel; WebKit is absent. Native runs create authored temporary data and stop
+their own loopback server, without installing a Windows service.
+
+Platform references checked 2026-10-21:
+[Netlify synchronous execution limit](https://docs.netlify.com/build/functions/configuration/?fn-language=js)
+and [Supabase Cron scheduling/monitoring](https://supabase.com/docs/guides/cron),
+[Cron configuration](https://supabase.com/docs/guides/cron/quickstart).
+These are hosting/database checks, not movie-source rights clearance. The new
+code is ready for focused re-review and controlled pilot **preparation**, not
+automatic merge, activation or a claim of deployed readiness.
+
+Recorded checks on the assembled implementation:
+M4 authored offline/HTTP/SQL + Edge form suite passed; research offline/HTTP
+**463/463** passed; Windows `windows.test.ps1 -Discovery` passed parent-exit
+survival, duplicate start, inherited mock-key routing, safe stop and restart in
+a disposable copy. No actual SSH disconnect was repeated. WebKit executable is
+absent. Local links/anchors: 13 Markdown documents, 416 links / 257 anchors,
+zero errors; whitespace clean. Exact final counts/remote statuses are recorded
+in the implementation PR description rather than guessed here.
+
+## Gemini-primary resolver feasibility (2026-10-21)
+
+Historical Gemini proposal, retained for its explicit blocker. The later
+[Brave pilot decision](#brave-pilot-provider-decision-and-data-flow-audit-2026-10-21)
+supersedes provider selection, not this finding or the unchanged runtime gates.
+
+### Decision and verified code baseline
+
+**Outcome: concrete API-use blocker; documentation-only successor, no adapter
+activation.** Current #192 HEAD `c5a09298903957b16360147b3363b8d4db90f195`,
+base #191 `e0817151f73da0f742ee72b77bc23bb709457d7b`; fetched develop remains
+`acbdadf8efa2d180a12ed3fc85aa7784bb681782`. All three #192 fixes are ancestors.
+At that checkpoint the request was Gemini-only, so Brave was not silently
+substituted. Its later explicit pilot approval below is a new provider decision,
+not fallback behavior.
+
+Inspection: `netlify/lib/kinobaza-resolver.mjs` exposes a replaceable
+`searchFactory(apiKey, boundedFetch)` with `accepts` and `search`; its current
+handler wiring in `netlify/functions/media-advice.mjs` still instantiates Brave.
+**This documentation change does not switch that existing wiring off or claim
+Gemini is installed.** M4 remains default-off, no activation or fallback is
+performed. A deployment of the unchanged baseline with its old Brave key would
+still select Brave; it must not be presented as the requested Gemini pilot.
+
+Research `config.mjs`/`server.mjs` currently use `gemini-3.8-flash`, REST
+`generateContent`, `googleSearch: {}`, low thinking, 4096 output tokens and a
+server-side `x-goog-api-key`. `public/display.mjs` checks UTF-8 support offsets,
+chunk indices and Search Suggestions to display the original answer/citations.
+That display contract is not a reusable license for automated URL collection.
+No secret values, owner configuration or live responses were inspected/copied.
+
+### Source-use blocker: explicit, not missing permission documentation
+
+The [Gemini Additional Terms, Grounding with Google Search → Use Restrictions](https://ai.google.dev/gemini-api/terms#grounding-with-google-search)
+(effective March 23, 2026; checked October 21) explicitly include these examples:
+“using programmatic or automated means to collect Links” and
+“using Links to identify destination pages for crawling or scraping”.
+They restrict separating components for another purpose and require combined
+grounded-answer/Search Suggestions display. The proposed machine URL resolver
+followed by Kinobaza HTML extraction directly conflicts with that stated use
+restriction. Transient memory, metadata-only URLs, fewer calls or adding display
+do not remove this purpose conflict. No claim of a general ban on Gemini or
+Kinobaza integration is made; this is the specific requested Grounding path.
+No applicable written exception is established. Without one or a different
+explicitly approved source route, do not activate this path. This is an
+engineering source-use assessment, not a legal guarantee.
+
+### Technical capability is present, but does not clear that blocker
+
+| Question | Official contract / consequence |
+| --- | --- |
+| Supported model | [Stable model page](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash) explicitly lists Search grounding for `gemini-3.8-flash`. Old model choice is still documented, not assumed valid merely because it exists in research. Account availability is not tested. |
+| API variants | [Generate Content Search guide](https://ai.google.dev/gemini-api/docs/generate-content/google-search) documents `POST /v1beta/models/gemini-3.8-flash:generateContent` with Google Search tool and header key. The [current main Search guide](https://ai.google.dev/gemini-api/docs/google-search) instead demonstrates Interactions. Do not mix their response shapes or assume an API migration fixes use restrictions. |
+| Generate Content evidence | [GroundingMetadata / GroundingSupport reference](https://ai.google.dev/api/generate-content#GroundingMetadata): `groundingChunks[].web.uri`, support `groundingChunkIndices`, `segment`/part byte offsets, `webSearchQueries`, `searchEntryPoint`. Generated text alone is not metadata evidence; citation attribution is not film identity. |
+| Interactions evidence | Main guide shows `google_search_call`, `google_search_result`/Suggestions and text `annotations` of type `url_citation`, with URL and segment indices. This is not the old `groundingMetadata` envelope. |
+| Opaque URLs | Generate Content guide itself illustrates `vertexaisearch.cloud.google.com` source URIs. A `web` chunk has URI/title, not a guaranteed separate canonical-destination field. A generated canonical URL plus an opaque citation does not establish their equivalence. |
+
+Any later permitted implementation must accept a URL only from a structurally
+valid, actually grounded source reference, linked to the cited response segment,
+then apply unchanged exact Kinobaza admission and independent identity/extraction.
+Do not use citation title/snippet as a destination mapping or identity proof.
+Wrong host, generated-text-only URL, empty/malformed grounding, or unsupported
+opaque reference must return a precise non-candidate outcome, not absence of a
+film/card. No redirect following, slug reconstruction, URL Context substitution,
+provider fetch or hidden resolution request is permitted.
+
+An opaque-reference-only result would require a **separately scoped proposal**
+for one tightly bounded reference-resolution operation, with validated host/path,
+target re-admission, accounting and terms review, before any implementation.
+It is not approved here and would not itself solve the explicit use restriction.
+
+### Accounting recorded before any implementation (proposed, not live-ready)
+
+The API exposes a single application request that can cause multiple internal
+Google Search queries. Keep these units separate:
+
+| Unit | Ceiling / accounting rule |
+| --- | --- |
+| TMDb / MOTN HTTP attempts | Existing ≤4, unchanged independent gates and identity reuse. |
+| Gemini API POST attempts | ≤2, each atomically reserved before dispatch using the two search slots. A lost response/timeout still consumes its reservation. |
+| Google Search operations | Unknown unless a documented response exposes them; declared query metadata is diagnostic, not an attested billing total or guaranteed complete internal count. Never label two Gemini calls as two Google searches. |
+| Kinobaza card GETs | ≤2, sequential; no redirects/retries/destination requests. |
+| Application HTTP total | ≤8 = 4 + 2 + 2, not a total-network-traffic or cost cap. No extra opaque-reference hop fits this definition without a separately reviewed budget. |
+| Time | Entry clock preserved: source work ends by 45s, finish by 53s, response/platform margin unchanged. No deadline reset or increased request cap. |
+
+Second-call strategy, only if the use blocker is cleared: after a successful,
+well-formed **grounded** first response with no admitted direct candidate, use
+one different already-known title alias plus existing year/director to
+disambiguate. No second call for auth/quota/transport/timeout, missing/malformed
+grounding or opaque-reference-only output. Multiple direct candidates go through
+the existing ≤2 card gates/choice, not a new LLM identity decision. This is not
+implemented and is not permission to run a probe.
+
+The [pricing page](https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash)
+currently lists Standard paid input/output at $0.75/$3.75 per million tokens
+through December 31, 2026, then $1.50/$7.50 from January 1, 2027. Grounding is
+not on the API Free tier for this model: 5,000 monthly search requests shared
+across Gemini 3+ precede $14/1,000 search requests; each model-executed search
+query is chargeable under its billing rules. No remaining quota, zero cost or
+per-film price is inferred. The [rate-limit guide](https://ai.google.dev/gemini-api/docs/rate-limits)
+uses model/project/tier limits (not per-key); actual owner limits are unknown.
+
+### Data/configuration and pilot boundary
+
+If later allowed, the outgoing input is explicitly projected public film
+identity only: title/known aliases, year, director and optional IMDb. Never
+serialize the whole film/source object: no user/group/form IDs, draft, TMDb/MOTN
+offers, card HTML, full responses or owner control observations. No source data
+to LLM for extraction, recommendations, localization or enrichment.
+
+`GEMINI_API_KEY` would have to be separately provisioned in Netlify Functions
+scope; an existing owner/demo key proves neither presence nor entitlement there.
+That unimplemented proposal required server-side explicit Gemini selection, never
+inference from whichever key exists. No env var, credential copy, provider-selection switch
+or new dependency is installed by this blocked change. Existing
+`BRAVE_SEARCH_API_KEY` is not invoked as Gemini fallback; baseline wiring is
+unchanged as stated above. Do not provision keys to bypass this decision.
+
+The five-real-Wishlist-film pilot must **not use the requested Gemini resolver**.
+Provider choice is now resolved by the Brave decision below; no Gemini exception
+is assumed. No owner evaluation or new risk-based study is requested. Tests for
+any future, separately permitted Gemini adapter would still need: direct
+grounded candidate; text-only/wrong-host/opaque URL; invalid/empty grounding;
+ambiguous candidates; timeout/quota/no fallback; second-call strategy, ≤8 cap,
+independent gates, R1/R2, exact URL/acknowledgement and form safeguards.
+No placeholder adapter or synthetic pass is claimed as implementation. This
+successor changes only Markdown, so runtime/browser/native suites are not rerun;
+their #192 results remain pinned historical evidence, not a test of Gemini.
+Verify local links/anchors, whitespace, scope and unchanged runtime tree only.
+Documentation-only verification: 13 documents / 420 local links / 259 anchors,
+zero reference errors; whitespace clean. Runtime/security/ledger/research paths
+are byte-for-byte unchanged from #192 `c5a0929`; no runtime tests are newly
+claimed. Actual Gemini/Search/card requests in this task: **0**.
+
+## Brave pilot provider decision and data-flow audit (2026-10-21)
+
+**Historical checkpoint, superseded by the Tavily replacement below.** Brave is
+no longer selected because of practical access/payment difficulties reported by
+the owner. The dated review, observations and counts below remain historical
+evidence, not current production adapter/configuration instructions.
+
+**Approved provider: Brave ordinary Web Search**, solely to find candidate
+Kinobaza URLs. Current handler wiring already selects it; no runtime change or
+provider switch is necessary. Gemini Grounding is not used for URL → HTML
+extraction and is not a fallback. No other automatic fallback exists. Finding a
+URL is not acceptance of film identity, extraction success or availability.
+Search rank/snippets do not satisfy any identity gate or fill any offer field.
+Resolver quality remains **live-unvalidated**, not established by authored mocks.
+
+### Dated terms finding and boundaries
+
+[Brave Search API Terms of Use](https://api-dashboard.search.brave.com/documentation/resources/terms-of-service),
+last updated September 1, 2026, checked October 21: §3(a) permits application use;
+§3(b)(i) restricts Search Results persistence while excepting operational transient
+storage. No direct equivalent of Google's Link-collection restriction was found
+for this bounded candidate-only flow. This is not blanket permission or a legal
+guarantee. §9(d) preserves third-party content rights; Brave grants no Kinobaza
+content rights. Other §3(b) limits, including redistribution/AI-improvement,
+remain; no Search Results are sent to an LLM or used for AI training/evaluation.
+§4(c) end-user/privacy obligations and actual account/Order Form still require
+operator confirmation. §4(d) attribution is optional but has requirements if
+elected; this change adds no Brave branding or endorsement claim.
+
+### Verified repository data path (no live traffic)
+
+Reviewed #193 `e412c0374bc99279b8eaecbfacaf78bef44081d3` on #192
+`c5a09298903957b16360147b3363b8d4db90f195`; both remain open, develop unchanged.
+This is a code/mock audit, not an inspection of deployed databases, browser
+extensions, log drains/APM or provider-side retention. No persistence or leak of
+the specified Search Results was found in the application path; no fix required.
+
+| Stage / inspected component | What exists transiently | What leaves/persists |
+| --- | --- | --- |
+| Brave response: `netlify/lib/kinobaza-resolver.mjs`, `braveWebSearch` | Bounded response bytes/JSON only in the current invocation (≤512KiB). | `web.results[].url` only through `admittedCandidates`; title, description/snippet, result envelope and numeric rank are not projected/logged/saved. Exact URL dedup/order preserves a bounded candidate list, not identity evidence. |
+| Resolver: same module, `createKinobazaResolver` | Admitted URLs, ≤2 fetched card results, independently checked identity/extraction. | Only status/count/reason summary; matched card projections/choices. Rejected/unexamined raw search entries are not returned. No query/search response cache, disk, log or database call. |
+| Projection: `netlify/lib/media-advice-service.mjs`, research `discovery.mjs` | Card `sourceURL` in provenance/film-localization or matched `cardChoices`, separate provider hrefs parsed from HTML. | Projected response only; `stages` removed. No raw Search Results or HTML archive. A source-card URL can reach the client as temporary provenance; it is not falsely claimed to be absent from the response. |
+| HTTP boundary: `netlify/functions/media-advice.mjs` | Result/serialized response in invocation memory; secret-echo suppression. | `Cache-Control: no-store`; generic errors, no body/URL/error-object logging. RPC arguments are fixed context, operation, session ID and stage only, never search result/card URL/snippet. |
+| UI: `assets/media-advice.mjs`; `app.js` media-advice bridge | Controller closure/session and text-only DOM; same-form reopening reuses memory. A chosen source-card URL may be shown. Invalidation clears session/DOM and rejects stale replies. | No localStorage/sessionStorage/IndexedDB, telemetry, chat-history snapshot or automatic navigation of search/card URLs. Requests use `cache: no-store`. `service-worker.js` has no fetch/cache handler. Closing retains appropriate current-session memory, not persistent storage. |
+| Short report: `assets/media-advice-report.mjs` | Allowlisted counters, statuses/reason codes and localization scopes, copied only on explicit action; selectable-text fallback. | No search queries, result text/rank/snippets, raw source-card/provider URLs or credentials. Clipboard is an explicit user export of that safe summary, not a source archive. |
+| Ledger/cleanup: both new M4 migration files | Private context bindings and attempt stages; cleanup health timestamp/count. | Technical session accounting only; no result/body/snippet/query/card URL columns or writes. Retention/permissions remain as above; no migrations executed in this task. |
+
+The repository M4 path has no custom analytics/telemetry emitter, response logger
+or Search Results storage. Existing unrelated app localStorage keys (group,
+invite, conversation-finished boolean) and main-chat HTML state do not receive
+this controller's results. Hosting instrumentation settings were not queried:
+before activation, verify that function log drains/APM, replay or browser
+telemetry do not capture request/response bodies or source URLs. This is a
+remaining operational check, not a claim that remote logging was inspected.
+
+### Separate origin and lifecycle of provider links
+
+For Kinobaza source rows, provider hrefs in `row.link`/`rawHref` come from a
+**separate Kinobaza HTML GET**, not from Brave's result URLs. MOTN links keep
+their own API provenance. HTML links retain provenance and link classification;
+tracking/affiliate transfer needs acknowledgement. `transferFor`/`makePreview`
+pass only the chosen medium and eligible provider href, never card `sourceURL`,
+search response, provenance object or snippet. Same-film/provider observations
+do not merge, and film badges do not become provider tracks.
+
+The controller changes only local form fields after explicit review/confirm.
+Ordinary `getMovieFormData` → `getMovieGroupListData` → Save can later persist
+that chosen **provider link** as `purchase_url`; no automatic save occurs.
+Existing app form/movie debug logging can also contain saved/selected provider
+URLs. Thus this audit does **not** claim that all URLs everywhere in MW are
+nonpersistent/unlogged; the confirmed boundary concerns Brave Search Results
+and search-discovered source-card URLs. Existing form logs do not receive the
+Search Results, source-card provenance or M4 result object. No unrelated logging
+refactor is introduced under a documentation-only provider decision.
+
+### Pilot cap and remaining activation conditions
+
+Exactly five actual Wishlist films, chosen before execution, not a new risk-set
+substitution. One explicit action per form/case, no retries. Per film: TMDb/MOTN
+≤4 + Brave ≤2 + card GET ≤2 = **8 application source HTTP attempts**. Across the
+pilot: Brave **≤10**, card GETs ≤10, all sources **≤40**; these are ceilings, not
+targets. Brave alternate query only after a successful first search with no
+admitted candidate, never after timeout/auth/quota/transport error. Internal
+provider traffic remains unknown and is not counted as known network traffic.
+The entry deadline, atomic reservations, unknown accounting on lost responses,
+independent gates, R1/R2 and form/draft controls are unchanged.
+
+Provider selection is resolved; remaining preparation is the existing M4 review,
+separate merge/develop branch-deploy authorization and verification of actual
+Netlify context/functions/key mapping, source-use/account checks, reconciled
+migration baseline, authorized cleanup/monitoring and backend-only pilot access.
+No secrets/flags/migrations/deployment are changed here. The five-film pilot
+and owner evaluation still require their separate activation step, not a new
+research cycle or another provider-selection approval.
+
+### Audit checks
+
+No runtime defect found, so only canonical documentation/README change. Existing
+resolver/report/HTTP authored regressions: **14/14 passed**. A separate in-memory
+authored canary exercise traversed handler → resolver → projection → report/RPC:
+2 Brave + 2 card + 4 baseline mock attempts, 8 reservations; no search
+title/snippet/envelope/key in client output, no URL/result in RPC or report,
+0 application log calls. Matched source-card URLs appeared only as transient
+provenance/choices; a separately extracted HTML provider link kept exact href
+and acknowledgement. The exercise disabled real fetch, saved no fixture/body
+archive, and is not live validation. Static review additionally covered storage,
+service worker, normal Save and existing app logging. Full browser/native/Windows
+suites are not rerun for unchanged runtime; prior evidence is not relabelled.
+Current documentation verification: 13 Markdown documents / 422 local links /
+261 anchors, zero errors; scope and whitespace clean. The prior Gemini-only
+checkpoint's 420/259 counts above are historical, not this audit's scope/count.
+
+## Tavily Search replacement (2026-10-21)
+
+**Implemented/offline-tested; live-unvalidated, default-off.** Narrow successor
+to #193 `0db059a710bff801e5c455dcc396f06914c156cc`, base #192
+`c5a09298903957b16360147b3363b8d4db90f195`. #190/#191 and develop
+`acbdadf8efa2d180a12ed3fc85aa7784bb681782` were unchanged at inspection.
+No migrations, ledger stages, client/state/form-transfer logic, dependency,
+cleanup configuration or research adapter changed. All three #192 fixes remain.
+Brave is removed from the active M4 path; Gemini's established API-use blocker
+is unchanged. There is no alternate-provider fallback.
+
+### Contract and data boundary
+
+[Official Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search),
+checked 2026-10-21: POST `https://api.tavily.com/search`, Bearer header;
+`search_depth: basic`, `topic: general`, `max_results: 5`,
+`auto_parameters: false`, `include_answer: false`,
+`include_raw_content: false`, `include_images: false`,
+`include_favicon: false`, `include_usage: false`,
+`include_domains: ["kinobazaua.com"]`, `include_domains_mode: restrict`.
+The explicit request avoids automatic parameter/depth changes and generated
+answers. Only `results[].url` is used; content/score/title/answer are discarded.
+Missing/malformed results is an error, not an empty success; `results: []` is
+empty. Responses exceeding five results are refused, unsafe URLs filtered and
+exact admitted URLs deduplicated. No Extract/Crawl/Research endpoint or SDK.
+
+The existing `searchFactory(apiKey, boundedFetch)` interface remains injectable.
+Only exact Tavily endpoint POSTs are accepted; redirects/cookies are refused.
+The 15s/512KiB response bound is inside the existing entry-based 45s source
+deadline, leaving the finish phase until 53s. Durable reservation precedes each
+attempt; a post-reservation deadline prevents dispatch without refund/retry.
+At most two searches: the second uses an already established alternate title
+only after successful search with zero admitted candidates. HTTP/auth/quota,
+malformed/oversize, transport and timeout errors do not trigger another query.
+401/403/429/432/433 and other HTTP errors use content-free status codes.
+
+The audited path remains response → URL admission → bounded card GET →
+independent identity/extraction → projected source rows → transient client.
+Neither Search Results nor snippets/scores/envelopes enter ledger, form,
+short report, browser storage or application logging. Matched card addresses
+can appear as transient card provenance/choices, not a search archive.
+The automated canary regression covers handler → projection → report/RPC and
+zero application log calls. Hosting-side telemetry/log-drain configuration
+remains uninspected and must not capture request/response bodies or secrets.
+Separately extracted HTML provider links retain their own provenance and
+R1/R2/navigation/transfer/acknowledgement rules. Ordinary explicit Save may
+persist that chosen provider URL; this is not persistence of Search Results.
+The existing app's form logging caveat in the historical audit still applies.
+
+### Dated source-use findings, not legal approval
+
+[Platform Terms](https://www.tavily.com/terms) (May 4, 2026; checked October 21):
+§§1.2–1.3 define Customer Applications/inputs, including end-user queries.
+§2 permits documented API integration but limits it to internal business
+purposes and expressly restricts third-party API use without prior written
+consent. §3.5 nevertheless addresses external application end users and
+requires appropriate user agreements without shifting liability to Tavily.
+Account/Order Form scope must reconcile this before unrelated group-user
+activation; protected keys alone do not establish rights. §§7/9.2 permit
+provider-side input sharing/retention/improvement: application no-storage is
+not a provider zero-retention guarantee. §17.8 requires usage/audit records;
+check actual account obligations without archiving result bodies. This is
+neither blanket app prohibition nor clearance.
+
+[AUP](https://www.tavily.com/acceptable-use-policy) (May 5, 2026; checked
+October 21), §2 allows expressly supported automated access while preserving
+third-party rights/obligations; no specific Google-style ban on candidate
+URL → independent HTML fetch was found in these reviewed texts. §4 requires
+downstream-user compliance/enforcement; §5 requires output vetting. Those are
+conditions, not a Kinobaza content license. Query input here is public film
+identity only, never user/group/draft/source offers. Application code requests
+no LLM answer; this does not claim Tavily has no internal AI processing.
+
+**Assessment:** documented search capability is compatible with the narrow
+technical pipeline; customer-app/end-user license scope remains **unresolved**,
+not cleared by this implementation. Kinobaza automatic arbitrary-card
+extraction and existing TMDb/MOTN conditions still need the separately
+authorized activation preflight. No new legal toggle/acknowledgement is added.
+
+### Five-Wishlist-film live plan (prepared, not authorized/executed)
+
+**Correction:** no five-film manifest has been selected or agreed. Earlier
+P1–P5 labels were placeholders, not agreed films. The
+[execution runbook](#activation--operation-plan-not-executed) is the only
+current operation/pilot sequence: select real Wishlist films before activation,
+≤10 Tavily calls within ≤40 application source attempts, one ordinary Save
+check in the test group. No pilot, preflight discovery or automatic retries
+are authorized here; billing/actual quota and provider internal traffic are
+not established by application counters.
+
+### Replacement verification
+
+Authored fixtures only, not live Tavily/Kinobaza validation. Final M4
+offline/mock-HTTP/isolated SQL/Edge suite: **45 passed, 1 native test skipped,
+0 failures**. Edge covers desktop 1280×900, mobile 375×812 and 820×1180,
+including pending apply/cancel/stale/manual-edit controls and safe clipboard
+fallback. Separate research provider-grouping/matching/R1/R2 regressions:
+**29/29 passed**. Ledger SQL, #192 queued access/
+pending-apply fixes and launchers are unchanged: no new migration or native
+PostgreSQL/Windows lifecycle execution is required for this adapter change.
+Previous PostgreSQL **17.6** concurrency evidence is reused, not relabelled as
+a Tavily run. No WebKit/device claim; Edge mobile viewport checks are separate.
+Local Markdown verification covers the root README, this canonical record and
+the existing research README/docs: **13 documents, 424 local links / 263
+anchors**, zero errors. Historical counts above remain pinned to their own
+checkpoints, not silently reused.
+
+## Autonomous five-film resolver iteration — 2026-10-23
+
+**Authorized implementation and live source investigation; no merge/deploy.**
+This subsequent owner decision supersedes the numerical caps of the earlier
+individual diagnostic controls, not application limits or service conditions.
+Lock the five cases before testing: Blade Runner 2049 (2017), Mortal Kombat
+(2021), Alien (1979), Oppenheimer (2023), Dune: Part Two (2024). The first four
+retain difficult owner-pilot cases; do not replace failures with easier films.
+Control URLs are independently established comparison evidence, never inputs
+to `createKinobazaResolver` or film-specific runtime exceptions. Automatic
+discovery, identity acceptance and extraction are separate outcomes; five
+successful controls would not establish whole-catalogue accuracy or rights.
+
+### Reviewed person record, not a film exception
+
+The earlier three-attempt person check stopped at a local 512KiB bound. Under
+the expanded authorization, the canonical Kinobaza person page was successfully
+read with an 8MiB **local inspection** bound: actual HTML 807,749 bytes, HTTP200.
+This does not change runtime title-card admission or its 2MiB body limit.
+Its unique H1 is `Денні Вільньов`; the same profile header explicitly names
+`Denis Villeneuve`, gives `3 жовтня 1967`, and lists director as a role.
+The canonical is the requested
+[Kinobaza person profile](https://kinobazaua.com/persons/denis-villeneuve).
+The existing trusted
+[TMDb movie credits](https://api.themoviedb.org/3/movie/335984/credits?language=uk-UA)
+identified one Director, person137427 (`Дені Вільнев` / `Denis Villeneuve`);
+the already-read
+[TMDb person record](https://api.themoviedb.org/3/person/137427?language=uk-UA&append_to_response=external_ids)
+gave the exact English name and full birth date `1967-10-03`.
+
+Manual person-level review of the exact English full name + full birth date +
+director role, attached to the same canonical profile/H1, establishes the
+literal alias for `tmdb:person:137427`. This is not the older diagnostic's
+automatic exact-alias/shared-ID confirmation: the Kinobaza page exposed neither
+a shared IMDb/TMDb person link nor a JSON-LD Person object. Birthplace values
+differ (TMDb Gentilly versus Kinobaza Trois-Rivières); no matching-birthplace or
+shared-person-ID claim is made. Slug similarity and any studied film title/year
+are not the linkage basis. An independent read-only evidence review agreed
+that this distinctive person-profile composite is adequate for this one
+reviewed record, with those explicit limitations.
+
+The registry now contains exactly one real record: `Денні Вільньов`, namespace
+`tmdb:person`, ID137427, scope `kinobaza-director-identity`, reviewed 2026-10-23.
+Exact NFC/whitespace/case equality only; no transliteration/fuzzy matching or
+director-gate bypass. It applies across this person's films, not other people,
+titles, offers or tracks. Unknown/ambiguous directors remain unresolved;
+explicit film-ID conflicts retain priority and claims remain withheld.
+Authored regressions exercise the actual record with two invented films,
+another person and conflicting film evidence: **31/31 passed**, not live
+availability or extraction validation.
+
+### Practical resolver work and one-entry local session
+
+General discovery changes under this authorization retain two search stages
+and two card stages. Normalize duplicate title-query spellings; use a genuinely
+different established title or an unquoted version when only one exists.
+Promote exact established ASCII title/optional-year slug matches as discovery
+hints, never create a URL or use its slug as identity proof. After a completed
+first-card identity refusal, use the remaining search slot before the
+second card slot; merge/deduplicate actual returned URLs and rank unseen
+candidates. Search errors are not retried and do not trigger alternatives.
+Admission, actual HTML identity/extraction, no redirects, R1/R2, exact links,
+acknowledgement and form controls remain independent. The normal application
+budget remains **8 = baseline4 + search<=2 + cards<=2**, with unchanged ledger
+stages/deadlines. The final fallback policy is recorded in the dated results
+below; no migration or arbitrary network destination is added.
+
+`scripts/m4-practical-session.ps1` is an opt-in local task tool, not deployed
+code. Enter TMDB_READ_ACCESS_TOKEN and TAVILY_API_KEY once each, hidden, and
+leave that SSH terminal open for the series (up to four hours). The helper
+keeps credentials and minimal trusted projected identities only in process
+memory; fresh fixed Node workers load edited resolver code for each requested
+operation. No key argv/environment/file/clipboard/console handoff, raw source
+archive or search snippet persistence. Reusing trusted identity prevents
+unnecessary repeat TMDb reads. A local-only named pipe permits the current
+Windows SID explicitly and rejects remote pipe clients in the kernel; it avoids the older
+CurrentUserOnly elevation comparison. Same-SID desktop/SSH connectivity still
+needs an actual session handshake; a failed handshake is not permission to
+rerun source tests blindly. Worker calls are separately bounded (60s and<=6
+attempts per invocation); the broader task can perform further deliberate
+iterations, with cumulative accounting, not automatic retries.
+
+At preparation, **3 new HTTP attempts**: Kinobaza person2 + title-card1, all200;
+TMDb0/Tavily0. The second profile read obtained the additional co-located
+English-name/birth-date fields not projected by the first inspection. The card
+read confirmed the previously observed Blade Runner2049 H1/H2/year/director
+shape. Historical25 attempts remain separate (**28 combined to this point**).
+No five-film automatic success is claimed yet. Full live resolver evaluation
+continues after the one credential entry; no new per-iteration authorization
+is needed. No MOTN/watch-provider/destination fetch, Wishlist write, owner
+demo change, initApp/lifecycle/auth/UI/retention/SQL/flag change or deployment.
+
+Preparation validation on the edited tree: **72/72 targeted offline/mock tests**
+(crosswalk, resolver, title/year, safe diagnostics and local series worker).
+Native PowerShell7 prerequisite check passed explicit-SID pipe request/response
+and the actual fixed Node worker `status` operation with authored placeholders:
+zero credential prompts/source requests. This exposed/fixed a missing worker
+opt-in argument and .NET async-void return leakage before any real key entry.
+An independent local-worker review also removed a too-broad H1-parent text
+projection: profile diagnostics now expose bounded headings, not biographies.
+13 Markdown docs/447 links/273 anchors, zero errors; whitespace/scope checked.
+No new browser/iPhone, Windows-demo lifecycle or SQL run yet: UI, form transfer,
+launcher and ledger are unchanged. Relevant final regression scope will be
+reassessed after the actual five-film iterations, not claimed from mocks.
+
+#### SSH preflight repair, before credential entry
+
+The owner launch at `fce49c6` returned `session-not-started` /
+`local-pipe-prerequisites`, **sourceRequests0**, before either hidden key prompt.
+That screenshot identifies the failed preflight, not the internal create/
+connect/frame/ACL branch or SSH token groups. The initial desktop/elevated
+preflight success was not proof of success under the owner's SSH token.
+
+Code review found an unconditional Deny-FullControl ACE for the Windows NETWORK
+SID. That SID describes a logon-token group, not whether a pipe client is
+connecting from another computer: it can deny an authorized same-account
+**local** SSH client. The fix retains one protected current-user-SID Allow ACE
+and moves remote-transport rejection to native `PIPE_REJECT_REMOTE_CLIENTS`
+(`0x8`). No Everyone/Users/anonymous grant, listener, default ACL, elevation
+requirement or credential file is introduced. Asynchronous operation,
+first-instance protection, non-inherited handles, request/output bounds and
+one fixed worker remain. The native handle is owned/closed by SafePipeHandle /
+NamedPipeServerStream; its security descriptor and helper compilation contain
+no credentials and exist only in memory. Sources:
+[Microsoft CreateNamedPipe flags](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea),
+[managed SafePipeHandle wrapper](https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.namedpipeserverstream.-ctor).
+
+On any remaining preflight failure, safe diagnostics distinguish create,
+local-connect, request-frame, response-frame and ACL-check, with exception type,
+numeric HResult/Win32 code and NETWORK-group-presence boolean. No exception
+message, token/SID dump, key or source content. This repairs local launch only;
+the screenshot does not by itself prove which SSH authorization check failed.
+The corrected desktop non-elevated preflight already passes pipe round trip,
+exact protected ACL and actual Node status worker, with **zero HTTP requests
+and zero credential prompts**. Actual owner-SSH handshake remains to verify.
+The five-film source series has not started; counts remain3 new /25 historical
+at this checkpoint. No resolver/search-policy/runtime or app-state change in
+this follow-up, no live repeat/merge/deploy.
+
+The focused native Windows Authz regression uses the **actual** new pipe DACL
+and a copy with the old NETWORK deny restored, then adds an enabled NETWORK
+SID to a synthetic current-user authorization context: old ACL/current user
+alone permits, old ACL/NETWORK denies (error5), new ACL/NETWORK permits. This
+reproduces the authorization defect with the Windows engine, not a homemade
+ACE evaluator or a claim that the owner's actual SSH token was captured.
+The same native test invokes the exact-HEAD zero-prompt/zero-HTTP pipe + worker
+preflight. Targeted checks: native pipe regression1/1 and local series worker
+regressions3/3; no full runtime/browser/demo/SQL repetition for this local
+helper-only repair. Actual five-film source work resumes after the hidden
+entry, without new authorization or a repeat of already completed source runs.
+
+#### Full local-session recovery — 2026-10-24
+
+The owner entered the keys at `a79e94f`. The agent could connect locally, so
+the earlier SSH ACL barrier no longer prevented transport. Initial client
+errors were generic and do not establish their exact branch. A subsequent
+diagnostic connection closed without sending a frame; later connects timed
+out. No identify/resolve/inspection operation was dispatched: **zero source
+attempts** in this credential session, not a repeat of the earlier controls.
+
+Code review found a second local-wrapper defect: client EOF can change the
+stream to Broken / `IsConnected=false`; the conditional Disconnect was then
+skipped and subsequent WaitForConnection calls could not recover the still
+allocated pipe. Cleanup now tracks an accepted connection and disconnects it
+even after EOF, recreating the same protected local pipe if necessary. That
+does not repeat a source action or clear credentials/context/counters. The
+client adds typed `-Action` / `-Film` / `-SourceURL` parameters, constructing JSON
+internally instead of relying on nested Windows shell quoting, and emits safe
+error phase/type/HResult only. Remaining outer errors preserve known counters
+or explicitly unknown counts instead of always claiming zero after prior work.
+These are local task-tool repairs, not application search, TTL or budget changes.
+
+The complete fake-key session also reproduced a first-response loss: the
+server disconnected immediately after writing, while PipeStream Flush is not
+a drain and Disconnect discards unread pipe data. The corrected client sends
+a framed receipt only after receiving/validating the entire safe JSON reply;
+the server waits at most5s for that receipt before disconnecting (including
+safe error replies). There is no unbounded WaitForPipeDrain or source retry.
+If sending a receipt fails, the client still preserves the already received
+guarded result/known counts and marks `acknowledgementSent=false`. References:
+[Microsoft pipe disconnection](https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-disconnectnamedpipe),
+[PipeStream Flush semantics](https://learn.microsoft.com/en-us/dotnet/api/system.io.pipes.pipestream.flush).
+
+The already-running owner process has the older functions loaded; editing the
+files cannot hot-patch its broken connection state. Restart that helper only,
+not the owner demo/application, and enter the keys hidden again. No credential
+is recovered from process memory, copied to disk or requested in chat. After
+that necessary wrapper restart, the authorized autonomous five-film work
+continues; no source rerun or new per-iteration consent is requested here.
+
+A new native full-loop regression executes the real helper/client code in
+isolated processes with a random pipe and authored fake keys, never the
+owner's pipe. It verifies status twice, an abandoned connection, another
+status with retained counters, receipt acknowledgements, stop and complete
+process/stdout closure. It passes without changing timeouts/assertions; the
+test waits for child `close` (stdio drained), not just `exit`. This closes the
+coverage gap in the older separate pipe/worker preflight. No five-film search
+result is claimed from this local regression.
+
+Final targeted run: **5/5 passed**, no failures/skips or loosened timeouts:
+native Authz/preflight + complete fake-key lifecycle +3 worker regressions.
+The first incomplete protocol tests failed and motivated the actual fixes;
+they are not described as passing evidence.13 docs/447 local links/273 anchor
+references and whitespace/scope checks pass. No live source attempt added;
+no app/runtime/UI/launcher/SQL suite rerun is warranted for these helper-only
+changes. The actual five-film resolver outcome remains pending the corrected
+credential-session start, not declared blocked by an external service.
+
+### Five-film automatic results — 2026-10-24
+
+**Completed local resolver investigation/fix/recheck, not deployed runtime
+attestation or a new owner pilot.** The corrected hidden-input session worked
+under the owner's SSH connection. TMDb search + Details established all five
+identities (10 requests); projected identities were then reused in memory.
+No MOTN, Watch Providers, provider destination, redirect or automatic retry was
+performed. No source HTML/search response/snippet archive was created.
+
+The final five-case pass used the same edited source tree over checkout
+`eaaa07bf54731718f5c8629d85d7704c9f94b5df`, explicitly `localTrackedEdits=true`,
+`execution=local-diagnostic`, `buildSha=null`; it is not a server-attested commit.
+All five worker hashes were
+`7d680acd8d4328496927aa032f19eacea29c1c8c1c18e91282f093343df5d580`.
+The reviewed source changes are committed in #200. The URLs below were actually
+returned by search, then independently checked from HTML; none was supplied
+as a resolver input or installed in a runtime catalogue.
+
+| Film / verified identity | Control / automatically selected card | Final search/card attempts | Identity / extraction | Local run ID |
+| --- | --- | --- | --- | --- |
+| Blade Runner 2049 (2017), TMDb335984 / IMDbtt1856101 | [blade-runner-2049](https://kinobazaua.com/titles/blade-runner-2049) | Tavily1 / cards2 | matched / partial; 32 candidates, 4 localization blocks | `819cad64-99da-40ff-bd98-2c42daad8b67` |
+| Mortal Kombat (2021), TMDb460465 / IMDbtt0293429 | [mortal-kombat-2021](https://kinobazaua.com/titles/mortal-kombat-2021) | Tavily1 / cards2 | matched / ok; 36 candidates, 3 blocks | `2a1f352a-836f-4343-b368-6c2306108a25` |
+| Alien (1979), TMDb348 / IMDbtt0078748 | [alien](https://kinobazaua.com/titles/alien) | Tavily1 + public search1 / cards2 | matched / ok; 29 candidates, 3 blocks | `d014f8ac-2dc5-4430-a59b-eaaf6060a040` |
+| Oppenheimer (2023), TMDb872585 / IMDbtt15398776 | [oppenheimer-2023](https://kinobazaua.com/titles/oppenheimer-2023) | Tavily1 / cards2 | matched / partial; 24 candidates, 3 blocks | `5c2c19fa-6883-42bb-94c7-11fb1ce198aa` |
+| Dune: Part Two (2024), TMDb693134 / IMDbtt15239678 | [dune-part-two](https://kinobazaua.com/titles/dune-part-two) | Tavily1 / cards2 | matched / ok; 32 candidates, 3 blocks | `57ee79f0-ca2b-4f9d-b66c-1e958b67793a` |
+
+Each final result is `one-confirmed-bounded-not-exhaustive`: one accepted card
+among the bounded reads, not proof that all source editions were examined.
+Matched identity uses the existing `explicit-title-year-director-match` route;
+no film stable ID was invented from a snippet or slug. The local summary's
+localization counter was corrected from nonexistent `providerBlocks` to the
+actual `localization.blocks`; the extractor/model were not changed. Counts are
+source claims, not independently verified offers, tracks or entitlement.
+Partial extraction remains partial. No transfer/Save was attempted here.
+
+#### Findings and final general strategy
+
+- The reviewed Villeneuve person alias works for both Blade Runner2049 and
+  Dune2. Unknown person spelling/group scope still withholds claims; no identity
+  gate relaxation was needed for these five films.
+- An early Mortal Kombat pass found Legends: Battle of the Realms first; its
+  different title/director was correctly refused. The second search slot then
+  found the 2021 card. Search outputs varied: the final pass found that card in
+  the first Tavily response. Do not attribute a deterministic ranking guarantee
+  to this small series.
+- Tavily returned Prometheus, Alien3, Covenant and related films for Alien1979,
+  not the actual card, across the original queries, a ten-result experiment,
+  altered quoting/year grouping and an IMDb discriminator. Those experiments
+  did not solve recall; **none of those experimental query/result-limit changes
+  is retained**. The ordinary public source search returned `/titles/alien`;
+  a separate control read passed the same identity gate. That manual control
+  was not counted as automatic success. Two later actual resolver passes found
+  it automatically through the general public-search fallback.
+- Wrong-film pages remain refused, including Alien3/Prometheus/Covenant, a Blade
+  Runner1982 card, Dune: Prophecy and the Oppenheimer documentary. Historical
+  owner-pilot responses are not reconstructed by these new reads.
+
+Tavily remains the primary provider (basic, max5 URL results, existing parameters).
+A successful first search with no admitted pointers still gets the established
+alternate-title Tavily query. After a completed first-card identity refusal,
+the remaining **second search slot** instead reads the source's ordinary
+public form: fixed `https://kinobazaua.com/search?q=<encoded trusted title>`.
+The form action/input and its unique `div#nav-titles` result scope were observed
+read-only on 2026-10-24; this is not an invented/private endpoint. Only literal
+relative `/titles/<admitted-slug>` anchors inside that scope become candidates.
+Source rank, link label, snippet, genre and person text never become identity
+or localization evidence. An explicit source-relative anchor is resolved only
+against the fixed canonical host; title-card admission itself is unchanged.
+
+The fallback has GET/manual/omit/no-auth controls, 15s header/body deadline,
+2MiB UTF-8 HTML bound, at most100,000 nodes/depth256/500 scoped anchors and one
+unambiguous result container. The initial 100-anchor local bound refused an
+ordinary observed scope (173 anchors:40 repeated title links plus133 auxiliary
+links); this own-code limitation was fixed, with an authored regression and a
+remaining finite bound. Missing/ambiguous/unsupported scope is a diagnostic
+refusal, not an absence-of-cards claim. Public-search diagnostic `returned`
+counts scoped anchors, not distinct film results; admitted counts unique safe
+card pointers and duplicate counts responsive repetitions. Safe short reports
+now identify the allowlisted search provider so those units are distinguishable.
+
+The union of actually discovered URLs is deduplicated and ranked before each
+remaining card read. No generated slug, per-film URL/alias exception, prefix
+sequel promotion, fuzzy matching, transliteration or winner among ambiguous
+confirmed cards. Primary/alternate title query text remains title/year-only;
+the director remains an independent HTML identity gate. Errors do not trigger
+fallback; no Brave/Gemini fallback. Search<=2/card GET<=2 and full runtime cap8,
+durable `search-1/2` reservations, handler/finish deadlines and lost-response
+accounting remain unchanged. No new dependency, key, migration or storage.
+
+#### Actual request ledger and limits of the result
+
+| Scope | TMDb | Tavily | Kinobaza public search | Kinobaza title GET | Kinobaza root | Person GET | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Working credential session, all investigation/rechecks | 10 | 22 | 3 | 32 | 0 | 0 | 67 |
+| Public-form/control-structure inspection outside credential broker | 0 | 0 | 3 | 0 | 1 | 0 | 4 |
+| **2026-10-24 total** | **10** | **22** | **6** | **32** | **1** | **0** | **71** |
+| Earlier expanded-task preparation, recorded above | 0 | 0 | 0 | 1 | 0 | 2 | 3 |
+| **This expanded task, total** | **10** | **22** | **6** | **33** | **1** | **2** | **74** |
+
+Earlier separately authorized controls remain25 (historical cumulative99,
+not a single evaluation run). The final five-case recheck alone cost16:
+Tavily5 + public search1 + title GET10, with zero repeat TMDb requests because
+trusted identity was reused. Successful and unsuccessful/refused attempts are
+included. Broker `countsIncomplete=false`; all recorded HTTP responses in this
+working session were200, including semantically refused results. Search-provider
+internal network operations are unknown and not included as known HTTP traffic.
+No credentials or response bodies are included in this ledger. The local key
+session was explicitly stopped after the final pass; no additional live work
+is required to complete this task.
+
+Five successes demonstrate this bounded improvement, not general catalogue
+coverage/accuracy. No automatic claim that a link destination works, tracks bind
+to a particular offer, access exists in UA or the user is entitled. Extraction
+coverage and source-use/account constraints remain; ordinary public search does
+not create blanket permission to reuse content. No new rights closure, production
+activation or hosted latency assertion is made. The full hosted deadline may
+still produce a bounded partial outcome under slower services.
+
+#### Final validation and handoff
+
+- Targeted resolver/public-search/crosswalk/diagnostics tests:86/86 passed.
+- Full `test/*.test.mjs` offline/mock/HTTP/browser run:167 passed,0 failed,
+  1 explicit skip (native PostgreSQL multi-connection fixture is not configured
+  for this run). Chromium/Edge exercised desktop1280x900, iPhone-X-sized375x812
+  and Air-sized820x1180, pending apply/cancel/Escape, manual form edits,
+  clipboard fallback, retained/expired state and late replies without source
+  replay. These are authored browser states, not an actual iPhone/Safari result.
+- Additional relevant invariants after adding two budget/deadline tests:
+  161/161 passed across resolver and research assisted identity, localization,
+  provider grouping/R1/R2 and URL controls. Counts overlap the full run; they
+  are not added together as distinct coverage. The two new cases explicitly
+  cover full-action8 with public fallback and denied/expired `search-2` without
+  dispatch. No assertion/timeout was loosened.
+- The new ordinary-search structural limit was calibrated to observed benign
+  anchor counts, with a regression at173 and refusal above500. This is a
+  justified parser-bound change, not a claim that a prior too-small limit was
+  an external blocker.
+- Native Windows task-helper ACL/complete fake-key session tests passed in the
+  full run. Windows **owner-demo launcher lifecycle** and native PostgreSQL
+  concurrency were not repeated: their code/SQL are unchanged and no new
+  relevant risk was introduced. Prior dated evidence is not called a fresh run.
+- No WebKit/device test, hosted resolver validation or remote-check success is
+  inferred from local tests. Links/anchors, whitespace and scope are checked;
+  remote missing/skipped statuses remain missing/skipped, not passed.
+
+Review-ready in existing stacked #200, above unchanged #199/#198. No merge,
+retarget, deployment, source-policy closure or owner evaluation is performed
+by the handoff. Owner checkout/demo and unrelated untracked files are preserved.
+MW-FUT-01 remains Discovery.
+
+## Three-film pilot retrieval follow-up — 2026-10-28
+
+**Authorized investigation and implementation; merge/deployment not authorized.**
+Base: verified `origin/develop` / deployed commit
+`e63316bcb36fdd3aff41c0522a4495d42460bc69`. Netlify deploy
+`6ae1f36b7525afed6cc83754` is ready, branch `develop`, context `branch-deploy`,
+with the media-advice Node22 function present. This task changes neither that
+deployment nor production. Work is isolated from the owner checkout/demo.
+
+Owner evidence, not archived source responses:
+
+| Film | Owner run | Reported outcome / limit |
+| --- | --- | --- |
+| Blade Runner (1982) | `70479803-be87-4152-9f3c-bd3322f001bd` | Kinobaza matched, 7/8, mapped0, film-UA unknown; externally observed iTunes/MEGOGO/audio on the current card does not reconstruct the historical HTML. |
+| Mortal Kombat (2021) | `b9c22f56-8ad3-458b-bee0-ab970f829bbf` | Matched, seven source rows Apple/Rakuten/MEGOGO/Prime; positive preservation control. Apple UA audio5.1/subtitle observation is not an attested ability to buy. |
+| Supergirl (2026) | `f7aca2a8-c902-4857-92ec-5bd82bd64e05` | First card title/year match with director-alias unresolved, second year refusal; 8/8 and eleven unread candidates. Report lacks card URLs; do not attribute either historical read to today's known URL. MOTN Prime language claims do not establish offer binding or UA entitlement. |
+
+Implementation: establish current extraction and person-level evidence;
+preserve independent film/provider localization when country sections cannot
+establish UA availability; reuse exact namespaced person aliases across films;
+add bounded content-free extraction diagnostics and a digest of the requested
+card pointer; run the actual resolver for the locked three films plus relevant
+offline/browser regressions. No inferred country/offer enrichment, broader URL
+fetch, UI/controller/global auth/lifecycle change, persistence or migration.
+
+Initial current evidence (five read-only HTTP attempts): three known
+card markup inspections, one exact Blade Runner extraction diagnostic, one
+person-profile inspection. Bodies were processed only in memory.
+The current Blade Runner card has PL/CZ/DE sections and no UA section. The actual
+unmodified extractor returned matched / unsupported-markup /
+`missing-explicit-ukraine-section`, candidates0, no localization: it computes
+independent badge/block localization then discards it on this global refusal.
+That proves a present code defect, not the historical run URL or body.
+The diagnostic's selected title/year/director metadata was an explicit owner
+control, not a newly attested TMDb projection; independent TMDb checks follow.
+
+The current Supergirl director anchor points to
+`https://kinobazaua.com/persons/craig-gillespie`. Its canonical person header
+co-locates H1 `Крейґ Ґіллеспі`, English H2 `Craig Gillespie`, birth date
+1 September1967, Sydney NSW Australia and director role. The subsequent trusted
+TMDb projection establishes sole director `tmdb:person:50767`; its fixed person
+details record reports `Крейґ Джиллеспай`, IMDb `nm0318916`, birth date
+`1967-09-01`, and no additional aliases. The exact English full name, complete
+birth date and director role agree across independently read person headers.
+This reviewed composite evidence activates literal `Крейґ Ґіллеспі` only for
+person50767 and scope `kinobaza-director-identity`; no shared external person ID
+was observed on Kinobaza. References: [trusted TMDb film projection](https://api.themoviedb.org/3/movie/1081003?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations),
+[TMDb person](https://api.themoviedb.org/3/person/50767?language=uk-UA&append_to_response=external_ids),
+[Kinobaza person](https://kinobazaua.com/persons/craig-gillespie). No film/slug
+shortcut, fuzzy matching, transliteration, flat multi-person alias list or new
+runtime person request. The existing Villeneuve record remains unchanged.
+
+Historical exact-card/body recovery is unavailable by design: copied reports
+omit URLs/bodies, the technical ledger stores no source content, and transient
+results were not archived. A new source response cannot establish what an old
+request returned. Current automatic results below are separate new evidence.
+
+Implemented fixes retain independent pre-accordion observations on country-only
+refusal, while ambiguous countries are handled atomically and valid foreign
+countries stay foreign. Shared fixed/assisted extraction changes because both
+use that same proven faulty path; admission and identity are unchanged.
+The current Blade Runner post-fix control returns partial,20 candidates,
+2 blocks and2 mapped rows: Apple/iTunes audio reported-negative/subtitles
+reported-positive for the named block labels; MEGOGO audio/subtitles
+reported-positive; general film audio reported-positive. Both rows have country
+unknown and availability unknown. These are literal source scopes, not a claim
+that Apple has no Ukrainian track in any offer or that MEGOGO is entitled in UA.
+This control still uses explicit owner metadata, not fresh TMDb attestation.
+
+Source attempts before the credential-backed series: **7** = titleGET6 +
+personGET1. One post-GET local diagnostic used an incomplete projection-stage
+argument and failed before printing a result; its spent GET is included, not
+reported as zero or silently retried. The corrected deliberate check produced
+the result above. No body archive or application retry was introduced.
+
+Content-free diagnostics now retain allowlisted extraction status/issues,
+candidate/foreign/block counts and film-badge state. Each attempted admitted
+card also gets SHA256 of its exact requested public URL: compare a known URL
+offline without copying raw URLs into the short report or archiving a body.
+The digest is not a capability, retrieval success or identity proof. Existing
+runtime SHA/run-ID attestation remains unchanged. Source content, aliases and
+HTML are still absent from normal reports/ledger.
+
+### Current automatic results, not historical reconstruction
+
+PR [#201](https://github.com/hebbiz/movie-wishlist/pull/201), based on develop
+`e63316bcb36fdd3aff41c0522a4495d42460bc69`. Fresh server-side TMDb search/details
+established Blade Runner78/`tt0083658`/1982/person578, Mortal Kombat460465/
+`tt0293429`/2021/person1828590 and Supergirl1081003/`tt8814476`/2026/person50767.
+The normal resolver, admission, identity, extraction and composition functions
+then ran without supplying known card URLs. No MOTN/Watch Providers or provider
+destinations were requested. Shared trusted identity data was reused, not fetched
+again during resolver repeats. Known URLs were used only in separately counted
+markup/control inspections, never injected as resolver successes.
+
+| Film / final local run | Automatic accepted card | Outcome and added source scopes | Resolver attempts in this pass |
+| --- | --- | --- | --- |
+| Blade Runner1982 / `3b9acca1-f9c2-471d-b9a1-8d8e788af19b` | `https://kinobazaua.com/titles/blade-runner` | Matched; partial,20 candidates/2 blocks/2 Kinobaza mapped rows. General film UA audio positive; Apple subtitles positive with named stereo/dolby audio labels negative; MEGOGO audio/subtitles positive. Both provider blocks have unknown territory/availability. Ex Machina correctly rejected by title. | Tavily1 + card2 =3 |
+| Mortal Kombat2021 / `f0901a0c-e6dc-418f-ad90-5a4180996097` | `https://kinobazaua.com/titles/mortal-kombat-2021` | Matched; ok,36 candidates/3 blocks/4 Kinobaza-only mapped rows. UA-section Apple pointer has unknown tracks; separate Apple/Rakuten/MEGOGO blocks keep literal track values and unknown territory. General film UA audio positive. Legends: Battle of the Realms correctly rejected by title. | Tavily1 + card2 =3 |
+| Supergirl2026 / `42a13989-aff0-4224-935e-c9e2a6492fec` | `https://kinobazaua.com/titles/supergirl-2026` | Matched with confirmed person alias; ok,24 candidates/1 block/3 Kinobaza mapped rows. UA-section Rakuten/HBO pointers have unknown tracks; separate Rakuten block audio/subtitles positive, territory unknown. General film UA audio positive. Just Her remains unresolved and withheld. | Tavily1 + public Kinobaza search1 + card2 =4 |
+
+All outcomes are `one-confirmed-bounded-not-exhaustive`; no claim that unread
+candidates do not contain another match. Supergirl's first current pass read the
+same correct card but stopped specifically at director-alias; after the reviewed
+person record it passes without changing any other gate. This establishes a
+current before/after, not the identity of either historical owner-read card.
+Mortal Kombat's four rows above are **Kinobaza-only**: the owner's seven historical
+rows were combined source observations, including Prime. Their different counts
+are not evidence of dropped baseline rows; an authored seven-observation
+Apple/Rakuten/MEGOGO/Prime preservation regression checks composition separately.
+No current Prime availability or Apple purchase/5.1 claim is independently
+validated by this source-limited run. Source country, film badge, provider track,
+offer binding and entitlement remain distinct.
+
+### Request ledger and secret handling
+
+This task used **34 application HTTP attempts**, including failed local diagnostics
+and deliberate rechecks: TMDb7, Tavily6, ordinary Kinobaza search2, title-card18,
+Kinobaza person1. The protected broker counted27 (TMDb7/search8/card12), plus the
+seven separately recorded pre-session reads above. TMDb comprises6 identity
+search/details reads and1 person read; search comprises6 Tavily +2 public search.
+The two automatic three-film passes used10 each; fresh identity/person reads7;
+pre-session reads7. This ledger is separate from earlier tasks'74/25/control
+counts and from the historical owner pilot. No provider/tracking destination,
+MOTN, Watch Providers, retry/redirect, production discovery, transfer or Save.
+
+The one hidden `-Study pilot-retrieval` session reused the existing SID-only
+broker; keys stayed in process memory, never argv/environment/files/logs or a
+Netlify export. Default five-film controls remain unchanged. The session was
+explicitly stopped after the final pass (zero requests to stop). Results identify
+`execution=local-diagnostic`, `buildSha=null`, checkout3a0d2ef plus tracked edits
+and worker digest; they are not attested deployed-runtime reports. Minimal
+identity/claim comparisons, not raw HTML/search response archives, are recorded.
+
+### Verification and boundaries
+
+Preparation:176/176 targeted extraction/workflow/report/resolver, R1/R2,
+localization/helper checks;8/8 scoped native helper/worker tests with fake keys
+and zero source HTTP. The broader main/HTTP/browser run had172 passes,1 skip
+(unconfigured native PostgreSQL fixture) and1 browser-environment failure:
+bundled Chromium was absent. The affected assisted browser suite then passed
+11/11 using installed Edge, unchanged assertions/timeouts. This is browser
+viewport testing, not native iPhone/WebKit validation. The final confirmed
+person entry also passed56/56 crosswalk/resolver/report regressions; independent
+review ran194/194 dependent offline cases with no runtime blocker. Final combined
+offline/HTTP/browser suite passed **291/291**, including desktop/iPhone X/Air
+viewports, assisted addition, pending apply, cancel, manual edits, retained/expired
+state, logout/context changes, clipboard/report, R1/R2 and forbidden enrichment.
+A sandbox child-process `EPERM` prevented an earlier invocation from starting;
+the allowed local execution passed without code/assertion/timeout relaxation.
+Review also found a local-only person-inspection helper accepted malformed/API
+error-shaped appended external IDs. It now refuses those proof inputs rather
+than labelling them inspected; **22/22** helper/person diagnostic tests passed,
+including eight new error-shape cases and missing/null optional-ID preservation.
+The actual Craig response was valid; this did not require another source call
+or alter runtime identity policy. Links:13 docs/451 local links/277 anchor
+references, zero errors; whitespace/scope clean. Local Node is24.22.0; deployed
+Node22 compatibility is not a newly executed hosting validation.
+
+No new runtime calls/stages/cap, broader admission, parser wrapper guessing,
+identity relaxation, R1/R2/acknowledgement change, offer enrichment, chat UI,
+initApp/global lifecycle/auth, persistence/retention, SQL/flag/secret or deployment
+change. The shared extractor necessarily serves fixed and assisted cards; both
+retain identity/boundary/count guards. Launcher/Windows lifecycle and native
+PostgreSQL concurrency were not repeated: their dependent code/schema is
+unchanged; native local IPC was tested separately. Existing source-use/account
+uncertainties remain; this investigation is not blanket rights approval or proof
+of general accuracy/coverage. MW-FUT-01 remains Discovery.
+
+## Mykola media dialog and form-session lifetime — 2026-10-28
+
+Current pilot presentation supersedes the historical per-variant UI, Rakuten-only
+inference and required M4 tracking acknowledgement below: see [compact service comparison,
+Kinobaza service-language interpretation and link preview](m4-platform-summary-pilot.md). This follow-up changes
+only M4 client interaction, not shared URL admission or research consumers.
+
+**Implemented for review; not merged/deployed or live-evaluated in this task.**
+Base `develop=f64c739593e07c879852c7b54f2729e9fd04f68f`, with #201 already merged.
+The owner authorizes the presentation/ranking and local memory-lifetime change;
+the existing pilot flag/default-off semantics and user/group access rules are
+unchanged. No new user/movie/group restriction. This is not production release
+readiness or completion of MW-FUT-01, which remains Discovery.
+
+### Implementation and user flow
+
+`assets/media-advice.mjs` keeps its own dialog, state, timers, abort controller,
+selection tokens, original source-row references and focus/scroll positions.
+It reuses Mykola's **CSS** bubbles, avatar and typing dots, never his conversation
+history, mutable controller, HTML snapshot or Advice Room lifecycle. No changes
+to `initApp`, its call frequency/order or global auth/resume handlers.
+The only `app.js` edits are in the existing M4 integration: capture title/year
+with the already established IMDb/form identity, and invalidate M4 on those
+identity inputs. These display fields are not sent as trusted server identity.
+
+Opening a new permitted form context explicitly starts its one discovery:
+loading bubble/dots exist only while the real promise is pending, with no fake
+delay. Completion shows a short Mykola answer and one compact card per established
+platform. Every original source row remains a separate variant inside that card.
+Reopening the same card session resumes the same DOM/results/variant/scroll,
+not another request. Closing does not reopen automatically on access refresh.
+Same-document app return retains state; full reload/iOS page eviction still
+loses memory, and durable recovery is not promised or introduced.
+
+Platform cards show only the selected variant's access, territory, languages,
+literal reported price/quality and meaningful warnings. A native selector makes
+all variants accessible without repeated action blocks: at most one link action
+and one selection action per platform. Switching variants changes neither the
+group order nor the underlying rows; it revokes pending selection and resets
+tracking/affiliate acknowledgement. Missing/unsafe URLs have no link action.
+Source names and technical field limitations live in the diagnostic report and
+attribution, not in the main platform list or per-row JSON disclosures.
+No new plain-text
+chat input, LLM, physical-offer search or fabricated links. Other/unmapped
+platforms remain visible read-only. Multiple identity-confirmed Kinobaza cards
+remain explicit local choices, not automatic merging or further fetches.
+
+`Відкрити посилання` appears only under the existing classification policy;
+exact href and tracking/affiliate acknowledgement remain intact. `Обрати` is
+bound to the **original row**, then shows before/after recommended medium and
+URL. Only `Перенести в картку`, after fresh source-free access authorization,
+can change those local form fields. A missing new URL cannot silently erase an
+old one: the explicit clear checkbox is still required. Changed form fields,
+canceled/replaced tokens, Escape/close, context changes and late authorization
+cannot apply the old preview. Ordinary Save remains the sole Wishlist write.
+
+### Deterministic evidence priority (owner's new decision)
+
+`assets/media-advice-presentation.mjs` is a pure view of projected original rows:
+
+1. Explicit UA source context and positive Ukrainian audio in that same row.
+2. Explicit UA source context and positive Ukrainian subtitles without positive
+   Ukrainian audio; unknown and explicitly negative audio are explained differently.
+3. Explicit UA source context without established language data.
+4. Supplemental rows whose territory is unknown/foreign; conflicts remain visible
+   but do not become a recommendation. Equal evidence retains stable input order,
+   with no new price/quality/provider preference or numeric confidence.
+
+The first-choice explanation is at most two sentences and describes the actual
+evidence, not a guaranteed best offer. No provider-name join or copying tracks
+from a film badge/separate block to an offer. Kinobaza block language stays a
+separate claim (`Для цієї пропозиції ще не перевірено`); unknown territory cannot
+become UA. Unknown/empty lists are not negative. Conflicts are not repaired or
+resolved by choosing a winner. A group warning keeps contradictions in other
+variants visible while a different variant is selected. The summary names the
+ranked original variant's ordinal/access when its platform has several options;
+selecting another option cannot silently acquire that explanation or its tracks.
+Recommendations do not assert entitlement.
+
+The 2026-10-29 review refinement is visual grouping, not offer deduplication or
+enrichment: even two rows with the same URL remain separate. Only established
+canonical platform mappings group together; ambiguous identity/provider rows
+remain read-only separate observations. An authored Supergirl-shaped fixture
+(not a reconstruction of the live response) contains2 Prime,2 HBO and4 Rakuten
+rows and renders3 platform cards with8 independently accessible variants.
+
+### Thirty minutes: freshness, not deletion of the answer
+
+The server action ledger still expires after **30 minutes**, keeps atomic stage
+reservations, cap8, finish/replay/rate limits and its existing retention/cleanup.
+No SQL, backend handler, source adapter, migration or production setting changes.
+`media_advice_action('capability')` already checks user/flag/group/edit-card rights
+**before** looking up an action session/TTL: see the second migration's capability
+branch and `netlify/functions/media-advice.mjs`. This source-free check is also
+the client's existing `validateApply` boundary, so stale viewing/transfer does
+not need a longer ledger or a permission bypass.
+
+The view now retains projected results for the **form session in page memory**.
+At 30 minutes from dispatch it marks them stale, retains expanded sections and
+positions, and revokes any pending preview authorization so that it must be
+reviewed with the warning. A new selection of retained results still checks
+fresh capability before applying. `Оновити вручну` is an explicit user action:
+after capability it rotates the M4 action reference and starts one new bounded
+discovery, subject to the unchanged server daily-session/replay/stage controls.
+It appears for stale/error results; reopening/returning/copy/render does not
+refresh sources. Abort does not refund a reserved attempt. A failed reply leaves
+accounting unknown, not a claimed zero or permission for an automatic retry.
+
+Successful Save, cancel/back-to-list, another form/movie/IMDb/group/user, logout
+or failed/revoked access clears the controller context. No full HTML/JSON body,
+search snippet archive, localStorage/sessionStorage/IndexedDB or server result
+storage. This is an explicitly approved extension of **projected-result memory
+lifetime**, not of technical ledger retention or source rights.
+
+### Temporary pilot report
+
+The last Mykola bubble links to `Діагностичний звіт`. It opens a separate panel
+with copy, selectable text fallback and return/focus preservation. Nothing is
+sent automatically. `safeMediaReport` receives the captured **run** title/year/
+IMDb context, not the subsequently edited form. A trusted result identity can
+fill matching context fields; incompatible IMDb bindings are withheld as
+unknown. Safe build/deploy/run IDs retain their prior provenance rules; missing
+attestation stays unknown. Source outcome statuses are allowlisted; row scopes,
+language distinctions, extraction/card-digest/search counters remain available.
+Each retained row also has a generated platform/variant reference matching the
+selector ordinal, fixed source label, allowlisted access/field states and safe
+conflict/block reason codes. Raw source descriptions and literal URLs stay out
+of the copied report; removing the main-list technical details adds no storage.
+The diagnostic panel also has a collapsed, read-only view of the already
+projected row/unmapped fields, including literal localization labels/formats.
+It uses bounded known keys and withholds URLs, raw-body/private keys and
+credential-shaped strings; this view is not appended to the copied short report.
+Thus simplifying the platform list does not erase inspectable source evidence.
+Age is updated if the report remains open across the freshness boundary, and
+copy recomputes it without a source call. No credentials, arbitrary error body,
+private/group metadata, raw URLs/tracking query or responses in the copied report.
+
+### Verification and activation boundaries
+
+Authored unit/HTTP/browser checks cover evidence ordering/no enrichment,
+source/refusal/empty/partial/conflict states, safe reports, real add/edit forms,
+explicit transfer, manual edits/missing URL/acknowledgement, isolated other chats,
+auto-once/reopen/return/expiry/context/late response guards and mobile focus/copy.
+Final 2026-10-29 full `test/*.test.mjs` run: **206 passed,1 skipped,0 failed**
+(207 total), including31 browser cases/subtests. This supersedes the original
+PR checkpoint's193/1 result. The skip is the unconfigured native
+PostgreSQL17 multi-connection fixture, not a passed concurrency result.
+The prior checkpoint's additional106/106 source/projection/R1/R2 result is
+historical, not a new run; source adapters/shared policies are unchanged.
+The grouped-card review adds8-to-3 rendering, all8 original options, no source
+names/per-row JSON in the main list, variant-scoped literal price/quality,
+unknown territory/block tracks, conflict visibility, exact non-primary transfer,
+acknowledgement reset, pending-selection cancellation and retained native controls.
+The final real-form
+browser run also checks successful ordinary Save with a **mocked** DB, clearing
+the cached dialog without a source call, and passed5/5 after adjusting screenshot
+capture to two actual mobile scroll positions (not an overflow-clipped element).
+Earlier failures while adapting the old
+technical-view tests led to explicit visible-preview waits and capturing scroll
+at the actual report click (after browser auto-scroll), not an unrelated prior
+position; assertions/timeouts were not weakened or increased. Native dialog focus
+handoffs, pending notice clearing and next-frame scroll restore are covered.
+No server/shared/migration diff; normalized source comparison confirms the whole
+`app.js` outside its M4 integration, including `initApp`/global lifecycle/auth,
+is unchanged. Syntax, whitespace,13 docs/453 local links/279 anchor references
+and13 handoff sections passed. Local Node24.22.0/installed Edge were used; no
+new Netlify Node22/deployed-runtime validation is claimed. Screenshot paths are
+listed in the PR; authored files stay outside Git and public artifacts.
+Screenshots use invented source fixtures, not live availability/coverage evidence.
+Browser viewports include1280×900,375×812 (iPhone X size),420×912 (iPhone Air size)
+and820×1180; these are Edge/Chromium simulations, not native Safari/iPhone tests.
+No live source discovery, Wishlist write, flag/secret change, migration, merge or
+deployment. Owner checkout/demo and unrelated files are preserved. Native
+PostgreSQL concurrency and Windows launcher lifecycle need no new run because
+their code/contracts/schema are unchanged; existing offline ledger tests still
+verify no new bypass. Separate merge/deployment approval remains required.
+
+### Owner verification on develop — 2026-10-28
+
+Owner-reported Netlify Function runs on deployed merge commit
+`61bc9e706230811628560468f41e7d112dbd64bf` and deploy
+`6ae2524cfdbb0094fbf3b6ff` verified the two focused pilot fixes:
+
+- Blade Runner (1982), run `e6bcacd8-e91d-4cb0-b75c-9c8f5a1a6921`:
+  the confirmed card URL digest matches `/titles/blade-runner`; two
+  Kinobaza rows (Apple and MEGOGO) and the film-level Ukrainian audio badge
+  were retained. Provider territory and availability remain unknown.
+- Supergirl (2026), run `03e07997-7655-4591-ab29-22a531abd724`:
+  the confirmed card URL digest matches `/titles/supergirl-2026`; identity
+  matched and three Kinobaza rows were projected. The separate Rakuten
+  localization block has unknown territory and unverified offer binding.
+
+These focused runs do not establish account entitlement, current platform
+availability, general catalog coverage, or native iPhone compatibility.
+
+## Mad Max noncritical image markup recovery — 2026-10-31
+
+Implemented locally on develop `cd96811b4a0f4527154d5863177c8c94043927de`
+(after #212); not merged or deployed by this task. MW-FUT-01 remains Discovery.
+The owner run `0d87341b-9cb6-42c3-9521-2257bb2073cd` reported a pre-identity
+`unsupported-markup / html-parse-errors` refusal. Its first requested-card digest
+`1a36d8f904915591582ac309a60c3ebd4a47e9891332c0fa5c955a3fbbe5d1d1`
+matches [the supplied Mad Max card](https://kinobazaua.com/titles/mad-max-fury-road),
+not an archived HTML body. The precise historical parser errors remain unknown.
+
+### Current response and cause
+
+The current HTTP200 response read at **2026-10-31 10:23:52 UTC**,432172 bytes,
+has exactly three parse5 errors at one trailer image on line3021:
+`missing-whitespace-between-attributes` (column210), then
+`unexpected-character-in-attribute-name` (columns236 and276). Unescaped quotes
+inside the image's `alt` produce stray attributes. This image follows the film
+metadata (H1 644–646, original H2 648, labelled director row1521–1526), the
+provider blocks1723–1813, and the complete availability accordion1818–2337.
+The old shared extractor rejects every non-doctype parse error before identity;
+it reproduces the reported refusal and zero candidates on these current bytes.
+This is a current reproduction, not proof of the historical response's contents.
+
+Recovery is structural, not a film/slug/trailer-text exception. Only those two
+attribute-tokenization codes may be tolerated, inside one located HTML void
+`img` **after a unique explicitly closed availability accordion**. Errors in
+H1/H2/table/provider-anchor ancestry or original source intervals, foreign elements, tags swallowing another
+`<`, duplicate attributes, unknown errors, missing/duplicate viewing boundaries
+or more than256 error events still refuse. Every collected error is classified;
+a later critical error cannot hide behind the old ten-event diagnostic cap.
+Source intervals also catch an image that parse5 foster-parents out of a table;
+repaired DOM ancestry alone is not accepted as proof of a noncritical location.
+No HTML repair, script execution or second parser is introduced. Identity and
+extraction use the original parse5 tree. Successful recovery stays `partial`
+with allowlisted, content-free `noncritical-image-markup-recovered` diagnostics.
+The fixed-card research path shares this parser, so the same narrow handling
+applies there; its identity, transport and extraction rules are unchanged.
+
+### Full-path result and controls
+
+The same in-memory responses were passed through baseline/current `extractHtml`
+with the same assisted identity gate, then actual composition, M4 presentation
+and transfer eligibility. These are **local controls, not a deployed run or a new
+TMDb identity fetch**. Control identity inputs were explicit: Mad Max's supplied
+IMDb/year and title/director names supported by the
+[Ukrainian distributor](https://kinomania.com.ua/shalenyy-maks-doroga-gnivu-0)
+and [Cannes film record](https://www.festival-cannes.com/en/f/mad-max-fury-road/);
+the distributor's2020 re-release date is not used as production year. Mortal
+Kombat's previously established movie identity and literal director name are
+local extraction-control inputs, not a newly verified person alias. Dune uses
+the existing reviewed person137427 alias record. No runtime aliases are added.
+
+| Current card | Baseline → fixed extraction | Own provider-block audio / subtitles | M4 projection |
+| --- | --- | --- | --- |
+| Mad Max: Fury Road2015 | unsupported-markup,0 → matched/partial,36 candidates,3 blocks | Apple `+ / −`; Rakuten `+ / −`; MEGOGO `+ / unknown` | 6 Kinobaza rows,0 unmapped; all three blocks reach the comparison and exact link choices. A fourth HBO group retains unknown languages. |
+| [Mortal Kombat2021](https://kinobazaua.com/titles/mortal-kombat-2021) | identical before/after: matched/ok,36 candidates,3 blocks | Apple `+ / +`; Rakuten named audio formats `−` / subtitles `+`; MEGOGO `+ / +` | 4 Kinobaza-only rows,0 unmapped. Named-format negatives do not imply absence of every Ukrainian audio track. |
+| [Dune: Part Two2024](https://kinobazaua.com/titles/dune-part-two) | identical before/after: matched/ok,32 candidates,3 blocks | Apple `+ / −`; Rakuten `+ / +`; MEGOGO `+ / +` | 5 Kinobaza-only rows,0 unmapped. |
+
+For both controls the **entire extracted object** is identical before/after.
+Candidate counts include foreign-country contexts and are not UA offer counts.
+Mad Max's own block URLs classify as admitted iTunes, JustWatch tracking and
+MEGOGO links; they survive unchanged. Apple's nested table CTA repeats the same
+URL, not a lost second offer. No downstream localization/link/presentation defect
+was established, so those production modules are not changed. The three language
+blocks retain unknown source territory/availability; M4 displays `◐` and uses
+the approved Ukraine interpretation, not independently verified availability or
+offer binding. The film-level audio badge stays unknown and supplies no tracks.
+No provider destination was opened and no purchase, playback or entitlement is
+verified. The historical owner's combined baseline rows are not these Kinobaza-
+only projections.
+
+Five direct Kinobaza card GET attempts were made: Mad Max three times (first local
+analysis process was sandbox-blocked; the last read at11:09:55 UTC rechecked the
+final source-interval guard and confirmed the same before/after outcome), Mortal
+Kombat once, Dune once; all200. These were explicit local research reads, not
+application retries. HTML existed only in memory, was reused for before/after
+analysis without refetches, and the process was terminated afterwards. Public
+documentation/identity-reference browsing is separate from these five source
+GETs. No Tavily, TMDb API, MOTN, Watch Providers, redirect or destination requests;
+no keys, raw HTML archive, new persistence, Wishlist writes or owner tests.
+
+### Regression evidence
+
+Authored fixtures are not reconstructed source HTML. They cover recovery after
+the closed boundary, critical/ambiguous structures and duplicate attributes,
+late critical errors/overflow, exact links, one-shot bounded GET, missing/unsafe
+links, source-block scopes, unresolved directors/stable conflicts/withholding,
+composition→comparison→original-row preview, and content-free safe reports.
+Validation: final M4 full offline/HTTP suite229 passed,4 skipped (three browser entry
+tests subsequently ran explicitly; native PostgreSQL17 concurrency remains
+unconfigured/skipped). Final changed parser/report/pipeline target54/54 passed;
+full shared research offline/HTTP suite479 passed,13 legacy browser entries
+skipped. M4 Edge browser suite30/30 passed: real add/edit forms with authored
+network/DB mocks, desktop1280×900, tablet820×1180 and iPhone-size375×812/420×912,
+pending apply, retained/stale results, context isolation and normal mocked Save.
+These are viewport simulations, not native Safari/iPhone or deployed Node22
+validation. Syntax, whitespace and14-document local link/anchor checks passed.
+Windows launcher lifecycle/native database concurrency were not repeated:
+transport/launcher, ledger and schema dependencies did not change. No assertions
+or timeouts were weakened. No initApp/global
+lifecycle/auth/UI, budgets/deadlines, source interpretation/ranking, session,
+preview/Save, ledger, migration, flag or production changes. Merge/deployment
+remain separately authorized; this does not establish general parser coverage.
+
+## Link-choice equivalence and JustWatch inspection — 2026-10-31
+
+Base develop `1f732537547ad67f84f5be3252f3ffc732b0d925`, after #213.
+The owner-supplied deploy `6ae5cef3b77db1ed705befed` is ready, branch-deploy
+`develop`, at that exact commit. Run `34a94bd3-42a6-4dcf-a675-02fa6aa17c2c`
+reported four Apple choices and two Rakuten choices. Full original result URLs
+are not archived by M4; the owner cannot provide the four pre-redirect addresses.
+Current source inspections below **are not a reconstruction of that run** and do
+not identify the two additional historical Apple addresses. No new MOTN API call
+was made; no local MOTN credential was available and no secret was read from
+Netlify. No new owner evaluation or authenticated discovery was requested.
+
+### Current Mad Max links and observed transport
+
+Current [Kinobaza card](https://kinobazaua.com/titles/mad-max-fury-road) extraction
+returns two Apple and two Rakuten candidate URLs. None is a literal duplicate.
+The own-block Apple CTA repeats the same iTunes href inside its table; it already
+produces only one candidate, so it is not the cause of four historical choices.
+
+| Source observation | Declared destination / distinguishing fields | Observed read-only outcome |
+| --- | --- | --- |
+| Apple UA-section JustWatch, href digest `034e67b1ef217a7cd80cf6730b4ac420526b5fb12342e834f984f18c0356922b` | `r` names `https://tv.apple.com/ua/movie/mad-max-fury-road/umc.cmc.6xerenwn1999cjd2y6421r2ex` with `playableId=tvs.sbd.9001:990549112`. | HTTP302 to that card with added `at`, `ct`, `itsct`; Apple returns200, title Mad Max: Fury Road, canonical URL with that same UA/UMC ID. Thus `r` is not byte-identical to the actual Location. |
+| Apple own-block iTunes, digest `9fd6a1a989a8c50d6b480310342d1e71b5a28e1af454b3dddcc3f721ae6c28e7` | `https://itunes.apple.com/ua/movie/id990549112`, query keys `at`, `l=uk`. | Three explicit301 steps: same iTunes card without `at`; localized-slug Apple TV URL; the same English-slug UA/UMC canonical above. This current route convergence is established, not independent offer/track/entitlement verification. |
+| Rakuten UA-section JustWatch, digest `0dcbd6e3eee9e9c08efdb33de5498f02f4aa27178a34aac21a0900dbde9cff69` | `r=https://www.rakuten.tv/ua/movies/mad-max-fury-road`. | HTTP302 Location exactly equals `r`. |
+| Rakuten own-block JustWatch, digest `092b08ba7fd9c3232f4cd760b0b5263ce4f20d987c16176653a3964df7c9f108` | Same exact `r` and `uct_country`; only outer `cx` differs from the UA-section link. | HTTP302 to the exact same URL. One destination GET returns200, generic Rakuten TV shell; scripts/login/purchase/playback were not executed. |
+
+The address supplied in a parameter and an observed redirect are distinct
+evidence. A supported `r` can be decoded locally and independently validated,
+but it is **not** an authenticated promise about future HTTP responses. There
+is no automatic redirect or destination fetch in the application, no direct-URL
+substitution, and no removal of source tracking parameters from open/transfer.
+These links establish neither new versions nor different offers; they also do
+not prove that all four historical Apple routes were equivalent.
+
+### Implemented navigation grouping, not an offer join
+
+`assets/media-advice-link-choices.mjs` is a pure presentation helper, called only
+by the existing `linkChoicesFor`. Each admitted choice keeps one **original**
+row and its exact href; the preferred original transfer row remains preferred.
+All original rows, access/language/package/edition facts and provenance remain
+unchanged in the diagnostic report. No source field is moved to a peer row.
+
+- Exact duplicate URLs remain one navigation action.
+- Apple TV UMC identity or iTunes numeric identity is compared within its own
+  namespace and explicit URL country. Rakuten uses its exact admitted regional
+  host/path; different slugs, hosts or trailing slashes are not guessed aliases.
+- Only documented Apple tracking keys `at`, `ct`, `itscg`, `itsct` are omitted
+  from the comparison key, **not from the original href**. Sources:
+  [Apple linking guide](https://performance-partners.apple.com/linking) and
+  [Apple TV Marketing Tools token definitions](https://toolbox.marketingtools.apple.com/en-us/apple-tv/subscribe-link).
+- `playableId` is decoded once and retained as a content qualifier. Other
+  parameters keep exact raw key/value spelling and relative order. Different,
+  missing or ambiguous qualifiers remain separate. No universal query stripping.
+- A JustWatch declared target participates only for exact HTTPS
+  `click.justwatch.com/a`, one each of `cx`, `r`, `uct_country`, no extra keys or
+  fragment, explicit UA, and an independently admitted same-provider UA card.
+  Nested wrappers, wrong providers, credentials, explicit ports, path
+  normalization, duplicate/encoded keys and malformed encoding do not establish
+  equivalence. Existing outer-link admission is unchanged.
+- Conflicting explicit country/cut/version/package evidence cannot bridge
+  semantic groups. Rent/buy labels alone do not turn the same card navigation
+  into different links; their source observations remain separate in diagnostics.
+- Missing/unsafe URLs remain unavailable as choices. Unknown semantics stay
+  distinct, never a reason to invent a link or to infer a shared offer.
+
+The current Mad Max Rakuten pair is now **2 choices →1**, selecting the unchanged
+own-block pointer when that is the preferred original row. The two current Apple
+routes remain **2→2**: the one-film redirect observation is not compiled into a
+per-film exception or a universal iTunes-number↔UMC crosswalk. `l=uk` is retained,
+not interpreted as track evidence. This is an intentional remaining limit, not
+a claim that the routes lead to different films. Known Apple tracking-only
+duplicates within one established card/qualifier namespace do collapse.
+
+A fresh local actual-extractor→composition→presentation→choice→preview check
+at 11:50:15 UTC confirms those counts and exact chosen URLs without row mutation.
+Dune: Part Two is a control: two Rakuten pointers declare the same UUID-based
+UA path and collapse2→1; its one iTunes route stays one. An authored six-row
+Mad Max-shaped fixture separately exercises four Apple source observations→two
+choices and two Rakuten observations→one; it is not a reconstruction of the
+owner's missing four URLs. Rendering/grouping/opening preview adds0 source calls.
+
+### Research accounting and boundaries
+
+This task made13 explicit HTTP GET attempts: Kinobaza Mad Max3 and Dune2;
+JustWatch3; iTunes2; Apple TV2; Rakuten1. All completed with200/301/302.
+The total includes separately requested redirect hops and final source-control
+reads, never application retries. Official-document browsing is separate.
+No cookies/credentials, subresource/script execution, purchase/playback, hidden
+endpoints, search/TMDb/MOTN calls or Wishlist writes. HTML and pointer maps were
+process-memory only and were discarded; no raw-body/search archive or retention
+change. Source-use/account conditions are unchanged, not blanket permission.
+
+Validation: 90/90 targeted offline tests pass across link choices, controller,
+platform presentation/summary, report and Kinobaza pipeline. The pending-apply
+and retained-document browser regressions pass 25/25, including revoked
+selection, changed form/context, access, expiry and late replies. Syntax and
+whitespace checks pass. Local documentation validation: 14 documents, 457 local
+links, 282 anchors, all 13 handoff sections, no errors.
+
+The real-form dialog browser suite also passes 5/5 (parent plus four viewports:
+1280×900, 375×812 iPhone X-size, 420×912 iPhone Air-size, 820×1180 tablet).
+Its new authored six-row case verifies deduplicated choices, switching to the
+distinct original iTunes pointer, exact open/preview/local apply, all six
+diagnostic records, no DB writes and reopen without another discovery.
+
+Browser runs use authored responses and local Edge/Playwright; they are not
+Safari/WebKit or physical-iPhone evidence, nor a deployed-runtime/source
+evaluation. Server/SQL/native-PostgreSQL and Windows lifecycle suites are not
+repeated: their code and dependencies are unchanged by this presentation-only
+helper. No earlier server result is attributed to the new commit.
+
+Only client link-choice presentation and its tests/documentation change. Ranking,
+language interpretation, link admission/R1/R2, original-row preview/apply/Save,
+session/stale/pending protection, initApp/global lifecycle/auth, server timeouts
+and budgets, schema/flags/main/production are unchanged. Merge/deployment remain
+separate decisions. MW-FUT-01 remains Discovery.
+
+## Single Apple link preference — 2026-10-31
+
+Base develop `004f425dc9f49d9729b8e9ff2942c62fbb54e13b`, after merged #214.
+This owner-approved UI preference replaces the multiple-Apple-choice policy,
+not the source observations or the finding that iTunes/UMC offers are not proved
+equivalent. Other services retain #214's choice/deduplication behavior.
+
+### Origin evidence and deterministic selection
+
+Inspection confirmed the existing server projection already distinguishes:
+
+- Recognized top provider blocks: `kinobazaLocalization.blockId`, exact block
+  href/provider association, `linkAudit.blockAssociation=associated`, null source
+  country/territory and `territoryBasis=Outside territory section`. These come
+  from the bounded film-content area before `availabilityAccordion`, not from
+  matching a host, movie ID or a screenshot. Ambiguous/unsupported block
+  boundaries cannot establish this priority.
+- UA regional observations: `country=UA`, matching `countrySignal` provider/href
+  and UA territory, `source-section-claim`, explicit country-section basis and
+  JustWatch-section upstream. The extractor validates its heading/control/panel
+  independently of top blocks.
+
+References: `kinobaza-localization.mjs` (`extractLocalization`), `html-source.mjs`
+(`extractHtml`) and `discovery.mjs` (`composeDiscovery`). No parser, server or
+source-contract change was needed. Unrecognized top anchors without a confirmed
+block association are **not guessed** into a priority category; they remain
+eligible under the safe fallback.
+
+`preferredAppleLinkChoice` inspects original eligible rows before deduplication:
+top-block TV → top-block iTunes → UA-section TV → existing eligible presentation
+preference, otherwise first eligible row in the supplied stable order. Multiple
+rows in the same priority also retain that order, without a price/quality/ID
+tie-break. Missing Kinobaza does not remove usable other-source pointers.
+
+A native admitted Apple URL supplies its host class. A strict admitted JustWatch
+`r` can supply only the **declared** Apple target class; no redirect/destination
+request occurs and the wrapper stays the exact selected URL. Numeric iTunes and
+playableId similarity is never an equivalence or identity rule. The main Apple
+actions expose one original row/href and no redundant select control.
+
+### Current Mad Max check, not historical reconstruction
+
+One read-only card GET at 12:33:09 UTC returned200, matched identity under the
+existing local control projection and partial extraction. No new TMDb identity
+request or deployed-runtime attestation was performed. The existing extractor
+and composition produced:
+
+- `kinobaza:1`: UA regional Apple TV Store JustWatch pointer, declared UA TV UMC
+  card with `playableId=tvs.sbd.9001:990549112`, no own-block association;
+  href SHA256 `034e67b1ef217a7cd80cf6730b4ac420526b5fb12342e834f984f18c0356922b`.
+- `kinobaza:33`: top-block `itunes`, `kinobaza:block:0`, associated literal href
+  `https://itunes.apple.com/ua/movie/id990549112` with its original query intact;
+  href SHA256 `9fd6a1a989a8c50d6b480310342d1e71b5a28e1af454b3dddcc3f721ae6c28e7`.
+
+The actual extraction→composition→presentation→preview control now chooses only
+the top iTunes row, with that exact digest/URL and no row mutation (2→1 current
+Kinobaza choices). This one page read does not reconstruct all three URLs from
+the owner's live result or establish which source supplied its additional TV
+address. The authored three-Apple-row regression explicitly covers distinct
+playableIds and the coinciding iTunes number without claiming offer equivalence.
+
+### Diagnostics and preserved boundaries
+
+Every original row remains in the in-memory result and sanitized source details.
+Every admitted matched Apple address is additionally available as **closed,
+text-only local diagnostic details**, including unselected alternatives. Unsafe,
+missing, identity-refused or provider-conflicting links are withheld. These are
+not anchors, are not included in copied short-report/JSON projections, and are
+not automatically opened, copied, sent, logged or persisted. Existing context
+invalidation clears them with the result; no new storage or retention policy.
+
+Language signs, provenance, ranking, identity/link policy, exact open/preview/
+transfer, explicit apply and ordinary Save remain independent and unchanged.
+No offer/track joins, new source calls on render/reopen, initApp/global lifecycle/
+auth changes, budgets, migrations, flags, main/production or owner-checkout edits.
+This task's live accounting is one Kinobaza GET, zero search/API/destination
+requests; earlier research accounting remains separate. Merge and deployment
+are not authorized. MW-FUT-01 remains Discovery.
+
+Validation: 99/99 targeted offline tests pass (link choice, controller, platform
+summary/UI, report and actual authored extraction pipeline). Browser final runs
+pass 5/5 real-form desktop/iPhone X-size/Air-size/tablet tests and 25/25 pending-
+apply/retained-document tests. They cover all priority tiers, absent Kinobaza,
+deterministic ties, three original Apple addresses retained outside the copied
+report, exact open/preview/apply, no actual DB writes, ordinary mocked Save,
+reopen/no discovery, stale/access/context boundaries and late replies. The new
+diagnostic details required narrowing prior browser JSON-only selectors to the
+original sanitized `pre` elements; URL/raw-content exclusions there were not
+relaxed. No assertions or timeouts were weakened.
+
+Syntax, whitespace and local documentation links/anchors pass. Independent
+read-only review found no blockers. Browser evidence is Edge/Playwright viewport
+emulation, not physical iPhone or Safari/WebKit. Server/SQL/native-PG/Windows
+lifecycle suites were not repeated because their components/dependencies did
+not change; no previous results are attributed to this new commit. No live
+discovery, Wishlist Save, merge or manual deployment was performed.
+
+## UA Beta access and private diagnostics — 2026-10-31
+
+Prepared against develop `21c7dbaba8ce63b12c4b7cca6f605def2da7af75` after #215.
+Updated on2026-11-01 with develop `9b5784055043099aaab7757096f9cb8c04831c02`
+after merged #217; see the [combined Beta record](#beta-and-tavily-integration--2026-11-01).
+This section supersedes the pilot's per-user access/search-count policy **only
+for the new Beta RPC/build**. Earlier source-use/evaluation records are history,
+not blanket approval. No production SQL, assignment, activation, source query,
+merge or deployment is performed for this preparation. MW-FUT-01 stays Discovery.
+
+### Access, region and compatibility boundary
+
+- `media_advice_private.user_regions` is the authoritative backend-only region,
+  not browser input or editable Auth metadata. Existing Auth users are backfilled
+  with UA; an independent Auth insert trigger gives new users UA. Both use
+  `ON CONFLICT DO NOTHING`, preserving explicit region values. A read-only
+  baseline check found no existing authoritative region column/metadata values;
+  stop and reconcile rather than overwrite if that changes before migration.
+  No IP lookup, location assertion, region UI or change to the existing profile
+  signup trigger is introduced. Region is an application preference, not proof
+  of physical location, residence or sanctions compliance.
+- `media_advice_private.beta_config.enabled`, seeded **false**, is the server
+  switch. A new service-role-only `public.media_advice_beta_action` requires it
+  plus region UA and current group owner/member rights on every action. Edit
+  still verifies list/group/movie IMDb linkage; add does not require a list row.
+  Authenticated anonymous sessions, visitors and foreign groups cannot use it.
+  The handler derives user identity from verified Supabase Auth, never browser
+  user/region/role/counter claims. Region/config tables have RLS and no client
+  grants; service_role can read, not update them. Configuration writes require
+  the separately authorised administrative operation.
+- The existing `media_advice_action` stays unchanged, including pilot permission
+  and its 20-session/24h quota. Old deployed code therefore cannot accidentally
+  give all-UA users its unrestricted diagnostic response after the migration.
+  The **Beta** handler uses only the new RPC. Its switch does not disable old
+  pilot deployments; those retain their existing backend pilot assignments.
+- Beta removes the per-user search-count quota. More than20 distinct form
+  sessions are allowed, including concurrently. One-shot form/stage reservations,
+  the shared atomic eight-attempt cap per search, 30min ledger TTL, source bounds,
+  no application retries/redirects and final authorization remain intact.
+  Authorization is rechecked **after** waiting for the advisory lock, before
+  cleanup/reservation/finish mutations. Timeout/lost replies do not refund or
+  replay a reservation. Handler entry-to-source window remains45s, finish ends
+  at53s and response allowance ends at55s, retaining headroom within the60s
+  synchronous host limit; Auth and RPC waits consume the same deadline.
+- Daily technical cleanup is unchanged: eligibility requires both24h since
+  creation and expired TTL; expected removal24–48h with a healthy scheduler,
+  not a guarantee during an outage. Read-only snapshot on2026-10-31 confirms
+  `mykola-media-advice-cleanup`, `15 2 * * *`, active; content-free heartbeat
+  `2026-10-31T02:15:00.25976Z`, overdue count0. No scheduler activation or new
+  monitoring service is performed. Existing retention/monitoring limitations
+  remain; no Wishlist, card, source-body or chat persistence is added.
+
+### Diagnostics and UI
+
+`mykola_media_advice_diagnostics` is a distinct backend permission with existing
+expiry/revocation semantics, not a prerequisite for ordinary advice. Read-only
+verification found exactly one current active, nonexpiring pilot assignment and
+confirmed it is the established test account; no name/first-user inference.
+Its identifier and personal data are deliberately absent from this record/PR.
+The migration creates **no** diagnostic assignment.
+
+Capability returns only two effective booleans. Fresh finish authorization
+selects the HTTP response: ordinary users receive only fields required for
+product presentation, scopes, safe original links and transfer; resolver/gate
+diagnostics, runtime/run/accounting details, source-card addresses and raw
+observations are withheld server-side. Diagnostics cannot be obtained by forging
+a client flag or requesting an alternate action. Product projection preserves
+separate offers, language evidence/unknowns/conflicts, Apple origin preference
+and exact-link policy; it does not create enrichment or join records.
+
+The controller separately guards the bubble, report, source-detail DOM and copy
+action, including late clipboard/authorization responses. Revoking diagnostics
+removes those details while preserving ordinary advice; revoking main access
+clears the context. A compact Beta badge and the agreed Ukrainian notice are
+added. Form-session memory, 30min stale-data behavior, pending-apply protection,
+preview/local-only transfer/ordinary Save and other Mykola contexts are unchanged.
+The only app integration change passes the capability object into this isolated
+controller. `initApp`, global lifecycle/auth handlers and their call order are
+not modified.
+
+### Current source-use and account prerequisites
+
+Official public terms/docs/pricing were reviewed on2026-10-31, **without API,
+search, card or destination calls**, account/secret inspection or paid purchases.
+Plan figures below describe published offers, not the owner's actual contract,
+balance or permission. They are not blanket legal approval.
+
+| Source | Confirmed public material | Still required before all-UA activation |
+| --- | --- | --- |
+| TMDb / JustWatch attribution | [TMDb FAQ](https://developer.themoviedb.org/docs/faq) distinguishes attributed noncommercial use from commercial licensing; [provider endpoint](https://developer.themoviedb.org/reference/movie-watch-providers) requires JustWatch attribution and is not a source of full deep links. [Rate guidance](https://developer.themoviedb.org/docs/rate-limiting) is changeable (around40requests/s); respect429. | Establish the applicable account agreement and commercial/noncommercial classification. Full API Terms were inaccessible to the reader; prior combined/derivative-use uncertainty is not declared resolved. Existing attribution remains. |
+| Movie of the Night | [Developer terms](https://developers.movieofthenight.com/terms-and-conditions) (§3–7, public page module) describe end-user app display, independent third-party rights and hard plan quotas. Linked credit is now “Streaming Availability API by Movie of the Night”. [Published pricing](https://www.movieofthenight.com/about/api/pricing): Free1000/month; Starter25k/$49, Growth100k/$99, Scale1M/$299. | Confirm actual plan, cycle, remaining quota and permitted application use. No quota overage/retry assumption; no source data used for AI training/evaluation. |
+| Tavily basic Search | [Terms](https://www.tavily.com/terms) (May4,2026), [AUP](https://www.tavily.com/acceptable-use-policy) (Oct21,2026), [credits](https://docs.tavily.com/documentation/api-credits) and [rates](https://docs.tavily.com/documentation/rate-limits) reviewed. Basic costs1credit/request; published free1000/month, PAYGO$0.008/credit; development100RPM/production1000RPM, subject to key tier. Only admitted URL candidates are used, not snippets/rank as identity evidence. A positive Tavily response for the described private Beta use of Researcher was reported on2026-11-01; [scope and evidence limits](#beta-and-tavily-integration--2026-11-01). | That response addresses the described private Beta scenario, not blanket public/commercial use or third-party content rights. Actual key tier, balance/credits and applicable territory/record obligations remain unverified; UA preference alone does not establish territorial eligibility (§17.1). Do not silently change retention or infer a quota waiver. No automatic fallback to another paid provider. |
+| Kinobaza | [Terms](https://kinobazaua.com/terms) do not establish an automated card-reuse licence. The2026-10-31 [robots.txt](https://kinobazaua.com/robots.txt) review found `/search`, `/search/` and `/search?*` disallowed. Merged #217 removes that runtime fallback: only admitted `/titles/<slug>` cards are read. | The former native-search activation concern is removed by the code change, not by assuming permission. Expanded automated card reuse/source rights remain unestablished. Robots is neither a licence nor proof that every title-card read is forbidden. |
+| Direct JustWatch | [Website terms](https://support.justwatch.com/article/just-watchs-terms-of-use) restrict scraping/data mining; [partner API](https://apis.justwatch.com/docs/api/) has a separate contractual path. | No new destination scraping/resolution is introduced; declared targets remain distinct from observed redirects. Neither Tavily nor another source grants rights to JustWatch/Kinobaza content. |
+
+For N explicit searches: TMDb≤3N, MOTN≤N, Tavily search
+slots≤2N, card GET≤2N; total application
+external attempts≤8N. Tavily basic credits≤2N; nominal PAYGO upper estimate
+$0.016×N is not an invoice or assurance about failed-request billing. Internal
+provider traffic is unknown. Provider/account quotas remain external limits,
+**not a new per-user MW search quota**. No application retry/fan-out increase.
+
+### Prepared migration, develop validation and release sequence
+
+New migration: `20261031135149_media_advice_beta_ua.sql`, generated with pinned
+Supabase CLI2.122.0. Dependencies are the **two actually applied** M4 versions
+`20261020205122`, `20261021072002`, Auth users/standard roles and existing
+group/card tables. The current read-only history contains exactly those two
+versions; engine is PostgreSQL17.6. No historical001–016 replay or RLS repair.
+
+1. Separately approve operational execution, recheck HEAD/base/required checks,
+   recovery checkpoint/scope, exact migration bytes and target project. Execute
+   [Beta preflight](../supabase/operations/media-advice-beta.preflight.sql)
+   read-only; compare all migration history, existing function/trigger names and
+   unchanged legacy RPC/table policies, not only row counts. Stop on collisions,
+   unexpected history, authoritative existing region data or dependency drift.
+2. Use the [isolated migration workdir procedure](#step-2--apply-only-the-two-m4-migrations-future-privileged-action),
+   now containing exactly the two unchanged applied M4 files **plus this new
+   file**, not001–016. Check CLI version/help and linked target privately. Before
+   `migration up --linked`, `migration list --linked` must show the first two
+   already applied and **only20261031135149 pending**. Never use general db push,
+   include-all, blanket history repair or a password-bearing command/URI.
+   On an error/lost reply stop and reconcile catalogs/definitions/history before
+   any targeted repair or rerun; do not assume transaction/history atomicity.
+3. Run [postchecks](../supabase/operations/media-advice-beta.postcheck.sql).
+   Require users_without_region0, region values/default/trigger correct, Beta
+   false, no diagnostics assignments, unchanged Auth/movie/list/member counts,
+   legacy RPC and historical RLS definitions. Check exact new history entry,
+   SECURITY DEFINER/empty search_path and RPC ACL (service_role only); private
+   region/config RLS and no client grants/self-writes. Counts alone do not prove
+   content equality: compare the established content-free baseline fingerprints
+   for existing MW objects/data privately. Do not print account identifiers.
+4. Separately approve merge/develop branch deploy; merge may trigger it
+   automatically. Verify deployed SHA, packaged handler/import and presence/
+   context of existing Functions credentials without values. Main stays on its
+   old pilot code/RPC until a separately approved production release. Before
+   switch-on, source-free smoke must deny unauthenticated/disabled/visitor/foreign
+   group access without discovery. New user/default-UA and non-UA scenarios are
+   already tested offline; no real user/Wishlist rows are created by preparation.
+5. Resolve the source/account prerequisites above before broad activation.
+   Privately reverify the established pilot assignment, then use prepared
+   [activation operation](../supabase/operations/media-advice-beta.activate.sql)
+   with that exact verified identifier supplied locally. It checks the sole
+   existing pilot assignment instead of selecting a first/name-matched user,
+   grants only that account diagnostics with its existing expiry semantics,
+   and enables the Beta switch. This is **not executed now**. Confirm ordinary
+   UA=true/diagnostics=false and test UA=true/diagnostics=true via authenticated
+   source-free capability checks; non-UA and revoked access must deny. A
+   diagnostic flag alone cannot grant media/group access.
+6. Controlled develop pilot/release are separate authorisations. Confirm cleanup
+   health and actual provider quota headroom for expanded usage; no owner manual
+   monitoring duty is assigned implicitly. Before production promotion recheck
+   code/migration versions, exact deployment target/main policy, source-use scope,
+   access separation and a successful develop smoke. Code completion is not
+   production readiness or permission to release.
+
+[Rollback](../supabase/operations/media-advice-beta.rollback.sql) is a prepared,
+non-destructive switch-off: deny new Beta actions/reservations/finish, retain
+explicit regions, permissions, ledger/cleanup and Wishlist/Auth data. If needed,
+revert the application by a normal reviewed commit separately; the old pilot RPC
+still has its old access/quota behavior. Do not drop region tables/trigger,
+delete history or replay old migrations as an automatic down-migration. If a
+transaction failed before commit, inspect actual state/history before recovery.
+
+### Validation status
+
+- Full offline/HTTP suite: `node --test --test-concurrency=1 test/*.test.mjs`:
+  **271passed,0failed,5explicit skips**. This includes7 isolated PGlite Beta
+  migration/ACL/rollout checks, adapter/identity/R1/R2/link/report regressions,
+  deadline tests and product-projection parity. The opt-in browser and two
+  native-engine wrappers skip in this command; they are not successes.
+- Separate Edge/Playwright browser run: **35/35pass**, desktop1280, tablet820,
+  iPhone X-size375×812 and Air-size420×912 plus responsive/fallback checks.
+  Ordinary Beta has no report; test permission has one; revocation while open,
+  closed or finishing removes it. Existing add/edit, context/isolation, expiry,
+  pending cancellation, exact preview/transfer, mocked ordinary Save and no
+  repeat discovery remain covered. This is viewport emulation, **not physical
+  iPhone, Safari or WebKit** validation.
+- Separate native PostgreSQL**17.6**: **7/7pass**,24 independent loopback
+  connections. More than20 concurrent distinct sessions succeed; identical
+  form/stage remains one-shot; all8 reservations are bounded. Queued region,
+  switch, membership and card revocation deny before mutation. New-user default,
+  no self-grant and finish denial pass. The first native run's6 functional
+  subcases passed but Windows temporary-directory removal failed; the harness
+  now performs bounded filesystem-only cleanup after engine stop and the full
+  rerun passes. This does not change SQL/runtime timeouts or retry policy.
+  The failed-run authored cluster was also removed; no user data was involved.
+- The old native pilot wrapper was not rerun: its SQL/cleanup/launcher is
+  unchanged, and current native evidence covers the new Beta action. No owner
+  demo/Windows launcher lifecycle rerun is warranted by these changed components.
+- Syntax, whitespace, local documentation links/anchors and independent focused
+  security review pass. No assertions/timeouts were weakened. Remote checks are
+  recorded in the PR separately; absent or skipped checks are not success.
+
+These are authored local databases and mocked browser accounts, not applied
+Supabase migration, real-user activation, live source quality or production
+release evidence. No new user identifiers/PII, credentials, snippets, raw source
+responses or persistent source history are committed.
+## Tavily-only alternative search — 2026-10-31
+
+Base develop after #215: `21c7dbaba8ce63b12c4b7cca6f605def2da7af75`.
+Separate branch `codex/m4-tavily-fallback`, not stacked on or including Beta#216.
+This supersedes the runtime public-search fallback recorded on2026-10-24;
+it does not rewrite that earlier investigation or its request accounting.
+
+### Runtime and query policy
+
+The resolver and both local control runners no longer import/invoke
+`kinobaza-public-search.mjs`. That module and its authored tests remain inert
+historical code, not a runtime network path. No automatic request to Kinobaza
+`/search` is made. Only exact admitted `/titles/<slug>` cards may be read.
+The earlier public-provider label stays allowlisted solely to read old reports;
+every new runtime search diagnostic/report says **tavily**.
+
+- Primary query remains quoted original title + year +
+  `site:kinobazaua.com/titles/`, with the existing independently restricted
+  domain, basic/auto_parameters=false/answer=false/raw_content=false and5 results.
+- A successful search with zero admitted URLs keeps the prior alternate-title
+  query, or unquoted same title when only one established name exists.
+- After the **first read card's** mismatch/unresolved identity, the unspent
+  second slot instead combines the first two distinct trusted TMDb title aliases
+  and quoted year: `"original title" "localized title" "year" site:kinobazaua.com/titles/`.
+  Names retain existing escaping and normalization; no director, invented slug,
+  prefilled card address or rejected-card content enters that query. With one
+  name, or a combination beyond the prior maximum single-title query length,
+  use the existing alternate query without truncating either name.
+- Both paths consume the **same** `search-2` reservation. If already spent,
+  denied, expired or aborted, there is no extra dispatch. HTTP/auth/quota/
+  transport/malformed-search failures are not retries or another provider.
+  Shared exact-URL Set, stable candidate ordering and examined Set remain.
+  A discovered URL/slug/snippet is not identity proof; all independent gates,
+  stable-ID conflict priority and withholding remain unchanged.
+- Budgets stay≤2 Tavily attempts,≤2 sequential card GETs and≤8 application
+  external attempts for full discovery. Baseline TMDb/MOTN independence,
+  entry deadline/finish reserve, one-shot ledger, manual redirects, no platform
+  requests and no automatic retries are unchanged. No migration, flag/access,
+  ranking, language, UI, retention or lifecycle/initApp change.
+
+### Current live controls, not historical reconstruction
+
+One memory-only credential session used the actual TMDb identity projection,
+Tavily adapter, URL admission and assisted identity/extraction functions. The
+local `tavily-fallback` study contains only five title/year pairs, no source URLs
+or movie IDs. Source output/snippets/HTML are not archived; the minimum public
+findings below are intentionally documented. No MOTN, Watch Providers,
+destination/platform requests or Wishlist writes occurred.
+
+| Control | Automatically discovered card | Identity / extraction | Actual TMDb / Tavily / card attempts |
+| --- | --- | --- | --- |
+| Alien(1979), tt0078748 | `https://kinobazaua.com/titles/alien` | Final matched / ok;29 extracted candidates,3 localization blocks,5 mapped rows | Initial2/2/2=6, final cached-identity0/2/2=4; total10 |
+| Mad Max: Fury Road(2015), tt1392190 | `https://kinobazaua.com/titles/mad-max-fury-road` | matched / partial;36 candidates,3 blocks,6 mapped rows |2/1/2=5 |
+| Dune: Part Two(2024), tt15239678 | `https://kinobazaua.com/titles/dune-part-two` | matched / ok;32 candidates,3 blocks,5 mapped rows |2/1/2=5 |
+| Blade Runner2049(2017), tt1856101 | `https://kinobazaua.com/titles/blade-runner-2049` | matched / partial;32 candidates,4 blocks,6 mapped rows |2/1/2=5 |
+| Mortal Kombat(2021), tt0293429 | `https://kinobazaua.com/titles/mortal-kombat-2021` | matched / ok;36 candidates,3 blocks,4 mapped rows |2/1/2=5 |
+
+Total **30 actual source HTTP attempts:10 TMDb +8 Tavily +12 card GETs**,
+including the initial unsuccessful Alien run. All received HTTP200; unsuccessful
+identity/extraction outcomes still count. Session receipt confirmed complete
+accounting and was stopped; keys were neither written to disk/env nor logged.
+Control session UTC start21:32:48; final Alien run
+`b26148a4-8815-40e4-ac7d-b432d55289be`, first run
+`df63a4b0-5d27-4d47-b51f-60fee4e13142`. Execution is **local-diagnostic** with
+buildSha unknown, not deployed runtime attestation. Controls ran on the base
+checkout plus these tracked changes; they are not retroactively assigned a
+Netlify build SHA.
+
+Alien's initial separate-title queries returned admitted sequels, not the1979
+card. The reads were `/titles/alien-3` (H1 year1992, H2 Alien³, David Fincher)
+and `/titles/prometheus` (2012, Prometheus), correctly refused. With the new
+general two-title query, `"Alien" "Чужий" "1979" site:kinobazaua.com/titles/`,
+the second search returned `/titles/alien` and the second card matched H1
+`Чужий (1979)`, H2 `Alien`,1979 and the established Ridley Scott person spelling.
+No known URL was injected. This observed improvement is not proof of general
+causality or catalogue coverage. Other four controls matched their first card,
+so their successful path is unchanged by the refusal-query refinement; no
+unnecessary live repeat was made for them. Extra candidates remain unexamined.
+Some second-card parser refusals/partial extraction remain unrelated limitations.
+Extracted source rows are not entitlement, verified platform availability or
+proof of any specific offer's language binding.
+
+### Preview configuration and Beta integration
+
+Read-only dashboard checks on2026-10-31 confirmed Node22.x, root publish dir,
+Functions directory `netlify/functions`, active builds and production branch
+**main**. TAVILY_API_KEY, TMDB_READ_ACCESS_TOKEN and MOTN_API_KEY are Secret,
+Functions-only, populated for Production and Branch deploys; Deploy Previews
+are **Empty**. No values were revealed/copied. Supabase keys are present in
+their existing four contexts; do not infer source-key presence from a successful
+static PR Preview.
+
+To provide a usable isolated preview without changing credentials or user
+permissions, only `codex/m4-tavily-fallback` was added to the explicit branch-
+deploy list, preserving develop, main and PR-preview policy. Its ordinary push
+may therefore create both a source-key-capable branch deploy and a separate
+source-key-empty PR Preview. Deployment IDs/SHA/state and source-free smoke are
+recorded in the PR after publication; neither is called live discovery evidence.
+No merge, production deployment or Netlify secret/flag/access-control change.
+
+At #217 preparation, Beta#216 was separate and still needed this parent advance.
+The [2026-11-01 integration](#beta-and-tavily-integration--2026-11-01) now records
+that update and its separate checks, without attributing #217 checks to Beta.
+MW-FUT-01 remains Discovery.
+
+Validation: targeted resolver/title-year/series42/42passed. Final full offline/
+HTTP suite:259passed,0failed,4 explicit browser/native opt-in skips. Documentation
+checker459local links/284anchors has0errors; syntax and whitespace pass. Preview
+results are recorded in the PR after publication; no
+assertions or timeouts are weakened. Browser/UI and native SQL/Windows launcher
+lifecycles need no repeat because those components are unchanged; local credential
+pipe regressions remain included in the full offline suite.
+
+## Beta and Tavily integration — 2026-11-01
+
+PR#216 is updated from its previous head
+`fee9b391cc529aa19eea2cb73ba97f3c3219966c` with current develop
+`9b5784055043099aaab7757096f9cb8c04831c02` (merged #217), using a normal
+feature-branch merge, not a rebase or merge of #216 into develop. Both dated
+records above are retained. The prepared Beta migration/operations and access
+contracts are unchanged: server-owned UA region, default-off global switch,
+group/card authorization, separate effective diagnostics permission and ordinary
+product-only HTTP projection. No migration, assignment or activation is performed.
+
+### Resolver and owner observations
+
+Runtime no longer requests `kinobazaua.com/search`. The unused legacy module
+and old report labels are historical compatibility, not a network path. The
+unused second search slot is Tavily after first-card identity refusal, or after
+a successful first search without admitted URLs. These are the same two slots,
+not extra allowances: **Tavily≤2, admitted card GET≤2, full discovery≤8 external
+attempts**. Independent identity gates, stable-ID conflict priority, withholding,
+deadline/finish reserve, one-shot reservations and no retries/redirects remain.
+
+The owner reports testing **Alien, Mad Max, Dune: Part Two, Supergirl and
+Goodfellas on develop after #217**, with no observed loss of results. This is
+owner observation, separate from the earlier five local controls above. There
+is **no short report for this owner Alien run**: its search-slot usage and exact
+request counts are unknown. Do not infer that it used slot2 from the earlier
+local Alien control or from the implemented fallback. These observations do not
+establish catalogue accuracy, entitlement, offer-language binding or Save.
+
+### Scoped Tavily response
+
+A **positive response from Tavily for the described private Beta use of
+Researcher** was supplied in the owner instruction recorded on2026-11-01.
+The available record does not establish the responder's identity, communication
+channel, exact wording or response date; none is attributed or invented here.
+This records the received scope confirmation, not an independently retrieved
+correspondence or blanket legal approval for public/commercial usage, all
+territories, third-party content or different account terms.
+
+The previously open private-Beta applicability question is updated accordingly;
+actual account tier/balance/quotas and unverified territory/record requirements
+are not asserted resolved. The response does not grant Kinobaza/JustWatch content
+rights, waive service quotas or authorize new persistence. Search snippets/raw
+responses remain unarchived; URL resolution is still separate from identity and
+extraction. No new source/terms requests are needed or made for this update.
+
+### Combined validation and Preview boundary
+
+Validation on the combined tree: full offline/HTTP **277passed,0failed,5 explicit
+opt-in skips**; separate Edge/Playwright browser **35/35passed**, desktop/tablet/
+iPhone X-size/Air-size and responsive cases. Targeted Beta-response/resolver tests
+**30/30passed**, including two new authored integration regressions. Syntax and
+whitespace pass; documentation checker:470 local links/291 anchors,0 errors.
+The five full-command skips are the three browser and two native wrappers;
+browser wrappers were run separately, native evidence is reused as stated below.
+No skipped check is counted as success. No physical iPhone/Safari/WebKit run.
+Independent read-only integration review found no actionable defect.
+
+The new authored HTTP integration exercises the actual handler/discovery/resolver,
+Beta RPC contract, first-card refusal → second Tavily → matched card, diagnostic
+versus ordinary projection and denied access without source dispatch. Browser
+regressions use mocked accounts/sources, not live discovery or Wishlist writes.
+
+The Beta SQL, native ledger implementation and Windows launcher components are
+unchanged from the prepared #216 head. Native PostgreSQL17.6 concurrency evidence
+above is explicitly reused, not represented as a new native run. Current offline
+PGlite/access checks and the combined HTTP path are rerun; no timeout/assertion
+or migration is changed to pass validation.
+
+PR Preview is separate from develop/main. Its actual SHA/state and source-free
+smoke are checked after the ordinary feature-branch push. Existing source keys
+were confirmed **absent from Deploy Preview context** on2026-10-31; the Beta
+migration was not applied at that preparation checkpoint. A ready/static Preview does not attest
+authenticated Beta activation or live resolver quality. No secrets/context,
+flags, database, main or production deployment are changed by this update.
+
+## Beta migration execution — 2026-11-01
+
+**Applied only `20261031135149_media_advice_beta_ua.sql`; Beta remains off.**
+The owner explicitly authorized this migration step, not merge, deployment or
+activation. Execution source: PR#216 head
+`306cedd8c76cb58cd2f5780b20dc3189132412bf`; develop independently rechecked at
+`9b5784055043099aaab7757096f9cb8c04831c02`, main unchanged. Target independently
+verified as `mttkectgdqqmejpenkrn`, database postgres, PostgreSQL17.6.
+
+The existing encrypted checkpoint `checkpoint-20261021T221351Z-432dc0a6` and
+wrapped key remained available. Offline audit authenticated all retained
+artifacts/checksums and the existing scoped MW recovery assessment. This reuses
+the documented MW/Auth recovery evidence for this additive step; it does not
+turn the older checkpoint into a fresh data snapshot or full Supabase-project
+recovery guarantee. No new export/restore cycle was performed. Existing data,
+legacy functions/ACLs and schema fingerprints were captured before execution.
+
+Supabase CLI**2.122.0** was used in the prepared isolated migration workdir,
+outside owner checkout, with an explicit verified project ref and no credential
+arguments/debug output. Before execution, `migration list --linked` showed only
+the two previous M4 versions applied and **only20261031135149 pending**. The
+workdir contained exactly those three files, not001–016. The old execution files
+retain their original reviewed SHA256 values; their difference from the current
+checkout was verified as LF/CRLF only, not changed SQL. They were not rewritten.
+The new execution-file SHA256 was
+`0f00f47b8571302c8cd24790efab249b2bf201443f36ed579761a6d43142fa7e`.
+
+One `migration up --linked --project-ref` invocation completed with exit0 from
+**09:05:16 to09:05:20 UTC**. No db push, include-all, history repair, historical
+replay or manual insertion into migration history was used. There was no lost
+response or migration retry. Post-execution CLI listing and independent catalog
+reads agree on exactly these three entries, with no pending file:
+
+| Version | Name |
+| --- | --- |
+|20261020205122|media_advice_access_ledger|
+|20261021072002|media_advice_review_fixes|
+|20261031135149|media_advice_beta_ua|
+
+### Actual postchecks
+
+All14 prepared postcheck SELECTs and the supplemental effective-privilege,
+region and definition comparisons passed:
+
+- Every current Auth user has a region row; all backfilled regions are UA.
+  The default is UA, NOT NULL with the two-letter constraint, FK/primary key
+  intact. Exactly one enabled AFTER INSERT trigger calls the expected private
+  default-region function. No real user was inserted to probe it; new-user
+  behavior retains the earlier offline/native evidence, not a new live signup.
+- The singleton Beta switch is **false**. Diagnostics assignments and active
+  diagnostics assignments are both **0**; existing pilot permissions unchanged.
+- RLS is enabled on both new tables and remains enabled on permissions/sessions.
+  Effective anon/authenticated table/schema/RPC access is denied. service_role
+  has SELECT-only access to the new tables and EXECUTE on the Beta RPC, not the
+  private helpers; no client self-grant/write path or PUBLIC grant was added.
+  Complete ACL listings and effective non-SELECT privilege checks were reviewed.
+- Three new function signatures, invoker/definer modes, VOLATILE behavior and
+  empty search_path settings match the migration. All three stored function
+  bodies match the reviewed SQL after line-ending normalization only.
+- Counts and aggregate content fingerprints match for **15 existing tables**:
+  all existing public application tables, auth.users and private permissions.
+  **833 existing object fingerprints** match, including legacy pilot RPC/cleanup
+  bodies, owners, ACLs/settings, existing table definitions/RLS, policies,
+  indexes, constraints and triggers. The intentionally widened feature-key
+  constraint was checked separately against the two approved keys. New Beta
+  objects/trigger were checked separately, not excluded as unexplained drift.
+  No rows, user identifiers, credentials or raw data fingerprints are published.
+- Security advisors were read. The Beta-related INFO
+  [RLS enabled without policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)
+  is intentional for backend-only private tables with no client grants; it is
+  not resolved by adding a browser policy. Historical RLS work remains out of
+  scope and no unrelated permissions were changed.
+
+Only execution documentation is updated afterward; no runtime/schema bytes or
+test assertions change, so application/browser/native suites are not repeated.
+Migration postchecks are real target-DB evidence, separate from prior authored
+test results. PR#216 remains open. Beta and diagnostic activation, merge,
+develop/main deployment and authenticated Beta smoke are **not performed**.
+No source discovery, Wishlist writes, cleanup/secret changes, owner checkout/
+demo edits or production restore. The shared live database has the authorized
+additive schema/UA-backfill change; production deployment is untouched.
+
+## Inline incomplete-data notice — 2026-11-01
+
+The media-advice dialog no longer adds a separate partial-source bubble. When
+usable results exist, the first answer replaces its ordinary caveat with:
+«Деякі дані неповні, тож перевір умови на платформі». The existing source-status
+classification is unchanged. Without usable results, incomplete/failed sources
+are still called out in that same first answer; an entirely failed request and
+the visible stale-results notice retain their existing paths. Missing results
+still do not establish unavailability. Source limitations and separately
+authorized diagnostics remain available without adding a second caveat bubble.
+
+Only client presentation changes. No ranking, source statuses, links, Beta
+access, transfer/Save, session lifecycle or server/SQL changes; no live discovery,
+Wishlist writes, flag changes, merge or manual deployment.
+
+## Reviewed Muccino director alias — 2026-11-01
+
+The current exact-name refusal is reproduced without changing any identity gate.
+The owner-executed, memory-only TMDb check follows
+[IMDb find](https://api.themoviedb.org/3/find/tt0454921?external_source=imdb_id&language=uk-UA)
+to movie 1402. Its validated [movie details/credits](https://api.themoviedb.org/3/movie/1402?language=uk-UA&append_to_response=external_ids,alternative_titles,credits,release_dates,translations)
+contain one director, `tmdb:person:20646`, named `Gabriele Muccino`.
+[Person 20646](https://api.themoviedb.org/3/person/20646?language=uk-UA&append_to_response=external_ids)
+returns that same ID/name, birthday 1967-05-20, Rome/Italy, IMDb person nm0610831,
+and an empty `also_known_as`. The supplied safe result begins mid-report, so
+its run ID/attempt header is unknown; no missing fields are reconstructed.
+
+The linked [Kinobaza person profile](https://kinobazaua.com/persons/gabriele-muccino)
+co-locates H1 `Ґабріеле Муччіно`, English H2 `Gabriele Muccino`, full date
+20 May 1967, Rome/Lazio/Italy and director role. This reviewed person-profile
+composite establishes the alias, not the film's title/year, a slug, or spelling
+similarity. No shared external person ID was observed on Kinobaza; the TMDb
+IMDb person ID alone is not asserted to be a shared identifier. One frozen
+person-level record is added for 20646, scope `kinobaza-director-identity`, with
+these references and verification date. No film-specific lookup condition,
+automatic transliteration, fuzzy matching or runtime person request is added.
+
+One direct GET of the [current card](https://kinobazaua.com/titles/the-pursuit-of-happyness)
+returned HTTP 200, 239153 bytes. Its requested-URL SHA256 is
+`97bf5b80b31ed905f6d885ee2cbaff6ceca13810e3240c99a06886337d020c17`, matching
+the owner's address digest, not a historical HTML fingerprint. The same response
+was replayed in memory through the production adapter twice: without the new
+record, `unresolved / director-alias-unestablished`, 0 candidates and localization
+withheld; with the compiled record, `matched / explicit-title-year-director-match`,
+extraction `partial`, 19 candidates and 2 localization blocks. H1/original title/year
+match; the literal source director is the newly reviewed Ukrainian alias.
+
+The ordinary composition retains 3 mapped rows: Apple in a source UA section,
+Netflix and MEGOGO provider blocks with unknown source territory. MEGOGO has
+positive audio/subtitles claims under the existing application UA interpretation;
+Netflix language values remain unknown in the current projection. The film-level
+positive audio badge is not lent to either offer. No parser, ranking, link or
+offer-binding confidence is changed; `partial` and unknown values remain honest.
+No platform destination was visited, availability/entitlement independently
+verified, or historical response reconstructed.
+
+Request ledger for this task: 3 TMDb GETs from the fixed owner-run check (the person
+result is reached only after its find/details/person reads), 1 direct card GET;
+additionally 2 web-reader page reads (card/person) and 4 public web-search queries
+for evidence lookup. Internal reader/search-provider traffic is unknown and not
+presented as an exact wire-level total. Tavily, MOTN, Watch Providers and platform
+destination calls: 0. Raw HTML, API responses and credentials were not archived.
+
+Validation: 265/265 targeted offline/HTTP regressions passed, 0 skips, including
+35 crosswalk tests. New authored markup reproduces the refusal and verifies the
+record across 2 invented films, person isolation, unknown/multiple directors,
+stable-ID precedence, title/year conflicts and withholding; it is not live HTML.
+Browser/Windows lifecycle/native DB suites are not repeated: no UI, lifecycle,
+SQL, access, request-policy or link-policy components changed. No merge, manual
+deployment, flags/secrets changes or Wishlist writes.
+
+## Netflix caption/catalogue follow-up — 2026-11-01
+
+This supersedes the Netflix-unknown/extraction-partial snapshot above, not the
+person-profile evidence. A fresh read of the same card identifies the loss in
+`kinobaza-localization.mjs`, before composition or UI: the upper Netflix
+`p.mt-2.d-flex.align-items-center` contains a labelled film anchor, a plain
+`span` with `(укр. субтитри)`, and a separate `Інші фільми →` catalogue anchor.
+The old extractor treated the latter as another ambiguous link; independently,
+its caption branch accepted only one child element and direct text, not a span.
+
+The actual film href is `https://www.netflix.com/title/70044605`; the catalogue
+href is `/online/netflix`, with the title `Інші фільми з українськими субтитрами
+або аудіо на Netflix`. No destination was visited. The narrow shared extractor
+fix accepts at most one attribute-free, text-only caption span and ignores only
+that exact same-service catalogue route/title/text as auxiliary navigation.
+The catalogue is never a film candidate or language evidence. Unexpected links,
+provider mismatches, multiple/nested spans and other ambiguous structures remain
+withheld for language interpretation. The own table branch is unchanged and
+still takes precedence, including negative/conflicting/missing fields.
+
+After the fix, the current card is `matched`, extraction `ok`, 19 candidates,
+2 provider blocks and 3 mapped rows. Netflix retains its exact admitted film
+href and has unknown audio / reported-positive subtitles; the table displays
+`◐ / ? / +`. MEGOGO remains `◐ / + / +`. Both diagnostic and ordinary Beta
+projections produce the same comparison; actual source territory and offer
+binding remain unknown. These are source claims under the existing app-UA
+interpretation, not verified availability or entitlement. A missing/unsafe film
+href never becomes a catalogue link; existing no-link/explicit-clear handling
+is retained without relaxing link-bound language interpretation.
+
+Validation: 305/305 targeted offline/HTTP tests passed, 0 skips; 5/5 existing
+real-form browser tests passed on desktop, tablet and iPhone X/Air-size
+viewports (Edge/Chromium emulation, not a real iPhone/WebKit). Four initial
+authored regressions reproduced the pre-fix loss; all 7 new extraction cases
+now pass. HTML-to-table controller tests cover ordinary Beta vs diagnostic
+visibility, literal subtitle provenance, MEGOGO isolation, exact open/preview/
+apply, missing/unsafe film links, and explicit clearing of an existing URL.
+Fixtures are authored structural examples, not archived/reconstructed HTML.
+
+This follow-up consumed 2 direct card GETs (inspection and post-fix verification),
+both HTTP 200, 239167 bytes. TMDb/Tavily/MOTN/Watch Providers/catalogue/platform
+requests: 0. The earlier PR evidence ledger remains separate: cumulative direct
+reads for PR #219 are 3 TMDb + 3 card GETs, plus the previously recorded web
+lookups with unknown internal traffic. Raw responses and credentials were not
+saved. No search policy, identity gate, budget, UI/auth lifecycle, Beta access,
+SQL, flags or source URL rewriting changes; no merge or manual deployment.
+
+## Cascaded card identity — implementation and live check, 2026-11-01
+
+Base: develop `5a9c3c38f892644d04988d9055e3463fc6b9b86b`, including merged
+#219. Work is on `codex/m4-cascade-card-identity`. The cascade is implemented;
+the live study below found no newly confirmed cards attributable to a shared
+movie ID. It does not establish improved catalogue coverage or accuracy.
+
+The assisted identity gate now applies this cascade after mandatory canonical,
+title/original-title structural checks and all explicit stable-ID conflict and
+malformed-ID refusals:
+
+| Evidence in the fetched card | Director requirement | Outcome |
+| --- | --- | --- |
+| Same-system film ID, known title, same year | Not required | `explicit-stable-title-year-match` |
+| Same-system film ID, known title, different year | Existing exact/confirmed person-name proof | `explicit-stable-and-structural-match`, or unresolved if director proof is missing |
+| No shared film ID, known title, same year | Existing exact/confirmed person-name proof | `explicit-title-year-director-match`, or unresolved if director proof is missing |
+| Conflicting film IDs or conflicting heading | Cannot override | Existing mismatch/withholding |
+
+IMDb compares only with IMDb, TMDb only with TMDb. A Kinobaza pointer, canonical
+URL, slug or person ID never establishes a shared movie ID. Agreeing evidence
+cannot erase another namespace's conflict or a malformed explicit ID. A stable
+ID cannot erase ambiguous original-title structure. Positive movie-ID authority
+is limited to labelled IMDb/TMDb rows in a table wholly between the unique H1
+and availability boundary; arbitrary later/body-table IDs cannot authorize a
+director bypass. Existing conservative refusal for explicit conflicting labelled
+IDs is preserved even when a critical boundary cannot be established.
+
+Reviewed person-level crosswalk records are unchanged. Without a shared movie
+ID, or when the year differs, unknown spellings and ambiguous/multiple directors
+still withhold claims. There is no fuzzy matching, transliteration, per-film
+exception, new source endpoint or browser-supplied person proof. Diagnostics
+retain the allowlisted cascade route, numeric selected/source years and their
+delta. Bypassed director gates are `not-evaluated`, not `pass`; unused crosswalk
+evidence is not claimed. Ordinary Beta responses still withhold diagnostics.
+
+### Profile lookup feasibility, not enabled in runtime
+
+The current server projection already retains the trusted TMDb director person
+ID/name association, but not that person's DOB, IMDb person ID or full alias
+record. A Kinobaza linked profile plus a TMDb person read would normally require
+two additional source requests. Full M4 is already bounded by 4 baseline reads
+(TMDb find/details/providers and MOTN), up to 2 Tavily searches and 2 card GETs.
+The durable reserve RPC also allowlists only those eight existing stage names.
+Charging a person read as a search/card would be false accounting; adding it
+silently would either exceed 8 or remove a current search/card opportunity.
+
+This implementation therefore adds **zero** profile requests to runtime and
+does not change the cap, stage allocation, deadline or finish-RPC reserve.
+Options for a later explicit decision are: keep reviewed zero-request person
+crosswalks; allocate the two remaining slots to profile proof instead of a
+second search/card when appropriate (with honest diagnostics and a reviewed
+ledger-stage migration); or redesign identity reuse before adding profile I/O.
+None is silently activated here. A future automated profile proof must establish
+profile ownership and use same-system person IDs, or sufficiently independent
+co-located profile facts; a similar name, slug or generic external link is not
+proof. Missing/conflicting/ambiguous evidence remains unresolved.
+
+Current linked-profile checks illustrate why name similarity is insufficient:
+
+- [Gabriele Muccino profile](https://kinobazaua.com/persons/gabriele-muccino),
+  reached from the labelled director row, co-locates H1 `Ґабріеле Муччіно`, H2
+  `Gabriele Muccino`, DOB 1967-05-20 and director role in the same `div.col-8`
+  header. [Current TMDb person20646](https://api.themoviedb.org/3/person/20646?language=uk-UA&append_to_response=external_ids)
+  has the exact English name, DOB 1967-05-20 and IMDb person `nm0610831`;
+  trusted current movie1402 credits retain person20646. This corroborates the
+  existing reviewed record, without reusing the film's title/year as proof.
+- [Tarsem Singh profile](https://kinobazaua.com/persons/tarsem-singh), reached
+  from The Fall's labelled row, co-locates `Тарсем Сінґ`, `Tarsem Singh`, director
+  role and **1961-05-26**. [Current TMDb person56512](https://api.themoviedb.org/3/person/56512?language=uk-UA&append_to_response=external_ids)
+  reports `Tarsem Singh`, alias `Tarsem Singh Dhandwar`, IMDb `nm0802248`, but
+  **1961-05-06**. No shared external person ID was observed on either checked
+  Kinobaza profile (their structured data was BreadcrumbList, not owned Person
+  identity). This discrepancy blocks automatic composite-profile confirmation;
+  it does not prove that the profiles describe different people. No new Tarsem
+  crosswalk is registered. Generic automatic profile verification is therefore
+  researched, not runtime-enabled or claimed universally reliable.
+
+### Current-response study and request accounting
+
+Initial public structural survey: 2 direct card GETs (Alien and The Pursuit of
+Happyness), both HTTP 200, no destination calls. Both expose a labelled director
+row with a `/persons/...` link; no external IMDb/TMDb movie anchor was observed
+in that survey. This is not a complete claim about every possible ID field or
+every catalogue card. Current responses are not archived pilot HTML.
+
+Nine title/year controls were identified with trusted TMDb projections and fed
+to the actual runtime resolver; no Kinobaza URLs or person aliases were prefilled.
+The local diagnostic uses an exact English search title when an original title
+is non-English, checks the same original title across search/details and rejects
+ambiguous matches. This is diagnostic selection only, not a runtime query change.
+Both the fixed develop baseline identity and new identity inspect the same
+current card bytes in memory. No duplicate HTTP call is made for that comparison.
+
+| Film | Actual resolver card / result before → after | Preserved mapped rows / localization blocks | TMDb / Tavily / card GET |
+| --- | --- | --- | --- |
+| Alien (1979) | [alien](https://kinobazaua.com/titles/alien), matched → matched, extraction ok | 5 / 3 | 2 / 1 / 2 |
+| Mad Max: Fury Road (2015) | [mad-max-fury-road](https://kinobazaua.com/titles/mad-max-fury-road), matched → matched, partial | 6 / 3 | 2 / 1 / 2 |
+| Dune: Part Two (2024) | [dune-part-two](https://kinobazaua.com/titles/dune-part-two), matched → matched, ok | 5 / 3 | 2 / 1 / 2 |
+| Supergirl (2026) | [supergirl-2026](https://kinobazaua.com/titles/supergirl-2026), matched → matched, ok | 3 / 1 | 2 / 1 / 2 |
+| Goodfellas (1990) | [goodfellas](https://kinobazaua.com/titles/goodfellas), matched → matched, ok | 6 / 3 | 2 / 1 / 2 |
+| The Pursuit of Happyness (2006) | [the-pursuit-of-happyness](https://kinobazaua.com/titles/the-pursuit-of-happyness), matched → matched, ok | 3 / 2 | 2 / 1 / 2 |
+| The Lives of Others (2006) | Actual reads were The Prestige / The Pursuit of Happyness; title conflicts remain rejected | 0 / 0 | 2 / 2 / 2 |
+| The Fall (TMDb 2008) | [the-fall](https://kinobazaua.com/titles/the-fall), year2006 vs selected2008, no shared ID; unchanged refusal | 0 / 0 | 2 / 2 / 2 |
+| The Prestige (2006) | [the-prestige](https://kinobazaua.com/titles/the-prestige), matched → matched, ok | 5 / 3 | 2 / 1 / 2 |
+
+All 18 card responses (15 distinct pointers) had no IDs in the supported labelled
+movie-metadata fields. This does not prove the absence of every possible ID shape
+or ID across the catalogue. The new shared-ID routes were exercised by authored
+fixtures only. The Lives of Others is a retrieval failure, not a false identity
+rejection of its own card and not proof that a card/offers do not exist. The Fall
+stops at year-crosswalk before director evaluation; its separate profile-DOB
+conflict is not presented as the cause of that year refusal. Unrelated titles,
+incomplete structures and unsupported markup remained withheld.
+
+Current claims retained include Netflix subtitles-positive/audio-unknown and
+MEGOGO audio/subtitles-positive for The Pursuit of Happyness; Apple audio-positive/
+subtitles-negative, Rakuten audio/subtitles-positive and MEGOGO positives for Dune.
+These remain source observations under the existing app-UA interpretation,
+not independently verified availability, entitlement or offer binding. None of
+the destinations was visited. The Mad Max card remains partial; this study does
+not silently broaden unrelated extraction policy.
+
+Actual new external attempts for this task: **53 = 20 TMDb + 11 Tavily + 20 card
+GET + 2 Kinobaza person GET**. The nine resolver controls account for 47 (18/11/18);
+add 2 TMDb person reads, the 2 preliminary card reads above and 2 linked-profile
+reads. All attempts returned HTTP200, including pages later rejected by parsing
+or identity. Final credential-session totals were 49; its `countsIncomplete` was
+false, and the session was explicitly stopped. The four additional public reads
+were outside that session. Search-provider internal traffic is unknown.
+
+New runtime request cost is zero; all two-search/two-card opportunities and the
+cap8/45s source deadline/finish reserve are unchanged. Profile verification would
+cost two extra requests and is not smuggled into existing stages. Recorded local
+parse times were about 13–339ms per policy/card; they include parse warm-up/order
+effects and do not establish a speedup, deployed latency or hosting validation.
+Runs are `local-diagnostic`, base checkout plus tracked changes; buildSha is null,
+not a server/deploy attestation. Raw HTML, search responses/snippets and keys were
+not archived, and present responses are not historical pilot reconstructions.
+
+Validation: 356/356 targeted offline/HTTP tests, 14/14
+local diagnostic-series tests, 2/2 native-pipe tests and 5/5 real-form browser regressions in
+Edge/Chromium desktop/tablet/iPhone X/Air-size emulation, zero skips.
+Authored cases cover both movie
+ID namespaces, conflicts, differing years, exact/reviewed/unverified directors,
+metadata boundaries, withholding, safe reports, ordinary Beta redaction,
+resolver caps/deadlines and unchanged preview/transfer protections. Native-pipe
+evidence is reused after the diagnostic-only English-title selection adjustment;
+the IPC protocol/security code is unchanged. Real iPhone/WebKit, live platforms,
+authenticated deployed-runtime checks and actual Wishlist Save were not run.
+No initApp/global lifecycle/auth/UI, source links/ranking, Beta flags, SQL,
+retention, Wishlist data, main or production changes; no merge/deployment.
+
+## Integrated Beta search and linked-person verification — 2026-11-01
+
+This extension of PR#220 supersedes the preceding **preparation choices** (no
+runtime query change/profile I/O/SQL), not its recorded observations. Base remains
+develop `5a9c3c38f892644d04988d9055e3463fc6b9b86b`; the extension was researched
+from PR head `21d1be24acf2b654254c38c9b252246ed8de1343` plus tracked changes.
+It is implementation ready for review, not permission to release production Beta.
+
+### Search and contextual years
+
+The existing validated TMDb Details already appends `alternative_titles`,
+`translations` and `release_dates`. The server now retains bounded typed title
+records with their actual language/country/type, and release events with literal
+date, country, type and optional language. These are not browser-supplied aliases
+or a flattened list of interchangeable release years. Conflicting parent/appended
+movie IDs withhold the projection. No additional TMDb movie request is added.
+
+Two Tavily basic slots remain shared between successful empty/all-rejected
+searches and first-card identity refusal. The first contextual query prefers an
+explicit English translation, otherwise the original/requested title. A country
+alone never establishes English. The second uses the known original/localized
+name and, for a single trusted director, an available exact Latin name as
+disambiguation. It retains escaping, bounded query length, `/titles/` site text,
+domain restriction and all existing basic/no-answer/no-raw-content parameters.
+Transport/auth/quota errors do not trigger retries/fallback. Exact admitted URL
+deduplication and stable candidate ordering remain; a slug/rank/snippet is never
+identity proof. There is no runtime Kinobaza `/search` or Tavily person search.
+
+For search, the first query uses the earliest supported premiere/theatrical year
+if present. The second uses the primary Details year, so a confirmed premiere2006
+and primary2008 do not consume both slots searching only2006. This applies to
+empty/all-rejected results, first-card refusal and the bounded-text fallback;
+the query still keeps known title/director context. For identity, a different source year without a shared movie
+ID must be that earliest contextual year (types1/2/3), with title/original-title
+and confirmed director still mandatory. Digital/physical/TV dates, later reissues,
+an arbitrary nearby year and an event belonging to another TMDb ID cannot do so.
+The selected film's year is not rewritten. Same-system movie-ID/title/year
+cascade and all canonical/ID/title/original-scope conflict priorities remain.
+
+The Fall has **actual** TMDb movie14784 release evidence
+`2006-09-09T00:00:00Z`, Canada, type1 (premiere), while its primary release date
+is in2008. This explains the source's2006 without guessing a year tolerance.
+The official [release-type contract](https://developer.themoviedb.org/reference/movie-release-dates)
+distinguishes premiere/theatrical from digital/physical/TV. Its director proof
+still fails below; contextual year evidence alone does not confirm the card.
+The Lives of Others has an explicitly English `en/US` translation in the same
+validated Details response; its German original and Ukrainian requested title
+retain their separate provenance.
+
+### Linked director proof, not fuzzy aliases
+
+Only a single exact `/persons/...` link in the card's labelled director row,
+inside the same bounded film metadata table, is eligible. No profile URL is
+guessed or taken from recommendations. Profile reads run only after the previous
+film gates have passed and the remaining failure is director-alias-unestablished.
+Existing reviewed person crosswalks/exact names and movie-ID bypasses need no
+profile requests. Unknown or multiple selected/source directors remain unresolved.
+
+The resolver defers eligible director-only refusals until its existing bounded
+card-reading loop ends. It allocates the single person pair using already-checked
+film metadata: scoped shared same-system film ID first, then exact primary year,
+then supported contextual-release variance. This is work allocation, not new
+identity proof. Titles, original-title scope, years, canonical and ID conflicts
+must already pass; search rank/snippet/slug do not decide which person to trust.
+Equally strong candidates with different profile URLs or normalized aliases have
+no evidence-based winner: `director-profile-candidates-ambiguous`, zero speculative
+profile requests, unresolved claims withheld. The same exact profile/normalized
+alias can share one bound proof, but each card reruns all gates independently;
+two confirmed cards remain explicit choices rather than being collapsed.
+
+One TMDb **person** GET uses the trusted credits ID and `language=en-US`; it does
+not trust a browser person ID or transliterate a credit. This obtains an exact
+Latin comparison name even where Ukrainian/credit projections use another script.
+One linked Kinobaza profile GET inspects a supported own header: native H1,
+Latin H2, full birth date and explicit director role, excluding filmography.
+Confirmation requires either an owned same-system person ID, or exact Latin
+name/alias **and** the same full birth date **and** role/native-name association.
+Any explicit person-ID or birth-date conflict has priority. Arbitrary external
+links, matching slugs, filmography, name resemblance and snippets do not prove a
+person. The resulting one-alias proof is scoped to that person ID and exact
+profile/card pointer; it is not registered globally or borrowed by another film.
+
+Actual A Separation and The Handmaiden profiles exposed a closed attribute-free
+style block before their single HTML doctype: style offsets0–663, doctype672–687,
+head707–713, all before their own person headers. parse5 reported missing-doctype,
+misplaced-doctype and misplaced-start-tag-for-head-element. The narrow recovery
+requires the **entire** bounded style-only preamble, exact located error spans,
+single standard doctype and immediate html/head openings; it uses the original
+bytes/tree. Text/script prefixes, other/critical errors, duplicate headers or
+conflicting semantic records remain refused. This does not broaden film-card
+markup policy. The shared extractor awaits its supplied identity callback and
+offers an internal one-shot blocked-identity continuation. The resolver can resume
+the same validated DOM and extraction function after allocating the pair, without
+a second card GET or parse. Fixed-card matching and markup rules are unchanged.
+Raw bytes/DOM/continuations stay invocation-local, never enter result/DTO, report,
+ledger, logs or persistent storage; unused continuations are disposed on exit.
+
+Current person evidence:
+
+- [Asghar Farhadi](https://kinobazaua.com/persons/asghar-farhadi), linked by the
+  actual A Separation director row: `Асґар Фархаді` / `Asghar Farhadi`, DOB1972-05-07,
+  director role. Trusted [TMDb person229931](https://api.themoviedb.org/3/person/229931?language=en-US&append_to_response=external_ids)
+  has the same exact Latin name and birth date; the Ukrainian person response did
+  not supply an exact Latin comparison, so it correctly did not confirm first.
+- [Chan-wook Park](https://kinobazaua.com/persons/chan-wook-park), linked by The
+  Handmaiden: `Пак Чхан-ук` / `Chan-wook Park`, DOB1963-08-23, director role;
+  [TMDb person10099](https://api.themoviedb.org/3/person/10099?language=en-US&append_to_response=external_ids)
+  supplies exact agreeing name/date evidence. Neither is a new per-film exception.
+- The Fall's linked Tarsem profile still reports1961-05-26, versus TMDb56512
+  1961-05-06. The final runtime diagnostic reports birthdayConflict=true and
+  remains unresolved/withheld. This is not proof of two different people.
+
+One research-only Tavily profile query for the trusted Gabriele Muccino person
+returned HTTP200 and5 search rows but **zero exact admitted profile pointers**.
+It read no profile/card or destinations. This single observation does not prove
+Tavily cannot find profiles; it establishes no added person evidence. Runtime
+already has the linked profile and does not spend a third search slot on it.
+Search output/snippets/generated answers never become person proof.
+
+### Budget decision and prepared migration
+
+| Design | Full-action HTTP cap | Preserves2 searches +2 cards | Linked-person proof |
+| --- | --- | --- | --- |
+| Existing ledger, unchanged |8|Yes|Disabled; no hidden use of search/card stages |
+| Spend existing slots on profiles |8|No|Rejected: silently reduces card/search opportunities |
+| Prepared per-session capability |10|Yes|At most1 TMDb person +1 Kinobaza person |
+
+The chosen bounded increase is **10 =4 baseline +2 Tavily +2 card +2 person**.
+The server trusts only its start receipt cap8/10, never browser counters/options.
+The new stages `tmdb-person` and `kinobaza-person` reserve atomically before I/O.
+Each has a5s header/body/reservation cutoff; the unchanged handler entry deadline
+still limits source work to45s and preserves finish up to53s plus response margin.
+The extra pair can consume up to10s of that shared time; preserving request slots
+does not guarantee all can finish before the deadline. Deferral reads/gates the
+available cards first, leaving less time for profile proof if earlier waits are
+slow. An initial director-only refusal may now spend the still-available second
+Tavily slot before person proof; this is at most one additional search compared
+with eager first-card success, not a new slot or retry. A failed second search
+does not discard an already-read eligible card: it can finish its bounded proof,
+return partial if confirmed, and preserve the exact provider error in diagnostics.
+No additional card is read after that search error. No retries or redirects.
+
+`supabase/migrations/20261101180436_media_advice_identity_budget.sql` was created
+with local Supabase CLI `migration new`, not applied remotely. It adds only a
+private `source_cap` (existing/legacy default8), changes the attempts constraint to
+the session cap, and replaces the Beta RPC with the same signature/grants and
+fresh post-advisory-lock authorization. New Beta starts explicitly receive10;
+old sessions keep8 and cannot reserve profile stages. Legacy pilot RPC, user
+search-count behavior, Beta/diagnostic permissions, flags, data,30-minute ledger
+TTL and24h cleanup eligibility are unchanged. No HTML/person content is stored
+in the ledger. A denied/uncertain reservation is not retried; timeout consumes an
+acknowledged reservation. Failed finish withholds results; no refund/re-fetch is
+implied. Existing session expiry remains in force.
+
+Future execution, **separately authorized**: verify exact reviewed SHA/project,
+the existing three M4 migration versions and recovery checkpoint; apply only
+version20261101180436 with the established isolated-file/history procedure, never
+general db push/repair/replay. Post-check default8 and allowed caps8/10, the
+per-session cardinality constraint, unchanged service-role-only Beta RPC signature
+and legacy function, fresh group/region/switch/diagnostic checks, unchanged
+flags/assignments and movie/list counts. Then deploy/review the exact build and
+source-free smoke before any independently agreed live activation. Code remains
+compatible with the old cap8 receipt if migration is not yet applied.
+
+Rollback: a normal code revert can leave the additive column/constraint in place;
+old code still spends at most8. Do not blindly restore an8-only constraint/drop
+the column while rows have9/10 attempts. A physical schema rollback requires
+separate authorization, stopped/drained new actions, retained accounting and a
+verified absence of >8 rows after normal retention cleanup, then restoration of
+the prior RPC/constraint transactionally. Do not erase accounting rows or mark
+migration history repaired simply to make rollback pass.
+
+### Current-response controls: before and after
+
+The live counts/times below belong to the preceding implementation checkpoint
+`790975b592c8d5559e927561ddd18faeb0aef0fa`, before the narrow follow-up below.
+They are retained evidence, not fresh live validation of the changed query/allocation.
+
+The fixed prior head21d1be2 identity inspects each current card in memory before
+the optional person proof; final results below come from the actual resolver,
+not manually seeded URLs. Two initial full-query controls for Lives/Fall also
+ran before the contextual query change. The diagnostic comparison initially kept
+the **new input aliases** for both policies: its matched Lives result therefore
+does not prove the prior production projection would accept that card. Checking
+the retained typed metadata establishes that old production aliases lack H2
+`The Lives of Others` and `The Handmaiden`; the new English translations supply
+them. The comparator is corrected to remove newly added translation/control
+aliases from prior-service input. The inferred earlier original-title refusals
+in the table are code/field comparisons, not new live old-service runs. Other
+before labels compare identity on the **same current card bytes**, not two
+equivalent search-provider runs. No raw
+HTML/search-response archive is retained; these are not historical reconstructions.
+
+Counts below are actual **TMDb / Tavily / card / person-page** requests in the
+listed final local operation; `*` means trusted movie identity was reused from
+this memory-only series, not a cold full action. MOTN and Watch Providers were not
+called. Times are local wall-clock observations, not deployed hosting latency.
+
+| Film / automatically found candidate | Prior identity → final | Mapped rows / blocks | Requests | Local time |
+| --- | --- | --- | --- | --- |
+| [Alien1979](https://kinobazaua.com/titles/alien) |matched → matched|5 /3|0/1/2/0*|1.74s |
+| [Mad Max2015](https://kinobazaua.com/titles/mad-max-fury-road) |matched → matched, partial|6 /3|2/1/2/0|5.73s |
+| [Dune Part Two2024](https://kinobazaua.com/titles/dune-part-two) |matched → matched|5 /3|2/1/2/0|7.61s |
+| [Supergirl2026](https://kinobazaua.com/titles/supergirl-2026) |matched → matched|3 /1|2/1/2/0|10.32s |
+| [Goodfellas1990](https://kinobazaua.com/titles/goodfellas) |matched → matched|6 /3|2/1/2/0|5.35s |
+| [Pursuit2006](https://kinobazaua.com/titles/the-pursuit-of-happyness) |matched → matched|3 /2|2/1/2/0|4.74s |
+| [Lives of Others2006](https://kinobazaua.com/titles/the-lives-of-others) |prior projection lacks English H2 alias (code/field comparison); current automatic retrieval + identity matched|0 /0|0/1/2/0*|3.69s |
+| [The Fall, selected2008](https://kinobazaua.com/titles/the-fall) |year refusal → year established, person DOB conflict unresolved|withheld|1/2/2/1*|2.04s |
+| [The Prestige2006](https://kinobazaua.com/titles/the-prestige) |matched → matched|5 /3|2/1/2/0|5.17s |
+| [A Separation2011](https://kinobazaua.com/titles/a-separation) |director alias unresolved → profile-confirmed|0 /0|1/1/2/1*|2.20s |
+| [The Handmaiden2016](https://kinobazaua.com/titles/the-handmaiden) |prior projection lacks English H2 alias; new titles alone then director-unresolved → profile-confirmed|1 /0|1/1/2/1*|2.11s |
+| [Amélie2001](https://kinobazaua.com/titles/amelie) |matched → matched, partial|2 /1|2/1/2/0|4.69s |
+
+Lives and A Separation confirm their cards but have no mapped UA rows in these
+responses; this is not failure to find the film or proof it is unavailable.
+Lives'17 foreign-context candidates remain outside UA offers. Previously useful
+Netflix subtitles/audio-unknown and MEGOGO positives for Pursuit, and all three
+independent Dune localization blocks remain. No track/territory/offer-binding
+confidence is promoted, and no destination was visited. Unrelated second cards
+(including The Last Laugh, Get Thrashed and The Walk), incomplete metadata and
+unsupported markup remain refused rather than chosen for more positive results.
+
+This extension consumed **122 external attempts =35 TMDb +30 Tavily +44 card
+GET +13 person GET**. The credential broker recorded119 (35/30/44/10),
+countsIncomplete=false, and was explicitly stopped;3 additional public profile
+markup inspections are included above. This includes intermediate refusals,
+rechecks and two completed operations whose full JSON handoff was not retained
+by the agent; later checks supply the final evidence. A failed local unsupported
+operation used0 source requests. Prior PR#220 study53 remains a separate batch
+(combined175), not a changed historical budget. Search-provider internal traffic
+is unknown. Keys, HTML, snippets, full source responses and personal application
+data were not saved; local diagnostics have no deployed-build attestation.
+
+The six requested regressions are preserved; two additional director spellings
+are now established live without a per-film exception.11/12 controls confirm a
+card; this deliberately selected sample is not catalogue accuracy or coverage.
+The Fall remains an evidence conflict, not a workaround invitation. Shared film-ID
+success routes, homonyms, malformed/conflicting profiles, ambiguous critical
+structure and unsupported release-year contexts are also checked by authored
+fixtures; those examples do not establish live catalogue facts.
+
+The existing Tavily private-Beta account response is not blanket permission for
+Kinobaza content or a production-publication approval. The linked-profile reads
+add a bounded source-use surface; applicable source/account terms and a reviewed
+exact deployment remain release prerequisites. No new service, key, tariff,
+flags, access assignments, retention policy or production data was changed here.
+
+### Validation of the integrated change
+
+These results record checkpoint790975b; the following subsection records the
+latest narrow follow-up validation separately.
+
+- Final complete offline/HTTP run: **891 passed,0 failed,1 skipped (892 total)**
+  across application and research regressions. The skipped optional research
+  synthetic mobile display is not counted as success. This includes contextual
+  title/year rules, stable-ID conflict priority, exact linked-person gates,
+  profile preamble recovery/critical negatives, secrets/report allowlists,
+  ordinary Beta diagnostic redaction, both cap8 and cap10 complete handler
+  pipelines, R1/R2, exact links and original-row/preview/transfer safeguards.
+- Prepared migration: **3/3 PGlite tests** (included above). Existing sessions
+  and legacy starts retain8, new Beta sessions10, no new user search quotas,
+  private permissions/default flags/diagnostic assignments/cleanup/data retained.
+- **Native PostgreSQL17.6:6/6 passed,0 skips**,24 verified distinct loopback
+  backend connections. Concurrent starts and repeated profile reservations each
+  succeed once; all ten distinct stages fit; queued region/switch/group/card
+  revocation denies mutation after lock acquisition. The test checks all eight
+  concurrent receipt cardinalities3–10 and the final DB cardinality10, not a
+  mistaken assumption that Promise.all submission order is commit order.
+  The authored temporary cluster was stopped/removed; no live database accessed.
+- **5/5 real-form browser regressions**, Edge/Chromium headless with mocked
+  Auth/source/DB and external requests blocked:1280×900 desktop,820×1180 tablet,
+ 375×812 iPhone X-size and420×912 Air-size emulation. They cover form transfer,
+  manual edits, pending apply, close/reopen and session isolation. This browser
+  fixture enables diagnostics; ordinary Beta/diagnostics-off is covered by the
+  separate server/pipeline tests, not claimed as a browser verification.
+- Local series **17/17** after correcting the prior-projection comparison;
+  **2/2 native Windows pipe** authorization/broker checks (IPC unchanged after
+  the study-only research extension). Source/migration syntax, whitespace and
+  canonical document42 local links/21 anchors passed.
+
+Not performed: real iPhone or WebKit, authenticated deployed-runtime smoke,
+live MOTN/Watch Providers/platforms, actual Wishlist Save, deployment, live
+migration, flag/permission changes or merge. The Windows application lifecycle
+suite is reused because launcher/lifecycle components are unchanged. initApp,
+global lifecycle/auth, other Mykola contexts, UI/ranking/preview/Save and link
+policies remain unchanged. Remote checks must be attached to the final exact
+commit; absent/skipped checks are not successful validation.
+
+### Two-year search and deferred person-pair follow-up — 2026-11-01
+
+Review reproduced two application defects using authored fixtures before fixes:
+both contextual queries emitted2006 despite a trusted primary2008 (2 assertions
+failed), and the first eligible card spent the person pair before a stronger
+second card could be examined (5 of8 initial selection regressions failed).
+The rules above now cover both cases without increasing the prepared cap10 or
+legacy cap8, changing the ledger/SQL, or borrowing search/card slots for profiles.
+
+The decisive selection regression has a first2006 premiere candidate and a
+second2008 primary-year candidate with different linked profiles. The second
+gets the only pair and confirms; the first remains withheld. Full-action counts
+are4 baseline +2 Tavily +2 cards +2 person =10. A scoped shared-film-ID candidate
+outranks a no-ID candidate even with a different year, but still must prove its
+director. A failed chosen profile never causes a second pair or relaxed proof.
+
+**Residual limit:** two equally supported different profiles cannot both be
+verified with one Kinobaza profile GET. A future option would reuse one TMDb
+person read and allow2 distinct Kinobaza person reads: at least3 person attempts,
+full cap11 and a new ledger stage/deadline assessment. It is not implemented or
+authorized by this follow-up. Alternatively retain bounded unresolved/manual
+narrowing; choosing the first profile by convenience is not identity evidence.
+
+Safe diagnostics expose only eligible/selected/unverified card counts, one-based
+card indexes and an allowlisted allocation basis/reason. Profile URLs, aliases,
+DOB, raw HTML and search content are not added. Ordinary Beta users still receive
+no privileged resolver diagnostics. The receipt time remains the original card
+read time, not the later proof-completion time; continuation is bounded by the
+same parent deadline and cannot revive results after abort.
+
+New external source HTTP attempts: **0**. Both changes are deterministic control
+flow/query defects reproduced offline; another source response is unnecessary
+to establish them. Earlier live observations, including The Fall DOB conflict,
+remain unchanged evidence, not claims of a new successful discovery or tracks.
+
+Follow-up validation on the completed runtime changes:
+
+- **911 passed,0 failed,1 skipped /912 offline+HTTP tests**, including20 new
+  authored regressions and the3 existing PGlite migration tests. The optional
+  research synthetic mobile-display skip is not success. The sandbox initially
+  denied child-process spawning (EPERM); the authorized local rerun passed,
+  without weakening assertions or timeouts.
+- **5/5 browser tests**, local Edge/Chromium, mocked Auth/source/DB, external
+  requests blocked: desktop1280×900, tablet820×1180, iPhone X375×812 and
+  Air420×912-size emulation. Preview/transfer, manual-edit/pending-apply guards,
+  report, close/reopen and isolated sessions remain covered; not real-device QA
+  or an actual Wishlist Save.
+- Independent review found and closed the alternate-search-error early-exit
+  regression;401 and15s mock timeout retain the first card with partial status
+  after valid proof,9 total authored attempts, no retry or second card GET.
+  No remaining code blocker was found in that review.
+- Syntax/whitespace and14-document local link/anchor audit passed
+  (471 links,292 anchors). initApp/global lifecycle/auth/UI, permissions,
+  ranking, links, historical SQL and the prepared migration are unchanged.
+- Native PostgreSQL17.6 evidence (**6/6**,24 loopback connections) and Windows
+  lifecycle/IPC evidence from checkpoint790975b are explicitly reused, not
+  rerun: no SQL, ledger RPC, database dependency, launcher or IPC component
+  changed. The full suite reran the existing local migration/access contracts.
+
+No live source calls, live database operations, flag changes, merge or manual
+deployment were performed. Automatic PR Preview/checks, if triggered by the
+existing Git integration, must be reported against the new exact SHA rather
+than inheriting checkpoint790975b statuses. Real iPhone/WebKit, deployed
+authenticated smoke and new live query/profile behavior remain unvalidated.
+
+### Klaus recommendation markup and Netflix caption — 2026-11-02
+
+Narrow follow-up from develop `f8c56851cce4da428dcdceb160bc4ce59a875090`.
+The owner-reported URL digest establishes the historical requested address,
+not its response HTML. The observations below concern current responses only;
+they do not reconstruct the pilot or independently verify Netflix availability,
+entitlement, territory or tracks on the destination platform.
+
+On the current [Klaus card](https://kinobazaua.com/titles/klaus), parse5 reports
+18 errors: six `missing-whitespace-between-attributes` and twelve
+`unexpected-character-in-attribute-name`. They are unescaped double quotes in
+recommendation anchor `title` and image `alt` attributes, in two carousels after
+the closed viewing accordion. In the inspected response the accordion ends at
+offset84763; affected carousels occupy149802–163191 and163386–174358, at
+lines2166/2177/2183 and2582/2593/2599. These are response-specific locations,
+not selectors or a runtime film exception. Previously even these unrelated
+anchor errors refused the whole page before identity.
+
+The new recovery accepts only those two located error codes in HTML `a`/`img`
+tokens inside an explicitly closed `scrolling-wrapper-flexbox__item` and its
+closed carousel, wholly after the unique closed viewing accordion. An anchor
+must itself be explicitly closed. Original source intervals and DOM ancestry
+must agree; critical headings, metadata tables, canonical links, provider
+anchors, viewing boundaries and supported inline director labels exclude
+recovery. A swallowed tag, unknown/duplicate attribute error, unclosed boundary,
+foreign target namespace or parser-event overflow still refuses before identity.
+HTML is neither rewritten nor reparsed through a different parser. The copied
+report names only `noncritical-recommendation-markup-recovered`, without source
+attributes, raw HTML or destination URLs. Existing image recovery remains
+separate; an image in a carousel cannot bypass its stricter boundary.
+
+A second independent issue was the upper Netflix paragraph: its own plain span
+contains `(укр. аудіо, укр. субтитри)`, followed by catalogue navigation. The exact
+additional navigation tuple is now recognized: `/online/netflix?netflix_audio=1`,
+title `Інші фільми з українською доріжкою на Netflix`, plain text
+`Інші з укр. аудіо →`. It supplies neither a film link nor languages. The original
+Pursuit catalogue tuple remains supported. Modified paths/parameters/hosts,
+provider labels, nested labels, competing anchors and duplicate controls remain
+ambiguous. Own table values still outrank a caption. Missing/unsafe film links
+are not replaced by catalogue links or promoted into usable language evidence.
+
+Current-response comparison used the same in-memory HTML with the pinned
+develop parser/localization code and the patched code; no extra source reads
+were needed for this comparison. Klaus uses the current server-adapter TMDb
+projection supplied through the hidden one-time runner: movie508965 /
+IMDbtt4729430,2019, sole director person124749, `Серджіо Пабло` / `Sergio Pablos`.
+It exactly matches the source's director; no new alias or identity relaxation.
+Alien/Pursuit reuse their previously established selected identity contexts,
+not a claim of newly fetched TMDb metadata.
+
+| Current fixed card | Before → after | Retained result |
+| --- | --- | --- |
+| Klaus2019 | `unsupported-markup/html-parse-errors`, identity not evaluated → matched / partial with recovery notice |6 extracted candidates;2 mapped rows, one Netflix group; ordinary and diagnostic projections both `◐ / + / +` |
+| [Alien1979](https://kinobazaua.com/titles/alien) | matched / ok → unchanged |29 extracted candidates,5 mapped rows; Apple/Rakuten subtitle claims and MEGOGO audio/subtitle claims retained; format-specific negative audio is not “no Ukrainian audio” |
+| [The Pursuit of Happyness2006](https://kinobazaua.com/titles/the-pursuit-of-happyness) | matched / ok → unchanged |19 extracted candidates,3 mapped rows; Netflix audio unknown/subtitles positive; MEGOGO audio/subtitles positive |
+
+These are fixed-card parser/identity/composition checks, **not automatic resolver
+search-quality validation**. The upper block remains territory unknown at source;
+`◐` and the app's existing Ukrainian-region language interpretation are unchanged.
+Original film links remain exact and are not followed during this study.
+
+Accounting: **6 known direct source HTTP attempts =5 Kinobaza title GETs +1
+TMDb Details GET**. The5 Kinobaza responses were200; the TMDb runner returned a
+validated projection but did not expose its exact successful HTTP status.
+Klaus accounts for3 GETs (two extra reads
+while correcting a local inspector/Windows child-spawn issue), Alien1, Pursuit1.
+No automatic source retry, Tavily, person-profile, MOTN, Watch Providers or
+platform-destination request. Additionally3 public TMDb page-open operations
+were attempted for initial identity orientation:2 returned cached public pages,
+1 was unavailable. The web tool's underlying network traffic is not attested;
+these operations are not hidden within the six directly counted attempts.
+Only the later current API projection is used for the Klaus identity check.
+Source HTML stayed in the local inspector's process memory; no source body,
+search snippet or key was archived. The inspector is stopped after verification.
+
+Authored fixtures are fictional structural regressions, not reconstructed owner
+HTML. They cover the new carousel and catalogue shape, all four inline director
+label forms, unsafe/missing film links, caption omissions, altered navigation,
+critical/ambiguous structures, table priority and unchanged source scopes.
+HTML → composition → ordinary/diagnostic Beta table, exact-link opening,
+preview/explicit transfer and no Save are covered separately from live reads.
+
+No changes to identity gates/crosswalk, search policy, source budgets/deadlines,
+link policy, ranking, retention, Beta access, session isolation, initApp or global
+lifecycle/auth. No migrations, flags, Wishlist writes, merge or manual deployment.
+
+Validation of this follow-up:
+
+- **355/355 targeted offline/HTTP regressions passed**, including parser,
+  localization, assisted identity/cascade, resolver, service, report and
+  HTML-to-Beta UI/preview contracts; no failures or skips in that selection.
+- **926 passed,0 failed,19 skipped /945 full offline/HTTP tests**. The19 opt-in
+  skips comprise research/product browser entries and native PostgreSQL entries;
+  they are not success. Relevant product browser tests were run separately.
+- **35/35 relevant browser tests passed**:30 pending-apply/retained-document
+  tests plus the final5-test desktop/tablet/iPhone X375×812/Air420×912 viewport
+  run. The latter includes both ordinary Beta and diagnostic projections of
+  authored recovered HTML, Netflix `◐ / + / +`, exact original tracking link,
+  no catalogue action, no writes on preview, and no discovery on reopen/report.
+  Local Edge/Chromium with mocked Auth/source/DB and external requests blocked;
+  not WebKit or real-device QA. Authored screenshots are local review artefacts,
+  not screenshots of a live source response or an actual Wishlist change.
+- A browser-fixture omission initially failed the recovery-code report assertion:
+  `composeDiscovery` alone does not attach the resolver envelope. Supplying the
+  actual allowlisted extraction diagnostic shape fixed the fixture; assertions
+  and timeouts were unchanged. A sandbox child-spawn denial was rerun with local
+  permission, not treated as a passing test.
+- Syntax and whitespace checks passed;14-document audit:471 local links and292
+  anchors,0 errors. Independent review found/closed the inline director-label
+  recovery hazard; no remaining actionable finding in the final runtime diff.
+- Native PostgreSQL/Windows lifecycle reruns are unnecessary for this parser
+  change: SQL, ledger, platform dependencies and lifecycle/IPC components are
+  unchanged. Existing source access/identity/budget tests reran; no production
+  database operation or deployed authenticated smoke was performed here.
+
+### Terminal Roman numeral title spelling — 2026-11-02
+
+Follow-up from develop `290bf23ab607d6c9e5dae137ff31a79a5ba240a9` after #221.
+The owner confirmed the Klaus fix on real develop. The next refusal is different:
+the current [Gladiator II card](https://kinobazaua.com/titles/gladiator-2) has
+H1 `Гладіатор ІІ ( 2024 )` (U+0406), H2 `Gladiator II`, director `Рідлі Скотт`.
+The selected title uses ASCII `I` (U+0049). Existing NFC/whitespace/case
+normalization deliberately does not equate these alphabets, so the old H1 gate
+returns `source-title-conflict` before extraction. This current response is not
+an archive or reconstruction of the owner's earlier run.
+
+The new title-only fallback compares a separate **final uppercase canonical
+Roman token with 2–15 glyphs**, after whitespace and a nonempty title base.
+Only Ukrainian `І` is treated as Latin `I` inside that token; the rest of the
+title must match under the existing normalization. No alphabet-wide replacement,
+fuzzy matching, transliteration, `II`↔`2`, Unicode numeral-symbol conversion,
+attached/nonterminal token, lowercase cross-script word, single ambiguous letter
+or malformed numeral is accepted. Other Cyrillic lookalikes are not folded.
+The same rule applies across films/parts, not a Gladiator/URL exception.
+
+Exact title aliases retain their existing priority and cascade. Only the new
+H1 fallback additionally requires an **exact original H2 alias, identical primary
+year and verified single-director scope/name**. Matching film IDs cannot skip
+the director or allow release-year variance on this route. ID/canonical/title
+conflicts and original-title structure checks retain priority; unresolved proof
+withholds every source claim. Director normalization and person crosswalk are
+unchanged. Diagnostics name `title-terminal-roman-year-director` and the specific
+`source-year-conflict-terminal-roman-title` refusal without raw title content;
+ordinary Beta still receives no privileged diagnostic fields.
+
+Current fixed-card comparisons use identical in-memory responses against the
+pinned develop identity code and the patched code:
+
+| Film | Before → after | Result retained through both Beta projections |
+| --- | --- | --- |
+| Gladiator II (2024) | title mismatch, 0 rows → matched/ok | 31 extracted candidates, 6 mapped rows, 4 service groups; Apple/Rakuten/MEGOGO audio+ and subtitles+; Netflix audio unknown/subtitles+ |
+| Klaus (2019) | matched/partial → unchanged | 6 candidates, 2 rows; Netflix audio+/subtitles+, existing recommendation recovery notice |
+| Alien (1979) | matched/ok → unchanged | 29 candidates, 5 rows; source labels and format-negative audio distinctions preserved |
+| The Pursuit of Happyness (2006) | matched/ok → unchanged | 19 candidates, 3 rows; Netflix subtitle-only and MEGOGO audio/subtitle claims preserved |
+
+Gladiator's comparison uses the owner-selected localized/original title, 2024
+and director context; no unseen IMDb/TMDb film IDs are invented and no fresh
+TMDb projection is claimed. Controls reuse their previously verified identity
+contexts. These are fixed-card identity/extraction/projection checks, not proof
+of automatic resolver search quality or deployed runtime. Source/app UA scopes,
+`◐`, ranking and unknown states are unchanged; destination availability, offer
+binding, entitlement and actual platform tracks are not independently verified.
+
+**7 external attempts, all Kinobaza title GETs/200**: 1 Gladiator, 2 each Klaus,
+Alien and Pursuit. The initial 3 controls exposed a local baseline-wrapper
+composition error after successful reads; the corrected comparator ran only
+those 3 again. There was no source error retry, search, TMDb/MOTN/Watch Providers,
+person/profile or platform-destination request. Bodies existed only in process
+memory; processes exited without a raw response/archive. No keys were needed.
+Runtime adds 0 requests and leaves all existing source caps/deadlines/retry rules.
+
+Validation: **54/54 new authored tests**, included in **371/371 targeted** and
+the **980 passed, 0 failed, 19 skipped / 999 full offline/HTTP suite**. Fictional
+fixtures cover II/III/IV/VI/IX/XIV, different parts/bases, script lookalikes,
+noncanonical/lowercase/nonterminal forms, conflicting IDs, exact H2, primary-year
+requirements even with ID/release evidence, unknown/multiple directors and
+person-scoped aliases. HTML→adapter→composition→ordinary/diagnostic response→
+language table→exact-link preview is exercised without apply/Save or row mutation.
+
+**5/5 browser tests passed**, local Edge/Chromium with mocked Auth/source/DB and
+external requests blocked, including desktop/tablet/iPhone X 375×812 and
+Air 420×912 emulation, current Klaus-shaped recovery, report, exact links,
+preview/transfer isolation and reopening without discovery. Initial sandbox
+spawn denial was rerun with scoped local permission, not a passing test.
+Full-suite opt-in browser/native-PG skips are not success. Real iPhone/WebKit,
+deployed authenticated smoke and actual Wishlist Save were not performed.
+Native PostgreSQL and Windows lifecycle were not separately rerun: no SQL,
+ledger, dependencies, IPC or lifecycle component changed. No assertions/timeouts
+were relaxed. Syntax/whitespace and local links/anchors checked separately.
+
+No search/admission, link/language/ranking policy, retention, Beta permission,
+initApp/global lifecycle/auth/UI, migration/flag/secret or Wishlist change.
+No merge or manual deployment; owner checkout/demo and main remain unchanged.
+
+### Ukrainian г/ґ title bridge and Kong control — 2026-11-02
+
+Follow-up in the same #222 branch, after `da21f88e872f5a6b6e96fecc48695fe1cf4a249b`;
+develop remains `290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The current public
+[Kong: Skull Island card](https://kinobazaua.com/titles/kong-skull-island) is
+headed `Конґ: Острів черепа (2017)` / `Kong: Skull Island`, with director
+`Джордан Вот-Робертс`. A localized `г`/`ґ` difference is spelling evidence,
+not independent film identity proof or evidence of a different director.
+
+The new title-only helper compares bounded Cyrillic titles after the existing
+NFC/whitespace/case normalization, treating only `ґ` and `г` as equivalent.
+All other letters, numbers and punctuation remain significant; mixed Latin
+homoglyphs, unrelated words and different parts are not folded. Exact aliases
+retain priority; the terminal Roman rule above is unchanged. No per-film or
+director exception, transliteration, global normalization or crosswalk entry
+was added.
+
+This H1 bridge requires a single H2 equal to the **trusted original title**
+(not merely a convenient alternative/localized alias), identical primary year
+and confirmed single-director identity. Even a matching film ID cannot bypass
+the director or accept a release-year variance on this route. Canonical/film-ID
+conflicts, ambiguous originals/directors and insufficient profile proof remain
+withheld. Diagnostic strategy is `title-ukrainian-g-year-director`; its explicit
+year refusal is `source-year-conflict-ukrainian-g-title`. Ordinary Beta still
+receives product fields, not privileged identity/profile diagnostics.
+
+No resolver/controller change was required: a spelling-admitted card with
+`director-alias-unestablished` now reaches the existing bounded linked-profile
+selection. Both card opportunities remain available before one person pair is
+allocated. Equal-strength distinct profiles remain ambiguous. cap10 permits
+one trusted TMDb person GET and one admitted linked Kinobaza profile GET, with
+durable reservation and the existing stage/end-to-end deadlines; cap8 cannot
+dispatch either. No third search/card, retries, redirects or Kinobaza `/search`.
+
+The operator's returned **current Kong result tail** confirms profile facts for
+`tmdb:person:236539` and the card-linked
+[Jordan Vogt-Roberts profile](https://kinobazaua.com/persons/jordan-vogt-roberts):
+`exact-name-birthdate-role`, native alias association, exact Latin-name and
+birthdate matches, director role, no ID or birthday conflict. Both reserved
+person requests returned 200. This is not confirmation by similar names or slug.
+Extraction completed `ok`: **33 candidates, 6 mapped rows**; both ordinary and
+diagnostic projections show:
+
+| Service | Availability | Ukrainian audio | Ukrainian subtitles |
+| --- | --- | --- | --- |
+| Apple | ◐ | + | − |
+| Rakuten | ◐ | + | − |
+| MEGOGO | ◐ | + | unknown |
+| HBO | unknown | unknown | unknown |
+
+These retain source/app interpretation scopes, not independently verified
+platform availability/entitlement. The pasted message begins with an older Klaus
+projection and omits Kong's `counts`, exact comparison and `before` header.
+They are **not combined into one run**, nor are unreceived TMDb title aliases,
+baseline outcome or duration claimed as observed. The audited one-shot Kong
+success path necessarily uses four GETs (movie Details, card, TMDb person,
+linked profile); the returned tail directly confirms the latter pair. It has
+no search, body persistence or retry and needs only a hidden memory-only TMDb
+credential. No rerun was requested to recover the omitted console prefix.
+
+Separately, **4 direct Kinobaza GETs/200** rechecked Gladiator II, Klaus, Alien
+and The Pursuit of Happyness against pinned develop and the patched code using
+the same response per comparison. Gladiator remains matched with 6 rows / four
+services; Klaus retains matched/partial with 2 rows, Alien matched/ok with 5 and
+Pursuit matched/ok with 3. Existing language states, format-negative distinctions
+and subtitle-only Netflix are unchanged. Other prior controls remain offline
+regressions, not newly read live responses. This follow-up therefore has four
+agent GETs plus the four-GET operator success path (eight source GETs by code
+path), and one public web search for the Kong pointer, separate from the prior
+seven GETs. None reconstructs historical HTML or validates resolver search quality.
+
+Validation: **51 new authored tests passed**; combined relevant Roman, profile,
+deferred resolver, cap/access and server suites **185/185 passed, no skips**.
+The full pre-existing 999-test set reran against the changed runtime with
+**980 passed, 0 failed, 19 opt-in skips**; the newly created file was run
+separately, not claimed as included in that earlier-expanded file list.
+The new tests cover conflicting film/person IDs, wrong original/year, namesakes,
+missing/conflicting profile facts, ambiguous cards, real resolver/verifier
+reservation ordering at 10, cap8 refusal, withholding, ordinary/diagnostic
+language tables and exact-link preview without mutation or Save.
+
+**5/5 browser tests passed again**, Edge/Chromium desktop/tablet/iPhone X/Air
+viewport emulation, with source/Auth/DB mocks and external traffic blocked;
+not a real iPhone/WebKit/deployed smoke or actual Wishlist write. Initial test
+spawn EPERM was rerun with scoped local permission, not counted as passing.
+Independent runtime review found no actionable issue. No assertions/timeouts
+were relaxed. Existing native PostgreSQL opt-in tests remain skipped; no SQL,
+ledger definition, dependency or deployment configuration changed.
+
+The Netlify Functions skill guided the bounded server-path audit; its existing
+reservation/deadline mechanisms are reused, not replaced. Search policy,
+language/link/ranking rules, access, retention, initApp/global lifecycle/auth,
+UI, flags/secrets and owner checkout/demo remain unchanged. No migration,
+merge or manual deployment. Local prompt/operator aids remain outside Git and
+keep credentials/bodies in process memory only; no key or raw response is in this
+record or PR. Rollback is a normal revert of this follow-up commit.
+
+### Independent localized alternative and Crimson Peak — 2026-11-02
+
+**Historical experiment, withdrawn below at the owner's request.** Its live
+observations and accounting remain evidence, not the current second-query
+policy or a demonstrated fix for the unrelated provider response.
+
+Follow-up to #222 at `d03a1a4976e8cf25f463f3baefd917cf13ae1582`, with develop
+still `290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The experiment temporarily
+replaced the combined second-query policy in the earlier production-Beta record,
+not its identity gates or historical observations. No historical unexamined URLs are
+inferred from a digest or reconstructed from today's results.
+
+Current server-equivalent TMDb search/Details projection established Crimson
+Peak (2015), TMDb 201085 / IMDb tt2554274, localized title `Багряний пік`,
+director person 10828, `Ґільєрмо дель Торо` / `Guillermo del Toro`.
+The current first query was `"Crimson Peak" 2015 site:kinobazaua.com/titles/`;
+the old second added both the localized title and quoted Latin director.
+
+In run `600c5d09-624c-44ef-a365-45581db8bf78`, both Tavily calls returned five
+admitted URLs, six unique in their union. The correct card was **absent**, not
+hidden at a lower rank. All six pointers scored zero against established title
+slugs, so stable provider/insertion order spent the two GETs on Mad Max: Fury
+Road and The Walk. Both had different titles/directors and were correctly
+withheld. No language data was allowed through.
+
+The experimental query change left the primary English/original query unchanged.
+If a distinct known title exists, the second contextual query independently
+uses that title and the primary Details year, for example
+`"Багряний пік" 2015 site:kinobazaua.com/titles/`. It does not add mandatory
+original-title/director terms. Without a distinct title, the existing
+primary-title/single-trusted-Latin-director disambiguation remains. Original /
+explicit-English / localized name selection, earlier confirmed premiere versus
+primary year, escaping, bounds and all Tavily basic/domain/no-answer/no-raw-content
+parameters remain. This changes discovery opportunity, not identity evidence.
+
+No candidate-ranking change was made in this experiment. In run
+`f0482e33-e50f-4401-9fb9-07807920278b`, the unchanged first query again produced
+the same five unrelated pointers. The standalone localized second query returned
+the correct [Crimson Peak card](https://kinobazaua.com/titles/crimson-peak) first.
+Its exact original-title slug scored 1, ahead of the zero-score old candidates,
+so the second GET read it. H1, original H2, year and director all passed;
+extraction was `ok`, 25 candidates / four localization blocks / six mapped rows.
+The runtime did not receive or generate a prefilled URL. Search rank, score,
+snippet or a film-level audio badge never substituted for identity/offer proof.
+
+Final repeat `c28b8fa8-9588-48d8-8446-74f064554e14` found and confirmed the same
+card in the **unchanged first query**, without spending the second search slot.
+This demonstrates provider-result variability: the localized alternative rescued
+one observed refusal, but does not prove that the old formulation always fails,
+that strict boolean semantics caused the provider response, or that search quality
+is now guaranteed. The two bounded GETs and finite non-exhaustive result remain.
+
+| Crimson run | TMDb / Tavily / cards / profile | Local elapsed | Result |
+| --- | --- | --- | --- |
+| Before | 2 / 2 / 2 / 0 | 2.847 s | no confirmed card |
+| Localized alternative | 0 / 2 / 2 / 0 | 4.549 s | correct card matched, six rows |
+| Final repeat | 0 / 1 / 2 / 0 | 2.983 s | correct card matched, six rows |
+
+Later runs reuse the verified in-memory movie projection; these timings therefore
+are not an equal-work latency comparison. One separate GET checked the discovered
+card's current language/link projection. No source-error retry or destination
+request occurred. Raw responses were never written to disk.
+
+Both ordinary and diagnostic product projections show MEGOGO audio+/subtitles+,
+and Apple/Rakuten/Netflix audio unknown/subtitles+. Apple/Rakuten's source
+table negatives remain scoped to named audio formats, not a universal absence
+of Ukrainian audio. Admitted choices are respectively MEGOGO, iTunes,
+JustWatch tracking and Netflix links; exact preview equality passed for every
+offered choice. Film-level audio and the Netflix catalogue helper do not become
+film links or lend languages to other offers. No URL was rewritten, opened on
+a destination, transferred or saved during this control; no independent platform
+availability, entitlement or actual tracks are claimed.
+
+Current automatic regression runs also confirmed:
+
+| Film | Discovered card suffix | Mapped rows | Attempts |
+| --- | --- | --- | --- |
+| Gladiator II | gladiator-2 | 6 | 5 |
+| Kong: Skull Island | kong-skull-island | 6 | 8 |
+| Klaus | klaus | 2 | 5 |
+| Alien | alien | 5 | 5 |
+| Mad Max: Fury Road | mad-max-fury-road | 6 | 5 |
+| Dune: Part Two | dune-part-two | 5 | 5 |
+| Supergirl | supergirl-2026 | 3 | 5 |
+| Goodfellas | goodfellas | 6 | 5 |
+| The Pursuit of Happyness | the-pursuit-of-happyness | 3 | 5 |
+
+These are present source responses, not unchanged historical row-count promises.
+Kong still used the existing deferred pair and exact-name/birthdate/role proof;
+Gladiator's Roman and Kong's г/ґ title routes retained director checks. Ordinary
+and diagnostic language tables agreed; exact admitted preview links were retained.
+
+This follow-up made **62 source HTTP attempts**: 21 TMDb (including Kong person),
+15 Tavily basic calls, 25 title-card GETs, one linked-person GET. The broker's
+final cumulative accounting was complete; failures count too. Two separate web
+search queries located the manual research control, never seeded runtime input.
+Crimson accounts for 14 of the 62; the nine live regression films account for 48.
+No MOTN, Watch Providers, Kinobaza `/search`, platform destination or Wishlist
+request. Per-user runtime remains two searches, two title cards and cap10 with
+the optional existing pair (legacy cap8 unchanged); diagnostic metadata reuse
+does not change production accounting or bypass backend access.
+
+Validation: **16 new authored tests**, **207/207 targeted** query/resolver,
+Roman/г/ґ, deferred-person, server/access, UI contract and restored local-runner
+regressions, plus **42/42** diagnostic/report/HTML-to-product pipeline tests.
+Zero test failures/skips in these completed runs. Initial sandbox spawn EPERM
+was rerun with scoped permission and unchanged assertions/timeouts. Independent
+review found no actionable issue; syntax, whitespace and doc links checked.
+The earlier full-suite 980-pass/19-skip and five browser results above belong to
+the preceding follow-up, not a new full/browser execution for this query-only
+change. Real iPhone, deployed smoke, native PostgreSQL and actual Save were not
+rerun; UI/lifecycle/SQL/dependencies are unchanged.
+
+The existing memory-only credential broker was reused; the temporary film
+selection and product-summary instrumentation were removed after the run, leaving
+both scripts identical to HEAD. The final stop channel was already unavailable;
+a scoped process check confirmed no matching task credential helper remained.
+No key, raw body or bulk search-result archive was retained. No migration,
+flag/secret/user-data change, merge or manual deployment. Netlify Functions
+guidance informed the bounded server audit; existing deadlines/reservations and
+the form's isolation, link policy, preview/Save and diagnostics remain intact.
+
+### Second-query restoration and Tavily integrity research — 2026-11-02
+
+Owner decision: withdraw the standalone-localized second query from commit
+`8b40273b41b407893d31062cbd2e0dbaf9859df1`; do not substitute query tuning for
+investigating unrelated search responses. A new ordinary commit restores
+`netlify/lib/kinobaza-resolver.mjs` byte-for-byte to its pre-experiment version
+at `d03a1a4976e8cf25f463f3baefd917cf13ae1582`, without history rewriting.
+The Roman-numeral and Ukrainian г/ґ title fixes remain.
+
+The restored contextual second query combines the selected primary title,
+distinct established alternate title when available, trusted single Latin
+director name when available, and primary Details year. Its existing 550-character
+fallback is unchanged. For Crimson Peak this is
+`"Crimson Peak" "Багряний пік" "Guillermo del Toro" 2015 site:kinobazaua.com/titles/`.
+The primary query, premiere/primary-year contexts, successful-empty and
+first-card-identity-refusal triggers, deduplication, ranking, admission, identity
+gates, two-search/two-card caps, optional person pair, deadlines and cap8/cap10
+accounting are unchanged. No new Tavily runtime setting or integrity/relevance
+gate is activated by this restoration.
+
+#### What is established, and what is not
+
+In the earlier fresh local broker run, the trusted film was Crimson Peak and
+the initial identity cache was empty. The diagnostic hook observed Mad Max /
+The Walk URLs directly from parsed Tavily `results`, before candidate ranking.
+Each operation starts a new Node worker; only verified TMDb film metadata is
+retained between operations. Read-only inspection found no search/HTML-result
+cache or cross-film result reuse in that path. These facts do not attest the
+provider's internal processing or prove absence of upstream caching/misrouting.
+
+The dispatched query/payload was not captured alongside the provider-returned
+`query`, `request_id` or response cache headers. The exact cause of the unrelated
+first response therefore remains **unestablished**. Subsequent variation of the
+unchanged primary query is not proof of either normal relevance behavior or a
+cache defect. Two separate public GETs during the preceding diagnosis found no
+literal `Crimson Peak`, `Багряний пік` or `crimson-peak` in the then-current Mad Max
+or The Walk HTML; those bodies are not the historical indexed provider copies.
+
+An **authored offline contract probe**, not a live replay, dispatched four mocked
+responses through the real adapter: same returned query, capitalization-only
+query, different-film query, and missing query. Every response's two admitted
+URLs were accepted as `ok`. This confirms that current URL admission does not
+check response/query correspondence or textual relevance; it does not establish
+which of those states occurred in the earlier live response. External HTTP
+attempts for this restoration/research: **0**. Official documentation reads are
+separate; no credentials, account logs, source or platform requests were used.
+
+#### Verified provider options and limitations
+
+- [Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+  defines response `query` as the executed query and `request_id` as a support
+  identifier. Byte-for-byte echo is not promised; capitalization differs in the
+  documentation's request/response example. Domain restriction filters hosts,
+  not film identity. `exact_match` constrains quoted phrases but does not prove
+  that the page's main film is the requested film.
+- [Search best practices](https://docs.tavily.com/documentation/best-practices/best-practices-search)
+  warns that exact matching can reduce or empty results. Enabling it blindly on
+  the restored multi-title/director query could overconstrain discovery. Result
+  titles may inform relevance selection, never film/person identity or languages.
+- Search `max_age_hours` describes freshness of cached **page copies**, not a
+  documented reset of the query-to-results association. A cache-busting nonce,
+  forced live fetch or retry is not an evidenced fix for this anomaly. `advanced`
+  costs two credits instead of basic's one and adds latency; it is no correctness
+  guarantee and is not enabled.
+- [Usage logs](https://docs.tavily.com/documentation/api-reference/endpoint/logs)
+  are paid-plan gated, can expose request IDs/times, but explicitly exclude the
+  original inputs/outputs. They might recover a support reference for the earlier
+  timestamp, not reconstruct its missing request/response evidence. No log lookup
+  or feedback submission was performed.
+
+#### Recommended separate follow-up, not implemented
+
+1. Pair each generated query and non-secret payload fingerprint with its local
+   run/search index, sanitized bounded provider `request_id`, HTTP status and
+   returned-query comparison. Keep raw bodies/snippets/credentials out of reports
+   and storage. Compare in memory; retain only safe derived states.
+2. Initially proposed: distinguish exact / conservative case-Unicode-whitespace
+   equivalent / mismatched / missing-invalid query before a possible rejection
+   gate. **That syntactic rejection proposal is withdrawn pending clarification:**
+   the paired control below returned the correct film while Tavily omitted quotes
+   and `site:` from response `query`. Such a difference alone cannot identify a
+   cross-wired response. Capture the original payload and returned field, rather
+   than silently rewriting either or treating normalized output as another film.
+   Missing echo is not verified correspondence. No automatic retries, new error
+   fallback or third search slot is implemented.
+3. Treat a correctly correlated but unrelated result set as a separate relevance
+   failure. Investigate using trusted title aliases against returned page titles
+   and URL paths to prioritize actual candidates and recognize wholly unrelated
+   sets **before** spending both card reads. If every first-set candidate is
+   demonstrably low-relevance, the existing second search could precede card
+   reads; after two unrelated sets, a clear unconfirmed result is preferable to
+   claiming success. This is a proposed policy change requiring validation, not
+   a new runtime rule. Unfamiliar/translated slugs and missing search titles must
+   stay distinct from explicit conflicts; absence of a slug match alone is not
+   sufficient to discard a potentially correct card.
+4. Preserve independent HTML identity checks even for promising search metadata.
+   Correlation adds zero HTTP attempts. Any relevance reordering must share the
+   same two searches/two cards and cap10, preserve both release-year contexts and
+   the person pair, and never reintroduce Kinobaza `/search`.
+5. Targeted cases: swapped concurrent film responses; meaningful title/year/site
+   changes; benign capitalization; missing/malformed/secret-like identifiers;
+   correct echo with unrelated titles; a valid localized/opaque slug; duplicate
+   pointers; stable-ID conflict; no extra dispatch or leaked raw content. Only
+   after capturing correspondence should a current-response comparison evaluate
+   exact matching or another provider setting. None was live-tested here.
+
+The restoration retains 16 authored second-query/identity/budget regressions,
+renamed to `test/kinobaza-second-query-policy.test.mjs`; examples remain fictional,
+not archived search evidence. The restored query tests first passed 52/52; the
+broader related search, Roman/г/ґ, cascade/person, server/access, diagnostic and
+HTML-to-product regressions passed **385/385, zero failures/skips** (the 52 are
+included, not additional). The initial sandbox spawn refusal was rerun with
+scoped permission, without relaxed assertions/timeouts. The runtime resolver and
+its two pre-existing query test files exactly match `d03a1a4`; whitespace checked.
+No live search, browser/iPhone, deployed smoke or actual Save was rerun for this
+query restoration. Earlier live results above belong to their recorded versions.
+No merge/deployment, live migration, flags/secrets, user data, source discovery,
+Wishlist write, UI/lifecycle or owner checkout/demo change.
+
+### Paired Crimson Peak query/response control — 2026-11-02
+
+Read-only diagnosis on PR#222 head
+`96f88f44b44b390f886c168f561e135a95a84ead`; develop/base remained
+`290bf23ab607d6c9e5dae137ff31a79a5ba240a9`. The runtime resolver is identical to
+its restored pre-experiment version. Gladiator II and Kong changes remain in the
+PR; no source-selection, identity, budget or query-policy change was made here.
+
+#### Inventory of the distinct earlier runs
+
+| Evidence | What is available | Missing evidence |
+| --- | --- | --- |
+| Failed local run `600c5d09-624c-44ef-a365-45581db8bf78`, checkout `d03a1a4` | Trusted Crimson identity, two five-pointer Tavily responses/six unique URLs; Mad Max and The Walk were actually read and title-rejected; six source attempts | Actual dispatched query/payload paired with returned query, provider request ID and cache metadata |
+| Owner-supplied successful **develop** report `21e54f7a-3ad3-4e42-97d5-5423a032310a` | Server build `290bf23`, deploy `6ae7bda7f8fb5d4070af6f0d`; one search/five admitted, two cards/three unexamined; seven attempts including TMDb providers and MOTN | Dispatched/returned queries, Tavily request ID and the five-URL list |
+| Earlier successful **local** repeat `c28b8fa8-9588-48d8-8446-74f064554e14` | Its own pointer list and local counters | Not a substitute for the develop run or its missing fields |
+
+Offline SHA256 comparison establishes that the develop report's first requested
+card digest `569c980504bf848f8fb0eee79063765d4bd7b0a9dd4e97b1c8c8f68fd2a9e6d4`
+matches `https://kinobazaua.com/titles/crimson-peak`, and its second digest
+`204b4750c63bdcb478170758abfbb81f25f3f46d56d6ccfd47e1ee106439f9ed` matches
+`https://kinobazaua.com/titles/sickle`. The first passed title/year/director and
+extracted 25 candidates/four localization blocks/six mapped rows. The second was
+withheld for incomplete identity structure. Digests do not reconstruct either
+HTML or the three unread URLs; those historical unread URLs remain unknown.
+
+#### One new local observation, not historical reconstruction
+
+Run `14701b4f-8458-4a77-8356-3823ebc38e64`, started
+`2026-11-02T11:59:09.139Z`, used fresh server-equivalent IMDb find/Details
+projection for `tt2554274` / TMDb201085. An external local harness imported the
+real query builder, adapter, admission and resolver. It observed the actual fetch
+body and a bounded response clone, returning the original Response unchanged.
+No endpoint instrumentation, deploy, body/snippet archive or persistent credential
+was created. Local runner SHA256:
+`c0a8f94fdf6c40ba2e20dd031673a0c5e4d21a086ccd323f2c96eeecc1b3afb7`.
+
+The generated first query and actual POST query were **exactly equal**:
+
+```text
+"Crimson Peak" 2015 site:kinobazaua.com/titles/
+```
+
+The actual body retained basic/general, max_results5, auto_parametersfalse,
+include_answerfalse, include_raw_contentfalse, images/favicon/usagefalse, and
+include_domains `["kinobazaua.com"]` with mode `restrict`. Actual UTF-8 body SHA256:
+`9ed7416afcb413fdb9a2b697645aeaeddf39d928cb256a598ac459f0bf3ce8f0`.
+The restored combined second query was generated but **not dispatched**: the
+first read card matched, so the second runtime search slot remained unused.
+
+| Call | HTTP | Actual sent query | Returned query | Tavily request ID |
+| --- | --- | --- | --- | --- |
+| Runtime-equivalent search1 | 200 | `"Crimson Peak" 2015 site:kinobazaua.com/titles/` | `Crimson Peak 2015` | `4d68bac9-3634-48a7-8242-bf03e7822ee5` |
+| One separate direct control | 200 | Byte-identical body, same query/parameters | `Crimson Peak 2015` | `828f81e9-5971-4c35-9526-eb19bcff1a2c` |
+
+Both calls returned the same five URLs in the same order, all under
+`https://kinobazaua.com`:
+
+1. `/titles/crimson-peak`
+2. `/titles/sickle`
+3. `/titles/the-uninvited-1944`
+4. `/titles/samhain-a-halloween-horror-movie`
+5. `/titles/hamartia`
+
+The captured response URL list, real adapter hook and admitted URL list were
+identical. The resolver read only Crimson Peak and Sickle. Crimson passed
+`explicit-title-year-director-match`, extraction `ok`, 25 candidates/four blocks/
+six mapped rows. Sickle remained `source-identity-structure-incomplete`; no claims
+were lent to Crimson. There was no current Mad Max/The Walk candidate or observed
+response substitution along adapter → admission → card selection.
+
+The observer's deliberately conservative comparison labelled the missing quotes/
+site operator a syntactic `mismatch`; this triggered the single allowed direct
+comparison. It is **not evidence of a different film query**: the paired direct
+call showed the same returned query and candidates. A rejection gate based only
+on that textual difference would have withheld a correct result. Neither query
+was rewritten by the harness. Removing `site:` from the returned field does not
+prove that the explicit domain restriction in the sent payload was ignored.
+
+No allowlisted cache-header evidence was captured. Different request IDs/body
+digests do not establish uncached computation; equal candidate lists do not
+establish a cache hit. Current sequential local success does not exclude an
+earlier provider relevance/index/cache/misrouting issue or a deployed-only fault.
+
+#### Accounting, limitations and next step
+
+**Six actual source HTTP attempts, all HTTP200**: two TMDb identity GETs, one
+ordinary resolver Tavily POST, two card GETs, and one separately counted direct
+Tavily POST. No automatic retries, redirects, `/search`, person queries, MOTN,
+Watch Providers, platform navigation or Wishlist writes. The normal resolver
+kept its two-search/two-card cap and optional cap10 person allowance. The direct
+call did not become a third runtime search; research stopped after it. Local
+3.952s includes the direct comparison and observation overhead, not deployed
+user latency. These six are separate from all earlier study accounting.
+
+Ten authored offline harness checks passed with no failures/skips: actual body
+capture, response/adapter equality, unchanged scheduling, optional single direct
+comparison, malformed/different/missing echoes, secret/query/fragment redaction,
+provider errors without retry, and zero requests without credentials. Independent
+review agreed with the evidence boundaries. Existing PR runtime regressions
+were not rerun for this documentation-only result record.
+
+The historical cause remains **unestablished**: neither old report contains the
+needed query/request-ID pair, and the new run cannot reconstruct it. A provider
+relevance/index variation, upstream cache problem or request interpretation remain
+possible explanations, not findings. No local search/HTML cache was identified;
+that is not a blanket exclusion of every historical/deployed failure mode.
+
+Recommended next step, **not implemented**: clarify Tavily's returned `query`
+semantics using these two current request IDs before designing any mismatch
+rejection. If an unrelated response recurs, capture this same request/response/
+candidate chain for that failing call and provide its ID for provider analysis.
+Current successful IDs do not identify the old bad request. Do not add cache
+busting, retries, query rewrites, stricter gates or budget increases on this
+evidence. No automatic feedback/support submission or account-log call occurred.
+Raw responses/keys remain unarchived; the credential process ended after the safe
+memory-only handoff. No merge or manual deployment was performed.
+
+### Protected possible-search relevance report — 2026-11-02
+
+Owner decision: **Crimson Peak is an unreproduced issue with an unestablished
+cause**, not a proved Tavily defect. The historical failures remain recorded
+above; neither the later successful develop report nor the paired local control
+reconstructs their missing request/response correlation. No historical query,
+request ID, URL list or response body is backfilled from a later run.
+
+The protected report now conditionally includes
+**«Можливо, нерелевантні результати пошуку»**. It appears only if **none of the
+actually requested cards is identity-matched** and at least one card has all of:
+
+- One unambiguously extracted H1 and original-title H2, within existing bounds.
+- Existing identity reason `source-title-conflict` and failed `heading-alias` gate.
+- Both existing title comparisons explicitly false against the trusted film's
+  known aliases, including the retained terminal Roman and Ukrainian г/ґ paths.
+
+This is a possible-relevance signal, not another identity decision or proof that
+the candidate is a different film. A known alternative/original title match,
+director-only or year-only refusal, conflicting ID, missing original title or
+ambiguous structure alone cannot trigger it. One confirmed card suppresses it
+even if another card is unrelated. Unparseable/ambiguous titles remain unknown;
+if another card supplies the qualifying signal, independently known single
+headings from a partially parsed card can still be reported without labelling
+that card a mismatch. A missing section is **not** assurance of relevant search.
+
+For such runs only, the report contains the trusted run film title/year/IMDb,
+each actual dispatched POST `query`, the available UUID-shaped Tavily
+`request_id` and returned `query`, and the read cards' bounded H1/H2, exact
+admitted title URL, identity status and allowlisted rejection reason. Actual
+query capture occurs at dispatch after reservation, not from the browser or a
+planned query. An unknown response field, unsupported identifier shape,
+unavailable title or redacted value is `unknown`. Undispatched candidates and
+denied card reservations do not become "read cards". The returned query is
+recorded as supplied: dropping quotes/site operators is not automatically
+classified as a wrong response or used to reject candidates.
+
+Authorization is server-side and unchanged: capture requires the diagnostic
+capability from the durable start receipt; returning the details additionally
+requires it in the final receipt. Ordinary Beta output uses the existing product
+allowlist and receives no resolver/correlation/card-title fields. Browser flags
+and Auth user metadata do not grant access. Revocation before completion strips
+the new diagnostic, and a late grant cannot recover uncaptured fields. The
+client report additionally checks the diagnostic capability and film-context
+binding. The section is plain report text, not an automatic navigation/action.
+
+The exception is restricted to bounded query/correlation/title fields and exact
+allowlisted card URLs. Credentials and credential-shaped/encoded echoes,
+arbitrary URLs, snippets, scores, generated answers, raw HTML/responses and
+untrusted error text are not included. Values stay in the existing in-memory
+form/result/report lifecycle; no log, ledger field, server archive, browser
+storage, report upload, migration or retention-policy change is introduced.
+
+Queries (including the restored second query), candidate ordering/deduplication,
+identity gates, extraction, ranking, link policy, reservations, cap8/cap10,
+timeouts and retry/redirect rules are unchanged. Gladiator II/Kong fixes remain
+in PR #222. No source request is added by this diagnostic. Validation for this
+increment uses authored fixtures and mocked HTTP only; these are not new live
+relevance or track-availability findings. No merge or deployment is authorized.
+
+Validation for this increment:
+
+- **439/439 targeted offline regressions passed**, no failures/skips: resolver,
+  query restoration/contextual years, title bridges, director identity and
+  allocation, extraction/pipeline/report, server authorization/product
+  projection and diagnostic redaction. This includes 30 new tests across
+  `media-search-relevance-diagnostic`, `media-advice-search-report` and
+  `media-advice-search-security`, not 30 additional live samples.
+- Diagnostic on/off parity preserves actual requests, order, reservations and
+  existing results. Authored cap8/cap10 full-handler cases each spend exactly
+  eight normal attempts (four baseline, two searches, two cards), no diagnostic
+  stage. Denied later reservations do not invent a read URL.
+- Alternate titles, known H2 despite unknown H1, director/year/ID-only refusals,
+  missing/duplicate/multiple headings and one matched card cannot generate the
+  signal alone. A mixed complete/partial case retains independently known text
+  without upgrading the partial card's conclusion.
+- **5/5 existing browser-suite tests passed**, no failures/skips: headless Edge
+  at 1280×900, 375×812, 420×912 and 820×1180. The added authored case checks the
+  protected section, exact selected text/unknowns, unavailable-clipboard manual
+  selection, no ordinary-Beta diagnostic bubble/payload, and report/reopen without
+  another discovery, navigation or write. These are viewport simulations, not
+  real iPhone/Safari testing.
+- Independent review found one missing-partial-title diagnostic issue, fixed
+  and covered before the final run; no remaining search/auth/budget issue found.
+  `git diff --check` passed. Owner checkout/demo/unrelated files preserved.
+- **Zero new live source HTTP requests** for this increment. No deployed smoke,
+  real platform/track verification, actual Wishlist Save or real-device check.
+
+### MEGOGO audio-format caption — 2026-11-02
+
+Base: current develop `9fc5899199965d29a296b06fd02e817ad9f40fe8` (merged
+PR #222). Separate branch `codex/m4-kinobaza-audio-format`; no changes to the
+owner checkout/demo, shared history, access/flags, identity or search policy.
+
+#### Current evidence and actual loss point
+
+One explicit read-only GET of the
+[Kong: Skull Island card](https://kinobazaua.com/titles/kong-skull-island)
+returned HTTP200, 354252 bytes. No redirect/retry, credentials, Tavily/TMDb,
+profile, platform or Wishlist request was needed. This is the **current** source
+response, not retained/reconstructed HTML from the owner's earlier run. The
+owner's prior identity-matched result is context, not a new identity attestation.
+
+The MEGOGO block is a recognized `p.mt-2` before `availabilityAccordion`, with
+one direct provider anchor, a `megogo.net` href, and a direct text node
+`(укр. аудіо [5.1])`. The anchor's explicit title is
+`Доступно в megogo з українською аудіо доріжкою / субтитрами`; there is no table
+or second link in this block. That tooltip's subtitle wording is **not** track
+evidence. No subtitles are stated in the own caption.
+
+The real localization function and its existing provider/link/exclusion helpers
+were compared against the **same in-memory parsed response**. Before the fix,
+the block and exact href were found, without issues, but the full-caption regex
+accepted only bare `укр. аудіо`/`укр. субтитри`; `[5.1]` failed the caption and
+both fields stayed `unknown`. The omission is therefore at **localization
+extraction**, not downstream provider association or table rendering.
+
+After the fix on that same DOM:
+
+| MEGOGO block field | Before | After |
+| --- | --- | --- |
+| Ukrainian audio | unknown | reported-positive |
+| Ukrainian subtitles | unknown | unknown |
+| Source evidence | none | label `укр. аудіо`, literal `укр. аудіо [5.1]`, formatLiteral `5.1` |
+| Exact original href | present | unchanged |
+
+All other localization blocks were byte-for-byte equal as structured values.
+This live comparison isolates localization only: it does not rerun the full
+resolver, repeat linked-person proof, or independently confirm an offer or
+audio format on MEGOGO. Identity-to-product-to-UI checks below use authored data.
+
+#### Narrow general implementation
+
+`kinobaza-localization.mjs` now recognizes an optional bounded numeric
+`[N.M]` suffix **only after audio**, where N is 1–9 and M is 0–2. `[5.1]` is the
+observed spelling; other accepted numeric spellings are grammar-level authored
+coverage, not new live findings. The original literal and format are retained
+as source evidence without codec/channel/entitlement inference. Bare captions,
+audio with subtitles and reversed token order remain supported. No service or
+film-specific exception is introduced.
+
+The existing one-provider paragraph/plain-span boundary and whole-caption rule
+remain: arbitrary format text, malformed/nested brackets, subtitle formats,
+trailing prose, multiple captions/anchors or extra links cannot create positive
+claims. Tables still exclusively take precedence, including negative, unknown,
+missing and conflicting table fields. Caption parsing cannot fill their gaps.
+Neighbouring services/films never lend evidence to the MEGOGO row.
+
+The report's literal allowlist gains the same narrow numeric form. Arbitrary
+bracket text, credentials or URLs remain withheld; no raw HTML/search response
+is archived. Original href, link policy, UA interpretation, ranking, comparison
+symbols, preview/explicit transfer/ordinary Save, Beta/diagnostic permission and
+session lifetime are unchanged. Temporary local helper exports used for the
+memory-only comparison were removed; `html-source.mjs` has no diff.
+
+The current HTML and DOM were kept only in the inspection process memory and
+are discarded after comparison. There is no source snapshot, new storage,
+retention policy, server stage, budget, migration or lifecycle/auth change.
+
+#### Validation and limitations
+
+- **390 targeted offline tests passed**, zero failures/skips. These cover
+  localization, assisted identity/withholding, original/plain/formatted captions,
+  table precedence, ambiguity, provider scope, safe/unsafe/missing/different-
+  service hrefs, ordinary Beta versus diagnostic projection, presentation,
+  diagnostic redaction and exact preview addresses. The relevant Gladiator II,
+  Kong, recovered Netflix/Klaus-shape and earlier table/catalogue regressions
+  remain passing. Fixtures are authored, not archived live source responses.
+- The full authored extraction → composition → product projection → comparison
+  shows MEGOGO `◐ / + / ?` for ordinary Beta and diagnostic users; neither the
+  caption nor provider tooltip supplies absent subtitles or changes the source's
+  unknown territory/offer binding. Preview preserves the one exact href without
+  mutating/saving the form. ID conflicts and unproven directors still withhold
+  all language claims before projection.
+- Independent review found no blocking issue; its optional hostile-bracket
+  report test was added and passed in the final run. `node --check` for the two
+  changed runtime modules and `git diff --check` passed.
+- **5/5 existing browser-suite tests passed**, zero failures/skips, in headless
+  Edge at 1280×900, 375×812, 420×912 and 820×1180 (80.2s total). The added
+  extraction-backed authored case checks ordinary/diagnostic users, `◐ / + / ?`,
+  exact original URL on explicit open, preview → explicit local transfer without
+  Save, and reopen without another discovery or automatic navigation/write.
+  The first sandbox attempt failed to launch (`EPERM`), and the helper's
+  escalated attempt never returned a started process. The final successful run
+  used the existing browser/runtime with a non-secret local env-file; no install
+  or external service was added. Viewports are emulation, not real iPhone/Safari.
+- **One external HTTP request total**, only the current Kong card GET. No live
+  resolver rerun, fresh TMDb/person verification, platform navigation, Wishlist
+  Save, real-device/iPhone/Safari check, merge or deployment was performed.
+
+### Meet the Fockers: scoped identity and complete source titles — 2026-11-02
+
+Base: develop `9ac354b5f4ed50d89d0ef2319b104ffe3fd12bc1`, including the
+merged Gladiator II/Kong title and MEGOGO format-caption fixes. New branch
+`codex/m4-localized-card-identity`; no changes to search query construction,
+candidate scores/order/deduplication, source budgets, access or link policy.
+
+#### Historical evidence versus current observations
+
+The owner's protected report for run
+`6dd4d20f-e379-4340-b5e7-87253c4c6bb9` records two Tavily searches, two
+card reads, eight admitted but unread candidates and eight total source
+attempts. The read-address digests correspond to `little-fockers` (2010) and
+`meet-the-parents` (2000); both failed title/original/year comparisons against
+the selected 2004 film. Neither was incorrectly confirmed. The report does
+**not** contain the historical queries, request IDs, full candidate URLs or
+expected-alias capture completeness. Whether `meet-the-fockers` was among
+those eight unread candidates remains unknown. It does not establish caching
+or a Tavily defect, nor the precise historical reason the optional warning was
+absent.
+
+A separate earlier investigation made one current Kinobaza card GET (HTTP200,
+279580 bytes), not an archive of that run. Its H1 was `Знайомство з Фокерами
+( 2004 )`, H2 `Meet the Fockers`. The film metadata identified `Джей Роуч`;
+later Ukrainian dubbing credits identified `Сергій Гаврилюк`. Previously the
+global director scan combined both people. Independently, a long list of
+expected aliases set a global diagnostic truncation flag and suppressed even
+complete, unique source H1/H2. Authored reproduction establishes those code
+defects, not unrecorded historical values.
+
+#### General, conservative changes
+
+- Source H1 and scoped H2 have independent completeness flags. The protected
+  possible-irrelevance section uses these, not expected-alias truncation.
+  Multiple/overlong/incomplete headings remain unknown; legacy observations
+  retain their strict fallback. The section still requires no confirmed card
+  and actual title non-match evidence, never alleges a proven provider error.
+- Directors and their linked-profile pointers are read only from labelled film
+  metadata between the unique H1 and availability block, with enclosing tables
+  wholly in that interval. Dubbing credits elsewhere are not film directors.
+  Competing people/values inside the interval remain unresolved; inline fields
+  cannot silently pick their first person. No name-to-profile URL is invented.
+- An unknown Cyrillic localization may continue only with **exact normalized
+  trusted original title**, the same selected year and a single confirmed
+  director. This is a separate `original-year-director-translation` route;
+  `headingAliasMatch` remains false and the alias gate is not claimed passed.
+  It performs no а/о replacement, transliteration or fuzzy matching. Latin or
+  mixed-script conflicting headings, explicit number differences and unknown
+  Roman-numbered bases remain refused. Existing base-preserving Roman/g/ґ
+  routes are unchanged. This intentionally does not solve all translations.
+- Stable-ID/canonical conflicts, competing H2s, missing or ambiguous directors
+  and unknown original/year evidence retain withholding. Even an agreeing film
+  ID cannot bypass director proof on this new route. A pending director spelling
+  can use the **same existing deferred person pair** after the preceding exact
+  original/year gates; tied different profiles stay ambiguous. No extra stage,
+  third card/search, retry or increase to cap10 is introduced.
+
+The ordinary Beta product projection still excludes protected search details.
+Diagnostics require the existing server flag/permission checks at both capture
+and final receipt. No raw source response, key, snippet or new persistent
+storage is introduced. Language evidence, exact selected links, ranking,
+preview/explicit transfer/ordinary Save and form-session isolation are unchanged.
+
+#### One-shot current control
+
+`scripts/m4-fockers-control.mjs` uses the actual TMDb projection, Tavily adapter,
+admission, ranking, resolver, card identity/extraction and optional person proof.
+It observes a bounded clone of the **same** Tavily response, recording actual
+sent query, available response query/request ID, candidate URL order, admitted
+union/rank before each dispatched card and the read card's identity fields.
+Missing/unsafe fields stay unknown. Search titles/snippets/raw bodies are not
+returned or archived. It never seeds a known card URL.
+
+The local control omits MOTN/Watch Providers/platform navigation and Wishlist;
+it is not deployed runtime or full discovery. Its maxima are two film TMDb
+GETs, two Tavily calls, two card GETs and the existing optional person pair
+(eight source attempts actually available, within unchanged cap10). Failed
+dispatches count; there are no redirects, retries or automatic reruns. Credentials
+are entered once in the existing local hidden-prompt pattern, passed only over
+child stdin, and not written to disk, argv, logs or environment variables.
+
+#### Current control results and limitations
+
+The owner ran the one-shot hidden prompt against implementation commit
+`72ea6edfd2d4639dba410865404c0fd4c569f57a` and supplied its safe diagnostic
+output. Local run `e1cdd854-afdf-4c60-8672-1a731cbc622b`, started
+2026-11-02T17:32:10.483Z, has no server build attestation (`buildSha:null`).
+The pasted middle of the JSON is incomplete; the complete query/candidate,
+read-card, counts and final projection fields below are present. Missing text
+is not reconstructed and is not a reason to rerun the search.
+
+| Actual Tavily POST query | Response query / request ID | Returned candidates, in source order |
+| --- | --- | --- |
+| `"Meet the Fockers" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers 2004`; `7b0eae3d-73cb-49f2-a3c9-83658abd007a` | `little-fockers`, `meet-the-parents`, `the-absent-minded-professor`, `snow-dogs`, `peeples` |
+| `"Meet the Fockers" "Знайомство з Факерами" "Jay Roach" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers Знайомство з Факерами Jay Roach 2004`; `36806962-addc-411b-9b12-745376c40429` | empty list |
+
+Each listed slug is an actual admitted `https://kinobazaua.com/titles/` URL,
+not an inferred URL. All five remained in that order under the **unchanged**
+ranking before each card read; the second read excludes the already read card.
+`meet-the-fockers` was absent from **both current responses**. Rearranging the
+returned candidates therefore could not find it in this run. A candidate URL
+is not identity proof and the three unread cards' actual contents are unknown.
+
+| Dispatched read | Actual source H1 / H2 | Outcome |
+| --- | --- | --- |
+| [little-fockers](https://kinobazaua.com/titles/little-fockers) | `Знайомство з Факерами 2 ( 2010 )` / `Little Fockers` | mismatch, `source-title-conflict`; original and year differ |
+| [meet-the-parents](https://kinobazaua.com/titles/meet-the-parents) | `Знайомство з батьками ( 2000 )` / `Meet the Parents` | mismatch, `source-title-conflict`; original and year differ even though director matches |
+
+The trusted TMDb projection reports movie 693, selected year 2004, original
+`Meet the Fockers`, director `tmdb:person` 6737 with `Джей Роуч` / `Jay Roach`,
+and 48 distinct title aliases. Both read cards have complete H1/H2 and
+`truncated:true` for the broader capture. The new `possibleIrrelevantSearch`
+section is present, with actual queries/correlation/addresses and both title
+refusals. This directly exercises the completeness separation without implying
+a proven provider defect. Ordinary Beta users still do not receive that section.
+
+Final current resolver status is `bounded-unresolved`, with **zero Kinobaza
+rows**, not a successful automatic discovery. The correct card was not read in
+this control; its new translation/director/language route is covered by authored
+tests, not claimed as a new live success. The response-query omission of quotes
+and `site:` is recorded literally; its cause or effect is not established.
+The two historical wrong cards recurring now does not reconstruct the old
+candidate list or prove why Tavily omitted the correct card.
+
+**Source accounting: 6 attempts, all HTTP200:** two TMDb film GETs, two Tavily
+POSTs, two Kinobaza card GETs. Optional person requests: zero. The prior
+investigation's single card GET is separate (seven current-source requests
+across the investigation plus this implementation control); historical runtime
+attempts are not replayed or charged again. No retries, redirects, platform
+navigation, MOTN, Watch Providers, Wishlist writes or additional live searches.
+
+No query/ranking change is included. The evidence establishes a current
+candidate-recall gap, but not a verified better replacement query. A next
+separate bounded comparison can test a less-constrained alternate/known-title
+query against the present combined second query, still within two slots and
+with independent card identity. Changing ranking alone cannot recover an
+absent pointer; no URL is prefilled to manufacture a success.
+
+#### Final checks
+
+- **456 targeted offline identity/resolver/extraction/diagnostic/control tests
+  passed**, no failures/skips. This includes all three Fockers parts,
+  same-title/different-year/person films, ID/canonical contradictions, original
+  and year requirements, missing/ambiguous directors, long aliases and prior
+  Gladiator II, Kong, Klaus-shaped and earlier control regressions. Fixtures
+  are authored, not retained live HTML or track/offer attestations.
+- **43 additional server/product/report tests passed**, no failures/skips:
+  Beta/diagnostic capability and revocation, search redaction, cap10 and
+  server-authorized projection. No shared database was accessed or changed.
+- **5 existing browser-suite tests passed**, no failures/skips: source-free
+  headless Edge with desktop/tablet/mobile viewports (1280×900, 820×1180,
+  375×812 and 420×912), protected versus ordinary report behavior, exact links,
+  local preview/explicit transfer and reopen without another discovery. These
+  are viewport simulations, not real iPhone/Safari checks or a Wishlist Save.
+- Independent review found first-anchor selection and same-name/different-person
+  pointer ambiguity; both were corrected and covered by five further negative
+  cases before the final 456-test run. `git diff --check` passed. Owner checkout,
+  demo and unrelated files remain unchanged.
+
+No production migration, flag/access operation, merge or deployment was run.
+Offline identity acceptance does not independently verify real availability,
+purchase/rental entitlement or platform language tracks.
+
+### Approved reserve exact-match stage and cap12 — 2026-11-02
+
+**Approval record at documentation checkpoint `c875489`; not an activation.** The owner
+approved retaining the current first two search/card opportunities and adding
+one bounded strict-search opportunity only if that whole path fails to confirm
+a card. This supersedes the earlier prospective recommendation to keep all
+future search improvements within two search/card slots and cap10. Historical
+measurements, deployed behavior and the existing implementation in PR #224
+remain as recorded above. The subsequent implementation is recorded in the
+next section; this approval-only checkpoint did not change them.
+
+The agreed sequence is:
+
+1. Keep the existing primary search and first card check.
+2. Keep the existing alternative-search behavior and second card opportunity,
+   including verified title/release-year context. Do not replace the already
+   useful alternative with exact match or silently move it to a later stage.
+3. Only when the current path, including any available linked-director proof,
+   yields no confirmed card, permit one reserve Tavily search with
+   `exact_match:true` and one additional unread card check. A confirmed card
+   ends eligibility for this reserve stage. An authorization/rate-limit error
+   or exhausted deadline does not authorize a fallback retry.
+
+For the reserve query, quote the trusted original title. A verified year and
+the trusted director name can provide context; do not make an exact Latin
+director spelling or an additional localized title a required quoted phrase.
+Preserve the context of confirmed release dates rather than inventing a year.
+Exact match constrains the searched phrase, **not film identity**: a page can
+mention that phrase without being the right card, or the search can be empty.
+No live benefit of this reserve stage has yet been established.
+
+| Source attempts per complete search | Current Beta maximum | Approved next maximum |
+| --- | ---: | ---: |
+| Existing TMDb identity/providers and MOTN baseline | 4 | 4 |
+| Tavily search slots | 2 | 3 |
+| Kinobaza card GET slots | 2 | 3 |
+| Existing linked-director profile pair | 2 | 2 |
+| **Total source HTTP attempts** | **10** | **12** |
+
+These are ceilings, not targets. A third search is useful only if an unread
+candidate can still be checked. Share admission/deduplication across all slots;
+do not refetch previously read cards, prefill known URLs or reintroduce
+Kinobaza `/search`. The existing single person pair is not doubled: if it is
+already spent, a third card needing new unestablished person proof may remain
+unconfirmed. Conflicting IDs, title/year/person ambiguity, withholding and link policy remain unchanged;
+a strict-search result never bypasses independent identity checks.
+
+Implementation must reserve/account for the new search/card stages on the
+server, count failed dispatches and preserve lost-reservation/no-retry safety.
+Merely changing a client or diagnostic limit is insufficient. Prepare any
+required ledger migration and its recovery/application checks separately;
+existing sessions must not silently gain fresh attempts. Retain finite source
+timeouts and the end-to-end deadline; the reserve stage runs only with time
+and authorized capacity remaining. Beta rights, protected diagnostics, session
+isolation, preview/transfer/Save and the absence of user search-count quotas
+are unaffected by this per-search technical ceiling.
+
+The follow-up requires targeted budget/identity/error regressions and controlled
+before/after source checks, separately reporting the third stage's actual
+benefit, request count and latency. This approval does **not** apply a live
+migration, activate a flag, authorize merge/deployment, or claim that cap12 is
+already available. At the approval-only checkpoint this increment edited
+documentation only: no runtime, schema, source request, live database or
+Wishlist operation was performed.
+
+### Reserve exact-match implementation and prepared cap12 ledger — 2026-11-02
+
+**Implemented in PR #224, not activated in a live database or deployment.**
+This supersedes the approval-only implementation status above, not its recorded
+source observations. The existing primary/alternative queries, first two card
+opportunities and independent identity/link gates remain unchanged.
+
+#### Resolver and finite request contract
+
+- Only a trusted server receipt with numeric cap12 permits the reserve stage.
+  cap8/10 retain their existing stages; browser cap/counters/identity fields do
+  not authorize anything. The complete per-search ceiling is **12 =4 baseline
+  +3 Tavily +3 title cards +the same2 person requests**. No per-user search-count
+  quota, new person pair, fourth search/card or automatic retry is introduced.
+- After the whole first-two path, including available deferred person proof,
+  yields no matched card, reserve `search-3` before one Tavily Advanced POST with
+  `exact_match:true`. Only the trusted original title is quoted; selected TMDb
+  year is unquoted context and no director name is added. This is the later
+  [Advanced update](#advanced-reserve-search-update--2026-11-02); earlier Basic
+  measurements below retain their original settings. Escaping,
+  text bounds, domain restriction and `/titles/` scope remain. The original two
+  search payloads do not acquire `exact_match` or a different query.
+- At least two source attempts and unexpired source time must remain before
+  reserve search. An admitted unread pointer from that exact response can spend
+  `kinobaza-3`; empty/rejected/duplicate-only responses cannot justify reading
+  another old candidate. Shared admission, deduplication and ranking remain;
+  no URL is manufactured, no previously read card refetched, and no request is
+  sent to Kinobaza `/search` or a platform.
+- A matched first/second card suppresses reserve. Source transport, reservation,
+  auth/access/rate/quota, redirect, challenge, invalid/oversized response or
+  deadline failures are not fallback/retry opportunities. A valid HTTP200 card
+  with unsupported film markup may permit a different exact-response candidate;
+  its original failure remains visible. Failed/uncertain reservations are never
+  retried or refunded.
+- The one global person pair is unchanged. If spent, a later card cannot fetch
+  different profiles. Exact-search position is not stronger film evidence:
+  remaining deferred cards are compared together under the existing evidence
+  ordering. Equal evidence linked to different people remains ambiguous;
+  cached proof is reused only for the same validated person/profile/alias.
+- Source work still ends at45s from handler entry, finalization by53s and total
+  response budget55s. Search/card bounds and each person's5s deadline remain.
+  Extra capacity is not extra time: slow earlier sources may leave no reserve
+  opportunity, and a third eligible card may still be unresolved.
+
+[Tavily's API reference](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+documents exact matching as constraining quoted phrases, not film identity.
+It neither guarantees recall nor establishes that a result is the right film.
+New search/card diagnostics are bounded to three; source/identity details remain
+behind the independent diagnostics permission, with ordinary Beta redaction.
+Unknown values remain unknown, and no raw responses or credentials enter them.
+
+#### Prepared migration and mixed-version compatibility
+
+CLI-generated file:
+`supabase/migrations/20261102181617_media_advice_exact_reserve_budget.sql`.
+SHA256 (Git blob, LF): `afdb81fa9cb6c883731755ca5fd8c8d5bda920c3a25415372d647916f5aa110d`.
+It widens only the private session cap constraint to8/10/12 and replaces the
+same service-only Beta RPC signature. It was unapplied at this preparation
+checkpoint; the later authorized [execution record](#cap12-migration-execution--2026-11-03)
+now confirms the single remote application. That does not authorize deployment.
+Existing rows, attempts, caps, default8, pilot RPC, TTL/cleanup eligibility,
+Beta/diagnostic access checks, switch/assignments and Wishlist data are unchanged.
+The new slots are individually unique and legal only for cap12; valid slot gaps
+after empty searches do not fabricate prior HTTP attempts.
+
+The handler supplies constant `p_stage='reserve-exact-v1'` only on `start`.
+This is a server implementation contract, not a browser value or access flag.
+The new RPC gives marked new sessions12; missing/null marker still gives10 for
+older/frozen callers sharing the DB. Unknown nonnull markers fail before ledger
+mutation. Reservation calls cannot use this marker or raise an existing cap.
+
+| Handler | Database function | New Beta cap |
+| --- | --- | ---: |
+| Old, no marker | Previous |10|
+| New, server marker | Previous (ignores start marker) |10|
+| Old, no marker | Prepared version |10|
+| New, server marker | Prepared version |12|
+
+The session's immutable receipt remains authoritative thereafter. RPC ACL stays
+service-role-only; empty `search_path`, same-form replay protection, advisory/row
+locks and post-lock region/group/card/switch authorization remain. A capability
+marker never grants diagnostic or Beta access.
+
+**Later application, separately authorized:**
+
+1. Verify exact reviewed PR SHA, migration bytes/hash, intended project and live
+   history including predecessor20261101180436. Recheck the existing recovery
+   checkpoint and take/validate a fresh scoped backup if the application plan
+   requires one; this PR does not claim a fresh remote snapshot was taken.
+   Inspect active sessions before any RPC replacement and retain their accounting.
+2. Prefer cap12-aware code first, confirming old cap10 receipts source-free.
+   The matrix also protects older callers if SQL precedes code; do not infer
+   that either migration or a Git commit alone activated cap12 everywhere.
+3. Use the established isolated migration workdir/file/history procedure, with
+   this version as the only pending migration. No general `db push`, history
+   repair, replay or unrelated migrations. If the result is lost, inspect actual
+   history/function/constraint state before considering another invocation.
+4. Postcheck version20261102181617 exactly once; allowed8/10/12, default8 and
+   per-row attempt constraint; old row/cap preservation; missing-marker10 versus
+   marked12; stage3 unavailable to old sessions; service-only ACL/empty path,
+   unchanged pilot RPC, rights, switch/diagnostics assignments and data counts.
+   Use source-free checks, then separately approve any live release smoke.
+
+**Rollback:** roll code back normally; older callers create10 without changing
+existing12 rows. Keep the widened constraint/RPC while an in-flight cap12 action
+may reserve its new stages. Before restoring the preceding Beta RPC, stop/drain
+new marked actions and let active actions finish/expire. Retain ledger rows and
+migration history. Do not down-promote caps or force an8/10-only constraint while
+cap12 rows remain; a physical schema reversal needs separate reviewed SQL after
+state inspection, not a blind replay or deletion of accounting.
+
+#### Validation and current-source controls
+
+Targeted authored regressions cover original query/payload preservation,
+first/second success, empty/duplicate/rejected reserve results, errors/deadlines,
+ID/title/year/person withholding, ambiguous profile allocation, exact link and
+language projection, protected versus ordinary diagnostics, and legacy budgets.
+Local SQL tests apply the migration only to authored fixtures; native PostgreSQL
+checks exercise competing starts/reservations and access revoked while queued.
+They are not tests against the shared Supabase project or real user data.
+
+- **575/575 targeted offline tests passed**, no failures/skips: Kinobaza and
+  director suites, unchanged two-query behavior, reserve stage, source controls,
+  full server chain, redaction, projection/report and Beta/old/new ledger tests.
+  This includes the three new PGlite migration/compatibility tests.
+- **12/12 native PostgreSQL17.6 tests passed**, no failures/skips, using24
+  independent loopback connections and authored data only. Parallel starts and
+  reserve slots have one winner, all12 unique stages fit, old/mixed-version
+  callers stay compatible, and all eight queued region/switch/group/card
+  revocation cases deny the two reserve stages before mutation.
+- **5/5 source-free headless Edge browser tests passed**, no failures/skips,
+  at1280×900,820×1180,375×812 and420×912. These are viewport emulations, not
+  real iPhone/Safari or a real Wishlist Save. No product UI was changed by this
+  increment; subsequent edits concern SQL/handler negotiation and test/report
+  bounds. Independent runtime and SQL/compatibility reviews found no remaining
+  actionable issue. `git diff --check` passed; owner checkout/demo preserved.
+
+The prepared one-pass local series covers Meet the Fockers, Alien, Mad Max:
+Fury Road, Dune: Part Two, Gladiator II, Kong: Skull Island, Klaus and The Pursuit
+of Happyness. It invokes the actual resolver, not preselected URLs. The two
+Providers/MOTN baseline requests are omitted and represented only as headroom
+sentinels; actual per-film HTTP counts are at most10:2 TMDb film +3 Tavily
++3 cards +2 person. `configuredResolverCap:12` and
+`serverLedgerCapAttested:false` explicitly distinguish local verification from
+an applied server ledger/deployment.
+
+The same invocation can replay captured responses for a cap10 counterfactual
+entirely in RAM, with **zero additional HTTP**. Missing recorded responses yield
+unknown rather than a hidden fetch. This is neither an independent before-run
+nor historical reconstruction. Live elapsed time and replay processing time
+are separate; the latter is not provider latency. Bodies/credentials are not
+archived, and one hidden credential entry serves the complete series.
+
+At implementation checkpoint `36d5775`, the new series had not yet returned a
+live result; no new request had been dispatched by the Codex process. The owner
+subsequently supplied the one-pass outputs below. These supersede that pending
+status, not the separate earlier6-attempt control or historical observations.
+
+#### Owner-forwarded cap12 series: actual results — 2026-11-02
+
+The owner supplied eight compact case outputs and the completed series summary.
+No new live request or automatic rerun was made to process this evidence. The
+credential command was pinned to implementation `36d57753a1d62f9e6841dc14042b0f00bdb1e9a6`;
+the JSON itself has `buildSha:null`, `execution:local-diagnostic` and
+`serverLedgerCapAttested:false`, not an independent build/deployment attestation.
+
+**Result: seven controls retain a confirmed card; Meet the Fockers remains
+unresolved. The reserve stage executed, but this series shows no additional
+confirmed film from cap12.** This does not establish that reserve exact search
+cannot help other responses or films.
+
+| Film | Confirmed current card | cap10 RAM replay → cap12 | Kinobaza mapped rows | Actual HTTP | Local elapsed ms |
+| --- | --- | --- | ---: | ---: | ---: |
+| Meet the Fockers (2004) | none | unresolved → unresolved |0|7|8712|
+| Alien (1979) | [alien](https://kinobazaua.com/titles/alien) | matched → matched |5|5|3627|
+| Mad Max: Fury Road (2015) | [mad-max-fury-road](https://kinobazaua.com/titles/mad-max-fury-road) | matched → matched |6|5|3559|
+| Dune: Part Two (2024) | [dune-part-two](https://kinobazaua.com/titles/dune-part-two) | matched → matched |5|5|3778|
+| Gladiator II (2024) | [gladiator-2](https://kinobazaua.com/titles/gladiator-2) | matched → matched |5|5|3479|
+| Kong: Skull Island (2017) | [kong-skull-island](https://kinobazaua.com/titles/kong-skull-island) | matched → matched |6|8|6224|
+| Klaus (2019) | [klaus](https://kinobazaua.com/titles/klaus) | matched → matched |2|5|3571|
+| The Pursuit of Happyness (2006) | [the-pursuit-of-happyness](https://kinobazaua.com/titles/the-pursuit-of-happyness) | matched replay → gated rows retained |3|5|3096|
+
+These are source rows, not unique offers or guaranteed platform availability.
+All eight cap10 replays report `complete:true`, with no external requests. They
+reuse the same current responses and current identity implementation, not a
+separate live baseline or the deployed historical resolver. The elapsed values
+sum to36046ms; they include local control/observation overhead and exclude the
+omitted Providers/MOTN, Auth and live ledger work. They are not production
+latency measurements. Seven unchanged controls do not prove catalogue-wide
+quality or causation for earlier source failures.
+
+**Meet the Fockers: the reserve opportunity was used, not successful.** Run
+`9f15ceab-fdfb-485f-93cf-43865ffaa6eb` used2 TMDb +3 Tavily +2 cards =7 requests,
+no person requests. All attempt records report HTTP200.
+
+| Search | Actual query | response.query / request_id | Observed outcome |
+| --- | --- | --- | --- |
+|1, unchanged | `"Meet the Fockers" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers 2004`; `8d777458-0510-4523-b851-d3aca848365f` | little-fockers → meet-the-parents → the-absent-minded-professor → house-of-lies → snow-dogs; all5 admitted |
+|2, unchanged | `"Meet the Fockers" "Знайомство з Факерами" "Jay Roach" 2004 site:kinobazaua.com/titles/` | `Meet the Fockers Знайомство з Факерами Jay Roach 2004`; `d6d1ca0a-494b-4e3a-adaa-6bd4dfba2cb7` | avp-alien-vs-predator → primer → one-last-ride → doomsday → a-guide-to-recognizing-your-saints; all5 admitted |
+|3, reserve `exact_match:true` | `"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/` | `"Meet the Fockers" 2004 Jay Roach`; `150ade1c-9f6e-499e-a2f9-b6e55f4de780` | returned1, admitted0, rejected1, category `query`; safe URL projection is null |
+
+The two original card reads remained little-fockers and meet-the-parents; the
+complete cap10 replay confirms both were refused with `source-title-conflict`.
+The supplied live readCards fragment is incomplete, so missing heading/director
+fields are not reconstructed from this replay or previous runs. The reserve
+response's address/path and query values are **unknown**: it may not be assumed
+to be the correct film, a duplicate, a `/search` URL or a redirect. Only its
+query-related admission refusal is established. There was no admitted reserve
+candidate and therefore **no `kinobaza-3` GET**, rather than a skipped valid
+third-card opportunity. The ten admitted normal candidates left8 unread;
+`bounded-unresolved` and0 Kinobaza rows are correct withholding outcomes.
+
+Compared with this invocation's cap10 replay, cap12 spent one additional Tavily
+request and confirmed no additional card. Do not strip parameters, invent a
+replacement URL, weaken admission or alter either existing query to turn this
+observation into a success. A possible separate follow-up would capture a safe
+classification of that rejected URL's origin/path, without secret query values,
+before proposing any policy change; no such request or change was made here.
+
+**Other controls and retained source facts:**
+
+- Alien: the API's second pointer `alien` was ranked first by the existing
+  candidate logic and independently matched. Apple/Rakuten blocks report audio−,
+  subtitles+; MEGOGO reports audio+/subtitles+. No reserve search was used.
+- Mad Max: correct first card matched with partial extraction and6 rows. Apple
+  and Rakuten report audio+/subtitles−, MEGOGO audio+/subtitles unknown. The other
+  read's unsupported markup did not discard the confirmed card or trigger reserve.
+- Dune: Part Two: correct first card matched and5 rows retained; Apple audio+/
+  subtitles−, Rakuten and MEGOGO audio+/subtitles+. Dune1984 was refused.
+- Gladiator II: `Гладіатор ІІ` matched through the terminal-Roman route with
+  original/year/director confirmation. Apple/Rakuten audio+/subtitles+ and
+  Netflix audio unknown/subtitles+ survived; Dope Thief was refused.
+- Kong: the г/ґ route reached the single linked-person pair. Both profile GETs
+  succeeded and exact Latin name, birthdate and director-role proof confirmed
+  the person. The first card then matched;2 TMDb film GETs +2 searches +2 cards
+  +2 person GETs =8 actual requests. Apple/Rakuten audio+/subtitles−, MEGOGO audio+/
+  subtitles unknown retained. No reserve search or second person pair occurred.
+- Klaus: correct card matched with partial extraction; Netflix audio+/subtitles+
+  and its admitted link survived. Noelle was refused, not merged into Klaus.
+- Pursuit:3 gated Kinobaza rows remain, including Netflix audio unknown/
+  subtitles+ and MEGOGO audio+/subtitles+. The complete RAM replay confirms the
+  correct card and refuses the-whole-enchilada as structurally incomplete.
+  The live readCards/resolver middle is missing in the pasted text; its exact
+  omitted gate trace is unavailable. The mapped live projection is independently
+  gated by `composeDiscovery` on matched identity; it is not a reconstructed
+  copy of those missing diagnostic fields.
+
+For links with `hasURL:true` and `transferable:true` in the supplied projection,
+those flags verify policy admission only, not navigation,
+equivalence of offers, entitlement or platform tracks. Upper-block country null
+remains distinct from explicit UA regional rows; the existing application's
+Kinobaza interpretation is unchanged and does not join unrelated offers.
+
+Case run IDs in series order:
+`9f15ceab-fdfb-485f-93cf-43865ffaa6eb`,
+`2084fca8-3d90-4518-83a0-cb94ca242d3a`,
+`834b19c7-c834-4c1d-a3cc-131e22e9784a`,
+`64db28ee-077a-4364-bddd-07b7bdde1725`,
+`494c94f6-a3a6-428c-ae28-fa4ca6ee9a00`,
+`fee0bed4-2d5d-4894-a23c-e71313503820`,
+`778fbc07-1d7a-4e84-9e11-870c17788bfd`,
+`35cdb04e-528a-4262-8f71-deed5f995beb`.
+
+**Reconciled source accounting:45 requests** =16 TMDb film +11 Tavily +16 card
+GETs +1 TMDb person +1 Kinobaza person. All visible attempt records report
+HTTP200. The aggregate exactly equals the eight per-case counts. Counterfactual
+replay adds0 HTTP. No Providers/MOTN/platform request, retry or Wishlist write
+occurred in this source-only series. The preceding6-attempt control and separate
+earlier1 card GET remain separate evidence (52 across those documented controls
+and this series), not additional requests made while reading this report.
+
+After implementation,161 additional HTML/localization/protected-relevance tests
+passed: **736 offline total**, plus the separately recorded12 native PostgreSQL
+and5 browser tests above. This evidence-only follow-up changes no runtime or SQL;
+only documentation and PR reporting are updated. No migration, feature/access
+operation, merge or deployment was performed. Runtime/browser suites were not
+rerun for this evidence-only documentation edit; `git diff --check` passed.
+
+#### Rejected reserve URL: one controlled observation and authorized recheck
+
+The earlier reserve response with request_id
+`150ade1c-9f6e-499e-a2f9-b6e55f4de780` is not recoverable from the local runner:
+it kept no raw-response archive, and the safe projection withheld the address.
+The following is a **new observation**, not proof of that earlier URL's spelling.
+
+The first permitted control, run `e65ddbf3-f324-489c-90df-0cc6d39daef5`, spent
+one Tavily attempt and returned HTTP401 / `search-auth-error`, with no candidates
+or request_id. The owner reported supplying the wrong key and explicitly
+authorized one additional control. No automatic retry was made and the first
+report was retained separately.
+
+Authorized recheck run `8bb8b81c-2ec8-4e12-bdf8-a51a6b82824f` returned HTTP200.
+It reused the actual reserve query and unchanged adapter/options:
+`"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/`, with
+`exact_match:true`. Tavily request_id:
+`22d5994f-4765-4cb5-9197-ee0b793607ce`; response.query:
+`"Meet the Fockers" 2004 Jay Roach`.
+
+| Safe field | Actual recheck result |
+| --- | --- |
+| Hostname | `kinobazaua.com` |
+| Original pathname | `/persons/jay-roach` |
+| Parsed pathname | `/persons/jay-roach` — unchanged |
+| Query parameter names | `page` |
+| Query / fragment / credentials present | yes / no / no |
+| Candidates returned / admitted / rejected |1 /0 /1|
+| Primary rejection category | `query` |
+| Independently allowed film-card path | no: `/persons/`, not `/titles/<slug>` |
+
+No parameter values, raw address with query, credentials, snippets or raw HTML
+were published or saved. The local report contains sanitized metadata only and
+inherits the study directory's current-user-only access rule. No key is saved.
+
+**The current pointer is not a usable film card.** Its pathname belongs to the
+person-profile namespace. This conclusion concerns the observed address type,
+not an HTML-based attestation of the profile's contents. No Kinobaza GET was
+sent because it was not a permitted title-card inspection target.
+
+The existing classifier chooses one primary reason: after scheme/host checks,
+it checks query presence before checking the supported title path. Consequently
+`query:1` is correct but does not show the independent wrong-path failure. Merely
+removing a query would not make `/persons/jay-roach` an admitted `/titles/` path;
+the runtime's full original-spelling admission also requires the title prefix.
+No actual URL was stripped, rewritten, resolved or followed to demonstrate this.
+
+The value/HTML effect of `page` was **not tested**. Its name suggests pagination,
+but that is an inference, not an observed behavior. It provides no evidence for
+the selected film's identity. No parameterized-versus-canonical card comparison
+was possible, and no common film ID/title/year/director confirmation is claimed
+for this person pointer. The earlier masked result may or may not have been the
+same address; this recheck cannot establish that.
+
+**Proposed next step at that checkpoint (paired observation completed below):**
+retain URL admission, query policy and
+all identity gates. Test the reserve query's quoted original title plus year
+against that same query with director context in a separately bounded comparison,
+without replacing the first two search stages. A director profile being returned
+makes director-context bias a plausible hypothesis, not a demonstrated cause;
+the earlier no-director primary search also omitted the desired card. Exact
+phrase matching alone does not prove a title-page result. Only independently
+confirmed cards should count toward a better query's success.
+
+Separately, protected diagnostics could retain the present primary category and
+add bounded independent flags such as `query-present` and `unsupported-card-path`.
+This would clarify failures without accepting a new address, exposing query
+values, altering identity or changing the per-search budget. No such runtime or
+diagnostic-policy change is included in this evidence-only update.
+
+**Accounting for this investigation:2 HTTP attempts total** — one HTTP401 Tavily
+control and one explicitly authorized HTTP200 Tavily control. Kinobaza card,
+person, TMDb and platform GETs:0. These are separate from the preceding45-request
+series. Reading the two sanitized local reports and the independent code review
+made no source requests. Six authored helper safety tests passed offline; they
+are not live identity/extraction successes. No migration, merge, deployment,
+runtime search change, identity change or Wishlist write was performed.
+
+#### One controlled reserve exact-match pair: director versus no director
+
+The owner separately authorized one ordered pair for Meet the Fockers (2004),
+IMDb `tt0290002`. Run `eeace42c-fe31-43bb-b1f4-dbe61b48652a` completed once
+against implementation `a682afd4e0f502932800d8c8422ce73b1d91d31e`.
+This is a current local diagnostic, not a reconstruction of an earlier run,
+a deployed build or an attestation of the live server ledger.
+
+The existing adapter dispatched these queries in order:
+
+1. With director: `"Meet the Fockers" 2004 Jay Roach site:kinobazaua.com/titles/`.
+2. Without director: `"Meet the Fockers" 2004 site:kinobazaua.com/titles/`.
+
+The actual outbound POST bodies were compared: **all options except query were
+identical**. Both used `exact_match:true`, `search_depth:basic`, `topic:general`,
+`max_results:5`, `auto_parameters:false`, and `include_domains:[kinobazaua.com]`
+with restrict mode. Answer/raw-content/images/favicon/usage inclusion remained
+false. No normal search stage, runtime query builder or URL policy was changed.
+
+| Observed field | With director | Without director |
+| --- | --- | --- |
+| HTTP status |200|200|
+| Tavily request_id |`4200f068-c405-4623-a1ae-c32d5fa6f8aa`|`9a8db7a3-2b3b-41fa-86bf-231434bde67e`|
+| response.query |`"Meet the Fockers" 2004 Jay Roach`|`"Meet the Fockers" 2004`|
+| Returned address count |1|5|
+| Address types |1 person-profile path|5 title-card paths|
+| URL-policy-admitted title cards |0|5|
+| Target `/titles/meet-the-fockers` returned / admitted |no / no|no / no|
+| Target identity check |not run: target absent|not run: target absent|
+| Search-call elapsed time |2710 ms|2518 ms|
+
+All returned hosts were `kinobazaua.com`. Safe address observations, in response
+order (original and parsed pathnames were equal):
+
+- With director: `/persons/jay-roach`; query present, parameter name `page`;
+  primary rejection `query`. Independently, it is not a permitted film-card path.
+  No fragment or credentials were present. No query value is retained or exposed.
+- Without director: `/titles/little-fockers`, `/titles/meet-the-parents`,
+  `/titles/the-absent-minded-professor`, `/titles/snow-dogs`,
+  `/titles/house-of-lies`. These five passed unchanged URL admission, with no
+  query, fragment or credentials. Their HTML was not read in this bounded test;
+  URL admission is not film-identity confirmation.
+
+The one optional card GET was allowed only for the exact target path actually
+returned and admitted by one of these responses. It could be shared between
+both variants, not fabricated from the known slug or obtained by stripping
+parameters. Because neither response contained the target, **no card GET or
+identity check occurred**. No person profile, platform or Kinobaza `/search`
+request was made. Previously verified TMDb film693/year2004/person6737 context
+was reused, not refreshed; its complete director evidence remained unchanged
+for any potential identity check. No current language/link result is claimed.
+
+**Observation:** dropping the director changed this pair's returned address
+types, but did not retrieve the required card. Neither variant demonstrated a
+successful film search. The no-director result must not be called an improvement
+merely because more URLs passed admission.
+
+**Limits and next step:** this is one sequential pair, with the director variant
+first, not repeated or randomized. It cannot isolate director context as a cause,
+establish indexing/ranking/cache behavior, explain the earlier hidden address or
+prove a general advantage for either query. The independently repeated profile
+pathname is a current observation, not recovery of the old masked URL. There is
+no evidence here to change the reserve query or relax admission/identity gates.
+A useful follow-up would be a provider-side investigation of these request IDs
+and the target page's discoverability; further live comparisons would require a
+separate scope and request accounting. No protective mechanism was implemented.
+
+**Accounting for the pair:2 external HTTP attempts** —2 Tavily HTTP200;
+Kinobaza cards/persons, TMDb and platforms:0. No retries or extra source requests
+were made while reading/reviewing the sanitized report. The pair adds2 to the
+preceding URL investigation's2 (4 across those separate follow-ups); the earlier
+45-request series remains separate. The two measured search calls total5228 ms,
+not end-to-end app latency. The report contains no raw responses, query-parameter
+values or credentials and retains current-user-only local access.
+
+Four authored pair-helper checks passed offline with no HTTP, covering payload
+equality, actual-target-only shared GET, rejection/no-target cases and error
+stop behavior. Independent review agreed with the counts and limits of inference.
+Application/browser/SQL suites were not rerun for this evidence-only edit;
+their previously recorded results above are not new live evidence. Only this
+documentation and the PR report change. No migration, search/identity change,
+merge, deployment, feature/access operation or Wishlist write was performed.
+
+### Advanced reserve search update — 2026-11-02
+
+The owner authorized replacing only the reserve stage's search settings after
+the completed Basic pair above. This is an explicit product decision, not a
+claim that the pair proved causality, a cache failure or Advanced recall.
+
+- `search-1` and `search-2` keep their existing text, selected/premiere-year
+  contexts, Basic payloads, URL admission, candidate order and card opportunities.
+- When the complete old path (including any eligible linked-person proof)
+  fails to confirm a card, `search-3` uses `search_depth:advanced` and
+  `exact_match:true`. Query: quoted verified original title, selected TMDb year,
+  `site:kinobazaua.com/titles/`; no director or extra localized title is required.
+  For Meet the Fockers: `"Meet the Fockers" 2004 site:kinobazaua.com/titles/`.
+- The adapter's default stays Basic. Only the explicit server-owned reserve
+  call opts into Advanced; unknown depth values do not enable it. All remaining
+  request parameters, including `auto_parameters:false` and `include_usage:false`,
+  are unchanged. The latter keeps both earlier payloads byte-for-byte compatible;
+  actual account charges must not be inferred when usage is absent.
+- The Advanced response remains candidate discovery only. A third GET must be
+  admitted, unread and present in that reserve response. URL parameters are not
+  stripped, a known slug is not supplied, and the original/title/year/director,
+  stable-ID conflict and ambiguity gates still decide whether claims survive.
+  Withholding, language binding, links and preview/transfer/Save are unchanged.
+- **12 HTTP attempts remain the ceiling**, not12 credits:4 baseline +3 searches
+  +3 title cards +one existing person pair. A failed search or reservation is not
+  retried. The existing45/53/55-second deadlines and15-second search bound are
+  unchanged; Advanced does not buy additional time or a fourth candidate read.
+- cap8/cap10 retain their Basic-only first-two behavior. The existing prepared
+  `reserve-exact-v1` negotiation and migration file are unchanged; no new SQL
+  stage, database operation or live migration is required for changing depth.
+  At this preparation checkpoint the cap12 migration had **not** been applied;
+  see the subsequent [execution record](#cap12-migration-execution--2026-11-03).
+- Only authorized diagnostics identify the reserve depth. Ordinary Beta results
+  gain no search metadata or new diagnostic access.
+
+According to the current [Tavily credits documentation](https://docs.tavily.com/documentation/api-credits),
+Basic costs1 credit per search and Advanced costs2. Therefore the maximum
+documented search cost for a successful full three-search path is **4 credits
+(2 Basic +2 Advanced)**, instead of3 for the previous all-Basic path. This is a
+depth-rate calculation, not an account invoice, confirmation of error charging
+or a claim about available Researcher balance. No automatic tier/payment change
+or quota waiver is made. [Search API reference](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+describes usage as optional; absent/malformed usage remains unknown.
+
+The local source-only control now records actual outbound Basic/Advanced depth,
+per-search elapsed time, documented-rate credits and separately allowlisted
+numeric `usage.credits` if returned. RAM cap10 replay is explicitly excluded from
+HTTP and credit counts. Times include local response inspection; they are not
+production end-to-end latency. Prior Basic runs and the earlier paired result
+are not relabeled as Advanced or counted as new live evidence.
+
+At that preparation checkpoint, live validation awaited one separately guarded four-film series:
+Meet the Fockers, Alien, Dune: Part Two and Kong. It uses the current resolver
+without prefilled card URLs and observes URL → admission → card read → identity
+→ gated language/link projection. Two Providers/MOTN baseline slots are reserved
+as headroom but not dispatched; every actual source attempt is counted. A found
+URL alone is not success. If the target is absent or a gate fails, the report
+must retain that outcome rather than manufacture a full-path success.
+
+Prepared validation:682 non-browser/non-native tests in `test/` plus206
+HTML/localization/discovery/matching tests passed (**888 offline**, zero failures
+or skips). After adding explicit per-depth accounting and byte-for-byte legacy
+payload assertions, the affected60-test subset passed again; it is included in,
+not added to, the888. Four separate outside-repository wrapper safety tests also
+passed without HTTP: fixed film scope, checkpoint/one-shot report, auth stop,
+Advanced reserve and RAM-only comparison. Independent runtime/compatibility review
+found no blocking issue. Native PostgreSQL tests have not been rerun for this
+depth-only change; the prepared migration bytes are unchanged.
+
+Source-free headless Edge browser regression: **35/35 passed**, zero failures or
+skips, with external network blocked. It covers desktop1280×900, tablet820×1180,
+iPhone-X-size375×812 and Air-size420×912, form preview/explicit local transfer,
+report access/revocation, pending selection, retained/stale results, context
+boundaries and no discovery replay. These are viewport emulations, not real
+iPhone/Safari tests or a real Wishlist Save. The subsequent source report is
+recorded below; it does not establish live Advanced behavior.
+
+### Four-film current-source report received — 2026-11-03
+
+The owner completed the guarded control once; its sanitized local report was
+read directly, without copying raw responses or repeating a source request.
+Worker run `e98ecb62-7551-45e8-82bb-3fa6c0e4b1ce` has status
+`completed-one-pass-no-automatic-repeat`, four finished cases and reconciled
+counts. The checked-out implementation and PR head at execution handoff were
+`3adbe6439428ca5aa68cb953ddbc5d26910de26d`. `buildSha:null` and
+`serverLedgerCapAttested:false` mean **local source control**, not a deployed
+build/live-cap12 attestation or an historical HTML reconstruction.
+
+**All four correct cards matched before reserve. Advanced was never called.**
+Do not attribute the newly successful Fockers search to Advanced or the extra
+slots: its unchanged first Basic request now returned the right card. That
+current observation cannot explain the earlier omitted candidate, determine
+provider indexing/cache/ranking internals or establish repeatable recall.
+
+| Film | Correct card / identity route | Source rows | Actual HTTP | Local live elapsed | Basic search elapsed |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Meet the Fockers (2004) | `/titles/meet-the-fockers`; original-year-director-translation |5|5|6222 ms|3817 ms|
+| Alien (1979) | `/titles/alien`; title-year-director |5|5|3819 ms|2354 ms|
+| Dune: Part Two (2024) | `/titles/dune-part-two`; title-year-director |5|5|3720 ms|2464 ms|
+| Kong: Skull Island (2017) | `/titles/kong-skull-island`; г/ґ route plus confirmed linked person |6|8|5277 ms|3794 ms (two calls)|
+
+#### Meet the Fockers: observed URL through gated language/link projection
+
+Case run `8a5ccec4-f9b4-41ee-bf88-8959021134b4` used the actual first Basic POST:
+`"Meet the Fockers" 2004 site:kinobazaua.com/titles/`, no exact-match option.
+Tavily request_id `0a94a9fd-246e-4112-afe0-3f3eaa52fc36`, response.query
+`Meet the Fockers 2004`;5 results, all admitted by the unchanged URL policy.
+In response and runtime ranking order:
+`meet-the-fockers`, `little-fockers`, `meet-the-parents`,
+`the-absent-minded-professor`, `snow-dogs` (all under the exact title namespace).
+No URL was prefilled or derived from the expected slug.
+
+The first read was the actually returned
+`https://kinobazaua.com/titles/meet-the-fockers`. H1 is
+`Знайомство з Фокерами ( 2004 )`, selected title `Знайомство з Факерами`;
+H2 `Meet the Fockers`, year2004 and director `Джей Роуч` matched the trusted
+TMDb context. No shared film ID was present and no stable-ID conflict was
+observed. Identity matched as
+`explicit-original-year-director-translation-match`, with exact original/year
+and confirmed director, **not** a blanket а/о replacement or title similarity.
+H1/H2 completeness remained true despite diagnostic alias-list truncation.
+Extraction was `ok`; no person pair was necessary.
+
+The second GET was `little-fockers`: H2 `Little Fockers`, year2010 and director
+`Пол Вайц`. It was refused with `source-title-conflict`, its differing original,
+year and director remained visible, and no claims were projected from it.
+`meet-the-parents` was returned but **not read in this live case**; its separate
+refusal and all-three-parts identity checks remain authored regression evidence,
+not an additional live GET in this report.
+
+The confirmed card produced5 source rows, across4 services (Rakuten has two
+distinct source scopes; they are not collapsed into a false single offer):
+
+| Retained source scope | Ukrainian audio | Ukrainian subtitles | Link policy observation |
+| --- | --- | --- | --- |
+| Rakuten regional UA row |unknown|unknown|tracking pointer, present and transferable|
+| Apple regional UA row |unknown|unknown|tracking pointer, present and transferable|
+| Rakuten upper provider block |reported-negative|reported-positive|tracking pointer, present and transferable|
+| Netflix upper provider block |unknown|reported-positive|card pointer, present and transferable|
+| MEGOGO upper provider block |reported-positive|reported-positive|card pointer, present and transferable|
+
+Upper-block country remains null in the source row; the already agreed
+application interpretation for Ukraine is unchanged, not a new source territory
+claim. Languages are not copied into the separate regional offer records or
+between services. The current report preserves language states and link
+`kind/hasURL/transferable`, but intentionally does **not** retain exact platform
+hrefs. Thus it verifies gated link projection/admission, not an independent
+byte-for-byte recheck of platform URLs or actual navigation. Exact-address
+transfer/preview and ordinary Save isolation are covered by the separately
+recorded automated tests. No platform was opened and no Wishlist record written.
+All these source statements remain non-entitlement/non-track guarantees.
+
+#### Retained controls and current negative reads
+
+- Alien: existing ranking promoted the returned second pointer `alien` to the
+  first read; it matched. `gigers-alien` remained structurally incomplete, not
+  a confirmed1979 movie. Apple/Rakuten audio− and subtitles+, MEGOGO audio+ and
+  subtitles+ survived in their own blocks.
+- Dune: correct card matched; Dune1984 was refused, not mixed into Dune2024.
+  Apple audio+/subtitles−, Rakuten and MEGOGO audio+/subtitles+ remained. One
+  extra returned pointer was withheld as unsupported-path; its exact spelling
+  is not recoverable from this sanitized report and is not guessed.
+- Kong: the correctly discovered card reached the existing global profile pair;
+  exact Latin name/birthdate/director-role facts confirmed the selected person,
+  and the г/ґ route matched. Apple/Rakuten audio+/subtitles− and MEGOGO audio+
+  with subtitles unknown survived. `love-amongst-friends` was read but stayed
+  structurally incomplete. The second Basic result contained unrelated pointers;
+  none replaced the correctly confirmed first card or supplied film identity.
+
+#### Actual Basic/Advanced queries, credits and timing
+
+| Depth | Actual calls | Documented-rate credits | Local search-call elapsed | Returned billed usage |
+| --- | ---: | ---: | --- | --- |
+| Basic |5|5|12429 ms total|unknown for all5; usage not returned|
+| Advanced |0|0 attributable to dispatched calls|not measured: never invoked|no Advanced response|
+
+The first three query strings are the quoted original titles shown in the table
+with their years and `site:kinobazaua.com/titles/`. Kong used both:
+`"Kong: Skull Island" 2017 site:kinobazaua.com/titles/` and
+`"Kong: Skull Island" "Конг: Острів черепа" "Jordan Vogt-Roberts" 2017 site:kinobazaua.com/titles/`.
+Its call times were2483 and1311 ms. Remaining request IDs in order:
+Alien `4ebab1a5-9574-4410-8d6f-fe541d200976`;
+Dune `43000442-ec13-4799-9542-39cedf8e00b6`;
+Kong first `9fb23231-c24b-45a6-ab40-4f9cd1e63f20`,
+second `8b3d5762-9783-4580-9924-89691a47eb4f`.
+No request had `search-3`, `kinobaza-3`, `exactMatch:true` or Advanced depth.
+No Advanced latency, live benefit or Advanced search failure is claimed.
+
+**Reconciled external source total:23 HTTP** =8 TMDb film +5 Tavily Basic
++8 title cards +1 TMDb person +1 Kinobaza person; all23 attempts received
+HTTP200. `Providers` and MOTN were omitted, with their2 ordinary runtime slots
+held as headroom per case. There were no retries, Kinobaza `/search`, platform
+requests or source calls during this report review. The sum of per-film live
+elapsed values is19038 ms, **not** worker wall time or production app latency;
+it excludes setup/serialization and1117 ms of separate RAM replay.
+
+All four cap10 comparisons completed using the **same current captured
+responses**, with0 extra HTTP and the same four confirmed cards. These are not
+independent live before-runs or credit/latency comparisons against deployed
+cap10. They support that current success did not require the new reserve path.
+
+Independent evidence review reconciled case/global counts, language scopes,
+link limits and timings without HTTP. The previous888 offline/35 browser/4
+wrapper results remain separately recorded; those suites were not rerun for
+this evidence-only documentation change. `git diff --check` passed. Advanced
+dispatch/failure/gates remain covered by authored tests, but its **live reserve
+behavior and recall remain untested by this series**. No forced failure or
+additional direct Advanced control was introduced to bypass the eligibility
+guard. Migration bytes, runtime, flags, access, production, merge and deployment
+were not changed during this reporting follow-up.
+
+### Cap12 migration execution — 2026-11-03
+
+The owner explicitly authorized **only**
+`20261102181617_media_advice_exact_reserve_budget.sql`. Reviewed PR#224 head
+was `722fc2e4127abd0d4ec5a6907e2e8532f797009b`, with clean task checkout;
+current `develop` was `9ac354b5f4ed50d89d0ef2319b104ffe3fd12bc1`.
+The original Git/file SHA256 matched
+`afdb81fa9cb6c883731755ca5fd8c8d5bda920c3a25415372d647916f5aa110d`.
+The established Movie Wishlist project identity, region and PG17 endpoint were
+rechecked against the linked CLI target; no project was selected by list order.
+No owner checkout/demo, Git history, feature assignment or application source
+was changed for this operation.
+
+#### Preflight and local recovery
+
+- Remote history contained exactly the four expected M4 versions, including
+  predecessor20261101180436 once and target20261102181617 zero times. There were
+  **0 unfinished/unexpired sessions** and10 existing rows, all cap10, with valid
+  unique attempts within each row's cap. Default source_cap remained8.
+- The actual live Beta RPC body was hashed against the immutable predecessor
+  SQL before replacement, not trusted solely because history listed its version.
+  Empty search_path, service-only execution, private RLS/ACL and the current
+  schema/constraint shape also passed preflight.
+- The retained20261021 checkpoint's pinned hashes, manifest and34 AES-GCM
+  artifacts authenticated again; DPAPI unwrap and native archive-list read
+  succeeded. Its earlier scoped recovery qualification is retained, not upgraded
+  to a full-project round-trip guarantee. It predates M4 and does not contain its
+  ledger, so it was not used alone as a current-state backup.
+- The earlier M4 supplement independently decrypted and validated. A **fresh
+  pre-cap12 supplement** was then captured in a read-only repeatable-read
+  transaction, encrypted with AES-256-GCM and a separate DPAPI CurrentUser-wrapped
+  key, and independently reloaded using the persisted key. Checksums,
+  authentication, JSON/SQL readability, row counts, primary keys and data
+  fingerprints passed. NTFS access was restricted to the current owner/SYSTEM;
+  no utilities or Windows updates were installed.
+- The new supplement covers the five M4-private tables (including complete
+  session/attempt/cap data), private/public M4 functions, ACL/RLS/constraints,
+  region trigger, cleanup configuration and existing migration history.
+  Numbered restore SQL is operator-only and never runs against the source.
+  Core/Auth rows, Storage files/services and secrets are not included; only
+  dependency-presence checks and referenced-Auth validity are recorded. This
+  fresh copy was **readability-verified, not newly restore-tested**.
+- Private local artifact roots (not attached to the PR):
+  `%LOCALAPPDATA%/MovieWishlist/Recovery/<verified-project>/m4-pre-cap12-20261103T094354Z-f9aa75a2`
+  and its separate key under `MovieWishlist/RecoveryKeys`.
+
+#### Single isolated application
+
+Installed CLI2.122.0 was used without installing its advertised update. A new
+private isolated workdir
+`%LOCALAPPDATA%/MovieWishlist/M4Deployment/exact-reserve-20261103T094354Z-f9aa75a2`
+contained exactly the four already-applied migration files plus the approved
+target. File roster/checksums matched the reviewed source; only the target was
+pending. Immediately before dispatch, recovery readability, SHA/file, history,
+RPC body, active-session absence and preflight fingerprints were rechecked.
+
+There was **one** guarded `migration up --linked` invocation in this workdir,
+explicitly pinned to the verified project, with bounded lock/statement timeouts.
+Its exclusive invocation marker was written before dispatch. No general
+`db push`, `--include-all`, history repair, manual migration-history insertion,
+unrelated SQL migration or replay was used. CLI success was received:
+2026-11-03 **09:46:50–09:46:53 UTC**. No retry or lost-response recovery was needed.
+
+#### Independent postchecks and rollback-only smoke
+
+All aggregate postchecks passed, then passed again after the functional smoke:
+
+- Exact version/name20261102181617 / media_advice_exact_reserve_budget appears
+  **once**; predecessor and complete prior-history fingerprint are unchanged.
+- All10 original session rows, caps and attempts match their full-row digest;
+  the10 cap10 rows were not promoted. No persisted cap12 test session remains.
+  The default8 and attempts≤own source_cap constraint are unchanged; only the
+  allowed-cap set widened to8/10/12. Other session columns/indexes/constraints
+  are unchanged; invalid and active-session counts remained0.
+- The installed Beta body matches the exact reviewed migration's normalized
+  body hash. Function identity/owner/settings/ACL metadata remains unchanged for
+  all five M4 functions, with unchanged bodies for pilot RPC, access checker,
+  cleanup and default-region trigger function. Beta RPC remains SECURITY DEFINER,
+  empty search_path, service_role EXECUTE only; anon/authenticated cannot call it.
+- Full fingerprints of M4 permissions/regions/config/health, sessions, movies,
+  movie-group lists, membership, profiles and Auth IDs match preflight. Private
+  schema/table ACLs and RLS, region trigger and cleanup configuration also match.
+  Beta was already enabled and stayed enabled; the same single diagnostic
+  assignment remains. No new user assignment or flag operation was performed.
+- One source-free probe selected the **existing unique verified pilot
+  assignment** and an authorized existing group/movie context privately. It
+  confirmed missing start marker→cap10, `reserve-exact-v1`→cap12, third-slot
+  refusal at10 and one-time search-3/kinobaza-3 at12. Duplicate reservation and
+  unsupported marker were refused. All temporary starts, reservations and
+  ordinary start cleanup ran inside an explicit transaction ending **ROLLBACK**;
+  the subsequent fingerprints confirm that none persisted. No source search,
+  platform navigation, Wishlist write or user-ID output occurred.
+
+The new compatible handler is now **DB-supported**, not deployed: older callers
+continue receiving10, and cap12 was proved only with the compatible protocol in
+the rollback-only smoke. No merge, branch/production deployment or source smoke
+was executed. Existing cap8 has no live row in this snapshot; its default/pilot
+body/constraints remain unchanged, with separately recorded authored/native
+compatibility coverage rather than a fabricated live cap8 record.
+
+#### Deviations and residual limits
+
+No application/postcheck deviation or new security-advisor finding was observed.
+Existing advisories were identical before/after:5 private-table RLS/no-policy
+INFOs (intentional service-only boundary),12 anon-executable and17
+authenticated-executable SECURITY DEFINER warnings on **other existing RPCs**,
+and disabled leaked-password protection. Neither M4 action RPC was in those
+warnings. These unrelated settings were not changed under this authorization.
+References: [anonymous RPC warning](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable),
+[authenticated RPC warning](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable),
+[password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Recovery remains a local owner/machine-dependent copy, not an off-device backup
+or a new full restore test. The compatibility/no-blind-rollback guidance above
+still applies: do not discard or down-promote future12-cap accounting rows.
+Only this authorized migration was applied; merge and deployment still require
+separate approval. A later documentation-only commit records this evidence and
+does not imply that the reviewed application head was deployed.
+
+### Linked-person plot markup recovery — Lucky Number Slevin, 2026-11-03
+
+Baseline: fetched `origin/develop`
+`26c025872e0b19ebf546a5d08b0e7f2123e3c4b0` (merged PR224). Work is on a
+separate branch; the owner's detached checkout/untracked research and temp
+directories are untouched. No SQL, flags, authentication/lifecycle, source
+search strategy, ranking, quotas, links, session or Save implementation changes.
+
+#### Historical evidence supplied by the owner
+
+The complete copied report identifies run
+`6041498d-a41a-49fd-9442-28b08067a0ae`, deploy
+`6ae9e57bd622f9e89c1f670e`, the baseline server build stamp above, IMDb
+`tt0425210`, title `Щасливе число Слевіна`, year2006. It records12/12 attempts:
+the four baseline stages, three Tavily searches, three card GETs and the same
+single linked-person pair. The first card's H1/H2 and year comparisons passed;
+the director gate remained `director-alias-unestablished`. Person selection
+points to card1, both person HTTP statuses are200, and the profile outcome is
+`profile-html-parse-errors`. Kinobaza rows were withheld, not treated as proof
+that the film/languages were unavailable.
+
+Read card1 is explicitly recorded as
+`https://kinobazaua.com/titles/lucky-number-slevin`; the other two are
+`/titles/knockaround-guys` (2001) and `/titles/the-samaritan` (2012), both title
+conflicts. Search3 is explicitly marked Advanced/exact_match. Its query and
+request ID are present in the protected report, but the full candidate lists
+and historical response bodies are not. We do not reconstruct those lists or
+assert which precise malformed historical tag caused the profile failure.
+
+#### Current page observations, not historical HTML
+
+Read-only inspection of the current film page finds a labelled film director
+row `Пол Макґіґан` linking to `/persons/paul-mcguigan`, and a MEGOGO paragraph
+with `(укр. аудіо, укр. субтитри)`. The actual linked profile has one scoped
+header: native name `Пол Макґіґан`, Latin name `Paul McGuigan`, full birthdate
+1963-09-19, and an explicit director role.
+
+On the current response, parse5 reports9 errors. The first3 are the already
+supported bounded style-before-doctype preamble. The remaining6 are two
+instances of a broken plot-footnote template, each emitting the exact start
+tag shape `<a href="…"<br />` with an explicit `</a>` and text-only content.
+They occur in direct `details.js-plot > em.nobr > a` scopes in the repeated
+mobile/desktop synopsis, not in the person facts or owned JSON-LD.
+
+In the observed response the profile header spans offsets24774–26945.
+Malformed start tags span288426–288516 (line4170) and293712–293802 (line4248).
+For each tag the located batch is:
+
+- `missing-whitespace-between-attributes` at the second `<`;
+- `unexpected-character-in-attribute-name` at that same offset;
+- `non-void-html-element-start-tag-with-trailing-solidus` spanning that tag.
+
+Offsets/line numbers describe these current bytes only. The old parser returns
+`profile-html-parse-errors`; the patched parser returns `scoped-profile-evidence`
+on a subsequent current read, recovering6 plot errors and3 preamble errors.
+Reading a profile successfully is not by itself a film or person confirmation.
+
+#### Bounded recovery and unchanged identity requirements
+
+The parser tolerates only that entire exact located three-error batch. It
+requires a closed plot and footnote after the validated, explicitly closed
+person header; exact two parsed attributes (`href` and the malformed `<br`),
+one text child, original start-tag spelling and explicit anchor end tag. It
+does not repair/follow a link, extract plot names/dates/IDs, add an alias,
+transliterate a director or ignore other errors. Existing size/depth/node/error
+limits, canonical/header/semantic ownership, exact name/full birthdate/role
+comparison and stable-ID/date conflict priority remain in force.
+
+`recoveredPlotErrors` is a content-free local inspector count, not a new field
+in the browser's protected profile diagnostic. The existing protected report
+continues to receive the allowlisted profile outcome/comparisons, not raw HTML.
+
+#### Mixed search diagnostic: assessment and proposed follow-up
+
+The historical section is explained by its current predicate: no read card is
+`matched` and **at least one** read card has complete, incompatible H1/H2.
+Cards2/3 meet that predicate even though card1 passed title/year gates and was
+blocked by director verification. The section does not prove a Tavily error,
+but its broad heading is easy to misread. Also, `titleMismatch:false` currently
+prints `unknown`; that false value alone is not proof of both title/year matches.
+
+Proposed report-only follow-up: use a neutral mixed-case heading such as
+`Пошук і підтвердження карток` and explain that a title/year-compatible card
+is awaiting director confirmation, while retaining the unrelated cards and
+their individual refusal reasons. Derive compatibility from the safe per-card
+identity gates/comparisons, not from `titleMismatch:false` alone. Associate a
+specific profile refusal only through its selected-card references. Keep the
+existing possible-irrelevance wording for title-conflict-only cases; unknown
+fields stay unknown and no compatible card is called confirmed prematurely.
+
+This task **assesses/proposes** that change: report/search predicates and UI
+wording have not been changed without further agreement. Characterization
+tests preserve all mixed-case evidence, ordinary-Beta redaction and matched-card
+suppression. After genuine person/film confirmation the existing predicate
+naturally suppresses the speculative section.
+
+#### Validation and request accounting
+
+- 705/705 root non-browser/non-native tests pass, including11 authored plot
+  parser tests,7 full resolver→person→extraction→table/link/preview tests and5
+  mixed diagnostic characterization tests. cap8 remains unable to request a
+  profile pair/reserve; cap10/cap12 success stays within the original pair and
+  does not dispatch search3 after confirmation. Movie/person ID conflicts,
+  missing/conflicting dates, malformed/ambiguous facts and unsafe links retain
+  refusal/withholding.
+- 498/498 executed research/HTML tests pass; the existing mobile-viewport test
+  is skipped in that invocation without Playwright configuration. Includes
+  prior Kong, Klaus, Fockers-series, Roman-number, title/year and localization
+  authored regressions; these are not new live responses for those films.
+- Initial broad parallel runs hit an existing IPC-helper process timeout and
+  an existing CLI child-process timeout. Both complete sets pass with test
+  concurrency2; no test timeout or product code was changed to hide them.
+- Before the separate TMDb control, current public inspection used exactly
+  **5 HTTP GETs**: film+linked profile, one targeted profile syntax inspection,
+  and film+profile after the parser change. All returned200. No Tavily,
+  platform visits, Wishlist writes, `/search`, retries or DB operations.
+- The local credential-broker status check performed no source HTTP and found
+  no available prior credential session. The owner then ran one separately
+  bounded TMDb-only control with hidden input; its result is recorded below,
+  not inferred from the authored tests or the historical12-attempt report.
+
+#### Completed current TMDb→profile→MEGOGO control
+
+The one-shot sanitized local report has
+`status:current-slevin-fixed-card-control`, `historicalReconstruction:false`,
+`buildSha:null`, `serverLedgerCapAttested:false`. It used **5 GET**, all200:
+TMDb find by IMDb, the unique movie Details, the observed film card, the trusted
+TMDb director person and the card's actual linked Kinobaza profile. Total local
+elapsed2104ms, not production latency. No search/provider/MOTN call or platform
+navigation occurred; this starts from a previously observed card, not a new
+search-recall test.
+
+The current trusted projection gives TMDb movie186, IMDbtt0425210, original
+`Lucky Number Slevin`, year2006, and director TMDb person2291 `Paul McGuigan`.
+No film ID was manually supplied in place of the `/find` result. The existing
+person pair confirms `Пол Макґіґан` using exact Latin name, equal full birthdate
+and director role (`exact-name-birthdate-role`); no common person ID is claimed.
+The existing film gates then return `explicit-title-year-director-match`,
+route `title-year-director`; no failed gate, shared film ID or ID conflict.
+
+Extraction is partial, with14 candidates. The resulting MEGOGO block has
+reported-positive Ukrainian audio and subtitles. Both ordinary-Beta and
+diagnostic local product projections show the same MEGOGO comparison
+**availability◐ / audio+ / subtitles+**, plus an Apple row with unknown values.
+This is the agreed app interpretation of an incomplete upper block, not
+independent platform availability or entitlement proof.
+
+MEGOGO exposes one policy-admitted choice: domain `megogo.net`, path
+`/ua/view/1326391`, no query parameters or fragment. The helper compares the
+original href in memory: preview and explicit local apply both preserve it
+exactly, and preview leaves the initial form unchanged. No automatic Save or
+real Wishlist write was performed; the platform URL was not opened.
+
+The ordinary local projection contains no resolver, source identity evidence
+or protected profile outcome; the diagnostic projection contains the allowed
+outcome. Neither has the speculative search section after genuine confirmation.
+These are local projection checks, **not a live server-authorization or browser
+Save attestation**; the existing server-rights regressions remain separate.
+
+This task's current external total is therefore **10 HTTP GETs**:5 public
+markup investigation GETs above +5 full-path control GETs. Tavily0, platform0,
+Wishlist writes0, retries0. The one-shot safe report stores no credential,
+raw body or URL parameter values; it is not committed. The prior historical
+12 attempts remain a separate observation.
+
+Historical12 attempts are not added to this task's new-request count. No
+merge/deployment, live migration or feature activation is authorized here.
+
+#### Browser limitation for this branch
+
+The attempted existing source-free Edge browser set (dialog, retained-session
+and pending-request tests) failed at sandbox process creation with `spawn EPERM`
+before browser cases ran. The escalated invocation required separate approval
+and was interrupted without test output or a process/session ID. Therefore
+**zero completed browser cases are attested for this branch**. Mobile, tablet,
+desktop, actual iPhone/Safari and live Save are not newly verified here; the
+previous PR's browser results are not substituted. No browser suite was silently
+restarted after that interruption. The705 root and498 executed research tests
+above remain independently completed offline checks.
+
+### Predicted-card reserve and owned Movie.sameAs (2026-11-04)
+
+Implementation base: develop `7a9754d6431426a86ea9c3843a11c97f28210c4c`.
+This section supersedes the earlier **proposal-only** scope for these changes,
+not the historical evidence or earlier run accounting. No shared DB, flag,
+merge or deployment is changed during PR preparation.
+
+#### Search order and refusal boundaries
+
+Both existing Basic requests, candidate admission/ranking and the third
+Advanced exact_match request are unchanged. Their existing card and optional
+director-proof opportunities run first. Only a server-negotiated cap14 session
+may then read one predicted `/titles/…` URL if no card confirmed, the address
+was not already read, and source budget/deadline remain. Prediction uses only
+the trusted original title: decomposed accents, apostrophe removal and ASCII
+word separators. Unsupported non-Latin originals produce no guess. There is
+no alias/year/series-number URL enumeration, no redirect following, no automatic
+retry and no Kinobaza `/search` request. A predicted URL is only a pointer;
+it supplies no identity or language evidence.
+
+Existing transport/access/quota/challenge failures and uncertain reservations
+remain fail-closed, not opportunities to bypass a source restriction. Safe
+HTTP200 markup/identity refusals may proceed to the reserve. A successful old
+route is not replaced or refreshed; a refused already-read URL is not fetched
+again. cap8/10/12 retain their old search/card opportunities and cannot acquire
+the new stages.
+
+#### Main Movie.sameAs authority
+
+Only one bounded root/root-array/immediate-graph Movie is supported. Its own
+URL must equal the opened, uniquely canonical Kinobaza card; its name must
+agree with the source H1 or sole metadata H2. Nested recommendations, Person,
+navigation and unrelated Movies cannot donate film IDs. No remote JSON-LD
+context is fetched. Duplicate JSON keys, competing owned Movies, mixed types,
+conflicting own IDs and malformed authority are not resolved by selecting a
+convenient value. Optional unparseable JSON cannot provide positive proof;
+observed owned-ID conflicts remain refusals.
+
+IMDb IDs compare only to IMDb; TMDb movie IDs only to TMDb movie IDs. The
+Kinobaza URL/slug is not a shared film ID. All observed film-ID conflicts retain
+priority over matching titles, years or director spelling. With a reliable
+shared ID, an exactly known title and equal primary year, the existing strong
+ID route no longer requires identical director spelling. A year difference
+still requires director proof. Terminal Roman glyph, Ukrainian г/ґ and unknown
+translation routes retain their narrower exact-original/primary-year/director
+requirements. Multiple people credited in one clearly structured metadata
+field are not, by themselves, competing film identities (see the 2026-11-07
+correction below). Duplicate director fields and opaque/unscoped multi-person
+values remain unresolved; director-required routes still need a single
+confirmed person and do not infer group membership from a flat alias list.
+An already proven contradiction for the exact bound director profile also
+cannot be bypassed. A different spelling alone is not that contradiction.
+
+Without reliable semantic IDs the existing title/year/director route remains.
+`datePublished` is retained only as a diagnostic date, never silently used as
+the film year; the visible H1 and trusted TMDb release context keep their roles.
+Extraction, per-service language binding, link policy and UI ranking are not
+changed. A verified film ID is not platform availability or entitlement proof.
+
+#### cap14 and time envelope
+
+| Source opportunity | Maximum HTTP attempts |
+| --- | ---: |
+| TMDb find/details/providers + MOTN | 4 |
+| Existing Basic/Basic/Advanced searches | 3 |
+| Existing discovered-card reads | 3 |
+| Original director person pair | 2 |
+| One unread predicted card | 1 |
+| One further bound Kinobaza director profile, reusing the same valid TMDb person | 1 |
+| Total | 14 |
+
+The extra profile is **not** a second pair. Reuse is invocation-local and bound
+to the fixed trusted TMDb person ID/names; every new Kinobaza pointer must
+independently prove that person. Exact profile/alias repeats reuse their settled
+result, including failure, without another request. A different person's data,
+a failed/missing TMDb projection or an already spent extra profile cannot be
+substituted. Such cases stay unresolved; cap14 does not promise confirmation.
+When the original pair was unused, the predicted card may use it within13
+total attempts. Equal competing profile candidates stay ambiguous.
+
+No user search quota is introduced. Three searches still cost at most4 nominal
+Tavily credits (Basic1 + Basic1 + Advanced2); the predicted/profile GETs add no
+Tavily credits. Actual billed usage is not inferred from that nominal rate.
+Source work still stops45 seconds from handler entry (including Auth/SQL time),
+finish stops at53 seconds and response/platform headroom remains. Individual
+timeouts do not stack into a larger invocation allowance. Thus a slow old path
+may leave no time for the reserve, even with unused HTTP slots. No Netlify limit
+or runtime timeout is raised. Current official references: [Tavily credit
+costs](https://docs.tavily.com/documentation/api-credits) and [Netlify function
+configuration](https://docs.netlify.com/build/functions/configuration/).
+
+#### Evidence and remaining control gaps
+
+The saved36-film study has SHA256
+`ed86b24af7a21f969b065272b5c7158bc8bb0a74aa117e9d95c33f526faf17a8`.
+It is a prior current-source observation, not an archive of the owner's
+historical runs. Its admitted Tavily pointers are available; full responses,
+HTML and person/API bodies were not retained. The later77-GET prototype study
+therefore cannot supply missing raw bytes. In particular, Dune's first GET
+returned200 but the local summarizer failed before producing its result;
+the saved digest cannot repair that lost HTML. Existing normalized earlier
+Dune extraction can be cited as earlier evidence only. Kong's short projection
+omits the person data needed to establish its current linked director proof.
+
+`scripts/m4-predicted-controls.mjs` supplies an explicit one-pass completion
+control: fresh trusted TMDb metadata/current HTML and bound profiles, comparing
+the fixed old cap12 resolver with cap14 on the same RAM-held source bytes.
+Previously admitted Tavily pointers replay only when the actual query and
+mode match; unknown traces are **unknown**, not fabricated empty results.
+This is not a fresh Tavily-recall or historical-response reconstruction. It
+does not call paid search, platforms, Wishlist or the shared ledger. Its
+logical stage counts and local RAM-replay timing are not live server budget
+or production latency attestation. Credentials and raw source bodies are not
+persisted; an owner-only sanitized report records actual HTTP separately.
+
+Protected diagnostics show the predicted outcome, fourth-card gate results
+and bounded sameAs authority/date status. Generated-card mismatches do not
+accuse Tavily of unrelated results, and any confirmed card suppresses the
+speculative search warning. Ordinary Beta responses still receive none of
+these privileged fields. Preview → explicit apply → ordinary Save, retained
+dialog isolation and Beta/group/edit authorization remain unchanged.
+
+#### Completed current-source / frozen-search comparison
+
+The owner completed the one-shot control on2026-11-04,21:04:08–21:05:11UTC,
+reviewed core SHA `88d71c8537014ff5c624cf1ff7d93e6115eede6d`.
+Sanitized report SHA256:
+`4b52cb10684c31395e24a506ddfd089f87b7f3763eff93c47430c2141eb20706`.
+All36 metadata controls finished;35 have complete query-matched frozen-search
+comparisons. On those current source bytes the old route confirms31 films,
+the new route34. All31 previous projection objects (rows/groups/link
+descriptors) are identical;0 lost confirmations and0 observed wrong matches.
+This finite sample is not independent proof of zero false-positive risk.
+
+New confirmations: **Parasite** and **All We Imagine as Light** through owned
+Movie.sameAs, and **Renfield** through the post-Tavily predicted card, then the
+same ID/title/year gates. Parasite yields one Apple record with unknown tracks;
+All We Imagine as Light confirms identity but has0 mapped records. Neither is
+misreported as a new streaming offer. Renfield yields4 records: Rakuten,
+Netflix and MEGOGO each show incomplete availability◐ and reported Ukrainian
+audio+/subtitles+, with policy-admitted links. No platform was opened.
+
+Dune's current gap is now closed **by a new response**, not by reconstructing
+the lost body: both routes confirm `/titles/dune-part-two`, produce5 rows and
+the same Apple+/−, Rakuten+/+, MEGOGO+/+ groups. The new route also observes
+owned IMDb/TMDb IDs. Kong now has fresh full trusted metadata and both bound
+person responses: exact Latin name/full birthdate/director role confirms the
+same person. Its г/ґ route still requires that proof even with matching film
+IDs; Apple+/−, Rakuten+/− and MEGOGO+/? survive. Slevin retains MEGOGO+/+;
+the new strong-ID route needs no person pair for it.
+
+**Unresolved/unknown:** The Fall's selected2008 versus source2006 still needs
+director proof; the current person comparison has a birthdate conflict and
+remains unresolved despite matching film IDs. Its predicted URL was already
+read and is not retried. Coherence's fresh TMDb primary year2014 and contextual
+premiere2013 are recorded, but no matching old Tavily pointer observation
+exists: both route comparisons are explicitly incomplete. No empty search or
+new confirmation is invented for that gap.
+
+The new route's76 read-card observations comprise34 matched,38 mismatched
+(film-ID conflicts), and4 unresolved (one director gate, three markup cases).
+Wrong franchise/homonym candidates remain withheld. The Thing1982/2011,
+Girl with the Dragon Tattoo2009/2011 and all three Fockers-series films keep
+their distinct cards. The possible ambiguous/wrong predicted slugs for
+Mortal Kombat, Oppenheimer, Supergirl and Roman-II titles are additionally
+covered by authored refusal tests; live successful old routes correctly skip
+prediction rather than probing them unnecessarily.
+
+| Film (requested year) | Current old → new confirmation | New language groups: audio/subtitles | New HTTP in shared control |
+| --- | --- | --- | ---: |
+| Coherence (2013) | unknown → unknown | comparison gap | 2 |
+| Dune: Part Two (2024) | yes → yes | Apple+/−; Rakuten+/+; MEGOGO+/+; HBO?/? | 4 |
+| Blade Runner (1982) | yes → yes | MEGOGO+/+; Apple?/+ | 4 |
+| Kingdom of Heaven (2005) | yes → yes | Apple?/? | 5 |
+| The Thing (1982) | yes → yes | MEGOGO+/+; Apple?/? | 4 |
+| The Thing (2011) | yes → yes | Apple?/? | 5 |
+| Parasite (2019) | no → yes | Apple?/? | 6 |
+| The Lives of Others (2006) | yes → yes | no mapped rows | 4 |
+| The Girl with the Dragon Tattoo (2009) | yes → yes | no mapped rows | 7 |
+| The Girl with the Dragon Tattoo (2011) | yes → yes | Apple+/−; Rakuten+/−; MEGOGO+/?; Netflix?/+ | 3 |
+| Perfect Days (2023) | yes → yes | MEGOGO+/? | 4 |
+| The Man from Earth (2007) | yes → yes | no mapped rows | 5 |
+| The Fall (2008) | no → no | director birthdate conflict | 7 |
+| Anatomy of a Fall (2023) | yes → yes | MEGOGO+/? | 4 |
+| All We Imagine as Light (2024) | no → yes | no mapped rows | 6 |
+| Blade Runner 2049 (2017) | yes → yes | Apple+/+; Rakuten+/+; MEGOGO+/?; Netflix?/+ | 4 |
+| Mortal Kombat (2021) | yes → yes | Apple+/+; MEGOGO+/+; Rakuten?/+ | 4 |
+| Alien (1979) | yes → yes | MEGOGO+/+; Apple?/+; Rakuten?/+ | 4 |
+| Oppenheimer (2023) | yes → yes | Rakuten+/+; MEGOGO+/+; Netflix?/+ | 4 |
+| Supergirl (2026) | yes → yes | Rakuten+/+; MEGOGO+/?; HBO?/? | 4 |
+| Mad Max: Fury Road (2015) | yes → yes | Apple+/−; Rakuten+/−; MEGOGO+/?; HBO?/? | 4 |
+| Goodfellas (1990) | yes → yes | MEGOGO+/?; Apple?/+; Rakuten?/+; HBO?/? | 4 |
+| The Pursuit of Happyness (2006) | yes → yes | MEGOGO+/+; Netflix?/+; Apple?/? | 3 |
+| The Prestige (2006) | yes → yes | MEGOGO+/?; Apple?/+; Rakuten?/+ | 4 |
+| A Separation (2011) | yes → yes | no mapped rows | 6 |
+| The Handmaiden (2016) | yes → yes | Apple?/? | 6 |
+| Amélie (2001) | yes → yes | Apple?/? | 4 |
+| Klaus (2019) | yes → yes | Netflix+/+ | 4 |
+| Gladiator II (2024) | yes → yes | Apple+/+; Rakuten+/+; Netflix?/+ | 4 |
+| Kong: Skull Island (2017) | yes → yes | Apple+/−; Rakuten+/−; MEGOGO+/?; HBO?/? | 6 |
+| Crimson Peak (2015) | yes → yes | MEGOGO+/+; Apple?/+; Rakuten?/+; Netflix?/+ | 4 |
+| Meet the Fockers (2004) | yes → yes | MEGOGO+/+; Rakuten?/+; Netflix?/+; Apple?/? | 4 |
+| Lucky Number Slevin (2006) | yes → yes | MEGOGO+/+; Apple?/? | 6 |
+| Renfield (2023) | no → yes | Rakuten+/+; Netflix+/+; MEGOGO+/+ | 6 |
+| Meet the Parents (2000) | yes → yes | MEGOGO+/+; Rakuten?/+; Netflix?/+; Apple?/? | 3 |
+| Little Fockers (2010) | yes → yes | Rakuten+/+; MEGOGO+/+; Netflix?/+; Apple?/? | 2 |
+
+These language symbols are source claims under the existing UA application
+rule, not independent availability/track/entitlement validation. `?` is not
+absence. No mapped row is not proof that no platform offer exists.
+
+Actual new external source requests: **160 GET, all200** =72 TMDb movie +70
+Kinobaza card +9 TMDb person +9 Kinobaza person. Maximum actual requests per
+film7;85 RAM response reuses incur no HTTP. No shared-address digest differs
+between routes. Tavily Basic0/Advanced0 requests,0 new credits; no `/search`,
+platform, Wishlist or shared-DB requests. Metadata/person/card requests from
+earlier research are **not** included in these new160.
+
+The physical series took63.029s, across36 independent cases. HTTP wire sums:
+TMDb11.732s, cards18.176s, TMDb persons1.444s, Kinobaza persons2.879s. Local
+route execution sums33.365s before and15.465s after include parsing/cache
+misses; they are **not independent latency benchmarks**. Frozen search stages
+were48 Basic/7 Advanced before,43 Basic/5 Advanced after, including one unknown
+Basic query in each; these are logical replays, not new calls, credits or current
+Tavily timing. The largest live-control logical budget was12; the full14-attempt
+case and exhausted/missing-projection cases are authored tests, not live-ledger
+attestations. A mid-case process crash can leave persisted counts incomplete;
+the one-shot fence then requires checking existing state, not automatic rerun.
+
+#### Migration/release order (prepared only)
+
+CLI-generated migration: `20261104210025_media_advice_predicted_card_budget.sql`.
+The new RPC accepts `predicted-card-v1 →14`, the old `reserve-exact-v1 →12`,
+and an omitted marker→10. Existing8/10/12 rows and the pilot default8 do not
+change. New stages are14-only; no second TMDb-person stage exists. Access
+checks, short advisory/row locks, private ACL and service-role-only execution
+are preserved. Preparation followed the Supabase least-privilege/short-
+transaction guidance; no source I/O is inside a database transaction.
+
+Before a separately authorized application: verify exact PR SHA/SQL hash,
+target project, actual migration history (predecessor20261102181617 once and
+new version absent), unfinished sessions and a fresh readable local recovery
+of M4 definitions/schema/ledger/config/permissions. Use an isolated workdir
+with **only this migration**, not general `db push` or history repair. Do not
+publish user IDs, recovery contents or keys.
+
+Apply migration **before** deploying the new handler: cap12 SQL rejects the
+new marker, and the handler deliberately does not retry/downgrade `start`.
+Postcheck one history version, unchanged old session caps/attempts, default8,
+all three new/old negotiation contracts,14-only unique stages, revoked user
+access, denied anon/authenticated RPC, unchanged private ACL/flags/diagnostic
+assignments/cards/pilot RPC. Any lost apply response requires inspecting actual
+history/schema/rows before considering another action.
+
+Rollback application first to the old reserve-exact handler, which remains
+compatible and receives12. Retain the widened constraint/RPC until every14
+session has finished/expired; never clamp a cap, erase attempts or repair
+history. A later SQL rollback needs separate reviewed predecessor definitions
+and recovery/state checks. This PR does **not** apply, merge, activate or deploy.
+
+#### Executed verification
+
+- Root M4 run:811 tests,804 passed,0 failed,7 opt-in skips; isolated HTML/research
+  run:498 executed passed,0 failed,13 opt-in skips. The new one-shot control
+  helper's11 tests use authored responses and no network.
+- Separate existing native PostgreSQL17 suites:31/31; new cap14 native suite:
+  11/11, including concurrent unique-stage allocation and queued region,
+  global-switch, membership and card revocation. New PGlite migration tests3/3.
+  All use authored loopback/in-memory schemas, not a shared project or history
+  attestation.
+- Source-free Edge dialog/session/pending suites:35/35, including desktop,
+  iPhone X/Air-sized and tablet viewports, one discovery, retained reopen,
+  diagnostic revocation, explicit preview/apply and regular-save workflow.
+  This is not a new physical iPhone/Safari test or live Wishlist write.
+- Authored negatives cover wrong/shared namespaces and film IDs, competing
+  Movies, duplicate/escaped JSON keys, nested/recommended entities, invalid or
+  missing dates, title/year/director contradictions, same-name people, multiple
+  linked directors, ambiguous candidates, unsafe/redirected/duplicate URLs,
+  withheld languages and source/time/reservation failures. Independent review
+  found a same-cell multi-director bypass and generated-pointer diagnostic
+  causality error; both were fixed and regression-tested before the control.
+- An initial broad run had one outdated three/four-card diagnostic fixture;
+  search-only observation retains its original three-card bound and the later
+  full run above passes. The first deadline test needed bounded microtask
+  draining before asserting a dispatched predicted GET; product deadlines were
+  not relaxed. No failure was hidden by a source retry.
+
+### Sin City: credited director groups versus ambiguous identity (2026-11-07)
+
+Base: `589b993cb6746356a6c47d4938b3c8f777e00f27` (`develop`). No search,
+ranking, source-link/localization, Beta/diagnostics authorization, ledger,
+deadline, migration or UI behavior change is part of this fix.
+
+#### Historical observation versus current reproduction
+
+The owner reported develop deploy `6aebab31553f7e3e61dbdec2`, run
+`a5991ff9-9d03-4d8b-b3f4-8266ebeb7919`, for IMDb `tt0401792`: the read card
+agreed on stable film ID, Ukrainian/original titles and year but stopped at
+`director-scope-unestablished`; prediction was `already-read`. We have that
+description, not the complete report, historical HTML, candidate list or full
+TMDb response. The current capture is not a reconstruction of that invocation.
+`already-read` correctly avoids reading the same URL again; another GET would
+not fix a deterministic identity refusal on the same card.
+
+Current response `https://kinobazaua.com/titles/sin-city`, captured
+2026-11-07T08:56:31Z, HTTP200,275793 bytes, SHA256
+`4b9e5e7a023a483f4f97856fbce3c1a943ac5eca46a556e563ae806166909756`:
+
+- One canonical, H1 `Місто Гріхів (2005)` and metadata H2 `Sin City`.
+- One owned JSON-LD Movie at line305; its own URL is the opened card and its
+  name agrees with H1. `sameAs` contains IMDb `tt0401792` and TMDb movie187,
+  alongside Wikipedia links. No `datePublished` is used as a film year.
+- One film metadata row, lines974–979, labelled **`Режисери:`**, containing
+  three comma-separated `/persons/` links: Frank Miller, Quentin Tarantino and
+  Robert Rodriguez, in the source's Ukrainian spellings. It is inside the main
+  film interval, before `availabilityAccordion` at line1179. This is one
+  structured credits field, not three competing metadata fields. No parse
+  errors were observed on this particular current Sin City body.
+
+Two code conditions explain the omission. The source reader recognized only
+singular `Режисер:`, so it did not report that plural row. Independently, the
+JSON-LD-only same-ID path vetoed any selected multi-director scope before its
+exact-title/same-year success branch. In a controlled declared-three-director
+context on these current bytes, the pinned develop code reproduces exactly
+`director-scope-unestablished`. Thus a stronger film-ID route was blocked by
+director cardinality, not by a demonstrated ID, title, year or person conflict.
+
+#### General correction and preserved refusals
+
+Both singular/plural labels are read only inside the existing film metadata
+boundary. One field can contain a bounded list of distinct, nonempty exact
+Kinobaza person-profile links separated by simple punctuation/line breaks.
+This establishes **structure only**, never alias equivalence, group membership,
+completeness or the identities of the credited people. No profile request or
+person alias is synthesized.
+
+Reliable owned Movie.sameAs ID + exact known H1 title + validated original-title
+scope/value + equal trusted primary year may use the existing
+`stable-id-title-year` route regardless of selected/source director cardinality.
+The protected report marks all three director gates `not-evaluated`, not
+verified. A prior proven exact-profile conflict is still checked against every
+eligible group pointer with no network I/O.
+
+Duplicate director fields, opaque combined names, extra unscoped text, groups
+containing non-person/foreign/parameterized links, duplicate profile addresses,
+oversized groups and critical HTML/JSON-LD ambiguity do not gain authority.
+Film-ID conflict precedence, same-system comparison, main-Movie ownership,
+canonical/H1/H2 checks, sequel/title conflicts and date semantics remain intact.
+No reliable ID, a different year, Roman-glyph, Ukrainian г/ґ or unknown-translation
+routes still require the old single-person director proof. Two people sharing
+a spelling are not silently deduplicated into one person on that route.
+Single-person name refusals keep their prior diagnostic reasons.
+
+#### Same-response before/after results
+
+Five current HTML captures are replayed against the exact pinned old parser and
+the new parser, without another source read. Sin City's independent input is
+the owner-supplied IMDb/original/year plus a declared expected Ukrainian display
+title and multi-credit test scope; it is **not a new trusted TMDb API response**.
+Only IMDb is compared to that input; source TMDb187 is not copied into trusted
+selected evidence. The four regressions use the retained 2026-11-04 TMDb
+projection's title/original/year/people subset, not fresh TMDb metadata or a
+claim about a new deployed invocation. The full source candidate search is not
+re-executed.
+
+| Current card | Old -> new confirmation on the same bytes | New Ukrainian audio/subtitle display |
+| --- | --- | --- |
+| Sin City2005 | unresolved -> matched, owned-ID/title/year | MEGOGO+/?, Netflix?/+, Apple?/? |
+| Renfield2023 | matched -> matched | Rakuten+/+, Netflix+/+, MEGOGO+/+ |
+| Lucky Number Slevin2006 | matched -> matched; extraction partial preserved | MEGOGO+/+, Apple?/? |
+| Meet the Fockers2004 | matched -> matched, original/year/director translation route | MEGOGO+/+, Rakuten?/+, Netflix?/+, Apple?/? |
+| Meet the Parents2000 | matched -> matched | MEGOGO+/+, Rakuten?/+, Netflix?/+, Apple?/? |
+
+For Sin City the returned exact source links include
+`https://megogo.net/ua/view/23089806` and
+`https://www.netflix.com/title/70021630`. Apple retains its original tracking
+pointer, without printing parameter values in the research report. All three
+pass the unchanged link policy. `?` is unknown, not absent. These are Kinobaza
+block claims under the existing UA application rule, **not independently
+verified platform availability, tracks, regional/account entitlement or offer
+equivalence**. No destination/redirect was visited. No language evidence was
+transferred between providers or offers.
+
+Both ordinary Beta product projection and diagnostic-authorized presentation
+produce identical tables; language details remain in their existing blocks.
+Exact link preview/explicit apply were exercised in memory with the original
+form unchanged until apply. This is not a live Save, login or physical browser
+test. Cross-replaying the two current Fockers/Parents bodies against the other
+selected IMDb context yields `source-stable-id-conflict` and zero records.
+
+A separate authored-search transport replay through the unchanged resolver
+confirms Sin City on one card, skips prediction as `prior-card-confirmed`, and
+uses search/card reservations only (6 total logical attempts including the4
+omitted baseline stages). It makes **zero HTTP**, establishes no Tavily ranking
+or new provider response, and does not attest a live ledger/session.
+
+#### Requests and verification limits
+
+New controlled source traffic: **6 GET** =1 robots.txt +5 Kinobaza cards, all200;
+Tavily Basic0/Advanced0,0 credits; TMDb API0; person profiles0; platforms0;
+shared DB/Wishlist0. Measured GET wire times total1.681s (cards1.326s). Replay
+adds0 external requests and is not an independent latency benchmark. A
+separate web-tool attempt to open the public TMDb movie page returned no
+accessible content; its underlying HTTP dispatch is not attested. It is not
+counted as a successful TMDb check or silently folded into the six measured GETs.
+
+The capture's initial robots guard conservatively stopped after its sole
+robots read because it did not distinguish listing-query rules and the separate
+meta-externalagent group. After reviewing the retained rules, the five ordinary
+card paths were explicitly qualified and the series continued. No received
+response was fetched again, no blocked path was used, and runtime robots/search
+logic was not changed. Raw current HTML remains a local study artifact, not a
+committed fixture, credential store or historical archive.
+
+Authored tests cover clean plural/singular groups, absent/conflicting IDs,
+wrong/duplicate/nested Movies, original/title/canonical/year contradictions,
+different series parts, same-name people, opaque/duplicate metadata, bounds and
+known person conflicts. Existing resolver-cap, protected diagnostics, source
+binding, dialogue isolation and preview/apply/save regressions are also run.
+No migration, merge, deployment or flag activation is part of this change.
+
+Final verification: `node --test --test-concurrency=1 test/*.test.mjs
+research/grounded-answer-demo/test/*.test.mjs` reports1364 tests: **1343 passed,
+0 failed,21 opt-in skips**. Skips are browser/native PostgreSQL suites; neither
+new physical-device tests nor live SQL migrations are claimed. The new authored
+director-group file has41 passing tests, including all cap8/10/12/14
+resolver→projection→table→exact-preview cases. `git diff --check` passes.
+The first broad run exposed three changed refusal reasons for opaque single
+values; the fix now scopes the new opaque-group veto to the strong semantic
+route and preserves those legacy alias refusals. No fixture was weakened to
+hide those failures, and no source response was fetched again for the rerun.
+
+### Apple TV+ subscription source mapping — 2026-11-07
+
+Prepared from `develop` e04ecff821c9c67f4755ca503bc4cfa8514ce22a. No
+migration, flag change, merge or deployment is authorized by this record.
+
+#### Historical evidence versus current evidence
+
+The owner supplied the complete protected report for The Lost Bus (2025),
+IMDb tt21103218, run c3ca0a1c-c00e-499f-9f8e-ddf52bd4e1a3, deploy
+6aeeecceea767b4dae3c1389. It attests 7/14 source attempts, 0 mapped rows,
+3 other-platform rows (1 Kinobaza), a matched owned-ID/title/year card,
+8 extracted candidates (7 foreign-context), and 0 localization blocks.
+The second card was independently rejected for conflicting stable IDs.
+These are facts about that run. The report does not contain the raw API
+provider IDs/options, the exact three other-platform records, or its HTML.
+It does not prove three identical offers. Their individual historical URLs,
+IDs and access fields cannot be reconstructed from those totals.
+The report's first requested-card digest matches the SHA256 of the exact
+`/titles/the-lost-bus` address; it does not recover the response body.
+
+One current card capture, `https://kinobazaua.com/titles/the-lost-bus`,
+at 2026-11-07T10:29:16Z has SHA256
+`150f1c4ff7075c327d49bd8784e1fb4ac429ac8b8b8396a575611a19205cd435`.
+The report's requested-card digest identifies an address, not a body; no
+historical body checksum or HTML is available for comparison. This capture
+is not a recovered historical response. It contains a top paragraph with title/image alt
+`Доступно в apple tv+`, followed by `(укр. субтитри)`. Separately, the
+Ukraine accordion contains an Apple TV provider anchor with its own
+`Subscription` child label. Both have original JustWatch tracking links.
+The parser previously recognized neither the Plus badge nor the regional
+subscription mapping. The footer's native Apple movie pointer is not borrowed
+as a provider-block link, and JSON-LD film-level subtitleLanguage is not
+promoted to provider tracks.
+
+#### Implementation boundaries
+
+- Product clarification supersedes the first draft of PR#228: the user sees
+  exactly one **Apple TV / iTunes** service and existing form medium. There is
+  no Apple TV+ service row, emblem, medium option or separate Wishlist value.
+  Internal `apple` (Store) and `appletvplus` (subscription) keys remain distinct
+  source/access records, not two user-facing services. Both transfer the
+  existing `Apple TV / iTunes` medium. `app.html` and `app.js` match the base
+  exactly; no changes to ordinary form options or global lifecycle are needed.
+- TMDb provider 2 remains Store; provider 350 + explicit subscription access
+  identifies Plus, including the shared display label Apple TV. TMDb watch
+  links remain watch pages, not usable platform deep links or track evidence.
+- MOTN service `apple` is split only by its explicit access type: rent/buy
+  versus subscription. Valid mixed types retain separate source observations.
+  Contrary recognized names/IDs/access stay unmapped/conflicting; a shared
+  service ID is not blanket immunity from conflict detection. Add-on/channel,
+  free, missing and unknown ambiguous Apple access are not guessed.
+- Kinobaza Plus badges retain their exact source name, href and parser-issued
+  block binding. Bare Apple TV needs an unambiguous `Subscription` child in
+  that exact anchor, not neighboring text, encoded redirect parameters or a
+  foreign section. A Store subscription or Plus purchase contradiction does
+  not acquire subscription authority. Table-over-caption precedence remains.
+- Ukrainian subtitles in the top block stay attached to that block. They do
+  not fill the separate regional record, TMDb/MOTN row, Store offer, audio,
+  or a missing/unsafe/ambiguous block. Group comparison uses the existing
+  reviewed UA interpretation, not confirmed offer equivalence or entitlement.
+- Plus permits the existing narrow native tv.apple.com movie route and
+  reviewed tracking links, never iTunes Store or a channel/catalogue URL.
+  URLs are opened/transferred verbatim, without stripping query parameters,
+  decoding redirect destinations, following redirects or semantic URL joins.
+  Different Plus pointers remain distinct access choices within the Apple
+  service; Store-only normalization and single-link preference do not apply
+  to Plus. The existing preferred Store pointer is retained alongside those
+  subscription choices. An equal URL for Store and Plus does not merge them.
+- An Apple access selection scopes its availability, tracks, source, conditions,
+  first response and preview to that original row. The display group retains
+  every raw observation, but does not aggregate subscription subtitles with
+  purchase/rental audio or fill an unknown field from another variant. Initial
+  selection uses existing language bands, then an admitted link and stable
+  source order. Selecting another variant updates local presentation only,
+  without a repeated discovery. An out-of-group row supplies no authority.
+- Repeated other-platform *notice text* is suppressed by normalized exact
+  name only. No source records, original pointers, access variants or protected
+  observations are deduplicated. The old loop printed one identical sentence
+  per raw record; that explains repeated text without proving offer duplicates.
+- Preview, explicit apply and ordinary Save/readback keep `Apple TV / iTunes`,
+  including subscription selections. Source rows and diagnostic product
+  namespaces remain separate. Beta/server capabilities, diagnostics
+  authorization, identity gates, source search/ranking/budgets, session
+  isolation and global lifecycle/auth remain unchanged. No migration is
+  needed. Subscription is a source claim, never account entitlement.
+
+#### Same-input results and verification scope
+
+Replaying the current card against the pinned baseline and changed extractor
+and composition yields 0 -> 2 mapped Kinobaza Plus records. Both tables
+(ordinary Beta projection and diagnostic projection) display one Apple TV /
+iTunes row, initially using the subtitle-caption variant: audio `?`, subtitles
+`+`. Selecting the regional-only record keeps its own unknown track fields;
+it cannot borrow the caption. The top subtitle block and regional subscription
+remain separate rows/links; neither is declared the same offer. Both original
+pointers pass link policy and preserve exact spelling through explicit
+preview/apply, always with the existing Apple TV / iTunes medium. No automatic
+Save or source refresh is introduced.
+
+Five retained 2026-11-07 card bodies, with retained control metadata rather
+than fresh TMDb requests, replay identically before/after this change:
+Sin City 3 rows, Renfield 4, Lucky Number Slevin 2, Meet the Fockers 5,
+Meet the Parents 5. Their identity, languages, links and preview results are
+unchanged. These are current/saved-response comparisons, not historical
+reconstructions, independent platform verification or a fresh Tavily search.
+
+Authored regressions additionally cover mixed subscription/rental/purchase,
+conflicting IDs/names/types, incomplete access/track data, provider and
+language isolation, unsafe links, ambiguous blocks, exact URL transfer,
+protected versus ordinary rendering, and ordinary form payload/readback.
+
+Measured new source traffic so far: 2 GET (Kinobaza robots.txt + card), both 200;
+GET wire times 399ms + 156ms. Tavily Basic 0/Advanced 0 and 0 credits; no platform
+visits, person-profile reads, source searches or Wishlist/shared-DB writes.
+The saved-body replays make 0 additional external requests. Current TMDb/MOTN
+source comparison is pending the separately requested memory-only credential
+control; fixtures are not a claim about their live response or historical IDs.
+
+The initial-draft default regression command (`node --test --test-concurrency=1
+test/*.test.mjs research/grounded-answer-demo/test/*.test.mjs`) reports
+**1387 tests: 1365 passed, 0 failed, 22 opt-in skips**. The new mapping file
+has 13 passing authored tests, including the actual `discoverMedia` service
+entry with five mocked source reads/reservations, unchanged cap14, separate
+source rows and ordinary-product diagnostic withholding. The new UI file
+has 9 passing tests/subtests for subscription/Store separation, accessible
+labels/fallback, exact preview/apply and actual ordinary-form payload/readback.
+The latter is local/mocked, not a live successful database Save. The default
+skips include browser and native PostgreSQL suites; they are not silently
+counted as executed. `git diff --check` and changed JavaScript syntax checks
+pass. Those totals describe the initial draft, before the single-service
+product clarification. Updated verification is recorded below.
+The additional opt-in real-browser fixture did not execute successfully: its
+initial process launch was denied and the approval retry ended without an
+execution result. No browser screenshots, physical iPhone verification or
+browser/database Save success is claimed. No source request was repeated to
+compensate for that missing verification.
+
+#### Single Apple service product clarification — 2026-11-07
+
+The updated product contract is one Apple TV / iTunes UI service and medium,
+not a new Apple TV+ service. Source-specific subscription, purchase and rental
+records retain their original product key, access, language, price/quality,
+URL and provenance. A shared display group or an equal URL is not sufficient
+evidence that two observations describe the same offer.
+
+Mixed authored tests exercise subscription subtitles versus Store audio,
+unknown rental fields, explicit negative/conflicting tracks, missing/unsafe
+links, same-URL different products and invalid/stale row selection. Changing
+the Apple variant updates the table, first answer, access/source labels and
+preview from the selected original record, and preserves that selection on
+reopening without rediscovery. The preferred Store pointer still follows its
+existing rule; Plus pointers do not use that Store-only preference.
+
+Both variants' exact preview/apply URLs survive, and the actual ordinary-form
+payload/readback uses only `Apple TV / iTunes`. There is no Plus option in the
+recommended or owned medium select; the complete app.html/app.js diff against
+the develop base is empty. Diagnostic namespaces and raw rows remain intact;
+ordinary Beta users still do not receive privileged details.
+
+The same retained current HTML replay again confirms The Lost Bus, with two
+distinct Kinobaza subscription records inside one Apple UI row and the
+caption variant displaying audio `?`, subtitles `+`. Selecting the regional
+record instead leaves tracks unknown. Five saved-card regressions retain the
+same identity, rows, links and language results. This uses zero new HTTP and
+does not independently verify provider availability or reconstruct old HTML.
+
+New external source traffic for this clarification: **0**. The entire PR's
+controlled live source traffic remains the earlier **2 Kinobaza GETs**; no new
+Tavily/API/platform calls, credits, shared-DB or Wishlist writes. The requested
+current TMDb/MOTN credential control remains unexecuted; its absence is not
+described as a successful live check. The relevant source mappings continue
+to have authored API-fixture coverage.
+
+The refinement includes 13 passing mapping/server tests and 19 passing UI
+tests/subtests. Ordinary and diagnostic users both exercise repeated
+Store-to-subscription switching where MOTN and Kinobaza have an identical
+subscription URL but different track evidence. Navigation choices retain the
+original representative throughout the view, rather than silently selecting
+a different source row after the summary changes. The exact source URL,
+caption provenance and existing Wishlist medium survive preview/apply and
+reopening, with no second discovery. Independent review reproduced the
+initial representative-selection bug and confirmed its fix.
+
+The revised browser fixture covers one service row at mobile/tablet/desktop
+sizes and both access variants' exact preview/apply/ordinary Save payload.
+It has passed syntax checks, **not browser execution**: the sandbox denied
+test-runner spawn, and the elevated attempt ended before any browser result.
+There are zero attested page-level assertions, no screenshots and no live
+Save. The local controller/ordinary-form projection tests are not presented
+as a successful browser or database write. No further browser attempt was
+made through an alternative mechanism after that blocked attempt.
+
+Final single-service regression after the representative-selection fix:
+**1397 tests: 1375 passed, 0 failed, 22 opt-in skips** using the same full
+root + research test command. Changed JavaScript/browser-fixture syntax and
+`git diff --check` pass. The final independent review found no remaining
+concrete issue. No migration, merge, deployment, flag activation or live
+database operation was performed.
+
+## Established-card link choices — 2026-11-07
+
+Base develop `ab5a0a74a64cb5a0ae645fd09ca49d6f9ef2789e`, after #228.
+This change is client navigation presentation only: it does not repeat discovery,
+follow a redirect, rewrite a URL, merge offers or change source interpretation.
+
+### Historical The Lost Bus: known and unavailable evidence
+
+The owner reports three choices (one MOTN and two Kinobaza) in run
+`c2fee1f0-9426-4bf0-918b-d8ae70e3cc10`, develop `ab5a0a7`, deploy
+`6aef28360b64ffad83d239c1`. The two Kinobaza labels look equal. Their full
+addresses, and the MOTN address, are unavailable; the owner has closed that
+search. No retained source response for that run was located. A repeat would
+be a new observation, not recovery of those three URLs.
+
+Therefore byte equality, embedded targets, qualifiers, actual redirects and
+card/offer equivalence of the **three historical choices remain unknown**.
+Neither the equal labels nor the earlier capture below establishes them.
+In particular, this PR does not claim that the historical three choices become
+one or that the historical MOTN pointer is a duplicate.
+
+### Same-input saved-response control, not a new live response
+
+The retained Kinobaza body from `2026-11-07T10:29:16Z`, SHA256
+`150f1c4ff7075c327d49bd8784e1fb4ac429ac8b8b8396a575611a19205cd435`,
+has a top Apple TV+ block (line 1087, Ukrainian subtitles) and a separate UA
+Apple TV / Subscription observation (line 1125, tracks unknown). Both original
+addresses are `click.justwatch.com/a` with keys `cx`, `r`, `uct_country`.
+They are not literal-equal, but differ only in `cx`; their complete declared
+`r` targets are equal, including query. The target has host `tv.apple.com`,
+an explicit `/ua/movie/` route with a percent-UTF-8 Ukrainian slug and the same
+UMC card ID, and keys `at`, `ct`, `itscg`, `itsct`. Query values are not copied
+into this report. No redirect was requested or attested by this comparison.
+
+The actual extractor and composition return two original `appletvplus` rows.
+Replaying the **same rows/HTML** against base and new link presentation gives
+**2 choices → 1**. Both original rows remain; the chosen original caption row
+keeps audio `?`, subtitles `+`, its source and its exact wrapper URL through
+preview/apply. The regional observation does not receive caption tracks.
+Ordinary Beta and authorized diagnostic projections agree on the public result.
+Lost Bus metadata here uses the owner IMDb/original title/year and declared
+Ukrainian title; it is not a fresh TMDb projection or deployed-runtime check.
+
+Two independent omissions caused this saved case to remain separate before:
+
+1. `directPointer` understood Apple Store (`apple`) and Rakuten, not the newer
+   internal subscription product (`appletvplus`). Plus thus got literal-only
+   grouping, even for strict wrappers declaring one admitted Apple card.
+2. The strict comparison rejected every percent escape in a path. The legitimate
+   localized Apple slug was already percent-UTF-8 encoded; assigning a Store key
+   alone still did not group it.
+
+### Shared principle and retained provider-specific boundaries
+
+One established navigation pointer produces one choice, selecting an original
+representative row and keeping all original members. It is **not** an offer or
+language join. Default representative preference and the frozen per-view choice
+cache remain; changing another choice cannot replace a subtitle-bearing record
+with a peer whose tracks are unknown. Opening and transfer use the selected
+original href, not a normalized key or a decoded redirect parameter.
+
+| Product/service | Sufficient comparison evidence | Deliberately not equated |
+| --- | --- | --- |
+| Apple Store and Plus, separately | Admitted `tv.apple.com` movie UMC + explicit URL country + retained content/unknown qualifiers; reviewed Apple `at`, `ct`, `itscg`, `itsct` are comparison-only exclusions | Store vs Plus offers; iTunes vs UMC namespaces; different/missing `playableId`, country or unknown qualifiers |
+| iTunes Store | Existing UA numeric-card namespace and the same retained qualifier rules | Numeric overlap with `playableId` or an observed one-film redirect |
+| Rakuten | Existing exact admitted regional host/path and raw qualifiers | Host aliases, slugs, trailing slash, versions or packages |
+| Netflix / Prime | Exact admitted native host/path and raw qualifiers, with compatible row/wrapper market context | Locale-looking prefixes as countries; alternate hosts, locale paths, IDs or trailing slash |
+| MEGOGO | Exact admitted UA native host/path and raw qualifiers | ID-only vs slug routes, host or slug aliases, other versions |
+| HBO | Literal equality where current policy admits the original pointer | No native HBO route is currently admitted by shared policy, so different opaque wrappers cannot be proved equivalent |
+
+Every service still collapses literal-equal admitted URLs into one navigation
+action; differing observations/conditions remain raw records. Other semantic
+joins require the strict existing JustWatch shape: HTTPS `click.justwatch.com/a`,
+exactly one each of `cx`, `r`, `uct_country`, explicit UA, no extra/encoded or
+duplicate keys, fragments, nested wrappers, unsafe/normalized routes or
+wrong-provider targets. Each declared target must independently pass the
+unchanged native link policy. A declared `r` is not a verified redirect.
+
+For regionless Netflix/Prime native routes, a strict wrapper contributes only
+its declared UA context; direct records need matching source context to join.
+A direct unknown-country record or an explicit conflicting country does not
+silently inherit UA. No source record's country is modified.
+
+The Apple-only localized-slug allowance accepts valid literal Unicode or UTF-8
+percent serialization within the admitted movie slug. Encoded ASCII (including
+separators, dot, percent or space), malformed/overlong/nested escapes, encoded
+IDs, explicit ports, fragments and path normalization do not establish a join.
+Country, UMC and qualifiers still matter; similar slug text proves nothing.
+The shared admission policy is unchanged; an opaque admissible original may
+remain a separate choice rather than being reinterpreted.
+
+Unknown query spelling/value/order, `playableId`, cut/version/package evidence
+and explicit country conflicts remain significant. A literal group with
+incompatible members cannot bridge to a third semantic pointer. Grouping never
+copies audio, subtitles, prices, quality, conditions or links between members.
+
+The #215 Store rule remains an explicit exception: top-block TV → top iTunes →
+UA TV → eligible existing preference/stable order. It chooses one original
+Store row for UI convenience, **not because its alternatives are equivalent**.
+It does not apply to Plus. Subscription and Store remain distinct internal
+product/access choices even with an equal href, within the existing single
+Apple TV / iTunes UI service/medium. No rental/purchase toggle is introduced.
+Remaining Apple options have a stable `посилання N` suffix so equal source/access
+labels are distinguishable without asserting distinct offers or card identity.
+
+### Verification and request accounting
+
+- Same saved-input extractor → identity → composition → choice → preview/apply
+  control: Lost Bus as above; Sin City (3 raw rows), Renfield (4), Lucky Number
+  Slevin (2), Meet the Fockers (5), Meet the Parents (5) keep matched identity,
+  all raw rows, original URLs and language results. Control metadata is retained
+  prior data, not fresh TMDb. No unchanged backend result is attributed to a new
+  source fetch. No platform availability/track entitlement is independently tested.
+- New authored tests cover all supported products: literal/declared/native
+  pointers, different cards, unresolved equivalence, host/market/qualifier/edition
+  conflicts, UTF-8 versus dangerous escapes, exact preview/apply and no mutation.
+  Ordinary/diagnostic UI tests keep all records and source-only tracks while
+  switching grouped Kino, uncertain MOTN and Store repeatedly without discovery.
+- Real local Edge/Playwright browser fixture: **6/6 tests/subtests pass**, zero
+  failures/skips; ordinary Beta and authorized diagnostics at 375×812 and
+  1280×900, plus Store-only Mad Max-shaped priority. Its authored Lost Bus-shaped
+  three Plus rows become two choices (the MOTN qualifier is intentionally unknown),
+  with a distinct Store product retained. Netflix/MEGOGO/Prime same-card wrapper
+  pairs group; separate cards remain selectable. Exact explicit open (intercepted
+  locally), preview/apply, all 13 diagnostic records, hidden ordinary diagnostics,
+  reopen/isolation, four-column rhythm and no overflow pass. Screenshots were
+  generated and visually checked. This supersedes a browser-blocked environment
+  assumption; it is not physical Safari/iPhone or an authenticated deployed test.
+- Full default regression: **1422 tests: 1399 passed, 0 failed, 23 opt-in
+  skips** (root + research suites, serial test files). Browser/native-DB skips
+  are not treated as executed checks; the separate opt-in browser run above
+  passed 6/6. Syntax and whitespace checks pass; independent review found no
+  concrete remaining P1/P2 blocker.
+
+**New source HTTP: 0. Tavily Basic/Advanced: 0 calls, 0 credits.** Saved-body
+replays and authored browser tests make no external source/platform/DB requests.
+No new TMDb/MOTN keys were requested and no live API result is claimed. The two
+earlier Kinobaza GETs that produced the retained body belong to the prior #228
+study, not this task. Platform navigation was intercepted only; real Wishlist
+Save and shared DB writes: 0. Identity gates, link admission, source search and
+ranking, request/time budgets, Beta/diagnostic permissions, session/global
+lifecycle/auth, migrations/flags and production remain unchanged. Merge and
+manual deployment are separate approvals and were not performed.
+
+## Compact Apple actions and scoped negative marks — 2026-11-07
+
+Base develop `65acdcf06e38791defbef09967938f62fb5e0f2f`, after #229.
+Only client presentation, tests and this report change. No source/identity/link
+policy, grouping, choice ordering, ranking or action-budget change is needed.
+
+### Historical report versus current source control
+
+The owner supplied the complete report for The Shining (1980), IMDb tt0081505,
+run `3f8505ba-423e-4586-b62b-cbcb58cebe66`, deploy
+`6aef2f127d5e7b793310e320`, commit `65acdcf`. It records 7/14 source attempts,
+11 mapped source rows (5 Kinobaza), matched card identity and these original
+provider-block values:
+
+- Apple: stereo `-`, dolby `-`, Ukrainian subtitles `+`.
+- Rakuten: stereo `-`, Ukrainian subtitles `+`.
+- MEGOGO: Ukrainian audio and subtitles positive. The film-level audio badge is
+  also positive, but neither is another provider's offer-level audio evidence.
+- Separate TMDb/UA availability observations have unknown provider tracks;
+  MOTN Prime subtitle evidence is a different source/service observation.
+
+The diagnostic negatives were not lost in extraction, projection or copied
+report. `comparisonLanguage` deliberately classified negatives restricted to
+named formats as `format-negative`, but left its visual symbol as `?`. The
+earlier implementation (introduced in `58ac0c7`) and tests intentionally avoided
+claiming that all Ukrainian audio was absent. That conservative meaning agrees
+with the existing limitation: a minus for one format does not exclude others.
+However, using the same visible mark as missing data concealed the explicit
+negative source assertion. This is a display ambiguity, not a new source failure.
+
+A new controlled GET of [The Shining card](https://kinobazaua.com/titles/the-shining)
+at `2026-11-07T14:23:03.687Z` returned 200, 414907 bytes, body SHA256
+`2a9b16711beff9664d4f96fc847ac5153fea96bbedb88b1d543be00d30473161`.
+The actual extractor confirms matched identity through the existing stable-ID,
+title/year route and returns 5 original rows. Its owned Apple and Rakuten tables
+contain the same named-format negative signs and positive subtitles. This is
+**current HTML, not reconstruction of the historical run**. The local film
+context uses the owner's IMDb/title/year, not a new TMDb projection; no current
+TMDb/MOTN offer response or independent platform availability was verified.
+
+For Meet the Fockers and Meet the Parents, retained 2026-11-07 card bodies from
+the earlier study each have an unambiguous top Rakuten table: stereo `-`,
+subtitles `+`. Their own table, not a neighboring caption/service, supplies the
+signs. They are saved-response regressions, not fresh source requests here.
+
+### Implemented display contract
+
+The extra Apple-only `Тип доступу… Джерело…` paragraph is removed **only from
+the actions block** below the selected service. Raw subscription/rental/purchase
+and source data remain intact. Link-selector product/access/source labels and
+the existing Apple preview access/source information remain. The advice engine
+still receives the same access facts; no ability to refer to a subscription is
+removed. Exact opening/preview/apply/ordinary Save behavior is unchanged.
+
+The `format-negative` state remains distinct; only its visible representation
+and scoped explanatory label change:
+
+| Evidence in the established source scope | Table mark | Meaning / boundary |
+| --- | --- | --- |
+| Reported Ukrainian track present | `+` | Positive source assertion; not independently verified availability |
+| Explicit unqualified negative | `−` | Negative in the stated record, not a conclusion about all offers |
+| Negative only for named audio formats | `−*` | Source says minus for those formats; other tracks and offers remain unverified |
+| Missing, unknown or unbound evidence | `?` | No negative assertion is invented |
+| Contradictory signs / mixed separate observations | `±` | Differences stay visible; no universal negative is inferred |
+
+The legend visibly explains `−*`; its tooltip and accessible label repeat the
+format and source scope. It is not an unqualified minus for the whole film,
+platform, region or every offer. Existing source notes retain the format caveat.
+
+A negative format beside an unknown peer remains visibly qualified; the peer's
+raw field remains unknown. An independent positive or conflicting UA observation
+still produces `±` under the existing aggregate rules. Negative stereo and
+positive dolby in distinct named fields can still yield positive audio evidence,
+not a fabricated contradiction or a claim that every format is present. Foreign,
+unsafe, identity-refused or unbound blocks do not gain authority.
+
+Explicitly selected Apple TV+ / Store rows remain row-scoped: selecting unknown
+subscription/rental data does not inherit a Store negative or another record's
+subtitles, even for a shared navigation URL. Grouping itself is unchanged and
+does not merge track evidence. No additional rental/purchase toggle is added.
+
+### Same-response results and verification
+
+The identical input is projected through base and updated presentation:
+
+| Control | Before → after audio / subtitles | Preserved |
+| --- | --- | --- |
+| The Shining, current card: Apple + Rakuten | `? / +` → `−* / +` for each | Matched identity, 5 raw Kino rows, chosen source and exact addresses |
+| The Shining, MEGOGO | `+ / +` → `+ / +` | No cross-service negative from Apple/Rakuten |
+| Meet the Fockers, saved Rakuten block | `? / +` → `−* / +` | 5 raw rows, separate Apple unknown remains `? / ?` |
+| Meet the Parents, saved Rakuten block | `? / +` → `−* / +` | 5 raw rows, separate Apple unknown remains `? / ?` |
+
+Ordinary Beta and diagnostic projections agree on these displayed results;
+primary values, provenance, format evidence and original URLs are unchanged.
+The same-input control checks every selectable exact URL through preview/apply.
+Historical report rows not supplied as raw API results are not recreated from
+these three HTML controls.
+
+Focused authored tests cover positive/negative/unknown/conflicting fields,
+format-only negatives, unknown and conflicting peers, different formats, wrong
+country/unbound blocks, selected Plus/Store isolation and unchanged actions,
+selectors and previews. Full regression and opt-in browser results are recorded
+below; skipped opt-in checks are not called executed tests.
+
+- Full root + research regression: **1425 tests: 1401 passed, 0 failed,
+  24 opt-in skips**. No native/live DB check is claimed from a skipped suite.
+- Separate local Edge/Chromium opt-in browser run: **14/14 tests/subtests
+  passed, 0 failed/skipped** (5 existing Apple mixed-form controls plus 9
+  scoped-negative controls). It uses authored source rows and local capability,
+  discovery and Supabase stubs, not historical/current platform offers.
+  Mobile 375/420, tablet 820 and desktop 1280 layouts, single/multiple pointers,
+  Plus/Store/subscription/rental/purchase, `+ / − / −* / ? / ±`, raw diagnostic
+  preservation, exact open interception/preview/apply, no rediscovery and form
+  isolation pass. Screenshots were visually inspected. Explicitly captured Save
+  payloads are local-only, not real database writes or a successful live Save.
+- Focused unit/controller run: 83/83 pass. Independent review and an independent
+  presentation-summary repeat (33/33) found no concrete remaining issue.
+  Syntax and whitespace checks pass. No physical Safari/iPhone or authenticated
+  deployed-browser verification is claimed.
+
+### External request accounting and release boundary
+
+This task made **2 controlled source GETs**: robots.txt (200, 352ms) and the one
+allowed film card (200, 397ms). The initial conservative local robots check
+incorrectly combined another user-agent's group and stopped **before** a card
+attempt. After inspecting the saved state and applicable wildcard group, the
+remaining one card GET was performed without re-fetching robots or retrying a
+card request. No robots restriction was bypassed; `/search` was not used.
+One separate web-index query located the card URL; its cached text was not
+used as the live HTML control. Tavily Basic/Advanced, TMDb/MOTN API calls and
+credits: 0. Saved-response and authored browser replays add 0 source HTTP.
+
+No source API keys, platform navigation, real Wishlist/shared-DB writes,
+migration, flags/auth/lifecycle changes, merge or manual deployment are part of
+this change. Actual platform availability/track entitlement, fresh TMDb/MOTN
+offers and authenticated deployed end-to-end Save remain unverified.
+
+## Service availability is not the selected navigation offer (2026-11-07)
+
+Base develop `7d313943495a5a79de801672de6a448ae32b4593`, after #230.
+This change is limited to presentation, regression tests and this report. It
+does not change source discovery, identity gates, grouping/link equivalence,
+link preference, ranking, preview/apply, request budgets or server accounting.
+
+### Historical Fast & Furious 6 evidence and cause
+
+The owner supplied the report for Fast & Furious 6 (2013), IMDb tt1905041,
+run `89d58df4-058a-4a02-84d2-5fc0706fd993`, deploy
+`6aef37167551b11aaa3632ea`, exact commit above. It records 10/14 attempts,
+17 mapped rows, 0 unmapped, matched source identity, TMDb UA Apple rental and
+purchase, two MOTN UA Apple purchase observations and one rental observation.
+Their provider tracks remain unknown/empty-list with unknown completeness.
+Kinobaza contributes a separate UA Apple Store pointer with unknown tracks and
+access, plus other services' language blocks. No Apple top language block is
+recorded. Another service's positive audio cannot supply Apple's audio.
+
+The report does not contain the selected Apple row or full original offer URLs.
+It therefore cannot establish which historical pointer was chosen or whether
+different source offers were equivalent. The current verified card URL has the
+same requested-address SHA256 `4ab42a44605397e55036968aaaf22f9cd6c3dfe99c318467a26451efd1b661f8`;
+this establishes the requested address, **not historical HTML equality**.
+
+Two presentation rules explain the discrepancy without any missing extraction:
+
+1. Explicit Apple navigation selection scopes `presentMediaGroup` to one row.
+   This correctly protects offer-bound languages/access, but also concealed
+   other same-product UA availability observations. An authored control using
+   the reported source-field shapes produces `●` with a TMDb pointer and `?`
+   with an unknown-country Kinobaza pointer on the same input before the fix.
+   This is a code-path reproduction, not a reconstruction of the historical
+   selected URL.
+2. `comparisonAvailability` excluded all Kinobaza rows, including an explicit
+   validated Ukrainian section. The current Fast 6 Kinobaza-only control
+   reproduces Apple `?` despite the preserved source-section UA claim.
+
+The earlier #228 selected-offer rule was too broad for the availability cell.
+It remains correct for tracks, conditions and addresses. The correction below
+narrows only availability authority; it does not merge offers or change country
+fields. The first advice sentence also uses the source-availability result when
+appropriate, so it no longer contradicts `●` by saying UA availability is wholly
+unknown. Display bands and recommendation order are unchanged.
+
+### Display contract and safeguards
+
+- `●` means a source mentions a UA variant of this service/product for the same
+  confirmed film. Its tooltip explicitly says this does **not** confirm the
+  selected offer and actual availability is unverified. It is not account,
+  platform, current price, entitlement or selected-link destination verification.
+- For Apple only the availability cell considers original matched peers of the
+  same established film and internal product. `apple` (Store) and `appletvplus`
+  (subscription) still share one Apple TV / iTunes UI and Wishlist medium, but
+  cannot lend availability to each other, even for equal navigation URLs.
+  Unknown/mixed film context and invalid/out-of-group selection cannot borrow
+  peer authority. The selected row's tracks, access, country, conditions and
+  exact URL remain unchanged.
+- The common provider rule accepts an explicit Kinobaza UA section only with
+  the complete existing parser-issued envelope: matched identity/known provider,
+  source `Kinobaza HTML`, the exact explicit-UA territory basis, JustWatch-section
+  provenance, `countrySignal.state=source-section-claim`, UA territory, literal
+  signal/row href equality, normalized source-provider equality and an admitted
+  transferable link. A country flag alone, invalid/partial envelope or top caption
+  does not qualify. These fields already survive the ordinary Beta projection.
+- UA TMDb/MOTN provider observations retain their existing authority. A row with
+  explicit availability, country, territory, provider or identity contradiction
+  cannot supply a clean UA observation. Unrelated track/price differences do not
+  erase a separate valid regional observation. No inference of unavailability is
+  added. Kinobaza's JustWatch section and TMDb share lineage, not independent
+  corroboration.
+- An owned language caption without a source UA observation remains `◐` under
+  the existing application interpretation. No country/availability field is
+  overwritten. Language `+ / − / −* / ? / ±`, format scope, selected Apple record
+  boundaries and table-over-caption priority are preserved.
+
+### Current HTML and identical-response controls
+
+Two new allowed film-card GETs were captured once after checking robots.txt:
+
+| Card | Captured UTC / HTTP / bytes / source time | HTML body SHA256 |
+| --- | --- | --- |
+| [Fast & Furious 6](https://kinobazaua.com/titles/fast-furious-6) | 2026-11-07T15:07:58.887Z / 200 / 348618 / 200 ms | `2005066bb9a2df8af6952aa5885a6288419b541cf2696f065902cfd7aeb6d20b` |
+| [Police Academy](https://kinobazaua.com/titles/police-academy) | 2026-11-07T15:07:59.098Z / 200 / 259043 / 174 ms | `d6bc7c3681b64ac22e9ef6f0e149ea957cd84cb1f891871ebbb4341cadb600d0` |
+
+The Lost Bus and The Shining use the earlier retained 2026-11-07 HTML, respectively
+body SHA256 `150f1c4ff7075c327d49bd8784e1fb4ac429ac8b8b8396a575611a19205cd435`
+and `2a9b16711beff9664d4f96fc847ac5153fea96bbedb88b1d543be00d30473161`.
+They are saved-response regressions, not new live requests or historical run
+reconstruction. All four go through the actual unchanged extractor/identity
+gates and composition with owner IMDb/title/year context; no fresh TMDb film
+projection or TMDb/MOTN provider response is claimed.
+
+The exact same source rows are presented by base and updated code:
+
+| Film/provider | Source rows | Availability before → after | Audio / subtitles, unchanged |
+| --- | --- | --- | --- |
+| Fast 6 Apple Store | 6 Kino rows total | `?` → `●` | `? / ?` |
+| Fast 6 Rakuten | same input | `◐` → `●` | `−* / +` |
+| Fast 6 Netflix | same input | `?` → `●` | `? / ?` |
+| Fast 6 Prime and MEGOGO | same input | `◐` → `◐` | `+ / +` each; no separate UA observation invented |
+| Police Academy Apple Store + Rakuten | 5 | `◐` → `●` each | `−* / +` each |
+| The Lost Bus Apple subscription | 2 | `◐` → `●` | `? / +` |
+| The Shining Apple Store + Rakuten | 5 | `◐` → `●` each | `−* / +` each |
+| Police Academy / The Shining MEGOGO | respective input above | `◐` → `◐` | `+ / +` |
+
+All four identities remain matched. The replay asserts ordinary/diagnostic
+display parity, unchanged original rows and choice/member identities, unchanged
+selected representative, no track copying, and byte-exact original preview/apply
+addresses for every selectable pointer. The local helper initially compared
+diagnostic-only access notes against their intentionally stripped ordinary
+projection; that assertion was corrected to compare actual product access
+state/value. Only saved data was replayed afterward, with no repeated HTTP.
+
+### Tests, browser scope and external requests
+
+Focused authored regressions cover same-product availability independent of
+navigation; selected-row tracks/access/URL; Store/Plus isolation; incomplete and
+forged section envelopes for all supported products; unknown/mixed film context;
+unconfirmed identity/provider and availability conflicts; foreign/unknown data;
+source-field immutability and ordinary/diagnostic parity. Browser fixtures use
+the actual app with local capability/discovery/auth/Save stubs and authored
+offers, not historical or currently verified API offers.
+
+- Final full root + research regression: **1465 tests, 1440 passed, 0 failed,
+  25 opt-in skips**, 157755 ms. Skipped suites are not claimed as executed.
+- Focused new availability/scope/summary tests: **39/39 passed**, 0 skipped.
+- Separate real local Edge/Chromium browser runs: **29/29 passed**, 0 skipped
+  (9 new availability tests/subtests plus 20 existing Apple, shared grouping
+  and scoped-language checks). New controls cover Fast 6, The Lost Bus,
+  The Shining, Police Academy and non-Apple Rakuten at 375/1280 pixels;
+  retained controls also exercise 420/820 layouts. Ordinary Beta and diagnostic
+  paths, single/multiple original pointers, repeated selection/reopen, exact
+  opening interception/preview/apply, no rediscovery and no real Save pass.
+  The initial new browser run exposed only an incorrectly authored preview
+  wording assertion, corrected to the actual existing text; final rerun passes.
+  Mobile/desktop screenshots were visually inspected: table/controls remain
+  aligned and compact, with `●` and unchanged track marks. These are authored
+  fixture assertions, not verification of platform destinations or historical
+  selected URLs. No physical iPhone Safari or authenticated deployed session is
+  tested by this local browser.
+- Independent read-only review found the first-answer/table inconsistency;
+  its narrow fix and regression pass. No remaining concrete issue was found
+  with film/product scope, source envelope, response parity or original URLs.
+  Syntax and whitespace checks pass.
+
+New controlled source HTTP: **3 GETs total** — robots.txt 200/357 ms, the two
+cards above 200/200 ms and 200/174 ms. No redirect follows or automatic retries.
+Two separate web-index queries located the exact card URLs; cached snippets did
+not substitute for the captured HTML. Tavily Basic/Advanced calls/credits,
+TMDb/MOTN API calls, platform requests and real DB writes: **0**. Saved-response,
+authored unit and browser replays add 0 source HTTP. No API keys were needed.
+
+No migration, flags/auth changes, merge or manual deployment is performed.
+Actual destination availability, selected-offer equivalence/entitlement, fresh
+TMDb/MOTN offers and authenticated end-to-end Save remain unverified.
+
+## Production Beta: prepared entry and non-flickering service icons (2026-11-08)
+
+Baseline: `develop` / `9b2edc509a73eaf586b5af3906dec8a2a6072c8a`.
+This is client UX preparation, not a new discovery route, server permission,
+ledger stage or provider identity rule. No SQL, migration, cap or endpoint change.
+
+### Cause and entry preparation
+
+Previously the hidden entry waited for `startEditMovie → fillForm →
+establishMediaAdvice → refresh → getSession → capability POST`. The import
+already started at app startup, but cold module/dependency loading could add a
+second wait. `loadCurrentRole` also refreshed advice **before** reading the new
+role, with no matching post-query refresh.
+
+The app now module-preloads the controller and entry helper, starts session
+initialization early and shares only an unfinished M4 `getSession` promise.
+No bearer token or capability is persisted. Group display eligibility is warmed
+as soon as mapped movie rows are available, before ancillary recommendation /
+activity loads and rendering. If a real movie is already known, it also runs
+in parallel with the role query. Empty groups do not send a fictional IMDb:
+preparation waits for a real lookup/film context.
+
+The existing capability request uses that **real** IMDb and `listId:null` for
+this display-only preparation. The existing SQL's null-list path checks Beta
+flag, UA region and current group membership/role, not a particular list row.
+Only a boolean, user/group key and 30-second expiry are retained. This hint
+can reveal the entry synchronously in the card-opening turn, but is never
+passed into `updateAccess`, diagnostics, click, renew, discovery or apply.
+Each card still receives its exact list/IMDb capability check in the background;
+opening advice and applying a preview still perform fresh checks, and server
+Auth plus start/finish authorization is untouched.
+
+Slow/failed session or capability work has a **4-second total client deadline**
+and cannot hold up the ordinary movie form. A valid form reserves the entry's
+space even while the button is hidden, avoiding a vertical layout jump on a
+cold module/capability response. The hidden control remains invisible and
+unfocusable. A failed check does not enable advice.
+
+User/group/auth changes, changed roles and observed access denial clear
+preparation/private state. Role results are applied before controller refresh;
+late results from another user/group are ignored. Late failed exact requests
+cannot revoke a newer film/form's display hint. Focus, pageshow and visibility
+return trigger revalidation (coalesced for 1.5 seconds); in-flight display
+checks coalesce too. A pending user click retains its own fresh authorization
+and cannot be swallowed by a background refresh or duplicate click.
+
+Supabase auth-event work is scheduled outside `onAuthStateChange`, following
+the [official callback guidance](https://supabase.com/docs/reference/javascript/auth-onauthstatechange)
+and [documented async-callback deadlock](https://supabase.com/kb/troubleshooting/why-is-my-supabase-api-call-not-returning-PGzXw0).
+`getSession` supplies transport credentials, not trusted authorization; the
+server still verifies the user and RPC permissions. Remote flag changes are
+not push notifications: they become visible on the next revalidation/action,
+not instantaneously while an idle page has no server contact.
+
+### Icons
+
+Previously the local SVG `src` was assigned only when the result table was
+built, and mobile names were clipped only after `load`. Hence visible text
+became an icon. Discovery now starts six deduplicated, fixed local image
+preloads alongside the three-dot loading state. No provider URL is fetched.
+
+The table always reserves an icon slot. Pending mobile icons use a static
+placeholder, not a transient visible service name; desktop retains its existing
+icon-plus-name layout. The button's accessible service name remains available
+throughout, and decorative SVGs are excluded from accessibility output. Error,
+empty image or 5 seconds pending in the rendered table produces a terminal text
+fallback; a late successful image cannot replace it. Search never waits for
+preloads, load/decode or the fallback deadline.
+
+### Validation and limits
+
+New deterministic controls cover short TTL, strict flag values, no invented
+film, user/group/role epochs, late replies, in-flight deduplication and fresh
+click checks. Icon controls cover allowlisted local assets, preload failure,
+load/error/empty/timeout and late-response terminal fallback. Source rows,
+grouping, identity gates, availability/languages and exact selected addresses
+are not modified.
+
+Real local Edge/Chromium browser controls run the actual app with authored
+Supabase/capability/discovery responses and all remote requests blocked. New
+mobile 375px and desktop 1280px scenarios include cold contexts, held module,
+held session, delayed/failed/denied capability, role/capability parallelism,
+film/group/user changes, flag revocation on focus/click/apply, and pending,
+failed or permanently stalled SVGs. They also check repeated link selection,
+preview, byte-exact form transfer, accessible names, touch targets, responsive
+layout and no discovery on preparation/revalidation/reopening. Screenshots of
+pending, loaded and failed states were visually inspected. Existing Store/Plus,
+non-Apple, grouping, pending/resume and form regressions are run separately.
+
+Validation results:
+
+- New preparation/icon helper controls: **15/15 passed**, no skips.
+- Root + research regression, excluding the two native Windows pipe checks:
+  **1480 reported tests, 1454 passed, 0 failed, 26 opt-in skips**. The omitted
+  native checks are not included in that total or claimed as passing.
+- Initial unfiltered regression: **1480 reported tests, 1453 passed, 1 failed,
+  26 skipped**. The failure is the unchanged fake-key PowerShell pipe broker's
+  16-second client `status` timeout. An isolated rerun also timed out (1 native
+  SID/NETWORK check passed, 1 broker check failed). These scripts/tests do not
+  import the changed client code. No unrelated pipe repair or relaxed timeout
+  was added; this remains an explicit environment/helper verification limit,
+  not a fully green unfiltered regression claim.
+- **84 distinct browser checks passed** across the new suite and seven
+  existing suites: **20 new + 64 existing**, with no final skips. New controls
+  were rerun after the final expired-hint/pending-click guard, **20/20**, 67.0s.
+  The initial combined run's 120-second CLI watchdog cancelled the unchanged
+  general viewport suite at 820px. That suite reran unchanged with a
+  300-second watchdog: **5/5 passed**, 170.2s, including 1280/375/420/820px.
+  No functional browser assertion failure remains. The independent review's
+  late-response, concurrent refresh/click and hint-expiry cases have targeted
+  regressions; no authorization blocker remains in that review.
+
+These are deterministic network-delay/error controls, not a real mobile
+carrier trace, physical iPhone/Safari, screen-reader session or authenticated
+deployed production check. No current film/API offers were refetched: new
+TMDb, MOTN, Tavily, Kinobaza and platform source HTTP requests **0**, Tavily
+Basic/Advanced credits **0**, real Supabase calls/writes **0**. Local app/API
+fixtures and six static SVGs are not source-budget attempts. Official auth
+documentation was consulted separately. No migration, merge or manual
+deployment is performed.
+
+### Follow-up: recovery after a hung getSession (2026-11-08)
+
+The first deadline control proved that a stalled auth read could not delay the
+ordinary form or send late HTTP, but did not attempt recovery while that raw
+SDK promise remained unresolved. Three new browser cases reproduced the gap:
+the capability's timeout settled its consumer, yet `mediaAdviceSessionFlight`
+still cached the unbounded raw `getSession()` promise. The next check joined
+that same stalled promise rather than reading the now-working session.
+
+The shared session read now has its own 4-second bounded wrapper, including
+startup warming. Every concurrent consumer shares that wrapper; timeout,
+success or failure clears it only if it still owns the current flight. A new
+session deadline is installed before the consuming capability's deadline, so
+the old shared read is released before the next check can join it. A single
+caller's cancellation does not detach a read still shared by other consumers.
+There is no automatic retry, SDK replacement or automatic discovery: the next
+ordinary revalidation/opening can initiate one fresh shared read without a page
+reload. Server authorization remains unchanged.
+
+The underlying SDK call has no cancellation contract here. Its old raw promise
+may remain pending, but a late success/rejection cannot clear a replacement
+flight, send an expired capability request, revoke recovered access or revive
+an actual server denial. This fixes our retained-flight state, not a persistent
+internal SDK lock if fresh SDK calls themselves still fail to return.
+
+Controls explicitly leave the old read unresolved past timeout, start
+concurrent preparation/exact refresh, require exactly one fresh SDK read, and
+recover the entry on the existing page before resolving the old read. Separate
+cases cover stale wrong-user success after recovery, old rejection during the
+new pending read, and current capability denial followed by stale success.
+Permission recovery makes no discovery request; only the later explicit click
+does. New source/API, real Supabase and platform requests/writes remain **0**.
+Follow-up validation: **65/65** focused preparation/icon/controller/server
+checks pass. **53/53** browser checks pass across the prepared UX (23), pending
+authorization (7) and resume/revocation (23) suites, 92.4s. The prepared UX
+suite additionally passed **23/23**, 58.3s, after strengthening the direct
+shared-promise identity assertion, so upper-layer coalescing cannot mask a
+detached flight.
+The earlier full-suite/native IPC limitation remains recorded above; this
+follow-up does not claim a new unfiltered full run or a live SDK recovery.
+No migration, merge or manual deployment is performed.
+
+## Global UA advice availability and early initialization — 2026-11-08
+
+Historical intermediate PR #233 design: the final [personal flag decision](#personal-feature-flag-and-global-beta--2026-11-08)
+below supersedes its runtime-UA rule, no-assignment plan and unchanged-pilot-RPC
+claims. Its browser timing observations remain separate evidence, not a new live measurement.
+
+This decision supersedes the group/film-scoped **display and discovery**
+eligibility described above. Mykola media advice is available to authenticated
+users of the application's existing Ukrainian region, regardless of movie,
+group membership or editing role. A valid selected IMDb identity is still
+required to search; it is not an authorization input. Ordinary card editing
+and saving permissions remain separate. Signed-out and Supabase anonymous
+accounts have not been assigned a new inferred region or new access policy.
+
+### Observed chain and implementation
+
+Baseline `develop` is `1f257566326bbe5968208cb13dd3d833d7fa879e`
+(including #232). The earlier warm-up needed a real IMDb from the group list;
+in an empty group it could not start until lookup filled the form. Its
+`Promise.all` also waited for the larger advice controller module before
+installing the small preparation helper. Rendering the filled form then
+triggered exact-film capability requests (including overlapping preparation
+and controller refresh). Reserving button space hid a layout jump, not that
+serial dependency.
+
+The small availability module now initializes independently. As soon as
+`updateAuthUI` knows the authenticated user, it prepares availability before
+awaiting the profile, group or role queries. One memory-only hint per user/app
+session is shared across concurrent consumers; group, role, movie and form
+changes do not create another eligibility request. Successful hints are not
+polled on focus/resume. Failed or unavailable initialization can be explicitly
+retried on a later foreground event, coalesced across those events. Auth user
+changes, explicit feature reinitialization/USER_UPDATED and discovery denial
+invalidate the relevant hint; token refresh alone does not repeat a successful
+availability request. The existing recoverable four-second session wrapper,
+abort and generation guards remain.
+
+`availability` sends only its action, without group, list, IMDb, region or
+browser-selected user claims. It returns only the display boolean, never a
+diagnostic grant. Opening or refreshing advice reads that cached eligibility;
+it makes no film-permission request. Discovery starts only on an explicit
+button click, sends IMDb + form session, and freshly verifies Auth and backend
+feature access at start, each reservation and finish. User/group/film changes
+invalidate private form/results/preview state. Editing-role changes preserve
+the existing read-only answer and spent search session, but cancel preview or
+pending transfer and refresh editing controls without another search. A visitor can read advice and
+open links but cannot transfer fields; transfer rechecks current local editing
+rights and the existing strict group/list capability on the server, with the
+ordinary save/RLS path unchanged. That existing transfer check still includes
+UA and the feature flag as well as editing/list rights.
+
+Protected diagnostics use a separate fresh **global** check before inserting
+the report DOM or copying it. Closing the dialog clears protected DOM; stale
+diagnostic replies cannot revive it after user/form/dialog changes. Neither a
+cached display hint nor an edit denial grants or revokes diagnostics silently.
+An ordinary `200` diagnostic denial only removes private details; a current
+`401/403` general Auth/feature denial removes global availability as well.
+Abort, exact-form and availability-epoch guards reject denials from an old
+film/form or a superseded availability check, even if a response ignores abort.
+Forced global revalidation retains a valid hint while pending, preventing a
+temporary refresh from discarding a one-shot answer. Initial SDK auth events
+are adopted coherently even when the first session read is still awaiting.
+
+An already-confirmed eligible entry can appear while the controller is still
+loading, visibly disabled with `aria-busy`; it becomes interactive only when
+ready. A failed optional module hides that entry without blocking the form.
+There is no promise of zero delay on the first cold authenticated launch:
+session availability, the small module and the server still take time. A
+cached successful display hint is not an immediate push notification of a
+remote flag/region change: the next server action fails closed, and explicit
+reinitialization refreshes it. No film search is used as a warm-up.
+
+### Existing region authority and prepared SQL
+
+The authority is unchanged: backend-only
+`media_advice_private.user_regions.region_code = 'UA'`, assigned by the
+existing Auth-user trigger/backfill with a default UA value. It is not IP,
+browser language, profile residence or editable Auth metadata. The existing
+global `beta_config.enabled` switch and separate expiring diagnostic grant
+are retained without changing any data or assignments.
+
+CLI-created migration
+`20261108185237_media_advice_global_access.sql` adds a service-role-only
+`media_advice_beta_global_action` and private volatile feature-access helper.
+Global sessions have honest NULL group/list metadata; the only column change
+is allowing NULL `sessions.group_id`. The new RPC requires
+`global-predicted-card-v1` for a new cap14 session, matches exact user/IMDb/form
+and NULL group/list on reserve/finish, and retains one-shot form protection,
+unique stages, expiry, cleanup and post-lock authorization. The existing
+pilot/group RPCs, their definitions and existing cap8/10/12/14 rows are not
+rewritten; neither contract can adopt the other's sessions. There is no
+fallback to an older permission contract after an error.
+
+Prepared operational order (NOT executed): independently recheck PR SHA and
+SQL, target project/history, active sessions and readable recovery; apply only
+this file through the isolated migration workflow; verify one history entry,
+unchanged existing session caps/attempts, old RPCs and ACLs/data/flags, plus a
+new global cap14 contract without a group; only then release the compatible
+handler/client through the approved release process. The new handler fails
+closed if the new RPC is absent. No general db push, history repair, live
+migration, merge or manual deployment is authorized by this implementation.
+
+### Controlled browser timing and evidence boundary
+
+The same local Chromium fixture runs frozen baseline sources and the changed
+actual add/IMDb-lookup and edit handlers. Authored delays: role 80ms, SDK
+session 60ms, capability 300ms, lookup 180ms, cold controller 600ms. Its
+boundary begins with a known user/group, not a complete deployed Auth startup.
+Network and Windows scheduling introduce jitter; these are individual
+controlled examples, not production medians or real-phone measurements.
+
+| Filled-form → visible button | Baseline | Global preparation |
+| --- | ---: | ---: |
+| Cold add, Fast Five, empty group | 663.4ms | 31.0ms |
+| Edit existing film | 392.2ms | 0ms |
+| Repeated opening after preparation | 0ms | 0ms |
+
+In the final cold-add example, the new availability request ran at 65.4–404.3ms,
+overlapping role (0.6–81.6ms) and lookup (152.7–375.2ms). The form was filled
+at 376.3ms and the visible button appeared at 407.3ms, still disabled while
+the delayed controller loaded. The baseline controller was ready at 606.7ms
+and did not send capability until 673.7ms, after filling its form at 330ms;
+the button became visible at 993.4ms. The new edit control had global
+availability ready before opening the populated form. These timestamps have
+different origins per run; compare intervals, not absolute cross-run times.
+`0ms` means visibility in the same JavaScript turn as film establishment, not
+zero physical paint time. A separate held-three-second-module case verifies
+that the button becomes enabled and one click then discovers exactly once.
+This table measures DOM appearance, not click-ready or complete search time.
+
+The exact local artifact is `m4-group-entry-study/before-after-timing.json`
+outside the repository; an earlier `baseline-timing.json` is superseded and
+is not the final evidence. New browser checks cover global initialization
+before a held profile, empty groups, visitor/no membership, cold/repeated
+add/edit, held/failed capability, delayed module, context changes, late-user
+responses, denial and recovery. Additional controller/SQL/HTTP regressions
+cover separate transfer/diagnostic permissions and old budgets.
+
+All source HTTP (TMDb/MOTN/Tavily/Kinobaza/platforms), real Supabase calls and
+database writes in these checks are **0**; Tavily Basic/Advanced credits **0**.
+Local app/API/SVG fixtures are not source attempts. This does not attest a
+live SDK account, deployed feature flags, physical iPhone/Safari or a real
+screen-reader session. The SQL was exercised only against an authored local
+database. Final test totals and any environment limits are recorded in the PR.
+
+Validation record: broad root + research regression **1480 passed, 0 failed,
+27 opt-in skips** (213.7s); two unrelated native Windows pipe/broker helper
+controls were excluded by name because of the previously recorded environment
+limit. This is not an unfiltered native integration claim. The nine global
+SQL contract/security tests passed, including preserved legacy rows, RPC
+definitions and ACLs. The final client lifecycle delta also passed **45/45**
+focused unit checks. Across nine browser suites, **98 distinct leaf checks**
+passed (107 reported checks including parent tests): the new global suite
+17/17, four unaffected legacy suites 44/44, and the four final rechecked suites
+46/46. These cover 375px mobile and 1280px desktop, delayed/error SVGs,
+selection/grouping/preview and original-address transfer, protected report
+open/copy, hung-session recovery, initial Auth events, role changes without
+search replay, and late discovery/report/apply responses. Earlier asynchronous
+DOM assertions and one case-sensitive error-text assertion were corrected to
+await the fresh diagnostic check; their original value/count assertions were
+retained. No runtime assertion failure remains in these final browser runs.
+
+## Personal feature flag and global Beta — 2026-11-08
+
+Historical PR #233 revision at `6a274c7`: the later
+[actual-region-transition policy](#actual-region-transitions-and-personal-overrides--2026-11-08)
+supersedes the permanent-manual-override behavior below. Its completed test and
+preflight records remain historical evidence, not results of the later revision.
+
+Final owner clarification for PR #233: **effective feature access = global
+`beta_config.enabled` AND active personal `mykola_media_advice` permission**,
+in addition to verified, non-anonymous Auth. There is no additional runtime
+UA/group/role/movie permission gate for viewing advice. The existing private
+backend region governs automatic personal flag assignment, not a new region
+definition or a browser claim. The existing default-UA Auth trigger is unchanged.
+
+### Assignment and explicit overrides
+
+The revised, still-unapplied CLI-created migration is
+`20261108185237_media_advice_global_access.sql` (the same version, NOT a repair
+of applied history). It fills missing flags for current Beta+UA users and
+installs an AFTER-region-row trigger, so every new user's actual default UA
+row exists before assignment. A Beta-activation trigger reconciles users
+created while Beta was off. No diagnostics flag is automatically assigned.
+
+Only newly inserted automatic flags enter private
+`beta_feature_assignments`. Existing flags are explicit overrides: their true,
+false and expiry values remain byte-for-byte unchanged. Any later direct
+UPDATE of a personal core-permission row, even a no-op assignment of the same
+value, detaches automatic ownership. Its subsequent region changes cannot
+silently overwrite that operator intent. Automatic reconciliation reclaims
+only its own writes after the permission trigger; there is no caller-controlled
+metadata/GUC bypass. Deleting a flag is absence, not durable refusal: a later
+eligible reconciliation can recreate it. Use an explicit false for durable denial.
+
+| Event / state | Stored personal flag | Effective advice access |
+| --- | --- | --- |
+| Active Beta + UA, no personal row | Insert true/no expiry; automatically managed | Yes |
+| New default-UA user while Beta off | No new row; next activation fills it | No |
+| Managed UA → non-UA or missing region | Automatic false, retains ownership | No |
+| Managed non-UA/missing → UA | Automatic true, including while Beta off | Only when global Beta is on |
+| Beta off, then on | Off does not erase personal rows; on fills missing eligible rows | Off denies ALL feature routes; on still requires active personal flag |
+| Existing/manual false or expired permission | Preserve value and expiry, do not renew | No |
+| Existing/manual true outside UA | Preserve explicit override; no runtime UA check | Yes while Beta is on and grant unexpired |
+| Repeat assignment | No-op for already-correct managed rows and all explicit rows | No new entitlement or diagnostics |
+
+The explicit-override exception is intentional preservation, not an inferred
+regional grant. If product policy should revoke **all** explicit true grants
+on leaving UA or automatically renew explicit expired/false grants, that needs
+a separate approved reconciliation decision. The target currently has no
+non-UA explicit grant. Assignment provenance did not exist historically, so
+this migration never guesses which old settings could be overwritten.
+
+Region/Beta writes serialize with the same transaction advisory lock in
+BEFORE STATEMENT triggers, before row locks; the reconciler also acquires that
+lock. This closes the simultaneous activation/default-region insertion gap.
+Migration backfill holds bounded table locks on Auth users, config, regions and permissions;
+lock timeout is 5s and a failure rolls the transaction back. Region deletion
+locks the permission before rechecking ownership, so it cannot overwrite a
+concurrent manual override. Auth-user deletion remains cascading; no orphan
+assignment is recreated. These locks do not span any source HTTP operation.
+
+### Entry, diagnostics, editing and old sessions
+
+The existing PR #233 client/server initialization remains: `updateAuthUI`
+starts the small global availability hint as soon as user identity is known,
+before waiting for profile/group/role and without an IMDb. The same minimal
+`availability` response now derives from the personal flag. User changes do
+not inherit another user's cached answer. Changing film/group/role does not
+repeat availability or start a search. A cold launch can still wait for Auth,
+module and network; the filled form is not blocked. Once-per-session caching
+is not real-time flag push: remote changes are enforced by fresh server
+authorization at start/reserve/finish/report/apply, and reinitialization
+refreshes the display hint. A stale positive button cannot authorize an action.
+
+Diagnostics still require the independent active
+`mykola_media_advice_diagnostics` permission, freshly checked before protected
+report DOM/copy. Diagnostics alone never grant advice. Modern ordinary advice
+does not require diagnostics. Transfer/apply still requires the ordinary
+group role/list/movie editing context, plus current Beta+personal entitlement;
+it no longer introduces a separate runtime UA condition. Save/RLS and exact
+selected-address transfer remain unchanged.
+
+Mass core-flag assignment would otherwise open the old pilot RPC to all UA
+users. A private `pilot_access_users` snapshot therefore captures only
+pre-backfill core-permission users (including disabled/expired settings).
+The legacy pilot RPC keeps its old role/list checks, cap8 and daily limit,
+with fresh pilot authorization both before and after its existing ledger
+lock. The global Beta switch now stops this route too. Because historical
+pilot HTTP deployments return an unredactable raw diagnostic result, that
+legacy boundary also requires the separate diagnostics grant. The one target
+pilot user already has it, so current pilot access is preserved. A synthetic
+old pilot without diagnostics now loses only that raw legacy route, not
+modern ordinary advice. Expanding legacy pilot membership is a separate
+operator decision, not a side effect of automatic flags.
+
+All private helpers revoke EXECUTE from PUBLIC/anon/authenticated/service_role;
+new ownership tables enable RLS, expose no browser policy or writes and allow
+service-role SELECT only. Public wrappers remain service-role-only with an
+empty search path. Global sessions use NULL group/list and cap14 negotiated
+only by the compatible handler. Existing cap8/10/12/14 ledger rows and source
+budgets remain unchanged; old/group contracts cannot adopt global sessions.
+
+### Read-only target preflight and release order (NOT executed)
+
+Verified target: `mttkectgdqqmejpenkrn` (`movie-wishlist`, eu-north-1), matching
+the application's Supabase URL. The checked script is
+`supabase/operations/media-advice-global-access.preflight.sql`: explicit
+READ ONLY transaction, timeouts, catalog/count/fingerprint queries and ROLLBACK,
+without app RPCs, user identifiers, emails, keys or source URLs.
+
+At **2026-11-08 21:10:38 UTC**, Beta was on, all 7 existing users had backend
+UA, one had an active core flag and one the separate diagnostics flag (same
+pilot user); 6 UA users had no core row. All six required earlier M4 versions
+were recorded exactly once; proposed `20261108185237`, global RPC and new
+ownership tables were absent. Existing service RPCs were service-only and
+used empty search paths; private tables had RLS and no browser access. There
+were 9 finished cap14 sessions, 0 active/over-cap; earlier reads had 5 and 6
+sessions. That is live concurrent application activity, not a stable backup
+or evidence of a preflight write. No cap8/10/12 rows existed on the target;
+their compatibility must be established locally, not claimed from live rows.
+
+The security advisor also reports existing no-policy RLS INFO notices for
+the intentionally private M4 tables, plus unrelated public definer-function
+and Auth-password-protection warnings. This PR does not silently change those
+broader settings or claim a clean project-wide security audit. See the
+[public-definer advisory](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable),
+[authenticated-definer advisory](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
+and [password-protection guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Prepared release procedure, requiring separate execution authorization:
+
+1. Recheck exact PR HEAD/develop, SQL hash, target ref, required history and
+   absence of this version, active sessions and queued work. Repeat the
+   read-only preflight immediately before applying: these counts are not a
+   future execution attestation. Coordinate manual region/permission writes.
+2. Confirm a readable recovery of current M4 definitions, permissions, regions,
+   config and ledger, with restricted local access. Create/verify a fresh copy
+   if the old recovery is stale; no new utility or Windows update is needed.
+   This task did not create or certify a fresh data backup; catalog MD5s are
+   drift comparisons, not recovery or cryptographic integrity proofs.
+3. Stage **only this exact migration** in an isolated migration workdir and
+   apply it through the established single-file workflow. No general db push,
+   history repair or blind retry. If the reply is lost, read actual history,
+   objects and assignments before deciding any next action.
+4. Postcheck exactly one version entry; expected current impact is 6 missing
+   core flags + 6 managed rows, one preserved pilot member, no new diagnostic
+   grants. Compare every pre-existing permission value/expiry and old ledger
+   caps/attempts/data, plus regions/config and unrelated data. Verify private
+   RLS/ACLs, service-only public RPCs, default-region and assignment triggers,
+   and compatible new global cap14 without adopting old sessions. Do not
+   create a live test account or source search without separate authorization.
+5. Only after successful SQL postchecks and separate release approval deploy
+   the compatible handler/client. Missing migration fails closed. Validate
+   startup, personal denial, global Beta kill switch, diagnostics and ordinary
+   read-only/editing transfer on the approved environment. No merge or manual
+   deployment was performed for this task.
+
+### Validation of the final personal-flag revision
+
+New external film-source HTTP requests: **0** (TMDb, MOTN, Tavily, Kinobaza,
+platforms); Tavily Basic/Advanced credits **0**. The target checks were four successful
+read-only SQL calls plus project metadata and the security advisor (one later
+confirmation expired without executing and was safely renewed); no live
+RPC invocation, mutation, account creation or migration. Browser checks use
+local authored Auth/API/source/SVG fixtures, not a deployed account. Earlier
+controlled timing and broad/browser counts above belong to the preceding
+client implementation, not a fresh production benchmark of this migration.
+
+Final single-revision broad regression: **1494 passed, 0 failed, 28 skipped**
+(183.54s), including all **19** global/personal SQL contract cases. Two unrelated
+native Windows pipe/broker controls remain excluded by name; the other skips
+are explicitly opt-in integrations, not claimed live coverage. Focused HTTP
+dispatch tests passed **12/12** (also included in the broad run).
+
+The existing installed native PostgreSQL **17.6** passed five independent
+multi-connection scenario subtests plus their parent (**6/6**, 48.3s including
+cluster initialization/cleanup): activation versus signup in both orders,
+same-value manual false plus queued region/mixed writes, and Auth deletion
+versus activation in both orders. Workers demonstrably waited on the common
+advisory lock before row locks; there were no missed grants or orphan rows in
+these controls. This is an authored loopback database, not the target Supabase.
+
+Final quiet-host browser run: **32 leaf scenarios + parent = 33/33**, 0 failures
+or skips (76.92s), using both 375px and 1280px viewports. It includes early
+initialization before the profile resolves, opposite personal flags, an
+explicit non-UA grant, global Beta off, revocation/expiry, user/group/role/film
+changes, getSession timeout recovery, late-response guards, separate report
+authorization, cold/delayed/error SVGs, repeated link switching, preview and
+exact-address transfer. No source discovery occurs before clicking.
+
+An earlier overloaded run hit the real five-second terminal icon fallback
+while the fixture still deliberately held the SVGs, and an earlier 115-second
+suite envelope timed out. Those are not suppressed successes: the unchanged
+runtime behaved as bounded; the full final rerun passed after removing local
+load. Only the expanded browser harness envelope is now 240s; production Auth,
+capability and icon deadlines were not relaxed. No physical iPhone/Safari,
+real screen reader, deployed SDK account, live signup or live source integration
+was exercised. Final local artifacts are `personal-final-regression.tap` and
+`personal-browser-quiet-final.tap` in the external `m4-group-entry-study` folder.
+
+## Actual region transitions and personal overrides — 2026-11-08
+
+This owner-approved refinement supersedes the permanent-manual-override rule
+of `6a274c7`. Runtime access is unchanged: **global Beta + active personal
+`mykola_media_advice` flag**, with verified non-anonymous Auth. There is no
+extra runtime region, group or film-editing gate for viewing advice.
+
+### Exact regional synchronization policy
+
+An explicit personal true outside UA remains valid until the next **actual**
+authoritative region change. An UPDATE whose old and new `region_code` values
+are equal is not such an event: the trigger returns before reconciliation,
+without touching permissions, expiry, ownership or diagnostics. This includes
+same-region writes while Beta is off, and a still-missing permission row.
+
+On a real change, the core enabled value becomes
+`new backend region = UA AND global Beta enabled`, even if the old value was
+set manually. UA→GB and GB→UA are both covered, as is GB→US (a different
+non-UA region). Initial insertion of the authoritative region and deletion
+to a missing region also count as regional events; missing region disables
+an existing flag. A missing permission is created only for active Beta + UA.
+The existing default-UA source and Auth trigger are not redefined.
+
+| Operation | Stored core flag / management | Effective feature access |
+| --- | --- | --- |
+| UA→GB→UA, Beta on | false→true, including a former manual value | denied→allowed if unexpired |
+| Manual true in GB, then GB→GB | true and manual ownership unchanged | allowed while Beta on and unexpired |
+| Manual true in GB, then GB→US | false; the real event resumes region management | denied |
+| UA→GB→UA, Beta off | existing core flag false on each real change | denied throughout |
+| Beta off alone, with no region event | no personal value or expiry change | denied globally |
+| Beta activation after a Beta-off UA transition | region-managed UA flag enabled; missing eligible rows filled | allowed if unexpired |
+| UA→UA after a manual false | no changes; bulk reconciliation also preserves detached manual override | denied until a real regional event or explicit grant |
+
+Only `enabled` is synchronized. Existing `expires_at` is preserved and never
+renewed: a regional UA event can set enabled=true on an expired row, but that
+row remains effectively denied until its expiry is explicitly changed. The
+owner authorized overriding the boolean on region events, not extending grant
+lifetime. Diagnostics and ordinary editing/save rights are not changed.
+
+### Implementation and compatibility
+
+The still-unapplied `20261108185237_media_advice_global_access.sql` adds a
+private invoker `sync_beta_feature_region(uuid)` helper. It reads the actual
+locked backend region, never a caller-supplied region. It serializes with
+Beta, region, permission and Auth deletion writes using the existing common
+statement-level transaction lock, then locks the personal row before writing.
+Auth deletion cannot recreate grants or ownership rows.
+
+The region trigger skips equal-region UPDATEs. Real region events adopt the
+core row into private automatic management, recording its original expiry as
+well as enabled state. Later manual permission writes still detach management,
+so their explicit value is preserved by ordinary activation/backfill until the
+next real region event. Beta-off bulk reconciliation is a no-op; Beta-on bulk
+reconciliation fills missing eligible flags and adjusts region-managed rows
+without erasing detached manual overrides or renewing expiry.
+
+Migration backfill still preserves every pre-existing permission/expiry and
+the old pilot snapshot. The global Beta gate, separate diagnostics, guarded
+legacy raw-pilot route, strict transfer editing checks, source budgets and
+cap8/10/12/14 session isolation are unchanged from the preceding revision.
+The new helper also revokes EXECUTE from PUBLIC, anon, authenticated and
+service_role; no browser-writable policy or extra public RPC is introduced.
+
+### Exact future application sequence — NOT run
+
+The same migration version was confirmed absent before editing. If that
+changes, STOP: do not replace applied history or reuse this procedure blindly.
+The exact approved PR HEAD is recorded in the PR report, not inferred from a
+future working HEAD. The SQL LF SHA256 for this revision is
+`0f8e5c05cd43837c08c810e66b9f36937c21e2d7746086cdc804462b4c27c51d`.
+Recheck it if any SQL changes after review.
+
+1. Recheck remote PR #233 HEAD, develop, clean source checkout and this exact
+   SQL. Verify project `mttkectgdqqmejpenkrn` against the application URL and
+   the read-only preflight. Require the six earlier M4 versions exactly once,
+   proposed version absent, expected RPC/trigger/table ACLs, no active/queued
+   M4 work and no unexpected history ordering. Coordinate Auth/region/flag
+   writes; table locks are bounded by a 5s timeout, not a reason to interrupt
+   user work or keep retrying.
+2. Verify a current readable, restricted local recovery of M4 definitions,
+   permissions, regions, config and ledger. Refresh it if stale using existing
+   tools only. Catalog MD5s are not a backup, and this read-only task does not
+   certify a fresh recovery. Preserve the before-state permission values/expiry
+   and session caps/attempts for comparison.
+3. Create a fresh isolated migration workdir under the task workspace, not the
+   general repository's migration directory. Copy only the approved source
+   config and these seven exact migration files from the reviewed checkout:
+
+   ```text
+   20261020205122_media_advice_access_ledger.sql
+   20261021072002_media_advice_review_fixes.sql
+   20261031135149_media_advice_beta_ua.sql
+   20261101180436_media_advice_identity_budget.sql
+   20261102181617_media_advice_exact_reserve_budget.sql
+   20261104210025_media_advice_predicted_card_budget.sql
+   20261108185237_media_advice_global_access.sql
+   ```
+
+   Compare the staged pending SQL's raw SHA256 to its source copy and its
+   normalized-LF SHA256 to the approved value above; record the execution-byte
+   hash. Verify the first six files are unchanged applied predecessors, not
+   additional pending work. Do not copy credentials or unrelated migrations.
+4. Use the existing verified CLI **2.122.0**, without installing/upgrading it.
+   `$M4Cli` is the checked absolute executable path and `$M4Stage` the fresh
+   isolated directory containing its `supabase` folder. Read-only list first:
+
+   ```powershell
+   $M4Cli = 'C:\Users\DenysLis\.codex\visualizations\2026\09\28\01a0e7c4-3dc8-75e0-a3ed-84a709483b8d\m4-beta-tools\npm-cache\_npx\91eb58246759989d\node_modules\@supabase\cli-windows-x64\bin\supabase.exe'
+   & $M4Cli migration list --linked --project-ref mttkectgdqqmejpenkrn --workdir $M4Stage
+   ```
+
+   Proceed only if **the sole pending migration is 20261108185237** and all
+   independent preconditions still match. If the CLI refuses partial staging,
+   reports history divergence or proposes another version, stop and inspect;
+   do not use `--include-all`, general `db push` or history repair.
+5. Only after explicit execution approval, apply exactly the staged file:
+
+   ```powershell
+   & $M4Cli migration up --linked --project-ref mttkectgdqqmejpenkrn --workdir $M4Stage
+   ```
+
+   These flags were verified using the installed CLI's help only. No migration
+   command was executed in this task. If the reply is lost or ambiguous, first
+   inspect history and actual objects/assignments; never retry the apply command
+   merely because its reply was missing.
+6. Postcheck exactly one proposed history record; global RPC and private helper
+   definitions/ACLs/RLS; unchanged default-UA trigger, regions and Beta value;
+   expected missing-flag backfill and preserved pilot/diagnostic scope; every
+   pre-existing personal value/expiry and ledger row's cap/attempts. The local
+   contracts cover old cap8/10/12/14 and new global cap14; do not mutate old
+   sessions or create a live test account/search just to demonstrate this.
+   Region-transition tests run on authored local PostgreSQL, not by changing
+   a real user's region during these postchecks.
+7. Keep merge and release separately authorized. The compatible client/handler
+   requires the new global RPC and fails closed if it is missing. Only after
+   successful SQL postchecks should the approved release path proceed; this
+   task does not merge or run a manual deployment.
+
+### Repeated preflight and validation for this regional revision
+
+At **2026-11-08 21:47:36 UTC**, the final read-only script confirmed the app's
+target `mttkectgdqqmejpenkrn` (the same URL in `app.js`): history contained
+exactly the six prior M4 versions, each once, latest `20261104210025`, no
+duplicates. Proposed `20261108185237` and its global RPC/assignment objects
+were absent; the proposed version is later than the full current history.
+Beta remained active; all **7 users were UA**. One had the active personal core
+flag and separate diagnostics grant; **6** had no core flag. There were **9
+finished/expired cap14 sessions, 0 active/over-cap**, and **0 active or queued
+visible M4 DB queries** with full activity-statistics visibility verified.
+Existing M4 RPCs still had empty search paths and no browser-role EXECUTE.
+
+Expected current apply impact remains **6 new core permissions + 6 automatic
+ownership rows**, one preserved pilot member and one unchanged diagnostic
+grant. The migration does not simulate a region event for existing users or
+rewrite their explicit values. Repeat this preflight and compare the full
+before-state immediately before any separately approved apply; these counts
+are a point-in-time observation, not an authorization or recovery snapshot.
+
+The security advisor was repeated: existing private-table no-policy INFO
+notices, 12 public/17 authenticated definer-callability WARN findings elsewhere
+and disabled leaked-password protection remained. They were not changed by
+this task. The prior section links the corresponding
+[public-definer remediation](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable),
+[authenticated-definer remediation](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
+and [password-protection guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+This is not a clean whole-project security certification.
+
+New validation on the regional policy:
+
+- Broad serial regression: **1495 passed, 0 failed, 28 opt-in/environment skips**
+  (209.92s), including all **20** global/personal SQL cases and the existing
+  HTTP, diagnostics, editing, link/preview/transfer regressions. Two unrelated
+  native Windows pipe/broker controls remain excluded by name, as previously.
+- Native PostgreSQL **17.6**: **7 scenario subtests + parent = 8/8**, 0 failures
+  or skips (13.97s including temporary cluster setup/cleanup). Both activation
+  versus signup orders, queued real region versus manual intent, manual true
+  outside UA, equal-region no-ops, both transition directions, Beta-off/on,
+  original expiry/diagnostics, missing flags and Auth deletion were exercised
+  on independent connections. No grant loss, deadlock or orphan was observed.
+- Frontend/runtime HTTP code did not change in this revision. The previous
+  32-scenario mobile/desktop browser pass remains separately dated evidence,
+  not a new browser or deployed-user run. Core Boolean changes use the same
+  fresh server authorization paths already tested for revocation and expiry.
+
+New film-source HTTP requests **0**, Tavily Basic/Advanced credits **0**.
+Target access consisted of **2 successful read-only SQL calls** (initial
+history guard and final full preflight), project metadata, documentation and
+security-advisor reads. No target application RPC, region/permission mutation,
+account creation, live migration, merge or manual deployment was performed.
+Only CLI version/help was invoked; no tool or Windows update was installed.
+Local artifacts: `m4-group-entry-study/region-transition-regression.tap` and
+`region-transition-native.tap` outside Git. No live signup, physical device,
+real platform availability or recovery-restoration exercise is attested here.
