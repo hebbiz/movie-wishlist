@@ -4,10 +4,11 @@ This file records user-visible and operational changes to Movie Wishlist. The
 v1.3.1 section is derived from the repository diff between `v1.3.0` and the
 reviewed production baseline.
 
-## [1.4.0] - Release preparation
+## [1.4.0]
 
-Prepared on **2026-11-11**; the versioned tag/GitHub Release publication date is
-pending. The limited streaming beta is already in production following
+Prepared on **2026-11-11**. At that time, the versioned tag and GitHub Release
+had not yet been created, and no publication date was recorded. The limited
+streaming beta was already in production following
 [#234](https://github.com/hebbiz/movie-wishlist/pull/234); this documentation and
 version-metadata PR does not deploy it again.
 
@@ -42,7 +43,7 @@ version-metadata PR does not deploy it again.
   release-preparation PR.
 - Technical debt may be considered for a later release, tentatively 1.4.1;
   no scope or delivery date is committed.
-- Prepared notes: [docs/releases/1.4.0/README.md](docs/releases/1.4.0/README.md).
+- Release notes: [docs/releases/1.4.0/README.md](docs/releases/1.4.0/README.md).
 
 ## [1.3.1] - 2026-10-17
 

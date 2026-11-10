@@ -8,8 +8,9 @@ plus Mykola's guided movie selection flow.
 Version **v1.4.0** records **«Поради носіїв Миколи»** in limited production
 beta, promoted through [#234](https://github.com/hebbiz/movie-wishlist/pull/234).
 Mykola and his other movie-selection/recommendation flows existed before this
-release. This release-preparation record does not create a tag or publish a
-GitHub Release; see the [prepared notes](docs/releases/1.4.0/README.md).
+release. Release documentation was prepared on **2026-11-11**; tag and GitHub
+Release completion are recorded separately. See the
+[release notes](docs/releases/1.4.0/README.md).
 
 ## Product boundaries
 
@@ -224,7 +225,7 @@ process.
 ## Documentation
 
 - [Changelog](CHANGELOG.md)
-- [v1.4.0 prepared release notes](docs/releases/1.4.0/README.md)
+- [v1.4.0 release notes](docs/releases/1.4.0/README.md)
 - [Local database backup/restore playbook and safety boundaries](docs/recovery-playbook.md)
 - [v1.3.1 baseline record](docs/baselines/v1.3.1.md)
 - [v1.3.1 release notes](docs/releases/1.3.1/README.md)

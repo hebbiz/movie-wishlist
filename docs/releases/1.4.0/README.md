@@ -1,7 +1,8 @@
 # Movie Wishlist v1.4.0
 
-**Status:** release preparation, November 11, 2026. Annotated tag and GitHub
-Release publication are pending; a publication date is not yet recorded.
+**Preparation record — November 11, 2026:** At that time, the annotated tag and
+GitHub Release had not yet been created, and no publication date was recorded.
+This records the preparation state, not their later publication status.
 
 Movie Wishlist v1.4.0 records the limited streaming beta of **«Поради носіїв
 Миколи»**. This adds media advice for a selected film to the existing Mykola
@@ -96,8 +97,8 @@ This release-preparation change updates version metadata and documentation only.
 It does not change runtime behavior, permissions, database schema, migrations,
 flags, secrets or Netlify configuration, and does not run SQL, merge or deploy.
 
-After review, follow the [Git workflow](../../git-workflow.md): complete the
-separately authorized release steps, confirm the final release commit and
-deployment evidence, then create the annotated `v1.4.0` tag and publish the
-prepared GitHub Release. Do not tag the earlier production-promotion commit by
-assumption or record pending steps as completed.
+For release completion, follow the [Git workflow](../../git-workflow.md): confirm
+the approved final release commit and deployment evidence before creating the
+annotated `v1.4.0` tag and publishing the GitHub Release. Record actual completion
+separately; do not infer the tag target from the earlier production-promotion
+commit or record uncompleted steps as completed.

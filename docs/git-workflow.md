@@ -55,7 +55,7 @@ After review and validation:
 3. Merge `develop` into `main` without rewriting history.
 4. Confirm the production deploy.
 5. Create the annotated tag for the approved version on the final release
-   commit (`v1.4.0` for the current preparation, not yet created).
+   commit.
 6. Publish the prepared GitHub Release notes.
 7. Synchronize `develop` with the final `main` history and verify identical
    trees.
