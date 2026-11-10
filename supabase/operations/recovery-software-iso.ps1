@@ -1,9 +1,10 @@
 # Public software only. No backup material may be present in the source tree.
 param([Parameter(Mandatory)][string]$Root)
 $ErrorActionPreference='Stop'
-$resolved=[IO.Path]::GetFullPath($Root)
-$expected=[IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'MovieWishlist/RestoreTests/restore-20261022-qemu-7c2c8e21'))
-if($resolved -ne $expected){throw 'Unexpected temporary environment path'}
+. "$PSScriptRoot/recovery-local-guards.ps1"
+$resolved=Assert-RecoveryVmRoot $Root
+# Never package private staging, wrapped keys or backup artifacts into an ISO.
+Assert-RecoveryPublicSoftwareOnly $resolved
 $source=Join-Path $resolved 'share';$software=Join-Path $resolved 'software'
 if(-not(Test-Path -LiteralPath $software)){
  if([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($source)) -ne $resolved -or [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($software)) -ne $resolved){throw 'Move outside temporary environment refused'}

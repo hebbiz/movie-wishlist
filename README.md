@@ -188,6 +188,7 @@ process.
 ## Documentation
 
 - [Changelog](CHANGELOG.md)
+- [Local database backup/restore playbook and safety boundaries](docs/recovery-playbook.md)
 - [v1.3.1 baseline record](docs/baselines/v1.3.1.md)
 - [v1.3.1 release notes](docs/releases/1.3.1/README.md)
 - [v1.3.0 release archive](docs/releases/1.3/README.md)

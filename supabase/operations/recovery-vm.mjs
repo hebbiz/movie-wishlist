@@ -1,11 +1,12 @@
 // Dedicated portable software VM. No NIC, forwarding, monitor, API or GUI.
 // Commands never contain data/credentials; private serial output is not echoed.
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { readFile, writeFile, mkdir, access, copyFile } from 'node:fs/promises';
 import { createWriteStream } from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {nativeAclChecks} from './recovery-acl-checks.mjs';
+import {fileURLToPath} from 'node:url';
 const root=path.resolve(process.argv[2]),mode=process.argv[3]??'prepare';
 if(!/^restore-\d{8}-qemu-[a-f0-9]{8}$/.test(path.basename(root)))throw new Error('invalid temporary VM root');
 if(!['prepare','inspect','build-pgnet','software-console','restore'].includes(mode))throw new Error('invalid VM operation');
@@ -14,6 +15,11 @@ if(mode==='software-console'){
   try{await access(path.join(root,file));throw new Error('private data forbids software console')}catch(e){if(e.code!=='ENOENT')throw e}
  }
 }
+// This entrypoint can be invoked without recovery-local.ps1. Fail closed before
+// writes/QEMU if its exact Windows root, private owner/ACL or reparse checks fail.
+if(process.platform!=='win32')throw new Error('Windows private VM preflight required');
+const preflight=spawnSync('pwsh.exe',['-NoProfile','-NonInteractive','-File',fileURLToPath(new URL('recovery-vm-preflight.ps1',import.meta.url)),'-VmRoot',root,...(mode==='restore'?[]:['-SoftwareOnly'])],{windowsHide:true,encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:120000});
+if(preflight.status!==0||preflight.stdout.trim()!=='PRIVATE_STOPPED_VM_ROOT_VERIFIED')throw new Error('private VM root preflight refused');
 if(mode==='build-pgnet'){
  const script=(await readFile(new URL('recovery-build-pgnet.sh',import.meta.url),'utf8')).replaceAll('\r\n','\n');
  const scriptFile=path.join(root,'share/build-pgnet.sh');
