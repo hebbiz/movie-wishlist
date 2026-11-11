@@ -1,10 +1,96 @@
 # M4 runtime separation and pilot inventory
 
-Current layout: [browser source ownership](#browser-source-layout--2026-11-11).
+Current layout: [rule ownership](#media-advice-rule-ownership--2026-11-11), after
+the [browser-source move](#browser-source-layout--2026-11-11).
 The completed pilot cleanup is recorded at
 [local pilot retirement](#local-pilot-retirement--2026-11-09).
 Stage 1–2.3 inventories and launch commands below are historical checkpoints,
 not instructions for running the retired demo in the current checkout.
+
+## Media-advice rule ownership — 2026-11-11
+
+This follow-up starts from develop
+`a060cf6f9e2022fbdd5635623432b3684c1632a7` after the browser-source move. It
+separates the ten formerly flat `shared/*.mjs` modules by their **actual runtime
+consumers**. Pure code is not necessarily shared browser/server code. No public
+API, identity condition, source/URL rule, result order, access rule or request
+budget is intentionally changed.
+
+| Module | Canonical owner | Current production consumers; reason |
+| --- | --- | --- |
+| `media-link-policy.mjs` | `shared/media-advice/` | Browser controller/presentation/link choices and server discovery composition; the same observed-URL classification |
+| `media-advice-diagnostics.mjs` | `shared/media-advice/` | Browser report and server resolver/card reader; the same bounded labels/allowlists |
+| `director-profile-diagnostics.mjs` | `shared/media-advice/` | Browser report and server resolver; the same safe profile-diagnostic projection |
+| `media-search-relevance-diagnostic.mjs` | `shared/media-advice/` | Browser report and server resolver; bounded search observations, not film identity proof |
+| `director-alias-crosswalk.mjs` | `netlify/lib/media-advice/identity/` | Server service/card reader; reviewed person aliases, not a browser registry |
+| `film-identity-context.mjs` | `netlify/lib/media-advice/identity/` | Server service; projects validated TMDb context, not identity proof by itself |
+| `film-release-year.mjs` | `netlify/lib/media-advice/identity/` | Server resolver/card reader; bounded initial-release evidence and year crosswalk |
+| `kinobaza-movie-identity.mjs` | `netlify/lib/media-advice/identity/` | Server card reader; owned Movie.sameAs interpretation, not remote JSON-LD discovery |
+| `terminal-roman-title.mjs` | `netlify/lib/media-advice/identity/` | Server card reader; narrow terminal title-spelling comparison, not general identity proof |
+| `ukrainian-g-title.mjs` | `netlify/lib/media-advice/identity/` | Server card reader; narrow Ukrainian title-spelling comparison, not person proof |
+
+All ten modules have product regression consumers. The controlled diagnostic,
+Fockers, practical-series and predicted-controls tools also consume the relevant
+person/context or safe diagnostic helpers; their current imports and reviewed
+source guards follow the actual owners. Historical operators/parity loaders
+still read their pinned old Git paths and bodies. A test or operator consumer
+does not make a server helper part of the browser closure.
+
+The two focused directories express ownership within existing shared/server
+boundaries, not new packages, transport layers or copies of the implementation:
+
+```text
+src/media-advice/<browser modules> ─┐
+                                  ├─ shared/media-advice/<four URL/diagnostic rules>
+netlify/lib/<server modules> ──────┘
+              └─ media-advice/identity/<six server identity helpers>
+
+publication: six canonical browser modules + four canonical shared rules
+             six old /assets/*.mjs forwarders + four old /shared/*.mjs forwarders
+             unchanged artwork/site resources; no server identity implementation
+```
+
+Publication admits the exact four shared-rule files, not the entire `shared/`
+tree. Four generated flat `/shared/<name>.mjs` ESM forwarders re-export the new
+canonical shared rules, alongside the six existing generated asset forwarders.
+They support delayed imports from already-open browser documents without
+retaining a second source implementation. No wrapper or public URL is retained
+for the six server-only identity helpers: they were outside the verified browser
+closure. Static unavailability is an ownership boundary, not a substitute for
+server authorization or evidence that disclosed code was a secret.
+
+New code/tests use canonical paths; wrappers belong to generated `.site-dist`,
+not source imports. Forwarding/canonical bindings should be identical for newly
+loaded modules; an already-evaluated old namespace intentionally remains old.
+The retained-document compatibility scenarios cover the v1.4.0 asset URLs and
+the #245 `src/media-advice/` bodies that still import old flat shared URLs.
+This does not promise compatibility with arbitrary future deploys/APIs, atomic
+replacement across arbitrary cached versions, general HTTP/CDN cache behavior
+or full-app Save after a live Netlify switch.
+The required checks are the actual browser/server import closure (including
+transitive/dynamic imports), path-only frozen parity, old-URL retained-document
+scenarios, exact link selection/preview/transfer, strict publication exclusions
+and repeated-build cleanup. Commands/results and skipped or unavailable cases
+belong in the PR report; this inventory does not assert a test, live source,
+database or deployment PASS.
+
+The current `test/media-advice-layout-browser.test.mjs` requires **both** frozen
+Git inputs: released v1.4.0 `15e29db04cf536c707a7d7dfba713affd57cac2c` for
+frontend path-only parity/old asset bodies, and post-#245
+`a060cf6f9e2022fbdd5635623432b3684c1632a7` for all ten rule bodies and the
+retained source-module cohort with old flat shared imports. Rule-body parity
+normalizes checkout line endings only; frontend parity additionally reverses
+the reviewed import-path relocations. Missing either object fails with its
+explicit fetch command; no
+automatic fetch, silent skip or current implementation substitute is used.
+See the [README prerequisites](../README.md#build-and-test-commands) for the
+repeatable Git/Node and optional browser invocation.
+
+The preceding layout's six browser modules, public resource URLs and filenames
+remain. Its dated description below correctly records that it did not yet move
+`shared/`; this follow-up supersedes that ownership, not its evidence. Older
+stage diagrams/counts, release archives and historical Git SHA/path references
+are preserved unchanged. Physical-media work remains separately deferred.
 
 ## Browser source layout — 2026-11-11
 

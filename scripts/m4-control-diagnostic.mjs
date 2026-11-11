@@ -4,10 +4,10 @@ import { pathToFileURL } from 'node:url';
 import { readTmdbJson, projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
 import { createKinobazaResolver, resolverQueries, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
-import { safeSearchDiagnostic } from '../shared/media-advice-diagnostics.mjs';
+import { safeSearchDiagnostic } from '../shared/media-advice/media-advice-diagnostics.mjs';
 import { readControlCredentials } from './m4-control-credentials.mjs';
 import { describeCandidateURL } from './m4-url-diagnostics.mjs';
-import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
+import { projectDirectorPeople } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
 
 const controls = [{ title:'Blade Runner 2049' }, { title:'Mortal Kombat', year:2021 }];
 const api = 'https://api.themoviedb.org/3';

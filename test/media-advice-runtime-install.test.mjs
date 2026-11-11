@@ -15,10 +15,12 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const prefix = 'mw-m4-runtime-root-install-';
 const runtime = ['kinobaza-card.mjs', 'kinobaza-html.mjs', 'kinobaza-localization.mjs',
   'media-discovery-compose.mjs', 'media-source-motn.mjs', 'media-source-tmdb.mjs'];
-const shared = ['director-alias-crosswalk.mjs', 'film-release-year.mjs', 'kinobaza-movie-identity.mjs',
-  'media-advice-diagnostics.mjs', 'media-link-policy.mjs', 'terminal-roman-title.mjs', 'ukrainian-g-title.mjs'];
+const identity = ['director-alias-crosswalk.mjs', 'film-release-year.mjs', 'kinobaza-movie-identity.mjs',
+  'terminal-roman-title.mjs', 'ukrainian-g-title.mjs'];
+const shared = ['media-advice-diagnostics.mjs', 'media-link-policy.mjs'];
 const files = ['package.json', 'package-lock.json',
-  ...runtime.map(name => `netlify/lib/${name}`), ...shared.map(name => `shared/${name}`),
+  ...runtime.map(name => `netlify/lib/${name}`), ...identity.map(name => `netlify/lib/media-advice/identity/${name}`),
+  ...shared.map(name => `shared/media-advice/${name}`),
   'test/kinobaza-html.fixture.mjs', 'test/kinobaza-localization.fixture.mjs',
   'test/assisted-kinobaza.fixture.mjs'];
 

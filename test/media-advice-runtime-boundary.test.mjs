@@ -21,6 +21,10 @@ const RUNTIME_FILES = [
   'netlify/lib/media-discovery-compose.mjs', 'netlify/lib/kinobaza-card.mjs',
   'netlify/lib/kinobaza-html.mjs', 'netlify/lib/kinobaza-localization.mjs',
 ];
+const BROWSER_SHARED_MODULES = ['director-profile-diagnostics.mjs', 'media-advice-diagnostics.mjs',
+  'media-link-policy.mjs', 'media-search-relevance-diagnostic.mjs'];
+const SERVER_IDENTITY_MODULES = ['director-alias-crosswalk.mjs', 'film-identity-context.mjs', 'film-release-year.mjs',
+  'kinobaza-movie-identity.mjs', 'terminal-roman-title.mjs', 'ukrainian-g-title.mjs'];
 const localRead = file => readFile(path.join(ROOT, file), 'utf8');
 const wordStart = c => c !== undefined && /[A-Za-z_$\p{L}]/u.test(c);
 const wordPart = c => c !== undefined && /[A-Za-z\d_$\p{L}\p{N}]/u.test(c);
@@ -261,6 +265,12 @@ test('production Function, all server libraries and browser code have no direct/
   assert.ok(browser.files.includes('src/media-advice/media-advice.mjs'));
   assert.ok(!browser.files.some(file => /^assets\/media-advice[^/]*\.mjs$/.test(file)), 'Tracked assets do not contain duplicate frontend implementations.');
   for (const file of RUNTIME_FILES) assert.ok(server.files.includes(file), `Runtime module must participate in the audited graph: ${file}`);
+  for (const name of SERVER_IDENTITY_MODULES) assert.ok(server.files.includes(`netlify/lib/media-advice/identity/${name}`),
+    `Server-only identity ${name} must remain in the Function's audited closure.`);
+  assert.deepEqual(browser.files.filter(file => file.startsWith('shared/')),
+    BROWSER_SHARED_MODULES.map(name => `shared/media-advice/${name}`).sort(),
+    'The complete current browser closure needs exactly four shared modules, not the server-only identity rules.');
+  assert.ok(!browser.files.some(file => file.startsWith('netlify/')), 'Browser imports must not reach server-only code.');
   for (const file of browser.files) {
     for (const token of tokens(await localRead(file))) if (token.kind === 'string' && /^(?:\/|(?:\.\.?\/)+)(?:research|test)(?:\/|$)/.test(token.value)) assert.fail(`Browser pilot resource dependency in ${file}: ${token.value}`);
   }
@@ -273,23 +283,71 @@ test('published legacy browser URLs forward through the canonical src graph with
     'media-advice-link-choices.mjs', 'media-advice-presentation.mjs', 'media-advice-report.mjs'];
   const publishedRead = file => readFile(path.join(ROOT, '.site-dist', file), 'utf8');
   const wrappers = names.map(name => `assets/${name}`);
+  const sharedWrappers = BROWSER_SHARED_MODULES.map(name => `shared/${name}`);
   for (const name of names) {
     const file = `assets/${name}`;
     assert.equal(await publishedRead(file), `export * from '../src/media-advice/${name}';\n`);
     assert.deepEqual(importReferences(await publishedRead(file)), [`../src/media-advice/${name}`]);
     await assert.rejects(localRead(file), { code: 'ENOENT' }, 'Legacy module compatibility is generated, not a second checked-in implementation.');
   }
-  const roots = [...htmlEntrypoints(await publishedRead('app.html')), 'app.js', ...wrappers,
+  for (const name of BROWSER_SHARED_MODULES) {
+    assert.equal(await publishedRead(`shared/${name}`), `export * from './media-advice/${name}';\n`);
+    assert.deepEqual(importReferences(await publishedRead(`shared/${name}`)), [`./media-advice/${name}`]);
+    await assert.rejects(localRead(`shared/${name}`), { code: 'ENOENT' }, 'Shared compatibility must be generated, not another implementation.');
+  }
+  const roots = [...htmlEntrypoints(await publishedRead('app.html')), 'app.js', ...wrappers, ...sharedWrappers,
     ...await codeFiles('src/media-advice'), ...await codeFiles('shared')];
   const graph = await graphFor(roots, publishedRead);
   assert.deepEqual(graph.edges.filter(edge => wrappers.includes(edge.from)).map(({ from, target }) => [from, target]),
     names.map(name => [`assets/${name}`, `src/media-advice/${name}`]));
+  assert.deepEqual(graph.edges.filter(edge => sharedWrappers.includes(edge.from)).map(({ from, target }) => [from, target]),
+    BROWSER_SHARED_MODULES.map(name => [`shared/${name}`, `shared/media-advice/${name}`]));
+  const publicShared = [...sharedWrappers, ...BROWSER_SHARED_MODULES.map(name => `shared/media-advice/${name}`)].sort();
+  assert.deepEqual(graph.files.filter(file => file.startsWith('shared/')), publicShared);
   for (const file of graph.files) {
     assert.match(file, /^(?:app\.js$|assets\/media-advice[^/]*\.mjs$|src\/media-advice\/|shared\/)/,
       `Published browser graph must not reach nonbrowser source: ${file}`);
   }
   assert.deepEqual(graph.edges.filter(edge => edge.external), [], 'Published browser modules use only the audited local closure.');
-  t.diagnostic(`Offline compatibility graph: ${wrappers.length} explicit forwarding modules / ${graph.files.length} browser modules; no research/server imports or external requests.`);
+  for (const name of SERVER_IDENTITY_MODULES) {
+    await assert.rejects(publishedRead(`shared/${name}`), { code: 'ENOENT' }, 'Unused historical identity URLs must not become compatibility wrappers.');
+    await assert.rejects(publishedRead(`netlify/lib/media-advice/identity/${name}`), { code: 'ENOENT' });
+  }
+  t.diagnostic(`Offline compatibility graph: ${wrappers.length} frontend + ${sharedWrappers.length} shared forwarding modules / ${graph.files.length} browser modules; no research/server imports or external requests.`);
+});
+
+test('four shared wrappers close both pre-245 assets bodies and PR245 src bodies read from pinned Git history', async t => {
+  buildSite();
+  const names = ['media-advice.mjs', 'media-advice-entry-access.mjs', 'media-advice-icons.mjs',
+    'media-advice-link-choices.mjs', 'media-advice-presentation.mjs', 'media-advice-report.mjs'];
+  const cases = [
+    { label: 'pre-245', sha: '15e29db04cf536c707a7d7dfba713affd57cac2c', directory: 'assets' },
+    { label: 'PR245', sha: 'a060cf6f9e2022fbdd5635623432b3684c1632a7', directory: 'src/media-advice' },
+  ];
+  const expectedShared = [...BROWSER_SHARED_MODULES.map(name => `shared/${name}`),
+    ...BROWSER_SHARED_MODULES.map(name => `shared/media-advice/${name}`)].sort();
+  for (const cohort of cases) {
+    const readHistorical = file => {
+      try {
+        return execFileSync('git', ['show', `${cohort.sha}:${file}`], { cwd: ROOT, encoding: 'utf8', windowsHide: true,
+          stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 2 * 1024 * 1024 });
+      } catch {
+        throw Error(`Required ${cohort.label} cached-browser Git source ${cohort.sha}:${file} is unavailable. ` +
+          `Run git fetch origin ${cohort.sha} (or git fetch --unshallow origin), then rerun this test. No automatic fetch or current-code fallback is allowed.`);
+      }
+    };
+    const cachedFiles = ['app.js', ...names.map(name => `${cohort.directory}/${name}`)];
+    const historical = new Map(cachedFiles.map(file => [file, readHistorical(file)]));
+    const readMixed = file => historical.has(file) ? historical.get(file) : readFile(path.join(ROOT, '.site-dist', file), 'utf8');
+    const roots = [...htmlEntrypoints(readHistorical('app.html')), ...cachedFiles];
+    const graph = await graphFor(roots, readMixed);
+    assert.deepEqual(graph.files.filter(file => file.startsWith('shared/')), expectedShared,
+      `${cohort.label} cached bodies need only the four actual shared compatibility URLs.`);
+    assert.ok(!graph.files.some(file => file.startsWith('netlify/')), 'Historical browser bodies cannot import server-only rules.');
+    assert.deepEqual(graph.edges.filter(edge => edge.external), []);
+    for (const file of cachedFiles) assert.ok(graph.files.includes(file), `The proof must actually scan cached ${cohort.label} body ${file}.`);
+    t.diagnostic(`Offline ${cohort.label} cached-body closure: pinned ${cohort.sha}, ${graph.files.length} browser modules; four shared wrappers suffice, six server identities absent.`);
+  }
 });
 
 test('extracted runtime modules exclude demo catalogues, fixed scenarios, prompts and synthetic fixture builders', async () => {

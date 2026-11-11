@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { CONFIRMED_DIRECTOR_ALIASES, createDirectorAliasLookup, projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
+import { CONFIRMED_DIRECTOR_ALIASES, createDirectorAliasLookup, projectDirectorPeople } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs';
@@ -320,6 +320,6 @@ test('HTTP browser person IDs/aliases are ignored; resolver receives only server
 });
 
 test('crosswalk module is pure compiled configuration, without fetching/persistence or runtime browser loading', async () => {
-  const source = await readFile(new URL('../shared/director-alias-crosswalk.mjs', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /fetch\(|console\.|localStorage|sessionStorage|writeFile|appendFile|readFile|process\.env|document\.|window\./);
 });

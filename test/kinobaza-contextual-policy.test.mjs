@@ -6,8 +6,8 @@ import { resolverQueries, resolverRefusalQuery } from '../netlify/lib/kinobaza-r
 import { fetchAssistedKinobaza, linkedDirectorProfile } from '../netlify/lib/kinobaza-card.mjs';
 import { extractHtml } from '../netlify/lib/kinobaza-html.mjs';
 import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
-import { initialReleaseEvidence } from '../shared/film-release-year.mjs';
-import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
+import { initialReleaseEvidence } from '../netlify/lib/media-advice/identity/film-release-year.mjs';
+import { projectFilmIdentityContext } from '../netlify/lib/media-advice/identity/film-identity-context.mjs';
 
 const PERSON = 999999;
 const PROFILE = 'https://kinobazaua.com/persons/authored-director';

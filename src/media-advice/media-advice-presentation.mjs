@@ -1,4 +1,4 @@
-import { classifyLink } from '../../shared/media-link-policy.mjs';
+import { classifyLink } from '../../shared/media-advice/media-link-policy.mjs';
 // Presentation of already projected source rows only. No joins, inference from
 // provider names/URLs, or promotion of film badges and separate source blocks.
 const providers = Object.freeze({ apple: 'Apple TV / iTunes', appletvplus: 'Apple TV / iTunes', netflix: 'Netflix', hbo: 'HBO Max', prime: 'Prime Video', megogo: 'MEGOGO', rakuten: 'Rakuten TV' });

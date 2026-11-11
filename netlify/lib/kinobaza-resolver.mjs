@@ -1,11 +1,11 @@
 import { admitKinobazaURL, fetchAssistedKinobaza } from './kinobaza-card.mjs';
-import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
+import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, resolverStatuses } from '../../shared/media-advice/media-advice-diagnostics.mjs';
 import { createHash } from 'node:crypto';
-import { initialReleaseEvidence } from '../../shared/film-release-year.mjs';
+import { initialReleaseEvidence } from './media-advice/identity/film-release-year.mjs';
 import { createDirectorVerifier } from './kinobaza-director-verifier.mjs';
-import { safeDirectorProfileDiagnostic } from '../../shared/director-profile-diagnostics.mjs';
+import { safeDirectorProfileDiagnostic } from '../../shared/media-advice/director-profile-diagnostics.mjs';
 import { selectDirectorCandidates } from './director-candidate-selection.mjs';
-import { possibleIrrelevantSearch, safeSearchCorrelation } from '../../shared/media-search-relevance-diagnostic.mjs';
+import { possibleIrrelevantSearch, safeSearchCorrelation } from '../../shared/media-advice/media-search-relevance-diagnostic.mjs';
 import { predictedKinobazaURL } from './kinobaza-predicted-url.mjs';
 const ENDPOINT = 'https://api.tavily.com/search';
 const text = s => typeof s === 'string' && s.length <= 500 && !/[\p{C}]/u.test(s) ? s.trim() : '';

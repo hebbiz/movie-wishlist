@@ -1,4 +1,4 @@
-import { classifyLink } from '../../shared/media-link-policy.mjs';
+import { classifyLink } from '../../shared/media-advice/media-link-policy.mjs';
 
 const platforms = new Set(['apple', 'appletvplus', 'netflix', 'hbo', 'prime', 'megogo', 'rakuten']);
 const editionFields = ['cut', 'package', 'version'];

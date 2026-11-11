@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {safeIdentityDiagnostic,safePredictedDiagnostic} from '../shared/media-advice-diagnostics.mjs';
+import {safeIdentityDiagnostic,safePredictedDiagnostic} from '../shared/media-advice/media-advice-diagnostics.mjs';
 import {safeMediaReport} from '../src/media-advice/media-advice-report.mjs';
 import {productMediaResult} from '../netlify/lib/media-advice-response.mjs';
-import {safePossibleIrrelevantSearch} from '../shared/media-search-relevance-diagnostic.mjs';
+import {safePossibleIrrelevantSearch} from '../shared/media-advice/media-search-relevance-diagnostic.mjs';
 test('new semantic/predicted diagnostics are allowlisted and cannot echo IDs, URLs, JSON or secrets',()=>{
  const data={status:'available',reason:'owned-movie-sameas',movieCount:1,idCount:2,datePublished:'2017-07-19',rawJSON:'PRIVATE_JSON',sourceURL:'https://private.invalid',ids:['PRIVATE_ID'],token:'PRIVATE_TOKEN'};
  const d=safeIdentityDiagnostic({movieSameAs:data});assert.equal(d.movieSameAs.yearAuthority,'none');assert.equal(d.movieSameAs.datePublished,'2017-07-19');assert.doesNotMatch(JSON.stringify(d),/PRIVATE_|private.invalid/);

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
-import { possibleIrrelevantSearch, safeSearchCorrelation, safePossibleIrrelevantSearch, safeSearchCardURL } from '../shared/media-search-relevance-diagnostic.mjs';
+import { possibleIrrelevantSearch, safeSearchCorrelation, safePossibleIrrelevantSearch, safeSearchCardURL } from '../shared/media-advice/media-search-relevance-diagnostic.mjs';
 
 const KEY = 'AUTHORED_PRIVATE_SEARCH_KEY', OTHER = 'AUTHORED_PRIVATE_OTHER_KEY';
 const SEARCH = 'https://api.tavily.com/search';

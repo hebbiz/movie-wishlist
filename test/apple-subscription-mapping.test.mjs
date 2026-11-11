@@ -5,7 +5,7 @@ import { composeDiscovery, mapProvider } from '../netlify/lib/media-discovery-co
 import { projectTmdbProvidersFor } from '../netlify/lib/media-source-tmdb.mjs';
 import { normalizeMotnFor } from '../netlify/lib/media-source-motn.mjs';
 import { authoredProductFilm, authoredProductHTML, extractProductHTML as extractHtml } from './media-advice-group.fixture.mjs';
-import { classifyLink } from '../shared/media-link-policy.mjs';
+import { classifyLink } from '../shared/media-advice/media-link-policy.mjs';
 import { presentMediaGroups, presentMediaGroup } from '../src/media-advice/media-advice-presentation.mjs';
 import { makePreview, applyPreview, linkChoicesFor } from '../src/media-advice/media-advice.mjs';
 import { discoverMedia } from '../netlify/lib/media-advice-service.mjs';

@@ -2,10 +2,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parse } from 'parse5';
-import { movieSameAsEvidence, parseMovieSameAsID, parseBoundedMovieJSON } from '../shared/kinobaza-movie-identity.mjs';
+import { movieSameAsEvidence, parseMovieSameAsID, parseBoundedMovieJSON } from '../netlify/lib/media-advice/identity/kinobaza-movie-identity.mjs';
 import { assistedIdentity, fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
-import { safeIdentityDiagnostic } from '../shared/media-advice-diagnostics.mjs';
+import { safeIdentityDiagnostic } from '../shared/media-advice/media-advice-diagnostics.mjs';
 
 const film = { identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001,
   imdbId: 'tt999900001', tmdbId: 999900001, directorCount: 1, directorAliases: ['Authored director'],

@@ -10,10 +10,15 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = join(root, '.site-dist');
 const build = () => execFileSync(process.execPath, ['scripts/build-site.mjs'], { cwd: root });
 const publicFiles = ['index.html', 'app.html', 'invite.html', 'app.js', 'styles.css', 'service-worker.js', 'site.webmanifest'];
-const publicDirectories = ['assets', 'shared', 'privacy', 'terms'];
+const publicDirectories = ['assets', 'privacy', 'terms'];
 const previousMediaAdviceModules = ['media-advice.mjs', 'media-advice-entry-access.mjs', 'media-advice-icons.mjs',
   'media-advice-link-choices.mjs', 'media-advice-presentation.mjs', 'media-advice-report.mjs'];
-const compatibilityFiles = previousMediaAdviceModules.map(name => `assets/${name}`);
+const browserSharedModules = ['director-profile-diagnostics.mjs', 'media-advice-diagnostics.mjs',
+  'media-link-policy.mjs', 'media-search-relevance-diagnostic.mjs'];
+const serverIdentityModules = ['director-alias-crosswalk.mjs', 'film-identity-context.mjs', 'film-release-year.mjs',
+  'kinobaza-movie-identity.mjs', 'terminal-roman-title.mjs', 'ukrainian-g-title.mjs'];
+const compatibilityFiles = [...previousMediaAdviceModules.map(name => `assets/${name}`),
+  ...browserSharedModules.map(name => `shared/${name}`)];
 
 function filesBelow(directory, prefix = '') {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -32,16 +37,19 @@ function section(config, name) {
 
 test('publish output preserves only public app dependencies, rebuilds cleanly and leaves Function/recovery sources in Git', async t => {
   // The expected surface is independent of the build script's private array.
-  // Assets/shared/legal directories are deliberate public roots, except their
-  // Markdown metadata. Only six explicit legacy module URLs are generated;
-  // their sole implementations live under the public src/media-advice subtree.
+  // Assets/legal are public roots, except their Markdown metadata. Browser code
+  // uses explicit six-frontend/four-shared allowlists and generated old URLs;
+  // no broad shared publication may expose the server-only identity rules.
   const copied = [...publicFiles, ...publicDirectories.flatMap(directory => filesBelow(join(root, directory), directory + '/')),
-    ...previousMediaAdviceModules.map(name => `src/media-advice/${name}`)]
+    ...previousMediaAdviceModules.map(name => `src/media-advice/${name}`),
+    ...browserSharedModules.map(name => `shared/media-advice/${name}`)]
     .filter(file => !/\.md$/i.test(file)).sort();
   const expected = [...copied, ...compatibilityFiles].sort();
   assert.equal(new Set(expected).size, expected.length, 'Legacy module URLs must not also contain repository implementations.');
   assert.deepEqual(filesBelow(join(root, 'src/media-advice')).filter(file => file.endsWith('.mjs')),
     [...previousMediaAdviceModules].sort(), 'Every moved module has one explicit old-URL compatibility entry.');
+  assert.deepEqual(filesBelow(join(root, 'shared/media-advice')).filter(file => file.endsWith('.mjs')),
+    [...browserSharedModules].sort(), 'Only the four actual browser-shared modules are canonical public dependencies.');
   const allowed = new Set(expected);
   const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8', windowsHide: true }).split('\0').filter(Boolean);
   const retained = tracked.filter(file => !allowed.has(file));
@@ -51,6 +59,9 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
     'netlify/functions/media-advice.mjs', 'netlify/lib/media-source-tmdb.mjs',
     'supabase/migrations/20261108185237_media_advice_global_access.sql', 'package.json', 'package-lock.json', 'netlify.toml']) {
     assert.ok(before.has(file), `${file} must stay tracked at the repository root, not become public output`);
+  }
+  for (const name of serverIdentityModules) {
+    assert.ok(before.has(`netlify/lib/media-advice/identity/${name}`), `${name} stays available to the Function bundle, not static publication.`);
   }
   const migrations = retained.filter(file => /^supabase\/migrations\/\d+_media_advice_.*\.sql$/.test(file));
   assert.deepEqual(migrations.sort(), [
@@ -67,7 +78,17 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
       assert.equal(readFileSync(join(output, 'assets', name), 'utf8'), `export * from '../src/media-advice/${name}';\n`,
         `Legacy ${name} must forward only to its canonical browser module.`);
     }
+    for (const name of browserSharedModules) {
+      assert.equal(existsSync(join(root, 'shared', name)), false, 'Flat shared compatibility belongs only in generated output.');
+      assert.equal(readFileSync(join(output, 'shared', name), 'utf8'), `export * from './media-advice/${name}';\n`);
+    }
+    for (const name of serverIdentityModules) {
+      assert.equal(existsSync(join(output, 'shared', name)), false, `Server-only former URL ${name} must not be published.`);
+      assert.equal(existsSync(join(output, 'netlify/lib/media-advice/identity', name)), false);
+    }
     assert.deepEqual(readdirSync(join(output, 'src')), ['media-advice'], 'Unrelated src folders must not become public.');
+    assert.deepEqual(readdirSync(join(output, 'shared')).sort(), ['media-advice', ...browserSharedModules].sort(),
+      'Only four shared compatibility URLs and their explicit canonical directory are public.');
     for (const directory of ['research', 'docs', 'test', 'tests', 'scripts', 'supabase', 'netlify', 'node_modules', '.git']) {
       assert.equal(existsSync(join(output, directory)), false, `${directory} must not be published, including empty/stale directories`);
     }
@@ -79,11 +100,14 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
 
   // A future/private sibling of a canonical module must not leak merely
   // because it lives in src/media-advice. It is authored and always removed.
-  const privateSource = join(root, 'src/media-advice/publication-private.fixture.mjs');
-  assert.equal(existsSync(privateSource), false, 'Do not overwrite an existing source fixture.');
-  writeFileSync(privateSource, 'export const authoredPrivateFixture = true;\n', { flag: 'wx' });
-  try { build(); verifyOutput(); }
-  finally { unlinkSync(privateSource); }
+  const privateSources = ['src/media-advice/publication-private.fixture.mjs', 'shared/media-advice/publication-private.fixture.mjs',
+    'shared/publication-private.fixture.mjs'].map(file => join(root, file));
+  for (const file of privateSources) assert.equal(existsSync(file), false, 'Do not overwrite an existing source fixture.');
+  const created = [];
+  try {
+    for (const file of privateSources) { writeFileSync(file, 'export const authoredPrivateFixture = true;\n', { flag: 'wx' }); created.push(file); }
+    build(); verifyOutput();
+  } finally { for (const file of created) unlinkSync(file); }
   // Every published .mjs is a pure browser/shared module at evaluation time.
   // Do not evaluate app.js, the service worker, or inline page scripts: those
   // intentionally need a browser. No test module may initiate network traffic.
@@ -99,6 +123,13 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
     assert.equal(Object.hasOwn(canonical, 'default'), false, 'Star forwarding must not silently drop a default export.');
     assert.deepEqual(Object.keys(legacy), Object.keys(canonical), `Legacy ${name} preserves the complete named API.`);
     for (const key of Object.keys(canonical)) assert.strictEqual(legacy[key], canonical[key], `${name}/${key} shares the canonical module binding.`);
+  }
+  for (const name of browserSharedModules) {
+    const canonical = await import(pathToFileURL(join(output, 'shared/media-advice', name)).href);
+    const legacy = await import(pathToFileURL(join(output, 'shared', name)).href);
+    assert.equal(Object.hasOwn(canonical, 'default'), false, 'Shared star forwarding must preserve the complete current API.');
+    assert.deepEqual(Object.keys(legacy), Object.keys(canonical), `Legacy shared ${name} preserves named exports.`);
+    for (const key of Object.keys(canonical)) assert.strictEqual(legacy[key], canonical[key], `${name}/${key} shares its canonical binding.`);
   }
   const app = readFileSync(join(output, 'app.js'), 'utf8');
   const appHtml = readFileSync(join(output, 'app.html'), 'utf8');
@@ -135,13 +166,15 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
     'scripts/private.mjs', 'docs/private.md', 'test/fixture.mjs', 'tests/fixture.mjs',
     'supabase/migrations/stale.sql', 'config/private.toml', 'assets/icons/stale.svg',
     'assets/icons/media/SOURCES.md', 'privacy/nested/stale.html', 'src/private.mjs',
-    'src/media-advice/stale.mjs', 'assets/media-advice-obsolete.mjs'];
+    'src/media-advice/stale.mjs', 'assets/media-advice-obsolete.mjs', 'shared/private.mjs', 'shared/media-advice/stale.mjs',
+    ...serverIdentityModules.map(name => `shared/${name}`)];
   for (const file of stale) {
     const destination = join(output, file); mkdirSync(dirname(destination), { recursive: true });
     writeFileSync(destination, 'STALE OUTPUT FIXTURE');
   }
   writeFileSync(join(output, 'assets/icons/tmdb.svg'), 'STALE LOGO FIXTURE');
   writeFileSync(join(output, 'assets/media-advice.mjs'), 'STALE LEGACY IMPLEMENTATION FIXTURE');
+  writeFileSync(join(output, 'shared/media-link-policy.mjs'), 'STALE SHARED IMPLEMENTATION FIXTURE');
   build(); verifyOutput();
   for (const file of stale) assert.equal(existsSync(join(output, file)), false, `${file} must not survive a rebuild`);
   assert.deepEqual(new Map(retained.map(file => [file, digest(file)])), before,

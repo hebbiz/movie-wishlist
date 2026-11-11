@@ -18,16 +18,21 @@ export async function loadCascadeBaseline(sha = CASCADE_BASELINE_SHA) {
   // Keep the pinned body/gates and Git source path. Its extractor import used
   // the demo wrapper only with an explicit identityCheck, which delegates
   // unchanged to this runtime extractor. No demo scenario/catalogue is needed.
-  let extractorImports = 0;
+  const runtimeImports = new Map([
+    ['research/grounded-answer-demo/html-source.mjs', 'netlify/lib/kinobaza-html.mjs'],
+    ['shared/media-advice-diagnostics.mjs', 'shared/media-advice/media-advice-diagnostics.mjs'],
+    ['shared/director-alias-crosswalk.mjs', 'netlify/lib/media-advice/identity/director-alias-crosswalk.mjs'],
+  ]), rebound = new Map();
   const code = baseline.replace(/from '(\.[^']+)'/g, (_, path) => {
     const absolute = new URL(path, moduleURL);
-    if (absolute.href === new URL('research/grounded-answer-demo/html-source.mjs', root).href) {
-      extractorImports++;
-      return `from '${new URL('netlify/lib/kinobaza-html.mjs', root).href}'`;
+    const relative = fileURLToPath(absolute).slice(fileURLToPath(root).length).replaceAll('\\', '/');
+    if (runtimeImports.has(relative)) {
+      rebound.set(relative, (rebound.get(relative) ?? 0) + 1);
+      return `from '${new URL(runtimeImports.get(relative), root).href}'`;
     }
     return `from '${absolute.href}'`;
   });
-  if (extractorImports !== 1) throw Error('fixed-baseline-extractor-import-unestablished');
+  if ([...runtimeImports.keys()].some(path => rebound.get(path) !== 1)) throw Error('fixed-baseline-runtime-import-unestablished');
   const loaded = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
   loaded.assistedIdentity.baselineSha = sha;
   return loaded.assistedIdentity;

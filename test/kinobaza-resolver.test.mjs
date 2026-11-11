@@ -9,8 +9,8 @@ import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
-import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
-import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
+import { projectDirectorPeople } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
+import { projectFilmIdentityContext } from '../netlify/lib/media-advice/identity/film-identity-context.mjs';
 const film = { id: 'authored', tmdbId: IDS[0], imdbId: `tt${IDS[0]}`, title: 'Вигаданий фільм', identityTitle: 'Вигаданий фільм', originalTitle: 'Authored original', year: 2001, titleAliases: ['Вигаданий фільм','Authored original'], directorCount: 1, directorAliases: ['Authored director'] };
 const urls = ['https://kinobazaua.com/titles/authored-card', 'https://kinobazaua.com/titles/authored-second', 'https://kinobazaua.com/titles/unexamined'];
 function serviceQueryFilm() {

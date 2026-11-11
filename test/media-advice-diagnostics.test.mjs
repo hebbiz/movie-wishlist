@@ -87,7 +87,7 @@ test('local controls fail closed without both credentials, zero attempts; mocked
   assert.doesNotMatch(JSON.stringify(result),/AUTHORED_TMDB_KEY|AUTHORED_TAVILY_KEY/);
 });
 test('new contracts have no source-body persistence/logging; only build identifiers are written by build stamp',async()=>{
-  for(const path of ['../netlify/lib/kinobaza-resolver.mjs','../shared/media-advice-diagnostics.mjs','../src/media-advice/media-advice-report.mjs']){
+  for(const path of ['../netlify/lib/kinobaza-resolver.mjs','../shared/media-advice/media-advice-diagnostics.mjs','../src/media-advice/media-advice-report.mjs']){
     const source=await readFile(new URL(path,import.meta.url),'utf8');assert.doesNotMatch(source,/console\.|localStorage|sessionStorage|writeFile|appendFile/);
   }
 });

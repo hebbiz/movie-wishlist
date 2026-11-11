@@ -2,7 +2,7 @@
 // are not captured live responses, historical reconstructions or offer proof.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sameUkrainianGTitle } from '../shared/ukrainian-g-title.mjs';
+import { sameUkrainianGTitle } from '../netlify/lib/media-advice/identity/ukrainian-g-title.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 import { netflixAudioCatalogueBlock } from './kinobaza-localization.fixture.mjs';
