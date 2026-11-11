@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rankMediaRows, groupMediaRows, presentMediaRow, summarizeMediaAdvice } from '../assets/media-advice-presentation.mjs';
+import { rankMediaRows, groupMediaRows, presentMediaRow, summarizeMediaAdvice } from '../src/media-advice/media-advice-presentation.mjs';
 import { authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
 
 // Authored projected rows only. No source request, offer merge or stored result.

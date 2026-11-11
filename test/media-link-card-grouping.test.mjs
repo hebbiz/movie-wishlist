@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupLinkChoices } from '../assets/media-advice-link-choices.mjs';
-import { applyPreview, linkChoicesFor, makePreview } from '../assets/media-advice.mjs';
+import { groupLinkChoices } from '../src/media-advice/media-advice-link-choices.mjs';
+import { applyPreview, linkChoicesFor, makePreview } from '../src/media-advice/media-advice.mjs';
 
 // Authored navigation evidence, not archived responses or redirect observations.
 const card = Object.freeze({

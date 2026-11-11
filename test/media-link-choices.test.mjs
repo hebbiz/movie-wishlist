@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupLinkChoices, preferredAppleLinkChoice } from '../assets/media-advice-link-choices.mjs';
-import { makePreview, linkChoicesFor } from '../assets/media-advice.mjs';
+import { groupLinkChoices, preferredAppleLinkChoice } from '../src/media-advice/media-advice-link-choices.mjs';
+import { makePreview, linkChoicesFor } from '../src/media-advice/media-advice.mjs';
 
 // Authored pointers only: these do not reconstruct a live source response.
 const apple = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authored';

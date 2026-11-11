@@ -8,11 +8,11 @@ import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 import { netflixAudioCatalogueBlock } from './kinobaza-localization.fixture.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
-import { linkChoicesFor, makePreview } from '../assets/media-advice.mjs';
+import { presentMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
+import { linkChoicesFor, makePreview } from '../src/media-advice/media-advice.mjs';
 import { createDirectorAliasLookup } from '../shared/director-alias-crosswalk.mjs';
 import { safeIdentityDiagnostic } from '../shared/media-advice-diagnostics.mjs';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 
 const film = { id: 'imdb:tt999900001', imdbId: 'tt999900001', tmdbId: 999900001,
   identityTitle: 'Авторська пригода II', originalTitle: 'Authored Adventure II', year: 2001,

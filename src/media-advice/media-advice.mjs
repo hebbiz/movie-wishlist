@@ -1,4 +1,4 @@
-import { classifyLink } from '../shared/media-link-policy.mjs';
+import { classifyLink } from '../../shared/media-link-policy.mjs';
 import { safeMediaReport, mediaSourceDetails } from './media-advice-report.mjs';
 import { groupMediaRows, presentMediaGroup, presentMediaGroups, presentMediaRow, summarizeMediaGroups } from './media-advice-presentation.mjs';
 import { groupLinkChoices, preferredAppleLinkChoice } from './media-advice-link-choices.mjs';

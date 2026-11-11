@@ -1,8 +1,77 @@
 # M4 runtime separation and pilot inventory
 
-Current cleanup state: [local pilot retirement](#local-pilot-retirement--2026-11-09).
+Current layout: [browser source ownership](#browser-source-layout--2026-11-11).
+The completed pilot cleanup is recorded at
+[local pilot retirement](#local-pilot-retirement--2026-11-09).
 Stage 1–2.3 inventories and launch commands below are historical checkpoints,
 not instructions for running the retired demo in the current checkout.
+
+## Browser source layout — 2026-11-11
+
+This layout-only follow-up starts from develop `15e29db`. It moves the six
+canonical browser media-advice modules from `assets/` to `src/media-advice/`:
+
+| Module | Owner / purpose |
+| --- | --- |
+| `media-advice.mjs` | Browser dialog/controller and exact selected-address preview/transfer |
+| `media-advice-entry-access.mjs` | Early, session-scoped capability preparation and invalidation |
+| `media-advice-presentation.mjs` | Pure service, offer and source-language presentation |
+| `media-advice-link-choices.mjs` | Navigation-equivalence grouping and original link selection |
+| `media-advice-icons.mjs` | Local service-icon warming, load state and bounded fallback |
+| `media-advice-report.mjs` | Protected, allowlisted diagnostics and source details |
+
+`src/media-advice/` is one focused browser-source directory, not a new runtime
+layer or package. It distinguishes executable application code from artwork
+without moving `app.js`, `shared/`, server libraries or unrelated product code.
+Sibling module names and exports stay the same; imports of shared policies now
+resolve two levels upward. Existing image, icon, GIF and TMDb attribution URLs
+remain under `/assets/`.
+
+```text
+app.js
+├─ src/media-advice/media-advice-entry-access.mjs
+└─ src/media-advice/media-advice.mjs
+   ├─ sibling presentation / link-choices / icons / report modules
+   └─ shared policies via ../../shared/
+
+build-site.mjs → .site-dist/src/media-advice/<six canonical modules>
+              → .site-dist/assets/<six legacy ESM forwarders>
+              → unchanged /assets/ artwork, /shared/ and site resources
+```
+
+The publication builder admits the **six explicit module paths**, not every
+present or future file under `src/`. The old `/assets/media-advice*.mjs` URLs
+are generated ESM forwarders to those canonical modules so an already-open page
+can still resolve a delayed old import after the new publication. They preserve
+exports without copying implementation bodies. They are not source-controlled
+compatibility implementations or an alternative import path for new code.
+Static inspection should use the built `.site-dist`, as in the README; a raw
+checkout is not the generated public compatibility surface.
+
+This compatibility scope does **not** promise atomic replacement of arbitrary
+cached old code or prove every browser/CDN version combination. The review must
+check the built old-URL import graph, forwarding/canonical binding identity, unchanged
+canonical behavior, selected-link/preview/exact transfer and resource URLs,
+alongside runtime/fixture/history boundaries and repeated publication cleanup.
+Passing a static build alone is not evidence of those browser scenarios or live
+source access; actual commands, results and unavailable cases belong in this
+change's PR report. No new live-source, database, deployment or release outcome
+is asserted by this layout record.
+
+`test/media-advice-layout-browser.test.mjs` pins its path-only comparison and
+authored retained-document source to v1.4.0 commit
+`15e29db04cf536c707a7d7dfba713affd57cac2c`. A shallow checkout must explicitly
+fetch that object if absent; the failure names the command, without skipping,
+fetching automatically or comparing current code against itself. Cached browser
+module-map retention is distinct from general HTTP/CDN cache validation, and an
+already evaluated old module intentionally remains its own old namespace.
+
+Earlier diagrams, resource counts and `assets/media-advice*.mjs` source paths
+below describe their pinned cleanup stages. They are preserved as historical
+evidence, not silently rewritten to make an old Git tree resemble this layout.
+The dated path references in the M4 runbook and release archives likewise
+retain their original meaning. Current source consumers use `src/media-advice/`;
+historical comparisons continue to read their exact old Git paths and bodies.
 
 ## Current operator scope — 2026-11-10
 

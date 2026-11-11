@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createEntryAccessPreparation } from '../assets/media-advice-entry-access.mjs';
-import { createMediaAdvice } from '../assets/media-advice.mjs';
+import { createEntryAccessPreparation } from '../src/media-advice/media-advice-entry-access.mjs';
+import { createMediaAdvice } from '../src/media-advice/media-advice.mjs';
 
 const allowed = { mykola_media_advice: true, mykola_media_advice_diagnostics: true };
 const context = { userId: 'user-a', groupId: 'group-a', imdbId: 'tt0290002', listId: 'list-a', formSession: 'form-a' };

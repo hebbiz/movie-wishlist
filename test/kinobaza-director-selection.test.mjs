@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { selectDirectorCandidates } from '../netlify/lib/director-candidate-selection.mjs';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
 
 const SEARCH = 'https://api.tavily.com/search';

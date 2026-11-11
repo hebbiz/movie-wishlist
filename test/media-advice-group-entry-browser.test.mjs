@@ -132,7 +132,10 @@ test('global UA advice availability: browser timing and actual add / edit lifecy
           state.lookup++; await wait(180);
           return route.fulfill({ json: { title: film.title, year: film.year } });
         }
-        if (url.pathname === '/assets/media-advice.mjs' && state.moduleDelay) await wait(state.moduleDelay);
+        // The frozen baseline keeps its historical URL; current app timing
+        // follows the canonical source rather than a generated legacy wrapper.
+        const controllerPath = state.baseline ? '/assets/media-advice.mjs' : '/src/media-advice/media-advice.mjs';
+        if (url.pathname === controllerPath && state.moduleDelay) await wait(state.moduleDelay);
         try {
           let body = await source(url.pathname, state.baseline);
           if (url.pathname === '/app.js') body = body.toString().replace(/^initApp\(\);\r?$/gm, '// Authored known-user/group boundary is installed by the browser fixture.') + '\n' + instrument;

@@ -1,7 +1,7 @@
 // An authored minimal DOM exercises the real controller; no browser/network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMediaAdvice } from '../assets/media-advice.mjs';
+import { createMediaAdvice } from '../src/media-advice/media-advice.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { authoredProductFilm, authoredProductHTML, extractProductHTML as extractHtml } from './media-advice-group.fixture.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';

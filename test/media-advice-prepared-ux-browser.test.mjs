@@ -84,7 +84,7 @@ test('prepared Mykola UX: local browser controls, cold cache and deliberately pe
         const url = new URL(route.request().url());
         if (url.hostname === 'cdn.jsdelivr.net') return route.fulfill({ contentType: 'text/javascript', body: sdkStub });
         if (url.origin !== origin) { state.blockedRemote.push(url.hostname); return route.abort(); }
-        if (url.pathname === '/assets/media-advice.mjs' && state.holdModule) {
+        if (url.pathname === '/src/media-advice/media-advice.mjs' && state.holdModule) {
           await new Promise(resolve => state.pendingModules.push(resolve));
           return route.fulfill({ contentType: 'text/javascript', body: await readFile(resolve(root, '.' + url.pathname)) });
         }

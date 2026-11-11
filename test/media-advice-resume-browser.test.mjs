@@ -28,7 +28,7 @@ test('M4 retained document: revalidation, expiry and context boundaries without 
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     if (mode === 'expiry-timer' || mode === 'report-age') await page.clock.install();
     await page.evaluate(async mode => {
-      const { createMediaAdvice } = await import('/assets/media-advice.mjs');
+      const { createMediaAdvice } = await import('/src/media-advice/media-advice.mjs');
       window.c = { userId: 'u', groupId: 'g', imdbId: 'tt1234567', formSession: 's',title:'Authored retained film',year:2020 };
       window.clock = 1000; window.allowed = true; window.diagnosticsAllowed = mode !== 'ordinary-beta'; window.accessError = false; window.writes = 0; window.calls = 0; window.storageWrites = 0; window.applyChecks = 0; window.discoveryContexts = [];
       Storage.prototype.setItem = () => { storageWrites++; throw Error('No storage'); };

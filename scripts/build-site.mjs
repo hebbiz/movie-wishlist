@@ -1,16 +1,25 @@
-import { cpSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const publishDir = join(root, '.site-dist');
 
-// Keep original public URL paths: product artwork lives under assets and
-// shared modules are imported directly by browser-side JavaScript. Server
-// functions and their source dependencies remain in the repository for bundling.
+// Old open tabs may import a previous release's assets URLs after a deploy.
+// Keep only these six known entry points as generated ESM forwarding modules:
+// one canonical implementation, no duplicated frontend source in assets/Git.
+const previousMediaAdviceModules = [
+  'media-advice.mjs', 'media-advice-entry-access.mjs', 'media-advice-icons.mjs',
+  'media-advice-link-choices.mjs', 'media-advice-presentation.mjs', 'media-advice-report.mjs',
+];
+
+// Product artwork stays under assets; only these exact six browser modules
+// are public under src, not every file in that folder or future source trees.
+// Server Functions and their source dependencies remain available for bundling.
 const publicPaths = [
   'index.html', 'app.html', 'invite.html', 'app.js', 'styles.css',
   'service-worker.js', 'site.webmanifest', 'assets', 'shared', 'privacy', 'terms',
+  ...previousMediaAdviceModules.map(name => `src/media-advice/${name}`),
 ];
 
 export function buildSite() {
@@ -23,6 +32,9 @@ export function buildSite() {
       // Icon provenance/docs remain tracked, not part of the browser resource graph.
       filter: source => !/\.md$/i.test(source),
     });
+  }
+  for (const name of previousMediaAdviceModules) {
+    writeFileSync(join(publishDir, 'assets', name), `export * from '../src/media-advice/${name}';\n`, { flag: 'wx' });
   }
 }
 

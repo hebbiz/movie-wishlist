@@ -13,6 +13,7 @@ import { builtinModules } from 'node:module';
 import { parse } from 'parse5';
 import { execFileSync } from 'node:child_process';
 import { MEDIA_ADVICE_BASELINE_SHA } from './media-advice-history.fixture.mjs';
+import { buildSite } from '../scripts/build-site.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const RUNTIME_FILES = [
@@ -252,16 +253,43 @@ test('production Function, all server libraries and browser code have no direct/
   const packageData = JSON.parse(await localRead('package.json'));
   const packages = new Set(Object.keys(packageData.dependencies ?? {}));
   const serverRoots = ['netlify/functions/media-advice.mjs', ...await codeFiles('netlify/lib')];
-  const browserRoots = [...htmlEntrypoints(await localRead('app.html')), 'app.js', ...await codeFiles('assets'), ...await codeFiles('shared')];
+  const browserRoots = [...htmlEntrypoints(await localRead('app.html')), 'app.js', ...await codeFiles('assets'),
+    ...await codeFiles('src/media-advice'), ...await codeFiles('shared')];
   const server = await graphFor(serverRoots, localRead, packages);
   const browser = await graphFor(browserRoots, localRead, packages);
   assert.ok(server.files.includes('netlify/functions/media-advice.mjs'));
-  assert.ok(browser.files.includes('assets/media-advice.mjs'));
+  assert.ok(browser.files.includes('src/media-advice/media-advice.mjs'));
+  assert.ok(!browser.files.some(file => /^assets\/media-advice[^/]*\.mjs$/.test(file)), 'Tracked assets do not contain duplicate frontend implementations.');
   for (const file of RUNTIME_FILES) assert.ok(server.files.includes(file), `Runtime module must participate in the audited graph: ${file}`);
   for (const file of browser.files) {
     for (const token of tokens(await localRead(file))) if (token.kind === 'string' && /^(?:\/|(?:\.\.?\/)+)(?:research|test)(?:\/|$)/.test(token.value)) assert.fail(`Browser pilot resource dependency in ${file}: ${token.value}`);
   }
   t.diagnostic(`Offline graph: ${server.files.length} server modules / ${server.edges.length} import edges; ${browser.files.length} browser modules / ${browser.edges.length} import edges; no research nodes.`);
+});
+
+test('published legacy browser URLs forward through the canonical src graph without research or server dependencies', async t => {
+  buildSite();
+  const names = ['media-advice.mjs', 'media-advice-entry-access.mjs', 'media-advice-icons.mjs',
+    'media-advice-link-choices.mjs', 'media-advice-presentation.mjs', 'media-advice-report.mjs'];
+  const publishedRead = file => readFile(path.join(ROOT, '.site-dist', file), 'utf8');
+  const wrappers = names.map(name => `assets/${name}`);
+  for (const name of names) {
+    const file = `assets/${name}`;
+    assert.equal(await publishedRead(file), `export * from '../src/media-advice/${name}';\n`);
+    assert.deepEqual(importReferences(await publishedRead(file)), [`../src/media-advice/${name}`]);
+    await assert.rejects(localRead(file), { code: 'ENOENT' }, 'Legacy module compatibility is generated, not a second checked-in implementation.');
+  }
+  const roots = [...htmlEntrypoints(await publishedRead('app.html')), 'app.js', ...wrappers,
+    ...await codeFiles('src/media-advice'), ...await codeFiles('shared')];
+  const graph = await graphFor(roots, publishedRead);
+  assert.deepEqual(graph.edges.filter(edge => wrappers.includes(edge.from)).map(({ from, target }) => [from, target]),
+    names.map(name => [`assets/${name}`, `src/media-advice/${name}`]));
+  for (const file of graph.files) {
+    assert.match(file, /^(?:app\.js$|assets\/media-advice[^/]*\.mjs$|src\/media-advice\/|shared\/)/,
+      `Published browser graph must not reach nonbrowser source: ${file}`);
+  }
+  assert.deepEqual(graph.edges.filter(edge => edge.external), [], 'Published browser modules use only the audited local closure.');
+  t.diagnostic(`Offline compatibility graph: ${wrappers.length} explicit forwarding modules / ${graph.files.length} browser modules; no research/server imports or external requests.`);
 });
 
 test('extracted runtime modules exclude demo catalogues, fixed scenarios, prompts and synthetic fixture builders', async () => {
@@ -305,7 +333,7 @@ test('canonical product fixtures have a closed test-only graph; retired compatib
 });
 
 test('TMDb logo uses a production asset path with unchanged bytes and attribution', async () => {
-  const source = await localRead('assets/media-advice.mjs');
+  const source = await localRead('src/media-advice/media-advice.mjs');
   assert.match(source, /logo\.src\s*=\s*['"]\/assets\/icons\/tmdb\.svg['"]/);
   assert.doesNotMatch(source, /\/research\/grounded-answer-demo\/public\/tmdb-logo\.svg/);
   const current = await readFile(path.join(ROOT, 'assets/icons/tmdb.svg'));
