@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {safeIdentityDiagnostic,safePredictedDiagnostic} from '../shared/media-advice-diagnostics.mjs';
-import {safeMediaReport} from '../assets/media-advice-report.mjs';
+import {safeMediaReport} from '../src/media-advice/media-advice-report.mjs';
 import {productMediaResult} from '../netlify/lib/media-advice-response.mjs';
 import {safePossibleIrrelevantSearch} from '../shared/media-search-relevance-diagnostic.mjs';
 test('new semantic/predicted diagnostics are allowlisted and cannot echo IDs, URLs, JSON or secrets',()=>{

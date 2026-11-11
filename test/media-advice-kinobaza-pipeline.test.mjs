@@ -4,9 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
-import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
-import { linkChoicesFor, makePreview } from '../assets/media-advice.mjs';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { presentMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
+import { linkChoicesFor, makePreview } from '../src/media-advice/media-advice.mjs';
+import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 
 const sourceURL = 'https://kinobazaua.com/titles/authored-recovery-film';

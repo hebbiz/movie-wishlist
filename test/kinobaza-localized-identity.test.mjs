@@ -7,7 +7,7 @@ import { assistedIdentity, linkedDirectorProfile, fetchAssistedKinobaza } from '
 import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 import { tableBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
-import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
+import { presentMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
 const PERSON=999909001, personURL='https://kinobazaua.com/persons/authored-jay-roach';
 const film={id:'authored-fockers',tmdbId:999909002,imdbId:'tt999909002',identityTitle:'Знайомство з Факерами',originalTitle:'Meet the Fockers',year:2004,
   titleAliases:['Знайомство з Факерами','Meet the Fockers'],directorCount:1,directorAliases:['Jay Roach'],

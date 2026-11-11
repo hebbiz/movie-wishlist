@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { safeMediaReport, mediaSourceDetails } from '../assets/media-advice-report.mjs';
+import { safeMediaReport, mediaSourceDetails } from '../src/media-advice/media-advice-report.mjs';
 import { authoredGroupedMediaRows, authoredDuneMediaResult } from './media-advice-group.fixture.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { CARD, markup } from './assisted-kinobaza.fixture.mjs';

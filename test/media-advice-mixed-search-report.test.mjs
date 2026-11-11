@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { possibleIrrelevantSearch } from '../shared/media-search-relevance-diagnostic.mjs';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 
 const FILM = { identityTitle: 'Авторська шукана назва', originalTitle: 'Authored sought film', year: 2006, imdbId: 'tt999900003' };

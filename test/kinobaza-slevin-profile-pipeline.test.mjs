@@ -7,8 +7,8 @@ import { markup } from './assisted-kinobaza.fixture.mjs';
 import { paragraphBlock } from './kinobaza-localization.fixture.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
-import { linkChoicesFor, makePreview, applyPreview } from '../assets/media-advice.mjs';
+import { presentMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
+import { linkChoicesFor, makePreview, applyPreview } from '../src/media-advice/media-advice.mjs';
 
 const CARD = 'https://kinobazaua.com/titles/authored-slevin';
 const OTHER = 'https://kinobazaua.com/titles/authored-other';

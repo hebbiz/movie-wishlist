@@ -5,7 +5,7 @@ import { discoverMedia } from '../netlify/lib/media-advice-service.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
 import { detailsData, providersData, motnData, IDS } from './film-workflow.fixture.mjs';
 import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';

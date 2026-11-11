@@ -27,6 +27,11 @@ test('reviewed-source fence covers every current and rebound historical dependen
   const manifest = source.match(/const usedPaths = \[([\s\S]*?)\];/);
   assert.ok(manifest, 'The control must retain its explicit reviewed-source manifest.');
   const protectedPaths = [...manifest[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
+  assert.ok(protectedPaths.includes('src/media-advice/media-advice-presentation.mjs'),
+    'The current canonical frontend dependency must be fenced before credentials.');
+  assert.ok(!protectedPaths.includes('assets/media-advice-presentation.mjs'),
+    'A generated public forwarding URL cannot stand in for the current source guard.');
+  assert.match(source, /\bfrom ['"]\.\.\/src\/media-advice\/media-advice-presentation\.mjs['"]/);
   const historicalPaths = ['research/grounded-answer-demo/assisted-kinobaza.mjs', 'netlify/lib/kinobaza-director-verifier.mjs', 'netlify/lib/kinobaza-resolver.mjs'];
   const rebound = new Map([
     ['research/grounded-answer-demo/html-source.mjs', 'netlify/lib/kinobaza-html.mjs'],

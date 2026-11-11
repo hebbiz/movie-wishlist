@@ -1,8 +1,8 @@
 // Authored source projections: no live source, platform or database requests.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupMediaRows, presentMediaGroup, presentMediaGroups, summarizeMediaGroups } from '../assets/media-advice-presentation.mjs';
-import { makePreview, transferFor } from '../assets/media-advice.mjs';
+import { groupMediaRows, presentMediaGroup, presentMediaGroups, summarizeMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
+import { makePreview, transferFor } from '../src/media-advice/media-advice.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 
 const filmId = 'imdb:tt1905041';

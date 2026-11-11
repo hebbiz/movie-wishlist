@@ -421,13 +421,13 @@ async function mediaAdviceRequest(action, context, signal, { entryPreparation = 
   }
 }
 
-import("./assets/media-advice-entry-access.mjs").then(({ createEntryAccessPreparation }) => {
+import("./src/media-advice/media-advice-entry-access.mjs").then(({ createEntryAccessPreparation }) => {
   mediaAdviceAccessPreparation = createEntryAccessPreparation({ scope: mediaAdviceEntryScope,
     request: (c, signal) => mediaAdviceRequest('availability', c, signal, { entryPreparation: true }) });
   prepareMediaAdviceAccess();
 }).catch(() => {}); // An optional entry hint must not affect ordinary editing.
 
-import("./assets/media-advice.mjs").then(({ createMediaAdvice }) => {
+import("./src/media-advice/media-advice.mjs").then(({ createMediaAdvice }) => {
   const entry = document.getElementById('mediaAdviceEntry');
   entry.disabled = false;
   entry.removeAttribute('aria-busy');

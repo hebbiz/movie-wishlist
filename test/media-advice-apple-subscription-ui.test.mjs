@@ -4,9 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
-import { createMediaAdvice, transferFor, makePreview, applyPreview, linkChoicesFor, otherPlatformLabels } from '../assets/media-advice.mjs';
-import { presentMediaGroups, presentMediaGroup } from '../assets/media-advice-presentation.mjs';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { createMediaAdvice, transferFor, makePreview, applyPreview, linkChoicesFor, otherPlatformLabels } from '../src/media-advice/media-advice.mjs';
+import { presentMediaGroups, presentMediaGroup } from '../src/media-advice/media-advice-presentation.mjs';
+import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 
 const filmId = 'imdb:tt21103218';

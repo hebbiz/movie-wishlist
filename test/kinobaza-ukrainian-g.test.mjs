@@ -9,9 +9,9 @@ import { netflixAudioCatalogueBlock } from './kinobaza-localization.fixture.mjs'
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
-import { linkChoicesFor, makePreview } from '../assets/media-advice.mjs';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { presentMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
+import { linkChoicesFor, makePreview } from '../src/media-advice/media-advice.mjs';
+import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 
 const SEARCH = 'https://api.tavily.com/search';
 const PERSON = 999998;

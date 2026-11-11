@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MEDIA_SERVICE_ICON_SOURCES, MEDIA_SERVICE_ICON_TIMEOUT_MS, preloadMediaServiceIcons, watchMediaServiceIcon } from '../assets/media-advice-icons.mjs';
+import { MEDIA_SERVICE_ICON_SOURCES, MEDIA_SERVICE_ICON_TIMEOUT_MS, preloadMediaServiceIcons, watchMediaServiceIcon } from '../src/media-advice/media-advice-icons.mjs';
 
 function iconControl() {
   const listeners = {}, timers = new Map(), cleared = [];

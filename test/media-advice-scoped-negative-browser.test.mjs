@@ -5,7 +5,7 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { mediaSourceDetails } from '../assets/media-advice-report.mjs';
+import { mediaSourceDetails } from '../src/media-advice/media-advice-report.mjs';
 
 // Authored source-shaped fixtures, not historical offers/HTML or independent
 // platform verification. Only the real local app is served: all source/API,

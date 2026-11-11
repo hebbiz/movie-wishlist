@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makePreview, applyPreview, transferFor, linkPreview, linkChoicesFor, normalizeMediaCapabilities } from '../assets/media-advice.mjs';
-import { presentMediaGroups } from '../assets/media-advice-presentation.mjs';
+import { makePreview, applyPreview, transferFor, linkPreview, linkChoicesFor, normalizeMediaCapabilities } from '../src/media-advice/media-advice.mjs';
+import { presentMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
 import { authoredGroupedMediaRows } from './media-advice-group.fixture.mjs';
 export const authoredRow = (href = 'https://tv.apple.com/ua/movie/authored/umc.cmc.authored') => ({
   id: 'motn:authored', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' },

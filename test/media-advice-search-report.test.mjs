@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { safeMediaReport } from '../assets/media-advice-report.mjs';
+import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 
 // Authored structured examples, not historical Tavily responses or source HTML.
 const HEADING = 'Можливо, нерелевантні результати пошуку';

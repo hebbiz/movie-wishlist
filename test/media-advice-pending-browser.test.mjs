@@ -24,7 +24,7 @@ test('pending authorization cannot apply a revoked selection token', { skip: !pr
     await page.route('**/*', route => new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort());
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.evaluate(async () => {
-      const { createMediaAdvice } = await import('/assets/media-advice.mjs');
+      const { createMediaAdvice } = await import('/src/media-advice/media-advice.mjs');
       const row = { id: 'authored', identityStatus: 'matched', provider: { key: 'apple', name: 'Apple TV Store' }, link: { href: 'https://click.justwatch.com/a?authored=%2F&ref=EXACT' } };
       const other = {...row,id:'authored-tracking',link:{href:'https://click.justwatch.com/other?ref=AUTHOR%2fONLY'}};
       window.writes = 0; window.sourceCalls = 0;

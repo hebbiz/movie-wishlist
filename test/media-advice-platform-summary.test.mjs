@@ -1,8 +1,8 @@
 // Authored server-projected rows, not live HTML or a claim about real offers.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupMediaRows, presentMediaGroup, presentMediaGroups, summarizeMediaGroups } from '../assets/media-advice-presentation.mjs';
-import { makePreview } from '../assets/media-advice.mjs';
+import { groupMediaRows, presentMediaGroup, presentMediaGroups, summarizeMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
+import { makePreview } from '../src/media-advice/media-advice.mjs';
 
 const filmId = 'imdb:tt1234567';
 const services = {
