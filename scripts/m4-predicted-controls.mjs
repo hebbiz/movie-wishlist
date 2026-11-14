@@ -7,8 +7,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { readTmdbCredential } from './m4-control-credentials.mjs';
 import { readTmdbJson, projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
-import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
-import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
+import { projectDirectorPeople } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
+import { projectFilmIdentityContext } from '../netlify/lib/media-advice/identity/film-identity-context.mjs';
 import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
 import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
 import { admitDirectorProfileURL } from '../netlify/lib/director-profile.mjs';
@@ -84,6 +84,15 @@ export async function loadPredictedControlBaseline() {
   const loaded = new Map(), runtimeImports = new Map([
     ['research/grounded-answer-demo/html-source.mjs', 'netlify/lib/kinobaza-html.mjs'],
     ['research/grounded-answer-demo/tmdb.mjs', 'netlify/lib/media-source-tmdb.mjs'],
+    ['shared/media-advice-diagnostics.mjs', 'shared/media-advice/media-advice-diagnostics.mjs'],
+    ['shared/director-profile-diagnostics.mjs', 'shared/media-advice/director-profile-diagnostics.mjs'],
+    ['shared/media-search-relevance-diagnostic.mjs', 'shared/media-advice/media-search-relevance-diagnostic.mjs'],
+    ['shared/director-alias-crosswalk.mjs', 'netlify/lib/media-advice/identity/director-alias-crosswalk.mjs'],
+    ['shared/film-release-year.mjs', 'netlify/lib/media-advice/identity/film-release-year.mjs'],
+    ['shared/terminal-roman-title.mjs', 'netlify/lib/media-advice/identity/terminal-roman-title.mjs'],
+    ['shared/ukrainian-g-title.mjs', 'netlify/lib/media-advice/identity/ukrainian-g-title.mjs'],
+  ]), repeatedImports = new Map([
+    ['shared/media-advice-diagnostics.mjs', 2], ['shared/film-release-year.mjs', 2],
   ]), rebound = new Map();
   for (const path of paths) {
     const base = new URL(path, ROOT), original = git('show', `${PREDICTED_CONTROL_BASELINE}:${path}`);
@@ -101,7 +110,7 @@ export async function loadPredictedControlBaseline() {
     });
     loaded.set(path, `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
   }
-  if ([...runtimeImports.keys()].some(path => rebound.get(path) !== 1)) throw Error('fixed-baseline-runtime-import-unestablished');
+  if ([...runtimeImports.keys()].some(path => rebound.get(path) !== (repeatedImports.get(path) ?? 1))) throw Error('fixed-baseline-runtime-import-unestablished');
   return (await import(loaded.get(paths[2]))).createKinobazaResolver;
 }
 
@@ -289,7 +298,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       'netlify/lib/kinobaza-predicted-url.mjs', 'netlify/lib/director-candidate-selection.mjs',
       'netlify/lib/kinobaza-card.mjs', 'netlify/lib/kinobaza-html.mjs', 'netlify/lib/kinobaza-localization.mjs',
       'netlify/lib/media-discovery-compose.mjs', 'netlify/lib/media-source-motn.mjs', 'netlify/lib/media-source-tmdb.mjs',
-      'netlify/lib/director-profile.mjs', 'shared',
+      'netlify/lib/director-profile.mjs', 'netlify/lib/media-advice/identity', 'shared',
       'src/media-advice/media-advice-presentation.mjs', 'scripts/m4-predicted-controls.mjs', 'scripts/m4-control-credentials.mjs'];
     if (git('status', '--porcelain', '--untracked-files=all', '--', ...usedPaths)) throw Error('reviewed-source-dirty');
     const bytes = await readFile(options['--input']);

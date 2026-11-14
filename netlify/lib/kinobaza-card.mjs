@@ -1,11 +1,11 @@
 // Owner-assisted source card, not a resolver. No URL rewriting or destinations.
 import { extractHtml, HTML_LIMIT_BYTES, HTML_TIMEOUT_MS } from './kinobaza-html.mjs';
-import { identityGates } from '../../shared/media-advice-diagnostics.mjs';
-import { lookupDirectorAliases } from '../../shared/director-alias-crosswalk.mjs';
-import { releaseYearEvidence } from '../../shared/film-release-year.mjs';
-import { sameTerminalRomanTitle } from '../../shared/terminal-roman-title.mjs';
-import { sameUkrainianGTitle } from '../../shared/ukrainian-g-title.mjs';
-import { movieSameAsEvidence } from '../../shared/kinobaza-movie-identity.mjs';
+import { identityGates } from '../../shared/media-advice/media-advice-diagnostics.mjs';
+import { lookupDirectorAliases } from './media-advice/identity/director-alias-crosswalk.mjs';
+import { releaseYearEvidence } from './media-advice/identity/film-release-year.mjs';
+import { sameTerminalRomanTitle } from './media-advice/identity/terminal-roman-title.mjs';
+import { sameUkrainianGTitle } from './media-advice/identity/ukrainian-g-title.mjs';
+import { movieSameAsEvidence } from './media-advice/identity/kinobaza-movie-identity.mjs';
 
 export function admitKinobazaURL(value) {
   // Validate original spelling BEFORE URL normalization (default ports/dot paths).

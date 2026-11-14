@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
+import { projectFilmIdentityContext } from '../netlify/lib/media-advice/identity/film-identity-context.mjs';
 import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
 
 // Entirely authored metadata. No live film record or historical response implied.

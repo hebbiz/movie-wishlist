@@ -10,8 +10,8 @@ import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
 import { detailsData, providersData, motnData, IDS } from './film-workflow.fixture.mjs';
 import { projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
-import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
-import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
+import { projectFilmIdentityContext } from '../netlify/lib/media-advice/identity/film-identity-context.mjs';
+import { projectDirectorPeople } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
 
 const user = '00000000-0000-4000-8000-000000000001', group = '00000000-0000-4000-8000-000000000002';
 const caps = diagnostics => ({ mykola_media_advice: true, mykola_media_advice_diagnostics: diagnostics });

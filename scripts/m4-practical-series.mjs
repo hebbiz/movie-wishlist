@@ -7,9 +7,9 @@ import { readTmdbJson, projectTmdbIdentityFor } from '../netlify/lib/media-sourc
 import { admitKinobazaURL, fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { createKinobazaResolver, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
 import { describeCandidateURL } from './m4-url-diagnostics.mjs';
-import { projectDirectorPeople } from '../shared/director-alias-crosswalk.mjs';
+import { projectDirectorPeople } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
-import { projectFilmIdentityContext } from '../shared/film-identity-context.mjs';
+import { projectFilmIdentityContext } from '../netlify/lib/media-advice/identity/film-identity-context.mjs';
 import { admitDirectorProfileURL } from '../netlify/lib/director-profile.mjs';
 
 export const practicalFilms = Object.freeze([

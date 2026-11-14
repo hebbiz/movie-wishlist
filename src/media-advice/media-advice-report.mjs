@@ -1,7 +1,7 @@
-import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, safePredictedDiagnostic, resolverStatuses } from '../../shared/media-advice-diagnostics.mjs';
+import { safeSearchDiagnostic, safeIdentityDiagnostic, safeExtractionDiagnostic, safePredictedDiagnostic, resolverStatuses } from '../../shared/media-advice/media-advice-diagnostics.mjs';
 import { groupMediaRows, presentMediaGroups } from './media-advice-presentation.mjs';
-import { safeDirectorProfileDiagnostic } from '../../shared/director-profile-diagnostics.mjs';
-import { safePossibleIrrelevantSearch } from '../../shared/media-search-relevance-diagnostic.mjs';
+import { safeDirectorProfileDiagnostic } from '../../shared/media-advice/director-profile-diagnostics.mjs';
+import { safePossibleIrrelevantSearch } from '../../shared/media-advice/media-search-relevance-diagnostic.mjs';
 const identities = new Set(['matched', 'mismatch', 'unresolved']);
 const platforms = new Set(['apple','appletvplus','prime','netflix','hbo','rakuten','megogo']);
 const accessKinds = new Set(['rent','rental','buy','purchase','subscription','flatrate','addon','free','ad-supported']);

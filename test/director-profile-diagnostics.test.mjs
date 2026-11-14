@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
+import { safeDirectorProfileDiagnostic } from '../shared/media-advice/director-profile-diagnostics.mjs';
 
 const fixture = () => ({ status: 'confirmed', reason: 'confirmed-person-profile-facts', basis: 'exact-name-birthdate-role', sourceAttempts: 2,
   reservationRequests: 2, reservationsAcknowledged: 2, tmdbPersonCalls: 1, kinobazaPersonCalls: 1,
@@ -66,7 +66,7 @@ test('malformed/null input remains content-free and cannot mutate the source obj
 });
 
 test('the projection is browser-safe with no Node/network/storage dependency', async () => {
-  const code = await readFile(new URL('../shared/director-profile-diagnostics.mjs', import.meta.url), 'utf8');
+  const code = await readFile(new URL('../shared/media-advice/director-profile-diagnostics.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(code, /\bimport\s|\bBuffer\b|\bprocess\b|\bfetch\s*\(|localStorage|sessionStorage|console\./);
 });
 

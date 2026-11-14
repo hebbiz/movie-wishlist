@@ -2,7 +2,7 @@
 // responses, historical-pilot reconstructions or availability assertions.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sameTerminalRomanTitle } from '../shared/terminal-roman-title.mjs';
+import { sameTerminalRomanTitle } from '../netlify/lib/media-advice/identity/terminal-roman-title.mjs';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 import { netflixAudioCatalogueBlock } from './kinobaza-localization.fixture.mjs';
@@ -10,8 +10,8 @@ import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 import { presentMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
 import { linkChoicesFor, makePreview } from '../src/media-advice/media-advice.mjs';
-import { createDirectorAliasLookup } from '../shared/director-alias-crosswalk.mjs';
-import { safeIdentityDiagnostic } from '../shared/media-advice-diagnostics.mjs';
+import { createDirectorAliasLookup } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
+import { safeIdentityDiagnostic } from '../shared/media-advice/media-advice-diagnostics.mjs';
 import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 
 const film = { id: 'imdb:tt999900001', imdbId: 'tt999900001', tmdbId: 999900001,

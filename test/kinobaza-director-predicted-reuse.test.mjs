@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDirectorVerifier } from '../netlify/lib/kinobaza-director-verifier.mjs';
-import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
+import { safeDirectorProfileDiagnostic } from '../shared/media-advice/director-profile-diagnostics.mjs';
 
 const KEY = 'AUTHORED_PRIVATE_REUSE_KEY';
 const ID = 900001;

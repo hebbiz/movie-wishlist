@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { kinobazaSearchURL, isKinobazaSearchURL, kinobazaPublicSearch } from '../netlify/lib/kinobaza-public-search.mjs';
-import { safeSearchDiagnostic } from '../shared/media-advice-diagnostics.mjs';
+import { safeSearchDiagnostic } from '../shared/media-advice/media-advice-diagnostics.mjs';
 
 const origin = 'https://kinobazaua.com';
 const page = inside => `<!doctype html><html><body><a href="/titles/outside-authored">Outside</a><div id="nav-persons"><a href="/persons/authored-person">Person</a></div><div id="nav-titles">${inside}</div></body></html>`;

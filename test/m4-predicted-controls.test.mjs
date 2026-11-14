@@ -32,10 +32,19 @@ test('reviewed-source fence covers every current and rebound historical dependen
   assert.ok(!protectedPaths.includes('assets/media-advice-presentation.mjs'),
     'A generated public forwarding URL cannot stand in for the current source guard.');
   assert.match(source, /\bfrom ['"]\.\.\/src\/media-advice\/media-advice-presentation\.mjs['"]/);
+  assert.ok(protectedPaths.includes('netlify/lib/media-advice/identity'),
+    'Moved server identity dependencies must remain guarded before credentials.');
   const historicalPaths = ['research/grounded-answer-demo/assisted-kinobaza.mjs', 'netlify/lib/kinobaza-director-verifier.mjs', 'netlify/lib/kinobaza-resolver.mjs'];
   const rebound = new Map([
     ['research/grounded-answer-demo/html-source.mjs', 'netlify/lib/kinobaza-html.mjs'],
     ['research/grounded-answer-demo/tmdb.mjs', 'netlify/lib/media-source-tmdb.mjs'],
+    ['shared/media-advice-diagnostics.mjs', 'shared/media-advice/media-advice-diagnostics.mjs'],
+    ['shared/director-profile-diagnostics.mjs', 'shared/media-advice/director-profile-diagnostics.mjs'],
+    ['shared/media-search-relevance-diagnostic.mjs', 'shared/media-advice/media-search-relevance-diagnostic.mjs'],
+    ['shared/director-alias-crosswalk.mjs', 'netlify/lib/media-advice/identity/director-alias-crosswalk.mjs'],
+    ['shared/film-release-year.mjs', 'netlify/lib/media-advice/identity/film-release-year.mjs'],
+    ['shared/terminal-roman-title.mjs', 'netlify/lib/media-advice/identity/terminal-roman-title.mjs'],
+    ['shared/ukrainian-g-title.mjs', 'netlify/lib/media-advice/identity/ukrainian-g-title.mjs'],
   ]), visited = new Set();
   const visit = async (path, historical = false) => {
     const key = `${historical ? PREDICTED_CONTROL_BASELINE : 'current'}:${path}`;

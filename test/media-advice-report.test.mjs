@@ -6,7 +6,7 @@ import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
 import { IDS } from './film-workflow.fixture.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { safeDirectorProfileDiagnostic } from '../shared/director-profile-diagnostics.mjs';
+import { safeDirectorProfileDiagnostic } from '../shared/media-advice/director-profile-diagnostics.mjs';
 
 test('recovered noncritical markup is named without retaining parser attributes or arbitrary issue content', () => {
  for (const issue of ['noncritical-image-markup-recovered', 'noncritical-recommendation-markup-recovered']) {

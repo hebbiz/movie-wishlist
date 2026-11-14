@@ -72,7 +72,7 @@ export function conflictingProviderIds(claims) {
   }).map(([id, keys]) => [id, [...keys]]));
 }
 
-import { classifyLink } from '../../shared/media-link-policy.mjs';
+import { classifyLink } from '../../shared/media-advice/media-link-policy.mjs';
 export { classifyLink };
 
 function rowBase(source, film, provider, index, provenance) {

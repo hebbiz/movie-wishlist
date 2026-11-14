@@ -9,7 +9,7 @@ import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { netflixAudioCatalogueBlock, paragraphBlock } from './kinobaza-localization.fixture.mjs';
 import { recommendationCarousel } from './recommendation-markup.fixture.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
-import { safeExtractionDiagnostic } from '../shared/media-advice-diagnostics.mjs';
+import { safeExtractionDiagnostic } from '../shared/media-advice/media-advice-diagnostics.mjs';
 
 const incompleteCaveat = 'Деякі дані неповні, тож перевір умови на платформі.';
 const ordinaryCaveat = 'Інформація не завжди точна, тож варто перевіряти.';

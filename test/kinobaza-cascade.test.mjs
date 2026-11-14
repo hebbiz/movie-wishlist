@@ -4,8 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchAssistedKinobaza } from '../netlify/lib/kinobaza-card.mjs';
 import { CARD, markup } from './assisted-kinobaza.fixture.mjs';
-import { createDirectorAliasLookup } from '../shared/director-alias-crosswalk.mjs';
-import { safeIdentityDiagnostic } from '../shared/media-advice-diagnostics.mjs';
+import { createDirectorAliasLookup } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
+import { safeIdentityDiagnostic } from '../shared/media-advice/media-advice-diagnostics.mjs';
 
 const PERSON = 999999;
 const film = { id: 'authored-cascade-film', tmdbId: 999900001, imdbId: 'tt999900001',

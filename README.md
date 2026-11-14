@@ -79,9 +79,10 @@ dependency PGlite supports local database-contract tests. The package exposes
 | `service-worker.js`, `site.webmanifest` | PWA installation, push and notification navigation |
 | `assets/` | static artwork, icons and Mykola GIF; TMDb logo at `assets/icons/tmdb.svg` |
 | `src/media-advice/` | six canonical browser media-advice modules: controller, entry access, presentation, link choices, icons and protected report |
-| `shared/` | pure identity, diagnostics and URL-policy modules shared by browser/server consumers |
+| `shared/media-advice/` | four pure URL-policy/diagnostic modules actually consumed by both browser and server |
 | `netlify/functions/` | `movie-search.js`, `movie-lookup.js`, `invite-preview.js` and `media-advice.mjs` endpoints |
 | `netlify/lib/` | media-advice orchestration, source adapters, extraction, identity/profile verification and request-budget helpers |
+| `netlify/lib/media-advice/identity/` | six server-owned film/person identity, release-year and narrow title-spelling helpers; not static website files |
 | `scripts/` | two build scripts plus explicit operator/controlled-study tools; not an automatic release-validation suite |
 | `test/` | M4 product, server, identity, access, browser, operator and historical-parity tests; canonical authored fixtures |
 | `tests/` | static-publication and recovery-tool tests, separate from `npm run test:m4` |
@@ -95,14 +96,24 @@ dependency PGlite supports local database-contract tests. The package exposes
 | `.site-dist/` | generated Netlify static publish directory, not the source checkout or Functions source |
 
 Media-advice browser code belongs in `src/media-advice/`, separate from static
-artwork and the server-side modules in `netlify/lib/`. Pure policies remain in
-`shared/`; the browser does not import server code or test fixtures. Images,
+artwork and the server-side modules in `netlify/lib/`. The four policies shared
+by both runtimes belong in `shared/media-advice/`; server-only identity helpers
+belong in `netlify/lib/media-advice/identity/`. Ownership follows actual consumers,
+not whether a module happens to be pure. The browser does not import server code
+or test fixtures. Images,
 service icons, the GIF and TMDb attribution keep their existing `/assets/` URLs.
 The build also generates six small ESM forwarders at the former
 `/assets/media-advice*.mjs` URLs for already-open pages. They re-export the
 canonical modules, not a second implementation. New code and current tests use
 `src/media-advice/`; the old URLs exist in built publication, not as source
-modules to maintain. See the [layout and compatibility boundaries](docs/m4-runtime-separation.md#browser-source-layout--2026-11-11).
+modules to maintain. Four generated forwarders also preserve the old flat
+`/shared/<name>.mjs` URLs used by those browser modules. The six server-only
+identity files have no public compatibility URL. See the
+[rule ownership and compatibility boundaries](docs/m4-runtime-separation.md#media-advice-rule-ownership--2026-11-11).
+Their [retirement plan](docs/m4-runtime-separation.md#forwarder-retirement-plan--2026-11-14)
+requires a separate cleanup PR no earlier than 30 days after the production deploy
+of 1.4.1, a dependency review and an old-tab risk assessment; elapsed time alone
+does not establish that no old tabs remain.
 
 The Windows/LAN/Termius demo under `research/grounded-answer-demo` was retired
 in [#240](https://github.com/hebbiz/movie-wishlist/pull/240). It is not a supported
@@ -164,17 +175,24 @@ git fetch origin 42b4b849d77281e1660701500c7bba9e6ec44b02
 node --test test/media-advice-runtime-parity.test.mjs
 ```
 
-Frontend relocation parity and the retained-document browser fixture use the
-released v1.4.0 baseline `15e29db04cf536c707a7d7dfba713affd57cac2c`:
+Frontend/rule relocation parity and the retained-document browser fixture need
+**both** pinned Git objects: the released v1.4.0 baseline
+`15e29db04cf536c707a7d7dfba713affd57cac2c` and the post-#245, pre-rule-separation
+baseline `a060cf6f9e2022fbdd5635623432b3684c1632a7`. If either is missing,
+explicitly fetch it before rerunning:
 
 ```sh
 git fetch origin 15e29db04cf536c707a7d7dfba713affd57cac2c
+git fetch origin a060cf6f9e2022fbdd5635623432b3684c1632a7
 node --test test/media-advice-layout-browser.test.mjs
 ```
 
-The first check needs only Git/Node; the browser scenario uses the same
+The two parity checks need only Git/Node; the browser scenarios use the same
 `PLAYWRIGHT_MODULE_PATH`/`PLAYWRIGHT_CHANNEL` prerequisites described above.
-It switches local static roots in a retained document, not a live Netlify deploy.
+Missing history fails with the exact fetch command, without auto-fetch, skip or
+current-code substitution. Retained-document scenarios switch local static roots
+for the v1.4.0 asset paths and #245 source paths with old flat shared imports,
+not a live Netlify deploy or full-app Save.
 
 For a shallow clone, `git fetch --unshallow origin` is another explicit option.
 The tests neither auto-fetch nor silently substitute current runtime code.
@@ -230,11 +248,13 @@ commit merely by running the script. Netlify-provided build metadata names are
 `NETLIFY`, `CONTEXT`, `BRANCH`, `COMMIT_REF` and `DEPLOY_ID`.
 
 The static allowlist retains the seven root browser/PWA files, `assets/`,
-`shared/`, `privacy/`, `terms/` and the six explicit browser modules under
-`src/media-advice/`, excluding Markdown provenance files. It does not publish
-arbitrary future `src/` files, documentation, research, server code, tests,
-scripts, migrations or configuration. The six generated legacy module
-forwarders under `assets/` are part of this public compatibility surface.
+`privacy/`, `terms/`, the six explicit browser modules under `src/media-advice/`
+and the four explicit rules under `shared/media-advice/`, excluding Markdown
+provenance files. It does not publish arbitrary future `src/` or `shared/` files,
+documentation, research, server code, tests, scripts, migrations or configuration.
+Six generated legacy module forwarders under `assets/` and four at the former
+flat `shared/` paths are part of this public compatibility surface; no identity
+implementation from `netlify/` is copied into static output.
 All four Netlify Functions and their dependencies
 remain in the full checkout for Functions bundling, outside the static publish
 directory. TMDb attribution continues to use `/assets/icons/tmdb.svg`.

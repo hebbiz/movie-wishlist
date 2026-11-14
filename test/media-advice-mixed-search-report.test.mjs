@@ -3,7 +3,7 @@
 // The current mixed-case heading is intentionally documented, not changed.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { possibleIrrelevantSearch } from '../shared/media-search-relevance-diagnostic.mjs';
+import { possibleIrrelevantSearch } from '../shared/media-advice/media-search-relevance-diagnostic.mjs';
 import { safeMediaReport } from '../src/media-advice/media-advice-report.mjs';
 import { productMediaResult } from '../netlify/lib/media-advice-response.mjs';
 
