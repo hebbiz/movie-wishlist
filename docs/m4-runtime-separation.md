@@ -2,6 +2,8 @@
 
 Current layout: [rule ownership](#media-advice-rule-ownership--2026-11-11), after
 the [browser-source move](#browser-source-layout--2026-11-11).
+Local study/diagnostic tools use the
+[current operator layout](#current-operator-scope--2026-11-14).
 The completed pilot cleanup is recorded at
 [local pilot retirement](#local-pilot-retirement--2026-11-09).
 Stage 1–2.3 inventories and launch commands below are historical checkpoints,
@@ -176,25 +178,54 @@ The dated path references in the M4 runbook and release archives likewise
 retain their original meaning. Current source consumers use `src/media-advice/`;
 historical comparisons continue to read their exact old Git paths and bodies.
 
-## Current operator scope — 2026-11-10
+## Current operator scope — 2026-11-14
 
-At verified develop `890f3a9ada0bedcfc91898d7832fa6fa9ea4cfc5`, `scripts/`
-contains **two build tools and fourteen operator files**, not a current
-release-validation suite. The retained Windows credential/IPC tools are not
-the retired Windows/LAN demo launcher. Recovery tooling lives separately in
-`supabase/operations/`; the older structure table's broad “recovery workflows”
-label for `scripts/` does not relocate or replace that recovery chain.
+This layout follow-up starts from develop
+`d7c98664ad5b3a975b47cca237ba9e30b865e0ee`. The 2026-11-10 scope review at
+`890f3a9ada0bedcfc91898d7832fa6fa9ea4cfc5` recorded **two build tools and
+fourteen operator files** in `scripts/`. The same fourteen files now live under
+`scripts/media-advice-diagnostics/`: **ten `.mjs` and four `.ps1` files**.
+Only `build-site.mjs` and `stamp-media-advice-build.mjs` remain directly under
+`scripts/`. This separates publication tools from local investigations without
+renaming files, adding a package or changing the studies into release validators.
+
+There are no wrappers at the former `scripts/m4-*` paths. Current invocations
+from the repository root use `scripts/media-advice-diagnostics/<same basename>`;
+the linked files below are canonical. Repository-root discovery accounts for
+the extra directory level, while reviewed-checkout/ExpectedCommit fences and
+tracked-source checks follow the moved files. Explicit modes, credential input,
+local IPC, refusal behavior and safe-output boundaries remain in force.
+
+[`test/m4-diagnostics-layout.test.mjs`](../test/m4-diagnostics-layout.test.mjs)
+compares all fourteen file bodies against the fixed pre-move develop object
+`d7c98664ad5b3a975b47cca237ba9e30b865e0ee`, allowing only reviewed import,
+repository-root and tracked-source path changes plus line-ending normalization.
+It checks the canonical location, absence of old-path wrappers and unchanged
+root build tools. Authored guards cover nine importable Node tools, the tenth
+tool's CLI-only explicit-live-inspection refusal and mocked wrong-commit/dirty
+source rejection at the relocated repository root before input, credentials,
+output or HTTP. These are local layout/guard checks, not live study results.
+The [README command and fixed-history prerequisite](../README.md#build-and-test-commands)
+provide the explicit fetch instruction; missing history fails without an
+automatic fetch, skip or current-body substitute.
+
+The retained Windows credential/IPC tools are not the retired Windows/LAN demo
+launcher. Recovery tooling lives separately in `supabase/operations/`; the older
+structure table's broad “recovery workflows” label for `scripts/` does not relocate
+or replace that recovery chain. The stage inventories and dated commands below
+retain their original paths, commits, manifest hashes and results; they describe
+their historical trees. Use this section for the current operator locations.
 
 | Retained files | Purpose and present limitation |
 | --- | --- |
 | [`build-site.mjs`](../scripts/build-site.mjs), [`stamp-media-advice-build.mjs`](../scripts/stamp-media-advice-build.mjs) | Current publication build and develop-only attestation. These write generated output/stamp files; they are not read-only diagnostic commands. |
-| [`m4-control-credentials.mjs`](../scripts/m4-control-credentials.mjs), [`m4-url-diagnostics.mjs`](../scripts/m4-url-diagnostics.mjs) | Shared memory-only credential and sanitized address-analysis helpers used by controlled studies and their authored tests; not release validators themselves. |
-| [`m4-control-password-prompt.ps1`](../scripts/m4-control-password-prompt.ps1), [`m4-read-control-result.ps1`](../scripts/m4-read-control-result.ps1), [`m4-practical-session.ps1`](../scripts/m4-practical-session.ps1), [`m4-practical-request.ps1`](../scripts/m4-practical-request.ps1) | Explicit operator entrypoints, hidden credential input and local IPC/result handling. Preserve reviewed-checkout/ExpectedCommit fences and credential lifecycle; a working IPC test is not evidence of live source or server authorization behavior. |
-| [`m4-control-diagnostic.mjs`](../scripts/m4-control-diagnostic.mjs), [`m4-director-person-diagnostic.mjs`](../scripts/m4-director-person-diagnostic.mjs) | Fixed-film source/address and director-profile investigations. Their selected examples/projections are study-specific, not replacements for runtime identity gates or a general release checklist. |
-| [`m4-fockers-control.mjs`](../scripts/m4-fockers-control.mjs) | Historical cap10/cap12 studies, including the eight-film cap12 series and in-memory cap10 replay. The cap12 series omits `tmdb-providers` and `motn-title`, so its local maximum is ten source attempts, not an attested server cap12 ledger session. Its report explicitly says `serverLedgerCapAttested: false`. |
-| [`m4-practical-series.mjs`](../scripts/m4-practical-series.mjs) | Historical practical series: even the mode named `production-beta` passes `sourceCap: 10`. The name does not make this a validator for the current cap14/global-access release. |
-| [`m4-cascade-comparison.mjs`](../scripts/m4-cascade-comparison.mjs), [`m4-predicted-controls.mjs`](../scripts/m4-predicted-controls.mjs) | Historical Git-pinned comparisons and sanitized study replay/control. Preserve original commits, historical `research` paths, manifest hashes and reviewed-source fences; these paths refer to Git objects, not a missing current demo dependency. |
-| [`m4-pilot-page-inspection.mjs`](../scripts/m4-pilot-page-inspection.mjs), [`m4-profile-markup-inspection.mjs`](../scripts/m4-profile-markup-inspection.mjs) | Explicit bounded page/profile investigation tools. The first is a fixed three-card pilot inspector; the second inspects one profile's markup. Neither proves current end-to-end release readiness. |
+| [`m4-control-credentials.mjs`](../scripts/media-advice-diagnostics/m4-control-credentials.mjs), [`m4-url-diagnostics.mjs`](../scripts/media-advice-diagnostics/m4-url-diagnostics.mjs) | Shared memory-only credential and sanitized address-analysis helpers used by controlled studies and their authored tests; not release validators themselves. |
+| [`m4-control-password-prompt.ps1`](../scripts/media-advice-diagnostics/m4-control-password-prompt.ps1), [`m4-read-control-result.ps1`](../scripts/media-advice-diagnostics/m4-read-control-result.ps1), [`m4-practical-session.ps1`](../scripts/media-advice-diagnostics/m4-practical-session.ps1), [`m4-practical-request.ps1`](../scripts/media-advice-diagnostics/m4-practical-request.ps1) | Explicit operator entrypoints, hidden credential input and local IPC/result handling. Preserve reviewed-checkout/ExpectedCommit fences and credential lifecycle; a working IPC test is not evidence of live source or server authorization behavior. |
+| [`m4-control-diagnostic.mjs`](../scripts/media-advice-diagnostics/m4-control-diagnostic.mjs), [`m4-director-person-diagnostic.mjs`](../scripts/media-advice-diagnostics/m4-director-person-diagnostic.mjs) | Fixed-film source/address and director-profile investigations. Their selected examples/projections are study-specific, not replacements for runtime identity gates or a general release checklist. |
+| [`m4-fockers-control.mjs`](../scripts/media-advice-diagnostics/m4-fockers-control.mjs) | Historical cap10/cap12 studies, including the eight-film cap12 series and in-memory cap10 replay. The cap12 series omits `tmdb-providers` and `motn-title`, so its local maximum is ten source attempts, not an attested server cap12 ledger session. Its report explicitly says `serverLedgerCapAttested: false`. |
+| [`m4-practical-series.mjs`](../scripts/media-advice-diagnostics/m4-practical-series.mjs) | Historical practical series: even the mode named `production-beta` passes `sourceCap: 10`. The name does not make this a validator for the current cap14/global-access release. |
+| [`m4-cascade-comparison.mjs`](../scripts/media-advice-diagnostics/m4-cascade-comparison.mjs), [`m4-predicted-controls.mjs`](../scripts/media-advice-diagnostics/m4-predicted-controls.mjs) | Historical Git-pinned comparisons and sanitized study replay/control. Preserve original commits, historical `research` paths, manifest hashes and reviewed-source fences; these paths refer to Git objects, not a missing current demo dependency. |
+| [`m4-pilot-page-inspection.mjs`](../scripts/media-advice-diagnostics/m4-pilot-page-inspection.mjs), [`m4-profile-markup-inspection.mjs`](../scripts/media-advice-diagnostics/m4-profile-markup-inspection.mjs) | Explicit bounded page/profile investigation tools. The first is a fixed three-card pilot inspector; the second inspects one profile's markup. Neither proves current end-to-end release readiness. |
 
 No operator is run automatically as a release prerequisite. A new live study
 needs an agreed film/target, reviewed source revision, source/credit/time

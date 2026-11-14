@@ -8,7 +8,7 @@ import { normalizeMotnFor } from '../netlify/lib/media-source-motn.mjs';
 import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
 import { buildEvidence } from '../scripts/stamp-media-advice-build.mjs';
 import { mediaRuntime } from '../netlify/lib/media-advice-runtime.mjs';
-import { runControlDiagnostic } from '../scripts/m4-control-diagnostic.mjs';
+import { runControlDiagnostic } from '../scripts/media-advice-diagnostics/m4-control-diagnostic.mjs';
 import { createMediaAdviceHandler } from '../netlify/functions/media-advice.mjs';
 import { markup, CARD } from './assisted-kinobaza.fixture.mjs';
 import { IDS, motnData, detailsData } from './film-workflow.fixture.mjs';

@@ -2,14 +2,14 @@
 // responses. Both policies inspect the same in-memory current card response.
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { extractHtml } from '../netlify/lib/kinobaza-html.mjs';
-import { assistedIdentity } from '../netlify/lib/kinobaza-card.mjs';
+import { extractHtml } from '../../netlify/lib/kinobaza-html.mjs';
+import { assistedIdentity } from '../../netlify/lib/kinobaza-card.mjs';
 export const CASCADE_BASELINE_SHA = '5a9c3c38f892644d04988d9055e3463fc6b9b86b';
 const source = 'research/grounded-answer-demo/assisted-kinobaza.mjs';
 
 export async function loadCascadeBaseline(sha = CASCADE_BASELINE_SHA) {
   if (![CASCADE_BASELINE_SHA,'21d1be24acf2b654254c38c9b252246ed8de1343'].includes(sha)) throw Error('fixed-local-baseline-required');
-  const root = new URL('../', import.meta.url), moduleURL = new URL(source, root);
+  const root = new URL('../../', import.meta.url), moduleURL = new URL(source, root);
   // The protected Windows worker intentionally has no inherited PATH. Use the
   // verified local Git executable, like the runner's fixed Node executable.
   const git = process.platform === 'win32' ? 'C:/Program Files/Git/cmd/git.exe' : 'git';

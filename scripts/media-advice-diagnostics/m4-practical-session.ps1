@@ -8,7 +8,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$repoPath = Split-Path -Parent $PSScriptRoot
+$repoPath = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $runnerPath = Join-Path $PSScriptRoot 'm4-practical-series.mjs'
 $nodePath = 'C:\Program Files\nodejs\node.exe'
 $pipeName = 'mw-m4-practical-series-v1'

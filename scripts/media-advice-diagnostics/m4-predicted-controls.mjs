@@ -6,18 +6,18 @@ import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { readTmdbCredential } from './m4-control-credentials.mjs';
-import { readTmdbJson, projectTmdbIdentityFor } from '../netlify/lib/media-source-tmdb.mjs';
-import { projectDirectorPeople } from '../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
-import { projectFilmIdentityContext } from '../netlify/lib/media-advice/identity/film-identity-context.mjs';
-import { createKinobazaResolver } from '../netlify/lib/kinobaza-resolver.mjs';
-import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
-import { admitDirectorProfileURL } from '../netlify/lib/director-profile.mjs';
-import { predictedKinobazaURL } from '../netlify/lib/kinobaza-predicted-url.mjs';
-import { composeDiscovery } from '../netlify/lib/media-discovery-compose.mjs';
-import { presentMediaGroups } from '../src/media-advice/media-advice-presentation.mjs';
+import { readTmdbJson, projectTmdbIdentityFor } from '../../netlify/lib/media-source-tmdb.mjs';
+import { projectDirectorPeople } from '../../netlify/lib/media-advice/identity/director-alias-crosswalk.mjs';
+import { projectFilmIdentityContext } from '../../netlify/lib/media-advice/identity/film-identity-context.mjs';
+import { createKinobazaResolver } from '../../netlify/lib/kinobaza-resolver.mjs';
+import { admitKinobazaURL } from '../../netlify/lib/kinobaza-card.mjs';
+import { admitDirectorProfileURL } from '../../netlify/lib/director-profile.mjs';
+import { predictedKinobazaURL } from '../../netlify/lib/kinobaza-predicted-url.mjs';
+import { composeDiscovery } from '../../netlify/lib/media-discovery-compose.mjs';
+import { presentMediaGroups } from '../../src/media-advice/media-advice-presentation.mjs';
 
 export const PREDICTED_CONTROL_BASELINE = '7a9754d6431426a86ea9c3843a11c97f28210c4c';
-const ROOT = new URL('../', import.meta.url);
+const ROOT = new URL('../../', import.meta.url);
 const API = 'https://api.themoviedb.org/3', SEARCH = 'https://api.tavily.com/search';
 const APPEND = 'external_ids,alternative_titles,credits,release_dates,translations';
 const sha256 = value => createHash('sha256').update(value).digest('hex');
@@ -299,7 +299,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       'netlify/lib/kinobaza-card.mjs', 'netlify/lib/kinobaza-html.mjs', 'netlify/lib/kinobaza-localization.mjs',
       'netlify/lib/media-discovery-compose.mjs', 'netlify/lib/media-source-motn.mjs', 'netlify/lib/media-source-tmdb.mjs',
       'netlify/lib/director-profile.mjs', 'netlify/lib/media-advice/identity', 'shared',
-      'src/media-advice/media-advice-presentation.mjs', 'scripts/m4-predicted-controls.mjs', 'scripts/m4-control-credentials.mjs'];
+      'src/media-advice/media-advice-presentation.mjs', 'scripts/media-advice-diagnostics/m4-predicted-controls.mjs', 'scripts/media-advice-diagnostics/m4-control-credentials.mjs'];
     if (git('status', '--porcelain', '--untracked-files=all', '--', ...usedPaths)) throw Error('reviewed-source-dirty');
     const bytes = await readFile(options['--input']);
     if (bytes.length > 16 * 1024 * 1024 || sha256(bytes) !== options['--input-sha256']) throw Error('frozen-input-mismatch');

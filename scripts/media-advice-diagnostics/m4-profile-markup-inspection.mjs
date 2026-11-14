@@ -2,7 +2,7 @@
 // source retry, credential reader, runtime endpoint or source-content archive.
 import { pathToFileURL } from 'node:url';
 import { parse } from 'parse5';
-import { admitDirectorProfileURL, inspectDirectorProfile } from '../netlify/lib/director-profile.mjs';
+import { admitDirectorProfileURL, inspectDirectorProfile } from '../../netlify/lib/director-profile.mjs';
 
 const LIMIT = 2 * 1024 * 1024;
 const TIMEOUT = 5_000;

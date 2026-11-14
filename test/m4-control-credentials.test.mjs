@@ -8,10 +8,10 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readControlCredentials, readTmdbCredential } from '../scripts/m4-control-credentials.mjs';
+import { readControlCredentials, readTmdbCredential } from '../scripts/media-advice-diagnostics/m4-control-credentials.mjs';
 
 const authored = {tmdbToken:'AUTHORED_TMDB_SECRET',tavilyKey:'AUTHORED_TAVILY_SECRET'};
-const runner = fileURLToPath(new URL('../scripts/m4-control-diagnostic.mjs',import.meta.url));
+const runner = fileURLToPath(new URL('../scripts/media-advice-diagnostics/m4-control-diagnostic.mjs',import.meta.url));
 const pwsh = [
   join(process.env.USERPROFILE??'', '.cache/codex-runtimes/codex-primary-runtime/dependencies/native/powershell/pwsh.exe'),
   join(process.env.ProgramFiles??'', 'PowerShell/7/pwsh.exe')
@@ -36,7 +36,7 @@ test('person-check stdin requires exactly one TMDb key, never a Tavily key or en
   for(const value of ['', '{}', JSON.stringify(authored), JSON.stringify({tmdbToken:'bad key'}), JSON.stringify({tmdbToken:'x'.repeat(4097)})]) {
     await assert.rejects(readTmdbCredential(Readable.from([value])),{message:'invalid-local-credentials'});
   }
-  const script=fileURLToPath(new URL('../scripts/m4-director-person-diagnostic.mjs',import.meta.url));
+  const script=fileURLToPath(new URL('../scripts/media-advice-diagnostics/m4-director-person-diagnostic.mjs',import.meta.url));
   const blockNetwork='data:text/javascript,'+encodeURIComponent('globalThis.fetch=()=>{throw Error("AUTHORED_TMDB_SECRET PRIVATE_ERROR")};');
   const env={...process.env,NODE_OPTIONS:'',TMDB_READ_ACCESS_TOKEN:'INHERITED_PRIVATE_TMDB',TAVILY_API_KEY:'INHERITED_PRIVATE_TAVILY'};
   const child=input=>spawnSync(process.execPath,['--import',blockNetwork,script,'--live-person-check','--credentials-stdin'],{input,encoding:'utf8',env,timeout:10_000});
@@ -79,7 +79,7 @@ test('stdin CLI has no credential argv/env fallback; authored fetch stub makes Z
   }
 });
 test('hidden Windows prompt parses and uses stdin/CurrentUserOnly IPC, not a disk/environment handoff',{skip:nativeSkip},async()=>{
-  const helper=fileURLToPath(new URL('../scripts/m4-control-password-prompt.ps1',import.meta.url));
+  const helper=fileURLToPath(new URL('../scripts/media-advice-diagnostics/m4-control-password-prompt.ps1',import.meta.url));
   const source=await readFile(helper,'utf8');
   const parseCode=`$tokens=$null; $errors=$null; [void][Management.Automation.Language.Parser]::ParseFile('${helper.replaceAll("'","''")}',[ref]$tokens,[ref]$errors); if($errors.Count){ $errors | ForEach-Object { $_.Message }; exit 1 }`;
   const parse=spawnSync(pwsh,['-NoProfile','-EncodedCommand',Buffer.from(parseCode,'utf16le').toString('base64')],{encoding:'utf8',timeout:10_000});
@@ -124,7 +124,7 @@ test('native Windows current-user-only named pipe hands off authored safe JSON w
   }finally{socket?.destroy();if(child.exitCode===null)child.kill();}
 });
 test('same-SSH safe-result reader parses, bounds result and cannot rerun sources or read credentials',{skip:nativeSkip},async()=>{
-  const helper=fileURLToPath(new URL('../scripts/m4-read-control-result.ps1',import.meta.url));
+  const helper=fileURLToPath(new URL('../scripts/media-advice-diagnostics/m4-read-control-result.ps1',import.meta.url));
   const source=await readFile(helper,'utf8');
   const code=`$tokens=$null; $errors=$null; [void][Management.Automation.Language.Parser]::ParseFile('${helper.replaceAll("'","''")}',[ref]$tokens,[ref]$errors); if($errors.Count){exit 1}`;
   const parse=spawnSync(pwsh,['-NoProfile','-EncodedCommand',Buffer.from(code,'utf16le').toString('base64')],{encoding:'utf8',timeout:10_000});
@@ -140,7 +140,7 @@ test('same-SSH safe-result reader parses, bounds result and cannot rerun sources
   assert.doesNotMatch(source,/Read-Host|TMDB_READ_ACCESS_TOKEN|TAVILY_API_KEY|m4-control-diagnostic|node\.exe|https?:|Invoke-WebRequest|Invoke-RestMethod|Set-Content|Out-File|WriteAll|SetAccessControl|SetEnvironmentVariable|\$env:/);
 });
 test('UTF-8 child JSON and ASCII reader output preserve authored aliases under legacy CP866',{skip:nativeSkip},async()=>{
-  const source=await readFile(new URL('../scripts/m4-control-password-prompt.ps1',import.meta.url),'utf8');
+  const source=await readFile(new URL('../scripts/media-advice-diagnostics/m4-control-password-prompt.ps1',import.meta.url),'utf8');
   const outputEncoding=source.match(/^\s*\$start\.StandardOutputEncoding = .*$/m)?.[0];
   assert.ok(outputEncoding,'helper must explicitly decode Node UTF-8 output');
   const authoredText='Authored Дені Вільнев — тест',node=process.execPath.replaceAll("'","''");
