@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKinobazaResolver, resolverQueries, resolverRefusalQuery, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
-import { runControlDiagnostic } from '../scripts/m4-control-diagnostic.mjs';
+import { runControlDiagnostic } from '../scripts/media-advice-diagnostics/m4-control-diagnostic.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
 import { detailsData, IDS } from './film-workflow.fixture.mjs';
 

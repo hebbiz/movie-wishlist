@@ -104,7 +104,7 @@ SQL/activation/recovery operation authorized by this document update**.
 | [`media-advice-beta.preflight.sql`](../supabase/operations/media-advice-beta.preflight.sql), [activation](../supabase/operations/media-advice-beta.activate.sql), [postcheck](../supabase/operations/media-advice-beta.postcheck.sql) | Historical pilot install/owner-only activation workflow. Its old RPC/absence/cohort assumptions are not the current personal/global access model. Do not use it as a streaming release validator or mass-assignment recipe. |
 | [`media-advice-beta.rollback.sql`](../supabase/operations/media-advice-beta.rollback.sql) | Retained global Beta kill-switch operation, requiring separate authorization. A shared switch also affects develop; it is not code rollback, data restoration or removal of personal assignments. |
 | [Cleanup inspection](../supabase/operations/media-advice-cleanup.sql), [scheduler preparation](../supabase/operations/media-advice-cleanup.schedule.sql) | Retained operational/retention tools; inspect current job/state before a separately authorized operation. No new scheduler or cleanup execution is attested here. |
-| [`scripts/`](../scripts/) controlled studies and inspectors | Versioned local diagnostics and historical cap10/cap12 comparisons, including `production-beta` study naming, are not current cap14 release validators. See the [operator inventory and scope](m4-runtime-separation.md). Keep their original guards, pinned SHA/paths and credentials boundaries. |
+| [`scripts/media-advice-diagnostics/`](../scripts/media-advice-diagnostics/) controlled studies and inspectors | Versioned local diagnostics and historical cap10/cap12 comparisons, including `production-beta` study naming, are not current cap14 release validators. See the [operator inventory and scope](m4-runtime-separation.md#current-operator-scope--2026-11-14). Keep their reviewed-checkout guards, pinned historical SHA/paths and credential boundaries. |
 | [`supabase/operations/`](../supabase/operations/) recovery chain | Retained interdependent export/readback/local-restore tools and tests. A script's existence is not a fresh usable backup or a successful restoration of today's schema. |
 
 Before a **separately approved** release/privileged operation, recheck actual Git
@@ -115,6 +115,15 @@ response; inspect actual state first. Preserve the source-use/account review,
 production configuration review and separately approved live acceptance checks.
 Passing fixtures, browser mocks or a Deploy Preview build do not certify a live
 film search, production authorization, source licence or complete restoration.
+
+**Current diagnostic paths — 2026-11-14:** all fourteen local study/diagnostic
+files (ten `.mjs`, four `.ps1`) now use
+`scripts/media-advice-diagnostics/<same basename>`. The two build tools remain
+directly under `scripts/`; there are no wrappers at the former `scripts/m4-*`
+paths. Dated records below retain their original commands, reviewed commits and
+source budgets. Use the linked current inventory for today's locations; do not
+substitute a new checkout/path into a historical ExpectedCommit command or treat
+a recorded one-time authorization as permission for another live run.
 
 ## Historical status index — superseded by the current entry point
 

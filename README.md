@@ -83,7 +83,8 @@ dependency PGlite supports local database-contract tests. The package exposes
 | `netlify/functions/` | `movie-search.js`, `movie-lookup.js`, `invite-preview.js` and `media-advice.mjs` endpoints |
 | `netlify/lib/` | media-advice orchestration, source adapters, extraction, identity/profile verification and request-budget helpers |
 | `netlify/lib/media-advice/identity/` | six server-owned film/person identity, release-year and narrow title-spelling helpers; not static website files |
-| `scripts/` | two build scripts plus explicit operator/controlled-study tools; not an automatic release-validation suite |
+| `scripts/` | `build-site.mjs` and `stamp-media-advice-build.mjs` at the directory root; publication and develop build provenance |
+| `scripts/media-advice-diagnostics/` | fourteen explicit operator/controlled-study files (ten `.mjs`, four `.ps1`); not an automatic release-validation suite |
 | `test/` | M4 product, server, identity, access, browser, operator and historical-parity tests; canonical authored fixtures |
 | `tests/` | static-publication and recovery-tool tests, separate from `npm run test:m4` |
 | `supabase/functions/` | movie-activity and Social Advice push delivery |
@@ -114,6 +115,14 @@ Their [retirement plan](docs/m4-runtime-separation.md#forwarder-retirement-plan-
 requires a separate cleanup PR no earlier than 30 days after the production deploy
 of 1.4.1, a dependency review and an old-tab risk assessment; elapsed time alone
 does not establish that no old tabs remain.
+
+The fourteen local media-advice study/diagnostic files have one owner directory,
+`scripts/media-advice-diagnostics/`, so the two publication tools remain visible
+at the root of `scripts/`. Their basenames, explicit opt-ins, reviewed-checkout
+guards and credential/IPC boundaries remain. There are no wrappers at the former
+`scripts/m4-*` paths. Use the [current operator inventory](docs/m4-runtime-separation.md#current-operator-scope--2026-11-14)
+for current locations; dated commands and pinned Git paths retain their historical
+meaning. Relocation does not make cap10/cap12 studies current cap14 validators.
 
 The Windows/LAN/Termius demo under `research/grounded-answer-demo` was retired
 in [#240](https://github.com/hebbiz/movie-wishlist/pull/240). It is not a supported
@@ -148,7 +157,7 @@ production readiness. These commands do not install or migrate a Supabase projec
 
 ### Build and test commands
 
-`test/` currently contains 82 Node test entry files and 12 authored fixture
+`test/` currently contains 83 Node test entry files and 12 authored fixture
 modules. `tests/` contains four Node test files and four Windows PowerShell test
 scripts. They are deliberately separate; running one directory does not cover
 the other.
@@ -165,6 +174,7 @@ the other.
 | `pwsh -NoProfile -File tests/recovery-password-prompt.native.test.ps1` | Explicit native Windows test of an empty local PostgreSQL 17 cluster; requires the already-installed PG 17.11 binaries at the path declared in that script. Not a target-database restore or an installer. |
 | `node --test --test-concurrency=1 test/media-advice-browser.test.mjs test/media-advice-apple-subscription-browser.test.mjs` | Controlled browser scenarios; set `PLAYWRIGHT_MODULE_PATH` to an existing Playwright module and optionally `PLAYWRIGHT_CHANNEL` for an installed browser. These fixtures are not live source checks or a physical iPhone test. |
 | `node --test --test-concurrency=1 test/media-advice-runtime-parity.test.mjs test/media-advice-fixture-parity.test.mjs test/media-advice-history.test.mjs` | Frozen baseline and fixture/history checks; the pinned historical Git objects must exist locally. |
+| `node --test test/m4-diagnostics-layout.test.mjs` | Fixed-body relocation parity for all fourteen diagnostic tools, canonical paths/no wrappers and root build tools; nine importable Node tools plus the CLI-only pilot refusal and mocked wrong-commit/dirty-source guards. No live source requests or database checks. |
 
 For frozen runtime parity the fixed baseline is
 `42b4b849d77281e1660701500c7bba9e6ec44b02`. If the test reports it missing,
@@ -193,6 +203,20 @@ Missing history fails with the exact fetch command, without auto-fetch, skip or
 current-code substitution. Retained-document scenarios switch local static roots
 for the v1.4.0 asset paths and #245 source paths with old flat shared imports,
 not a live Netlify deploy or full-app Save.
+
+Diagnostic-tool relocation parity requires Git and the fixed pre-move develop
+object `d7c98664ad5b3a975b47cca237ba9e30b865e0ee`. If it is missing, explicitly
+fetch it and rerun the focused check:
+
+```sh
+git fetch origin d7c98664ad5b3a975b47cca237ba9e30b865e0ee
+node --test test/m4-diagnostics-layout.test.mjs
+```
+
+The test compares all fourteen bodies with that fixed Git tree, allowing only
+reviewed import/repository-root/source-guard path changes and line-ending
+normalization. Missing history fails with the fetch command; there is no
+automatic fetch, skip or current-body substitute.
 
 For a shallow clone, `git fetch --unshallow origin` is another explicit option.
 The tests neither auto-fetch nor silently substitute current runtime code.

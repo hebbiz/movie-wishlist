@@ -10,7 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const helper = fileURLToPath(new URL('../scripts/m4-practical-session.ps1', import.meta.url));
+const helper = fileURLToPath(new URL('../scripts/media-advice-diagnostics/m4-practical-session.ps1', import.meta.url));
+const promptHelper = fileURLToPath(new URL('../scripts/media-advice-diagnostics/m4-control-password-prompt.ps1', import.meta.url));
 const pwsh = [
   join(process.env.USERPROFILE ?? '', '.cache/codex-runtimes/codex-primary-runtime/dependencies/native/powershell/pwsh.exe'),
   join(process.env.ProgramFiles ?? '', 'PowerShell/7/pwsh.exe')
@@ -169,7 +170,7 @@ try {
   assert.match(sha, /^[a-f0-9]{40}$/);
   for (const study of ['practical-five','pilot-retrieval','tavily-fallback','cascade-identity','production-beta']) {
   const preflight = spawnSync(pwsh, ['-NoProfile', '-NonInteractive', '-File', helper, '-ExpectedCommit', sha, '-Study', study, '-CheckPrerequisites'], {
-    cwd: repo, encoding: 'utf8', timeout: 30_000
+    cwd: join(repo, 'test'), encoding: 'utf8', timeout: 30_000
   });
   assert.ifError(preflight.error);
   assert.equal(preflight.status, 0, preflight.stderr || preflight.stdout);
@@ -185,6 +186,29 @@ try {
   assert.equal(report.sourceRequests, 0);
   assert.equal(report.credentialPrompts, 0);
   }
+
+  const wrongSha = sha === '0'.repeat(40) ? '1'.repeat(40) : '0'.repeat(40);
+  const wrongCheckout = spawnSync(pwsh, ['-NoProfile', '-NonInteractive', '-File', helper, '-ExpectedCommit', wrongSha, '-CheckPrerequisites'], {
+    cwd: join(repo, 'test'), encoding: 'utf8', timeout: 30_000
+  });
+  assert.ifError(wrongCheckout.error);
+  assert.equal(wrongCheckout.status, 1, wrongCheckout.stderr || wrongCheckout.stdout);
+  assert.equal(wrongCheckout.stderr, '');
+  const rejected = JSON.parse(wrongCheckout.stdout);
+  assert.equal(rejected.status, 'session-not-started');
+  assert.equal(rejected.reason, 'prerequisites');
+  assert.equal(rejected.sourceRequests, 0);
+
+  const tracked = spawnSync('git', ['diff', '--quiet', 'HEAD', '--'], { cwd: repo, encoding: 'utf8', timeout: 10_000 });
+  assert.ifError(tracked.error);
+  assert.ok([0, 1].includes(tracked.status), tracked.stderr);
+  const controlPreflight = spawnSync(pwsh, ['-NoProfile', '-NonInteractive', '-File', promptHelper, '-ExpectedCommit', sha, '-CheckPrerequisites'], {
+    cwd: join(repo, 'test'), encoding: 'utf8', timeout: 30_000
+  });
+  assert.ifError(controlPreflight.error);
+  assert.equal(controlPreflight.status, tracked.status, controlPreflight.stderr || controlPreflight.stdout);
+  assert.equal(controlPreflight.stderr, '');
+  assert.match(controlPreflight.stdout, tracked.status === 1 ? /Stopped before source dispatch/ : /zero source requests/);
 });
 
 test('full fake-key broker reconnects after two status requests and an abandoned client, then stops', { skip: nativeSkip, timeout: 60_000 }, async () => {
@@ -193,6 +217,9 @@ test('full fake-key broker reconnects after two status requests and an abandoned
   assert.equal(commit.status, 0, commit.stderr);
   const sha = commit.stdout.trim();
   assert.match(sha, /^[a-f0-9]{40}$/);
+  const tracked = spawnSync('git', ['diff', '--quiet', 'HEAD', '--'], { cwd: repo, encoding: 'utf8', timeout: 10_000 });
+  assert.ifError(tracked.error);
+  assert.ok([0, 1].includes(tracked.status), tracked.stderr);
   const pipeName = `mw-m4-lifecycle-${randomUUID().replaceAll('-', '')}`;
   const psString = value => `'${value.replaceAll("'", "''")}'`;
   const replaceOnce = (source, from, to) => {
@@ -200,13 +227,13 @@ test('full fake-key broker reconnects after two status requests and an abandoned
     return source.replace(from, to);
   };
   let serverSource = readFileSync(helper, 'utf8');
-  serverSource = replaceOnce(serverSource, '$repoPath = Split-Path -Parent $PSScriptRoot', `$repoPath = ${psString(repo)}`);
-  serverSource = replaceOnce(serverSource, "$runnerPath = Join-Path $PSScriptRoot 'm4-practical-series.mjs'", `$runnerPath = ${psString(join(repo, 'scripts/m4-practical-series.mjs'))}`);
+  serverSource = replaceOnce(serverSource, '$repoPath = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)', `$repoPath = ${psString(repo)}`);
+  serverSource = replaceOnce(serverSource, "$runnerPath = Join-Path $PSScriptRoot 'm4-practical-series.mjs'", `$runnerPath = ${psString(join(repo, 'scripts/media-advice-diagnostics/m4-practical-series.mjs'))}`);
   serverSource = replaceOnce(serverSource, "'mw-m4-practical-series-v1'", psString(pipeName));
   serverSource = replaceOnce(serverSource, 'if ([Console]::IsInputRedirected)', 'if ($false)');
   serverSource = replaceOnce(serverSource, "Read-Host 'TMDB_READ_ACCESS_TOKEN (hidden)' -AsSecureString", "ConvertTo-SecureString 'AUTHORED_FAKE_TMDB_TOKEN' -AsPlainText -Force");
   serverSource = replaceOnce(serverSource, "Read-Host 'TAVILY_API_KEY (hidden)' -AsSecureString", "ConvertTo-SecureString 'AUTHORED_FAKE_TAVILY_KEY' -AsPlainText -Force");
-  const clientPath = fileURLToPath(new URL('../scripts/m4-practical-request.ps1', import.meta.url));
+  const clientPath = fileURLToPath(new URL('../scripts/media-advice-diagnostics/m4-practical-request.ps1', import.meta.url));
   const clientSource = replaceOnce(readFileSync(clientPath, 'utf8'), "'mw-m4-practical-series-v1'", psString(pipeName));
   // Source stays in memory. Compression avoids Windows' command-line length limit;
   // dot-sourcing preserves the production script's $script: state across requests.
@@ -234,6 +261,7 @@ test('full fake-key broker reconnects after two status requests and an abandoned
     assert.equal(report.execution, 'local-diagnostic');
     assert.equal(report.acknowledgementSent, true);
     assert.equal(report.localCheckoutSha, sha);
+    assert.equal(report.localTrackedEdits, tracked.status === 1);
     assert.equal(report.session.sourceCounts.total, 0);
     assert.equal(report.session.countsIncomplete, false);
     return report;

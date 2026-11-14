@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { predictedControlManifest, frozenSearchFactory, safeControlURL, createControlTransport,
-  runPredictedControlSeries, loadPredictedControlBaseline, PREDICTED_CONTROL_BASELINE } from '../scripts/m4-predicted-controls.mjs';
+  runPredictedControlSeries, loadPredictedControlBaseline, PREDICTED_CONTROL_BASELINE } from '../scripts/media-advice-diagnostics/m4-predicted-controls.mjs';
 import { resolverQueries, resolverReserveQuery } from '../netlify/lib/kinobaza-resolver.mjs';
 import { extractHtml } from '../netlify/lib/kinobaza-html.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
@@ -22,7 +22,7 @@ const context = () => ({ findURL: 'https://api.themoviedb.org/3/find/tt0290002?e
 const get = () => ({ method: 'GET', redirect: 'manual', credentials: 'omit', signal: AbortSignal.timeout(1000), headers: { Accept: 'text/html' } });
 
 test('reviewed-source fence covers every current and rebound historical dependency before credentials or HTTP', async () => {
-  const root = new URL('../', import.meta.url), entry = 'scripts/m4-predicted-controls.mjs';
+  const root = new URL('../', import.meta.url), entry = 'scripts/media-advice-diagnostics/m4-predicted-controls.mjs';
   const source = await readFile(new URL(entry, root), 'utf8');
   const manifest = source.match(/const usedPaths = \[([\s\S]*?)\];/);
   assert.ok(manifest, 'The control must retain its explicit reviewed-source manifest.');
@@ -31,7 +31,7 @@ test('reviewed-source fence covers every current and rebound historical dependen
     'The current canonical frontend dependency must be fenced before credentials.');
   assert.ok(!protectedPaths.includes('assets/media-advice-presentation.mjs'),
     'A generated public forwarding URL cannot stand in for the current source guard.');
-  assert.match(source, /\bfrom ['"]\.\.\/src\/media-advice\/media-advice-presentation\.mjs['"]/);
+  assert.match(source, /\bfrom ['"]\.\.\/\.\.\/src\/media-advice\/media-advice-presentation\.mjs['"]/);
   assert.ok(protectedPaths.includes('netlify/lib/media-advice/identity'),
     'Moved server identity dependencies must remain guarded before credentials.');
   const historicalPaths = ['research/grounded-answer-demo/assisted-kinobaza.mjs', 'netlify/lib/kinobaza-director-verifier.mjs', 'netlify/lib/kinobaza-resolver.mjs'];
@@ -74,9 +74,9 @@ test('reviewed-source fence covers every current and rebound historical dependen
 
 test('all seven operators and pinned comparison loaders load no current demo or test modules', () => {
   const operators = ['cascade-comparison', 'control-diagnostic', 'director-person-diagnostic', 'fockers-control', 'practical-series', 'predicted-controls', 'url-diagnostics']
-    .map(name => new URL(`../scripts/m4-${name}.mjs`, import.meta.url).href);
-  const cascade = new URL('../scripts/m4-cascade-comparison.mjs', import.meta.url).href;
-  const predicted = new URL('../scripts/m4-predicted-controls.mjs', import.meta.url).href;
+    .map(name => new URL(`../scripts/media-advice-diagnostics/m4-${name}.mjs`, import.meta.url).href);
+  const cascade = new URL('../scripts/media-advice-diagnostics/m4-cascade-comparison.mjs', import.meta.url).href;
+  const predicted = new URL('../scripts/media-advice-diagnostics/m4-predicted-controls.mjs', import.meta.url).href;
   const script = `import { registerHooks } from 'node:module';
     registerHooks({ resolve(specifier, context, nextResolve) {
       const resolved = nextResolve(specifier, context);

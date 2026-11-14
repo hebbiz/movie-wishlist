@@ -10,7 +10,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$repoPath = Split-Path -Parent $PSScriptRoot
+$repoPath = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $runnerPath = Join-Path $PSScriptRoot $(if ($DirectorPersonCheck) { 'm4-director-person-diagnostic.mjs' } else { 'm4-control-diagnostic.mjs' })
 $nodePath = 'C:\Program Files\nodejs\node.exe'
 $pipeName = if ($DirectorPersonCheck) { 'mw-m4-director-person-200' } else { 'mw-m4-controls-198' }

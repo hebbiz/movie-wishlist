@@ -1,7 +1,7 @@
 // Authored person records and HTML only: these tests are not source evidence.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { runDirectorPersonDiagnostic } from '../scripts/m4-director-person-diagnostic.mjs';
+import { runDirectorPersonDiagnostic } from '../scripts/media-advice-diagnostics/m4-director-person-diagnostic.mjs';
 
 const TMDB_KEY = 'AUTHORED_TMDB_PERSON_KEY';
 const PERSON = 999999;

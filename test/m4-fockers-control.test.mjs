@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { fockersControl, cap12ControlSeries, cap12ControlFilms } from '../scripts/m4-fockers-control.mjs';
+import { fockersControl, cap12ControlSeries, cap12ControlFilms } from '../scripts/media-advice-diagnostics/m4-fockers-control.mjs';
 import { rankedCandidates, resolverQueries, resolverRefusalQuery } from '../netlify/lib/kinobaza-resolver.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
 
@@ -95,7 +95,7 @@ test('IMDb find ambiguity stops after one attempt and bad credentials cause zero
 });
 
 test('one-shot entry point reads only stdin and never opens a report or credential file',async()=>{
-  const script=await readFile(new URL('../scripts/m4-fockers-control.mjs',import.meta.url),'utf8');
+  const script=await readFile(new URL('../scripts/media-advice-diagnostics/m4-fockers-control.mjs',import.meta.url),'utf8');
   assert.match(script,/readControlCredentials\(process\.stdin\)/);assert.doesNotMatch(script,/process\.env|writeFile|appendFile|createWriteStream|console\.|api\.movieofthenight|watch\/providers/);
   assert.doesNotMatch(script,/titles\/(?:meet-the-fockers|little-fockers|meet-the-parents)/);
 });

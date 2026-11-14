@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { describeCandidateURL } from '../scripts/m4-url-diagnostics.mjs';
-import { runControlDiagnostic } from '../scripts/m4-control-diagnostic.mjs';
+import { describeCandidateURL } from '../scripts/media-advice-diagnostics/m4-url-diagnostics.mjs';
+import { runControlDiagnostic } from '../scripts/media-advice-diagnostics/m4-control-diagnostic.mjs';
 import { admitKinobazaURL } from '../netlify/lib/kinobaza-card.mjs';
 import { resolverQueries, tavilySearch } from '../netlify/lib/kinobaza-resolver.mjs';
 import { detailsData, IDS } from './film-workflow.fixture.mjs';

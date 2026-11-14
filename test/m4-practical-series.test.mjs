@@ -2,15 +2,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { practicalFilms, practicalStudies, practicalOperation, inspectPublicIdentity } from '../scripts/m4-practical-series.mjs';
+import { practicalFilms, practicalStudies, practicalOperation, inspectPublicIdentity } from '../scripts/media-advice-diagnostics/m4-practical-series.mjs';
 import { detailsData, IDS } from './film-workflow.fixture.mjs';
 import { markup } from './assisted-kinobaza.fixture.mjs';
-import { loadCascadeBaseline, compareCascadeCard, CASCADE_BASELINE_SHA } from '../scripts/m4-cascade-comparison.mjs';
+import { loadCascadeBaseline, compareCascadeCard, CASCADE_BASELINE_SHA } from '../scripts/media-advice-diagnostics/m4-cascade-comparison.mjs';
 const keys = {tmdbToken:'AUTHORED_TMDB_KEY',tavilyKey:'AUTHORED_TAVILY_KEY'};
 
 test('fixed identity baseline loads inside the credential worker environment without inherited PATH or secrets', () => {
   const env = Object.fromEntries(['SystemRoot','WINDIR','TEMP','TMP'].filter(k => process.env[k]).map(k => [k, process.env[k]]));
-  const url = new URL('../scripts/m4-cascade-comparison.mjs', import.meta.url).href;
+  const url = new URL('../scripts/media-advice-diagnostics/m4-cascade-comparison.mjs', import.meta.url).href;
   const code = `const m = await import(${JSON.stringify(url)}); process.stdout.write(typeof await m.loadCascadeBaseline());`;
   const output = execFileSync(process.execPath, ['--input-type=module','-e',code], {env,encoding:'utf8',windowsHide:true,timeout:15000});
   assert.equal(output, 'function');
