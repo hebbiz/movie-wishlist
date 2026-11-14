@@ -7,6 +7,16 @@ The [dated recovery record](m4-media-advice.md#recovery-checkpoint--2026-10-22-b
 retains historical evidence and limitations; it is not a command to replay an
 old checkpoint or authorization for a production restore.
 
+**Current test locations — 2026-11-14:** recovery tests now live under
+[`test/recovery/`](../test/recovery/); see the
+[current test inventory](m4-runtime-separation.md#current-test-layout--2026-11-14)
+and [README commands](../README.md#build-and-test-commands). The Node recovery
+suites parse and compare authored SQL strings without executing SQL. The
+[`recovery-password-prompt.native.test.ps1`](../test/recovery/recovery-password-prompt.native.test.ps1)
+test starts an empty local PostgreSQL cluster and executes SQL; it is an
+explicit opt-in, excluded from this no-SQL layout change. Neither relocation
+nor fixture checks authorize a real backup, restore or database operation.
+
 ## Scope and authorization
 
 For this project, an owner-approved local backup/restore test may use the
@@ -252,9 +262,9 @@ hashes/isolation/native-extension requirements to work around it.
    exact-cleanup conditions. Record unknown encryption as unknown. Stop if
    these conditions cannot be established; do not silently extend the waiver.
 
-Run `pwsh -NoProfile -File tests/recovery-local-guards.test.ps1` for authored
-Windows-only negative/positive guard cases (38 checks in this change), and
-`node --test tests/recovery-local.test.mjs tests/recovery-archive.test.mjs`
+Run `pwsh -NoProfile -File test/recovery/recovery-local-guards.test.ps1` for authored
+Windows-only negative/positive guard cases (38 checks in the original guard change), and
+`node --test test/recovery/recovery-local.test.mjs test/recovery/recovery-archive.test.mjs`
 for archive/VM-contract fixtures. They do not use real backups, keys, a live
 database or QEMU. Confirm the stopped public-only root separately with:
 
@@ -418,8 +428,8 @@ arguments, stdout or an unguarded temporary file to work around that boundary.
 Reproducible **synthetic**, not real-source/restore, checks:
 
 ```powershell
-node --test tests/recovery-m4-compare.test.mjs
-pwsh -NoProfile -File tests/recovery-m4-compare-wrapper.test.ps1
+node --test test/recovery/recovery-m4-compare.test.mjs
+pwsh -NoProfile -File test/recovery/recovery-m4-compare-wrapper.test.ps1
 ```
 
 The first suite covers all79 identities plus omissions on both sides, wrong

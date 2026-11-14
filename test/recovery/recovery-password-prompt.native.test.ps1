@@ -1,6 +1,6 @@
 # Native PG17, authored empty local cluster only. No production connection/credentials.
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot/../supabase/operations/recovery-password-prompt.ps1"
+. "$PSScriptRoot/../../supabase/operations/recovery-password-prompt.ps1"
 $bin = Join-Path $env:LOCALAPPDATA 'MovieWishlist/RecoveryTools/pg17.11/pgsql/bin'
 $fixture = [IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetTempPath()) ('mw-recovery-native-' + [Guid]::NewGuid().ToString('N'))))
 $data = Join-Path $fixture 'data'

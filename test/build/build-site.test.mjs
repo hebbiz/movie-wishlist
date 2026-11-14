@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFile
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const output = join(root, '.site-dist');
 const build = () => execFileSync(process.execPath, ['scripts/build-site.mjs'], { cwd: root });
 const publicFiles = ['index.html', 'app.html', 'invite.html', 'app.js', 'styles.css', 'service-worker.js', 'site.webmanifest'];
@@ -55,7 +55,7 @@ test('publish output preserves only public app dependencies, rebuilds cleanly an
   const retained = tracked.filter(file => !allowed.has(file));
   const before = new Map(retained.map(file => [file, digest(file)]));
   for (const file of ['assets/icons/media/SOURCES.md', 'test/media-advice-history.fixture.mjs',
-    'docs/m4-media-advice.md', 'scripts/build-site.mjs', 'tests/build-site.test.mjs', 'test/media-advice-server.test.mjs',
+    'docs/m4-media-advice.md', 'scripts/build-site.mjs', 'test/build/build-site.test.mjs', 'test/media-advice-server.test.mjs',
     'netlify/functions/media-advice.mjs', 'netlify/lib/media-source-tmdb.mjs',
     'supabase/migrations/20261108185237_media_advice_global_access.sql', 'package.json', 'package-lock.json', 'netlify.toml']) {
     assert.ok(before.has(file), `${file} must stay tracked at the repository root, not become public output`);

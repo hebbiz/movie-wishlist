@@ -2,9 +2,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {compareM4, m4Contract, assertM4InputBinding} from '../supabase/operations/recovery-m4-compare.mjs';
-import {schemaBlocks} from '../supabase/operations/recovery-schema-compare.mjs';
-import {normalizeSchema, copyBlocks} from '../supabase/operations/recovery-local.mjs';
+import {compareM4, m4Contract, assertM4InputBinding} from '../../supabase/operations/recovery-m4-compare.mjs';
+import {schemaBlocks} from '../../supabase/operations/recovery-schema-compare.mjs';
+import {normalizeSchema, copyBlocks} from '../../supabase/operations/recovery-local.mjs';
 
 const schema = 'media_advice_private';
 const constraints = [

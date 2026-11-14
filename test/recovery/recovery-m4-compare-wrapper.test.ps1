@@ -1,6 +1,6 @@
 # Authored fixture only. No real checkpoint, credentials, VM or SQL execution.
 $ErrorActionPreference='Stop'
-. "$PSScriptRoot/../supabase/operations/recovery-password-prompt.ps1"
+. "$PSScriptRoot/../../supabase/operations/recovery-password-prompt.ps1"
 $oldLocalAppData=$env:LOCALAPPDATA
 $fixture=Join-Path ([IO.Path]::GetTempPath()) ('mw-m4-comparison-'+[Guid]::NewGuid().ToString('N'))
 $env:LOCALAPPDATA=$fixture
@@ -14,7 +14,7 @@ function Assert-Test($Condition){if(-not $Condition){throw 'Authored M4 wrapper 
 function Refused([scriptblock]$Action){$failed=$false;try{& $Action|Out-Null}catch{$failed=$true};Assert-Test $failed}
 function Run-AuthoredNode([string]$Script,$Config){
  $start=[Diagnostics.ProcessStartInfo]::new();$start.FileName=(Get-Command node.exe).Source
- $start.WorkingDirectory=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+ $start.WorkingDirectory=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
  $start.UseShellExecute=$false;$start.CreateNoWindow=$true
  $start.RedirectStandardInput=$true;$start.RedirectStandardOutput=$true;$start.RedirectStandardError=$true
  foreach($arg in @('--input-type=module','-e',$Script)){$start.ArgumentList.Add($arg)}
@@ -62,7 +62,7 @@ key.fill(0);
  Run-AuthoredNode $setup @{root=$root;directory=$directory;fullName=$fullName;authored=$authored;keyBase64=[Convert]::ToBase64String($key)}|Out-Null
  $manifest=Join-Path $directory 'status.json';$fullPath=Join-Path $directory $fullName
  $pins=@{VmRoot=$root;Checkpoint=$checkpoint;ManifestSha256=(Get-FileHash -LiteralPath $manifest).Hash.ToLowerInvariant();KeySha256=(Get-FileHash -LiteralPath $keyPath).Hash.ToLowerInvariant();FullStatusName=$fullName;FullStatusSha256=(Get-FileHash -LiteralPath $fullPath).Hash.ToLowerInvariant()}
- $wrapper=Join-Path $PSScriptRoot '../supabase/operations/recovery-m4-compare.ps1'
+ $wrapper=Join-Path $PSScriptRoot '../../supabase/operations/recovery-m4-compare.ps1'
  $result=& $wrapper @pins|ConvertFrom-Json
  Assert-Test ($result.m4ArchivedReplayMatches -eq $true -and $result.fullVerifierVerified -eq $false -and $result.wholeProjectRecoveryEstablished -eq $false);$checks++
  Assert-Test ((Get-FileHash -LiteralPath $fullPath).Hash.ToLowerInvariant() -eq $pins.FullStatusSha256 -and (Get-Content -LiteralPath $fullPath -Raw|ConvertFrom-Json).verified -eq $false);$checks++
