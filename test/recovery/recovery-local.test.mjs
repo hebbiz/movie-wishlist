@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {copyBlocks,normalizeSchema,normalizeAcl,aclMismatchSummary} from '../supabase/operations/recovery-local.mjs';
-import {graphqlAclSupplement} from '../supabase/operations/recovery-schema-supplement.mjs';
-import {schemaBlocks,blockMeaning,boundarySettings,catalogRows} from '../supabase/operations/recovery-schema-compare.mjs';
-import {nativeAclChecks} from '../supabase/operations/recovery-acl-checks.mjs';
+import {copyBlocks,normalizeSchema,normalizeAcl,aclMismatchSummary} from '../../supabase/operations/recovery-local.mjs';
+import {graphqlAclSupplement} from '../../supabase/operations/recovery-schema-supplement.mjs';
+import {schemaBlocks,blockMeaning,boundarySettings,catalogRows} from '../../supabase/operations/recovery-schema-compare.mjs';
+import {nativeAclChecks} from '../../supabase/operations/recovery-acl-checks.mjs';
 import {spawnSync} from 'node:child_process';
 import {mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -22,7 +22,7 @@ test('software console refuses authored private-stage marker before reading asse
  await mkdir(root);
  try{
   await writeFile(path.join(root,'private-data-staged.json'),'{}');
-  const child=spawnSync(process.execPath,[fileURLToPath(new URL('../supabase/operations/recovery-vm.mjs',import.meta.url)),root,'software-console'],{windowsHide:true,encoding:'utf8'});
+  const child=spawnSync(process.execPath,[fileURLToPath(new URL('../../supabase/operations/recovery-vm.mjs',import.meta.url)),root,'software-console'],{windowsHide:true,encoding:'utf8'});
   assert.notEqual(child.status,0);assert.match(child.stderr,/private data forbids software console/);
   assert.doesNotMatch(child.stdout,/VM_BOOTED|PUBLIC_SOFTWARE_CONSOLE/);
  }finally{await rm(root,{recursive:true})}

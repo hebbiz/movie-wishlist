@@ -1,7 +1,7 @@
 # Authored Windows-only fixtures. Never reads a real backup/key or starts QEMU.
 $ErrorActionPreference='Stop'
-. "$PSScriptRoot/../supabase/operations/recovery-password-prompt.ps1"
-. "$PSScriptRoot/../supabase/operations/recovery-local-guards.ps1"
+. "$PSScriptRoot/../../supabase/operations/recovery-password-prompt.ps1"
+. "$PSScriptRoot/../../supabase/operations/recovery-local-guards.ps1"
 function Assert-GuardTest($Condition,[string]$Message){if(-not $Condition){throw $Message}}
 function Assert-Refused([scriptblock]$Action,[string]$Reason=''){
  $refused=$false
@@ -85,17 +85,17 @@ try{
  function Get-Process { [PSCustomObject]@{Path=(Join-Path $root 'qemu/qemu-system-x86_64.exe')} }
  try{Assert-Refused {Assert-RecoveryVmRoot $root} 'VM still running';$checks++}finally{Remove-Item Function:Get-Process}
  $stageMarker=Join-Path $root 'private-data-staged.json';[IO.File]::WriteAllText($stageMarker,'{}')
- try{Assert-Refused {& (Join-Path $PSScriptRoot '../supabase/operations/recovery-software-iso.ps1') -Root $root} 'Private recovery material';$checks++}finally{Remove-Item -LiteralPath $stageMarker}
+ try{Assert-Refused {& (Join-Path $PSScriptRoot '../../supabase/operations/recovery-software-iso.ps1') -Root $root} 'Private recovery material';$checks++}finally{Remove-Item -LiteralPath $stageMarker}
  # Node cannot bypass the PowerShell ACL/path preflight, even in software mode.
  $node=(Get-Command node.exe).Source
- $vmScript=Join-Path $PSScriptRoot '../supabase/operations/recovery-vm.mjs'
+ $vmScript=Join-Path $PSScriptRoot '../../supabase/operations/recovery-vm.mjs'
  $badRoot=Join-Path $fixture 'restore-20000101-qemu-aabbccdd'
  New-RecoveryPrivateDirectory $badRoot | Out-Null
  $output=& $node $vmScript $badRoot prepare 2>&1
  Assert-GuardTest ($LASTEXITCODE -ne 0 -and ($output -join ' ').Contains('private VM root preflight refused')) 'Node must reject a root outside RestoreTests before QEMU.';$checks++
  Assert-GuardTest (@(Get-ChildItem -LiteralPath $badRoot -Force).Count -eq 0) 'Node guard must run before any writes.';$checks++
  # Cleanup wrapper must fail before deletion when independent checkpoint pin is wrong.
- $cleanup=Join-Path $PSScriptRoot '../supabase/operations/recovery-local-cleanup.ps1'
+ $cleanup=Join-Path $PSScriptRoot '../../supabase/operations/recovery-local-cleanup.ps1'
  Assert-Refused {& $cleanup -VmRoot $root -Checkpoint $checkpoint -ManifestSha256 ('0'*64) -KeySha256 $keyHash} 'pin mismatch';$checks++
  Assert-GuardTest ((Test-Path -LiteralPath $root) -and (Get-FileHash -LiteralPath $manifest).Hash.ToLowerInvariant() -eq $manifestHash) 'Refused cleanup preserves staging and original fixture.';$checks++
  $privateDirectory=Join-Path $root 'nested';New-Item -ItemType Directory -Path $privateDirectory | Out-Null
@@ -108,7 +108,7 @@ try{
  New-RecoveryPrivateDirectory $root | Out-Null
  # Positive deletion uses only authored local fixtures and a captured invocation.
  $attempt=Join-Path $root 'attempt-restore-1';New-Item -ItemType Directory -Path $attempt | Out-Null
- Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../supabase/operations/recovery-guest-inside.sh') -Destination (Join-Path $attempt 'guest-inside.sh')
+ Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../../supabase/operations/recovery-guest-inside.sh') -Destination (Join-Path $attempt 'guest-inside.sh')
  [IO.File]::WriteAllText((Join-Path $root 'latest-restore.json'),'{"share":"attempt-restore-1"}')
  [IO.File]::WriteAllText((Join-Path $root 'vm-invocation-restore-1.json'),'{"mode":"restore","noNetworkDevice":true,"noPorts":true,"startedAt":"2000-01-01T00:00:00Z"}')
  $status=& $cleanup -VmRoot $root -Checkpoint $checkpoint -ManifestSha256 $manifestHash -KeySha256 $keyHash | ConvertFrom-Json

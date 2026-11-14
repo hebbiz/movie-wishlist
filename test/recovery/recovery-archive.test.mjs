@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { encryptBytes, decryptSmallArtifact, verifyArtifact } from '../supabase/operations/recovery-archive.mjs';
+import { encryptBytes, decryptSmallArtifact, verifyArtifact } from '../../supabase/operations/recovery-archive.mjs';
 test('authored encrypted archive roundtrip, nonce uniqueness, tamper and wrong-key refusal', async () => {
   const root = await mkdtemp(path.join(tmpdir(),'mw-archive-authored-'));
   try {

@@ -85,8 +85,9 @@ dependency PGlite supports local database-contract tests. The package exposes
 | `netlify/lib/media-advice/identity/` | six server-owned film/person identity, release-year and narrow title-spelling helpers; not static website files |
 | `scripts/` | `build-site.mjs` and `stamp-media-advice-build.mjs` at the directory root; publication and develop build provenance |
 | `scripts/media-advice-diagnostics/` | fourteen explicit operator/controlled-study files (ten `.mjs`, four `.ps1`); not an automatic release-validation suite |
-| `test/` | M4 product, server, identity, access, browser, operator and historical-parity tests; canonical authored fixtures |
-| `tests/` | static-publication and recovery-tool tests, separate from `npm run test:m4` |
+| `test/` | 83 root M4 test entry files and 12 canonical authored fixture modules |
+| `test/build/` | static-publication test, separate from `npm run test:m4` |
+| `test/recovery/` | three Node recovery-tool tests and four Windows PowerShell test scripts; separate from `npm run test:m4` |
 | `supabase/functions/` | movie-activity and Social Advice push delivery |
 | `supabase/migrations/` | ordered database changes; repository presence does not prove deployment |
 | `supabase/operations/` | scoped preflight, activation/kill-switch and recovery tools; inspect their version-specific runbooks before use |
@@ -157,24 +158,34 @@ production readiness. These commands do not install or migrate a Supabase projec
 
 ### Build and test commands
 
-`test/` currently contains 83 Node test entry files and 12 authored fixture
-modules. `tests/` contains four Node test files and four Windows PowerShell test
-scripts. They are deliberately separate; running one directory does not cover
-the other.
+The root of `test/` retains the same 83 Node test entry files and 12 authored
+fixture modules. `test/build/` contains one Node test file; `test/recovery/`
+contains three Node test files and four Windows PowerShell test scripts. The
+former `tests/` directory has no aliases or wrappers. The unchanged `test:m4`
+command uses the nonrecursive `test/*.test.mjs` selection, so it still selects
+exactly the same 83 root entry files and excludes both nested suites. See the
+[current test inventory](docs/m4-runtime-separation.md#current-test-layout--2026-11-14)
+for canonical paths and the distinction from historical commands.
 
 | Command | Scope and limitations |
 | --- | --- |
-| `npm run test:m4` | Runs `node --test --test-concurrency=1 test/*.test.mjs`; includes controlled source fixtures and local PGlite/SQL contract tests, not migrations against the target database. Native/browser scenarios have additional prerequisites and may skip. |
-| `node --test tests/build-site.test.mjs` | Builds/rebuilds `.site-dist`, checks the public allowlist, browser dependencies and removal of stale output. |
-| `node --test tests/recovery-archive.test.mjs tests/recovery-local.test.mjs` | Authored recovery-tool fixtures and temporary local files, not a restore of the current M4 database. |
-| `node --test tests/recovery-m4-compare.test.mjs` | Authored supplemental M4 archive-comparison fixtures; cannot promote a failed full restore into a PASS. |
-| `pwsh -NoProfile -File tests/recovery-local-guards.test.ps1` | Windows-only authored path/checkpoint/private-ACL guards; no actual backup, VM or restore. |
-| `pwsh -NoProfile -File tests/recovery-m4-compare-wrapper.test.ps1` | Windows-only wrapper with authored DPAPI/AES-GCM inputs and preserved full `verified:false`; no real checkpoint or restore. |
-| `pwsh -NoProfile -File tests/recovery-password-prompt.test.ps1` | Windows-only authored credential/ACL handling test; no real credentials or database connection. |
-| `pwsh -NoProfile -File tests/recovery-password-prompt.native.test.ps1` | Explicit native Windows test of an empty local PostgreSQL 17 cluster; requires the already-installed PG 17.11 binaries at the path declared in that script. Not a target-database restore or an installer. |
+| `npm run test:m4` | Runs `node --test --test-concurrency=1 test/*.test.mjs`; includes controlled source fixtures and executes local PGlite/SQL contract tests, not migrations against the target database. Native/browser scenarios have additional prerequisites and may skip. This full command is outside a no-SQL verification scope. |
+| `node --test test/build/build-site.test.mjs` | Builds/rebuilds `.site-dist`, checks the public allowlist, browser dependencies and removal of stale output. |
+| `node --test test/recovery/recovery-archive.test.mjs test/recovery/recovery-local.test.mjs` | Authored recovery-tool fixtures and temporary local files; SQL is parsed/compared as strings, with no SQL execution or real restore. |
+| `node --test test/recovery/recovery-m4-compare.test.mjs` | Authored supplemental M4 archive-comparison SQL strings, without SQL execution; cannot promote a failed full restore into a PASS. |
+| `pwsh -NoProfile -File test/recovery/recovery-local-guards.test.ps1` | Windows-only authored path/checkpoint/private-ACL guards; no actual backup, VM or restore. |
+| `pwsh -NoProfile -File test/recovery/recovery-m4-compare-wrapper.test.ps1` | Windows-only wrapper with authored DPAPI/AES-GCM inputs and SQL strings, preserving full `verified:false`; no SQL execution, real checkpoint or restore. |
+| `pwsh -NoProfile -File test/recovery/recovery-password-prompt.test.ps1` | Windows-only authored credential/ACL handling test; no real credentials or database connection. |
+| `pwsh -NoProfile -File test/recovery/recovery-password-prompt.native.test.ps1` | Explicit opt-in native Windows test: starts an empty local PostgreSQL 17 cluster and executes SQL. Requires the already-installed PG 17.11 binaries at the path declared in that script. Outside this no-SQL layout verification; not a target-database restore or an installer. |
 | `node --test --test-concurrency=1 test/media-advice-browser.test.mjs test/media-advice-apple-subscription-browser.test.mjs` | Controlled browser scenarios; set `PLAYWRIGHT_MODULE_PATH` to an existing Playwright module and optionally `PLAYWRIGHT_CHANNEL` for an installed browser. These fixtures are not live source checks or a physical iPhone test. |
 | `node --test --test-concurrency=1 test/media-advice-runtime-parity.test.mjs test/media-advice-fixture-parity.test.mjs test/media-advice-history.test.mjs` | Frozen baseline and fixture/history checks; the pinned historical Git objects must exist locally. |
 | `node --test test/m4-diagnostics-layout.test.mjs` | Fixed-body relocation parity for all fourteen diagnostic tools, canonical paths/no wrappers and root build tools; nine importable Node tools plus the CLI-only pilot refusal and mocked wrong-commit/dirty-source guards. No live source requests or database checks. |
+
+This layout-only change excludes SQL execution, including local PGlite and
+native PostgreSQL tests, as well as real backup/restore operations. Authored
+SQL strings in the Node recovery suites are fixture data, not statements sent
+to a database. The native recovery test above requires a separate explicit
+opt-in when SQL execution is authorized; its new location does not authorize it.
 
 For frozen runtime parity the fixed baseline is
 `42b4b849d77281e1660701500c7bba9e6ec44b02`. If the test reports it missing,

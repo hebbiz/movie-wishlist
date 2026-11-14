@@ -1,6 +1,6 @@
 # Authored offline test; no database/network calls or real credentials.
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot/../supabase/operations/recovery-password-prompt.ps1"
+. "$PSScriptRoot/../../supabase/operations/recovery-password-prompt.ps1"
 function Assert-RecoveryTest($Condition, [string]$Message) {
     if (-not $Condition) { throw $Message }
 }

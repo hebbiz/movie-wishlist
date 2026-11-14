@@ -4,6 +4,7 @@ Current layout: [rule ownership](#media-advice-rule-ownership--2026-11-11), afte
 the [browser-source move](#browser-source-layout--2026-11-11).
 Local study/diagnostic tools use the
 [current operator layout](#current-operator-scope--2026-11-14).
+Build and recovery tests use the [current test layout](#current-test-layout--2026-11-14).
 The completed pilot cleanup is recorded at
 [local pilot retirement](#local-pilot-retirement--2026-11-09).
 Stage 1–2.3 inventories and launch commands below are historical checkpoints,
@@ -240,6 +241,46 @@ not an old pilot activation recipe. Historical SHA prerequisites below remain
 unchanged, including the frozen `42b4b849…` baseline and the operator comparison
 pins. [Physical-media work](m4-physical-media-handoff.md) remains deferred and
 recoverable from Git; none of these streaming studies integrates it into beta.
+
+## Current test layout — 2026-11-14
+
+This layout follow-up starts from develop
+`c9911c814e60bb0d7d79593a184179e996f78ec5`. It consolidates the eight files
+formerly under `tests/` into `test/build/` and `test/recovery/`, retaining each
+basename. The former directory disappears; no aliases or wrappers remain.
+The existing **95 root `test/` files** stay byte-for-byte unchanged: **83 Node
+test entry files and 12 authored fixture modules**. No product, operator,
+package/configuration or database contract changes follow from this move.
+
+| Canonical current file | Scope |
+| --- | --- |
+| [`test/build/build-site.test.mjs`](../test/build/build-site.test.mjs) | Publication allowlist, browser import closure and repeated-build cleanup |
+| [`test/recovery/recovery-archive.test.mjs`](../test/recovery/recovery-archive.test.mjs) | Authored archive encryption/authentication and temporary-file fixtures |
+| [`test/recovery/recovery-local.test.mjs`](../test/recovery/recovery-local.test.mjs) | Authored archive/VM contracts and SQL serialization/ACL strings |
+| [`test/recovery/recovery-m4-compare.test.mjs`](../test/recovery/recovery-m4-compare.test.mjs) | Supplemental M4 archive-comparison fixtures; SQL strings are parsed/compared without execution |
+| [`test/recovery/recovery-local-guards.test.ps1`](../test/recovery/recovery-local-guards.test.ps1) | Windows-only authored path/checkpoint/private-ACL guards |
+| [`test/recovery/recovery-m4-compare-wrapper.test.ps1`](../test/recovery/recovery-m4-compare-wrapper.test.ps1) | Windows-only authored DPAPI/AES-GCM/SQL-string wrapper fixtures; no SQL execution or real checkpoint |
+| [`test/recovery/recovery-password-prompt.test.ps1`](../test/recovery/recovery-password-prompt.test.ps1) | Windows-only authored credential/ACL handling, without a database connection |
+| [`test/recovery/recovery-password-prompt.native.test.ps1`](../test/recovery/recovery-password-prompt.native.test.ps1) | Explicit opt-in: an empty local PostgreSQL cluster and SQL execution; excluded from this no-SQL change |
+
+`package.json` and `npm run test:m4` remain unchanged:
+`node --test --test-concurrency=1 test/*.test.mjs`. Its nonrecursive root glob
+still selects exactly the same **83** M4 entry files; it includes neither the
+build suite nor any recovery suite. The full M4 command includes local SQL
+execution and is therefore outside this change's no-SQL verification scope.
+The Node recovery suites use authored SQL as strings, without a database or
+SQL execution. Native PostgreSQL and real backup/restore operations require
+separate authorization; relocating their tests does not grant it. Current
+commands and prerequisites are in the
+[README](../README.md#build-and-test-commands) and
+[recovery playbook](recovery-playbook.md).
+
+The `tests/` paths, old directory counts and commands in the historical cleanup
+checkpoints below describe their original Git trees and verification records.
+They remain unchanged, including the pinned build-test commands. Use the
+canonical paths above for the present checkout; do not substitute them into a
+historical reproduction without checking out its recorded revision. This layout
+record asserts no new test, SQL, restore, deployment or release result.
 
 ## Historical cleanup checkpoints
 

@@ -125,6 +125,16 @@ source budgets. Use the linked current inventory for today's locations; do not
 substitute a new checkout/path into a historical ExpectedCommit command or treat
 a recorded one-time authorization as permission for another live run.
 
+**Current build/recovery test paths — 2026-11-14:** the eight former `tests/`
+files now use `test/build/build-site.test.mjs` and
+`test/recovery/<same recovery basename>`, with no old-path aliases. The
+[current test inventory](m4-runtime-separation.md#current-test-layout--2026-11-14)
+and [README commands](../README.md#build-and-test-commands) describe these paths.
+The unchanged nonrecursive `npm run test:m4` still selects only the same 83 root
+M4 entry files. Node recovery SQL fixtures remain strings; native PostgreSQL
+tests execute SQL and are explicit opt-ins outside this no-SQL layout change.
+Historical commands and recorded results below retain their original meaning.
+
 ## Historical status index — superseded by the current entry point
 
 The original index and chronological records below are retained for their dated
