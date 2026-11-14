@@ -92,6 +92,23 @@ remain. Its dated description below correctly records that it did not yet move
 stage diagrams/counts, release archives and historical Git SHA/path references
 are preserved unchanged. Physical-media work remains separately deferred.
 
+### Forwarder retirement plan — 2026-11-14
+
+Keep the six generated `/assets/media-advice*.mjs` and four flat
+`/shared/<name>.mjs` forwarders for 1.4.1 compatibility. Propose their removal in
+a **separate cleanup PR no earlier than 30 days after the actual production
+deploy of 1.4.1**; record that deploy's commit and timestamp, not a merge or
+Preview date. Before removal:
+
+- Recheck current static, dynamic and transitive imports, preloads, build rules,
+  tests and documentation; preserve intentional historical Git-path references.
+- Assess the risk to old open tabs and cached HTML/module bodies, including
+  retained-document tests without the forwarders and any remaining evidence gaps.
+
+Thirty days is a minimum review gate, **not proof that old tabs are gone** or
+that cached modules have expired. Retain the forwarders if the assessed risk is
+not acceptable. This plan introduces no automatic expiry or runtime change.
+
 ## Browser source layout — 2026-11-11
 
 This layout-only follow-up starts from develop `15e29db`. It moves the six

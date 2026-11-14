@@ -110,6 +110,10 @@ modules to maintain. Four generated forwarders also preserve the old flat
 `/shared/<name>.mjs` URLs used by those browser modules. The six server-only
 identity files have no public compatibility URL. See the
 [rule ownership and compatibility boundaries](docs/m4-runtime-separation.md#media-advice-rule-ownership--2026-11-11).
+Their [retirement plan](docs/m4-runtime-separation.md#forwarder-retirement-plan--2026-11-14)
+requires a separate cleanup PR no earlier than 30 days after the production deploy
+of 1.4.1, a dependency review and an old-tab risk assessment; elapsed time alone
+does not establish that no old tabs remain.
 
 The Windows/LAN/Termius demo under `research/grounded-answer-demo` was retired
 in [#240](https://github.com/hebbiz/movie-wishlist/pull/240). It is not a supported
