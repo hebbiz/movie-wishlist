@@ -76,17 +76,87 @@ export function aclMismatchSummary(rows,inventory){
   tableAclMismatchCount:tables.length,
   tableAclMismatchesExtensionOwned:tables.length?tables.every(x=>Boolean(inventory.tables.find(t=>t.schema===x.key[0]&&t.name===x.key[1])?.extension)):null};
 }
+// Public metadata only; never infer isolation from a hardcoded status value.
+// Historical software preparation may predate host-result records, but the
+// actual restore must bind its own successful host/guest result exactly.
+export function vmIsolationEvidence({root,latest,invocations,results}){
+ if(!latest||!/^attempt-restore-\d+$/.test(latest.share)||!Array.isArray(invocations)||!invocations.length||!Array.isArray(results))throw new Error('VM_HOST_EVIDENCE_MISSING');
+ const normalized=value=>value.replaceAll('\\','/').replace(/\/+$/,'').toLowerCase();
+ const base=normalized(root);
+ const filename=value=>value.replaceAll('\\','/').toLowerCase();
+ const flag=new Set(['-nodefaults','-no-user-config']);
+ const valueOptions=new Set(['-machine','-accel','-cpu','-smp','-m','-display','-monitor','-serial','-nic','-parallel','-kernel','-initrd','-append','-drive']);
+ const names=new Set();
+ for(const item of invocations){
+  const record=item.record;
+  if(!/^vm-invocation-(?:prepare|inspect|build-pgnet|software-smoke|software-console|restore)-\d+\.json$/.test(item.name)||names.has(item.name)||!record||!Array.isArray(record.args)||record.args.some(x=>typeof x!=='string')||typeof record.share!=='string')throw new Error('VM_INVOCATION_INVALID');
+  names.add(item.name);
+  if(item.name.slice('vm-invocation-'.length).replace(/-\d+\.json$/,'')!==record.mode)throw new Error('VM_INVOCATION_MODE_MISMATCH');
+  const sharePattern=record.mode==='restore'?/^attempt-restore-\d+$/:record.mode==='software-console'?/^share$/:new RegExp('^attempt-software-'+record.mode+'-\\d+-[a-f0-9]{8}$');
+  if(!sharePattern.test(record.share))throw new Error('VM_INVOCATION_SHARE_INVALID');
+  const options=new Map();
+  for(let i=0;i<record.args.length;i++){
+   const option=record.args[i];
+   if(flag.has(option)){if(options.has(option))throw new Error('VM_ISOLATION_ARGUMENTS');options.set(option,[true]);continue;}
+   if(!valueOptions.has(option)||i+1>=record.args.length)throw new Error('VM_ISOLATION_ARGUMENTS');
+   const value=record.args[++i];
+   if(value.startsWith('-')||/hostfwd|guestfwd|netdev|qmp|vnc|(?:tcp|udp):/i.test(value))throw new Error('VM_ISOLATION_ARGUMENTS');
+   if(options.has(option)&&option!=='-drive')throw new Error('VM_ISOLATION_ARGUMENTS');
+   options.set(option,[...(options.get(option)??[]),value]);
+  }
+  if(![...flag].every(f=>options.has(f))||!['-display','-monitor','-nic','-parallel'].every(f=>options.get(f)?.[0]==='none')||options.get('-serial')?.[0]!=='stdio')throw new Error('VM_ISOLATION_ARGUMENTS');
+  if(filename(options.get('-kernel')?.[0]??'')!==base+'/alpine/boot/vmlinuz-virt'
+   ||filename(options.get('-initrd')?.[0]??'')!==base+'/alpine/boot/initramfs-virt')throw new Error('VM_ISOLATION_ARGUMENTS');
+  const drives=options.get('-drive')??[];
+  const driveKinds=new Set();
+  for(const drive of drives){
+   // Accept the actual four local-drive grammars only. Merely checking the
+   // prefix before a comma would permit network block options after that comma.
+   const m=drive.match(/^file=([^,]+)(,.*)$/);
+   if(!m)throw new Error('VM_ISOLATION_ARGUMENTS');
+   const file=filename(m[1]),suffix=m[2],prefix=base+'/assets/alpine-virt-';
+   let kind;
+   if(file.startsWith(prefix)&&/^\d+\.\d+\.\d+-x86_64\.iso$/.test(file.slice(prefix.length))
+    &&suffix===',media=cdrom,if=ide,readonly=on')kind='alpine';
+   else if(file===base+'/software.iso'&&suffix===',media=cdrom,if=ide,readonly=on')kind='software';
+   else if(file===base+'/work.qcow2'&&suffix===',format=qcow2,if=virtio')kind='work';
+   else if(file===`fat:rw:${base}/${record.share}`&&suffix===',format=raw,if=virtio')kind='share';
+   else throw new Error('VM_ISOLATION_ARGUMENTS');
+   if(driveKinds.has(kind))throw new Error('VM_ISOLATION_ARGUMENTS');
+   driveKinds.add(kind);
+  }
+  if(drives.length!==4||driveKinds.size!==4)throw new Error('VM_ISOLATION_ARGUMENTS');
+ }
+ const restore=invocations.filter(x=>x.record.mode==='restore'&&x.record.share===latest.share);
+ if(restore.length!==1)throw new Error('VM_LATEST_RESTORE_BINDING');
+ const matched=results.filter(x=>x.record?.invocation===restore[0].name);
+ if(matched.length!==1)throw new Error('VM_RESTORE_HOST_RESULT_MISSING');
+ const result=matched[0];
+ if(result.name!==restore[0].name.replace('vm-invocation-','vm-result-')||result.record.format!==1||result.record.mode!=='restore'||result.record.share!==latest.share)throw new Error('VM_RESTORE_HOST_RESULT_BINDING');
+ if(result.record.qemuExitCode!==0||result.record.guestCommandsPassed!==true)throw new Error('VM_RESTORE_HOST_FAILED');
+ return {vmIsolationVerified:true,restoreDriverVerified:true,networkDevice:false,vmInvocationCount:invocations.length};
+}
 async function verify(){
  let share=path.join(config.root,'share');
  try{const latest=JSON.parse(await readFile(path.join(config.root,'latest-restore.json'),'utf8'));if(!/^attempt-restore-\d+$/.test(latest.share))throw new Error('private path refused');share=path.join(config.root,latest.share)}catch(e){if(e.code!=='ENOENT')throw e}
  const stamp=new Date().toISOString().replaceAll(/[:.]/g,'-');
- const evidence={at:new Date().toISOString(),actualRestore:false,networkDevice:false,tcpListener:false};
+ const evidence={at:new Date().toISOString(),actualRestore:false,networkDevice:null,tcpListener:null,vmIsolationVerified:false,restoreDriverVerified:false};
  const files=await readdir(share);const privateFiles={};
  // Persist detailed diagnostics encrypted BEFORE temporary VM deletion, never echo.
  for(const name of files.filter(x=>/\.(?:log|jsonl?|txt|sql)$/.test(x))){privateFiles[name]=(await readFile(path.join(share,name))).toString('utf8')}
  const diagnostics=Object.fromEntries(Object.entries(privateFiles).filter(([name])=>
   !name.endsWith('.sql')&&name!=='source-inventory.json'&&name!=='target-data.sql'
  ));
+ // Preserve host launch/isolation/preparation evidence before removing staging.
+ // Safe keys prevent collisions with guest diagnostics or the M4 input binding.
+ const hostNames=(await readdir(config.root)).filter(name=>
+  /^vm-(?:invocation|result)-[a-z0-9.-]+\.json$/.test(name)
+  || /^(?:serial|qemu)-[a-z0-9.-]+\.log$/.test(name)
+  || /^(?:software-prepared|software-smoke-verified|latest-restore|private-data-staged)\.json$/.test(name));
+ for(const name of hostNames)diagnostics['host/'+name]=await readFile(path.join(config.root,name),'utf8');
+ try{
+  for(const name of (await readdir(path.join(config.root,'assets'))).filter(name=>/^[a-z0-9.-]+\.json$/.test(name)))diagnostics['assets/'+name]=await readFile(path.join(config.root,'assets',name),'utf8');
+ }catch(e){if(e.code!=='ENOENT')throw e;}
  await encryptBytes(Buffer.from(JSON.stringify(diagnostics)),path.join(config.directory,'restore-'+stamp+'-details.aesgcm'),key);
  evidence.phaseDiagnostics=['initdb','start','roles-restore','pre-data','data','post-data','relationships','redump-data','redump-schema'].filter(x=>files.includes(x+'.log')).map(stage=>({stage,errorReported:/\b(?:ERROR|FATAL|PANIC):|command not found|cannot execute|No such file or directory/.test(privateFiles[stage+'.log'])}));
  const logged=Object.entries(privateFiles).filter(([name])=>name.endsWith('.log')).map(([,text])=>text).join('\n');
@@ -97,8 +167,13 @@ async function verify(){
   const complete=JSON.parse(privateFiles['restore-complete.json']);evidence.serverVersion=complete.serverVersion;
   if(!String(complete.serverVersion).startsWith('17'))throw new Error('SERVER_MAJOR');
   evidence.actualRestore=true;
+  const hostRecords=prefix=>hostNames.filter(name=>name.startsWith(prefix)).map(name=>({name,record:JSON.parse(diagnostics['host/'+name])}));
+  Object.assign(evidence,vmIsolationEvidence({root:config.root,
+   latest:JSON.parse(diagnostics['host/latest-restore.json']??'null'),
+   invocations:hostRecords('vm-invocation-'),results:hostRecords('vm-result-')}));
   evidence.relationships=complete.validatedForeignKeysNoOrphans===true;
   evidence.cronDisabled=complete.cronDisabled===true;evidence.noTcp=complete.noTcp===true;
+  evidence.tcpListener=complete.noTcp===true?false:null;
   evidence.pgNetWorkerAbsent=complete.pgNetWorkerAbsent===true;
   evidence.pgNetProcessingDisabled=complete.pgNetProcessingDisabled===true;
   evidence.pgNetIsolated=complete.pgNetIsolated===true;
@@ -146,7 +221,7 @@ async function verify(){
   const fingerprints={at:evidence.at,schema:{source:sha(normalizeSchema(privateFiles['source-schema.sql'])),target:sha(normalizeSchema(privateFiles['target-schema.sql']))},copyBlocks:{source:[...a],target:[...b]},roles:{source:sha(normalizeRoles(privateFiles['roles.sql'])),target:sha(normalizeRoles(privateFiles['target-roles.sql']))},sequences:{source:sha(equal(sequences(privateFiles['source-data.sql']))),target:sha(equal(sequences(privateFiles['target-data.sql'])))}};
   const proofFile=path.join(config.directory,'restore-'+stamp+'-comparisons.aesgcm');
   await encryptBytes(Buffer.from(JSON.stringify(fingerprints)),proofFile,key);await verifyArtifact(proofFile,key);
-  evidence.verified=Object.values(evidence.catalog).every(Boolean)&&evidence.aclEffective&&evidence.alignedClient&&evidence.rowCounts&&evidence.copyData&&evidence.sequences&&evidence.schemaSql&&evidence.roles&&evidence.relationships&&evidence.cronDisabled&&evidence.noTcp&&evidence.pgNetProcessingDisabled&&evidence.pgNetIsolated&&evidence.httpQueueEmpty&&evidence.nativeDependencies;
+  evidence.verified=evidence.vmIsolationVerified&&evidence.restoreDriverVerified&&Object.values(evidence.catalog).every(Boolean)&&evidence.aclEffective&&evidence.alignedClient&&evidence.rowCounts&&evidence.copyData&&evidence.sequences&&evidence.schemaSql&&evidence.roles&&evidence.relationships&&evidence.cronDisabled&&evidence.noTcp&&evidence.pgNetProcessingDisabled&&evidence.pgNetIsolated&&evidence.httpQueueEmpty&&evidence.nativeDependencies;
  }catch(e){evidence.failure=/^[A-Z_]+$/.test(e.message)?e.message:'VERIFICATION_FAILED';evidence.verified=false}
  await writeFile(path.join(config.directory,'restore-'+stamp+'.status.json'),JSON.stringify(evidence,null,2),{flag:'wx',mode:0o600});
  console.log(JSON.stringify(evidence));if(!evidence.verified)process.exitCode=1;
