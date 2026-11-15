@@ -90,6 +90,16 @@ wrapped key or staging. DPAPI CurrentUser binds the key to this Windows
 profile/machine. It is **not** an off-device recovery-key solution, and neither
 private placement nor NTFS ACLs are disk encryption.
 
+Check the fresh `credential.pending.clixml` and `pending.json` files as well as
+their directory before consumption. An elevated terminal can create files owned
+by built-in Administrators despite a private DACL; the historical-owner exception
+does not apply to these fresh inputs. On **2026-11-15**, the owner separately
+approved changing only the owner of those two files to the current Windows user.
+Their byte hashes and DACLs remained identical, and strict ownership/private-path
+checks passed before export. This dated correction is not permission for automatic
+repairs, broader ACLs or relaxed guards. Do not rerun the prompt over a pending
+handoff to work around a failed ownership check.
+
 Pin the original `status.json` and wrapped-key SHA256 in the private operation
 record. Verify persisted-key readback, all manifest sizes/hashes and every
 retained AES-GCM tag. A hash calculated from an untrusted file is not independent
@@ -506,7 +516,7 @@ data-loss decision.
 
 ### Checkpoint-specific evidence
 
-The current approved test concerns
+The recorded November 10 restore test concerns
 `checkpoint-20261110T084741Z-dd8c8783`, snapshot **2026-11-10 08:47:42 UTC**.
 Its fresh export and persisted-key readback are distinct from the older scoped
 pre-#233 copy. One real-data no-NIC/socket-only PG17.6 restore started at
@@ -534,6 +544,39 @@ Exact temporary cleanup completed at **10:11:55 UTC**. Readback authenticated
 all retained evidence and confirmed all 61 previously pinned encrypted/key
 files unchanged. The operation/PR report retains the comparison boundaries;
 this result does **not** establish whole-project recovery or production readiness.
+
+### Fresh logical export and readback — 2026-11-15
+
+For 1.4.1 preparation, reviewed `develop` was
+`b2624505a7488b022380888e74adb0ad3d3a31ea`. The existing exporter ran from the
+clean `62711e4badf3569308f6035ed92fe8a79a486024` checkout, whose complete Git tree
+was verified identical to that `develop` commit. Exactly **one export** produced
+`checkpoint-20261115T092706Z-e4ac3901` for project `mttkectgdqqmejpenkrn`:
+snapshot **2026-11-15 09:27:08.419 UTC**, export completed **09:27:33.263 UTC**.
+
+The unfiltered custom archive used a repeatable-read **read-only** snapshot;
+logical roles/memberships were exported before and after without passwords.
+One offline audit completed at **09:31:17 UTC** using the persisted DPAPI-wrapped
+key. Manifest byte sizes/hashes, retained-artifact authentication, key readback,
+archive TOC and full native archive reading passed. Native export diagnostics
+had no warnings, roles were stable, all captured snapshot counts were readable,
+all application/managed non-extension tables were accounted for, and the four
+captured key relationship checks passed. Auth and Storage SQL data were
+represented; object bytes and external service settings remain excluded.
+
+The expected `net._http_response` and `net.http_request_queue` payload exclusions
+remain. These checks do not independently establish complete function/column ACL
+or `pg_init_privs` coverage. The Windows client bundle still lacks the native
+`pg_cron`, `pg_net` and `supabase_vault` modules required for a future restore;
+no restore software was prepared or downloaded in this operation.
+
+The encrypted checkpoint and separate wrapped key remain in the existing local
+recovery locations. All 112 previously pinned files retained their sizes/hashes.
+The one-use credential was consumed; no plaintext archive was created. No restore
+was performed for this checkpoint (`restoreVerified:false`); production data,
+schema, rights and configuration were not changed by the operation. The November
+10 full restore remains **`verified:false`** with the ACL differences above.
+This export/readback does not repair them or establish whole-project recovery.
 
 Official references:
 [Supabase backup limits](https://supabase.com/docs/guides/platform/backups),
