@@ -179,3 +179,14 @@ test('host isolation evidence derives actual no-NIC/driver proof and refuses mis
  publicRun.record.args.push('-net','user');
  assert.throws(()=>vmIsolationEvidence(good),/VM_ISOLATION_ARGUMENTS/);
 });
+
+test('public invocation shares reject traversal and absolute paths even when the FAT argument matches',()=>{
+ for(const share of ['../outside','..\\outside','C:/outside','C:\\outside','/outside','.','..']){
+  const f=hostEvidenceFixture(),publicRun=structuredClone(f.invocations[0]);
+  publicRun.name='vm-invocation-prepare-123.json';publicRun.record.mode='prepare';
+  publicRun.record.share=share;
+  publicRun.record.args[publicRun.record.args.length-1]=`file=fat:rw:${f.root}/${share},format=raw,if=virtio`;
+  f.invocations.unshift(publicRun);
+  assert.throws(()=>vmIsolationEvidence(f),/VM_INVOCATION_SHARE_INVALID/);
+ }
+});

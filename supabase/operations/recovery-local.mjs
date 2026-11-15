@@ -92,6 +92,8 @@ export function vmIsolationEvidence({root,latest,invocations,results}){
   if(!/^vm-invocation-(?:prepare|inspect|build-pgnet|software-smoke|software-console|restore)-\d+\.json$/.test(item.name)||names.has(item.name)||!record||!Array.isArray(record.args)||record.args.some(x=>typeof x!=='string')||typeof record.share!=='string')throw new Error('VM_INVOCATION_INVALID');
   names.add(item.name);
   if(item.name.slice('vm-invocation-'.length).replace(/-\d+\.json$/,'')!==record.mode)throw new Error('VM_INVOCATION_MODE_MISMATCH');
+  const sharePattern=record.mode==='restore'?/^attempt-restore-\d+$/:record.mode==='software-console'?/^share$/:new RegExp('^attempt-software-'+record.mode+'-\\d+-[a-f0-9]{8}$');
+  if(!sharePattern.test(record.share))throw new Error('VM_INVOCATION_SHARE_INVALID');
   const options=new Map();
   for(let i=0;i<record.args.length;i++){
    const option=record.args[i];
