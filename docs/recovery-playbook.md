@@ -231,20 +231,76 @@ fresh `attempt-restore-<timestamp>` share for each actual attempt. Do not reuse
 an old writable-FAT output share, and do not invoke public console/preparation
 after private staging.
 
-**Remaining reproducibility gap:** the repository still lacks a guarded,
-single public-preparation continuation that automates the inspected partial
-unpack decision, symlink-aware alias repair and fresh-share smoke above.
-`prepare` → `inspect` → `build-pgnet` alone is therefore not a verified complete
-route on a new root; the current build helper still has the symlink-sensitive
-fallback. Before the next real-data restore, either prepare a reviewed minimal
-public-only continuation and validate it on public/empty-PG inputs, or stop and
-report this blocker. Do not rerun real data to prove the documentation or relax
-hashes/isolation/native-extension requirements to work around it.
+**Gap after the November 10 test:** that recorded attempt needed a task-local
+partial-unpack continuation and symlink-aware repair; the repository then lacked
+a complete scripted empty-PG smoke. The old three-mode sequence alone was not
+proof of a repeatable fresh-root preparation. The current route below requires
+complete unpack and an explicit empty-cluster smoke; it does not accept the old
+partial-unpack workaround or authorize repeating real data to prove instructions.
+
+### Current public preparation route
+
+This is a Linux guest in QEMU on the Windows machine. It is not a Windows guest
+or a full Supabase service deployment. Before any plaintext staging, create one
+new private root as described in section 3 and run the public-only preflight.
+Dot-sourcing the prompt helper supplies `New-RecoveryPrivateDirectory`; do not
+invoke its password prompt for an existing checkpoint restore.
+
+Host assembly is still an **operator sequence**, not a fresh-machine installer:
+
+1. Run `node supabase/operations/recovery-vm-assets.mjs "$vmRoot/assets"` once.
+   Keep `assets/assets.json`; verify the publisher QEMU checksum, official Alpine
+   checksum and every pinned OCI digest before use. The Alpine discovery URL is
+   mutable: record its actual version, rather than assuming a historical name.
+2. With an existing reviewed extractor, unpack QEMU into `$vmRoot/qemu` and only
+   `boot/vmlinuz-virt` and `boot/initramfs-virt` from the verified ISO into
+   `$vmRoot/alpine`. Do not run the QEMU Windows installer. Record extractor and
+   QEMU versions. Use the extracted `qemu-img` to create a new dynamic
+   `$vmRoot/work.qcow2` (16 GiB in the November 15 attempt), never an old disk.
+3. Run `node supabase/operations/recovery-oci-layout.mjs $vmRoot`; it verifies the
+   image config and umoci release digest and builds the public OCI layout. Extract
+   only `usr/lib/locale/locale-archive` from verified layer50 into
+   `$vmRoot/assets/locale-software`, checking the exact locale pin above.
+4. Run `node supabase/operations/recovery-client17-source.mjs $vmRoot`; require
+   the exact client17.11 hash above. Then run
+   `recovery-software-iso.ps1 -Root $vmRoot`. This moves `share` to `software` and
+   makes a fresh `share`; never put database material in that ISO.
+5. Only now run `recovery-pgnet-source.mjs` and `recovery-curl-source.mjs`, each
+   with `$vmRoot`. Require the complete reviewed pg_net commit, retained hashes
+   and actual native modules, not an arbitrary library or stub.
+
+The scripted VM steps are separate operations, with inspection between them:
+
+```powershell
+node .\supabase\operations\recovery-vm.mjs $vmRoot prepare
+node .\supabase\operations\recovery-vm.mjs $vmRoot inspect
+node .\supabase\operations\recovery-vm.mjs $vmRoot build-pgnet
+node .\supabase\operations\recovery-vm.mjs $vmRoot software-smoke
+```
+
+`prepare` permits at most 60 minutes for full unpack, requires its completion
+marker and a successful QEMU exit, and records `software-prepared.json`.
+Any previous prepare invocation refuses another format of that root. On failure,
+retain public diagnostics and stop; do not retry the destructive mode or treat
+an inspectable partial root as complete. Each scripted public mode has a fresh
+output share, addressing the earlier writable-FAT output problem.
+
+The build follows resolving aliases from the pinned image and checks all seven
+real native modules. A missing newly built pg_net cannot fall back to the image's
+stock version. The [software smoke guest](../supabase/operations/recovery-software-smoke.sh)
+uses a new empty PG cluster, pinned locale/client,
+socket0700/no TCP, cron off, pg_net template1/batch0 and rejected host
+authentication. It also executes the read-only target-privilege query on the
+empty target. Require its JSON result and `software-smoke-verified.json`, plus
+successful guest and QEMU results, before staging. Synthetic host tests alone do
+not establish this gate; host symlink restrictions must be stated separately.
 
 ## 3. Mandatory gates before plaintext staging
 
 1. Check checkpoint name, project, snapshot time, original manifest/key pins,
    every artifact hash and full GCM authentication against the approved record.
+   PowerShell may deserialize an ISO timestamp as `DateTime`; compare exact UTC
+   instants/ticks, not a formatted display string or a rounded timestamp.
    Do not choose the newest directory automatically. Run the synthetic guard
    tests first, including wrong checkpoint/path/hash, extra-reader ACLs and
    reparse points. Never relax a guard just to pass.
@@ -274,7 +330,7 @@ hashes/isolation/native-extension requirements to work around it.
 
 Run `pwsh -NoProfile -File test/recovery/recovery-local-guards.test.ps1` for authored
 Windows-only negative/positive guard cases (38 checks in the original guard change), and
-`node --test test/recovery/recovery-local.test.mjs test/recovery/recovery-archive.test.mjs`
+`node --test test/recovery/recovery-local.test.mjs test/recovery/recovery-archive.test.mjs test/recovery/recovery-software.test.mjs`
 for archive/VM-contract fixtures. They do not use real backups, keys, a live
 database or QEMU. Confirm the stopped public-only root separately with:
 
@@ -329,6 +385,22 @@ aggregate results in Git/reports:
 - cron/pg_net/no-TCP/no-NIC evidence, extension versions/native dependencies,
   full schema redump and all retained audit flags. A successful command or
   matching totals alone is insufficient.
+
+The host driver records `vm-result-<run>.json` only after QEMU closes, separately
+from the guest command marker. The general verifier checks every recorded argv
+against the permitted local drives and no-network options, and binds the actual
+restore share to exactly one invocation and successful host/guest result. Missing,
+nonzero or contradictory evidence cannot become `networkDevice:false` or a full
+PASS. Host invocation/result/serial logs and public asset metadata are retained
+inside encrypted diagnostics before cleanup.
+
+[`recovery-target-acl.sql`](../supabase/operations/recovery-target-acl.sql) also captures read-only **target** observations for
+`graphql`, `graphql_public` and `extensions`: owners, raw/expanded ACLs,
+`has_*_privilege`, extension dependencies, initial/default ACLs and non-password
+role attributes/memberships. The empty-PG smoke checks its syntax and JSON output
+before real staging. Actual output remains private in encrypted diagnostics.
+This does not reconstruct uncaptured source function/column/initial ACLs, prove
+row access through RLS, or change the full verifier's result.
 
 The October 22 full restore had **two GraphQL schema ACL mismatches** and a
 full-schema SQL mismatch. A later focused public/Auth schema test did not
@@ -577,6 +649,105 @@ was performed for this checkpoint (`restoreVerified:false`); production data,
 schema, rights and configuration were not changed by the operation. The November
 10 full restore remains **`verified:false`** with the ACL differences above.
 This export/readback does not repair them or establish whole-project recovery.
+
+### Controlled isolated restore — 2026-11-15
+
+Reviewed `develop`: `8b6c6ce4a12dc0952d8e759c8e609b3a7a3dc938` (merge #249;
+only the playbook changed since the prior reviewed base). The owner approved
+**one local real-data restore** of `checkpoint-20261115T092706Z-e4ac3901`,
+snapshot **2026-11-15 09:27:08.419 UTC**, and clarified that the existing Linux
+guest in QEMU on Windows was intended. No new production export was created.
+
+Public host assembly used existing 7-Zip **18.01**, QEMU **11.1.0** from the
+publisher-checksummed 20260811 archive, Alpine **3.24.4** with its published
+checksum, the pinned Supabase PG17.6 image/53 OCI layers and umoci **0.6.0**.
+Pinned locale/client17.11 and official pg_net **0.20.4** source were checked;
+the extension was built offline with the downloaded curl8.4.0 headers. Windows
+PG clients were **17.11**, PowerShell **7.6.9**, Node **24.22.0**. Component URLs,
+hashes and manual host-assembly metadata are retained privately. No installer,
+system service, Docker, cloud project or Windows update was used.
+
+The new bounded prepare completed a **full unpack** between **11:47:53.912** and
+**12:12:29.346 UTC**, approximately 24m35s: no partial-unpack continuation or
+repeat format. Inspection, symlink-aware native build and the new empty-PG
+smoke then passed, each with a fresh output share. The smoke executed and parsed
+the target ACL query before real staging. Public prepare had already started
+before host-result serialization was added; its complete/QEMU0 marker remains
+the evidence for that mode. Later modes, including the actual restore, retained
+the new host-result records. The one real-data restore started at
+**12:28:49.857 UTC** and closed normally before verification.
+
+Restore/general verifier tools: `77e83bff49174f393900e27faf3b3a17b55b954b`.
+The exact general result is `restore-2026-11-15T12-35-03-354Z.status.json`:
+
+| Check | Actual result |
+| --- | --- |
+| Included snapshot counts, sorted COPY fingerprints, sequences | PASS; the two documented net payload exclusions remain |
+| Captured schemas/tables/extensions, owners, constraints and table RLS | PASS |
+| Logical roles/memberships and FK orphan checks | PASS within the existing capture/comparison scope |
+| No-NIC host arguments and successful actual host/guest result | PASS; five VM invocations, one real-data restore |
+| No TCP, cron off, pg_net template1/batch0, empty restored HTTP queue | PASS; the required pg_net worker was present but isolated |
+| Seven real native modules and aligned17.11 client | PASS |
+| Native captured schema/table ACLs | FAIL: two schema mismatches, zero table mismatches |
+| Full normalized archive/redump schema SQL | FAIL |
+| Full verifier | **`verified:false`** |
+
+Raw table ACL text was not identical, but native expansion/default/grantor/
+grant-option comparison reported **zero** table differences. It is not counted
+as another effective ACL failure. No permissions, supplement, policies or source
+objects were changed to obtain a PASS.
+
+The supplemental M4 runner first refused with `M4_SIGNATURE`: its RPC ACL loop
+sent unrelated public functions with integer/jsonb/etc. arguments into the M4
+UUID/text-only parser. A synthetic regression reproduced this before the fix.
+Commit `a5160caedaf66a817834961fb2e218049fbc327e` scopes exact M4 basenames first;
+the signature parser, exact inventory and bad-M4/overload refusals remain strict.
+Only the offline comparison was repeated on the same pinned inputs, not restore.
+
+The new actual strict comparison passed **79/79 M4 blocks**, all seven private
+payloads, fourteen function signatures, eight trigger bindings, ledger
+(cap8/10/12/14), RPC/RLS checks and complete migration-history equality, with each of the seven
+versions once. It preserved `fullVerifierVerified:false`. This is separate from
+the November10 task-local comparison and later synthetic tests.
+
+#### ACL findings for this checkpoint
+
+| Evidence | Finding and limit |
+| --- | --- |
+| Captured source schema ACL vs native restored target | `graphql` and `graphql_public` kept the captured owners, but target ACLs were NULL/default. Source had direct USAGE grants for anon/authenticated/service_role; target `has_schema_privilege` returned false for those roles on both schemas. Postgres still had USAGE. This is a confirmed schema-access loss, not merely SQL serialization. |
+| Full source archive vs target redump | Same 856 block totals; no changed exact-header block, but 51 missing/extra ACL-header pairs in `extensions` (49 functions, two relations). Owner annotations change postgres to supabase_admin, and 51 source revokes for postgres are absent from redump. Bodies differ; these are not dismissed as formatting or independent proof of changed native ownership. |
+| Target-only catalog observations | All 51 pairs mapped to native target objects: pgcrypto36, uuid-ossp10, pg_stat_statements5. Target postgres had EXECUTE on 49/49 functions and SELECT on 2/2 relations. Source independent function/column/initial ACLs were not captured, so this does not prove 51 access changes or harmlessness. |
+| Dependencies and potential impact | No direct GraphQL caller was found in the reviewed application code. Target registered dependencies and role/default/initial-ACL evidence are retained; procedural/dynamic and external consumers remain incomplete. The measured schema losses can block GraphQL consumers; API/service behavior was not tested. Crypto/UUID/monitoring or managed-service consequences of the extension differences remain unproved. M4 archived/RPC/private ACL checks passed, without exercising live application actions. |
+| Source-preserving next step | The existing two-schema supplement passed source-shape validation for this checkpoint, and the observed target owners/default ACLs met its expected shape. It was **not applied** and its target guards/effect were not executed here. A separate isolated follow-up may test that exact source-derived correction; extension repairs require better independent source privilege evidence, not blanket grants or normalization of the differences. |
+
+Detailed classification was a **manual offline operator step** using the
+existing `schemaBlocks`/`blockMeaning` parsers with synthetic duplicate-header
+and owner/statement-delta checks. No source/redump SQL or user rows were printed.
+The full exact inputs and target/host catalog evidence were retained encrypted
+before cleanup. The M4 replay cipher was read back with the persisted key and
+reproduced without reading staging files at **12:51:47 UTC**; full false stayed
+false. This closes the retained-input gap for this new attempt, not retroactively
+for the older November10 comparison. It does not add a fresh-machine installer
+or a packaged post-cleanup replay CLI; those remaining manual boundaries are
+explicit, as is Alpine's mutable discovery URL.
+
+Review then reproduced an additional synthetic public-share traversal case.
+Commit `df4234c37f9a13b0818c8c819b08f121251e2cee` restricts every recorded share
+to its mode's allowed basename, including public invocations. After cleanup,
+the stricter helper was run on the authenticated retained host records at
+**13:11:05 UTC**: all five actual invocations passed. No VM or restore was
+repeated, and the original full-verifier status/hash remained unchanged.
+
+Cleanup completed at **12:53:12.440 UTC**: QEMU stopped, exact private temporary
+root absent, executed guest hash matched the worktree, and all **130** previously
+pinned files retained their sizes/hashes. Original checkpoint/key and encrypted
+proofs were preserved; post-cleanup audit authenticated the retained artifacts.
+Disk encryption was not independently established; the existing owner waiver
+was used only with its unchanged private-ACL/no-network/exact-cleanup conditions.
+Ordinary deletion is **not forensic erase**. Production data/schema/permissions/
+flags/configuration were unchanged; no migration, production restore or service
+recovery was attempted. Auth/service settings, Storage bytes, secrets, role
+passwords and external infrastructure remain outside the established recovery.
 
 Official references:
 [Supabase backup limits](https://supabase.com/docs/guides/platform/backups),
