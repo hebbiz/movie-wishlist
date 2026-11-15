@@ -23,14 +23,26 @@ make CC=gcc with_llvm=no PG_CONFIG="$core_config" CPPFLAGS="$("$core_config" --c
 # the verified real PG headers, then install into the actual plugin locations.
 install -m 0755 pg_net.so "$libdir/pg_net.so"
 install -m 0644 pg_net.control sql/pg_net--*.sql "$(pg_config --sharedir)/extension/"
-for module in pg_cron supabase_vault; do
+# Same pinned image aliases as the restore guest. test -f follows a resolving
+# symlink; find -type f incorrectly skipped the image's unversioned aliases.
+# Preserve every existing real module, particularly the newly built pg_net.
+native_root=/nix/store/1h5zql3fk1aan2fpbkhyxkc9bp0l8anp-postgresql-and-plugins-17.6/lib
+module_evidence_root=/recovery
+ensure_real_module() {
+ local module="$1"
+ case "$module" in pg_cron|pg_net|supabase_vault|pg_stat_statements|pgcrypto|uuid-ossp|plpgsql) ;; *) return 1 ;; esac
  if ! test -f "$libdir/$module.so"; then
-  native_module=$(find /nix/store -maxdepth 5 -type f -name "$module.so" -print -quit)
-  test -f "$native_module"
-  ln -s "$native_module" "$libdir/$module.so"
+  # pg_net must be the exact build above, never a fallback stock binary.
+  test "$module" != pg_net || return 1
+  local native_module="$native_root/$module.so"
+  test -f "$native_module" || return 1
+  ln -s "$native_module" "$libdir/$module.so" || return 1
  fi
- ldd "$libdir/$module.so" > "/recovery/$module.dependencies.txt"
- if grep -q 'not found' "/recovery/$module.dependencies.txt"; then exit 1; fi
+ ldd "$libdir/$module.so" > "$module_evidence_root/$module.dependencies.txt" || return 1
+ if grep -q 'not found' "$module_evidence_root/$module.dependencies.txt"; then return 1; fi
+}
+for module in pg_cron pg_net supabase_vault pg_stat_statements pgcrypto uuid-ossp plpgsql; do
+ ensure_real_module "$module"
 done
 cat "$(pg_config --sharedir)/extension/pg_net.control"
 ldd "$libdir/pg_net.so" > /recovery/pg-net-built.dependencies.txt

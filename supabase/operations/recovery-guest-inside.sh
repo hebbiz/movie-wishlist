@@ -80,6 +80,7 @@ PGOPTIONS='-c session_replication_role=replica' restore --create --role=supabase
 psql -At -d postgres -f /recovery/target-inventory.sql > /recovery/target-inventory.json 2> /recovery/inventory.log
 psql -At -d postgres -f /recovery/counts.sql > /recovery/target-counts.jsonl 2> /recovery/counts.log
 psql -At -d postgres -f /recovery/acl-checks.sql > /recovery/acl-comparison.jsonl 2> /recovery/acl-checks.log
+psql -At -d postgres -f /recovery/target-acl.sql > /recovery/target-privileges.json 2> /recovery/target-privileges.log
 psql -d postgres -f /recovery/target-relationships.sql > /recovery/relationships.log 2>&1
 aspostgres env LD_LIBRARY_PATH="$clientlibs:/usr/lib/x86_64-linux-gnu" "$clientbin/pg_dump" -h "$socket" -U mw_restore_bootstrap -d postgres --data-only --file=/var/lib/postgresql/recovery-test/target-data.sql > /recovery/redump-data.log 2>&1
 cp /var/lib/postgresql/recovery-test/target-data.sql /recovery/target-data.sql
