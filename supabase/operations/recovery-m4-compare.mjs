@@ -98,7 +98,10 @@ function ledgerAndRls(all) {
 }
 function rpcAcl(all) {
  return m4Contract.publicFunctions.every(fn=>{
-  const a=all.filter(b=>b.type==='ACL'&&b.schema==='public'&&objectName(b)==='FUNCTION '+fn);
+  // Other public RPCs can use arbitrary PostgreSQL argument types. Scope by
+  // exact M4 basename before applying this contract's UUID/text-only parser.
+  const prefix='FUNCTION '+fn.slice(0,fn.indexOf('('))+'(';
+  const a=all.filter(b=>b.type==='ACL'&&b.schema==='public'&&b.name.startsWith(prefix)&&objectName(b)==='FUNCTION '+fn);
   if(a.length!==1 || !['postgres','supabase_admin'].includes(a[0].owner)) return false;
   const lines=blockMeaning(a[0]).split('\n');
   const parsed=lines.map(line=>line.match(/^(REVOKE|GRANT) ALL ON FUNCTION public\.(.+) (FROM|TO) ([a-z_]+|PUBLIC);$/));

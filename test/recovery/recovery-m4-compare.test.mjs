@@ -150,6 +150,35 @@ test('unrelated schema differences do not conceal the unchanged failed full-veri
  assert.equal(result.fullVerifierVerified, false);
 });
 
+test('unrelated public RPC ACLs with non-M4 argument types do not enter the restricted M4 signature parser', () => {
+ const signatures=['unrelated_integer(integer)','unrelated_payload(jsonb)',
+  'unrelated_named(p_count integer, p_payload jsonb, p_when timestamp with time zone)',
+  'unrelated_array(integer[])','unrelated_domain(public.authored_domain)'];
+ const extra=signatures.flatMap(signature=>[
+  block(signature,'FUNCTION','public',`CREATE FUNCTION public.${signature} RETURNS void LANGUAGE sql AS $_$SELECT NULL;$_$;`),
+  block('FUNCTION '+signature,'ACL','public',`GRANT ALL ON FUNCTION public.${signature} TO authenticated;`)
+ ]);
+ const f=changeSql(fixture(),blocks=>[...blocks,...extra],true),before=structuredClone(f.fullStatus);
+ const result=compareM4(f);
+ assert.equal(result.m4ArchivedReplayMatches,true);
+ assert.equal(result.sourceBlocks,79);assert.equal(result.targetBlocks,79);
+ assert.equal(result.checks.serviceOnlyRpcAcl,true);
+ assert.equal(result.fullVerifierVerified,false);assert.deepEqual(f.fullStatus,before);
+});
+
+test('scoping unrelated RPCs does not ignore unsupported M4 ACL signatures, extra overloads or malformed grants',async t=>{
+ for(const signature of ['media_advice_cleanup(integer)','media_advice_cleanup_extra(jsonb)',
+  'media_advice_action(uuid, integer)'])await t.test(signature,()=>{
+  refused(changeSql(fixture(),blocks=>[...blocks,block('FUNCTION '+signature,'ACL','public',
+   `GRANT ALL ON FUNCTION public.${signature} TO service_role;`)],true));
+ });
+ await t.test('malformed M4 grant keeps its correct header',()=>{
+  refused(replaceBody(fixture(),isType('ACL','FUNCTION media_advice_cleanup()'),
+   body=>body.replace('GRANT ALL ON FUNCTION public.media_advice_cleanup()',
+    'GRANT ALL ON FUNCTION public.media_advice_cleanup(integer)'),true));
+ });
+});
+
 test('CRLF and ACL-statement order are serialization differences, not semantic changes', () => {
  const f = changeSql(fixture(), blocks => blocks.map(b => b.header.includes('; Type: ACL;') ?
   {...b,body:b.body.trim().split('\n').reverse().join('\n')} : b));
